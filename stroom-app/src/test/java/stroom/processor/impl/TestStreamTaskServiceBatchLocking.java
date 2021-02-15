@@ -18,14 +18,16 @@
 package stroom.processor.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 
 class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject

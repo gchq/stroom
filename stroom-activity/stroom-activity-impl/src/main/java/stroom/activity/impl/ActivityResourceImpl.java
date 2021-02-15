@@ -8,9 +8,9 @@ import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
-import stroom.util.rest.RestUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -19,12 +19,13 @@ import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 
 @AutoLogged
 class ActivityResourceImpl implements ActivityResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResourceImpl.class);
 
     private final Provider<ActivityService> activityServiceProvider;

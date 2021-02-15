@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 class HyperlinkTest {
+
     @Test
     void testValidUrl() {
         // Given

@@ -107,7 +107,7 @@ public abstract class Result implements Serializable {
      * @param <T> The result class type, either Flat or Table
      * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
-    public static abstract class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
 
         private String componentId;
         private String error;

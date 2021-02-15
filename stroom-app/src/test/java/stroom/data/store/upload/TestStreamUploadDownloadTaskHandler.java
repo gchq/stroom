@@ -43,16 +43,17 @@ import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -186,12 +187,15 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 for (int i = 1; i <= streamSource.count(); i++) {
                     try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
                         assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
-                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT), false)).isEqualTo("CONTEXT" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT),
+                                false)).isEqualTo("CONTEXT" + i);
 
                         if (originalMeta.equals(meta)) {
-                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "META:" + i, "X:" + i);
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
+                                    false), "META:" + i, "X:" + i);
                         } else {
-                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
+                                    false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
                         }
                     }
                 }

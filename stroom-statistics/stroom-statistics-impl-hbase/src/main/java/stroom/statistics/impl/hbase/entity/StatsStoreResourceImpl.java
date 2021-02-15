@@ -24,6 +24,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import javax.inject.Inject;
 
 class StatsStoreResourceImpl implements StatsStoreResource {
+
     private final StroomStatsStoreStore stroomStatsStoreStore;
     private final DocumentResourceHelper documentResourceHelper;
 

@@ -16,12 +16,14 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.SelectionModel;
-import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public abstract class TreePanel<E> extends Composite {
+
     public abstract Box<E> getBox(E item);
 
     public abstract Box<E> getTargetBox(Event event, boolean usePosition);
@@ -37,6 +39,7 @@ public abstract class TreePanel<E> extends Composite {
     public abstract void setTree(DefaultTreeForTreeLayout<E> tree);
 
     public interface RefreshCallback {
+
         void onRefresh();
     }
 }

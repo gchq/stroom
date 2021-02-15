@@ -5,11 +5,12 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.feed.shared.FeedDoc;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class FeedSerialiser implements DocumentSerialiser2<FeedDoc> {
+
     private final Serialiser2<FeedDoc> delegate;
 
     @Inject

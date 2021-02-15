@@ -25,6 +25,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class SearchBusPollRequest {
+
     @JsonProperty
     private final String applicationInstanceId;
     @JsonProperty

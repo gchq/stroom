@@ -1,5 +1,7 @@
 package stroom.index.app;
 
+import stroom.index.app.guice.AppModule;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -12,13 +14,13 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.app.guice.AppModule;
 
+import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import java.util.EnumSet;
 
 public class App extends Application<Config> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";

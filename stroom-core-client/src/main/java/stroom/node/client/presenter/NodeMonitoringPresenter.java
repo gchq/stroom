@@ -56,7 +56,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>> implements Refreshable {
+public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>>
+        implements Refreshable {
+
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
 
     private final RestFactory restFactory;
@@ -75,7 +77,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
-            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<FetchNodeStatusResponse> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(NODE_RESOURCE).find();
             }
@@ -191,7 +194,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         priorityColumn.setFieldUpdater((index, row, value) -> {
             final Rest<Node> rest = restFactory.create();
-            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setPriority(row.getNode().getName(), value.intValue());
+            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setPriority(row.getNode().getName(),
+                    value.intValue());
         });
         getView().addColumn(priorityColumn, "Priority", 55);
 
@@ -208,7 +212,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final Rest<Node> rest = restFactory.create();
-            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setEnabled(row.getNode().getName(), value.toBoolean());
+            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setEnabled(row.getNode().getName(),
+                    value.toBoolean());
         });
 
         getView().addColumn(enabledColumn, "Enabled", 60);
@@ -290,6 +295,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private static final class PingResult {
+
         private final Long ping;
         private final String error;
 

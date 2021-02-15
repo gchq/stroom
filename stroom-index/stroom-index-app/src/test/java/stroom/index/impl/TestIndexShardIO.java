@@ -16,10 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.SearcherManager;
-import org.junit.jupiter.api.Test;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -29,6 +25,11 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.search.impl.shard.IndexShardSearcher;
 import stroom.util.io.FileUtil;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SearcherManager;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -231,7 +232,8 @@ class TestIndexShardIO {
 //                            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer);
 //                            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
 //                            final IndexSearcher searcher = searcherManager.acquire();
-//                            //                final Query query = NumericRangeQuery.newLongRange("Id", 3L, 100L, true, true);
+//                            //                final Query query = NumericRangeQuery.newLongRange(
+//                            "Id", 3L, 100L, true, true);
 //
 //                            final Query query = new TermQuery(new Term("Test", "Test"));
 //

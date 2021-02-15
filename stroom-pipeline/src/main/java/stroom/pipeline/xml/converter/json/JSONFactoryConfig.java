@@ -3,6 +3,7 @@ package stroom.pipeline.xml.converter.json;
 import java.util.Objects;
 
 public class JSONFactoryConfig {
+
     private boolean allowComments;
     private boolean allowYamlComments;
     private boolean allowUnquotedFieldNames;
@@ -94,10 +95,15 @@ public class JSONFactoryConfig {
         this.allowTrailingComma = allowTrailingComma;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final JSONFactoryConfig that = (JSONFactoryConfig) o;
         return allowComments == that.allowComments &&
                 allowYamlComments == that.allowYamlComments &&
@@ -113,7 +119,17 @@ public class JSONFactoryConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(allowComments, allowYamlComments, allowUnquotedFieldNames, allowSingleQuotes, allowUnquotedControlChars, allowBackslashEscapingAnyCharacter, allowNumericLeadingZeros, allowNonNumericNumbers, allowMissingValues, allowTrailingComma);
+        return Objects.hash(
+                allowComments,
+                allowYamlComments,
+                allowUnquotedFieldNames,
+                allowSingleQuotes,
+                allowUnquotedControlChars,
+                allowBackslashEscapingAnyCharacter,
+                allowNumericLeadingZeros,
+                allowNonNumericNumbers,
+                allowMissingValues,
+                allowTrailingComma);
     }
 
     @Override

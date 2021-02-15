@@ -24,13 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +34,17 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMultiNodeResourceTest.class);
 
     private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
@@ -447,6 +448,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
     public static class TestNode {
+
         private final String nodeName;
         private final int port;
         private final boolean isEnabled;
@@ -469,10 +471,15 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             return isEnabled;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final TestNode testNode = (TestNode) o;
             return port == testNode.port &&
                     isEnabled == testNode.isEnabled &&

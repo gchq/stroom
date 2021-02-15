@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 class MockStreamHandler implements StreamHandler {
-    private List<String> entryNameList = new ArrayList<>();
-    private List<byte[]> byteArrayList = new ArrayList<>();
+
+    private final List<String> entryNameList = new ArrayList<>();
+    private final List<byte[]> byteArrayList = new ArrayList<>();
     private ByteArrayOutputStream byteArrayOutputStream = null;
 
     private int handleErrorCount = 0;

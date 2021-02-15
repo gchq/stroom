@@ -19,6 +19,7 @@ package stroom.util.config;
 import javax.xml.bind.annotation.XmlElement;
 
 public class Parameter {
+
     private String name;
     private String value;
     private String regEx;

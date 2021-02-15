@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public interface HasName {
+
     String getName();
 
     void setName(final String name);

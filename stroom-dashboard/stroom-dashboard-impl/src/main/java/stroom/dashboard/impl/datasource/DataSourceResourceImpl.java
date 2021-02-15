@@ -22,10 +22,11 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 class DataSourceResourceImpl implements DataSourceResource {
+
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 
@@ -43,10 +44,12 @@ class DataSourceResourceImpl implements DataSourceResource {
                 return MetaFields.getFields();
             }
 
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(dataSourceRef)
-                    .map(provider -> provider.getDataSource(dataSourceRef).getFields())
-                    .orElse(null));
+            // Elevate the users permissions for the duration of this task so they can read the index if
+            // they have 'use' permission.
+            return securityContext.useAsReadResult(
+                    () -> dataSourceProviderRegistry.getDataSourceProvider(dataSourceRef)
+                            .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                            .orElse(null));
         });
     }
 }

@@ -17,12 +17,6 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -39,11 +33,19 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         implements HasDocumentRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<EntityChooser> dictionarySelection;
     private final ButtonView addButton;
@@ -54,8 +56,10 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     private boolean readOnly = true;
 
     @Inject
-    public DictionaryListPresenter(final EventBus eventBus, final WrapperView view,
-                                   final DocRefListPresenter docRefListPresenter, final Provider<EntityChooser> dictionarySelection) {
+    public DictionaryListPresenter(final EventBus eventBus,
+                                   final WrapperView view,
+                                   final DocRefListPresenter docRefListPresenter,
+                                   final Provider<EntityChooser> dictionarySelection) {
         super(eventBus, view);
         this.docRefListPresenter = docRefListPresenter;
         this.dictionarySelection = dictionarySelection;

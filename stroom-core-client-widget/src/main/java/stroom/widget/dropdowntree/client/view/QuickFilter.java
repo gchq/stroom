@@ -132,7 +132,9 @@ public class QuickFilter extends FlowPanel
     }
 
     private SafeHtml getPopupText() {
-        return popupTextSupplier != null ? popupTextSupplier.get() : null;
+        return popupTextSupplier != null
+                ? popupTextSupplier.get()
+                : null;
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
@@ -172,6 +174,7 @@ public class QuickFilter extends FlowPanel
 
     @ImportedWithPrefix("stroom-quickfilter")
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "QuickFilter.css";
 
         String quickFilter();
@@ -188,6 +191,7 @@ public class QuickFilter extends FlowPanel
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_CSS)
         Style style();
     }

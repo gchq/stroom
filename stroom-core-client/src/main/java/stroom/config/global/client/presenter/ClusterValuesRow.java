@@ -12,10 +12,10 @@ import java.util.Set;
 
 class ClusterValuesRow implements TreeRow {
 
-    private String effectiveValue;
-    private Integer nodeCount;
-    private String nodeName;
-    private String source;
+    private final String effectiveValue;
+    private final Integer nodeCount;
+    private final String nodeName;
+    private final String source;
     private Expander expander;
 
     ClusterValuesRow(final String effectiveValue,
@@ -75,17 +75,19 @@ class ClusterValuesRow implements TreeRow {
         effectiveValueToNodesMap.entrySet()
                 .stream()
                 .sorted(Comparator.comparing(entry ->
-                    entry.getValue()
-                            .stream()
-                        .map(NodeSource::getNodeName)
-                            .sorted()
-                            .findFirst()
-                            .orElse("")
+                        entry.getValue()
+                                .stream()
+                                .map(NodeSource::getNodeName)
+                                .sorted()
+                                .findFirst()
+                                .orElse("")
                 ))
                 .forEach(entry -> {
                     final String effectiveValue = entry.getKey();
                     final Set<NodeSource> nodes = entry.getValue();
-                    final int nodeCount = nodes != null ? nodes.size() : 0;
+                    final int nodeCount = nodes != null
+                            ? nodes.size()
+                            : 0;
 
                     // If this value has only one node associated to it then just show all the detail
                     // in the master row
@@ -113,7 +115,7 @@ class ClusterValuesRow implements TreeRow {
                             groupRowNodeName);
 
                     boolean isExpanded = treeAction.isRowExpanded(row)
-                        || (!treeAction.isRowExpanded(row) && !treeAction.isRowCollapsed(row));
+                            || (!treeAction.isRowExpanded(row) && !treeAction.isRowCollapsed(row));
 
                     if (row.getExpander() == null) {
                         row.setExpander(new Expander(depth, isExpanded, isLeaf));
@@ -130,29 +132,34 @@ class ClusterValuesRow implements TreeRow {
                         if (treeAction.isRowExpanded(row)) {
                             // Add the detail rows with blank value
                             entry.getValue()
-                                .stream()
-                                .sorted(Comparator.comparing(NodeSource::getNodeName))
-                                .map(nodeEffectiveValue ->
-                                    new ClusterValuesRow(
-                                        null,
-                                        null,
-                                        nodeEffectiveValue.getSource(),
-                                        nodeEffectiveValue.getNodeName(),
-                                        new Expander(depth + 1, false, true)))
-                                .forEach(rows::add);
+                                    .stream()
+                                    .sorted(Comparator.comparing(NodeSource::getNodeName))
+                                    .map(nodeEffectiveValue ->
+                                            new ClusterValuesRow(
+                                                    null,
+                                                    null,
+                                                    nodeEffectiveValue.getSource(),
+                                                    nodeEffectiveValue.getNodeName(),
+                                                    new Expander(depth + 1, false, true)))
+                                    .forEach(rows::add);
                         }
                     }
                 });
         return rows;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ClusterValuesRow that = (ClusterValuesRow) o;
         return Objects.equals(effectiveValue, that.effectiveValue) &&
-            Objects.equals(nodeName, that.nodeName);
+                Objects.equals(nodeName, that.nodeName);
     }
 
     @Override
@@ -163,9 +170,9 @@ class ClusterValuesRow implements TreeRow {
     @Override
     public String toString() {
         return "ClusterValuesRow{" +
-            "effectiveValue='" + effectiveValue + '\'' +
-            ", nodeName='" + nodeName + '\'' +
-            ", expander=" + expander +
-            '}';
+                "effectiveValue='" + effectiveValue + '\'' +
+                ", nodeName='" + nodeName + '\'' +
+                ", expander=" + expander +
+                '}';
     }
 }

@@ -30,6 +30,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
         implements Refreshable, TaskManagerUiHandlers {
+
     private final TaskManagerListPresenter listPresenter;
 
     @Inject
@@ -63,6 +64,7 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
     }
 
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
+
         void setList(Widget widget);
     }
 }

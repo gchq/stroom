@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
 public class VisResult extends Result {
+
     @JsonProperty
     private final String jsonData;
     @JsonProperty
@@ -50,6 +51,7 @@ public class VisResult extends Result {
     }
 
     public static class Store {
+
         public Object key;
         public Object[] values;
         public Double[] min;

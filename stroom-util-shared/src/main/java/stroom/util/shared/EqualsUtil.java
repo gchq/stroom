@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public final class EqualsUtil {
+
     private EqualsUtil() {
     }
 

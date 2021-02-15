@@ -17,16 +17,18 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerServiceMoveRequest {
+
     @JsonProperty
     private final List<DocRef> docRefs;
     @JsonProperty
@@ -35,9 +37,11 @@ public class ExplorerServiceMoveRequest {
     private final PermissionInheritance permissionInheritance;
 
     @JsonCreator
-    public ExplorerServiceMoveRequest(@JsonProperty("docRefs") final List<DocRef> docRefs,
-                                      @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
-                                      @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+    public ExplorerServiceMoveRequest(
+            @JsonProperty("docRefs") final List<DocRef> docRefs,
+            @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+            @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+
         this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;

@@ -16,14 +16,16 @@
 
 package stroom.pipeline.filter;
 
-import org.w3c.dom.ls.LSInput;
 import stroom.util.io.StreamUtil;
+
+import org.w3c.dom.ls.LSInput;
 
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 
 public class LSInputImpl implements LSInput {
+
     private final String data;
     private final String systemId;
     private final String publicId;

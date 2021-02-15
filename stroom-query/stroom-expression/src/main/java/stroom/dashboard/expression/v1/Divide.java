@@ -24,8 +24,8 @@ package stroom.dashboard.expression.v1;
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The value of arg1 divided by arg2.",
         commonDescription = "The value of arg1 divided by arg2. If more than two arguments are supplied then " +
-                "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. Can be expressed as " +
-                "'${field1}/${field2}'.",
+                "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. " +
+                "Can be expressed as '${field1}/${field2}'.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -34,6 +34,7 @@ package stroom.dashboard.expression.v1;
                         isVarargs = true,
                         minVarargsCount = 2)))
 class Divide extends NumericFunction {
+
     static final String NAME = "/";
     static final String ALIAS = "divide";
     private static final Calc CALC = new Calc();
@@ -48,6 +49,7 @@ class Divide extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

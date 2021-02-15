@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
 
 public class RenameTabViewImpl extends ViewImpl implements RenameTabView {
+
     private final Widget widget;
 
     @UiField
@@ -59,5 +61,6 @@ public class RenameTabViewImpl extends ViewImpl implements RenameTabView {
     }
 
     public interface Binder extends UiBinder<Widget, RenameTabViewImpl> {
+
     }
 }

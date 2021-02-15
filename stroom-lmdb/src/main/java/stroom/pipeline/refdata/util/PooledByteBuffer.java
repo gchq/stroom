@@ -19,12 +19,12 @@ package stroom.pipeline.refdata.util;
 
 import stroom.util.logging.LogUtil;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
@@ -122,10 +122,15 @@ public class PooledByteBuffer implements AutoCloseable {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PooledByteBuffer that = (PooledByteBuffer) o;
         return Objects.equals(byteBuffer, that.byteBuffer);
     }

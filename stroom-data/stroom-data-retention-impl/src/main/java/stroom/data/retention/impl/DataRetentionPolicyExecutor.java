@@ -35,8 +35,6 @@ import stroom.util.time.TimeUtils;
 
 import com.google.common.collect.Ordering;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
@@ -53,6 +51,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * This class is concerned with logically deleting meta records according to a set of data
@@ -81,6 +81,7 @@ import java.util.stream.Collectors;
  * 1yr+1d ago => 1yr ago
  */
 public class DataRetentionPolicyExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
@@ -218,7 +219,8 @@ public class DataRetentionPolicyExecutor {
     }
 
     private List<DataRetentionRule> getActiveRules(final List<DataRetentionRule> rules) {
-        final List<DataRetentionRule> activeRules;// make sure we create a list of rules that are enabled and have at least one enabled term.
+        // make sure we create a list of rules that are enabled and have at least one enabled term.
+        final List<DataRetentionRule> activeRules;
         if (rules != null) {
             activeRules = rules.stream()
                     .filter(rule -> rule.isEnabled()
@@ -268,7 +270,7 @@ public class DataRetentionPolicyExecutor {
 
             return LogUtil.message(
                     "Considering streams created " +
-                    "between {}, {} rule actions:\n{}",
+                            "between {}, {} rule actions:\n{}",
                     getPeriodInfo(period, now),
                     sortedRuleActions.size(),
                     sortedRuleActions.stream()
@@ -351,7 +353,7 @@ public class DataRetentionPolicyExecutor {
                                                 final DataRetentionRule rule,
                                                 final Instant now) {
         final Instant ruleMinCreateTime = getMinCreateTime(rule, now);
-        
+
         // Work out if this rule should delete or retain data in this period
         return period.getFrom().isBefore(ruleMinCreateTime)
                 ? RetentionRuleOutcome.DELETE

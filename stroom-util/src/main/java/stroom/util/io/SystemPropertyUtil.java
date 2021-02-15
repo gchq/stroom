@@ -19,6 +19,7 @@ package stroom.util.io;
 import java.util.Set;
 
 final class SystemPropertyUtil {
+
     private static final SystemPropertyProvider SYSTEM_PROPERTY_PROVIDER = new SystemPropertyProvider();
 
 //    static String replaceProperty(final String string, final PropertyProvider provider) {
@@ -62,6 +63,7 @@ final class SystemPropertyUtil {
     }
 
     static class SystemPropertyProvider implements PropertyProvider {
+
         @Override
         public String getProperty(final String key) {
             String prop = System.getProperty(key);
@@ -76,6 +78,7 @@ final class SystemPropertyUtil {
     }
 
     interface PropertyProvider {
+
         String getProperty(String name);
     }
 }

@@ -27,6 +27,7 @@ import stroom.statistics.impl.sql.client.view.StatisticsDataSourceSettingsViewIm
 import stroom.statistics.impl.sql.client.view.StatisticsFieldEditViewImpl;
 
 public class StatisticsModule extends PluginModule {
+
     @Override
     protected void configure() {
         // Statistics

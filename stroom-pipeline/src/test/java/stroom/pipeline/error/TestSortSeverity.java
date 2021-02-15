@@ -17,15 +17,17 @@
 package stroom.pipeline.error;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.shared.Severity;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 class TestSortSeverity extends StroomUnitTest {
+
     @Test
     void test() {
         final List<Severity> list = new ArrayList<>();

@@ -20,6 +20,7 @@ package stroom.util.client;
  * Utility class to format some primitive types.
  */
 public class StroomCoreStringUtil {
+
     public static String toString(final Object obj) {
         if (obj == null) {
             return "";

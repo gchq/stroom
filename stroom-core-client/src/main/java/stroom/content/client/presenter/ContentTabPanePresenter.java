@@ -16,13 +16,6 @@
 
 package stroom.content.client.presenter;
 
-import com.google.gwt.user.client.History;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.CloseContentTabEvent.CloseContentTabHandler;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -39,15 +32,26 @@ import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.user.client.History;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
+public class ContentTabPanePresenter
+        extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
         implements OpenContentTabHandler, CloseContentTabHandler, SelectContentTabHandler, RefreshContentTabHandler {
+
     private final List<TabData> historyList = new ArrayList<>();
     private int currentHistoryId;
     private int currentIndex;
     private boolean ignoreHistory;
+
     @Inject
     public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
                                    final ContentTabPaneProxy proxy) {
@@ -182,5 +186,6 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
 
     @ProxyCodeSplit
     public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
+
     }
 }

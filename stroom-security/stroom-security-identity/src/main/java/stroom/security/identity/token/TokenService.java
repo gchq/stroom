@@ -6,6 +6,7 @@ import stroom.security.identity.config.TokenConfig;
 import java.util.Optional;
 
 public interface TokenService {
+
     TokenResultPage list();
 
     TokenResultPage search(SearchTokenRequest request);

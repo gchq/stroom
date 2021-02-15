@@ -16,6 +16,12 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
+import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,14 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
-import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStructureUiHandlers>
         implements PipelineStructureView {
+
     private final Widget widget;
     @UiField(provided = true)
     SvgButton add;
@@ -53,6 +55,7 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     ResizeSimplePanel pipelineReferences;
     @UiField
     Hyperlink viewSource;
+
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
         add = SvgButton.create(SvgPresets.ADD);
@@ -136,5 +139,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     }
 
     public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
+
     }
 }

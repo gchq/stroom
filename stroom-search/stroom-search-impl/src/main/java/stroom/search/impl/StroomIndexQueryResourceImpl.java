@@ -38,10 +38,11 @@ import stroom.util.logging.LogUtil;
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.ApiParam;
 
-import javax.inject.Inject;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -60,6 +61,7 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
         this.taskContextFactory = taskContextFactory;
     }
 
+    @Override
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(taskContextFactory.contextResult("Getting Data Source",
@@ -69,13 +71,14 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
                 }));
     }
 
+    @Override
     @Timed
     public SearchResponse search(final SearchRequest request) {
         return taskContextFactory.contextResult("Getting search results",
                 taskContext -> {
-                    // if this is the first call for this query key then it will create a searchResponseCreator (& store)
-                    // that have a lifespan beyond the scope of this request and then begin the search for the data If
-                    // it is not the first call for this query key then it will return the existing
+                    // if this is the first call for this query key then it will create a searchResponseCreator
+                    // (& store) that have a lifespan beyond the scope of this request and then begin the search for
+                    // the data If it is not the first call for this query key then it will return the existing
                     // searchResponseCreator with access to whatever data has been found so far
                     final SearchResponseCreator searchResponseCreator =
                             searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
@@ -131,6 +134,7 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
                 resultInfo);
     }
 
+    @Override
     @Timed
     public Boolean destroy(final QueryKey queryKey) {
         return taskContextFactory.contextResult("Destroy search",

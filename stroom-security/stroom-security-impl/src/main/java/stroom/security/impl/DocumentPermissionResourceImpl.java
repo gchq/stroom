@@ -2,12 +2,13 @@ package stroom.security.impl;
 
 import stroom.security.shared.DocumentPermissions;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 
 public class DocumentPermissionResourceImpl implements DocumentPermissionResource {
+
     private final DocumentPermissionServiceImpl documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
 

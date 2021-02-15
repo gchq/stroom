@@ -16,11 +16,13 @@
 
 package stroom.dashboard.client.query.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.query.QueryPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface QueryGinjector {
+
     AsyncProvider<QueryPlugin> getQueryPlugin();
 
     AsyncProvider<QueryPresenter> getQueryPresenter();

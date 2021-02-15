@@ -46,6 +46,6 @@ public interface ProcessorResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}/enabled")
     @ApiOperation("Sets the enabled/disabled state for a processor")
-    void setEnabled(@PathParam("id") Integer id, 
+    void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }

@@ -20,7 +20,6 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,10 +30,17 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockMetaService implements MetaService, Clearable {
-    private static final Set<String> STANDARD_TYPES = Set.of("Raw Events", "Raw Reference", "Events", "Reference", "Records", "Error");
+
+    private static final Set<String> STANDARD_TYPES = Set.of("Raw Events",
+            "Raw Reference",
+            "Events",
+            "Reference",
+            "Records",
+            "Error");
 
     private final Set<String> feeds = new HashSet<>();
     private final Set<String> types = new HashSet<>(STANDARD_TYPES);
@@ -169,7 +175,8 @@ public class MockMetaService implements MetaService, Clearable {
                 final Meta meta = entry.getValue();
 //                final MetaRow row = new MetaRow(meta);
                 final Map<String, Object> attributeMap = createAttributeMap(meta);
-                if (criteria.getExpression() == null || expressionMatcher.match(attributeMap, criteria.getExpression())) {
+                if (criteria.getExpression() == null || expressionMatcher.match(attributeMap,
+                        criteria.getExpression())) {
                     list.add(meta);
                 }
             } catch (final RuntimeException e) {

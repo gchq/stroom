@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class OpenIdConfig extends AbstractConfig {
+
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
 
     private CacheConfig accessCodeCache = CacheConfig.builder()

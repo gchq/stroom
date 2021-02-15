@@ -17,10 +17,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
@@ -39,9 +35,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.Set;
 
 public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.FieldEditView> {
+
     private Set<String> otherFieldNames;
 
     @Inject
@@ -81,6 +83,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
     public interface FieldEditView extends View {
+
         String getType();
 
         void setType(String type);

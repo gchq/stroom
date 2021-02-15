@@ -39,6 +39,7 @@ package stroom.dashboard.expression.v1;
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class Min extends AbstractAggregateFunction {
+
     static final String NAME = "min";
 
     public Min(final String name) {
@@ -46,6 +47,7 @@ class Min extends AbstractAggregateFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

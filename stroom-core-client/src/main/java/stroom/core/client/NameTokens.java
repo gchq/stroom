@@ -17,5 +17,6 @@
 package stroom.core.client;
 
 public class NameTokens {
+
     public static final String LOGIN = "!login";
 }

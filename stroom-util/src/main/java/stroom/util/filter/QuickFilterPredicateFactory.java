@@ -32,16 +32,16 @@ public class QuickFilterPredicateFactory {
      * Creates a match predicate based on userInput. userInput may be a single match string
      * e.g. 'event', or a set of optionally qualified match strings, e.g. 'event type:pipe'.
      * See the test for valid examples.
-     *
+     * <p>
      * Where multiple fields are used in the filter they are combined using OR.
-     *
+     * <p>
      * This class delegates the matching of each field to {@link StringPredicateFactory}.
      */
     public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
                                                              final FilterFieldMappers<T> fieldMappers) {
-       LOGGER.trace("userInput [{}], mappers {}", userInput, fieldMappers);
+        LOGGER.trace("userInput [{}], mappers {}", userInput, fieldMappers);
 
-       // user input like 'vent type:pipe' or just 'vent'
+        // user input like 'vent type:pipe' or just 'vent'
 
         final Predicate<T> predicate;
         if (userInput == null || userInput.isEmpty()) {
@@ -125,7 +125,8 @@ public class QuickFilterPredicateFactory {
         final Collection<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.getDefaultFieldMappers();
 
         if (defaultFieldMappers.isEmpty()) {
-            throw new RuntimeException("No default field mappers(s) has/have been defined, fieldMappers" + fieldMappers);
+            throw new RuntimeException(
+                    "No default field mappers(s) has/have been defined, fieldMappers" + fieldMappers);
         }
         return defaultFieldMappers;
     }
@@ -161,6 +162,7 @@ public class QuickFilterPredicateFactory {
     /**
      * Split the input on spaces with each chunk optionally enclosed with a double quotes.
      * Should ignore leading, trailing repeated spaces.
+     *
      * @return An empty list if it can't parse
      */
     private static List<String> splitInput(final String userInput) {
@@ -237,7 +239,8 @@ public class QuickFilterPredicateFactory {
 
             if (!matchToken.matchInput.isBlank()) {
                 if (!matchToken.isQualified()) {
-                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput, fieldMappers);
+                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput,
+                            fieldMappers);
                     compoundPredicate = andPredicates(compoundPredicate, unqualifiedPredicate);
                 } else {
                     // A qualified token, so get its mapper
@@ -296,6 +299,7 @@ public class QuickFilterPredicateFactory {
 
 
     public static class MatchToken {
+
         private final String qualifier;
         private final String matchInput;
 
@@ -318,13 +322,20 @@ public class QuickFilterPredicateFactory {
 
         @Override
         public String toString() {
-            return "[" + (qualifier != null ? qualifier : "") + "]:[" + matchInput + "]";
+            return "[" + (qualifier != null
+                    ? qualifier
+                    : "") + "]:[" + matchInput + "]";
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final MatchToken that = (MatchToken) o;
             return Objects.equals(qualifier, that.qualifier) &&
                     matchInput.equals(that.matchInput);

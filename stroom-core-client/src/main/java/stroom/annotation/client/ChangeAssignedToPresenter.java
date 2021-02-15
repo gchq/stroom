@@ -16,13 +16,6 @@
 
 package stroom.annotation.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
@@ -37,10 +30,20 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView> implements PopupUiHandlers, ChangeAssignedToUiHandlers {
+public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView>
+        implements PopupUiHandlers, ChangeAssignedToUiHandlers {
+
     private final RestFactory restFactory;
     private final ChooserPresenter assignedToPresenter;
     private final ClientSecurityContext clientSecurityContext;
@@ -138,6 +141,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
     }
 
     public interface ChangeAssignedToView extends View, HasUiHandlers<ChangeAssignedToUiHandlers> {
+
         void setAssignedTo(String assignedTo);
     }
 }

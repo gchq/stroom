@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class PreviewInputStream extends InputStream {
+
     private final InputStream inputStream;
     private byte[] buffer;
     private int bufOffset;

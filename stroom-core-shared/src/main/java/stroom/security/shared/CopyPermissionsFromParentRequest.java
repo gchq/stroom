@@ -1,13 +1,15 @@
 package stroom.security.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 @JsonInclude(Include.NON_NULL)
 public class CopyPermissionsFromParentRequest {
+
     @JsonProperty
     private final DocRef docRef;
 

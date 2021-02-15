@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class SearchStartEvent extends GwtEvent<SearchStartEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final boolean forceUpdate;
 
@@ -54,6 +55,7 @@ public class SearchStartEvent extends GwtEvent<SearchStartEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onStart(SearchStartEvent event);
     }
 }

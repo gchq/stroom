@@ -33,6 +33,7 @@ package stroom.dashboard.expression.v1;
                                 minVarargsCount = 2)
                 }))
 class Concat extends AbstractManyChildFunction {
+
     static final String NAME = "concat";
 
     public Concat(final String name) {
@@ -45,6 +46,7 @@ class Concat extends AbstractManyChildFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

@@ -16,12 +16,14 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class QuerySettingsPresenter extends SettingsPresenter {
+
     @Inject
     public QuerySettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                   final BasicQuerySettingsPresenter basicSettingsPresenter) {

@@ -16,8 +16,6 @@
 
 package stroom.pipeline.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -29,6 +27,9 @@ import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class AbstractIOElement extends AbstractElement implements HasTargets {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIOElement.class);
     private final List<Element> targetList = new ArrayList<>();
     private InputStream inputStream;
@@ -208,7 +210,8 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         }
     }
 
-    private static abstract class DestinationProcessor implements Processor {
+    private abstract static class DestinationProcessor implements Processor {
+
         private final List<DestinationProvider> destinationProviders;
         private Map<DestinationProvider, Destination> destinationMap;
 
@@ -263,6 +266,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
     }
 
     private static class DestinationOutputProcessor extends DestinationProcessor {
+
         private final List<OutputStream> otherOutputStreams;
         private InputStream inputStream;
 
@@ -317,6 +321,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
     }
 
     private static class DestinationWriterProcessor extends DestinationProcessor {
+
         private final List<Writer> otherWriters;
         private Reader reader;
 
@@ -334,7 +339,8 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
 
                     final List<Writer> writers = new ArrayList<>(otherWriters);
                     for (final Destination destination : getDestinations()) {
-                        writers.add(new OutputStreamWriter(destination.getByteArrayOutputStream(), StreamUtil.DEFAULT_CHARSET));
+                        writers.add(new OutputStreamWriter(destination.getByteArrayOutputStream(),
+                                StreamUtil.DEFAULT_CHARSET));
                     }
 
                     final char[] buffer = new char[8192];

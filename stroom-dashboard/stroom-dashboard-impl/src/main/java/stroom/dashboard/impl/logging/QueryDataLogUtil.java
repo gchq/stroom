@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class QueryDataLogUtil {
+
     public static void appendExpressionItem(final List<AdvancedQueryItem> items,
                                             final WordListProvider wordListProvider,
                                             final CollectionService collectionService,
@@ -108,7 +109,8 @@ public class QueryDataLogUtil {
                         break;
                     case IN_FOLDER:
                         if (collectionService != null) {
-                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
+                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(),
+                                    expressionTerm.getField());
                             if (docRefs != null && docRefs.size() > 0) {
                                 final String words = docRefs
                                         .stream()

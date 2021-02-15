@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class RequestCloseAllTabsEvent extends GwtEvent<RequestCloseAllTabsEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private RequestCloseAllTabsEvent() {
@@ -48,6 +49,7 @@ public class RequestCloseAllTabsEvent extends GwtEvent<RequestCloseAllTabsEvent.
     }
 
     public interface Handler extends EventHandler {
+
         void onCloseAllTabs(RequestCloseAllTabsEvent event);
     }
 }

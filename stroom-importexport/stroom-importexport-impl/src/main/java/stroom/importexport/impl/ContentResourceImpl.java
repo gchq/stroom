@@ -17,6 +17,8 @@
 package stroom.importexport.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -25,8 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
@@ -45,17 +45,18 @@ import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
 
 @AutoLogged
 class ContentResourceImpl implements ContentResource {
+
     private final Provider<ImportExportService> importExportServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<ResourceStore> resourceStoreProvider;

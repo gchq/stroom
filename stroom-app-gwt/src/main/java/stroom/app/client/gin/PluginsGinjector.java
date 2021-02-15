@@ -16,9 +16,11 @@
 
 package stroom.app.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.help.client.HelpPlugin;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface PluginsGinjector {
+
     AsyncProvider<HelpPlugin> getHelpPlugin();
 }

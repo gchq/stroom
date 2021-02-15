@@ -24,6 +24,7 @@ import java.nio.file.Path;
  * </p>
  */
 final class FsPrefixUtil {
+
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
 

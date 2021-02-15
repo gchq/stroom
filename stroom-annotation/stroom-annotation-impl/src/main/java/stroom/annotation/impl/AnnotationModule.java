@@ -27,6 +27,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class AnnotationModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(AnnotationCreator.class).to(AnnotationService.class);

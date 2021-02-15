@@ -24,16 +24,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**

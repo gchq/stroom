@@ -17,12 +17,6 @@
 
 package stroom.dashboard.client.table.cf;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -44,10 +38,19 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView> implements HasDirtyHandlers {
+public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
+        implements HasDirtyHandlers {
+
     private final ExpressionTreePresenter expressionPresenter;
     private final MenuListPresenter menuListPresenter;
 
@@ -228,6 +231,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     public interface EditExpressionView extends View {
+
         ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);

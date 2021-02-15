@@ -9,11 +9,11 @@ import stroom.util.sysinfo.SystemInfoResultList;
 import event.logging.Resource;
 import event.logging.ViewEventAction;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class SystemInfoResourceImpl implements SystemInfoResource {
 

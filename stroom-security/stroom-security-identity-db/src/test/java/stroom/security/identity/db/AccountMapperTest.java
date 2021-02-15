@@ -18,8 +18,6 @@ package stroom.security.identity.db;
 
 import org.junit.jupiter.api.Disabled;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @Disabled
 public final class AccountMapperTest {
 //    @Test
@@ -71,10 +69,13 @@ public final class AccountMapperTest {
 //        assertThat(updatedRecord.getComments()).isEqualTo("new comments");
 //        assertThat(updatedRecord.getLoginFailures()).isEqualTo(3);
 //        assertThat(updatedRecord.getLoginCount()).isEqualTo(5);
-//        assertThat(updatedRecord.getLastLogin()).isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-01T00:00:00"));
-//        assertThat(updatedRecord.getUpdatedOn()).isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-02T00:00:00"));
+//        assertThat(updatedRecord.getLastLogin())
+//        .isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-01T00:00:00"));
+//        assertThat(updatedRecord.getUpdatedOn())
+//        .isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-02T00:00:00"));
 //        assertThat(updatedRecord.getUpdatedByUser()).isEqualTo("New updating user");
-//        assertThat(updatedRecord.getCreatedOn()).isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-03T00:00:00"));
+//        assertThat(updatedRecord.getCreatedOn())
+//        .isEqualTo(UserMapper.convertISO8601ToTimestamp("2017-01-03T00:00:00"));
 //        assertThat(updatedRecord.getCreatedByUser()).isEqualTo("New creating user");
 //        assertThat(updatedRecord.getNeverExpires()).isEqualTo(false);
 //        assertThat(updatedRecord.getForcePasswordChange()).isEqualTo(true);
@@ -108,7 +109,8 @@ public final class AccountMapperTest {
 //        assertThat(mapped.getFirstName()).isEqualTo(orig.getFirstName());
 //        assertThat(mapped.getLastName()).isEqualTo(orig.getLastName());
 //        assertThat(mapped.getNeverExpires()).isEqualTo(orig.getNeverExpires());
-//        // NB: We don't assert that the password has is equal because this is generated. We just assert it's not null.
+//        // NB: We don't assert that the password has is equal because
+//        this is generated. We just assert it's not null.
 //        assertThat(mapped.getPasswordHash()).isNotNull();
 //        assertThat(mapped.getUpdatedByUser()).isEqualTo(orig.getUpdatedByUser());
 //        assertThat(mapped.getForcePasswordChange()).isEqualTo(orig.getForcePasswordChange());
@@ -160,7 +162,8 @@ public final class AccountMapperTest {
 //        Instant now = Instant.now();
 //        final AccountRecord mapped = new AccountRecord();
 //        UserMapper.mapToRecord(account, mapped);
-////        AccountRecord mapped = UserMapper.updateUserRecordWithUser(users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()));
+////        AccountRecord mapped = UserMapper.updateUserRecordWithUser(
+// users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()));
 //        assertThat(mapped.getEnabled()).isTrue();
 //        assertThat(mapped.getLastLogin().toInstant().getEpochSecond()).isEqualTo(now.getEpochSecond());
 //        assertThat(mapped.getLoginFailures()).isEqualTo(0);

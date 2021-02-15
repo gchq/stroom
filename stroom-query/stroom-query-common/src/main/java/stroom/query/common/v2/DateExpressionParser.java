@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DateExpressionParser {
+
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
@@ -44,7 +45,9 @@ public class DateExpressionParser {
         return parse(expression, ZoneOffset.UTC.getId(), nowEpochMilli);
     }
 
-    public static Optional<ZonedDateTime> parse(final String expression, final String timeZoneId, final long nowEpochMilli) {
+    public static Optional<ZonedDateTime> parse(final String expression,
+                                                final String timeZoneId,
+                                                final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
@@ -74,6 +77,7 @@ public class DateExpressionParser {
                         zoneId = ZoneId.of(timeZoneId);
                     }
                 } catch (final RuntimeException ex) {
+                    // Ignore error
                 }
 
                 // If no time zone was specified then try and parse as a local datetime.
@@ -90,14 +94,17 @@ public class DateExpressionParser {
             if (part != null) {
                 if (part.getObject() instanceof ZonedDateTime) {
                     if (time != null) {
-                        throw new DateTimeException("Attempt to set the date and time twice with '" + part.toString().trim() + "'. You cannot have more than one declaration of date and time.");
+                        throw new DateTimeException("Attempt to set the date and time twice with '" +
+                                part.toString().trim() +
+                                "'. You cannot have more than one declaration of date and time.");
                     }
 
                     time = (ZonedDateTime) part.getObject();
 
                 } else if (part.getObject() instanceof TimeFunction) {
                     if (time == null) {
-                        throw new DateTimeException("You must specify a time or time constant before adding or subtracting duration '" + part.toString().trim() + "'.");
+                        throw new DateTimeException("You must specify a time or time constant before adding or " +
+                                "subtracting duration '" + part.toString().trim() + "'.");
                     }
                     final TimeFunction duration = (TimeFunction) part.getObject();
                     time = duration.apply(time);
@@ -114,7 +121,7 @@ public class DateExpressionParser {
         for (final DatePoint datePoint : DatePoint.values()) {
             final String function = datePoint.getFunction();
 
-            int start = expression.indexOf(function, 0);
+            int start = expression.indexOf(function);
             while (start != -1) {
                 final int end = start + function.length();
 
@@ -149,6 +156,8 @@ public class DateExpressionParser {
                     case YEAR:
                         time = ZonedDateTime.of(now.getYear(), 1, 1, 0, 0, 0, 0, now.getZone());
                         break;
+                    default:
+                        throw new RuntimeException("Unexpected datePoint " + datePoint);
                 }
 
                 parts[start] = new Part(function, time);
@@ -187,7 +196,10 @@ public class DateExpressionParser {
             } while (found);
 
             if (sign == 'x') {
-                throw new DateTimeException("You must specify a plus or minus operation before duration '" + new String(chars, start, end - start).trim() + "'.");
+                throw new DateTimeException("You must specify a plus or minus operation before duration '" + new String(
+                        chars,
+                        start,
+                        end - start).trim() + "'.");
             }
 
             final String section = new String(chars, index, end - index);
@@ -277,7 +289,14 @@ public class DateExpressionParser {
     }
 
     private enum DatePoint {
-        NOW("now()"), SECOND("second()"), MINUTE("minute()"), HOUR("hour()"), DAY("day()"), WEEK("week()"), MONTH("month()"), YEAR("year()");
+        NOW("now()"),
+        SECOND("second()"),
+        MINUTE("minute()"),
+        HOUR("hour()"),
+        DAY("day()"),
+        WEEK("week()"),
+        MONTH("month()"),
+        YEAR("year()");
 
         private final String function;
 
@@ -291,6 +310,7 @@ public class DateExpressionParser {
     }
 
     private static class Part {
+
         private final String string;
         private final Object object;
 
@@ -310,5 +330,6 @@ public class DateExpressionParser {
     }
 
     private interface TimeFunction extends Function<ZonedDateTime, ZonedDateTime> {
+
     }
 }

@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Pager extends AbstractPager {
+
     private static Binder binder;
     @UiField(provided = true)
     SvgButton first;
@@ -221,9 +222,8 @@ public class Pager extends AbstractPager {
         try {
             return Integer.valueOf(textBox.getText().trim());
         } catch (final NumberFormatException e) {
+            return 0;
         }
-
-        return 0;
     }
 
     @Override
@@ -363,11 +363,12 @@ public class Pager extends AbstractPager {
     }
 
     public void setToVisibleState(final boolean isVisible) {
-            lblTo.setVisible(isVisible);
+        lblTo.setVisible(isVisible);
 //            txtTo.setVisible(isVisible);
-            lblToSeparator.setVisible(isVisible);
+        lblToSeparator.setVisible(isVisible);
     }
 
     public interface Binder extends UiBinder<Widget, Pager> {
+
     }
 }

@@ -23,6 +23,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.TooltipView> {
+
     @Inject
     public TooltipPresenter(final EventBus eventBus, final TooltipView view) {
         super(eventBus, view);
@@ -37,6 +38,7 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
     }
 
     public interface TooltipView extends View {
+
         void setText(String text);
 
         void setHTML(SafeHtml html);

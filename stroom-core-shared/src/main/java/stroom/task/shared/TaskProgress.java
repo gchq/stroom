@@ -30,6 +30,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class TaskProgress implements TreeRow {
+
     @JsonProperty
     private TaskId id;
     @JsonProperty
@@ -173,10 +174,15 @@ public class TaskProgress implements TreeRow {
     }
 
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TaskProgress that = (TaskProgress) o;
         return Objects.equals(id, that.id);
     }
@@ -196,7 +202,7 @@ public class TaskProgress implements TreeRow {
      * and their default values this avoids having to have a prop called isFilteredOut and is
      * explicitly clear.
      */
-    public static enum FilterMatchState {
+    public enum FilterMatchState {
         MATCHED,
         NOT_MATCHED;
 

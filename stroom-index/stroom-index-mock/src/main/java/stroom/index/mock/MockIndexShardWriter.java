@@ -16,20 +16,22 @@
 
 package stroom.index.mock;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexableField;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStructure;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexableField;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockIndexShardWriter implements IndexShardWriter {
+
     //    private final IndexShardManager indexShardManager;
     private final List<Document> documents = new ArrayList<>();
 
@@ -39,7 +41,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     private final int maxDocumentCount;
     private final AtomicInteger documentCount = new AtomicInteger();
-    private volatile long lastUsedTime;
+    private final long lastUsedTime;
 
     MockIndexShardWriter(final IndexShardKey indexShardKey, final IndexShard indexShard, final int maxDocumentCount) {
 //        this.indexShardManager = indexShardManager;

@@ -16,6 +16,12 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.vis.MyScriptInjector.FromString;
+import stroom.dashboard.client.vis.MyScriptInjector.FromUrl;
+import stroom.script.shared.ScriptDoc;
+import stroom.visualisation.client.presenter.VisFunction;
+import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
+
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -27,16 +33,12 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.dashboard.client.vis.MyScriptInjector.FromString;
-import stroom.dashboard.client.vis.MyScriptInjector.FromUrl;
-import stroom.script.shared.ScriptDoc;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
 import java.util.List;
 import java.util.Set;
 
 public class VisPanel extends SimplePanel implements VisPane {
+
     private final Set<String> loadedScripts;
     private JavaScriptObject vis;
     private boolean autoResize = true;
@@ -332,6 +334,7 @@ public class VisPanel extends SimplePanel implements VisPane {
     }-*/;
 
     private class Wrapper extends Widget {
+
         public Wrapper(final Element elem) {
             setElement(elem);
         }

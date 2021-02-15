@@ -16,6 +16,8 @@
 
 package stroom.alert.client.view;
 
+import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
@@ -37,9 +39,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 
 public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
+
     private static final int MAX_MESSAGE_LENGTH = 1000;
 
     private final HorizontalPanel widget = new HorizontalPanel();
@@ -159,6 +161,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @ImportedWithPrefix("stroom-alert")
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "alert.css";
 
         String table();
@@ -171,6 +174,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource info();
 
         ImageResource warn();

@@ -40,11 +40,11 @@ public abstract class AbstractKryoSerde<T> implements Serde<T>, KryoSerializer<T
 
     @Override
     public T deserialize(final ByteBuffer byteBuffer) {
-       try (final Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
-           T object = read(input);
-           byteBuffer.flip();
-           return object;
-       }
+        try (final Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
+            T object = read(input);
+            byteBuffer.flip();
+            return object;
+        }
     }
 
     @Override

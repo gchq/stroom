@@ -15,6 +15,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class LmdbConfig extends AbstractConfig {
+
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
@@ -44,10 +45,10 @@ public class LmdbConfig extends AbstractConfig {
     @ValidFilePath
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path to a provided LMDB system library file. If unset the LMDB binary " +
-            "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
-            "installed or want to make use of a package manager provided instance. If you set this property care needs " +
-            " to be taken over version compatibility between the version of LMDBJava (that Stroom uses to interact with " +
-            "LMDB) and the version of the LMDB binary.")
+            "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have " +
+            "LMDB installed or want to make use of a package manager provided instance. If you set this property " +
+            "care needs  to be taken over version compatibility between the version of LMDBJava (that Stroom " +
+            "uses to interact with LMDB) and the version of the LMDB binary.")
     public String getLmdbSystemLibraryPath() {
         return lmdbSystemLibraryPath;
     }

@@ -43,8 +43,9 @@ package stroom.dashboard.expression.v1;
                                         name = "decimalPlaces",
                                         argType = ValInteger.class,
                                         description = "The maximum number of decimal places to round to.")}
-                                )})
+                )})
 class Ceiling extends AbstractRoundingFunction {
+
     static final String NAME = "ceiling";
 
     public Ceiling(final String name) {
@@ -62,6 +63,7 @@ class Ceiling extends AbstractRoundingFunction {
     }
 
     private static class NumericCeiling implements RoundCalculator {
+
         private static final long serialVersionUID = -2414316545075369054L;
 
         @Override
@@ -76,6 +78,7 @@ class Ceiling extends AbstractRoundingFunction {
     }
 
     private static class DecimalPlaceCeiling implements RoundCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         private final double multiplier;

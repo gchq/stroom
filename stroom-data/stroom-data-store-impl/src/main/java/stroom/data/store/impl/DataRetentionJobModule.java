@@ -1,7 +1,7 @@
 package stroom.data.store.impl;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
 
@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class DataRetentionJobModule extends AbstractModule {
+
     @Override
     protected void configure() {
 
@@ -21,6 +22,7 @@ public class DataRetentionJobModule extends AbstractModule {
     }
 
     private static class DataRetention extends RunnableWrapper {
+
         @Inject
         DataRetention(final FeedDataRetentionExecutor feedDataRetentionExecutor) {
             super(feedDataRetentionExecutor::exec);

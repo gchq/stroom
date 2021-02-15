@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OpenItems<T> {
+
     private final Set<T> openItems = new HashSet<>();
     private Set<T> temporaryOpenItems = new HashSet<>();
 

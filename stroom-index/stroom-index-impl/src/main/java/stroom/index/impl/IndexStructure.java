@@ -23,11 +23,14 @@ import stroom.index.shared.IndexFieldsMap;
 import java.util.List;
 
 public class IndexStructure {
+
     private final IndexDoc index;
     private final List<IndexField> indexFields;
     private final IndexFieldsMap indexFieldsMap;
 
-    public IndexStructure(final IndexDoc index, final List<IndexField> indexFields, final IndexFieldsMap indexFieldsMap) {
+    public IndexStructure(final IndexDoc index,
+                          final List<IndexField> indexFields,
+                          final IndexFieldsMap indexFieldsMap) {
         this.index = index;
         this.indexFields = indexFields;
         this.indexFieldsMap = indexFieldsMap;

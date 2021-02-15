@@ -48,14 +48,15 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
+import javax.inject.Inject;
 
 @ConfigurableElement(type = "StreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class StreamAppender extends AbstractAppender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -209,7 +210,8 @@ public class StreamAppender extends AbstractAppender {
                 streamTarget.getAttributes().putAll(metaData.getAttributes());
 
                 // Get current process statistics
-                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount,
+                        errorReceiverProxy);
                 // Diff the current statistics with the last captured statistics.
                 final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
                 // Set the last statistics.
@@ -252,7 +254,8 @@ public class StreamAppender extends AbstractAppender {
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     @PipelineProperty(
-            description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
+            description = "The feed that output stream should be written to. If not specified the feed the input " +
+                    "stream belongs to will be used.",
             displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
         this.feed = feedRef.getName();
@@ -266,7 +269,8 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Should the output stream be marked with indexed segments to allow fast access to individual records?",
+            description = "Should the output stream be marked with indexed segments to allow fast access to " +
+                    "individual records?",
             defaultValue = "true",
             displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
@@ -274,7 +278,8 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a " +
+            "new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);

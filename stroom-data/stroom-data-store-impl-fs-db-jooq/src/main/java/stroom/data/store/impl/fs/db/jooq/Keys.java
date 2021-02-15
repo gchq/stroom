@@ -4,13 +4,6 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
-import javax.annotation.processing.Generated;
-
-import org.jooq.ForeignKey;
-import org.jooq.Identity;
-import org.jooq.UniqueKey;
-import org.jooq.impl.Internal;
-
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
@@ -21,6 +14,13 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsTypePathRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.Identity;
+import org.jooq.UniqueKey;
+import org.jooq.impl.Internal;
+
+import javax.annotation.processing.Generated;
 
 
 /**

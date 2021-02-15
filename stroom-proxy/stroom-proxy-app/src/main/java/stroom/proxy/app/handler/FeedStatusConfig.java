@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FeedStatusConfig {
+
     private String feedStatusUrl;
     private String apiKey;
 

@@ -16,13 +16,15 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
 
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -30,7 +32,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
@@ -38,6 +39,7 @@ import java.util.List;
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig {
+
     @XmlElement(name = "parameters")
     @JsonProperty("parameters")
     private String parameters;
@@ -105,7 +107,9 @@ public class DashboardConfig {
     }
 
     public enum TabVisibility implements HasDisplayValue {
-        SHOW_ALL("Show All"), HIDE_SINGLE("Hide Single Tabs"), HIDE_ALL("Hide All");
+        SHOW_ALL("Show All"),
+        HIDE_SINGLE("Hide Single Tabs"),
+        HIDE_ALL("Hide All");
 
         private final String displayValue;
 

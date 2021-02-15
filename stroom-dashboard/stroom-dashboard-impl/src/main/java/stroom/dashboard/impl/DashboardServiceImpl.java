@@ -69,9 +69,6 @@ import stroom.util.shared.ResourceKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -90,9 +87,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
@@ -114,18 +115,18 @@ class DashboardServiceImpl implements DashboardService {
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
-                          final StoredQueryService queryService,
-                          final DocumentResourceHelper documentResourceHelper,
-                          final SearchRequestMapper searchRequestMapper,
-                          final ResourceStore resourceStore,
-                          final SearchEventLog searchEventLog,
-                          final ActiveQueriesManager activeQueriesManager,
-                          final DataSourceProviderRegistry searchDataSourceProviderRegistry,
-                          final SecurityContext securityContext,
-                          final HttpServletRequestHolder httpServletRequestHolder,
-                          final ExecutorProvider executorProvider,
-                          final TaskContextFactory taskContextFactory,
-                          final Provider<FunctionService> functionServiceProvider) {
+                         final StoredQueryService queryService,
+                         final DocumentResourceHelper documentResourceHelper,
+                         final SearchRequestMapper searchRequestMapper,
+                         final ResourceStore resourceStore,
+                         final SearchEventLog searchEventLog,
+                         final ActiveQueriesManager activeQueriesManager,
+                         final DataSourceProviderRegistry searchDataSourceProviderRegistry,
+                         final SecurityContext securityContext,
+                         final HttpServletRequestHolder httpServletRequestHolder,
+                         final ExecutorProvider executorProvider,
+                         final TaskContextFactory taskContextFactory,
+                         final Provider<FunctionService> functionServiceProvider) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -186,7 +187,8 @@ class DashboardServiceImpl implements DashboardService {
 
                                 ComponentResultRequest newRequest = null;
                                 if (componentResultRequest instanceof TableResultRequest) {
-                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                                    final TableResultRequest tableResultRequest =
+                                            (TableResultRequest) componentResultRequest;
                                     // Remove special fields.
                                     tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
                                     newRequest = tableResultRequest
@@ -244,7 +246,8 @@ class DashboardServiceImpl implements DashboardService {
             final Search search = searchRequest.getSearch();
 
             try {
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
+                final ActiveQueries activeQueries = activeQueriesManager.get(
+                        securityContext.getUserIdentity(), request.getApplicationInstanceId());
 
                 // Make sure we have active queries for all current UI queries.
                 // Note: This also ensures that the active query cache is kept alive
@@ -264,7 +267,8 @@ class DashboardServiceImpl implements DashboardService {
                 final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                         .getDataSourceProvider(dataSourceRef)
                         .orElseThrow(() ->
-                                new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
+                                new RuntimeException("No search provider found for '" +
+                                        dataSourceRef.getType() + "' data source"));
 
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
                 SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
@@ -318,9 +322,14 @@ class DashboardServiceImpl implements DashboardService {
 
                 download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent());
 
-                searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                searchEventLog.downloadResults(search.getDataSourceRef(),
+                        search.getExpression(),
+                        search.getQueryInfo());
             } catch (final RuntimeException e) {
-                searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                searchEventLog.downloadResults(search.getDataSourceRef(),
+                        search.getExpression(),
+                        search.getQueryInfo(),
+                        e);
                 throw EntityServiceExceptionUtil.create(e);
             }
 
@@ -358,12 +367,14 @@ class DashboardServiceImpl implements DashboardService {
     @Override
     public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
         return securityContext.secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+            // Elevate the users permissions for the duration of this task so they can read the index if they have
+            // 'use' permission.
             return securityContext.useAsReadResult(() -> {
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(
                             "Only the following search queries should be active for session '");
-                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(), request.getApplicationInstanceId()));
+                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(),
+                            request.getApplicationInstanceId()));
                     sb.append("'\n");
                     for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
                         sb.append("\t");
@@ -372,7 +383,8 @@ class DashboardServiceImpl implements DashboardService {
                     LOGGER.debug(sb.toString());
                 }
 
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
+                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(),
+                        request.getApplicationInstanceId());
                 final Set<DashboardSearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 //            // Fix query keys so they have session and user info.
@@ -397,7 +409,9 @@ class DashboardServiceImpl implements DashboardService {
                             httpServletRequestHolder.set(httpServletRequest);
                             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
                             if (searchRequest.getSearch() != null) {
-                                final DashboardSearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
+                                final DashboardSearchResponse searchResponse = processRequest(activeQueries,
+                                        queryKey,
+                                        searchRequest);
                                 if (searchResponse != null) {
                                     searchResults.add(searchResponse);
                                 }
@@ -424,8 +438,8 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     private DashboardSearchResponse processRequest(final ActiveQueries activeQueries,
-                                          final DashboardQueryKey queryKey,
-                                          final DashboardSearchRequest searchRequest) {
+                                                   final DashboardQueryKey queryKey,
+                                                   final DashboardSearchRequest searchRequest) {
         DashboardSearchResponse result;
 
         boolean newSearch = false;
@@ -537,6 +551,4 @@ class DashboardServiceImpl implements DashboardService {
         return functionServiceProvider.get()
                 .getSignatures();
     }
-
-
 }

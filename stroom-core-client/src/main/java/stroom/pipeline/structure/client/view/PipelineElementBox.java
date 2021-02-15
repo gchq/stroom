@@ -16,6 +16,9 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.svg.client.SvgIcon;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
@@ -23,10 +26,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import stroom.pipeline.shared.data.PipelineElement;
-import stroom.svg.client.SvgIcon;
 
 public class PipelineElementBox extends Box<PipelineElement> {
+
     private static Resources resources;
     private final PipelineElement pipelineElement;
 
@@ -79,6 +81,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT = "PipelineElementBox.css";
 
         String background();
@@ -93,6 +96,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT)
         Style style();
     }

@@ -10,6 +10,7 @@ import stroom.security.impl.UserDao;
 import javax.sql.DataSource;
 
 public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationConfig, SecurityDbConnProvider> {
+
     private static final String MODULE = "stroom-security";
     private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db/migration";
     private static final String FLYWAY_TABLE = "security_schema_history";
@@ -48,6 +49,7 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationConfig
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements SecurityDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

@@ -55,6 +55,7 @@ import java.util.regex.Pattern;
  * Convert our query objects to a LUCENE query.
  */
 public class SearchExpressionQueryBuilder {
+
     private static final String DELIMITER = ",";
     private static final Pattern NON_WORD_OR_WILDCARD = Pattern.compile("[^a-zA-Z0-9+*?]");
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
@@ -66,8 +67,11 @@ public class SearchExpressionQueryBuilder {
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider, final IndexFieldsMap indexFieldsMap,
-                                        final int maxBooleanClauseCount, final String timeZoneId, final long nowEpochMilli) {
+    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
+                                        final IndexFieldsMap indexFieldsMap,
+                                        final int maxBooleanClauseCount,
+                                        final String timeZoneId,
+                                        final long nowEpochMilli) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
@@ -321,7 +325,10 @@ public class SearchExpressionQueryBuilder {
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newFloatRange(fieldName, getFloat(fieldName, value), Float.MAX_VALUE, false,
+                    return NumericRangeQuery.newFloatRange(fieldName,
+                            getFloat(fieldName, value),
+                            Float.MAX_VALUE,
+                            false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
                     return NumericRangeQuery.newFloatRange(fieldName, getFloat(fieldName, value), Float.MAX_VALUE, true,
@@ -357,16 +364,28 @@ public class SearchExpressionQueryBuilder {
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newDoubleRange(fieldName, getDouble(fieldName, value), Double.MAX_VALUE, false,
+                    return NumericRangeQuery.newDoubleRange(fieldName,
+                            getDouble(fieldName, value),
+                            Double.MAX_VALUE,
+                            false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newDoubleRange(fieldName, getDouble(fieldName, value), Double.MAX_VALUE, true,
+                    return NumericRangeQuery.newDoubleRange(fieldName,
+                            getDouble(fieldName, value),
+                            Double.MAX_VALUE,
+                            true,
                             true);
                 case LESS_THAN:
-                    return NumericRangeQuery.newDoubleRange(fieldName, Double.MIN_VALUE, getDouble(fieldName, value), true,
+                    return NumericRangeQuery.newDoubleRange(fieldName,
+                            Double.MIN_VALUE,
+                            getDouble(fieldName, value),
+                            true,
                             false);
                 case LESS_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newDoubleRange(fieldName, Double.MIN_VALUE, getDouble(fieldName, value), true,
+                    return NumericRangeQuery.newDoubleRange(fieldName,
+                            Double.MIN_VALUE,
+                            getDouble(fieldName, value),
+                            true,
                             true);
                 case BETWEEN:
                     final double[] between = getDoubles(fieldName, value);
@@ -393,7 +412,11 @@ public class SearchExpressionQueryBuilder {
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, false,
+                    return NumericRangeQuery.newLongRange(fieldName,
+                            8,
+                            getDate(fieldName, value),
+                            Long.MAX_VALUE,
+                            false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
                     return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
@@ -838,6 +861,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     public static class SearchExpressionQuery {
+
         private final Query query;
         private final Set<String> terms;
 

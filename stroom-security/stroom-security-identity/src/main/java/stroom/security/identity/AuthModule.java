@@ -16,13 +16,15 @@
 
 package stroom.security.identity;
 
-import com.google.inject.AbstractModule;
 import stroom.security.identity.account.AccountModule;
 import stroom.security.identity.authenticate.AuthenticateModule;
 import stroom.security.identity.openid.OpenIdModule;
 import stroom.security.identity.token.TokenModule;
 
+import com.google.inject.AbstractModule;
+
 public final class AuthModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new AccountModule());

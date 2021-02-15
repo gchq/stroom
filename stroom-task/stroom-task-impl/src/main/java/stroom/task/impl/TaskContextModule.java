@@ -16,20 +16,24 @@
 
 package stroom.task.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.task.api.TaskContextFactory;
 
+import com.google.inject.AbstractModule;
+
 public class TaskContextModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

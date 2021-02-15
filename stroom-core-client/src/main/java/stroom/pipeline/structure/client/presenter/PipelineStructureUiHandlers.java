@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface PipelineStructureUiHandlers extends UiHandlers {
+
     void onAdd(ClickEvent event);
 
     void onRestore(ClickEvent event);

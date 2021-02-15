@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ExpressionMatcher {
+
     private static final String DELIMITER = ",";
 
     private final Map<String, AbstractField> fieldMap;
@@ -411,11 +412,7 @@ public class ExpressionMatcher {
 
         return wordMap.computeIfAbsent(docRef, k -> {
             final String[] words = wordListProvider.getWords(docRef);
-            if (words != null) {
-                return words;
-            }
-
-            return null;
+            return words;
         });
     }
 
@@ -426,7 +423,9 @@ public class ExpressionMatcher {
             }
 
             //empty optional will be caught below
-            return DateExpressionParser.parse(value.toString(), timeZoneId, nowEpochMilli).get().toInstant().toEpochMilli();
+            return DateExpressionParser.parse(value.toString(),
+                    timeZoneId,
+                    nowEpochMilli).get().toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new MatchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
@@ -466,6 +465,7 @@ public class ExpressionMatcher {
     }
 
     private static class MatchException extends RuntimeException {
+
         MatchException(final String message) {
             super(message);
         }

@@ -16,14 +16,16 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class NamePresenter extends MyPresenterWidget<NamePresenter.NameView> {
+
     @Inject
     public NamePresenter(final EventBus eventBus, final NameView view) {
         super(eventBus, view);
@@ -42,6 +44,7 @@ public class NamePresenter extends MyPresenterWidget<NamePresenter.NameView> {
     }
 
     public interface NameView extends View, HasUiHandlers<PopupUiHandlers> {
+
         String getName();
 
         void setName(String name);

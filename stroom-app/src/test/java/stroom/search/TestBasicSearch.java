@@ -17,15 +17,6 @@
 
 package stroom.search;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.MultiReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TermQuery;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.FieldFactory;
 import stroom.index.impl.IndexShardKeyUtil;
@@ -46,13 +37,24 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicSearch extends AbstractCoreIntegrationTest {
+
     @Inject
     private Indexer indexer;
     @Inject
@@ -67,7 +69,12 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Test
     void testSimple() throws IOException {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        final IndexField idField = IndexField.createField("IdTreeNode", AnalyzerType.ALPHA_NUMERIC, false, true, true, false);
+        final IndexField idField = IndexField.createField("IdTreeNode",
+                AnalyzerType.ALPHA_NUMERIC,
+                false,
+                true,
+                true,
+                false);
         final IndexField testField = IndexField.createField("test", AnalyzerType.ALPHA_NUMERIC, false, true, true,
                 false);
         final IndexField nonStoreField = IndexField.createField("nonstore", AnalyzerType.ALPHA_NUMERIC, false, false,

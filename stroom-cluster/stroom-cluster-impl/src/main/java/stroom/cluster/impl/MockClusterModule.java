@@ -21,6 +21,7 @@ import stroom.cluster.api.ClusterNodeManager;
 import com.google.inject.AbstractModule;
 
 public class MockClusterModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ClusterNodeManager.class).to(MockClusterNodeManager.class);

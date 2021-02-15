@@ -1,10 +1,10 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -24,14 +24,15 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.LongAccumulator;
 import java.util.function.Predicate;
+import javax.inject.Inject;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingInfoDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessingInfoDb.class);
 
@@ -166,6 +167,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     }
 
     public interface Factory {
+
         ProcessingInfoDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 

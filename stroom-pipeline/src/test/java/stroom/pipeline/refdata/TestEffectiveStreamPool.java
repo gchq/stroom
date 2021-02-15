@@ -17,19 +17,20 @@
 package stroom.pipeline.refdata;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
-import stroom.meta.mock.MockMetaService;
 import stroom.meta.api.EffectiveMetaDataCriteria;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.mock.MockMetaService;
+import stroom.meta.shared.Meta;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.time.StroomDuration;
+
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEffectiveStreamPool extends StroomUnitTest {
+
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1000000000;
 
@@ -204,6 +206,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
     }
 
     private static class InnerStreamMetaService extends MockMetaService {
+
         private final List<Meta> streams = new ArrayList<>();
         private long callCount = 0;
 

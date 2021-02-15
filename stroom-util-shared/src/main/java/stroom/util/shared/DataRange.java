@@ -110,7 +110,7 @@ public class DataRange {
 
     /**
      * @param byteOffsetFrom Zero based
-     * @param length The number of chars in the range
+     * @param length         The number of chars in the range
      */
     public static DataRange fromByteOffset(final long byteOffsetFrom, final long length) {
         return new DataRange(null,
@@ -244,10 +244,15 @@ public class DataRange {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRange dataRange = (DataRange) o;
         return Objects.equals(locationFrom, dataRange.locationFrom) &&
                 Objects.equals(charOffsetFrom, dataRange.charOffsetFrom) &&
@@ -260,7 +265,13 @@ public class DataRange {
 
     @Override
     public int hashCode() {
-        return Objects.hash(locationFrom, charOffsetFrom, byteOffsetFrom, locationTo, charOffsetTo, byteOffsetTo, length);
+        return Objects.hash(locationFrom,
+                charOffsetFrom,
+                byteOffsetFrom,
+                locationTo,
+                charOffsetTo,
+                byteOffsetTo,
+                length);
     }
 
     @Override
@@ -285,6 +296,7 @@ public class DataRange {
     }
 
     public static final class Builder {
+
         private Location locationFrom;
         private Long charOffsetFrom;
         private Long byteOffsetFrom;

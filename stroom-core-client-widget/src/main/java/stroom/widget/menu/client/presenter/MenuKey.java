@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 public class MenuKey {
+
     private final String menuName;
 
     public MenuKey(final String menuName) {

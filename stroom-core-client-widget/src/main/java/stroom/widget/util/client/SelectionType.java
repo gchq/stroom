@@ -17,6 +17,7 @@
 package stroom.widget.util.client;
 
 public class SelectionType {
+
     private final boolean doubleSelect;
     private final boolean rightClick;
     private final boolean allowMultiSelect;
@@ -31,7 +32,11 @@ public class SelectionType {
         this.shiftPressed = false;
     }
 
-    public SelectionType(final boolean doubleSelect, final boolean rightClick, final boolean allowMultiSelect, final boolean controlPressed, final boolean shiftPressed) {
+    public SelectionType(final boolean doubleSelect,
+                         final boolean rightClick,
+                         final boolean allowMultiSelect,
+                         final boolean controlPressed,
+                         final boolean shiftPressed) {
         this.doubleSelect = doubleSelect;
         this.rightClick = rightClick;
         this.allowMultiSelect = allowMultiSelect;

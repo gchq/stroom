@@ -17,7 +17,6 @@
 package stroom.data.store.impl.fs;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -25,16 +24,19 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
+
     @Inject
     private FsDataStoreMaintenanceService streamMaintenanceService;
     @Inject

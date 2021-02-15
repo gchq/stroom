@@ -28,6 +28,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataRetentionViewImpl extends ViewImpl implements DataRetentionView {
+
     private final Widget widget;
 
     @UiField
@@ -56,5 +57,6 @@ public class DataRetentionViewImpl extends ViewImpl implements DataRetentionView
     }
 
     public interface Binder extends UiBinder<Widget, DataRetentionViewImpl> {
+
     }
 }

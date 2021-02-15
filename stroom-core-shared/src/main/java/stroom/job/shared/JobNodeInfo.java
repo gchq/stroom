@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class JobNodeInfo {
+
     @JsonProperty
     private Integer currentTaskCount;
     @JsonProperty
@@ -71,20 +72,25 @@ public class JobNodeInfo {
     @Override
     public String toString() {
         return "JobNodeInfo{" +
-            "currentTaskCount=" + currentTaskCount +
-            ", scheduleReferenceTime=" + scheduleReferenceTime +
-            ", lastExecutedTime=" + lastExecutedTime +
-            '}';
+                "currentTaskCount=" + currentTaskCount +
+                ", scheduleReferenceTime=" + scheduleReferenceTime +
+                ", lastExecutedTime=" + lastExecutedTime +
+                '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final JobNodeInfo that = (JobNodeInfo) o;
         return Objects.equals(currentTaskCount, that.currentTaskCount) &&
-            Objects.equals(scheduleReferenceTime, that.scheduleReferenceTime) &&
-            Objects.equals(lastExecutedTime, that.lastExecutedTime);
+                Objects.equals(scheduleReferenceTime, that.scheduleReferenceTime) &&
+                Objects.equals(lastExecutedTime, that.lastExecutedTime);
     }
 
     @Override

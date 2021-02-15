@@ -24,14 +24,15 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 
 @Singleton
 class ProcessorFeedCache implements Clearable {
+
     private static final String CACHE_NAME = "Processor Feed Cache";
 
     private final ICache<String, Integer> cache;

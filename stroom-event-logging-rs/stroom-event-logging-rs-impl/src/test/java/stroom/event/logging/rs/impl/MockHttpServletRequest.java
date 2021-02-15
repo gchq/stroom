@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Vector;
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.ReadListener;
@@ -30,22 +43,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Vector;
 
 public class MockHttpServletRequest implements HttpServletRequest {
+
     private Map<String, String> headers = new HashMap<>();
-    private Map<String, Object> attributes = new HashMap<>();
+    private final Map<String, Object> attributes = new HashMap<>();
     private byte[] inputStreamData;
     private InputStream inputStream;
     private String queryString;
@@ -315,7 +317,8 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse)
+            throws IllegalStateException {
         return null;
     }
 
@@ -437,6 +440,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     public static class ServletInputStreamImpl extends ServletInputStream {
+
         private final InputStream inputStream;
 
         public ServletInputStreamImpl(final InputStream inputStream) {

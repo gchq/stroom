@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
+
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     private final Provider<VisualisationPresenter> editorProvider;
@@ -59,7 +60,9 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<VisualisationDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<VisualisationDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<VisualisationDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -69,7 +72,10 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final VisualisationDoc document, final Consumer<VisualisationDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final VisualisationDoc document,
+                     final Consumer<VisualisationDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<VisualisationDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

@@ -16,16 +16,19 @@
 
 package stroom.explorer.client.event;
 
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.Layer;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class OpenExplorerTabEvent extends GwtEvent<OpenExplorerTabEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final TabData tabData;
     private final Layer layer;
+
     private OpenExplorerTabEvent(final TabData tabData, final Layer layer) {
         this.tabData = tabData;
         this.layer = layer;
@@ -61,6 +64,7 @@ public class OpenExplorerTabEvent extends GwtEvent<OpenExplorerTabEvent.Handler>
     }
 
     public interface Handler extends EventHandler {
+
         void onOpen(OpenExplorerTabEvent event);
     }
 }

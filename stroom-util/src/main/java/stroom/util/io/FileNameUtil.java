@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 public class FileNameUtil {
+
     public static String getBaseName(final String file) {
         final int i = file.lastIndexOf('.');
         if (i > 0) {

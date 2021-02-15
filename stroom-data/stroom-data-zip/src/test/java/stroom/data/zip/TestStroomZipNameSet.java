@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestStroomZipNameSet {
+
     @Test
     void testScan1() {
         doTest(Arrays.asList("request.dat", "request.hdr"), true, Arrays.asList("request"));
@@ -62,6 +63,7 @@ class TestStroomZipNameSet {
             doTest(Arrays.asList("1", "11", "111", "111.hdr", "11.hdr", "1.hdr"), true, Arrays.asList("NA"));
             fail("Expecting exception");
         } catch (final StroomZipNameException nex) {
+            // Ignore errors
         }
     }
 
@@ -78,6 +80,7 @@ class TestStroomZipNameSet {
                     "111.log"), true, Arrays.asList("NA"));
             fail("Expecting exception");
         } catch (final StroomZipNameException nex) {
+            // Ignore errors
         }
     }
 
@@ -171,14 +174,26 @@ class TestStroomZipNameSet {
         final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(true);
         stroomZipNameSet.add(Arrays.asList("001.hdr", "001.dat", "002_1.hdr", "002_1.dat", "002_2.hdr", "002_2.dat"));
 
-        assertThat(stroomZipNameSet.getBaseNameGroupedList("_")).isEqualTo(Arrays.asList(Arrays.asList("001"), Arrays.asList("002_1", "002_2")));
+        assertThat(stroomZipNameSet.getBaseNameGroupedList("_")).isEqualTo(Arrays.asList(Arrays.asList("001"),
+                Arrays.asList("002_1", "002_2")));
     }
 
     @Test
     void testGetBaseNameSetVsGetBaseNameList() {
         final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
-        stroomZipNameSet.add(Arrays.asList("005.mf", "001.hdr", "001.dat", "002_1.hdr", "002_1.dat", "003.dat", "003.mf",
-                "003.meta", "002_2.hdr", "002_2.dat", "004.dat", "004.meta", "005.dat"));
+        stroomZipNameSet.add(Arrays.asList("005.mf",
+                "001.hdr",
+                "001.dat",
+                "002_1.hdr",
+                "002_1.dat",
+                "003.dat",
+                "003.mf",
+                "003.meta",
+                "002_2.hdr",
+                "002_2.dat",
+                "004.dat",
+                "004.meta",
+                "005.dat"));
 
         // the oder they were added in
         final List<String> expectedList = Arrays.asList("005", "001", "002_1", "003", "002_2", "004");

@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExpressionParser {
+
     // We deliberately exclude brackets as they are treated as an unnamed function.
     private static final Type[] BODMAS = new Type[]{
             Type.ORDER,
@@ -123,7 +124,9 @@ public class ExpressionParser {
         for (final Param object : objects) {
             if (object instanceof Token) {
                 final Token token = (Token) object;
-                if (Type.COMMA.equals(token.getType()) || Type.WHITESPACE.equals(token.getType()) || Type.UNIDENTIFIED.equals(token.getType())) {
+                if (Type.COMMA.equals(token.getType())
+                        || Type.WHITESPACE.equals(token.getType())
+                        || Type.UNIDENTIFIED.equals(token.getType())) {
                     throw new ParseException("Unexpected token found", token.getStart());
                 }
             }
@@ -135,7 +138,11 @@ public class ExpressionParser {
 
     }
 
-    private Function getFunction(final List<Param> objects, final int start, final int end, final FieldIndex fieldIndex) throws ParseException {
+    private Function getFunction(final List<Param> objects,
+                                 final int start,
+                                 final int end,
+                                 final FieldIndex fieldIndex)
+            throws ParseException {
         // Get the function.
         final Token functionToken = (Token) objects.get(start);
 
@@ -155,7 +162,8 @@ public class ExpressionParser {
                 if (object instanceof Token) {
                     final Token token = (Token) object;
                     if (Type.COMMA.equals(token.getType())) {
-                        // Ifg we haven't found a parameter from the previous token or object then this comma is unexpected.
+                        // Ifg we haven't found a parameter from the previous token or object then this comma
+                        // is unexpected.
                         if (paramStart == -1) {
                             throw new ParseException("Unexpected comma", token.getStart());
                         }
@@ -280,7 +288,8 @@ public class ExpressionParser {
                         // Get left param.
                         final Param leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndex);
                         // Get right param.
-                        final Param rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex), fieldIndex);
+                        final Param rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex),
+                                fieldIndex);
 
                         // Addition and subtraction without a preceding param are allowed. In this form plus can be
                         // ignored and minus will negate right param.
@@ -329,9 +338,13 @@ public class ExpressionParser {
                     final Token token = (Token) object;
                     if (type.equals(token.getType())) {
                         // Get before param.
-                        final Param leftParam = getParam(copyList(objects, 0, i - 1), fieldIndex);
+                        final Param leftParam = getParam(
+                                copyList(objects, 0, i - 1),
+                                fieldIndex);
                         // Get after param.
-                        final Param rightParam = getParam(copyList(objects, i + 1, objects.size() - 1), fieldIndex);
+                        final Param rightParam = getParam(
+                                copyList(objects, i + 1, objects.size() - 1),
+                                fieldIndex);
 
                         if (leftParam == null) {
                             throw new ParseException("No parameter before operator", token.getStart());
@@ -367,7 +380,10 @@ public class ExpressionParser {
         return newList;
     }
 
-    private List<Param> sandwich(final List<Param> list, final Param object, final int insertStart, final int insertEnd) {
+    private List<Param> sandwich(final List<Param> list,
+                                 final Param object,
+                                 final int insertStart,
+                                 final int insertEnd) {
         if (insertStart <= 0 && insertEnd >= list.size() - 1) {
             return Collections.singletonList(object);
         }

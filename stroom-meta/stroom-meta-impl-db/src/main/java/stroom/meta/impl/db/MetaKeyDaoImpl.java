@@ -24,11 +24,11 @@ import stroom.util.shared.Clearable;
 import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
@@ -91,15 +91,23 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     @Override
     public Integer getMinId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context.select(DSL.min(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(Record1::value1)).orElse(1);
+                context
+                        .select(DSL.min(META_KEY.ID))
+                        .from(META_KEY)
+                        .fetchOptional()
+                        .map(Record1::value1))
+                .orElse(1);
     }
 
     @Override
     public Integer getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context.select(DSL.max(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(Record1::value1)).orElse(MetaFields.getExtendedFields().size());
+                context
+                        .select(DSL.max(META_KEY.ID))
+                        .from(META_KEY)
+                        .fetchOptional()
+                        .map(Record1::value1))
+                .orElse(MetaFields.getExtendedFields().size());
     }
 
     private void setup() {

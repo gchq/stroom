@@ -16,13 +16,6 @@
 
 package stroom.annotation.client;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.shared.EventId;
@@ -32,9 +25,18 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.function.Consumer;
 
 public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> implements PopupUiHandlers {
+
     @Inject
     public AddEventLinkPresenter(final EventBus eventBus, final AddEventLinkView view) {
         super(eventBus, view);
@@ -94,6 +96,7 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> i
     }
 
     public interface AddEventLinkView extends View {
+
         HasText getName();
 
         HasKeyDownHandlers getNameBox();

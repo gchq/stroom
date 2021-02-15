@@ -17,5 +17,6 @@
 package stroom.alert.client.event;
 
 public interface ConfirmCallback {
+
     void onResult(boolean ok);
 }

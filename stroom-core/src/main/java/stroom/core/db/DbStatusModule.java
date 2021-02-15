@@ -21,6 +21,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class DbStatusModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();

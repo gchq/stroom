@@ -9,9 +9,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 
@@ -20,6 +20,7 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
  */
 @Singleton
 class FsTypePathDaoImpl implements FsTypePathDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTypePathDaoImpl.class);
 
     private static final String NAME_TO_PATH_CACHE_NAME = "Name To Path Cache";
@@ -34,8 +35,12 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                       final CacheManager cacheManager,
                       final FsVolumeConfig fsVolumeConfig) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        nameToPathCache = cacheManager.create(NAME_TO_PATH_CACHE_NAME, fsVolumeConfig::getTypePathCache, this::loadPath);
-        pathToNameCache = cacheManager.create(PATH_TO_NAME_CACHE_NAME, fsVolumeConfig::getTypePathCache, this::loadName);
+        nameToPathCache = cacheManager.create(NAME_TO_PATH_CACHE_NAME,
+                fsVolumeConfig::getTypePathCache,
+                this::loadPath);
+        pathToNameCache = cacheManager.create(PATH_TO_NAME_CACHE_NAME,
+                fsVolumeConfig::getTypePathCache,
+                this::loadName);
     }
 
     @Override
@@ -67,7 +72,8 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     private void createPath(final String name) {
         final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
         if (!path.equals(name)) {
-            LOGGER.debug(() -> LogUtil.message("A non standard type name was found when registering a file path '{}'", name));
+            LOGGER.debug(() -> LogUtil.message("A non standard type name was found when registering a file path '{}'",
+                    name));
         }
 
         JooqUtil.context(fsDataStoreDbConnProvider, context -> context

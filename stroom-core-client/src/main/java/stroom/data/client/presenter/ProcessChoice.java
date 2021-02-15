@@ -1,6 +1,7 @@
 package stroom.data.client.presenter;
 
 public class ProcessChoice {
+
     private final int priority;
     private final boolean autoPriority;
     private final boolean reprocess;

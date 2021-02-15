@@ -2,12 +2,10 @@ package stroom.processor.shared;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ProcessorFilterFields {
+
     public static final String FIELD_ID = "Id";
 
     private static final List<AbstractField> FIELDS = new ArrayList<>();

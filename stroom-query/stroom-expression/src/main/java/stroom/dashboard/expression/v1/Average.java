@@ -44,6 +44,7 @@ import com.esotericsoftware.kryo.io.Output;
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class Average extends AbstractManyChildFunction implements AggregateFunction {
+
     static final String NAME = "average";
     static final String ALIAS = "mean";
     private final Add.Calc calculator = new Add.Calc();
@@ -75,6 +76,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
     }
 
     private static final class AggregateGen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Calculator calculator;
@@ -131,6 +133,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Calculator calculator;

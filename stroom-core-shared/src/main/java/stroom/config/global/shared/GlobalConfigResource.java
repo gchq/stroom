@@ -10,6 +10,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.Arrays;
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -18,8 +20,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
 
 @Api(tags = "Global Config")
 @Path(GlobalConfigResource.BASE_PATH)
@@ -73,6 +73,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @ApiOperation(value = "Get the property value from the YAML configuration in the specified node.")
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
+
     @POST
     @ApiOperation(value = "Create a configuration property")
     ConfigProperty create(@ApiParam("configProperty") final ConfigProperty configProperty);

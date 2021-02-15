@@ -1,5 +1,10 @@
 package stroom.pipeline.xsltfunctions;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.impl.CacheManagerImpl;
+import stroom.pipeline.PipelineConfig;
+import stroom.util.cert.SSLConfig;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,15 +12,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import okhttp3.Response;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.cache.api.CacheManager;
-import stroom.cache.impl.CacheManagerImpl;
-import stroom.pipeline.PipelineConfig;
-import stroom.util.cert.SSLConfig;
 
 import static org.assertj.core.api.Assertions.fail;
 
 @Disabled
 class TestHttpCall {
+
     @Test
     void test() throws JsonProcessingException {
         final SSLConfig sslConfig = new SSLConfig();

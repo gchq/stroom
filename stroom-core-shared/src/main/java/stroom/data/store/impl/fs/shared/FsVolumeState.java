@@ -16,18 +16,20 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.util.shared.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.ModelStringUtil;
 
 /**
  * State of a volume.
  */
 @JsonInclude(Include.NON_NULL)
 public class FsVolumeState {
+
     public static final String ENTITY_TYPE = "VolumeState";
 
     @JsonProperty

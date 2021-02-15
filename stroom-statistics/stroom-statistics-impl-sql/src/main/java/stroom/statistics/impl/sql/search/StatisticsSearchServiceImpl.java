@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,11 +37,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
         //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
@@ -63,14 +64,14 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     );
 
     //defines how the entity fields relate to the table columns
-    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
+    private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
+    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider,
                                 final SearchConfig searchConfig) {
-        this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
+        this.sqlStatisticsDbConnProvider = sqlStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
     }
 
@@ -304,7 +305,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 try {
                     return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
                 } catch (SQLException e) {
-                    throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()), e);
+                    throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()),
+                            e);
                 }
             });
             return data;
@@ -344,7 +346,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             // the aggregateValue is sum of all values against that
             // key/time. We therefore need to get the
             // average using the count column
-            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
+            final double averagedValue = count != 0
+                    ? (aggregatedValue / count)
+                    : 0;
 
             arr[idx] = ValDouble.create(averagedValue);
         };
@@ -391,7 +395,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                          final Receiver receiver) {
         long count = 0;
 
-        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             //settings ot prevent mysql from reading the whole resultset into memory
             //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
             //Also needs 'useCursorFetch=true' on the jdbc connect string
@@ -481,10 +485,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @FunctionalInterface
     private interface ValueExtractor {
+
         /**
          * Function for extracting values from a {@link ResultSet} and placing them into the passed String[]
          *
-         * @param resultSet       The {@link ResultSet} instance to extract data from. It is assumed the {@link ResultSet}
+         * @param resultSet       The {@link ResultSet} instance to extract data from. It is assumed
+         *                        the {@link ResultSet}
          *                        has already been positioned at the desired row. next() should not be called on the
          *                        resultSet.
          * @param data            The data array to populate

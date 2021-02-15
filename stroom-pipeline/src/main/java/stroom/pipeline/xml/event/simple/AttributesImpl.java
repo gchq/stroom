@@ -21,10 +21,11 @@ import org.xml.sax.Attributes;
 import java.io.Serializable;
 
 public class AttributesImpl implements Attributes, Serializable {
+
     private static final long serialVersionUID = 8341093893787192467L;
 
     private final int length;
-    private final String data[];
+    private final String[] data;
 
     public AttributesImpl() {
         length = 0;

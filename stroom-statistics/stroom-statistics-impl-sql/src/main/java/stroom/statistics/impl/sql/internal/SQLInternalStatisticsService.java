@@ -1,9 +1,5 @@
 package stroom.statistics.impl.sql.internal;
 
-import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.impl.InternalStatisticsService;
@@ -12,13 +8,19 @@ import stroom.statistics.impl.sql.StatisticEvent;
 import stroom.statistics.impl.sql.StatisticTag;
 import stroom.statistics.impl.sql.Statistics;
 
-import javax.inject.Inject;
+import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SQLInternalStatisticsService implements InternalStatisticsService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLInternalStatisticsService.class);
 
     private final Statistics statisticsService;

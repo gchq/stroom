@@ -8,7 +8,8 @@ import com.google.gwt.user.client.ui.ValueBoxBase;
  * like TextBox or TextArea.
  */
 public class AceDefaultCommandLine implements AceCommandLine {
-    private ValueBoxBase<String> textBox;
+
+    private final ValueBoxBase<String> textBox;
 
     /**
      * Create command line wrapper around GWT text box.

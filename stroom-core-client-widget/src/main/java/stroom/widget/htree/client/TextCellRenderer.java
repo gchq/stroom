@@ -16,17 +16,19 @@
 
 package stroom.widget.htree.client;
 
-import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
-import com.google.gwt.canvas.dom.client.CssColor;
-import com.google.gwt.canvas.dom.client.TextMetrics;
-import com.google.gwt.user.client.ui.HasText;
 import stroom.widget.htree.client.ShadowBox.Colors;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
+import com.google.gwt.canvas.dom.client.CssColor;
+import com.google.gwt.canvas.dom.client.TextMetrics;
+import com.google.gwt.user.client.ui.HasText;
+
 public final class TextCellRenderer<T extends HasText> implements CellRenderer<T>, NodeExtentProvider<T> {
+
     private static final int DEFAULT_TEXT_SIZE = 10;
     private static final int DEFAULT_TEXT_PADDING = 5;
     private static final Colors NORMAL = Colors.createDefault();

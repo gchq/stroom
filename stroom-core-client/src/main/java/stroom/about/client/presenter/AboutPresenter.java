@@ -16,14 +16,6 @@
 
 package stroom.about.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.dispatch.client.Rest;
@@ -34,7 +26,17 @@ import stroom.util.shared.SessionInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
+
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
     @Inject
@@ -70,9 +72,11 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
 
     @ProxyCodeSplit
     public interface AboutProxy extends Proxy<AboutPresenter> {
+
     }
 
     public interface AboutView extends View {
+
         void setHTML(String html);
 
         HasText getBuildVersion();

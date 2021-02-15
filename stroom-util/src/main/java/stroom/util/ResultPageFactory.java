@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 public class ResultPageFactory {
+
     /**
      * Creates a list limited to a result page from a full list of results.
      *
@@ -25,9 +26,11 @@ public class ResultPageFactory {
      * @param <T>         The type of list item.
      * @return A list limited to a result page from a full list of results.
      */
-    public static <T, RESULT_PAGE> RESULT_PAGE createPageLimitedList(final List<T> fullList,
-                                                                     final PageRequest pageRequest,
-                                                                     final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createPageLimitedList(
+            final List<T> fullList,
+            final PageRequest pageRequest,
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
+
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
@@ -48,20 +51,29 @@ public class ResultPageFactory {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse(offset, limited.size(), (long) fullList.size(), true);
+                final PageResponse pageResponse = new PageResponse(offset,
+                        limited.size(),
+                        (long) fullList.size(),
+                        true);
                 return function.apply(limited, pageResponse);
             }
         }
 
-        final PageResponse pageResponse = new PageResponse(0L, fullList.size(), (long) fullList.size(), true);
+        final PageResponse pageResponse = new PageResponse(
+                0L,
+                fullList.size(),
+                (long) fullList.size(),
+                true);
         return function.apply(fullList, pageResponse);
     }
 
     /**
      * Used for full queries (not bounded).
      */
-    public static <T, RESULT_PAGE> RESULT_PAGE createUnboundedList(final List<T> realList,
-                                                                   final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createUnboundedList(
+            final List<T> realList,
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
+
         if (realList != null) {
             return function.apply(realList, createPageResponse(realList));
         } else {
@@ -78,7 +90,10 @@ public class ResultPageFactory {
 
     private static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
         if (values != null) {
-            return new PageResponse(pageResponse.getOffset(), values.size(), pageResponse.getTotal(), pageResponse.isExact());
+            return new PageResponse(pageResponse.getOffset(),
+                    values.size(),
+                    pageResponse.getTotal(),
+                    pageResponse.isExact());
         }
         return new PageResponse(pageResponse.getOffset(), 0, pageResponse.getTotal(), pageResponse.isExact());
     }
@@ -86,28 +101,34 @@ public class ResultPageFactory {
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T, RESULT_PAGE> RESULT_PAGE createCriterialBasedList(final List<T> realList,
-                                                                        final BaseCriteria baseCriteria,
-                                                                        final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createCriterialBasedList(
+            final List<T> realList,
+            final BaseCriteria baseCriteria,
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
+
         return createPageResultList(realList, baseCriteria.getPageRequest(), null, function);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T, RESULT_PAGE> RESULT_PAGE createCriterialBasedList(final List<T> realList,
-                                                                        final BaseCriteria baseCriteria, final Long totalSize,
-                                                                        final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createCriterialBasedList(
+            final List<T> realList,
+            final BaseCriteria baseCriteria, final Long totalSize,
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
+
         return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize, function);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    private static <T, RESULT_PAGE> RESULT_PAGE createPageResultList(final List<T> realList,
-                                                                     final PageRequest pageRequest,
-                                                                     final Long totalSize,
-                                                                     final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+    private static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createPageResultList(
+            final List<T> realList,
+            final PageRequest pageRequest,
+            final Long totalSize,
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
+
         final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
@@ -129,8 +150,8 @@ public class ResultPageFactory {
                     // get to process more that 1 + that limit. If this fails it
                     // will be a coding error
                     // or not applying the limit.
-                    throw new IllegalStateException(
-                            "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
+                    throw new IllegalStateException("For some reason we returned more rows that we were limited " +
+                            "to. Did you apply the restriction criteria?");
                 }
 
                 // All our queries are + 1 to we need to remove the last element
@@ -143,17 +164,21 @@ public class ResultPageFactory {
             }
         }
 
-        final PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
+        final PageResponse pageResponse = new PageResponse(
+                offset,
+                realList.size(),
+                calulatedTotalSize,
+                !moreToFollow);
         return function.apply(realList, pageResponse);
     }
 
 
-    private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
+    private static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> createCollector(
             final PageRequest pageRequest,
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         // Explicit typing needed for GWT
-        return new Collector<T, List<T>, R>() {
+        return new Collector<T, List<T>, T_RESULT_PAGE>() {
             long counter = 0L;
 
             @Override
@@ -184,12 +209,14 @@ public class ResultPageFactory {
             }
 
             @Override
-            public Function<List<T>, R> finisher() {
+            public Function<List<T>, T_RESULT_PAGE> finisher() {
                 return accumulator ->
                         resultPageFactory.apply(
                                 accumulator,
                                 new PageResponse(
-                                        pageRequest != null ? pageRequest.getOffset() : 0,
+                                        pageRequest != null
+                                                ? pageRequest.getOffset()
+                                                : 0,
                                         accumulator.size(),
                                         counter,
                                         true));
@@ -206,9 +233,9 @@ public class ResultPageFactory {
      * Creates a collector that builds a sub class of a ResultPage, e.g.
      * .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
      */
-    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> collector(
             final PageRequest pageRequest,
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         return createCollector(pageRequest, resultPageFactory);
     }
@@ -217,8 +244,8 @@ public class ResultPageFactory {
      * Creates a collector that builds a sub class of a ResultPage, e.g.
      * .collect(ListConfigResponse.collector(ListConfigResponse::new));
      */
-    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> collector(
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         return createCollector(null, resultPageFactory);
     }
@@ -227,9 +254,11 @@ public class ResultPageFactory {
         return createCollector(pageRequest, ResultPage::new);
     }
 
-    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(final Function<List<T>, R> resultPageFactory,
-                                                                         final Class<T> itemType) {
-        return (final R resultPage1, final R resultPage2) -> {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> BinaryOperator<T_RESULT_PAGE> reducer(
+            final Function<List<T>, T_RESULT_PAGE> resultPageFactory,
+            final Class<T> itemType) {
+
+        return (final T_RESULT_PAGE resultPage1, final T_RESULT_PAGE resultPage2) -> {
             final List<T> combinedList = new ArrayList<>();
             combinedList.addAll(resultPage1.getValues());
             combinedList.addAll(resultPage2.getValues());

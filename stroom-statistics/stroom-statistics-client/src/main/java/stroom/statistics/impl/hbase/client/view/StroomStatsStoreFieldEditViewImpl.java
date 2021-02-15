@@ -16,15 +16,17 @@
 
 package stroom.statistics.impl.hbase.client.view;
 
+import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreFieldEditPresenter;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreFieldEditPresenter;
 
-public class StroomStatsStoreFieldEditViewImpl extends ViewImpl implements StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView {
+public class StroomStatsStoreFieldEditViewImpl extends ViewImpl
+        implements StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView {
 
     private final Widget widget;
     @UiField
@@ -51,5 +53,6 @@ public class StroomStatsStoreFieldEditViewImpl extends ViewImpl implements Stroo
     }
 
     public interface Binder extends UiBinder<Widget, StroomStatsStoreFieldEditViewImpl> {
+
     }
 }

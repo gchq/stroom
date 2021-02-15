@@ -7,9 +7,9 @@ import stroom.util.time.StroomDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 
 public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
@@ -25,7 +25,9 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     @Override
     public List<RefStoreEntry> entries(final Integer limit) {
         return referenceDataServiceProvider.get()
-                .entries(limit != null ? limit : 100);
+                .entries(limit != null
+                        ? limit
+                        : 100);
     }
 
     @Override

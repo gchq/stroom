@@ -19,6 +19,7 @@ package stroom.index.shared;
 import java.util.Objects;
 
 public class IndexShardKey {
+
     private final String indexUuid;
     private final String partition;
     private final int shardNo;
@@ -60,10 +61,15 @@ public class IndexShardKey {
         return shardNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final IndexShardKey that = (IndexShardKey) o;
         return shardNo == that.shardNo &&
                 Objects.equals(indexUuid, that.indexUuid) &&
@@ -95,6 +101,7 @@ public class IndexShardKey {
     }
 
     public static final class Builder {
+
         private String indexUuid;
         private String partition;
         private int shardNo;

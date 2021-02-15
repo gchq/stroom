@@ -58,6 +58,7 @@ import java.util.stream.Stream;
  * 7. Ensure all JSON classes that use Map have a string key
  */
 class TestJsonSerialisation {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJsonSerialisation.class);
     private static final String PACKAGE_NAME = "stroom";
     private static final String PACKAGE_START = PACKAGE_NAME + ".";
@@ -72,7 +73,8 @@ class TestJsonSerialisation {
 //        try (ScanResult scanResult =
 //                     new ClassGraph()
 //                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
+//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
+//                                                                      scan all packages)
 //                             .scan()) {                   // Start the scan
 //            for (ClassInfo routeClassInfo : scanResult.getClassesWithMethodAnnotation(routeAnnotation)) {
 //                try {
@@ -265,11 +267,11 @@ class TestJsonSerialisation {
             }
 
         });
-   }
+    }
 
     private void dumpErrors(final Map<String, String> classErrors) {
         classErrors.forEach((className, msg) ->
-            LOGGER.error("Class {} has error(s): \n{}", className, msg));
+                LOGGER.error("Class {} has error(s): \n{}", className, msg));
     }
 
     /**
@@ -390,7 +392,6 @@ class TestJsonSerialisation {
                     });
                 });
     }
-
 
 
     private Set<String> getConstructorPropNames(final Constructor<?> constructor) {
@@ -566,7 +567,8 @@ class TestJsonSerialisation {
                 addType(stroomClasses, arg);
             }
 
-        } else if (clazz.getName().startsWith(PACKAGE_START) && !clazz.getName().contains("StroomDuration")) { // Non POJO
+        } else if (clazz.getName().startsWith(PACKAGE_START)
+                && !clazz.getName().contains("StroomDuration")) { // Non POJO
             // IF the class references sub classes then include those too.
             final JsonSubTypes jsonSubTypes = clazz.getAnnotation(JsonSubTypes.class);
             if (jsonSubTypes != null) {
@@ -608,10 +610,10 @@ class TestJsonSerialisation {
     private static List<Class<?>> getResourceRelatedClasses() {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
-                     new ClassGraph()
-                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
-                             .scan()) {                   // Start the scan
+                new ClassGraph()
+                        .enableAllInfo()             // Scan classes, methods, fields, annotations
+                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
+                        .scan()) {                   // Start the scan
             for (ClassInfo routeClassInfo : scanResult.getClassesImplementing(DirectRestService.class.getName())) {
                 final Class<?> clazz = routeClassInfo.loadClass();
                 addPublicMethods(stroomClasses, clazz);
@@ -631,10 +633,10 @@ class TestJsonSerialisation {
     private List<Class<?>> getSharedClasses() {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
-                     new ClassGraph()
-                             .enableAllInfo()
-                             .whitelistPackages(PACKAGE_NAME)
-                             .scan()) {
+                new ClassGraph()
+                        .enableAllInfo()
+                        .whitelistPackages(PACKAGE_NAME)
+                        .scan()) {
             for (ClassInfo routeClassInfo : scanResult.getAllClasses()) {
                 if (routeClassInfo.getName().contains(".shared.") &&
                         !routeClassInfo.getName().contains("hadoopcommonshaded") &&

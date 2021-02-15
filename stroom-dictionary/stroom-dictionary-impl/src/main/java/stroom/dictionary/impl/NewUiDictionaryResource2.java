@@ -30,6 +30,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -38,15 +41,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
 
 @Api(tags = "Dictionaries (v2)")
 @Path(NewUiDictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUiDictionaryResource2 implements RestResource {
+
     public static final String BASE_RESOURCE_PATH = "/dictionary" + ResourcePaths.V2;
 
     private final Provider<DictionaryStore> dictionaryStoreProvider;
@@ -71,18 +72,20 @@ public class NewUiDictionaryResource2 implements RestResource {
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result =  dictionaryStoreProvider.get()
+        final ImportExportActionHandler.ImpexDetails result = dictionaryStoreProvider.get()
                 .importDocument(
                         documentData.getDocRef(),
                         documentData.getDataMap(),
                         importState,
                         ImportMode.IGNORE_CONFIRMATION);
 
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
+
     @POST
     @Path("/export")
     @Timed

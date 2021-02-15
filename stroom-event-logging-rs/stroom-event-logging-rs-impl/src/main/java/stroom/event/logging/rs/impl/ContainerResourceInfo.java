@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.api.EventActionDecorator;
@@ -23,14 +24,15 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.lang.reflect.Method;
+import java.util.Optional;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
-import java.lang.reflect.Method;
-import java.util.Optional;
 
 public class ContainerResourceInfo {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContainerResourceInfo.class);
 
     private final ResourceContext resourceContext;
@@ -48,7 +50,7 @@ public class ContainerResourceInfo {
         this.requestContext = requestContext;
         final Optional<OperationType> operationType = getOperationTypeFromAnnotations(getMethod(), getResourceClass());
         this.autologgerAnnotationPresent = operationType.isPresent();
-        this.operationType = findOperationType (operationType, getMethod().getName(), requestContext.getMethod());
+        this.operationType = findOperationType(operationType, getMethod().getName(), requestContext.getMethod());
         this.eventActionDecoratorClass = findEventActionDecorator(getMethod(), getResourceClass());
     }
 
@@ -71,11 +73,11 @@ public class ContainerResourceInfo {
         return resourceInfo.getResourceClass();
     }
 
-    public Method getMethod(){
+    public Method getMethod() {
         return resourceInfo.getResourceMethod();
     }
 
-    public OperationType getOperationType(){
+    public OperationType getOperationType() {
         return operationType;
     }
 
@@ -87,40 +89,42 @@ public class ContainerResourceInfo {
         return eventActionDecoratorClass;
     }
 
-    public String getTypeId(){
+    public String getTypeId() {
         //If method annotation provided use that on its own
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).typeId();
         }
         String resourcePrefix = getResourceClass().getSimpleName();
         if ((getResourceClass().getAnnotation(AutoLogged.class) != null) &&
-                (!getResourceClass().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getResourceClass().getAnnotation(AutoLogged.class).typeId()
+                        .equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             resourcePrefix = getResourceClass().getAnnotation(AutoLogged.class).typeId();
         }
 
         return resourcePrefix + "." + getMethod().getName();
     }
 
-    public String getVerbFromAnnotations(){
+    public String getVerbFromAnnotations() {
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).verb();
         }
         return null;
     }
 
-    private static Class <? extends EventActionDecorator> findEventActionDecorator(final Method method, final Class<?> resourceClass){
+    private static Class<? extends EventActionDecorator> findEventActionDecorator(final Method method,
+                                                                                  final Class<?> resourceClass) {
         final Class<? extends EventActionDecorator> decoratorClass;
-        if (method.getAnnotation(AutoLogged.class) != null){
+        if (method.getAnnotation(AutoLogged.class) != null) {
             decoratorClass = method.getAnnotation(AutoLogged.class).decorator();
-        } else if (resourceClass.getAnnotation(AutoLogged.class) != null){
+        } else if (resourceClass.getAnnotation(AutoLogged.class) != null) {
             decoratorClass = resourceClass.getAnnotation(AutoLogged.class).decorator();
         } else {
             decoratorClass = EventActionDecorator.class;
         }
 
-        if (decoratorClass.equals(EventActionDecorator.class)){
+        if (decoratorClass.equals(EventActionDecorator.class)) {
             return null; // Default is no implementation
         }
 
@@ -128,16 +132,16 @@ public class ContainerResourceInfo {
     }
 
     private static Optional<OperationType> getOperationTypeFromAnnotations(final Method method,
-                                                                           final Class<?> resourceClass){
-        if (method.getAnnotation(AutoLogged.class) != null){
+                                                                           final Class<?> resourceClass) {
+        if (method.getAnnotation(AutoLogged.class) != null) {
             return Optional.of(method.getAnnotation(AutoLogged.class).value());
-        } else if (resourceClass.getAnnotation(AutoLogged.class) != null){
+        } else if (resourceClass.getAnnotation(AutoLogged.class) != null) {
             return Optional.of(resourceClass.getAnnotation(AutoLogged.class).value());
         }
         return Optional.empty();
     }
 
-    public Optional<OperationType> getOperationTypeFromAnnotations(){
+    public Optional<OperationType> getOperationTypeFromAnnotations() {
         return getOperationTypeFromAnnotations(getMethod(), getResourceClass());
     }
 
@@ -164,7 +168,7 @@ public class ContainerResourceInfo {
 
     private OperationType findOperationType(final Optional<OperationType> type,
                                             final String methodName,
-                                            final String httpMethod){
+                                            final String httpMethod) {
 
         if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
             return type.get();
@@ -207,15 +211,15 @@ public class ContainerResourceInfo {
         }
     }
 
-    public boolean shouldLog (LoggingConfig config){
+    public boolean shouldLog(LoggingConfig config) {
         OperationType op = getOperationType();
-        if (OperationType.MANUALLY_LOGGED.equals(op)){
+        if (OperationType.MANUALLY_LOGGED.equals(op)) {
             return false;
-        } else if (config.isLogEveryRestCallEnabled()){
+        } else if (config.isLogEveryRestCallEnabled()) {
             return true;
-        } else if (OperationType.UNLOGGED.equals(op)){
+        } else if (OperationType.UNLOGGED.equals(op)) {
             return false;
-        } else if (isAutologgerAnnotationPresent()){
+        } else if (isAutologgerAnnotationPresent()) {
             return true;
         } else {
             return false;

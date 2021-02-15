@@ -40,6 +40,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractDataStoreTest {
+
     private final Sizes defaultMaxResultsSizes = Sizes.create(50);
 
     @BeforeAll

@@ -25,8 +25,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
 import java.io.Reader;
+import javax.inject.Inject;
 
 @ConfigurableElement(type = "InvalidXMLCharFilterReader",
         category = Category.READER,
@@ -37,6 +37,7 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
+
     private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
     private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();

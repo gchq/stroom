@@ -16,26 +16,29 @@
 
 package stroom.security.client.presenter;
 
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class FolderPermissionsTabPresenter
         extends DocumentPermissionsTabPresenter {
+
     private final PermissionsListPresenter createPermissionsListPresenter;
 
     @Inject
-    public FolderPermissionsTabPresenter(final EventBus eventBus, final FolderPermissionsTabView view,
-                                         final DocumentUserListPresenter userListPresenter, final PermissionsListPresenter permissionsListPresenter, final PermissionsListPresenter createPermissionsListPresenter,
+    public FolderPermissionsTabPresenter(final EventBus eventBus,
+                                         final FolderPermissionsTabView view,
+                                         final DocumentUserListPresenter userListPresenter,
+                                         final PermissionsListPresenter permissionsListPresenter,
+                                         final PermissionsListPresenter createPermissionsListPresenter,
                                          final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
         super(eventBus, view, userListPresenter, permissionsListPresenter, selectUserPresenterProvider);
         this.createPermissionsListPresenter = createPermissionsListPresenter;
@@ -50,7 +53,10 @@ public class FolderPermissionsTabPresenter
     }
 
     @Override
-    public void setDocumentPermissions(final List<String> allPermissions, final DocumentPermissions documentPermissions, final boolean group, final Changes changes) {
+    public void setDocumentPermissions(final List<String> allPermissions,
+                                       final DocumentPermissions documentPermissions,
+                                       final boolean group,
+                                       final Changes changes) {
         super.setDocumentPermissions(allPermissions, documentPermissions, group, changes);
 
         final List<String> permissions = new ArrayList<>();
@@ -64,6 +70,7 @@ public class FolderPermissionsTabPresenter
     }
 
     public interface FolderPermissionsTabView extends DocumentPermissionsTabView {
+
         void setCreatePermissionsView(View view);
     }
 }

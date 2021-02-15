@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private final String href;
@@ -55,6 +56,7 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onChange(ShowDashboardEvent event);
     }
 }

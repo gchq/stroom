@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class SqlStatisticsStore implements Store {
+
     public static final String TASK_NAME = "Sql Statistic Search";
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
@@ -43,7 +44,10 @@ public class SqlStatisticsStore implements Store {
 
         // convert the search into something stats understands
         final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(statisticStoreDoc, updatedSearchRequest.getQuery().getExpression(), searchRequest.getDateTimeLocale());
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
+                statisticStoreDoc,
+                updatedSearchRequest.getQuery().getExpression(),
+                searchRequest.getDateTimeLocale());
 
         // Create coprocessors.
         coprocessors = coprocessorsFactory.create(updatedSearchRequest);

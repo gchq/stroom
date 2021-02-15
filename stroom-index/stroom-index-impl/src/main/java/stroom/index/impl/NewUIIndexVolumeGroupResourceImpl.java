@@ -2,9 +2,9 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexVolumeGroup;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 public class NewUIIndexVolumeGroupResourceImpl implements NewUIIndexVolumeGroupResource {
 
@@ -48,7 +48,7 @@ public class NewUIIndexVolumeGroupResourceImpl implements NewUIIndexVolumeGroupR
     }
 
     @Override
-    public Response update(IndexVolumeGroup indexVolumeGroup){
+    public Response update(IndexVolumeGroup indexVolumeGroup) {
         final var group = indexVolumeGroupService.update(indexVolumeGroup);
         return Response.ok(group).build();
     }

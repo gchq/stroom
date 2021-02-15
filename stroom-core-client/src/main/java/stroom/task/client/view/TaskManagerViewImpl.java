@@ -33,6 +33,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandlers>
         implements TaskManagerPresenter.TaskManagerView {
+
     private final Widget widget;
 
     @UiField
@@ -46,7 +47,8 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                 "Server Tasks Quick Filter",
                 builder -> builder
-                        .addLine("Matched tasks are displayed in black, un-matched but related tasks are displayed in grey.")
+                        .addLine("Matched tasks are displayed in black, un-matched but related tasks are " +
+                                "displayed in grey.")
                         .addLine("All relations of a matched task will be included in the results.")
                         .addBreak(),
                 FindTaskProgressCriteria.FIELD_DEFINITIONS));
@@ -68,5 +70,6 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     }
 
     public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
+
     }
 }

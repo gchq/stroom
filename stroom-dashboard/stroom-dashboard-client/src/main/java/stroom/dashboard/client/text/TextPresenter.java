@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
+
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
@@ -319,8 +320,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
                         message = "No stream id found in selection";
 
-                    } else if (getTextSettings().getRecordNoField() == null &&
-                            !(getTextSettings().getLineFromField() != null && getTextSettings().getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                    } else if (getTextSettings().getRecordNoField() == null
+                            && !(
+                            getTextSettings().getLineFromField() != null
+                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
+                        //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
                     } else if (getTextSettings().getRecordNoField() != null && currentRecordNo == null) {
@@ -343,8 +347,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         }
 
                         final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-                                .withPartNo(currentPartNo != null ? currentPartNo - 1: 0) // make zero based
-                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1: 0) // make zero based
+                                .withPartNo(currentPartNo != null
+                                        ? currentPartNo - 1
+                                        : 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null
+                                        ? currentRecordNo - 1
+                                        : 0) // make zero based
                                 .withDataRange(dataRange)
                                 .withHighlight(highlight)
                                 .build();
@@ -626,8 +634,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (currentStreamId != null) {
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
-                    currentPartNo != null ? currentPartNo : 1,
-                    currentRecordNo != null ? currentRecordNo : -1);
+                    currentPartNo != null
+                            ? currentPartNo
+                            : 1,
+                    currentRecordNo != null
+                            ? currentRecordNo
+                            : -1);
 
             BeginPipelineSteppingEvent.fire(
                     this,
@@ -642,6 +654,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+
         void setContent(View view);
 
         void setClassification(String classification);

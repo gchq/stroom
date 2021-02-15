@@ -16,13 +16,14 @@
 
 package stroom.dashboard.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 class ActiveQueries {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ActiveQueries.class);
 
     private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
@@ -51,14 +53,16 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = securityContext.asProcessingUserResult(() -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
-                        .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
-                        .orElseGet(() -> {
-                            LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
-                                    queryKey.getUuid(),
-                                    activeQuery.getDocRef().getType());
-                            return Boolean.TRUE;
-                        }));
+                final Boolean success = securityContext.asProcessingUserResult(() ->
+                        dataSourceProviderRegistry.getDataSourceProvider(
+                                activeQuery.getDocRef())
+                                .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
+                                .orElseGet(() -> {
+                                    LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
+                                            queryKey.getUuid(),
+                                            activeQuery.getDocRef().getType());
+                                    return Boolean.TRUE;
+                                }));
 
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.

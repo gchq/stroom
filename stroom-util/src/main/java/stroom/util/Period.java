@@ -35,6 +35,7 @@ import java.util.Optional;
  * </p>
  */
 public class Period extends Range<Long> {
+
     private static final int N3 = 3;
 
     private static final long serialVersionUID = -7978314234943698113L;

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class IgnoreCloseOutputStream extends WrappedOutputStream {
+
     public IgnoreCloseOutputStream(final OutputStream outputStream) {
         super(outputStream);
     }

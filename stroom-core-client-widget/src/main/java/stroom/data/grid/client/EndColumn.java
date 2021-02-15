@@ -20,6 +20,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 
 public class EndColumn<T> extends Column<T, String> {
+
     public EndColumn() {
         super(new TextCell());
     }

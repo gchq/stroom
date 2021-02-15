@@ -22,12 +22,13 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 
-import javax.inject.Inject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class FeedResourceImpl implements FeedResource {
+
     private static final List<String> SUPPORTED_ENCODINGS;
 
     static {

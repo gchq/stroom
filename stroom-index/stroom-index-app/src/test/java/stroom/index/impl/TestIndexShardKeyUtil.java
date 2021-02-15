@@ -17,18 +17,20 @@
 package stroom.index.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.date.DateUtil;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardKeyUtil extends StroomUnitTest {
+
     @Test
     void testMultishard() {
         final IndexDoc index = new IndexDoc();

@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class SearchResponseCreator {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseCreator.class);
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
@@ -161,7 +162,9 @@ public class SearchResponseCreator {
             final List<Result> res = LOGGER.logDurationIfTraceEnabled(() ->
                     getResults(searchRequest), "Getting results");
             LOGGER.debug(() -> "Returning new SearchResponse with results: " +
-                    (res.size() == 0 ? "null" : res.size()) +
+                    (res.size() == 0
+                            ? "null"
+                            : res.size()) +
                     ", complete: " +
                     complete +
                     ", isComplete: " +

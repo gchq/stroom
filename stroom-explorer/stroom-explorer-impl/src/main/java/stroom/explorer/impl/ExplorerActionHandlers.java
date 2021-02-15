@@ -20,8 +20,6 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -29,9 +27,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ExplorerActionHandlers {
+
     private final Set<ExplorerActionHandler> explorerActionHandlers;
 
     private volatile Handlers handlers;
@@ -66,6 +67,7 @@ class ExplorerActionHandlers {
     }
 
     private static class Handlers {
+
         private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
         private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
         private final List<DocumentType> documentTypes;
@@ -92,12 +94,14 @@ class ExplorerActionHandlers {
 
             final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
             if (existingActionHandler != null) {
-                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                throw new RuntimeException("A handler already exists for '" + type +
+                        "' existing {" + existingActionHandler + "} new {" + handler + "}");
             }
 
             final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
             if (existingDocumentType != null) {
-                throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
+                throw new RuntimeException("A document type already exists for '" + type + "' existing {" +
+                        existingDocumentType + "} new {" + handler.getDocumentType() + "}");
             }
         }
     }

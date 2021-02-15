@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IndexVolumeDao {
+
     IndexVolume create(IndexVolume indexVolume);
 
     IndexVolume update(IndexVolume indexVolume);

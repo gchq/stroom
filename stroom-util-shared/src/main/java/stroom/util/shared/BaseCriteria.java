@@ -32,6 +32,7 @@ import java.util.Set;
  */
 @JsonInclude(Include.NON_NULL)
 public abstract class BaseCriteria {
+
     @JsonProperty
     private PageRequest pageRequest;
     @JsonProperty
@@ -122,10 +123,15 @@ public abstract class BaseCriteria {
         return sortList;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BaseCriteria)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BaseCriteria)) {
+            return false;
+        }
         final BaseCriteria that = (BaseCriteria) o;
         return Objects.equals(pageRequest, that.pageRequest) &&
                 Objects.equals(sortList, that.sortList);

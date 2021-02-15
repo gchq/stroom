@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ContentManager implements HasHandlers {
+
     private final Map<TabData, CloseHandler> handlerMap = new HashMap<>();
     private final EventBus eventBus;
 
@@ -109,10 +110,12 @@ public class ContentManager implements HasHandlers {
     }
 
     public interface CloseCallback {
+
         void closeTab(boolean ok);
     }
 
     public interface CloseHandler {
+
         void onCloseRequest(CloseCallback callback);
     }
 }

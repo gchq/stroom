@@ -9,6 +9,7 @@ import java.util.function.Function;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter> {
+
     @Override
     public ProcessorFilter apply(final Record record) {
         final ProcessorFilter processorFilter = new ProcessorFilter();

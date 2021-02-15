@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<ReceiveDataRule>> {
+
     @Inject
     public RuleSetListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, false));

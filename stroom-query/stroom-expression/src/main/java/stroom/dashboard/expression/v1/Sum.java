@@ -40,6 +40,7 @@ package stroom.dashboard.expression.v1;
                                 minVarargsCount = 2))
         })
 class Sum extends AbstractAggregateFunction {
+
     static final String NAME = "sum";
 
     public Sum(final String name) {

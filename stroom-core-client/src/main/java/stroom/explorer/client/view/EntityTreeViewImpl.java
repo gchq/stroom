@@ -33,11 +33,13 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
         implements EntityTreePresenter.EntityTreeView {
+
     private final Widget widget;
     @UiField
     QuickFilter nameFilter;
     @UiField
     MaxScrollPanel scrollPanel;
+
     @Inject
     public EntityTreeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -64,5 +66,6 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     }
 
     public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {
+
     }
 }

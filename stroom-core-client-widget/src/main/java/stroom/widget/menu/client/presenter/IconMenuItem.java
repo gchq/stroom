@@ -16,10 +16,12 @@
 
 package stroom.widget.menu.client.presenter;
 
-import com.google.gwt.user.client.Command;
 import stroom.svg.client.Icon;
 
+import com.google.gwt.user.client.Command;
+
 public class IconMenuItem extends CommandMenuItem {
+
     private final Icon enabledIcon;
     private final Icon disabledIcon;
 

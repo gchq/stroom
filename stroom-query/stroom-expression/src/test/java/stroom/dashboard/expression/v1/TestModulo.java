@@ -2,7 +2,7 @@ package stroom.dashboard.expression.v1;
 
 import java.util.stream.Stream;
 
-class TestModulo extends AbstractFunctionTest<Modulo>{
+class TestModulo extends AbstractFunctionTest<Modulo> {
 
     @Override
     Class<Modulo> getFunctionType() {

@@ -9,6 +9,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class BuildInfo extends AbstractConfig {
+
     @JsonProperty
     private final String upDate;
     @JsonProperty
@@ -37,10 +38,15 @@ public class BuildInfo extends AbstractConfig {
         return upDate;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final BuildInfo buildInfo = (BuildInfo) o;
         return Objects.equals(upDate, buildInfo.upDate) &&
                 Objects.equals(buildDate, buildInfo.buildDate) &&

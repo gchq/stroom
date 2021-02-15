@@ -1,13 +1,15 @@
 package stroom.query.api.v2;
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SearchRequestBuilderTest {
+
     @Test
     void doesBuild() {
         // Given

@@ -16,6 +16,13 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.entity.client.presenter.HasReadAndWrite;
+import stroom.item.client.StringListBox;
+import stroom.util.client.JSONUtil;
+import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -27,17 +34,12 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
-import stroom.entity.client.presenter.HasReadAndWrite;
-import stroom.item.client.StringListBox;
-import stroom.util.client.JSONUtil;
-import stroom.widget.customdatebox.client.MyDateBox;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject> {
+
     private final SimplePanel outer;
     private final List<StringListBox> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
@@ -325,9 +327,9 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return opacity;
     }
 
-    /**************
-     * Start Layer
-     **************/
+    //*************
+    // Start Layer
+    //*************/
     @Override
     public void setOpacity(final double opacity) {
         this.opacity = opacity;
@@ -353,7 +355,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         // }
     }
 
-    /**************
-     * End Layer
-     **************/
+    //*************
+    // End Layer
+    //*************/
 }

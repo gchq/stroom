@@ -37,6 +37,7 @@ public interface Location extends Comparable<Location> {
     Comparator<Location> LINE_COL_COMPARATOR = Comparator
             .comparingInt(Location::getLineNo)
             .thenComparingInt(Location::getColNo);
+
     /**
      * @return The line number of the location, one based.
      */

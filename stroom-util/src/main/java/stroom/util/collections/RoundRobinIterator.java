@@ -23,9 +23,10 @@ import java.util.List;
  * An iterator that starts at a certain position and increments a cursor.
  */
 public abstract class RoundRobinIterator<T> implements Iterator<T> {
+
     // List to loop over
     private final List<T> list;
-    private int initial;
+    private final int initial;
     private T lastItem;
 
     public RoundRobinIterator(final List<T> list, final int start) {

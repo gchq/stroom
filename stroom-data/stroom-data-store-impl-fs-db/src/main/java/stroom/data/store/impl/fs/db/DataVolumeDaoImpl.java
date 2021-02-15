@@ -1,20 +1,22 @@
 package stroom.data.store.impl.fs.db;
 
-import org.jooq.Condition;
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.jooq.Condition;
+
 import java.util.Collection;
 import java.util.List;
+import javax.inject.Inject;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
 public class DataVolumeDaoImpl implements DataVolumeDao {
+
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
@@ -60,9 +62,9 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     public DataVolume createDataVolume(final long dataId, final FsVolume volume) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
             context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                        .values(dataId, volume.getId())
-                        .execute();
-                return new DataVolumeImpl(dataId, volume.getPath());
+                    .values(dataId, volume.getId())
+                    .execute();
+            return new DataVolumeImpl(dataId, volume.getPath());
         });
     }
 
@@ -75,6 +77,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     }
 
     class DataVolumeImpl implements DataVolume {
+
         private final long streamId;
         private final String volumePath;
 

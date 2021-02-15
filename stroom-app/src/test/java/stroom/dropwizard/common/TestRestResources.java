@@ -1,7 +1,7 @@
 package stroom.dropwizard.common;
 
-import stroom.util.ConsoleColour;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.ConsoleColour;
 import stroom.util.shared.RestResource;
 
 import com.google.common.base.Strings;
@@ -20,16 +20,6 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -43,6 +33,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Provider;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
 
 class TestRestResources {
 
@@ -101,7 +101,7 @@ class TestRestResources {
                             Arrays.stream(clazz.getMethods())
                                     .map(method -> Tuple.of(clazz, method)))
                     .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._1, clazzMethod._2, false))
-                    .map(clazzMethod-> Tuple.of(
+                    .map(clazzMethod -> Tuple.of(
                             clazzMethod._2.getName(),
                             getJaxRsHttpMethod(clazzMethod._2),
                             getMethodSig(clazzMethod._1, clazzMethod._2),
@@ -113,29 +113,29 @@ class TestRestResources {
 
             final StringBuilder stringBuilder = new StringBuilder();
             results.entrySet()
-        .stream()
-        .sorted(Entry.comparingByKey())
-        .forEach(entry -> {
-            final Tuple2<String, String> key = entry.getKey();
-            final List<Tuple4<String, String, String, String>> value = entry.getValue();
-            stringBuilder
-                        .append(key._1)
-                        .append(" (")
-                        .append(ConsoleColour.yellow(key._2))
-                        .append(")\n");
+                    .stream()
+                    .sorted(Entry.comparingByKey())
+                    .forEach(entry -> {
+                        final Tuple2<String, String> key = entry.getKey();
+                        final List<Tuple4<String, String, String, String>> value = entry.getValue();
+                        stringBuilder
+                                .append(key._1)
+                                .append(" (")
+                                .append(ConsoleColour.yellow(key._2))
+                                .append(")\n");
 
-                value.stream()
-                        .sorted()
-                        .forEach(tuple4 -> {
-                            final String path = Strings.padEnd(tuple4._4, 40, ' ');
-                            stringBuilder
-                                    .append("    ")
-                                    .append(ConsoleColour.blue(path))
-                                    .append(" ")
-                                    .append(tuple4._3)
-                                    .append("\n");
-                        });
-            });
+                        value.stream()
+                                .sorted()
+                                .forEach(tuple4 -> {
+                                    final String path = Strings.padEnd(tuple4._4, 40, ' ');
+                                    stringBuilder
+                                            .append("    ")
+                                            .append(ConsoleColour.blue(path))
+                                            .append(" ")
+                                            .append(tuple4._3)
+                                            .append("\n");
+                                });
+                    });
             LOGGER.info("Methods:\n{}", stringBuilder.toString());
         }
     }
@@ -157,6 +157,7 @@ class TestRestResources {
                 ConsoleColour.cyan(clazz.getSimpleName()) +
                 "]";
     }
+
     private String getJaxRsPath(final Method method) {
         return Arrays.stream(method.getAnnotations())
                 .filter(anno -> Path.class.equals(anno.annotationType()))
@@ -187,8 +188,8 @@ class TestRestResources {
 
         final boolean isInterface = resourceClass.isInterface();
         final String typeName = isInterface
-                        ? "interface"
-                        : "class";
+                ? "interface"
+                : "class";
 
         final boolean superImplementsRestResource = Arrays.stream(resourceClass.getInterfaces())
                 .filter(iface ->
@@ -227,8 +228,8 @@ class TestRestResources {
                             final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
 
                             softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
-                                    .withFailMessage(() -> "Method " + method.getName() + "(...) or its class must be " +
-                                            "annotated with @AutoLogged")
+                                    .withFailMessage(() -> "Method " + method.getName() +
+                                            "(...) or its class must be annotated with @AutoLogged")
                                     .isTrue();
                         });
             } else {
@@ -281,7 +282,9 @@ class TestRestResources {
                             .filter(ifaceMethod -> areMethodsEqual(method, ifaceMethod))
                             .findAny();
 
-                    return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface, ifaceMethod, checkInterfaces))
+                    return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface,
+                            ifaceMethod,
+                            checkInterfaces))
                             .orElse(false);
                 }
             } else {

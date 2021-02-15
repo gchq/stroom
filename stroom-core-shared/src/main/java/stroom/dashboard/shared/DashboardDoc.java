@@ -16,18 +16,29 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "dashboardConfig"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "dashboardConfig"})
 @JsonInclude(Include.NON_NULL)
 public class DashboardDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "Dashboard";
 
     @JsonProperty
@@ -58,11 +69,18 @@ public class DashboardDoc extends Doc {
         this.dashboardConfig = dashboardConfig;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final DashboardDoc that = (DashboardDoc) o;
         return Objects.equals(dashboardConfig, that.dashboardConfig);
     }

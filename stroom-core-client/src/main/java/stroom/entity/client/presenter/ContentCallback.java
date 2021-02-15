@@ -19,5 +19,6 @@ package stroom.entity.client.presenter;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public interface ContentCallback {
+
     void onReady(PresenterWidget<?> content);
 }

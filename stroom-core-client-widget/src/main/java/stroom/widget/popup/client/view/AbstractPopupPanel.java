@@ -19,6 +19,7 @@ package stroom.widget.popup.client.view;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
+
     public AbstractPopupPanel(final boolean autoHide, final boolean modal) {
         super(autoHide, modal);
     }

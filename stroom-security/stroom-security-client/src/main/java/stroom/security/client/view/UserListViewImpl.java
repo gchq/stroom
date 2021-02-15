@@ -34,11 +34,12 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> implements UserListView {
+
     @UiField
     QuickFilter nameFilter;
     @UiField
     ResizeSimplePanel dataGrid;
-    private Widget widget;
+    private final Widget widget;
 
     @Inject
     public UserListViewImpl(final EventBus eventBus, final Binder binder) {
@@ -67,5 +68,6 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
     }
 
     public interface Binder extends UiBinder<Widget, UserListViewImpl> {
+
     }
 }

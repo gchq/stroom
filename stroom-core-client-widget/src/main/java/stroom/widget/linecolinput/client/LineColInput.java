@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import java.util.Optional;
 
 public class LineColInput extends Composite {
+
     private final TextBox valueBox = new TextBox();
     private final RegExp regExp;
 

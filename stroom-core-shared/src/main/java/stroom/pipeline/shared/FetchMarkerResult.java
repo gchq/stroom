@@ -16,9 +16,9 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.Count;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.Count;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,7 @@ import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchMarkerResult extends AbstractFetchDataResult {
+
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
 
@@ -49,7 +50,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
-//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+//        super(streamTypeName, classification, streamRange,
+//        streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(feedName,
                 streamTypeName,
                 classification,

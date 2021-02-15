@@ -21,6 +21,11 @@ import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,17 +36,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Api(tags = "Pipelines")
 @Path("/pipelines" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUiPipelineResource implements RestResource {
+
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
@@ -50,6 +51,7 @@ public class NewUiPipelineResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     private static class PipelineDTO {
+
         @JsonProperty
         private DocRef docRef;
         @JsonProperty
@@ -133,17 +135,18 @@ public class NewUiPipelineResource implements RestResource {
         return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && offset == null) || (pageSize == null && offset != null)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(
+                        "A pagination request requires both a pageSize and an offset").build();
             }
 
             // TODO: The below isn't very efficient because it grabs and processes on all the pipelines. Better to
             // do paging on the database. But this sort of paging is done like this elsewhere so it's a general issue.
             List<DocRef> pipelines = pipelineStore.list();
-            int totalPipelines = pipelines.size();
 
             // Filter
             if (!Strings.isNullOrEmpty(filter)) {
-                pipelines = pipelines.stream().filter(pipeline -> pipeline.getName().contains(filter)).collect(Collectors.toList());
+                pipelines = pipelines.stream().filter(pipeline -> pipeline.getName().contains(filter)).collect(
+                        Collectors.toList());
             }
 
             // Sorting
@@ -154,13 +157,16 @@ public class NewUiPipelineResource implements RestResource {
                 final int fromIndex = offset * pageSize;
                 int toIndex = fromIndex + pageSize;
                 if (toIndex >= pipelines.size()) {
-                    toIndex = pipelines.size() == 0 ? 0 : pipelines.size();
+                    toIndex = pipelines.size() == 0
+                            ? 0
+                            : pipelines.size();
                 }
                 pipelines = pipelines.subList(fromIndex, toIndex);
             }
 
             // Produce response
             final List<DocRef> results = pipelines;
+            int totalPipelines = pipelines.size();
             Object response = new Object() {
                 public int total = totalPipelines;
                 public List<DocRef> pipelines = results;
@@ -173,7 +179,8 @@ public class NewUiPipelineResource implements RestResource {
     @Path("/{pipelineId}")
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
         return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have
+            // 'use' permission on them.
             return securityContext.useAsReadResult(() -> fetchInScope(pipelineId));
         }));
     }
@@ -190,7 +197,7 @@ public class NewUiPipelineResource implements RestResource {
 
             // Validate the pipeline data and add element and property type
             // information.
-            pipelineDataValidator.validate( DocRefUtil.create(pipe), pipelineData, elementMap);
+            pipelineDataValidator.validate(DocRefUtil.create(pipe), pipelineData, elementMap);
             configStack.add(pipelineData);
 
         }
@@ -228,13 +235,15 @@ public class NewUiPipelineResource implements RestResource {
     public Response save(@PathParam("pipelineId") final String pipelineId,
                          @ApiParam("pipelineDocUpdates") final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have
+            // 'use' permission on them.
             securityContext.useAsRead(() -> {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
 
                 if (pipelineDoc != null) {
                     pipelineDoc.setDescription(pipelineDocUpdates.getDescription());
-                    pipelineDocUpdates.getConfigStack().forEach(pipelineDoc::setPipelineData); // will have the effect of setting last one
+                    // will have the effect of setting last one
+                    pipelineDocUpdates.getConfigStack().forEach(pipelineDoc::setPipelineData);
                     pipelineStore.writeDocument(pipelineDoc);
                 }
             });

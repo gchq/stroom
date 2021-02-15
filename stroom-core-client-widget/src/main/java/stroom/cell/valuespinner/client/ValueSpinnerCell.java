@@ -16,6 +16,9 @@
 
 package stroom.cell.valuespinner.client;
 
+import stroom.cell.valuespinner.shared.Editable;
+import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -31,11 +34,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.AbstractImagePrototype.ImagePrototypeElement;
-import stroom.cell.valuespinner.shared.Editable;
-import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
+
     private static volatile Template template;
     private static volatile AbstractImagePrototype arrowDown;
     private static volatile AbstractImagePrototype arrowDownHover;
@@ -54,6 +56,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
      * The currently focused value key. Only one key can be focused at any time.
      */
     private Object focusedKey;
+
     public ValueSpinnerCell() {
         this(0, 100, 1, 99);
     }
@@ -412,6 +415,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     interface Resources extends ClientBundle {
+
         ImageResource arrowDown();
 
         ImageResource arrowDownHover();
@@ -426,7 +430,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"valueSpinner\"><input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input><div class=\"arrows\">{1}{2}</div></div>")
+
+        @Template("<div class=\"valueSpinner\">" +
+                "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>" +
+                "<div class=\"arrows\">{1}{2}</div>" +
+                "</div>")
         SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
     }
 
@@ -434,6 +442,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
      * The {@code ViewData} for this cell.
      */
     public static class ViewData {
+
         /**
          * The last value that was updated.
          */
@@ -516,7 +525,9 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         }
 
         private boolean equalsOrNull(final Object a, final Object b) {
-            return (a != null) ? a.equals(b) : ((b == null));
+            return (a != null)
+                    ? a.equals(b)
+                    : ((b == null));
         }
     }
 }

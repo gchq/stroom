@@ -34,7 +34,9 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements ChooserView {
+
     public interface Binder extends UiBinder<Widget, ChooserViewImpl> {
+
     }
 
     @UiField
@@ -52,7 +54,7 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
 
         // Only deals in lists of strings so no field defs required.
         nameFilter.registerPopupTextProvider(() ->
-                QuickFilterTooltipUtil.createTooltip( "Choose Item Quick Filter"));
+                QuickFilterTooltipUtil.createTooltip("Choose Item Quick Filter"));
     }
 
     @Override

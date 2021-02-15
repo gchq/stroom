@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class SQLStatisticsEventValidator {
+
     private static final Pattern DIRTY_CHARACTER_PATTERN = Pattern.compile(SQLStatisticConstants.NAME_SEPARATOR);
 
     public static List<String> validateEvent(final StatisticEvent statisticEvent) {
@@ -29,16 +30,16 @@ public class SQLStatisticsEventValidator {
         for (final StatisticTag tag : statisticEvent.getTagList()) {
             if (DIRTY_CHARACTER_PATTERN.matcher(tag.getTag()).find()) {
                 // found bad chars in the tag
-                warningList.add(String.format(
-                        "Statistic tag [%s] contains unsupported characters, as defined by the regex %s.  They will be replaced with a '%s'",
+                warningList.add(String.format("Statistic tag [%s] contains unsupported characters, as defined by " +
+                                "the regex %s. They will be replaced with a '%s'",
                         tag.getTag(), DIRTY_CHARACTER_PATTERN.toString(),
                         SQLStatisticConstants.DIRTY_CHARACTER_REPLACEMENT));
             }
 
             if (DIRTY_CHARACTER_PATTERN.matcher(tag.getValue()).find()) {
                 // found bad chars in the tag
-                warningList.add(String.format(
-                        "Statistic value [%s] contains unsupported characters, as defined by the regex %s.  They will be replaced with a '%s'",
+                warningList.add(String.format("Statistic value [%s] contains unsupported characters, as defined " +
+                                "by the regex %s. They will be replaced with a '%s'",
                         tag.getValue(), DIRTY_CHARACTER_PATTERN.toString(),
                         SQLStatisticConstants.DIRTY_CHARACTER_REPLACEMENT));
             }

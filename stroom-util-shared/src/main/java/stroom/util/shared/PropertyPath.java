@@ -20,6 +20,7 @@ import java.util.Objects;
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath> {
+
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
 
@@ -133,17 +134,26 @@ public class PropertyPath implements Comparable<PropertyPath> {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PropertyPath that = (PropertyPath) o;
         return parts.equals(that.parts);
     }
 
     public boolean equalsIgnoreCase(final PropertyPath o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         if (parts.size() != o.parts.size()) {
             return false;
         }
@@ -169,6 +179,7 @@ public class PropertyPath implements Comparable<PropertyPath> {
     }
 
     public static final class Builder {
+
         private List<String> parts;
 
         private Builder() {

@@ -1,14 +1,16 @@
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.WrappedSegmentOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
 public class SegmentOutputStreamProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SegmentOutputStreamProvider.class);
 
     private long index = -1;
@@ -31,7 +33,8 @@ public class SegmentOutputStreamProvider {
                 throw new IOException("Output stream already provided for index " + index);
             }
 
-            // Move up to the right index if this OS is behind, i.e. it hasn't been requested for a certain data type before.
+            // Move up to the right index if this OS is behind, i.e. it hasn't been requested for a certain
+            // data type before.
             while (this.index < index - 1) {
                 LOGGER.debug("Fast forwarding for " + dataTypeName);
                 this.index++;

@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class FeedStatusResource implements RestResource, HasHealthCheck {
+
     public static final String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
 
     private final FeedStatusService feedStatusService;

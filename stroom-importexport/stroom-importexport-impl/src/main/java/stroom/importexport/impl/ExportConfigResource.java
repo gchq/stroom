@@ -12,6 +12,10 @@ import stroom.util.shared.RestResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.ClientErrorException;
@@ -22,14 +26,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Set;
 
 @Api(tags = "Export")
 @Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
+
     private final transient Provider<ImportExportService> importExportServiceProvider;
     private final transient Provider<ResourceStore> resourceStoreProvider;
     private final transient Provider<ExportConfig> exportConfigProvider;

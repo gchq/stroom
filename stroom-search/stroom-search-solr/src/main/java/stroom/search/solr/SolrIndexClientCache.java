@@ -16,13 +16,15 @@
 
 package stroom.search.solr;
 
-import org.apache.solr.client.solrj.SolrClient;
 import stroom.search.solr.shared.SolrConnectionConfig;
+
+import org.apache.solr.client.solrj.SolrClient;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface SolrIndexClientCache {
+
     void context(SolrConnectionConfig key, Consumer<SolrClient> consumer);
 
     <R> R contextResult(SolrConnectionConfig key, Function<SolrClient, R> function);

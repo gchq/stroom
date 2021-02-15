@@ -16,10 +16,12 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
 import stroom.index.shared.IndexShardKey;
+
+import org.apache.lucene.document.Document;
 
 
 public interface Indexer {
+
     void addDocument(IndexShardKey key, Document document);
 }

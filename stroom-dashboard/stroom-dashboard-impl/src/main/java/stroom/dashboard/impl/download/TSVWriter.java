@@ -19,6 +19,7 @@ package stroom.dashboard.impl.download;
 import java.io.Writer;
 
 public class TSVWriter extends DelimitedWriter {
+
     public TSVWriter(final Writer writer) {
         super("\t", writer);
     }

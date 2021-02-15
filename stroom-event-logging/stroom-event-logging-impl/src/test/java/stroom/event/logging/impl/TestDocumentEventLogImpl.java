@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 
 public class TestDocumentEventLogImpl {
+
     @Mock
     private StroomEventLoggingService loggingService;
 
@@ -16,8 +17,8 @@ public class TestDocumentEventLogImpl {
     private DocumentEventLogImpl documentEventLog;
 
     @BeforeEach
-    void setup (){
-       documentEventLog = new DocumentEventLogImpl(loggingService, securityContext);
+    void setup() {
+        documentEventLog = new DocumentEventLogImpl(loggingService, securityContext);
     }
 
 

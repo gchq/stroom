@@ -17,12 +17,13 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.inject.Provider;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.widget.tab.client.presenter.TabData;
+
+import com.google.inject.Provider;
+import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, ReadOnlyChangeHandler {
+
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 

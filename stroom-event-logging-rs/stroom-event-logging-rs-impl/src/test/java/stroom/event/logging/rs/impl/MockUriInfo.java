@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
+import java.net.URI;
+import java.util.List;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.List;
 
-public class MockURIInfo implements UriInfo {
+public class MockUriInfo implements UriInfo {
+
     @Override
     public String getPath() {
         return null;
@@ -79,7 +81,7 @@ public class MockURIInfo implements UriInfo {
 
     private String uuid;
 
-    public void setId (Integer id){
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -91,10 +93,10 @@ public class MockURIInfo implements UriInfo {
     public MultivaluedMap<String, String> getPathParameters() {
         MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
 
-        if (id != null){
+        if (id != null) {
             pathParameterMap.putSingle("id", id.toString());
         }
-        if (uuid != null){
+        if (uuid != null) {
             pathParameterMap.putSingle("uuid", uuid);
         }
 

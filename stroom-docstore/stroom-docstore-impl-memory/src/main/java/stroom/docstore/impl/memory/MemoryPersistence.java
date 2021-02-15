@@ -5,14 +5,15 @@ import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 public class MemoryPersistence implements Persistence, Clearable {
+
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
 
     private final Map<DocRef, Map<String, byte[]>> map = new ConcurrentHashMap<>();

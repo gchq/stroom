@@ -1,22 +1,27 @@
 package stroom.processor.impl.db;
 
-import org.jooq.DSLContext;
 import stroom.db.util.GenericDao;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.ProcessorFilterTracker;
 
-import javax.inject.Inject;
+import org.jooq.DSLContext;
+
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 
 class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
+
     private final GenericDao<ProcessorFilterTrackerRecord, ProcessorFilterTracker, Integer> genericDao;
 
     @Inject
     ProcessorFilterTrackerDaoImpl(final ProcessorDbConnProvider processorDbConnProvider) {
-        this.genericDao = new GenericDao<>(PROCESSOR_FILTER_TRACKER, PROCESSOR_FILTER_TRACKER.ID, ProcessorFilterTracker.class, processorDbConnProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR_FILTER_TRACKER,
+                PROCESSOR_FILTER_TRACKER.ID,
+                ProcessorFilterTracker.class,
+                processorDbConnProvider);
     }
 
     @Override
@@ -39,7 +44,8 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
         return genericDao.delete(id);
     }
 
-    public ProcessorFilterTracker update(final DSLContext context, final ProcessorFilterTracker processorFilterTracker) {
+    public ProcessorFilterTracker update(final DSLContext context,
+                                         final ProcessorFilterTracker processorFilterTracker) {
         return genericDao.update(context, processorFilterTracker);
     }
 }

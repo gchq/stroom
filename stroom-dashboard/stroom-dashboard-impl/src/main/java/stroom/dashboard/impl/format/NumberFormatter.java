@@ -21,6 +21,7 @@ import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
 
 public class NumberFormatter implements Formatter {
+
     private final NumberFormatSettings numberFormatSettings;
 
     private NumberFormatter(final NumberFormatSettings numberFormatSettings) {

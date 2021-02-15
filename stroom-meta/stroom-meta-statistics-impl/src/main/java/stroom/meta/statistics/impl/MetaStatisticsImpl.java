@@ -16,23 +16,25 @@
 
 package stroom.meta.statistics.impl;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class MetaStatisticsImpl implements MetaStatistics {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaStatisticsImpl.class);
 
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;

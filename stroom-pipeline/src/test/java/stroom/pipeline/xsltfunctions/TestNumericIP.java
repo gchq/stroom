@@ -17,12 +17,14 @@
 package stroom.pipeline.xsltfunctions;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNumericIP extends StroomUnitTest {
+
     @Test
     void test() {
         final NumericIP numericIP = new NumericIP();

@@ -17,6 +17,7 @@
 package stroom.importexport.migration;
 
 public abstract class DocumentEntity extends NamedEntity {
+
     private String uuid;
 
     public String getUuid() {

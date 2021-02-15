@@ -17,6 +17,11 @@
 
 package stroom.entity.client.view;
 
+import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.item.client.ItemListBox;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -24,12 +29,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.item.client.ItemListBox;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CopyDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements CopyDocumentView {
+
     private final Widget widget;
     @UiField
     SimplePanel foldersInner;
@@ -70,5 +72,6 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> im
     }
 
     public interface Binder extends UiBinder<Widget, CopyDocumentViewImpl> {
+
     }
 }

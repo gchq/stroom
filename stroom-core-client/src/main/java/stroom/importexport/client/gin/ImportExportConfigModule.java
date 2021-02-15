@@ -33,6 +33,7 @@ import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 import stroom.importexport.client.view.ImportConfigViewImpl;
 
 public class ImportExportConfigModule extends PluginModule {
+
     @Override
     protected void configure() {
         // Import.

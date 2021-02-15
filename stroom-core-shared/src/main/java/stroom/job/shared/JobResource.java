@@ -46,6 +46,6 @@ public interface JobResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}/enabled")
     @ApiOperation(value = "Sets the enabled status of the job")
-    void setEnabled(@PathParam("id") Integer id, 
+    void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }

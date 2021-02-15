@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class AdvancedUserListPresenter extends AbstractUserListPresenter {
+
     private final RestFactory restFactory;
     private UserDataProvider dataProvider;
     private FindUserCriteria findUserCriteria;

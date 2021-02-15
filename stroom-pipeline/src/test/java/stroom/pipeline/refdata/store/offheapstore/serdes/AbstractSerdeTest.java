@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractSerdeTest<T, S extends Serde<T>> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
 
     private static final int BYTE_BUFFER_SIZE = 10_000;
@@ -57,7 +58,10 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         return () -> {
             try {
                 return getSerdeType().getConstructor().newInstance();
-            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            } catch (NoSuchMethodException
+                    | InvocationTargetException
+                    | InstantiationException
+                    | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         };

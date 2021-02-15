@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileSet {
+
     private final FileSetKey key;
     private long totalUncompressedFileSize;
     private long totalZipEntryCount;

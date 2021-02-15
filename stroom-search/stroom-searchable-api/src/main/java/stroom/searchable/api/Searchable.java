@@ -9,6 +9,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import java.util.function.Consumer;
 
 public interface Searchable {
+
     DocRef getDocRef();
 
     DataSource getDataSource();

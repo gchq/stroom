@@ -16,20 +16,22 @@
 
 package stroom.data.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.alert.client.event.AlertEvent;
-import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 
 import java.util.function.Consumer;
 
 public abstract class RestDataProvider<R, T extends ResultPage<R>> extends AsyncDataProvider<R> implements HasHandlers {
+
     private final EventBus eventBus;
 
     private Range requestedRange;

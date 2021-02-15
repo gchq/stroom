@@ -17,5 +17,6 @@
 package stroom.entity.client.presenter;
 
 public interface ReadOnlyChangeHandler {
+
     void onReadOnly(boolean readOnly);
 }

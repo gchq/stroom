@@ -31,9 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,9 +41,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class ScheduledTaskExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutor.class);
 
     private static final String STROOM_JOB_THREAD_POOL = "Stroom Job#";
@@ -109,7 +110,8 @@ class ScheduledTaskExecutor {
                     StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
 
             // Create the executor service that will execute scheduled services.
-            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
+            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1,
+                    threadFactory);
             scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
             this.scheduledExecutorService.set(scheduledExecutorService);
         }
@@ -203,7 +205,10 @@ class ScheduledTaskExecutor {
                         function = new ScheduledJobFunction(scheduledJob, consumerProvider.get(), running);
                     }
                 } else {
-                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", scheduledJob.getName(), enabled, scheduler);
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}",
+                            scheduledJob.getName(),
+                            enabled,
+                            scheduler);
                     running.set(false);
                 }
             } catch (final RuntimeException e) {
@@ -242,6 +247,7 @@ class ScheduledTaskExecutor {
     }
 
     private static class JobNodeTrackedFunction extends ScheduledJobFunction {
+
         private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedFunction.class);
 
         private final JobNodeTracker jobNodeTracker;

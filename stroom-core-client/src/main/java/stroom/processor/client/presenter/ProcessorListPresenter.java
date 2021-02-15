@@ -77,6 +77,7 @@ import java.util.function.Consumer;
 
 public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<ProcessorListRow>>
         implements Refreshable, HasDocumentRead<Object> {
+
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
@@ -103,7 +104,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         request = new FetchProcessorRequest();
         dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
             @Override
-            protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ProcessorListRowResultPage> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
@@ -208,7 +210,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                                 addRowDateString(tableBuilder, "Created On", processor.getCreateTimeMs());
                                 tableBuilder.addRow("Updated By", processor.getUpdateUser());
                                 addRowDateString(tableBuilder, "Updated On", processor.getUpdateTimeMs());
-                                tableBuilder.addRow("Pipeline", DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
+                                tableBuilder.addRow("Pipeline",
+                                        DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
 
                             } else if (row instanceof ProcessorFilterRow) {
                                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -220,7 +223,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                                 addRowDateString(tableBuilder, "Created On", filter.getCreateTimeMs());
                                 tableBuilder.addRow("Updated By", filter.getUpdateUser());
                                 addRowDateString(tableBuilder, "Updated On", filter.getUpdateTimeMs());
-                                tableBuilder.addRow("Pipeline", DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
+                                tableBuilder.addRow("Pipeline",
+                                        DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
                                 addRowDateString(tableBuilder, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
                                 addRowDateString(tableBuilder, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
                                 addRowDateString(tableBuilder, "Stream Create Ms", tracker.getMetaCreateMs());
@@ -253,7 +257,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             public Expander getValue(final ProcessorListRow row) {
                 Expander expander = null;
                 if (row instanceof TreeRow) {
-                    final TreeRow treeRow = (TreeRow) row;
+                    final TreeRow treeRow = row;
                     expander = treeRow.getExpander();
                 }
                 return expander;
@@ -454,7 +458,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addEnabledColumn() {
-        final Appearance appearance = allowUpdate ? new DefaultAppearance() : new NoBorderAppearance();
+        final Appearance appearance = allowUpdate
+                ? new DefaultAppearance()
+                : new NoBorderAppearance();
 
         // Enabled.
         final Column<ProcessorListRow, TickBoxState> enabledColumn = new Column<ProcessorListRow, TickBoxState>(

@@ -19,23 +19,24 @@ package stroom.pipeline.factory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.pipeline.PipelineConfig;
+import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
+
     private static final String CACHE_NAME = "Pipeline Structure Cache";
 
     private final PipelineStackLoader pipelineStackLoader;
@@ -58,7 +59,8 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     @Override
     public PipelineData get(final PipelineDoc pipelineDoc) {
         if (!documentPermissionCache.hasDocumentPermission(pipelineDoc.getUuid(), DocumentPermissionNames.USE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + pipelineDoc);
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to use " + pipelineDoc);
         }
 
         return cache.get(pipelineDoc);

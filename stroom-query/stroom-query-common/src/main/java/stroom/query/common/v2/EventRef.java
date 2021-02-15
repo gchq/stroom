@@ -25,6 +25,7 @@ import java.io.Serializable;
 
 @JsonInclude(Include.NON_NULL)
 public class EventRef implements Serializable {
+
     private static final long serialVersionUID = -3159853837079171362L;
 
     @JsonProperty

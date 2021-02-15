@@ -16,6 +16,10 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.item.client.ItemListBox;
+import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
+import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -23,11 +27,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.item.client.ItemListBox;
-import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
-import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 
 public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
+
     private final Widget widget;
     @UiField
     Label element;
@@ -37,6 +39,7 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     ItemListBox<Source> source;
     @UiField
     SimplePanel value;
+
     @Inject
     public NewPropertyViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -69,5 +72,6 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     }
 
     public interface Binder extends UiBinder<Widget, NewPropertyViewImpl> {
+
     }
 }

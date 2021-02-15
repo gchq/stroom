@@ -16,21 +16,23 @@
 
 package stroom.widget.htree.client;
 
+import stroom.widget.htree.client.treelayout.Bounds;
+import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
+import stroom.widget.htree.client.treelayout.TreeLayout;
+import stroom.widget.util.client.MySingleSelectionModel;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SetSelectionModel;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.widget.htree.client.treelayout.Bounds;
-import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
-import stroom.widget.htree.client.treelayout.TreeLayout;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TreeRenderer<T> {
+
     public static final String SHADOW_LAYER = "shadow";
     public static final String ITEM_LAYER = "item";
     public static final String ARROW_LAYER = "arrow";
@@ -146,7 +148,8 @@ public class TreeRenderer<T> {
                             selectionModel.setSelected(item, true);
 
                         } else if (selectionModel instanceof MySingleSelectionModel<?>) {
-                            final MySingleSelectionModel<T> singleSelectionModel = (MySingleSelectionModel<T>) setSelectionModel;
+                            final MySingleSelectionModel<T> singleSelectionModel =
+                                    (MySingleSelectionModel<T>) setSelectionModel;
                             final T lastSelection = singleSelectionModel.getSelectedObject();
                             if (lastSelection != null) {
                                 selectionModel.setSelected(lastSelection, false);

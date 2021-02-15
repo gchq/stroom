@@ -16,20 +16,33 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.HasData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.docstore.shared.Doc;
-import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "data",
+        "converterType"})
 @JsonInclude(Include.NON_NULL)
 public class TextConverterDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "TextConverter";
 
     @JsonProperty
@@ -91,11 +104,18 @@ public class TextConverterDoc extends Doc implements HasData {
         this.converterType = converterType;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final TextConverterDoc that = (TextConverterDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(data, that.data) &&
@@ -108,7 +128,9 @@ public class TextConverterDoc extends Doc implements HasData {
     }
 
     public enum TextConverterType implements HasDisplayValue {
-        NONE("None"), DATA_SPLITTER("Data Splitter"), XML_FRAGMENT("XML Fragment");
+        NONE("None"),
+        DATA_SPLITTER("Data Splitter"),
+        XML_FRAGMENT("XML Fragment");
 
         private final String displayValue;
 

@@ -34,6 +34,7 @@ import java.util.Objects;
 @ApiModel(description = "The string formatting to apply to a date value")
 @JsonInclude(Include.NON_NULL)
 public final class DateTimeFormatSettings implements FormatSettings {
+
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
     @ApiModelProperty(
@@ -80,10 +81,15 @@ public final class DateTimeFormatSettings implements FormatSettings {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DateTimeFormatSettings that = (DateTimeFormatSettings) o;
         return Objects.equals(pattern, that.pattern) &&
                 Objects.equals(timeZone, that.timeZone);
@@ -114,6 +120,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
      * Builder for constructing a {@link DateTimeFormatSettings dateTimeFormat}
      */
     public static final class Builder {
+
         private String pattern;
         private TimeZone timeZone;
 

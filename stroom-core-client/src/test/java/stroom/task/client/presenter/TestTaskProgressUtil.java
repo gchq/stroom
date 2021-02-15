@@ -32,6 +32,7 @@ import java.util.function.BiFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTaskProgressUtil {
+
     @Test
     void testSortByAge() {
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
@@ -86,7 +87,8 @@ class TestTaskProgressUtil {
         testList(sortedList, (v1, v2) -> v1.getNodeName().compareTo(v2.getNodeName()) >= 0);
     }
 
-    private void testList(final List<TaskProgress> sortedList, final BiFunction<TaskProgress, TaskProgress, Boolean> compareFunction) {
+    private void testList(final List<TaskProgress> sortedList,
+                          final BiFunction<TaskProgress, TaskProgress, Boolean> compareFunction) {
         TaskProgress lastParent = null;
         TaskProgress lastChild = null;
         for (final TaskProgress taskProgress : sortedList) {

@@ -12,12 +12,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.solr.client.solrj.SolrQuery;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 public class SolrSearchFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchFactory.class);
 
     private final WordListProvider wordListProvider;

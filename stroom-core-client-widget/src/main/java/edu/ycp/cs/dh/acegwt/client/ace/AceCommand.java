@@ -37,7 +37,7 @@ public enum AceCommand {
 
     private final String name;
 
-    private AceCommand(final String name) {
+    AceCommand(final String name) {
         this.name = name;
     }
 

@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
         implements HasDirtyHandlers {
+
     private final RuleListPresenter listPresenter;
     //    private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -202,25 +203,30 @@ public class RulesPresenter
         editRulePresenter.read(newRule, fields);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(RulesPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ConditionalFormattingRule rule = editRulePresenter.write();
-                    rules.add(rule);
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
-                    setDirty(true);
-                }
+        ShowPopupEvent.fire(RulesPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Add New Rule",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final ConditionalFormattingRule rule = editRulePresenter.write();
+                            rules.add(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
+                            setDirty(true);
+                        }
 
-                HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
-            }
+                        HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
+                    }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     private void edit(final ConditionalFormattingRule existingRule) {
@@ -376,6 +382,7 @@ public class RulesPresenter
     }
 
     public interface RulesView extends View {
+
         void setTableView(View view);
 
 //        void setExpressionView(View view);

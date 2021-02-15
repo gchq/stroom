@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import com.google.gwt.user.cellview.client.Header;
 
 public class FieldsHeader extends Header<Boolean> {
+
     private final Boolean optionsVisible;
 
     public FieldsHeader(final FieldsManager fieldsManager, final Boolean optionsVisible) {

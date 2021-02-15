@@ -23,6 +23,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ResultPage;
 
 public interface ProcessorTaskService {
+
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 
     ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);

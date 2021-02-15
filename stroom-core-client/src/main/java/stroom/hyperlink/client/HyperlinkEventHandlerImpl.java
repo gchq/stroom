@@ -40,6 +40,7 @@ import java.util.function.Function;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
+
     private final EventBus eventBus;
     private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
     private final Provider<IFramePresenter> iFramePresenterProvider;
@@ -58,8 +59,10 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         this.contentManager = contentManager;
 
 //        clientPropertyCache.get()
-//                .onSuccess(result -> namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
-//                .onFailure(caught -> AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
+//                .onSuccess(result ->
+//                namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
+//                .onFailure(caught ->
+//                AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
 
         registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
     }
@@ -166,7 +169,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final int colFrom = (int) getParam(href, "colFrom", -1);
         final int lineTo = (int) getParam(href, "lineTo", -1);
         final int colTo = (int) getParam(href, "colTo", -1);
-        final DataViewType dataViewType= getParam(
+        final DataViewType dataViewType = getParam(
                 href,
                 "viewType",
                 DataViewType::parse,

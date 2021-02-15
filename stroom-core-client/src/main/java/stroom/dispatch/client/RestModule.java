@@ -21,6 +21,7 @@ import com.google.inject.Singleton;
 import org.fusesource.restygwt.client.Dispatcher;
 
 public class RestModule extends AbstractGinModule {
+
     @Override
     protected void configure() {
         bind(Dispatcher.class).to(RestDispatcher.class);

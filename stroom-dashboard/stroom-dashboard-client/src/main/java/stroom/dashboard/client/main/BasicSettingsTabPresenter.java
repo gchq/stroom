@@ -17,7 +17,6 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentConfig.Builder;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,6 +26,7 @@ import java.util.Objects;
 
 public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.SettingsView>
         extends AbstractSettingsTabPresenter<V> {
+
     @Inject
     public BasicSettingsTabPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
@@ -61,6 +61,7 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
     }
 
     public interface SettingsView extends View {
+
         void setId(String id);
 
         String getName();

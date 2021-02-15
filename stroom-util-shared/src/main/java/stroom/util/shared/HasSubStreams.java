@@ -23,6 +23,7 @@ public interface HasSubStreams {
 
     /**
      * Called when the user clicks one of the part nav controls
+     *
      * @param partNo The new part number
      */
     void setPartNo(final long partNo);
@@ -38,6 +39,7 @@ public interface HasSubStreams {
      * @return True if multiple segments can be displayed at once
      */
     boolean canDisplayMultipleSegments();
+
     /**
      * zero based, inclusive
      */
@@ -57,6 +59,7 @@ public interface HasSubStreams {
 
     /**
      * Called when the user clicks one of the segment nav controls
+     *
      * @param segmentNoFrom The new segment number
      */
     void setSegmentNoFrom(final long segmentNoFrom);

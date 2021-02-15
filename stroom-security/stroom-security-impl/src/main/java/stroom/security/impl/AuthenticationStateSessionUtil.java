@@ -1,16 +1,18 @@
 package stroom.security.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import stroom.util.servlet.UserAgentSessionUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 public final class AuthenticationStateSessionUtil {
+
     private static final String AUTHENTICATION_STATE_SESSION_ATTRIBUTE = "AUTHENTICATION_STATE_SESSION_ATTRIBUTE";
 
     private AuthenticationStateSessionUtil() {
@@ -38,7 +40,8 @@ public final class AuthenticationStateSessionUtil {
     public static AuthenticationState pop(final HttpServletRequest request, final String stateId) {
         final HttpSession session = request.getSession(false);
         if (session != null) {
-            final Cache<String, AuthenticationState> cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
+            final Cache<String, AuthenticationState> cache = (Cache) session.getAttribute(
+                    AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
             if (cache != null) {
                 return cache.getIfPresent(stateId);
             }

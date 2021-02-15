@@ -1,14 +1,16 @@
 package stroom.pipeline.reader;
 
+import stroom.util.xml.XMLUtil;
+
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.util.xml.XMLUtil;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
 public class TestInvalidCharFilterReader {
+
     @Test
     public void test() throws IOException {
         char[] good = {'v', 'a', 'l', 'u', 'e'};
@@ -123,6 +125,7 @@ public class TestInvalidCharFilterReader {
     }
 
     private static class Params {
+
         private final String attributeValue;
         private final String content;
 

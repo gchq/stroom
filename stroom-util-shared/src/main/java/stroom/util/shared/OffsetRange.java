@@ -30,6 +30,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "The offset and length of a range of data in a sub-set of a query result set")
 public final class OffsetRange {
+
     @ApiModelProperty(
             value = "The start offset for this sub-set of data, where zero is the offset of the first record " +
                     "in the full result set",
@@ -73,10 +74,15 @@ public final class OffsetRange {
         return length;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         OffsetRange that = (OffsetRange) o;
         return Objects.equals(offset, that.offset) &&
                 Objects.equals(length, that.length);
@@ -107,6 +113,7 @@ public final class OffsetRange {
      * Builder for constructing a {@link OffsetRange}
      */
     public static final class Builder {
+
         private Long offset;
         private Long length;
 

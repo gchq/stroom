@@ -1,8 +1,8 @@
 package stroom.data.client.presenter;
 
 import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
-import stroom.util.shared.HasItems;
 import stroom.util.shared.Count;
+import stroom.util.shared.HasItems;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 class BasicInputStreamProvider implements InputStreamProvider {
+
     private final Map<String, SegmentInputStream> inputStreamMap = new HashMap<>();
 
     @Override

@@ -19,6 +19,7 @@ package stroom.kafka.pipeline;
 import stroom.pipeline.factory.PipelineElementModule;
 
 public class KafkaPipelineModule extends PipelineElementModule {
+
     @Override
     protected void configureElements() {
         bindElement(StandardKafkaProducer.class);

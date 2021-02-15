@@ -1,10 +1,11 @@
 package stroom.config;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 

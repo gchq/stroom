@@ -1,15 +1,17 @@
 package stroom.proxy.feed.remote;
 
+import stroom.proxy.remote.RemoteRequest;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.proxy.remote.RemoteRequest;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class GetFeedStatusRequest extends RemoteRequest {
+
     private static final long serialVersionUID = -4083508707616388035L;
 
     @JsonProperty
@@ -39,10 +41,15 @@ public class GetFeedStatusRequest extends RemoteRequest {
         return senderDn;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final GetFeedStatusRequest that = (GetFeedStatusRequest) o;
         return Objects.equals(feedName, that.feedName) &&
                 Objects.equals(senderDn, that.senderDn);

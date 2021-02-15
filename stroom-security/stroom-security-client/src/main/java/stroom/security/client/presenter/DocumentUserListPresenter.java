@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class DocumentUserListPresenter extends AbstractUserListPresenter {
+
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private List<User> userList;

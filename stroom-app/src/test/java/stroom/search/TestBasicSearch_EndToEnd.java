@@ -18,8 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -36,14 +34,18 @@ import stroom.search.impl.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -146,7 +148,9 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents) {
+    private void test(final ExpressionOperator.Builder expression,
+                      final long expectedStreams,
+                      final long expectedEvents) {
         final ResultPage<IndexShard> resultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
         for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));

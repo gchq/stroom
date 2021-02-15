@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class IndexDataSourceFieldUtil {
+
     public static List<AbstractField> getDataSourceFields(final IndexDoc index, final SecurityContext securityContext) {
         if (index == null || index.getFields() == null) {
             return null;

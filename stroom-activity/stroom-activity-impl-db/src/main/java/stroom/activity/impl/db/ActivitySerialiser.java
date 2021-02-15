@@ -16,18 +16,20 @@
 
 package stroom.activity.impl.db;
 
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.ActivityDetails;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.shared.Activity;
-import stroom.activity.shared.Activity.ActivityDetails;
 
 import java.io.IOException;
 
 class ActivitySerialiser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivitySerialiser.class);
 
     static Activity serialise(final Activity activity) {

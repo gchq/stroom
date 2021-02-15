@@ -16,6 +16,9 @@
 
 package stroom.security.client.view;
 
+import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -25,10 +28,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public final class DocumentPermissionsTabViewImpl extends ViewImpl implements DocumentPermissionsTabPresenter.DocumentPermissionsTabView {
+public final class DocumentPermissionsTabViewImpl extends ViewImpl
+        implements DocumentPermissionsTabPresenter.DocumentPermissionsTabView {
+
     private final Widget widget;
     @UiField
     ResizeSimplePanel users;
@@ -63,5 +66,6 @@ public final class DocumentPermissionsTabViewImpl extends ViewImpl implements Do
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsTabViewImpl> {
+
     }
 }

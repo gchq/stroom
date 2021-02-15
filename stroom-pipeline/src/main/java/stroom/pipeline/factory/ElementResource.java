@@ -9,6 +9,10 @@ import stroom.util.shared.RestResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -17,10 +21,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @Api(tags = "Elements")
 @Path("/elements" + ResourcePaths.V1)

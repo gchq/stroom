@@ -1,17 +1,19 @@
 package stroom.security.shared;
 
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class User implements HasAuditInfo, HasIntegerId {
+
     public static final String ADMIN_USER_NAME = "admin";
 
     @JsonProperty
@@ -181,10 +183,15 @@ public class User implements HasAuditInfo, HasIntegerId {
 //    }
 
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final User user = (User) o;
         return uuid.equals(user.uuid);
     }
@@ -203,6 +210,7 @@ public class User implements HasAuditInfo, HasIntegerId {
     }
 
     public static final class Builder {
+
         private Integer id;
         private Integer version;
         private Long createTimeMs;
@@ -256,7 +264,16 @@ public class User implements HasAuditInfo, HasIntegerId {
         }
 
         public User build() {
-            return new User(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, uuid, group, enabled);
+            return new User(id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name,
+                    uuid,
+                    group,
+                    enabled);
         }
     }
 }

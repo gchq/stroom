@@ -16,8 +16,6 @@
 
 package stroom.cluster.task.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -26,13 +24,17 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
 import stroom.node.api.NodeInfo;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TargetNodeSetFactoryImpl.class);
 
     private static final Long ONE_MINUTE = 60000L;
@@ -63,7 +65,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
         }
     }
 
-//    @Override
+    //    @Override
     public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         return Collections.singleton(getMasterNode());
     }

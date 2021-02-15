@@ -1,5 +1,8 @@
 package stroom.security.identity.token;
 
+import stroom.security.openid.api.JsonWebKeyFactory;
+import stroom.util.logging.LogUtil;
+
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -9,8 +12,6 @@ import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.openid.api.JsonWebKeyFactory;
-import stroom.util.logging.LogUtil;
 
 import java.util.UUID;
 

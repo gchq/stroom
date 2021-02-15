@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
+
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
     @Inject

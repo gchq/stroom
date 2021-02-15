@@ -38,6 +38,7 @@ class VisualisationResourceImpl implements VisualisationResource {
         this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
+    @Override
     public VisualisationDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(
                 visualisationStoreProvider.get(),

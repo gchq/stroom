@@ -28,14 +28,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,7 +44,7 @@ class TestStroomEventLoggingServiceImpl {
 
     private static final String TYPE_ID = "typeId";
     private static final String DESCRIPTION = "I did something";
-    private SecurityContext securityContext = new MockSecurityContext();
+    private final SecurityContext securityContext = new MockSecurityContext();
     @Mock
     private HttpServletRequest httpServletRequest;
     @Mock
@@ -54,7 +54,7 @@ class TestStroomEventLoggingServiceImpl {
 
     private StroomEventLoggingService stroomEventLoggingService;
 
-    private BaseObject testObj = OtherObject.builder().withDescription("Test").build();
+    private final BaseObject testObj = OtherObject.builder().withDescription("Test").build();
 
     @BeforeEach
     void setup() {
@@ -225,9 +225,9 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     @Test
-    void testDataItemCreationAndRedaction () throws Exception {
-        List<Data> allData = stroomEventLoggingService.getDataItems
-                (new TestSecretObj("test", "xyzzy", "open-sesame"));
+    void testDataItemCreationAndRedaction() throws Exception {
+        List<Data> allData = stroomEventLoggingService.getDataItems(
+                new TestSecretObj("test", "xyzzy", "open-sesame"));
 
         assertThat(allData.size()).isEqualTo(4);
         assertThat(allData).anyMatch(data -> data.getName().equals("name"));
@@ -244,13 +244,13 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     @Test
-    void testConvertPojoWithInfoPrvider () throws Exception {
+    void testConvertPojoWithInfoPrvider() throws Exception {
         BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
         assertThat(baseObject).isSameAs(testObj);
     }
 
     @Test
-    void testConvertPojoWithoutInfoPrvider () throws Exception {
+    void testConvertPojoWithoutInfoPrvider() throws Exception {
         String name = "TestSecretObject1";
         String typeName = TestSecretObj.class.getSimpleName();
         BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));
@@ -308,12 +308,13 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     public static class TestSecretObj implements HasName {
-        private String name;
-        private String password;
+
+        private final String name;
+        private final String password;
         private String myNewSecret;
         private boolean secret;
 
-        public TestSecretObj (String name, String password, String myNewSecret){
+        public TestSecretObj(String name, String password, String myNewSecret) {
             this.name = name;
             this.password = password;
             this.myNewSecret = myNewSecret;

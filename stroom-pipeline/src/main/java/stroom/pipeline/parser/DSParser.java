@@ -39,22 +39,23 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
-import stroom.util.io.PathCreator;
 import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.function.Consumer;
 
 @ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
 public class DSParser extends AbstractParser implements SupportsCodeInjection {
+
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
@@ -188,7 +189,8 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                 getPipelineName(),
                 message -> getErrorReceiverProxy().log(Severity.WARNING, null, getElementId(), message, null));
         if (docRef == null) {
-            throw new ProcessException("No data splitter is configured or can be found to match the provided name pattern");
+            throw new ProcessException(
+                    "No data splitter is configured or can be found to match the provided name pattern");
         } else {
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
             if (tc == null) {

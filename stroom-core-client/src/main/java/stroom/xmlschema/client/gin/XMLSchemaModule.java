@@ -27,6 +27,7 @@ import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSet
 import stroom.xmlschema.client.view.XMLSchemaSettingsViewImpl;
 
 public class XMLSchemaModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(XMLSchemaPlugin.class);

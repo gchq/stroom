@@ -53,7 +53,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     @POST
     @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation("Finds tasks for a node")
-    TaskProgressResponse find(@PathParam("nodeName") String nodeName, 
+    TaskProgressResponse find(@PathParam("nodeName") String nodeName,
                               @ApiParam("request") FindTaskProgressRequest request);
 
     @GET
@@ -64,6 +64,6 @@ public interface TaskResource extends RestResource, DirectRestService {
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation("Terminates tasks for a node")
-    Boolean terminate(@PathParam("nodeName") String nodeName, 
+    Boolean terminate(@PathParam("nodeName") String nodeName,
                       @ApiParam("request") TerminateTaskProgressRequest request);
 }

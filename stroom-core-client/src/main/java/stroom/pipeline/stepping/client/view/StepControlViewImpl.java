@@ -16,6 +16,12 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
+import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,13 +30,9 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
-import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
 
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
+
     private final Widget widget;
     @UiField(provided = true)
     SvgButton firstButton;
@@ -42,6 +44,7 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     SvgButton lastButton;
     @UiField(provided = true)
     SvgButton refreshButton;
+
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
@@ -129,5 +132,6 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     }
 
     public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
+
     }
 }

@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public abstract class ExtensionFileVisitor extends AbstractFileVisitor {
+
     private final String extension;
 
     public ExtensionFileVisitor(final String extension) {

@@ -16,13 +16,15 @@
 
 package stroom.dashboard.client.unknown;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLView> {
+
     private static final ComponentType TYPE = new ComponentType(99, "Unknown", "Unknown");
 
     @Inject

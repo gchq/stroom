@@ -45,6 +45,7 @@ import java.text.ParseException;
                                 argType = ValInteger.class),
                 }))
 class Substring extends AbstractFunction implements Serializable {
+
     static final String NAME = "substring";
     private static final long serialVersionUID = -305845496003936297L;
     private Function startFunction;
@@ -131,6 +132,7 @@ class Substring extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator startPosGenerator;

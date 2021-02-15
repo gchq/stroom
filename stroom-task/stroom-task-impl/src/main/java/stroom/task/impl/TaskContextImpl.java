@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class TaskContextImpl implements TaskContext {
+
     private final TaskId taskId;
     private final UserIdentity userIdentity;
     private final String name;

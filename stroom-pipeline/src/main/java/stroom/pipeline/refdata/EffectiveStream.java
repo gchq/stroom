@@ -44,6 +44,7 @@ class EffectiveStream implements Comparable<EffectiveStream> {
         return Long.compare(effectiveMs, o.effectiveMs);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

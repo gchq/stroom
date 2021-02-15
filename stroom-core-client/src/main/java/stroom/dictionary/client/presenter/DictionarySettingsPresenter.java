@@ -17,19 +17,22 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.shared.XsltDoc;
 
-public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
+public class DictionarySettingsPresenter
+        extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
+
     private final DictionaryListPresenter dictionaryListPresenter;
 
     @Inject
@@ -81,6 +84,7 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     }
 
     public interface DictionarySettingsView extends View {
+
         TextArea getDescription();
 
         void setImportList(View view);

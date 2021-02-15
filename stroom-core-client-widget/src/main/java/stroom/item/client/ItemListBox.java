@@ -16,12 +16,13 @@
 
 package stroom.item.client;
 
+import stroom.docref.HasDisplayValue;
+
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
-import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ItemListBox<T extends HasDisplayValue> extends Composite implements ItemListBoxDisplay<T> {
+
     private final ListBox listBox;
     private final List<T> items;
     private final String nonSelectString;

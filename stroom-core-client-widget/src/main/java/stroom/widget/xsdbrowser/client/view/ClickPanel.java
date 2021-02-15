@@ -26,6 +26,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ClickPanel extends SimplePanel implements HasClickHandlers, HasDoubleClickHandlers {
+
     @Override
     public HandlerRegistration addClickHandler(ClickHandler handler) {
         return addDomHandler(handler, ClickEvent.getType());

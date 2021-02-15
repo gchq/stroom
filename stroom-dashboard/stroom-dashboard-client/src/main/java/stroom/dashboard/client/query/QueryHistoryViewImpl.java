@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.cell.list.client.CustomCellList;
+import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
+import stroom.dashboard.shared.StoredQuery;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
@@ -24,11 +28,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.cell.list.client.CustomCellList;
-import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
-import stroom.dashboard.shared.StoredQuery;
 
 public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
+
     private final Widget widget;
     @UiField(provided = true)
     CustomCellList<StoredQuery> cellList;
@@ -57,5 +59,6 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     }
 
     public interface Binder extends UiBinder<Widget, QueryHistoryViewImpl> {
+
     }
 }

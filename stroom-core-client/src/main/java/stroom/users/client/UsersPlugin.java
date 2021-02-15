@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class UsersPlugin extends NodeToolsPlugin {
+
     private final UiConfigCache clientPropertyCache;
 
     @Inject

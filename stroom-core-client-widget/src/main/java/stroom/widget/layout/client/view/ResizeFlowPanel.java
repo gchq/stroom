@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ResizeFlowPanel extends FlowPanel implements RequiresResize, ProvidesResize {
+
     @Override
     public void onResize() {
         for (int i = 0; i < getWidgetCount(); i++) {

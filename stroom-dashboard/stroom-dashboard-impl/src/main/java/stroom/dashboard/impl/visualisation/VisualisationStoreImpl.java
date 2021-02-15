@@ -30,15 +30,16 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
+
     private final Store<VisualisationDoc> store;
 
     @Inject
@@ -148,12 +149,17 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

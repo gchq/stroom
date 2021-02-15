@@ -16,6 +16,13 @@
 
 package stroom.search.impl.shard;
 
+import stroom.index.impl.IndexShardUtil;
+import stroom.index.impl.LockFactoryFactory;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.search.impl.SearchException;
+import stroom.util.io.FileUtil;
+
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherFactory;
@@ -24,18 +31,13 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.impl.IndexShardUtil;
-import stroom.index.impl.LockFactoryFactory;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.search.impl.SearchException;
-import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IndexShardSearcher {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcher.class);
 
     private final IndexShard indexShard;
@@ -76,7 +78,8 @@ public class IndexShardSearcher {
                 final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
                 if (!Files.isDirectory(dir)) {
-                    throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(dir));
+                    throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(
+                            dir));
                 }
 
                 directory = new NIOFSDirectory(dir, LockFactoryFactory.get());
@@ -93,8 +96,8 @@ public class IndexShardSearcher {
                         // may still have been written to since we got this
                         // reference.
                         if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                            LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
-                                    + indexShard.getDocumentCount());
+                            LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount +
+                                    " DB says " + indexShard.getDocumentCount());
                         } else if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
                                     + " DB says " + indexShard.getDocumentCount());
@@ -117,7 +120,10 @@ public class IndexShardSearcher {
     }
 
     private SearcherManager openWithWriter(final IndexWriter indexWriter) throws IOException {
-        final SearcherManager searcherManager = new SearcherManager(indexWriter, false, new SearcherFactory());
+        final SearcherManager searcherManager = new SearcherManager(
+                indexWriter,
+                false,
+                new SearcherFactory());
 
         // Check the document count in the index matches the DB. We are using
         // the writer so chances are there is a mismatch.

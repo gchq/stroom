@@ -16,12 +16,6 @@
 
 package stroom.pipeline.cache;
 
-import net.sf.saxon.s9api.Processor;
-import net.sf.saxon.s9api.SaxonApiException;
-import net.sf.saxon.s9api.XsltCompiler;
-import net.sf.saxon.s9api.XsltExecutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
@@ -36,16 +30,24 @@ import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XsltCompiler;
+import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
-import java.util.List;
 
 @Singleton
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XsltPoolImpl.class);
 
     private final URIResolver uriResolver;
@@ -64,7 +66,11 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
     }
 
     @Override
-    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XsltDoc k, final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences, final boolean usePool) {
+    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XsltDoc k,
+                                                                   final ErrorReceiver errorReceiver,
+                                                                   final LocationFactory locationFactory,
+                                                                   final List<PipelineReference> pipelineReferences,
+                                                                   final boolean usePool) {
         // Get the item from the pool.
         final PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
 

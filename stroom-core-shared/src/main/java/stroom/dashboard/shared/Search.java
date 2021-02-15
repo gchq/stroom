@@ -9,7 +9,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.QueryComponentSettings.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -34,6 +33,7 @@ import java.util.Objects;
         "queryInfo"})
 @JsonInclude(Include.NON_NULL)
 public class Search {
+
     @JsonProperty
     private final DocRef dataSourceRef;
     @JsonProperty
@@ -94,10 +94,15 @@ public class Search {
         return queryInfo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Search search = (Search) o;
         return incremental == search.incremental &&
                 storeHistory == search.storeHistory &&
@@ -110,7 +115,14 @@ public class Search {
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSourceRef, expression, componentSettingsMap, params, incremental, storeHistory, queryInfo);
+        return Objects.hash(
+                dataSourceRef,
+                expression,
+                componentSettingsMap,
+                params,
+                incremental,
+                storeHistory,
+                queryInfo);
     }
 
     @Override
@@ -135,6 +147,7 @@ public class Search {
     }
 
     public static final class Builder {
+
         private DocRef dataSourceRef;
         private ExpressionOperator expression;
         private Map<String, ComponentSettings> componentSettingsMap;

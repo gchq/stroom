@@ -113,5 +113,6 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
     }
 
     public interface Binder extends UiBinder<Widget, ProgressViewImpl> {
+
     }
 }

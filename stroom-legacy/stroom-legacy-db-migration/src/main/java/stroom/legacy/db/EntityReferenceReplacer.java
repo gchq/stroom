@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 @Deprecated
 public class EntityReferenceReplacer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityReferenceReplacer.class);
 
     private static final String[] CONTAINERS = {"entity", "pipeline", "feed", "streamType", "dataSource", "extractionPipeline", "visualisation"};
@@ -36,7 +37,8 @@ public class EntityReferenceReplacer {
         String newData = data;
 
         for (final String container : CONTAINERS) {
-            Pattern pattern = Pattern.compile("<" + container + ">\\s*<type>.*?</type>.*?</" + container + ">", Pattern.DOTALL);
+            Pattern pattern = Pattern.compile("<" + container + ">\\s*<type>.*?</type>.*?</" + container + ">",
+                    Pattern.DOTALL);
             Matcher matcher = pattern.matcher(data);
             while (matcher.find()) {
                 try {
@@ -96,10 +98,24 @@ public class EntityReferenceReplacer {
                                 appendReference(connection, container, "VIS", id, type, name, path, sb);
                                 break;
                             case "StatisticStore":
-                                appendReference(connection, container, "STAT_DAT_SRC", id, "StatisticStore", name, path, sb);
+                                appendReference(connection,
+                                        container,
+                                        "STAT_DAT_SRC",
+                                        id,
+                                        "StatisticStore",
+                                        name,
+                                        path,
+                                        sb);
                                 break;
                             case "StatisticsDataSource":
-                                appendReference(connection, container, "STAT_DAT_SRC", id, "StatisticStore", name, path, sb);
+                                appendReference(connection,
+                                        container,
+                                        "STAT_DAT_SRC",
+                                        id,
+                                        "StatisticStore",
+                                        name,
+                                        path,
+                                        sb);
                                 break;
                             default:
                                 LOGGER.error("Unable to perform entity replacement for unknown type '" + type + "'");
@@ -125,7 +141,14 @@ public class EntityReferenceReplacer {
         return null;
     }
 
-    private void appendReference(final Connection connection, final String container, final String table, final String id, final String type, final String name, final String path, final StringBuilder sb) {
+    private void appendReference(final Connection connection,
+                                 final String container,
+                                 final String table,
+                                 final String id,
+                                 final String type,
+                                 final String name,
+                                 final String path,
+                                 final StringBuilder sb) {
         sb.append("<");
         sb.append(container);
         sb.append(">");

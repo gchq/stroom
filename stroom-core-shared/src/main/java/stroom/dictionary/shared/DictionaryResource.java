@@ -27,6 +27,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -35,7 +36,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Set;
 
 @Api(tags = "Dictionaries (v1)")
 @Path("/dictionary" + ResourcePaths.V1)
@@ -66,7 +66,6 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     ResourceGeneration download(DocRef dictionaryRef);
 
 
-
     ////////////////////////
     // React UI endpoints //
     ////////////////////////
@@ -95,5 +94,5 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     @Path("/{dictionaryUuid}")
     @ApiOperation("Save the supplied dictionary")
     void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-                         final DictionaryDTO updates);
+              final DictionaryDTO updates);
 }

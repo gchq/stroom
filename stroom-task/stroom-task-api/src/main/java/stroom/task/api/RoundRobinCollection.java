@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class RoundRobinCollection<T> {
+
     private final List<T> list = new ArrayList<>();
     private volatile int index;
 

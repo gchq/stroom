@@ -95,7 +95,11 @@ public class ResultPage<T> implements Serializable {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse(offset, limited.size(), (long) fullList.size(), true);
+                final PageResponse pageResponse = new PageResponse(
+                        offset,
+                        limited.size(),
+                        (long) fullList.size(),
+                        true);
                 return new ResultPage<>(limited, pageResponse);
             }
         }
@@ -124,7 +128,10 @@ public class ResultPage<T> implements Serializable {
 
     public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
         if (values != null) {
-            return new PageResponse(pageResponse.getOffset(), values.size(), pageResponse.getTotal(), pageResponse.isExact());
+            return new PageResponse(pageResponse.getOffset(),
+                    values.size(),
+                    pageResponse.getTotal(),
+                    pageResponse.isExact());
         }
         return new PageResponse(pageResponse.getOffset(), 0, pageResponse.getTotal(), pageResponse.isExact());
     }
@@ -172,8 +179,8 @@ public class ResultPage<T> implements Serializable {
                     // get to process more that 1 + that limit. If this fails it
                     // will be a coding error
                     // or not applying the limit.
-                    throw new IllegalStateException(
-                            "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
+                    throw new IllegalStateException("For some reason we returned more rows that we were limited to. " +
+                            "Did you apply the restriction criteria?");
                 }
 
                 // All our queries are + 1 to we need to remove the last element
@@ -231,7 +238,9 @@ public class ResultPage<T> implements Serializable {
                         resultPageFactory.apply(
                                 accumulator,
                                 new PageResponse(
-                                        pageRequest != null ? pageRequest.getOffset() : 0,
+                                        pageRequest != null
+                                                ? pageRequest.getOffset()
+                                                : 0,
                                         accumulator.size(),
                                         counter,
                                         true));
@@ -333,10 +342,15 @@ public class ResultPage<T> implements Serializable {
         values.forEach(action);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ResultPage<?> that = (ResultPage<?>) o;
         return Objects.equals(values, that.values) &&
                 Objects.equals(pageResponse, that.pageResponse);

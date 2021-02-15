@@ -20,6 +20,7 @@ package stroom.task.api;
 import stroom.task.shared.TaskId;
 
 public interface TaskManager {
+
     void startup();
 
     void shutdown();

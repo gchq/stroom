@@ -17,12 +17,14 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.docref.DocRef;
 
 public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private final DocRef docRef;
@@ -58,6 +60,7 @@ public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onSaveAs(final SaveAsDocumentEvent event);
     }
 }

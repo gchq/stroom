@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
+
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
     private static final String FLYWAY_TABLE = "meta_schema_history";
@@ -76,12 +77,14 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements MetaDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }
     }
 
     private static class MetaValueServiceFlush extends RunnableWrapper {
+
         @Inject
         MetaValueServiceFlush(final MetaValueDaoImpl metaValueService) {
             super(metaValueService::flush);

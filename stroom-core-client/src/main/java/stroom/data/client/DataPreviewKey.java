@@ -5,6 +5,7 @@ import stroom.pipeline.shared.SourceLocation;
 import java.util.Objects;
 
 public class DataPreviewKey {
+
     private final long metaId;
 
     public DataPreviewKey(final long metaId) {
@@ -19,11 +20,16 @@ public class DataPreviewKey {
         return metaId;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
 
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataPreviewKey that = (DataPreviewKey) o;
         return metaId == that.metaId;
     }

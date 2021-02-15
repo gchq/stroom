@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXMLUtil {
+
     @Test
     void testWords() {
         assertThat(XMLUtil.toXMLName(XMLUtil.class.getSimpleName())).isEqualTo("xmlUtil");

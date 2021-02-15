@@ -21,12 +21,13 @@ import stroom.cache.api.ICache;
 import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 class UserCache implements Clearable {
+
     private static final String CACHE_NAME = "User Cache";
 
     private final AuthenticationService authenticationService;

@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class CacheHolder {
+
     private final Caffeine cacheBuilder;
     private final Cache cache;
 

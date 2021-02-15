@@ -77,6 +77,7 @@ import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
+
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -217,7 +218,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             if (dashboardConfig != null) {
                 if (null == currentParams) {
                     currentParams = "";
-                    if (dashboardConfig.getParameters() != null && dashboardConfig.getParameters().trim().length() > 0) {
+                    if (dashboardConfig.getParameters() != null
+                            && dashboardConfig.getParameters().trim().length() > 0) {
                         currentParams = dashboardConfig.getParameters().trim();
                     }
                 }
@@ -486,6 +488,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
+
         void addWidgetLeft(Widget widget);
 
         void addWidgetRight(Widget widget);
@@ -500,6 +503,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+
         private final ComponentAddPresenter presenter;
         private HandlerRegistration handlerRegistration;
 

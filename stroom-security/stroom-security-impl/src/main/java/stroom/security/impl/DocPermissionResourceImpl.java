@@ -21,7 +21,6 @@ import stroom.util.shared.EntityServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,8 +30,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class DocPermissionResourceImpl implements DocPermissionResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
     private final DocumentPermissionServiceImpl documentPermissionService;
@@ -58,7 +59,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             // Check that the current user has permission to change the permissions of the document.
             if (securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.OWNER)) {
-                // Record what documents and what users are affected by these changes so we can clear the relevant caches.
+                // Record what documents and what users are affected by these changes
+                // so we can clear the relevant caches.
                 final Set<DocRef> affectedDocRefs = new HashSet<>();
                 final Set<String> affectedUserUuids = new HashSet<>();
 
@@ -74,7 +76,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 return true;
             }
 
-            throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document");
+            throw new EntityServiceException("You do not have sufficient privileges to change " +
+                    "permissions for this document");
         });
     }
 
@@ -82,14 +85,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     public DocumentPermissions copyPermissionFromParent(final CopyPermissionsFromParentRequest request) {
         final DocRef docRef = request.getDocRef();
 
-        boolean isUserAllowedToChangePermissions = securityContext.
-                hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.OWNER);
+        boolean isUserAllowedToChangePermissions = securityContext.hasDocumentPermission(
+                docRef.getUuid(), DocumentPermissionNames.OWNER);
         if (!isUserAllowedToChangePermissions) {
-            throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document!");
+            throw new EntityServiceException("You do not have sufficient privileges to change " +
+                    "permissions for this document!");
         }
 
         Optional<ExplorerNode> parent = explorerNodeService.getParent(docRef);
-        if (!parent.isPresent()) {
+        if (parent.isEmpty()) {
             throw new EntityServiceException("This node does not have a parent to copy permissions from!");
         }
 
@@ -103,13 +107,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 return documentPermissionService.getPermissionsForDocument(request.getDocRef().getUuid());
             }
 
-            throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");
+            throw new EntityServiceException("You do not have sufficient privileges to fetch " +
+                    "permissions for this document");
         });
     }
 
     @Override
     public Boolean checkDocumentPermission(final CheckDocumentPermissionRequest request) {
-        return securityContext.insecureResult(() -> securityContext.hasDocumentPermission(request.getDocumentUuid(), request.getPermission()));
+        return securityContext.insecureResult(() ->
+                securityContext.hasDocumentPermission(request.getDocumentUuid(), request.getPermission()));
     }
 
     @Override
@@ -139,7 +145,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                       final boolean clear) {
         if (clear) {
             // If we are asked to clear all permissions then get them for this document and then remove them.
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(
+                    docRef.getUuid());
             for (final Map.Entry<String, Set<String>> entry : documentPermissions.getPermissions().entrySet()) {
                 final String userUUid = entry.getKey();
                 for (final String permission : entry.getValue()) {
@@ -178,7 +185,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             final String userUuid = entry.getKey();
             for (final String permission : entry.getValue()) {
                 // Don't add create permissions to items that aren't folders as it makes no sense.
-                if (DocumentTypes.isFolder(docRef.getType()) || !permission.startsWith(DocumentPermissionNames.CREATE)) {
+                if (DocumentTypes.isFolder(docRef.getType())
+                        || !permission.startsWith(DocumentPermissionNames.CREATE)) {
                     try {
                         documentPermissionService.addPermission(docRef.getUuid(), userUuid, permission);
                         // Remember the affected documents and users so we can clear the relevant caches.
@@ -193,7 +201,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
     }
 
-//    private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<User> affectedUsers, final ChangeDocumentPermissionsAction.Cascade cascade) {
+//    private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet,
+//    final Set<DocRef> affectedDocRefs,
+//    final Set<User> affectedUsers, final ChangeDocumentPermissionsAction.Cascade cascade) {
 //        final BaseEntity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
 //        if (entity != null) {
 //            if (entity instanceof Folder) {
@@ -202,22 +212,28 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 //                switch (cascade) {
 //                    case CHANGES_ONLY:
 //                        // We are only cascading changes so just pass on the change set.
-//                        changeChildPermissions(DocRefUtil.create(folder), changeSet, affectedDocRefs, affectedUsers, false);
+//                        changeChildPermissions(
+//                        DocRefUtil.create(folder), changeSet, affectedDocRefs, affectedUsers, false);
 //                        break;
 //
 //                    case ALL:
-//                        // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
-//                        final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(DocRefUtil.create(folder));
+//                        // We are replicating the permissions of the parent folder on all children
+//                        so create a change set from the parent folder.
+//                        final DocumentPermissions parentPermissions =
+//                        documentPermissionService.getPermissionsForDocument(DocRefUtil.create(folder));
 //                        final ChangeSet<UserPermission> fullChangeSet = new ChangeSet<>();
-//                        for (final Map.Entry<User, Set<String>> entry : parentPermissions.getUserPermissions().entrySet()) {
+//                        for (final Map.Entry<User, Set<String>> entry :
+//                        parentPermissions.getUserPermissions().entrySet()) {
 //                            final User userRef = entry.getKey();
 //                            for (final String permission : entry.getValue()) {
 //                                fullChangeSet.add(new UserPermission(userRef, permission));
 //                            }
 //                        }
 //
-//                        // Set child permissions to that of the parent folder after clearing all permissions from child documents.
-//                        changeChildPermissions(DocRefUtil.create(folder), fullChangeSet, affectedDocRefs, affectedUsers, true);
+//                        // Set child permissions to that of the parent folder after clearing all
+//                        permissions from child documents.
+//                        changeChildPermissions(
+//                        DocRefUtil.create(folder), fullChangeSet, affectedDocRefs, affectedUsers, true);
 //
 //                    break;
 //
@@ -228,7 +244,12 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 //        }
 //    }
 //
-//    private void changeChildPermissions(final DocRef folder, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<User> affectedUsers, final boolean clear) {
+//    private void changeChildPermissions(
+//    final DocRef folder,
+//    final ChangeSet<UserPermission> changeSet,
+//    final Set<DocRef> affectedDocRefs,
+//    final Set<User> affectedUsers,
+//    final boolean clear) {
 //        final List<String> types = getTypeList();
 //        for (final String type : types) {
 //            final List<DocumentEntity> children = genericEntityService.findByFolder(type, folder, null);
@@ -258,8 +279,10 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                     break;
 
                 case ALL:
-                    // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
-                    final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+                    // We are replicating the permissions of the parent folder on all children so create a change
+                    // set from the parent folder.
+                    final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(
+                            docRef.getUuid());
                     final Map<String, Set<String>> add = new HashMap<>();
                     for (final Entry<String, Set<String>> entry : parentPermissions.getPermissions().entrySet()) {
                         final String userUuid = entry.getKey();
@@ -270,7 +293,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
                     final Changes fullChangeSet = new Changes(add, new HashMap<>());
 
-                    // Set child permissions to that of the parent folder after clearing all permissions from child documents.
+                    // Set child permissions to that of the parent folder after clearing all permissions from
+                    // child documents.
                     changeDescendantPermissions(docRef, fullChangeSet, affectedDocRefs, affectedUserUuids, true);
 
                     break;
@@ -278,6 +302,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 case NO:
                     // Do nothing.
                     break;
+                default:
+                    throw new RuntimeException("Unexpected cascade " + cascade);
             }
         }
     }

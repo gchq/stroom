@@ -24,5 +24,6 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import java.util.List;
 
 public interface StroomStatsStoreStore extends DocumentStore<StroomStatsStoreDoc> {
+
     List<DocRef> list();
 }

@@ -27,7 +27,8 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
      * Unprocessed - yet to be locked
      */
-    UNPROCESSED("Unprocessed", 1), /**
+    UNPROCESSED("Unprocessed", 1),
+    /**
      * Assigned - some one has locked it
      */
     ASSIGNED("Assigned", 2),

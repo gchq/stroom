@@ -16,13 +16,6 @@
 
 package stroom.pipeline.xml.util;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.AbstractFileVisitor;
@@ -30,9 +23,14 @@ import stroom.util.io.FileUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -44,11 +42,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestXMLWriter extends StroomUnitTest {
+
     private static final SAXParserFactory PARSER_FACTORY;
     private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);
 
@@ -77,15 +79,18 @@ class TestXMLWriter extends StroomUnitTest {
 
     private void processDir(final Path inputDir, final Path outputDir) {
         try {
-            Files.walkFileTree(inputDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    if (file.getFileName().toString().endsWith(".xml")) {
-                        processXML(file, outputDir);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+            Files.walkFileTree(inputDir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            if (file.getFileName().toString().endsWith(".xml")) {
+                                processXML(file, outputDir);
+                            }
+                            return super.visitFile(file, attrs);
+                        }
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);

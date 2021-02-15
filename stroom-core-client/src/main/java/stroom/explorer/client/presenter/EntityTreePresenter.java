@@ -16,17 +16,19 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.RestFactory;
-import stroom.explorer.shared.ExplorerNode;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
         implements EntityTreeUiHandlers {
+
     private final ExplorerTree explorerTree;
 
     @Inject
@@ -71,6 +73,7 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
     }
 
     public interface EntityTreeView extends View, HasUiHandlers<EntityTreeUiHandlers> {
+
         void setCellTree(Widget cellTree);
     }
 }

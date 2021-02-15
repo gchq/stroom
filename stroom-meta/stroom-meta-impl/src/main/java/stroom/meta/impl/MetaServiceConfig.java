@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
+
     private DbConfig dbConfig = new DbConfig();
     private MetaValueConfig metaValueConfig = new MetaValueConfig();
     private CacheConfig metaFeedCache = CacheConfig.builder()

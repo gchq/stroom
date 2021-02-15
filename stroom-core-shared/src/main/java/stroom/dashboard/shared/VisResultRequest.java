@@ -34,6 +34,7 @@ import java.util.Objects;
         "requestedRange"})
 @JsonInclude(Include.NON_NULL)
 public class VisResultRequest extends ComponentResultRequest {
+
     @JsonProperty
     private final VisComponentSettings visDashboardSettings;
     @JsonProperty
@@ -57,10 +58,15 @@ public class VisResultRequest extends ComponentResultRequest {
         return requestedRange;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final VisResultRequest that = (VisResultRequest) o;
         return Objects.equals(visDashboardSettings, that.visDashboardSettings) &&
                 Objects.equals(requestedRange, that.requestedRange);
@@ -88,6 +94,7 @@ public class VisResultRequest extends ComponentResultRequest {
     }
 
     public static final class Builder {
+
         private String componentId;
         private Fetch fetch;
         private VisComponentSettings visDashboardSettings;

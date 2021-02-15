@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
@@ -51,20 +52,22 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * (see {@link #addChild(Object, Object)} and
  * {@link #addChildren(Object, Object...)}).
  */
-public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayout<TreeNode> {
-    private final Map<TreeNode, List<TreeNode>> childrenMap = new HashMap<>();
-    private final Map<TreeNode, TreeNode> parents = new HashMap<>();
-    private List<TreeNode> emptyList;
+public class DefaultTreeForTreeLayout<T_TREE_NODE> extends AbstractTreeForTreeLayout<T_TREE_NODE> {
+
+    private final Map<T_TREE_NODE, List<T_TREE_NODE>> childrenMap = new HashMap<>();
+    private final Map<T_TREE_NODE, T_TREE_NODE> parents = new HashMap<>();
+    private List<T_TREE_NODE> emptyList;
+
     /**
      * Creates a new instance with a given node as the root
      *
      * @param root the node to be used as the root.
      */
-    public DefaultTreeForTreeLayout(final TreeNode root) {
+    public DefaultTreeForTreeLayout(final T_TREE_NODE root) {
         super(root);
     }
 
-    private List<TreeNode> getEmptyList() {
+    private List<T_TREE_NODE> getEmptyList() {
         if (emptyList == null) {
             emptyList = new ArrayList<>();
         }
@@ -72,21 +75,23 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
     }
 
     @Override
-    public TreeNode getParent(final TreeNode node) {
+    public T_TREE_NODE getParent(final T_TREE_NODE node) {
         return parents.get(node);
     }
 
     @Override
-    public List<TreeNode> getChildrenList(final TreeNode node) {
-        final List<TreeNode> result = childrenMap.get(node);
-        return result == null ? getEmptyList() : result;
+    public List<T_TREE_NODE> getChildrenList(final T_TREE_NODE node) {
+        final List<T_TREE_NODE> result = childrenMap.get(node);
+        return result == null
+                ? getEmptyList()
+                : result;
     }
 
     /**
      * @param node
      * @return true if the node is in the tree
      */
-    public boolean hasNode(final TreeNode node) {
+    public boolean hasNode(final T_TREE_NODE node) {
         return node == getRoot() || parents.containsKey(node);
     }
 
@@ -94,7 +99,7 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
      * @param parentNode [hasNode(parentNode)]
      * @param node       [!hasNode(node)]
      */
-    public void addChild(final TreeNode parentNode, final TreeNode node) {
+    public void addChild(final T_TREE_NODE parentNode, final T_TREE_NODE node) {
         checkArg(hasNode(parentNode), "parentNode is not in the tree");
         checkArg(!hasNode(node), "node is already in the tree");
 
@@ -102,10 +107,10 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
         parents.put(node, parentNode);
     }
 
-    public void removeChild(final TreeNode node) {
-        final TreeNode parent = parents.remove(node);
+    public void removeChild(final T_TREE_NODE node) {
+        final T_TREE_NODE parent = parents.remove(node);
         if (parent != null) {
-            final List<TreeNode> children = getChildrenList(parent);
+            final List<T_TREE_NODE> children = getChildrenList(parent);
             if (children != null) {
                 children.remove(node);
             }

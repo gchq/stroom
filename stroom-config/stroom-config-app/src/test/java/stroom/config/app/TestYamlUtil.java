@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestYamlUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestYamlUtil.class);
 
     static final String EXPECTED_YAML_FILE_NAME = "expected.yaml";
@@ -50,8 +51,10 @@ class TestYamlUtil {
         final Consumer<List<String>> diffLinesConsumer = diffLines -> {
             LOGGER.error(
                     "\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                            "\n  If the difference is what you would expect based on the changes you have made to the config model " +
-                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml\n{}",
+                            "\n  If the difference is what you would expect based on the changes you have made to " +
+                            "the config model " +
+                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
+                            "expected yaml\n{}",
                     String.join("\n", diffLines));
 
             LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
@@ -65,8 +68,8 @@ class TestYamlUtil {
                 diffLinesConsumer);
 
         assertThat(haveDifferences)
-            .withFailMessage("Expected and actual YAML do not match!")
-            .isFalse();
+                .withFailMessage("Expected and actual YAML do not match!")
+                .isFalse();
     }
 
     static Path getExpectedYamlFilePath() {
@@ -101,7 +104,7 @@ class TestYamlUtil {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         AppConfig appConfig = new AppConfig();
         YamlUtil.writeConfig(appConfig, byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
+        return byteArrayOutputStream.toString();
     }
 
     /**
@@ -118,7 +121,7 @@ class TestYamlUtil {
     private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
         Path path = getStroomAppFile(filename);
 
-        try  {
+        try {
             return YamlUtil.readAppConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

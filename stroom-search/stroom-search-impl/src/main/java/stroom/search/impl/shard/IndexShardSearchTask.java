@@ -24,6 +24,7 @@ import org.apache.lucene.util.Version;
 import java.util.concurrent.atomic.AtomicLong;
 
 class IndexShardSearchTask {
+
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
     private final String[] fieldNames;
@@ -81,6 +82,7 @@ class IndexShardSearchTask {
     }
 
     interface IndexShardQueryFactory {
+
         Query getQuery(Version luceneVersion);
     }
 }

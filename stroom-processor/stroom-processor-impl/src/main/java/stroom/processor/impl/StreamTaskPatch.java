@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class StreamTaskPatch {
+
     @JsonProperty
     private String op;
     @JsonProperty

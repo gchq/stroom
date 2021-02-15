@@ -16,12 +16,14 @@
 
 package stroom.data.client.event;
 
+import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
+
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 
 public interface HasDataSelectionHandlers<I> extends HasHandlers {
+
     /**
      * Adds a {@link SelectionEvent} handler.
      *

@@ -40,14 +40,14 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 
 // TODO : @66 add event logging
 class ExplorerResourceImpl implements ExplorerResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final ExplorerService explorerService;
@@ -69,7 +69,10 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public DocRef create(final ExplorerServiceCreateRequest request) {
         return securityContext.secureResult(() ->
-                explorerService.create(request.getDocType(), request.getDocName(), request.getDestinationFolderRef(), request.getPermissionInheritance()));
+                explorerService.create(request.getDocType(),
+                        request.getDocName(),
+                        request.getDestinationFolderRef(),
+                        request.getPermissionInheritance()));
     }
 
     @Override
@@ -79,12 +82,16 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
-        return securityContext.secureResult(() -> explorerService.copy(request.getDocRefs(), request.getDestinationFolderRef(), request.getPermissionInheritance()));
+        return securityContext.secureResult(() -> explorerService.copy(request.getDocRefs(),
+                request.getDestinationFolderRef(),
+                request.getPermissionInheritance()));
     }
 
     @Override
     public BulkActionResult move(final ExplorerServiceMoveRequest request) {
-        return securityContext.secureResult(() -> explorerService.move(request.getDocRefs(), request.getDestinationFolderRef(), request.getPermissionInheritance()));
+        return securityContext.secureResult(() -> explorerService.move(request.getDocRefs(),
+                request.getDestinationFolderRef(),
+                request.getPermissionInheritance()));
     }
 
     @Override
@@ -157,7 +164,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                 // Add special permissions for folders to control creation of sub items.
                 if (DocumentTypes.isFolder(docRef.getType())) {
                     for (final DocumentType documentType : explorerService.getNonSystemTypes()) {
-                        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
+                        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(
+                                documentType.getType());
                         if (securityContext.hasDocumentPermission(docRef.getUuid(),
                                 permissionName)) {
                             createPermissions.add(documentType.getType());
@@ -165,7 +173,10 @@ class ExplorerResourceImpl implements ExplorerResource {
                     }
                 }
 
-                result.add(new ExplorerNodePermissions(explorerNode, createPermissions, documentPermissions, securityContext.isAdmin()));
+                result.add(new ExplorerNodePermissions(explorerNode,
+                        createPermissions,
+                        documentPermissions,
+                        securityContext.isAdmin()));
             }
 
             return result;

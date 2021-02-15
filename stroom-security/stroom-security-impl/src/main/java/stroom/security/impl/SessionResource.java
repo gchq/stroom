@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SessionResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
     String NODE_NAME_PARAM = "nodeName";
@@ -37,7 +38,8 @@ public interface SessionResource extends RestResource, DirectRestService {
     @GET
     @Path("/noauth/login")
     @ApiOperation("Checks if the current session is authenticated and redirects to an auth flow if it is not")
-    LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest, @QueryParam("redirect_uri") String redirectUri);
+    LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
+                        @QueryParam("redirect_uri") String redirectUri);
 
     @GET
     @Path("logout/{sessionId}")

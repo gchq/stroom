@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataSourceUrlConfig extends AbstractConfig {
+
     // These paths must match the paths in the respective resource classes
     // Not ideal having them defined in two places
     private String index = "/api/stroom-index/v2";

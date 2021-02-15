@@ -25,6 +25,7 @@ import java.util.List;
  * given time window
  */
 public class StatisticEvent {
+
     private final long timeMs;
     private final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent;
 
@@ -109,6 +110,7 @@ public class StatisticEvent {
 
     /**
      * Convenience method for extracting the value of a tag in this statistic event
+     *
      * @param tagName The name of the tag to extract
      * @return The value of the named tag
      */
@@ -124,10 +126,12 @@ public class StatisticEvent {
 
 //    public StatisticEvent duplicateWithNewTagList(final List<StatisticTag> newTagList) {
 //        if (timeAgnosticStatisticEvent.getStatisticType().equals(StatisticType.COUNT)) {
-//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createCount(timeAgnosticStatisticEvent.getName(), newTagList,
+//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createCount(
+//            timeAgnosticStatisticEvent.getName(), newTagList,
 //                    timeAgnosticStatisticEvent.getCount()));
 //        } else {
-//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createValue(timeAgnosticStatisticEvent.getName(), newTagList,
+//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createValue(
+//            timeAgnosticStatisticEvent.getName(), newTagList,
 //                    timeAgnosticStatisticEvent.getValue()));
 //        }
 //    }
@@ -136,25 +140,33 @@ public class StatisticEvent {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((timeAgnosticStatisticEvent == null) ? 0 : timeAgnosticStatisticEvent.hashCode());
+        result = prime * result + ((timeAgnosticStatisticEvent == null)
+                ? 0
+                : timeAgnosticStatisticEvent.hashCode());
         result = prime * result + (int) (timeMs ^ (timeMs >>> 32));
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final StatisticEvent other = (StatisticEvent) obj;
         if (timeAgnosticStatisticEvent == null) {
-            if (other.timeAgnosticStatisticEvent != null)
+            if (other.timeAgnosticStatisticEvent != null) {
                 return false;
-        } else if (!timeAgnosticStatisticEvent.equals(other.timeAgnosticStatisticEvent))
+            }
+        } else if (!timeAgnosticStatisticEvent.equals(other.timeAgnosticStatisticEvent)) {
             return false;
+        }
         return timeMs == other.timeMs;
     }
 

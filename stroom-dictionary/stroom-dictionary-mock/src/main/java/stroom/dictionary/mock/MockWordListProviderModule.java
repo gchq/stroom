@@ -16,15 +16,17 @@
 
 package stroom.dictionary.mock;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import java.util.Collections;
 import java.util.List;
 
 public class MockWordListProviderModule extends AbstractModule {
+
     @Provides
     WordListProvider wordListProvider() {
         return new WordListProvider() {

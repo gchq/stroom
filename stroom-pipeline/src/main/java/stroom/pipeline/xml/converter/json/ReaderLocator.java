@@ -16,13 +16,15 @@
 
 package stroom.pipeline.xml.converter.json;
 
-import org.xml.sax.Locator;
 import stroom.util.io.WrappedReader;
+
+import org.xml.sax.Locator;
 
 import java.io.IOException;
 import java.io.Reader;
 
 public class ReaderLocator extends WrappedReader implements Locator {
+
     private int lineNo = 1;
     private int colNo = 1;
 

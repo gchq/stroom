@@ -2,10 +2,11 @@ package stroom.meta.impl;
 
 import stroom.meta.api.PhysicalDelete;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 class PhysicalDeleteImpl implements PhysicalDelete {
+
     private final MetaDao metaDao;
     private final MetaValueDao metaValueDao;
 

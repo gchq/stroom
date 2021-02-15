@@ -16,6 +16,12 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.state.LocationHolder;
+import stroom.pipeline.state.LocationHolder.FunctionType;
+import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -26,15 +32,11 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.state.LocationHolder;
-import stroom.pipeline.state.LocationHolder.FunctionType;
-import stroom.pipeline.state.MetaHolder;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 
 class Source extends StroomExtensionFunctionCall {
+
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
     private static final String URI = "stroom-meta";
 
@@ -66,7 +68,8 @@ class Source extends StroomExtensionFunctionCall {
         return result;
     }
 
-    private Sequence createSequence(final XPathContext context, final long streamId, final SourceLocation location) throws SAXException {
+    private Sequence createSequence(final XPathContext context, final long streamId, final SourceLocation location)
+            throws SAXException {
         final Configuration configuration = context.getConfiguration();
         final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
         final Builder builder = new TinyBuilder(pipe);
@@ -96,7 +99,8 @@ class Source extends StroomExtensionFunctionCall {
         return sequence;
     }
 
-    private void data(final ReceivingContentHandler contentHandler, final String name, final long value) throws SAXException {
+    private void data(final ReceivingContentHandler contentHandler, final String name, final long value)
+            throws SAXException {
         startElement(contentHandler, name);
         characters(contentHandler, String.valueOf(value));
         endElement(contentHandler, name);

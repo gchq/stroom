@@ -40,6 +40,7 @@ import javax.inject.Inject;
 
 public class UsersAndGroupsTabPresenter extends
         MyPresenterWidget<UserListView> implements HasHandlers {
+
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     public static final String LIST = "LIST";
@@ -138,7 +139,8 @@ public class UsersAndGroupsTabPresenter extends
     private void onDelete() {
         final User userRef = listPresenter.getSelectionModel().getSelected();
         if (userRef != null) {
-            ConfirmEvent.fire(UsersAndGroupsTabPresenter.this, "Are you sure you want to delete the selected " + getTypeName() + "?",
+            ConfirmEvent.fire(UsersAndGroupsTabPresenter.this,
+                    "Are you sure you want to delete the selected " + getTypeName() + "?",
                     ok -> {
                         if (ok) {
                             final Rest<Boolean> rest = restFactory.create();

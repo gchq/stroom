@@ -17,19 +17,16 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.HasSave;
+import stroom.core.client.HasSaveRegistry;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.docref.DocRef;
-import stroom.core.client.HasSave;
-import stroom.core.client.HasSaveRegistry;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -39,8 +36,13 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
         implements HasSave, HasDirtyHandlers, CloseHandler, ClassificationUiHandlers {
+
     private final SteppingPresenter steppingPresenter;
     private final HasSaveRegistry hasSaveRegistry;
     private DocRef pipeline;

@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 class TestSearchResponseMapper {
+
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
@@ -42,14 +43,23 @@ class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression("${test}").build());
+        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression(
+                "${test}").build());
         final List<Row> rows = Collections.singletonList(Row.builder()
                 .groupKey("groupKey")
                 .values(Collections.singletonList("test"))
                 .depth(5)
                 .build());
-        final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
-        return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Collections.singletonList("some error"), false);
+        final TableResult tableResult = new TableResult("table-1234",
+                fields,
+                rows,
+                new OffsetRange(1, 2),
+                1,
+                "tableResultError");
+        return new SearchResponse(Arrays.asList("highlight1", "highlight2"),
+                Arrays.asList(tableResult, getVisResult1()),
+                Collections.singletonList("some error"),
+                false);
     }
 
     private FlatResult getVisResult1() {
@@ -76,7 +86,8 @@ class TestSearchResponseMapper {
 //        Field[][] structure = new Field[3][];
 //        structure[0] = new Field[]{new Field("key1", Type.GENERAL)};
 //        structure[1] = new Field[]{new Field("key2", Type.GENERAL)};
-//        structure[2] = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+//        structure[2] = new Field[]{new Field("val1", Type.GENERAL),
+//        new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 //
 //        Object[][] data = new Object[8][];
 //        data[0] = new Object[]{"test0", 0.4, 234, "this0"};

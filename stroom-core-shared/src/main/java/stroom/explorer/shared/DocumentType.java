@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class DocumentType {
+
     public static final String DOC_IMAGE_URL = "document/";
 
     @JsonProperty
@@ -73,10 +74,15 @@ public class DocumentType {
         return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final DocumentType that = (DocumentType) o;
 

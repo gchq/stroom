@@ -3,11 +3,12 @@ package stroom.index.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 public class NewUIIndexVolumeResourceImpl implements NewUIIndexVolumeResource {
+
     private final IndexVolumeService indexVolumeService;
 
     @Inject

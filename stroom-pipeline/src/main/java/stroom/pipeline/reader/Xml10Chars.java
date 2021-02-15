@@ -1,26 +1,39 @@
 package stroom.pipeline.reader;
 
+@SuppressWarnings("checkstyle:variabledeclarationusagedistance")
 public class Xml10Chars implements XmlChars {
     //
     // Constants
     //
 
-    /** Character flags. */
+    /**
+     * Character flags.
+     */
     private static final byte[] CHARS = new byte[1 << 16];
 
-    /** Valid character mask. */
+    /**
+     * Valid character mask.
+     */
     public static final int MASK_VALID = 0x01;
 
-    /** Space character mask. */
+    /**
+     * Space character mask.
+     */
     public static final int MASK_SPACE = 0x02;
 
-    /** Name start character mask. */
+    /**
+     * Name start character mask.
+     */
     public static final int MASK_NAME_START = 0x04;
 
-    /** Name character mask. */
+    /**
+     * Name character mask.
+     */
     public static final int MASK_NAME = 0x08;
 
-    /** Pubid character mask. */
+    /**
+     * Pubid character mask.
+     */
     public static final int MASK_PUBID = 0x10;
 
     /**
@@ -33,10 +46,14 @@ public class Xml10Chars implements XmlChars {
      */
     public static final int MASK_CONTENT = 0x20;
 
-    /** NCName start character mask. */
+    /**
+     * NCName start character mask.
+     */
     public static final int MASK_NCNAME_START = 0x40;
 
-    /** NCName character mask. */
+    /**
+     * NCName character mask.
+     */
     public static final int MASK_NCNAME = 0x80;
 
     //

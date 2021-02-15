@@ -16,12 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import com.google.common.base.Strings;
-import org.xml.sax.Attributes;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.SchemaKey;
@@ -31,27 +25,35 @@ import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.state.PipelineContext;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.pipeline.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-import javax.xml.validation.Schema;
-import javax.xml.validation.ValidatorHandler;
+import com.google.common.base.Strings;
+import org.xml.sax.Attributes;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
+import javax.xml.validation.ValidatorHandler;
 
 /**
  * An XML filter for performing inline schema validation of XML.
  */
 public class SchemaFilter extends AbstractXMLFilter implements Locator {
+
     private static final int INDENT = 2;
     private static final String SPACE = " ";
     private static final String SCHEMA_LOCATION = "schemaLocation";
@@ -588,7 +590,11 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             // Replay errors generated when creating schema.
             try {
                 for (final StoredError storedError : storedSchema.getErrorReceiver().getList()) {
-                    errorReceiverProxy.log(storedError.getSeverity(), locationFactory.create(1, 1), getElementId(), storedError.toString(), null);
+                    errorReceiverProxy.log(storedError.getSeverity(),
+                            locationFactory.create(1, 1),
+                            getElementId(),
+                            storedError.toString(),
+                            null);
                 }
             } catch (final RuntimeException e) {
                 errorHandler.fatalError(new SAXParseException(e.getMessage(), null));

@@ -16,25 +16,26 @@
 
 package stroom.core.entity.event;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
 
 @AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {
+
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
@@ -58,7 +59,9 @@ class EntityEventResourceImpl implements EntityEventResource {
             entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
+                    nodeServiceProvider.get(),
+                    nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
                     nodeName);

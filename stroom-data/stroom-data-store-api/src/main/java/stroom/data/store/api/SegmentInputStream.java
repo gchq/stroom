@@ -30,6 +30,7 @@ import java.io.IOException;
  * </p>
  */
 public abstract class SegmentInputStream extends SizeAwareInputStream {
+
     /**
      * This method returns the total number of segments that can be read from
      * this input stream.

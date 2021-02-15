@@ -20,6 +20,7 @@ import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 
 public class Split extends Expression implements Match {
+
     private static final char SPACE = ' ';
 
     private final SplitFactory factory;
@@ -61,7 +62,7 @@ public class Split extends Expression implements Match {
         boolean inContainer = false;
         boolean escape = false;
 
-        int outerStart = 0;
+        final int outerStart = 0;
         int outerEnd = 0;
         int innerStart = 0;
         int innerEnd = -1;

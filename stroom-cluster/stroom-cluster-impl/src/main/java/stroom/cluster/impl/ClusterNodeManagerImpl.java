@@ -16,8 +16,6 @@
 
 package stroom.cluster.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.api.FindNodeCriteria;
@@ -36,8 +34,9 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,6 +45,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Component that remembers the node list and who is the current master node
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterNodeManagerImpl.class);
 
     private static final int ONE_SECOND = 1000;
@@ -254,7 +256,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     if (!enabledActiveNodes.contains(sourceNode)) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug(
-                                    "ping() - Just had a ping from a node that was not in our ping list.  Next cluster call we will re-discover");
+                                    "ping() - Just had a ping from a node that was not in our ping list.  " +
+                                            "Next cluster call we will re-discover");
                         }
                         updateClusterStateAsync(REQUERY_DELAY, true);
                     }
@@ -290,7 +293,10 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     }
 
 
-    public void exec(final TaskContext taskContext, final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
+    public void exec(final TaskContext taskContext,
+                     final ClusterState clusterState,
+                     final int delay,
+                     final boolean testActiveNodes) {
         securityContext.secure(() -> {
             try {
                 // We sometimes want to wait a bit before we try and establish the
@@ -311,7 +317,9 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         });
     }
 
-    private void updateState(final TaskContext taskContext, final ClusterState clusterState, final boolean testActiveNodes) {
+    private void updateState(final TaskContext taskContext,
+                             final ClusterState clusterState,
+                             final boolean testActiveNodes) {
         String thisNodeName = nodeInfo.getThisNodeName();
 
         // Get nodes and ensure uniqueness.
@@ -359,7 +367,10 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         clusterState.setUpdateTime(System.currentTimeMillis());
     }
 
-    private void updateActiveNodes(final TaskContext parentContext, final ClusterState clusterState, final String thisNodeName, final Set<String> enabledNodes) {
+    private void updateActiveNodes(final TaskContext parentContext,
+                                   final ClusterState clusterState,
+                                   final String thisNodeName,
+                                   final Set<String> enabledNodes) {
         // Only retain active nodes that are currently enabled.
         retainEnabledActiveNodes(clusterState, enabledNodes);
 
@@ -385,7 +396,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         }
     }
 
-    private synchronized void retainEnabledActiveNodes(final ClusterState clusterState, final Set<String> enabledNodes) {
+    private synchronized void retainEnabledActiveNodes(final ClusterState clusterState,
+                                                       final Set<String> enabledNodes) {
         final Set<String> enabledActiveNodes = new HashSet<>();
         for (final String nodeName : enabledNodes) {
             if (clusterState.getEnabledActiveNodes().contains(nodeName)) {

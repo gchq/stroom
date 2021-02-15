@@ -45,6 +45,7 @@ package stroom.dashboard.expression.v1;
                                         description = "The maximum number of decimal places to round to.")}
                 )})
 class Round extends AbstractRoundingFunction {
+
     static final String NAME = "round";
 
     public Round(final String name) {
@@ -62,6 +63,7 @@ class Round extends AbstractRoundingFunction {
     }
 
     private static class NumericRound implements RoundCalculator {
+
         private static final long serialVersionUID = -2414316545075369054L;
 
         @Override
@@ -76,6 +78,7 @@ class Round extends AbstractRoundingFunction {
     }
 
     private static class DecimalPlaceRound implements RoundCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         private final double multiplier;

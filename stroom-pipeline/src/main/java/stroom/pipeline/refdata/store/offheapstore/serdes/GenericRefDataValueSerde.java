@@ -21,9 +21,9 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.UnknownRefDataValue;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class GenericRefDataValueSerde implements RefDataValueSerde {
 

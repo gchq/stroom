@@ -19,5 +19,6 @@ package stroom.widget.tab.client.event;
 import com.google.gwt.event.shared.EventHandler;
 
 public interface TabSelectorHandler extends EventHandler {
+
     void onClick(TabSelectorEvent event);
 }

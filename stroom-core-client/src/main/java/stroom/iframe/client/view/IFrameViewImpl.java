@@ -16,6 +16,9 @@
 
 package stroom.iframe.client.view;
 
+import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
+import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.IFrameElement;
@@ -27,12 +30,11 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
-import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 
 import java.util.Objects;
 
 public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> implements IFrameView {
+
     private static final String DEFAULT_TITLE = "Loading...";
 
     private final SimplePanel panel = new SimplePanel();

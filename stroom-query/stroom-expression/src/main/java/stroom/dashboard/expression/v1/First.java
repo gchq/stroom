@@ -35,6 +35,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 public class First extends AbstractSelectorFunction implements Serializable {
+
     static final String NAME = "first";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -48,6 +49,7 @@ public class First extends AbstractSelectorFunction implements Serializable {
     }
 
     public static class FirstSelector extends Selector {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         FirstSelector(final Generator childGenerator) {

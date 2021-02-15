@@ -7,6 +7,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * from command line or by {@link AceEditor#execCommand(String)} API calls).
  */
 public class AceCommandDescription {
+
     private final String name;
     private final ExecAction exec;
     private KeyBinding bindKey = null;
@@ -299,7 +300,7 @@ public class AceCommandDescription {
     /**
      * Ace command scrolling options.
      */
-    public static enum ScrollIntoView {
+    public enum ScrollIntoView {
         /**
          * Scroll to cursor with animation
          */
@@ -319,8 +320,9 @@ public class AceCommandDescription {
 
         public static ScrollIntoView fromString(String value) {
             for (ScrollIntoView ret : ScrollIntoView.values()) {
-                if (ret.name().equals(value))
+                if (ret.name().equals(value)) {
                     return ret;
+                }
             }
             return null;
         }
@@ -329,7 +331,7 @@ public class AceCommandDescription {
     /**
      * Action defines a way of running commands based on editor text selection.
      */
-    public static enum MultiSelectAction {
+    public enum MultiSelectAction {
         /**
          * Execute command for each selection in multi-select mode
          */
@@ -345,8 +347,9 @@ public class AceCommandDescription {
 
         public static MultiSelectAction fromString(String value) {
             for (MultiSelectAction ret : MultiSelectAction.values()) {
-                if (ret.name().equals(value))
+                if (ret.name().equals(value)) {
                     return ret;
+                }
             }
             return null;
         }
@@ -355,14 +358,16 @@ public class AceCommandDescription {
     /**
      * Ace command execution action.
      */
-    public static interface ExecAction {
-        public Object exec(AceEditor editor);
+    public interface ExecAction {
+
+        Object exec(AceEditor editor);
     }
 
     /**
      * Key binding description.
      */
     public static class KeyBinding {
+
         private final String allPlatforms;
         private final String mac;
         private final String exceptMac;
@@ -412,8 +417,9 @@ public class AceCommandDescription {
 
         @Override
         public String toString() {
-            if (allPlatforms != null)
+            if (allPlatforms != null) {
                 return "KeyBinding [allPlatforms=" + allPlatforms + "]";
+            }
             return "KeyBinding [mac=" + mac + ", exceptMac=" + exceptMac + "]";
         }
 

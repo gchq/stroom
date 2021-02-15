@@ -17,6 +17,7 @@ import javax.sql.DataSource;
 
 @Singleton
 class TestDataSourceFactory implements DataSourceFactory, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
     private final CommonDbConfig commonDbConfig;

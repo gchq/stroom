@@ -16,13 +16,14 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -35,8 +36,9 @@ import java.util.EnumSet;
 import java.util.Map;
 
 class FileMetaGrep extends AbstractCommandLineTool {
-    private Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
-    private Map<String, String> matchMap;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
+    private final Map<String, String> matchMap;
     private String[] repoPathParts = null;
     private String feedId;
 
@@ -77,19 +79,22 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
     private void scanDir(Path path) {
         try {
-            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        if (matches(file.toAbsolutePath().normalize().toString())) {
-                            scanFile(file);
+            Files.walkFileTree(path,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                if (matches(file.toAbsolutePath().normalize().toString())) {
+                                    scanFile(file);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -106,44 +111,46 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
             if (path.endsWith("meta.bgz")) {
                 String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
-                    int segment = 0;
-                    boolean done = false;
-                    while (!done) {
-                        try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(file),
-                                new UncompressedInputStream(Paths.get(bdyPath), true))) {
-                            if (segmentInputStream.count() <= segment - 1) {
-                                done = true;
-                            } else {
-                                segmentInputStream.include(segment);
+                int segment = 0;
+                boolean done = false;
+                while (!done) {
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(
+                            new BlockGZIPInputFile(file),
+                            new UncompressedInputStream(Paths.get(bdyPath), true))) {
 
-                                AttributeMap attributeMap = new AttributeMap();
-                                AttributeMapUtil.read(segmentInputStream, attributeMap);
+                        if (segmentInputStream.count() <= segment - 1) {
+                            done = true;
+                        } else {
+                            segmentInputStream.include(segment);
 
-                                boolean match = true;
+                            AttributeMap attributeMap = new AttributeMap();
+                            AttributeMapUtil.read(segmentInputStream, attributeMap);
 
-                                for (String matchKey : matchMap.keySet()) {
-                                    if (!attributeMap.containsKey(matchKey)) {
+                            boolean match = true;
+
+                            for (String matchKey : matchMap.keySet()) {
+                                if (!attributeMap.containsKey(matchKey)) {
+                                    // No Good
+                                    match = false;
+                                } else {
+                                    if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
                                         // No Good
                                         match = false;
-                                    } else {
-                                        if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
-                                            // No Good
-                                            match = false;
-                                        }
                                     }
                                 }
-
-                                if (match) {
-                                    // Found Match
-                                    System.out.println("Found Match in " + path + " at segment " + segment);
-                                    System.out.write(AttributeMapUtil.toByteArray(attributeMap));
-                                    System.out.println();
-                                }
-
-                                segment++;
                             }
+
+                            if (match) {
+                                // Found Match
+                                System.out.println("Found Match in " + path + " at segment " + segment);
+                                System.out.write(AttributeMapUtil.toByteArray(attributeMap));
+                                System.out.println();
+                            }
+
+                            segment++;
                         }
                     }
+                }
             }
         } catch (IOException ioEx) {
             ioEx.printStackTrace();

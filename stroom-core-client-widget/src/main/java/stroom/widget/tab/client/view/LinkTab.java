@@ -23,6 +23,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 
 public class LinkTab extends AbstractTab {
+
     private static Resources resources;
     private final Element element;
     private final Element background;
@@ -87,6 +88,7 @@ public class LinkTab extends AbstractTab {
     }
 
     public interface Style extends CssResource {
+
         String linkTab();
 
         String selected();
@@ -101,6 +103,7 @@ public class LinkTab extends AbstractTab {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("LinkTab.css")
         Style style();
     }

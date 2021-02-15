@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.api;
 
 import event.logging.EventAction;
@@ -23,10 +24,11 @@ import event.logging.EventAction;
  * @param <A> the type of event action that this EventActionDecorator works for
  */
 
-public interface EventActionDecorator <A extends EventAction> {
+public interface EventActionDecorator<A extends EventAction> {
 
     /**
      * Decorate this event action
+     *
      * @param eventAction the basic (automatically assigned) event action
      * @return a decorated version of the supplied eventAction
      */

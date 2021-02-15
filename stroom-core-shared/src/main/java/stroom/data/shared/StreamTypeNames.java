@@ -1,6 +1,7 @@
 package stroom.data.shared;
 
 public class StreamTypeNames {
+
     /**
      * Saved raw version for the archive.
      */

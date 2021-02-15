@@ -138,7 +138,6 @@ class TestPooledByteBufferOutputStream {
     }
 
 
-
     @TestFactory
     @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testExpansionWithDifferentWriteMethods() {

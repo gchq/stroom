@@ -19,6 +19,7 @@ package stroom.dashboard.impl.format;
 import stroom.dashboard.expression.v1.Val;
 
 public class StringFormatter implements Formatter {
+
     private StringFormatter() {
     }
 

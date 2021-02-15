@@ -34,6 +34,7 @@ import java.util.Set;
         signatures = @FunctionSignature(
                 args = {}))
 class CountGroups extends AbstractFunction {
+
     static final String NAME = "countGroups";
 
     public CountGroups(final String name) {
@@ -56,6 +57,7 @@ class CountGroups extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = -9130548669643582369L;
 
         private final Set<GroupKey> childGroups = new HashSet<>();

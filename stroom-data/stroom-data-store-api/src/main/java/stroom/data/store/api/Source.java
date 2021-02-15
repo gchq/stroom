@@ -29,6 +29,7 @@ import java.io.IOException;
  * </p>
  */
 public interface Source extends Closeable {
+
     /**
      * Get the meta data associated with this source.
      *
@@ -45,6 +46,7 @@ public interface Source extends Closeable {
 
     /**
      * Get an input stream provider for the nested data item specified by the provided 0 based index.
+     *
      * @param index The index of the nested data item to get an input stream provider for.
      * @return An input stream provider for the specified index or throw an IOException if the index is out of bounds.
      * @throws IOException
@@ -53,6 +55,7 @@ public interface Source extends Closeable {
 
     /**
      * How many nested data items does this source contain.
+     *
      * @return
      * @throws IOException
      */

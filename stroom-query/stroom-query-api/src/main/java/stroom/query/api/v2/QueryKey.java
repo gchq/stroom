@@ -24,12 +24,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"uuid"})
 @JsonInclude(Include.NON_NULL)
@@ -38,6 +38,7 @@ import java.util.Objects;
 @ApiModel(description = "A unique key to identify the instance of the search by. This key is used to " +
         "identify multiple requests for the same search when running in incremental mode.")
 public final class QueryKey implements Serializable {
+
     private static final long serialVersionUID = -3222989872764402068L;
 
     @XmlElement
@@ -64,10 +65,15 @@ public final class QueryKey implements Serializable {
         this.uuid = uuid;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         QueryKey queryKey = (QueryKey) o;
         return Objects.equals(uuid, queryKey.uuid);
     }

@@ -29,6 +29,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class GWTModuleCreator {
+
     private static final String MODULE_EXTENSION = ".gwt.xml";
 
     public static void main(final String[] args) {
@@ -61,24 +62,28 @@ public class GWTModuleCreator {
 
     private void processDir(final Path dir, final String rootPath, final List<String> modules) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                    if (file.getFileName().toString().endsWith(MODULE_EXTENSION)) {
-                        try {
-                            String module = file.toAbsolutePath().normalize().toString();
-                            module = module.substring(rootPath.length() + 1);
-                            module = module.substring(0, module.length() - MODULE_EXTENSION.length());
-                            module = module.replaceAll("/", ".");
-                            modules.add(module);
-                        } catch (final RuntimeException e) {
-                            // Ignore.
-                        }
-                    }
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                                throws IOException {
+                            if (file.getFileName().toString().endsWith(MODULE_EXTENSION)) {
+                                try {
+                                    String module = file.toAbsolutePath().normalize().toString();
+                                    module = module.substring(rootPath.length() + 1);
+                                    module = module.substring(0, module.length() - MODULE_EXTENSION.length());
+                                    module = module.replaceAll("/", ".");
+                                    modules.add(module);
+                                } catch (final RuntimeException e) {
+                                    // Ignore.
+                                }
+                            }
 
-                    return super.visitFile(file, attrs);
-                }
-            });
+                            return super.visitFile(file, attrs);
+                        }
+                    });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

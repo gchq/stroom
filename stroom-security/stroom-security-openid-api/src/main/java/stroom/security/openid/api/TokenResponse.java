@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class TokenResponse {
+
     @JsonProperty("id_token")
     private final String idToken;
     @JsonProperty("access_token")
@@ -60,6 +61,7 @@ public class TokenResponse {
     }
 
     public static final class Builder {
+
         private String idToken;
         private String accessToken;
         private String refreshToken;

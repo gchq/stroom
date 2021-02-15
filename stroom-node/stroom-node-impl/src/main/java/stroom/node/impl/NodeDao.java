@@ -21,6 +21,7 @@ import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 
 public interface NodeDao {
+
     Node create(Node node);
 
     Node update(Node node);

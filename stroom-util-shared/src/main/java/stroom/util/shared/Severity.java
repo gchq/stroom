@@ -27,9 +27,9 @@ public enum Severity implements HasDisplayValue {
 
     public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
 
-    private int id;
-    private String displayValue;
-    private String summaryValue;
+    private final int id;
+    private final String displayValue;
+    private final String summaryValue;
 
     Severity(final int id, final String displayValue, final String summaryValue) {
         this.id = id;

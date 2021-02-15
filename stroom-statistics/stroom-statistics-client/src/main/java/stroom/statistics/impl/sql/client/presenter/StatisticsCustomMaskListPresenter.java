@@ -17,15 +17,6 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
-import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -49,6 +40,16 @@ import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 
+import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,9 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
+        ReadOnlyChangeHandler {
+
     private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
 
     private final ButtonView newButton;
@@ -186,7 +189,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         final StatisticsCustomMaskListPresenter thisInstance = this;
 
         ConfirmEvent.fire(this,
-                "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
+                "Are you sure you want to clear the existing roll-ups and generate all possible " +
+                        "permutations for the field list?",
                 result -> {
                     if (result) {
                         final Rest<List<CustomRollUpMask>> rest = restFactory.create();
@@ -227,7 +231,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         // add a line with no rollups as a starting point
         if (statisticsDataSource.getCustomRollUpMasks().size() == 0
                 && statisticsDataSource.getStatisticFieldCount() > 0) {
-            maskList.addMask(new CustomRollUpMask(Collections.<Integer>emptyList()));
+            maskList.addMask(new CustomRollUpMask(Collections.emptyList()));
         }
     }
 
@@ -298,7 +302,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
                     updateState(result.getCustomRollUpMasks());
                 })
                 .call(STATISTIC_ROLLUP_RESOURCE)
-                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData, newStatisticsDataSourceData));
+                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
+                        newStatisticsDataSourceData));
     }
 
     /**
@@ -306,6 +311,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
      * the UI, to allow multiple rows with the same check box values
      */
     public static class MaskHolder {
+
         private final int id;
         private final CustomRollUpMask mask;
 
@@ -330,18 +336,20 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
             return result;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             final MaskHolder other = (MaskHolder) obj;
-            if (id != other.id)
-                return false;
-            return true;
+            return id == other.id;
         }
     }
 
@@ -350,6 +358,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
      * {@link CustomRollUpMask} object added to it
      */
     public static class MaskHolderList extends ArrayList<MaskHolder> {
+
         private static final long serialVersionUID = 4981870664808232963L;
 
         private int idCounter = 0;

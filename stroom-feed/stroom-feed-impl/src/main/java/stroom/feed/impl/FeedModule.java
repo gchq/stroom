@@ -31,6 +31,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class FeedModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(FeedStore.class).to(FeedStoreImpl.class);

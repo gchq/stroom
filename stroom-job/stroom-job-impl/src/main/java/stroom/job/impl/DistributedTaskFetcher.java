@@ -16,8 +16,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
@@ -26,10 +24,12 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * This class executes all tasks that are currently queued for execution. This
@@ -47,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Singleton
 class DistributedTaskFetcher {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
 
@@ -126,64 +129,16 @@ class DistributedTaskFetcher {
                     // Only allow one set of tasks to be fetched at any one time.
                     if (fetchingTasks.compareAndSet(false, true)) {
                         if (!stopping.get()) {
-                            final Runnable runnable = taskContextFactory.context("Fetch Tasks", taskContext -> {
-                                try {
-                                    taskContext.info(() -> "fetching tasks");
-                                    LOGGER.trace("Trying to fetch tasks");
 
-                                    // We will force a fetch if it has been more than one minute since
-                                    // our last fetch. This allows the master node to know that the
-                                    // worker nodes are still alive and that it is still going to be
-                                    // required to distribute tasks. If it did not get a call every
-                                    // minute it might try and release cached tasks back to the database
-                                    // event though this doesn't happen in the current implementation.
-                                    final long now = System.currentTimeMillis();
-                                    final long elapsed = now - lastFetch;
-                                    final boolean forceFetch = elapsed > ONE_MINUTE;
-
-                                    // Get the trackers.
-                                    final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
-
-                                    // Get this node.
-                                    final String nodeName = jobNodeTrackerCache.getNodeName();
-
-                                    // Create an array of runnable jobs sorted into priority order.
-                                    final DistributedRequiredTask[] requiredTasks = getDistributedRequiredTasks(trackers);
-
-                                    // Find out how many tasks we need in total.
-                                    int count = 0;
-                                    for (final DistributedRequiredTask requiredTask : requiredTasks) {
-                                        count += requiredTask.getRequiredTaskCount();
-                                    }
-
-                                    // If there are some tasks we need to get then get them.
-                                    if (count > 0 || forceFetch) {
-                                        if (targetNodeSetFactory.isClusterStateInitialised()) {
-                                            for (final Entry<String, DistributedTaskFactory> entry : distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
-                                                final String jobName = entry.getKey();
-                                                final DistributedTaskFactory distributedTaskFactory = entry.getValue();
-
-                                                if (LOGGER.isDebugEnabled()) {
-                                                    LOGGER.debug("Task request: node=\"" + nodeName + "\"");
-                                                    if (LOGGER.isTraceEnabled()) {
-                                                        final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
-                                                                + distributedTaskFactory;
-                                                        LOGGER.trace(trace);
-                                                    }
-                                                }
-
-                                                final List<DistributedTask> tasks = distributedTaskFactory.fetch(nodeName, count);
-                                                handleResult(nodeName, jobName, tasks);
-                                            }
-
-                                            // Remember the last fetch time.
-                                            lastFetch = now;
+                            final Runnable runnable = taskContextFactory.context(
+                                    "Fetch Tasks", taskContext -> {
+                                        try {
+                                            doFetch(taskContext);
+                                        } catch (final RuntimeException e) {
+                                            LOGGER.error(e.getMessage(), e);
                                         }
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e.getMessage(), e);
-                                }
-                            });
+                                    });
+
                             CompletableFuture
                                     .runAsync(runnable, executorProvider.get())
                                     .whenComplete((r, t) -> afterFetch());
@@ -199,6 +154,65 @@ class DistributedTaskFetcher {
                 LOGGER.error("Unable to fetch task!", e);
             }
         });
+    }
+
+    private void doFetch(final TaskContext taskContext) {
+        taskContext.info(() -> "fetching tasks");
+        LOGGER.trace("Trying to fetch tasks");
+
+        // We will force a fetch if it has been more than one minute since
+        // our last fetch. This allows the master node to know that the
+        // worker nodes are still alive and that it is still going to be
+        // required to distribute tasks. If it did not get a call every
+        // minute it might try and release cached tasks back to the database
+        // event though this doesn't happen in the current implementation.
+        final long now = System.currentTimeMillis();
+        final long elapsed = now - lastFetch;
+        final boolean forceFetch = elapsed > ONE_MINUTE;
+
+        // Get the trackers.
+        final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+
+        // Get this node.
+        final String nodeName = jobNodeTrackerCache.getNodeName();
+
+        // Create an array of runnable jobs sorted into priority order.
+        final DistributedRequiredTask[] requiredTasks = getDistributedRequiredTasks(trackers);
+
+        // Find out how many tasks we need in total.
+        int count = 0;
+        for (final DistributedRequiredTask requiredTask : requiredTasks) {
+            count += requiredTask.getRequiredTaskCount();
+        }
+
+        // If there are some tasks we need to get then get them.
+        if (count > 0 || forceFetch) {
+            if (targetNodeSetFactory.isClusterStateInitialised()) {
+                for (final Entry<String, DistributedTaskFactory> entry :
+                        distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
+
+                    final String jobName = entry.getKey();
+                    final DistributedTaskFactory distributedTaskFactory = entry.getValue();
+
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Task request: node=\"" + nodeName + "\"");
+                        if (LOGGER.isTraceEnabled()) {
+                            final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
+                                    + distributedTaskFactory;
+                            LOGGER.trace(trace);
+                        }
+                    }
+
+                    final List<DistributedTask> tasks = distributedTaskFactory.fetch(
+                            nodeName,
+                            count);
+                    handleResult(nodeName, jobName, tasks);
+                }
+
+                // Remember the last fetch time.
+                lastFetch = now;
+            }
+        }
     }
 
     /**
@@ -296,7 +310,8 @@ class DistributedTaskFetcher {
                 // this time.
                 if (job.isEnabled() && jobNode.isEnabled()) {
                     // Store the task request.
-                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(), requiredTaskCount);
+                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(),
+                            requiredTaskCount);
                 }
             }
         }

@@ -30,12 +30,13 @@ import java.io.Serializable;
                         @FunctionArg(
                                 name = "value",
                                 description = "The string to convert to upper case.",
-                                argType = ValString.class) }))
+                                argType = ValString.class)}))
 class UpperCase extends AbstractStringFunction implements Serializable {
+
     static final String NAME = "upperCase";
     private static final long serialVersionUID = -305845496003936297L;
 
-    private static final Operation OPERATION = (Operation) String::toUpperCase;
+    private static final Operation OPERATION = String::toUpperCase;
 
     public UpperCase(final String name) {
         super(name);

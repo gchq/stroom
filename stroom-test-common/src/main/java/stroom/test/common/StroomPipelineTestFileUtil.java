@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class StroomPipelineTestFileUtil {
+
     private static Path PROJECT_DIR;
     private static Path TEST_RESOURCES_DIR;
     private static Path TEST_OUTPUT_DIR;

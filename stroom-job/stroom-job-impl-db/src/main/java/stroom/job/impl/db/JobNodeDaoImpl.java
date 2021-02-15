@@ -1,9 +1,5 @@
 package stroom.job.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.FindJobNodeCriteria;
@@ -15,8 +11,11 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.util.shared.HasIntCrud;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
@@ -65,12 +66,16 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return jobNode;
     };
 
-    private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER = (jobNode, record) -> {
-        record.from(jobNode);
-        record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
-        record.set(JOB_NODE.JOB_TYPE, jobNode.getJobType() != null ? jobNode.getJobType().getPrimitiveValue() : JobType.UNKNOWN.getPrimitiveValue());
-        return record;
-    };
+    private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER =
+            (jobNode, record) -> {
+                record.from(jobNode);
+                record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
+                record.set(JOB_NODE.JOB_TYPE,
+                        jobNode.getJobType() != null
+                                ? jobNode.getJobType().getPrimitiveValue()
+                                : JobType.UNKNOWN.getPrimitiveValue());
+                return record;
+            };
 
     private final JobDbConnProvider jobDbConnProvider;
     private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;

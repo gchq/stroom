@@ -35,17 +35,18 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.client.SyncInvoker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.client.SyncInvoker;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
@@ -70,7 +71,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     public List<String> listAllNodes() {
         FetchNodeStatusResponse response = find();
-        if (response != null && response.getValues() != null){
+        if (response != null && response.getValues() != null) {
             return response.getValues()
                     .stream()
                     .map(NodeStatusResult::getNode)

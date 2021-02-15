@@ -21,6 +21,7 @@ import stroom.task.shared.TaskId;
 import java.util.UUID;
 
 class TaskIdFactory {
+
     static TaskId create() {
         return new TaskId(createUUID(), null);
     }

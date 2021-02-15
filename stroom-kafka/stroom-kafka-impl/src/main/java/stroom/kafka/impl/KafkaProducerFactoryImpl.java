@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
@@ -33,8 +34,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
@@ -46,6 +45,8 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Class to provide shared {@link KafkaProducer} instances wrapped inside a {@link SharedKafkaProducer}.
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
     private final KafkaConfigDocCache kafkaConfigDocCache;
@@ -66,7 +68,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     private final ConcurrentMap<String, SharedKafkaProducerImpl> currentSharedProducersMap = new ConcurrentHashMap<>();
     // Keyed on uuid|version so can hold one or more KPs for each uuid if the config has changed over
     // time. Once clients are no longer using the superseded KPs they will be removed.
-    private final ConcurrentMap<SharedKafkaProducerIdentity, SharedKafkaProducerImpl> allSharedProducersMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<SharedKafkaProducerIdentity, SharedKafkaProducerImpl> allSharedProducersMap =
+            new ConcurrentHashMap<>();
 
     @Inject
     KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache) {
@@ -88,7 +91,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
             final SharedKafkaProducerIdentity desiredKey = new SharedKafkaProducerIdentity(kafkaConfigDoc);
 
             // Optimistically assume the map will have the latest SharedKafkaProducer
-            final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(desiredKey.getConfigUuid());
+            final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(
+                    desiredKey.getConfigUuid());
             if (activeSharedProducer != null
                     && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
                 // This is the latest SharedKafkaProducer so use it
@@ -118,7 +122,9 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                     removeRedundantSharedKafkaProducers();
 
                                     // swap out the existing current SharedKafkaProducer for our new one
-                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
+                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc,
+                                            docRefFromDoc,
+                                            desiredKey);
                                 }
                             }
                             return sharedKafkaProducer2;
@@ -209,7 +215,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                 .parallelStream()
                 .forEach(sharedKafkaProducer -> {
                     sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
-                        LOGGER.info("Closing Kafka producer for {}", sharedKafkaProducer.getSharedKafkaProducerIdentity());
+                        LOGGER.info("Closing Kafka producer for {}",
+                                sharedKafkaProducer.getSharedKafkaProducerIdentity());
                         kafkaProducer.close();
                     });
                 });
@@ -231,7 +238,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     @Override
     public SystemInfoResult getSystemInfo() {
 
-        final List<Map<String,Object>> producerInfo = allSharedProducersMap.values().stream()
+        final List<Map<String, Object>> producerInfo = allSharedProducersMap.values().stream()
                 .map(sharedKafkaProducer -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("docName", sharedKafkaProducer.getConfigName());
@@ -250,10 +257,10 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                     final String groupName = entry.getKey().group()
                                             + " ("
                                             + entry.getKey().tags().entrySet()
-                                                .stream()
-                                                .filter(entry2 -> !entry2.getKey().equals("client-id"))
-                                                .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
-                                                .collect(Collectors.joining(","))
+                                            .stream()
+                                            .filter(entry2 -> !entry2.getKey().equals("client-id"))
+                                            .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
+                                            .collect(Collectors.joining(","))
                                             + ")";
 
                                     return Tuple.of(

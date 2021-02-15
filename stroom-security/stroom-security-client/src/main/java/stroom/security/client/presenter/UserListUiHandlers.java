@@ -19,5 +19,6 @@ package stroom.security.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface UserListUiHandlers extends UiHandlers {
+
     void changeNameFilter(String name);
 }

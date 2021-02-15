@@ -18,21 +18,22 @@ package stroom.index.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "fields")
 public class IndexFields implements Serializable {
+
     private static final long serialVersionUID = 4457718308915039068L;
 
-    private List<IndexField> indexFields;
+    private final List<IndexField> indexFields;
 
     public IndexFields() {
         this.indexFields = new ArrayList<>();
@@ -79,10 +80,15 @@ public class IndexFields implements Serializable {
         return set;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final IndexFields that = (IndexFields) o;
         return Objects.equals(indexFields, that.indexFields);
     }

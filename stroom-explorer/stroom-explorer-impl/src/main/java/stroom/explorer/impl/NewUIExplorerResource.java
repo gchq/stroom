@@ -23,6 +23,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -36,18 +42,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Api(tags = "Explorer (v1) (New UI)")
 @Path("/explorer" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUIExplorerResource implements RestResource {
+
     private final Provider<ExplorerService> explorerServiceProvider;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final Provider<ExplorerTreeModel> explorerTreeModelProvider;
@@ -157,7 +158,9 @@ public class NewUIExplorerResource implements RestResource {
 
         final List<String> docRefTypes = treeModel.values().stream()
                 .flatMap(List::stream)
-                .map(elementNode -> elementNode == null ? "" : elementNode.getType())
+                .map(elementNode -> elementNode == null
+                        ? ""
+                        : elementNode.getType())
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
@@ -167,6 +170,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     static class CreateOp {
+
         @JsonProperty
         private String docRefType;
         @JsonProperty
@@ -218,6 +222,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     static class CopyOp {
+
         @JsonProperty
         private List<DocRef> docRefs;
         @JsonProperty
@@ -264,6 +269,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     static class MoveOp {
+
         @JsonProperty
         private List<DocRef> docRefs;
         @JsonProperty
@@ -310,6 +316,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     static class RenameOp {
+
         @JsonProperty
         private DocRef docRef;
         @JsonProperty
@@ -370,8 +377,14 @@ public class NewUIExplorerResource implements RestResource {
         if (children != null) {
 
             for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter, filterPredicate);
+                // Recurse right down to find out if a descendant is being added and therefore if we need to
+                // include this as an ancestor.
+                final boolean hasChildren = filterDescendants(child,
+                        treeModelIn,
+                        treeModelOut,
+                        currentDepth + 1,
+                        filter,
+                        filterPredicate);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
@@ -459,7 +472,9 @@ public class NewUIExplorerResource implements RestResource {
         } else {
             parent.setNodeState(NodeState.OPEN);
             for (final ExplorerNode child : children) {
-                final SimpleDocRefTreeDTO resultChild = new SimpleDocRefTreeDTO(child.getUuid(), child.getType(), child.getName());
+                final SimpleDocRefTreeDTO resultChild = new SimpleDocRefTreeDTO(child.getUuid(),
+                        child.getType(),
+                        child.getName());
                 getChildren(child, filteredModel).forEach(resultChild::addChild);
                 result.add(resultChild);
             }

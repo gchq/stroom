@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class RefreshExplorerTreeEvent extends GwtEvent<RefreshExplorerTreeEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private RefreshExplorerTreeEvent() {
@@ -49,6 +50,7 @@ public class RefreshExplorerTreeEvent extends GwtEvent<RefreshExplorerTreeEvent.
     }
 
     public interface Handler extends EventHandler {
+
         void onRefresh(RefreshExplorerTreeEvent event);
     }
 }

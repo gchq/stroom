@@ -28,8 +28,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,9 +36,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockIndexShardService implements IndexShardService {
+
     protected final Map<Object, IndexShard> map = new ConcurrentHashMap<>();
     private final AtomicInteger indexShardsCreated;
     private final AtomicLong indexShardId;

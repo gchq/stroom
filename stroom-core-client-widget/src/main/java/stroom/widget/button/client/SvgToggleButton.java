@@ -24,12 +24,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
 
-    private SvgPreset onPreset;
-    private SvgPreset offPreset;
+    private final SvgPreset onPreset;
+    private final SvgPreset offPreset;
     private boolean isOn = false;
 
     private SvgToggleButton(final SvgPreset onPreset,
-                           final SvgPreset offPreset) {
+                            final SvgPreset offPreset) {
         super(offPreset);
         this.onPreset = onPreset;
         this.offPreset = offPreset;
@@ -40,7 +40,7 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
     }
 
     /**
-     * @param onPreset The face to display when in the ON state, e.g. an OFF icon
+     * @param onPreset  The face to display when in the ON state, e.g. an OFF icon
      * @param offPreset The face to display when in the OFF state, e.g. an ON icon
      */
     public static SvgToggleButton create(final SvgPreset onPreset,

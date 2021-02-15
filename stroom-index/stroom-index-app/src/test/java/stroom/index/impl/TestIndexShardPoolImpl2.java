@@ -16,10 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -29,9 +25,15 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
 class TestIndexShardPoolImpl2 extends StroomUnitTest {
+
     @BeforeEach
     void before() {
         FileUtil.deleteContents(getCurrentTestDir().resolve("index"));

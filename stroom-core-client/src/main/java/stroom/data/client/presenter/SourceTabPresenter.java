@@ -43,11 +43,12 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                 .orElse("");
         return sourceKey != null
                 ? ("Stream " + sourceKey.getMetaId()
-                    + " : " + (sourceKey.getPartNo() + 1) // to one based
-                    + " : " + (sourceKey.getSegmentNo().orElse(0L) + 1) // to one based
-                    + type)
+                + " : " + (sourceKey.getPartNo() + 1) // to one based
+                + " : " + (sourceKey.getSegmentNo().orElse(0L) + 1) // to one based
+                + type)
                 : "Source Data";
     }
+
     public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
         sourceKey = new SourceKey(sourceLocation);
         sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
@@ -68,6 +69,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
 
     public interface SourceTabView extends View {
+
         void setSourceView(final ClassificationWrapperView sourceView);
     }
 

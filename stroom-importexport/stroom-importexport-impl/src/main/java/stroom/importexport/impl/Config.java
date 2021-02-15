@@ -16,23 +16,16 @@
 
 package stroom.importexport.impl;
 
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.ext.Attributes2Impl;
 import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.ext.Attributes2Impl;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -43,8 +36,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 public class Config {
+
     private static final Attributes2Impl BLANK_ATTRIBUTES = new Attributes2Impl();
     private static final String YES = "yes";
 

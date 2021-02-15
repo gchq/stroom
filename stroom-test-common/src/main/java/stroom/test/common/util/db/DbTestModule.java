@@ -7,6 +7,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class DbTestModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();

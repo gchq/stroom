@@ -87,7 +87,7 @@ class TestCharReader {
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream,false,  utf8.name());
+        CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -157,7 +157,9 @@ class TestCharReader {
                     final ByteOrderMark byteOrderMark = tuple2._2();
                     final String testName = charset.displayName()
                             + "__"
-                            + (byteOrderMark != null ? byteOrderMark.toString() : "NO-BOM");
+                            + (byteOrderMark != null
+                            ? byteOrderMark.toString()
+                            : "NO-BOM");
 
                     return DynamicTest.dynamicTest(testName, () -> {
                         LOGGER.info("Charset {}, byteOrderMark {}",
@@ -212,7 +214,7 @@ class TestCharReader {
 
                         // Check right number of 'characters'
                         Assertions.assertThat(decodedChars)
-                                .hasSize(inputStr.length() -1); // -1 to account for 2 char emoji
+                                .hasSize(inputStr.length() - 1); // -1 to account for 2 char emoji
                     });
                 });
     }
@@ -297,7 +299,7 @@ class TestCharReader {
             }
         }
         // now the last read
-        readAndAssert(charReader,expectedString, expectedByteOffset, expectedCharOffset);
+        readAndAssert(charReader, expectedString, expectedByteOffset, expectedCharOffset);
     }
 
     private void readAndAssert(final CharReader charReader,

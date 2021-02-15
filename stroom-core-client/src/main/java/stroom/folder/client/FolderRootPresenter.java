@@ -16,12 +16,8 @@
 
 package stroom.folder.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
-
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -37,7 +33,12 @@ import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class FolderRootPresenter extends LinkTabPanelPresenter implements TabData {
+
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");

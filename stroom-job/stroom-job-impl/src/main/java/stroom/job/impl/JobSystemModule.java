@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class JobSystemModule extends AbstractModule {
+
     @Override
     protected void configure() {
 
@@ -66,6 +67,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
     private static class FetchNewTasks extends RunnableWrapper {
+
         @Inject
         FetchNewTasks(final DistributedTaskFetcher distributedTaskFetcher) {
             super(distributedTaskFetcher::execute);
@@ -73,6 +75,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
     private static class JobBootstrapStartup extends RunnableWrapper {
+
         @Inject
         JobBootstrapStartup(final JobBootstrap jobBootstrap) {
             super(jobBootstrap::startup);
@@ -80,6 +83,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
     private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
+
         @Inject
         DistributedTaskFetcherShutdown(final DistributedTaskFetcher distributedTaskFetcher) {
             super(distributedTaskFetcher::shutdown);
@@ -87,6 +91,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
     private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
+
         @Inject
         ScheduledTaskExecutorStartup(final ScheduledTaskExecutor scheduledTaskExecutor) {
             super(scheduledTaskExecutor::startup);
@@ -94,6 +99,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
     private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
+
         @Inject
         ScheduledTaskExecutorShutdown(final ScheduledTaskExecutor scheduledTaskExecutor) {
             super(scheduledTaskExecutor::shutdown);

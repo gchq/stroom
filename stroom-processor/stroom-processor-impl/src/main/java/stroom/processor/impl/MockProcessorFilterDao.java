@@ -6,13 +6,14 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
+
     private final MockIntCrud<ProcessorFilter> dao = new MockIntCrud<>();
 
     @Override
@@ -21,7 +22,9 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long minMetaCreateMs, final Long maxMetaCreateMs) {
+    public ProcessorFilter create(final ProcessorFilter processorFilter,
+                                  final Long minMetaCreateMs,
+                                  final Long maxMetaCreateMs) {
         if (processorFilter.getProcessorFilterTracker() == null) {
             processorFilter.setProcessorFilterTracker(new ProcessorFilterTracker());
         }

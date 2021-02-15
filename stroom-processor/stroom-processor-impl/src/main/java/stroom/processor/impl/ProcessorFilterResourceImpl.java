@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.CreateReprocessFilterRequest;
@@ -31,11 +30,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 // TODO : @66 add event logging
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
     private final ProcessorFilterService processorFilterService;

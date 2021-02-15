@@ -1,6 +1,7 @@
 package stroom.dashboard.expression.v1;
 
 public abstract class Selector extends AbstractSingleChildGenerator {
+
     private static final long serialVersionUID = 8153777070911899616L;
 
     Selector(final Generator childGenerator) {

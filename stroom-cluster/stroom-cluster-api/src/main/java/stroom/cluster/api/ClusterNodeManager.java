@@ -22,6 +22,7 @@ import stroom.node.shared.ClusterNodeInfo;
  * Component that remembers the node list and who is the current master node
  */
 public interface ClusterNodeManager {
+
     /**
      * Gets the current cluster state. If the current state is null or is older
      * than the expiry time then the cluster state will be updated

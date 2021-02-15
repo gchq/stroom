@@ -18,17 +18,18 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.shared.XsltDTO;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.util.rest.RestUtil;
-import stroom.event.logging.rs.api.AutoLogged;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
 class XsltResourceImpl implements XsltResource {
+
     private final Provider<XsltStore> xsltStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 

@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class DirtyEvent extends GwtEvent<DirtyEvent.DirtyHandler> {
+
     private static Type<DirtyHandler> TYPE;
     private final boolean dirty;
 
@@ -55,6 +56,7 @@ public class DirtyEvent extends GwtEvent<DirtyEvent.DirtyHandler> {
     }
 
     public interface DirtyHandler extends EventHandler {
+
         void onDirty(DirtyEvent event);
     }
 }

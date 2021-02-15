@@ -16,16 +16,17 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.data.client.event.DataSelectionEvent;
+import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
+import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.xml.client.Document;
 import com.google.gwt.xml.client.XMLParser;
 import com.google.gwt.xml.client.impl.DOMParseException;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
+
     private final HandlerManager handlerManager = new HandlerManager(this);
     List<XSDNode> history = new ArrayList<>();
     int historyPos = -1;

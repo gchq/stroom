@@ -16,14 +16,15 @@
 
 package stroom.job.impl;
 
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.StringCriteria;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.FindNamedEntityCriteria;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindJobCriteria extends FindNamedEntityCriteria {
+
     public static final String FIELD_ID = "Id";
     public static final String FIELD_ADVANCED = "Advanced";
 

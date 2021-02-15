@@ -63,9 +63,10 @@ import java.time.format.DateTimeFormatter;
                                         name = "timezone",
                                         argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'"),
-                                },
+                        },
                         description = "Parse dateString using the supplied date format pattern and timezone.")})
 class ParseDate extends AbstractFunction implements Serializable {
+
     static final String NAME = "parseDate";
     private static final long serialVersionUID = -305845496003936297L;
     private String pattern = DateUtil.DEFAULT_PATTERN;
@@ -130,6 +131,7 @@ class ParseDate extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String pattern;

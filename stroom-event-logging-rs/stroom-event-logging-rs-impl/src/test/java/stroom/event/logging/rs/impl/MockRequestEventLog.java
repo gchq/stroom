@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import javax.annotation.Nullable;
 
 public class MockRequestEventLog implements RequestEventLog {
+
     @Override
     public void log(final RequestInfo info, @Nullable final Object responseEntity) {
 

@@ -51,8 +51,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,10 +61,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
 
     @Inject
@@ -97,7 +98,9 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void test(final String name, final String type) {
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
-        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
+        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml",
+                name,
+                TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
         final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
 
@@ -226,7 +229,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     private void checkInnerData(final long streamId, final boolean text) throws IOException {
         if (text) {
-            final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+            @SuppressWarnings("checkstyle:LineLength") final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
                     "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
 
             checkInnerData(streamId, 143, innerRef);

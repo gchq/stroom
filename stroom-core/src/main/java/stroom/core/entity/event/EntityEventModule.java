@@ -28,6 +28,7 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 public class EntityEventModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
@@ -44,6 +45,7 @@ public class EntityEventModule extends AbstractModule {
     }
 
     private static class EntityEventBusInit extends RunnableWrapper {
+
         @Inject
         EntityEventBusInit(final EntityEventBusImpl entityEventBus) {
             super(entityEventBus::init);

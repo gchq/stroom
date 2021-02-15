@@ -17,8 +17,8 @@
 package stroom.security.shared;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,13 +34,15 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends BaseCriteria {
+
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
 
-    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(FIELD_DEF_NAME);
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(
+            FIELD_DEF_NAME);
 
     /**
      * Find user groups

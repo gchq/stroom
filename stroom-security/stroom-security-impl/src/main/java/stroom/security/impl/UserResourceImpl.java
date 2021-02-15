@@ -5,9 +5,9 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
-import java.util.List;
 
 public class UserResourceImpl implements UserResource {
 

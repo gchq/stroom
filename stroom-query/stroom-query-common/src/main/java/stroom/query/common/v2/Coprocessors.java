@@ -10,7 +10,6 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,8 +19,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 public class Coprocessors implements Iterable<Coprocessor> {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
     private final Map<Integer, Coprocessor> coprocessorMap;

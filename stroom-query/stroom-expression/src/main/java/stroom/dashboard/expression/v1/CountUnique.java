@@ -47,6 +47,7 @@ import java.util.Set;
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class CountUnique extends AbstractFunction {
+
     static final String NAME = "countUnique";
 
     private Generator gen;
@@ -98,6 +99,7 @@ class CountUnique extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Set<Val> uniqueValues = new HashSet<>();

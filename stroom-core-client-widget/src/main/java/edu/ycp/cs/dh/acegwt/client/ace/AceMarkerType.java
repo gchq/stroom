@@ -22,7 +22,7 @@ public enum AceMarkerType {
 
     private final String name;
 
-    private AceMarkerType(final String name) {
+    AceMarkerType(final String name) {
         this.name = name;
     }
 

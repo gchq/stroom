@@ -16,7 +16,7 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
 
     private final DataPresenter dataPresenter;
 
-    private Widget widget;
+    private final Widget widget;
 
     @UiField
     ResizeSimplePanel container;
@@ -55,5 +55,6 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
     }
 
     public interface Binder extends UiBinder<Widget, DataPreviewTabViewImpl> {
+
     }
 }

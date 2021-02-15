@@ -21,7 +21,6 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.google.inject.Inject;
@@ -31,6 +30,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<Object> {
+
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
@@ -82,5 +82,6 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
     }
 
     public interface StreamTaskView extends View {
+
     }
 }

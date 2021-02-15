@@ -1,7 +1,5 @@
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -12,10 +10,14 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
+import javax.inject.Inject;
 
 class AppPermissionResourceImpl implements AppPermissionResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionResourceImpl.class);
 
     private final SecurityContext securityContext;

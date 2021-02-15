@@ -26,6 +26,7 @@ import java.nio.file.Paths;
  * Not very OO but added here for GWT reasons.
  */
 public class IndexShardUtil {
+
     public static Path getIndexPath(IndexShard indexShard) {
         StringBuilder builder = new StringBuilder();
         builder.append(indexShard.getVolume().getPath());

@@ -12,36 +12,45 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 final class FormatterCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FormatterCache.class);
 
     // Create cache
     private static final int MAX_ENTRIES = 1000;
 
-    private static final Map<String, CachedFormatter> FORMATTER_CACHE = Collections.synchronizedMap(new LinkedHashMap<String, CachedFormatter>(MAX_ENTRIES + 1, .75F, true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+    private static final Map<String, CachedFormatter> FORMATTER_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, CachedFormatter>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
-    private static final Map<String, CachedZoneId> ZONEID_CACHE = Collections.synchronizedMap(new LinkedHashMap<String, CachedZoneId>(MAX_ENTRIES + 1, .75F, true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+    private static final Map<String, CachedZoneId> ZONEID_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, CachedZoneId>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
     private FormatterCache() {
         // Utility
@@ -102,6 +111,7 @@ final class FormatterCache {
     }
 
     private static class CachedFormatter {
+
         private final DateTimeFormatter formatter;
         private final RuntimeException exception;
 
@@ -117,6 +127,7 @@ final class FormatterCache {
     }
 
     private static class CachedZoneId {
+
         private final ZoneId zoneId;
         private final RuntimeException exception;
 

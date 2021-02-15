@@ -16,6 +16,10 @@
 
 package stroom.task.client.presenter;
 
+import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
+import stroom.task.shared.TaskProgress;
+import stroom.util.shared.ModelStringUtil;
+
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HasText;
@@ -24,11 +28,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
-import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ModelStringUtil;
 
 public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
+
     @Inject
     public UserTaskPresenter(final EventBus eventBus, final UserTaskView view) {
         super(eventBus, view);
@@ -49,6 +51,7 @@ public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
     }
 
     public interface UserTaskView extends View, HasUiHandlers<UserTaskUiHandlers> {
+
         void setTaskProgress(TaskProgress taskProgress);
 
         HasText getTaskAge();
@@ -59,6 +62,7 @@ public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource terminate();
     }
 }

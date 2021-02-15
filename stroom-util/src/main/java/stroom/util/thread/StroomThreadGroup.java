@@ -17,6 +17,7 @@
 package stroom.util.thread;
 
 public final class StroomThreadGroup {
+
     private static final ThreadGroup MAIN_THREAD_GROUP = Thread.currentThread().getThreadGroup();
     private static final ThreadGroup STROOM_THREAD_GROUP = new ThreadGroup(MAIN_THREAD_GROUP, "Stroom");
 

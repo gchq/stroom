@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -31,7 +32,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(tags = "Nodes")
 @Path(NodeResource.BASE_PATH)
@@ -73,12 +73,12 @@ public interface NodeResource extends RestResource, DirectRestService {
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets the priority of a node")
-    void setPriority(@PathParam("nodeName") String nodeName, 
+    void setPriority(@PathParam("nodeName") String nodeName,
                      @ApiParam("nodeName") Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets whether a node is enabled")
-    void setEnabled(@PathParam("nodeName") String nodeName, 
+    void setEnabled(@PathParam("nodeName") String nodeName,
                     @ApiParam("enabled") Boolean enabled);
 }

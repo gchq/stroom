@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.util.io;
 
 import java.util.Arrays;
@@ -67,7 +68,9 @@ public enum ByteSizeUnit {
                     })
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException(String.format(
-                "ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
+                    "ShortName [%s] is not valid. Should be one of [%s] (case insensitive).",
+                    shortName,
+                    allShortNames));
         }
         return val;
     }
@@ -76,7 +79,7 @@ public enum ByteSizeUnit {
         ByteSizeUnit val = intToEnumMap.get(bytes);
         if (val == null) {
             throw new IllegalArgumentException(String.format(
-                "The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
+                    "The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
         }
         return val;
     }
@@ -85,7 +88,7 @@ public enum ByteSizeUnit {
      * @return The number of bytes in this byte size unit
      */
     public long longBytes() {
-        return (long) bytes;
+        return bytes;
     }
 
     /**
@@ -131,6 +134,7 @@ public enum ByteSizeUnit {
     }
 
     private static class CaseInsensitiveString {
+
         private final String value;
 
         private CaseInsensitiveString(final String value) {
@@ -141,10 +145,15 @@ public enum ByteSizeUnit {
             return new CaseInsensitiveString(value);
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             CaseInsensitiveString that = (CaseInsensitiveString) o;
 

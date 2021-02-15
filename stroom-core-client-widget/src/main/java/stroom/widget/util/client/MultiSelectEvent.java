@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class MultiSelectEvent extends GwtEvent<MultiSelectEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final SelectionType selectionType;
 
@@ -54,6 +55,7 @@ public class MultiSelectEvent extends GwtEvent<MultiSelectEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onSelect(MultiSelectEvent event);
     }
 }

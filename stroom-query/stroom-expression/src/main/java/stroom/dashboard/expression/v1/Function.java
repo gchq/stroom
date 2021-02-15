@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.util.Map;
 
 public interface Function extends Param, Serializable {
+
     /**
      * Set the parameters that this function will use.
      *

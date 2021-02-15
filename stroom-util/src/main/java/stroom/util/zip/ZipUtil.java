@@ -45,6 +45,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public final class ZipUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipUtil.class);
 
     private ZipUtil() {
@@ -68,21 +69,25 @@ public final class ZipUtil {
     private static void zip(final Path parent, final ZipOutputStream zip,
                             final Pattern includePattern, final Pattern excludePattern) {
         try {
-            Files.walkFileTree(parent, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fullPath = parent.relativize(file).toString();
-                        if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
-                                (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
-                            putEntry(zip, file, fullPath);
+            Files.walkFileTree(
+                    parent,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fullPath = parent.relativize(file).toString();
+                                if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
+                                        (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
+                                    putEntry(zip, file, fullPath);
+                                }
+                            } catch (final IOException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final IOException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final NotDirectoryException e) {
             // Ignore.
         } catch (final IOException e) {

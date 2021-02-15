@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public class ToStringBuilder {
+
     private final StringBuilder sb = new StringBuilder();
 
     public void appendSuper(final String string) {

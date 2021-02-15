@@ -53,14 +53,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Message;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -69,6 +68,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 class DataServiceImpl implements DataService {
 
@@ -145,13 +146,17 @@ class DataServiceImpl implements DataService {
             }
 
             final DataDownloadSettings settings = new DataDownloadSettings();
-            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria, file.getParent(), fileName, settings);
+            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria,
+                    file.getParent(),
+                    fileName,
+                    settings);
 
             if (result.getRecordsWritten() == 0) {
-                if (result.getMessageList() != null && result.getMessageList().size() > 0){
+                if (result.getMessageList() != null && result.getMessageList().size() > 0) {
                     throw new RuntimeException("Download failed with errors: " +
-                            result.getMessageList().stream().map(m -> m.getMessage()).
-                                    collect(Collectors.joining(", ")));
+                            result.getMessageList().stream()
+                                    .map(Message::getMessage)
+                                    .collect(Collectors.joining(", ")));
                 }
             }
             return new ResourceGeneration(resourceKey, result.getMessageList());
@@ -355,7 +360,9 @@ class DataServiceImpl implements DataService {
         }
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid(), pipelineName));
+            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                    meta.getPipelineUuid(),
+                    pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
         }
         return entries;
@@ -373,9 +380,12 @@ class DataServiceImpl implements DataService {
 //            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
 //            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
+                    attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
+                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
+                    attributeMap.get(DataRetentionFields.RETENTION_RULE)));
         }
 
         return entries;

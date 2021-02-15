@@ -19,8 +19,6 @@ package stroom.util.cert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.security.auth.x500.X500Principal;
-import javax.servlet.ServletRequest;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,8 +26,11 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.security.auth.x500.X500Principal;
+import javax.servlet.ServletRequest;
 
 public class CertificateUtil {
+
     /**
      * API into the request for the certificate details.
      */

@@ -1,19 +1,21 @@
 package stroom.proxy.app.handler;
 
-import org.slf4j.Logger;
 import stroom.meta.api.AttributeMap;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class LogStream {
+
     private final Set<String> metaKeySet;
 
     @Inject
@@ -25,7 +27,13 @@ public class LogStream {
         }
     }
 
-    public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
+    public void log(final Logger logger,
+                    final AttributeMap attributeMap,
+                    final String type,
+                    final String url,
+                    final int responseCode,
+                    final long bytes,
+                    final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
             final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))

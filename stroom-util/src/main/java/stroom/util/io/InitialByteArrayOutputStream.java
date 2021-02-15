@@ -27,7 +27,8 @@ import java.io.OutputStream;
  * It also allows access to the buffer and pos without a copy of the array.
  */
 public class InitialByteArrayOutputStream extends OutputStream {
-    private byte[] preBuffer;
+
+    private final byte[] preBuffer;
     private int preBufferPos = 0;
     private GetBufferByteArrayOutputStream postBuffer;
 
@@ -94,8 +95,9 @@ public class InitialByteArrayOutputStream extends OutputStream {
     }
 
     public static class BufferPos {
-        private byte[] buffer;
-        private int bufferPos;
+
+        private final byte[] buffer;
+        private final int bufferPos;
 
         @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
         public BufferPos(byte[] buffer, int bufferPos) {
@@ -119,6 +121,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
     }
 
     private static class GetBufferByteArrayOutputStream extends ByteArrayOutputStream {
+
         @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
         public byte[] getBuffer() {
             return buf;

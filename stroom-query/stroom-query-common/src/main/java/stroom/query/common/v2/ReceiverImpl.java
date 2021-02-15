@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.Val;
 import java.util.function.Consumer;
 
 public class ReceiverImpl implements Receiver {
+
     private final Consumer<Val[]> valuesConsumer;
     private final Consumer<Throwable> errorConsumer;
     private final Consumer<Long> completionConsumer;

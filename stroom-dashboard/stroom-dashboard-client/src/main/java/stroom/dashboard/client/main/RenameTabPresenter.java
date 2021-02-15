@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 
 public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> implements PopupUiHandlers {
+
     private DashboardPresenter dashboardPresenter;
     private TabLayout tabLayout;
     private String componentName;
@@ -98,6 +99,7 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
     }
 
     public interface RenameTabView extends View {
+
         HasText getName();
 
         HasKeyDownHandlers getNameBox();

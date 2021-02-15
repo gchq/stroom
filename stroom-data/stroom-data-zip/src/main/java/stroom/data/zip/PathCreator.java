@@ -1,7 +1,8 @@
 package stroom.data.zip;
 
-import com.google.common.base.Strings;
 import stroom.meta.api.AttributeMap;
+
+import com.google.common.base.Strings;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class PathCreator {
+
     static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);

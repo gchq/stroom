@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePresenter.ProcessChoiceView {
+
     @UiField
     ValueSpinner priority;
     @UiField
@@ -61,5 +62,6 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     }
 
     public interface Binder extends UiBinder<Widget, ProcessChoiceViewImpl> {
+
     }
 }

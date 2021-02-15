@@ -12,6 +12,7 @@ import stroom.security.identity.token.TokenTypeDao;
 import javax.sql.DataSource;
 
 public class AuthDbModule extends AbstractFlyWayDbModule<IdentityConfig, AuthDbConnProvider> {
+
     private static final String MODULE = "stroom-authentication";
     private static final String FLYWAY_LOCATIONS = "stroom/security/identity/db/migration";
     private static final String FLYWAY_TABLE = "authentication_schema_history";
@@ -53,6 +54,7 @@ public class AuthDbModule extends AbstractFlyWayDbModule<IdentityConfig, AuthDbC
     }
 
     public static class DataSourceImpl extends DataSourceProxy implements AuthDbConnProvider {
+
         public DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

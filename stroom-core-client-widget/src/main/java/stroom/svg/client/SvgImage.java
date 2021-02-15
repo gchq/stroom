@@ -16,13 +16,15 @@
 
 package stroom.svg.client;
 
+import stroom.widget.util.client.ResourceCache;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.util.client.ResourceCache;
 
 public class SvgImage extends Widget {
+
     private boolean detached;
     private int width;
     private int height;

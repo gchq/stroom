@@ -18,7 +18,6 @@
 package stroom.statistics.impl.hbase;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.importexport.impl.ImportExportSerializer;
@@ -32,14 +31,17 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject

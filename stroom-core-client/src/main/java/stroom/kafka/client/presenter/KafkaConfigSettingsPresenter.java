@@ -17,19 +17,21 @@
 
 package stroom.kafka.client.presenter;
 
+import stroom.core.client.event.DirtyKeyDownHander;
+import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter.KafkaConfigSettingsView;
+import stroom.kafka.shared.KafkaConfigDoc;
+
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter.KafkaConfigSettingsView;
 
 public class KafkaConfigSettingsPresenter extends DocumentSettingsPresenter<KafkaConfigSettingsView, KafkaConfigDoc> {
+
     @Inject
     public KafkaConfigSettingsPresenter(final EventBus eventBus, final KafkaConfigSettingsView view) {
         super(eventBus, view);
@@ -62,6 +64,7 @@ public class KafkaConfigSettingsPresenter extends DocumentSettingsPresenter<Kafk
     }
 
     public interface KafkaConfigSettingsView extends View {
+
         TextArea getDescription();
     }
 }

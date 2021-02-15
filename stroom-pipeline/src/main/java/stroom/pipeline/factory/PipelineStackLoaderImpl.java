@@ -17,18 +17,20 @@
 
 package stroom.pipeline.factory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class PipelineStackLoaderImpl implements PipelineStackLoader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStackLoaderImpl.class);
 
     private final PipelineStore pipelineStore;

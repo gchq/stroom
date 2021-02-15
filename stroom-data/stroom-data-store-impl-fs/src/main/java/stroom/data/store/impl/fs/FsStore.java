@@ -35,14 +35,14 @@ import stroom.meta.shared.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
@@ -55,6 +55,7 @@ import java.util.Objects;
  */
 @Singleton
 class FsStore implements Store, AttributeMapFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -88,7 +89,12 @@ class FsStore implements Store, AttributeMapFactory {
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
         final Path volumePath = Paths.get(dataVolume.getVolumePath());
         final String streamType = meta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, meta, volumePath, streamType, false);
+        final FsTarget target = FsTarget.create(metaService,
+                fileSystemStreamPathHelper,
+                meta,
+                volumePath,
+                streamType,
+                false);
 
         // Force Creation of the files
         target.getOutputStream();
@@ -151,7 +157,8 @@ class FsStore implements Store, AttributeMapFactory {
 //
 //                // Does the manifest exist ... overwrite it
 //                if (FileSystemUtil.isAllFile(childFile)) {
-//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
+//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+//                    InternalStreamTypeNames.MANIFEST, childFile)) {
 //                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
 //                    }
 //                    doneManifest = true;
@@ -160,8 +167,10 @@ class FsStore implements Store, AttributeMapFactory {
 //
 //            if (!doneManifest) {
 //                // No manifest done yet ... output one if the parent dir's exist
-//                if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
+//                if (FileSystemUtil.isAllParentDirectoryExist(
+//                ((FileSystemStreamTarget) streamTarget).getFiles(false))) {
+//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(
+//                    InternalStreamTypeNames.MANIFEST).getOutputStream()) {
 //                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
 //                    }
 //                } else {
@@ -239,7 +248,8 @@ class FsStore implements Store, AttributeMapFactory {
                 throw new DataException(message);
             }
 //            final Node node = nodeInfo.getThisNode();
-//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(
+//            volumeSet, node.getId(), node.getRack().getId());
 //            if (streamVolume == null) {
 //                final String message = "Unable to access any volume for " + meta
 //                        + " perhaps the data is on a private volume";
@@ -268,7 +278,8 @@ class FsStore implements Store, AttributeMapFactory {
 //        final Set<DataVolume> volumeSet = dataVolumeService.findDataVolume(meta.getId());
 //        if (volumeSet != null && volumeSet.size() > 0) {
 //            final DataVolume streamVolume = volumeSet.iterator().next();
-//            final Path manifest = fileSystemStreamPathHelper.getChildPath(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
+//            final Path manifest = fileSystemStreamPathHelper.getChildPath(
+//            meta, streamVolume, InternalStreamTypeNames.MANIFEST);
 //
 //            if (Files.isRegularFile(manifest)) {
 //                final AttributeMap attributeMap = new AttributeMap();
@@ -293,7 +304,9 @@ class FsStore implements Store, AttributeMapFactory {
 //                            meta, meta.getTypeName());
 //
 //                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-//                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
+//                    attributeMap.put("Files", allFiles.stream()
+//                    .map(FileUtil::getCanonicalPath)
+//                    .collect(Collectors.joining(",")));
 //
 //
 //                    //                streamAttributeMap.setFileNameList(new ArrayList<>());

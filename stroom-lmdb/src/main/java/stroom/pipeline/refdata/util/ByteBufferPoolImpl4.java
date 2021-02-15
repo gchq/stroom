@@ -6,8 +6,6 @@ import stroom.util.sysinfo.SystemInfoResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -26,6 +24,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * An bounded self-populating pool of directly allocated ByteBuffers.
@@ -96,10 +96,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         final OptionalInt optMaxSize = pooledByteBufferCounts == null
                 ? OptionalInt.empty()
                 : pooledByteBufferCounts.keySet()
-                    .stream()
-                    .filter(ByteBufferPoolImpl4::isPowerOf10)
-                    .mapToInt(Integer::intValue)
-                    .max();
+                        .stream()
+                        .filter(ByteBufferPoolImpl4::isPowerOf10)
+                        .mapToInt(Integer::intValue)
+                        .max();
 
         if (optMaxSize.isPresent()) {
             // Going from a zero based offset to a count so have to add one.
@@ -128,8 +128,12 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand do no need to hold the queue/counter
-            pooledBufferQueues[i] = configuredCount > 1 ? new ArrayBlockingQueue<>(configuredCount) : null;
-            pooledBufferCounters[i] = configuredCount > 1 ? new AtomicInteger(0) : null;
+            pooledBufferQueues[i] = configuredCount > 1
+                    ? new ArrayBlockingQueue<>(configuredCount)
+                    : null;
+            pooledBufferCounters[i] = configuredCount > 1
+                    ? new AtomicInteger(0)
+                    : null;
             maxBufferCounts[i] = configuredCount;
             bufferSizes[i] = bufferCapacity;
             msgs.add(bufferCapacity + "=" + configuredCount);
@@ -139,10 +143,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 (pooledByteBufferCounts == null
                         ? "null"
                         : pooledByteBufferCounts.entrySet()
-                            .stream()
-                            .sorted(Entry.comparingByKey())
-                            .map(entry -> entry.getKey() + "=" + entry.getValue())
-                            .collect(Collectors.joining(","))),
+                                .stream()
+                                .sorted(Entry.comparingByKey())
+                                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                .collect(Collectors.joining(","))),
                 String.join(",", msgs));
     }
 

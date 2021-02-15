@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public interface StroomZipOutputStream extends Closeable, AutoCloseable {
+
     long getProgressSize();
 
     OutputStream addEntry(String name) throws IOException;

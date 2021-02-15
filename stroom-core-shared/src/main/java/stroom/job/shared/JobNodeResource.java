@@ -61,18 +61,18 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
     @ApiOperation(value = "Sets the task limit for the job node")
-    void setTaskLimit(@PathParam("id") Integer id, 
+    void setTaskLimit(@PathParam("id") Integer id,
                       @ApiParam("taskLimit") Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
     @ApiOperation(value = "Sets the schedule job node")
-    void setSchedule(@PathParam("id") Integer id, 
+    void setSchedule(@PathParam("id") Integer id,
                      @ApiParam("schedule") String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
     @ApiOperation(value = "Sets the enabled status of the job node")
-    void setEnabled(@PathParam("id") Integer id, 
+    void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }

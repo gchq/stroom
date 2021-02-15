@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalConfigResource> {
+
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
@@ -365,7 +366,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
                 .thenAnswer(invocation ->
-                        baseEndPointUrls.get((String) invocation.getArgument(0)));
+                        baseEndPointUrls.get(invocation.getArgument(0)));
 
 //        when(nodeService.remoteRestResult(
 //                Mockito.anyString(),

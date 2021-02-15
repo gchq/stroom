@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql;
 
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
@@ -36,15 +35,16 @@ import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.ws.rs.BadRequestException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestSQLStatisticEventStore2 extends StroomUnitTest {
+
     private static final long EVENT_TIME = 1234L;
     private static final String EVENT_NAME = "MyStatistic";
     private static final long EVENT_COUNT = 1;
@@ -303,7 +303,9 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
+                rootOperator.build(),
+                null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);
@@ -372,7 +374,9 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
+                rootOperator.build(),
+                null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getFilterTermsTree().toString()).isEqualTo("[]");
@@ -396,7 +400,9 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
+                rootOperator.build(),
+                null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);

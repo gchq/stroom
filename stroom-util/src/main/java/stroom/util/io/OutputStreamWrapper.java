@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class OutputStreamWrapper extends OutputStream {
+
     private OutputStream outputStream;
 
     @Override

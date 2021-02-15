@@ -16,11 +16,11 @@
 
 package stroom.cluster.lock.impl.db;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
@@ -34,6 +34,7 @@ import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 
 @AutoLogged(UNLOGGED)
 class ClusterLockResourceImpl implements ClusterLockResource {
+
     private final Provider<NodeService> nodeService;
     private final Provider<NodeInfo> nodeInfo;
     private final Provider<WebTargetFactory> webTargetFactory;

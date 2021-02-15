@@ -22,14 +22,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StroomStatsStoreFieldChangeRequest {
+
     @JsonProperty
     private final StroomStatsStoreEntityData oldEntityData;
     @JsonProperty
     private final StroomStatsStoreEntityData newEntityData;
 
     @JsonCreator
-    public StroomStatsStoreFieldChangeRequest(@JsonProperty("oldEntityData") final StroomStatsStoreEntityData oldEntityData,
-                                              @JsonProperty("newEntityData") final StroomStatsStoreEntityData newEntityData) {
+    public StroomStatsStoreFieldChangeRequest(
+            @JsonProperty("oldEntityData") final StroomStatsStoreEntityData oldEntityData,
+            @JsonProperty("newEntityData") final StroomStatsStoreEntityData newEntityData) {
+
         this.oldEntityData = oldEntityData;
         this.newEntityData = newEntityData;
     }

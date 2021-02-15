@@ -46,6 +46,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements RestResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
 
     private final Provider<StatisticsQueryService> statisticsQueryServiceProvider;

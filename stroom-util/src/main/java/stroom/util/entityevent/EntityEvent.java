@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"docRef", "action"})
 @JsonInclude(Include.NON_NULL)
 public class EntityEvent {
+
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
@@ -56,6 +57,7 @@ public class EntityEvent {
     }
 
     public interface Handler {
+
         void onChange(EntityEvent event);
     }
 

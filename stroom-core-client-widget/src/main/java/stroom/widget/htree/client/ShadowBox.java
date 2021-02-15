@@ -16,17 +16,19 @@
 
 package stroom.widget.htree.client;
 
+import stroom.widget.htree.client.treelayout.Bounds;
+
 import com.google.gwt.canvas.dom.client.CanvasGradient;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.canvas.dom.client.FillStrokeStyle;
-import stroom.widget.htree.client.treelayout.Bounds;
 
 public class ShadowBox {
+
     private static final double DEFAULT_RADIUS = 5;
     private final RoundedRectangle roundedRectangle = new RoundedRectangle();
-    private double radius = DEFAULT_RADIUS;
-    private double shadowOffset = 1;
+    private final double radius = DEFAULT_RADIUS;
+    private final double shadowOffset = 1;
 
     public void draw(final Context2d shadowContext, final Context2d backgroundContext, final Bounds bounds,
                      final Colors colors) {
@@ -79,6 +81,7 @@ public class ShadowBox {
     }
 
     public static class Colors {
+
         private static final String DEFAULT_BORDER_COLOR = "#c5cde2";
         private static final String DEFAULT_BACKGROUND_TOP_COLOR = "#f5f9fd";
         private static final String DEFAULT_BACKGROUND_BOTTOM_COLOR = "#e1ebf8";

@@ -43,8 +43,6 @@ import org.apache.solr.client.solrj.request.schema.SchemaRequest.Fields;
 import org.apache.solr.client.solrj.request.schema.SchemaRequest.ReplaceField;
 import org.apache.solr.client.solrj.response.schema.SchemaResponse.FieldsResponse;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,9 +56,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SolrIndexStoreImpl implements SolrIndexStore {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexStoreImpl.class);
 
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
@@ -185,10 +186,14 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                 .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
                     }
 
-                    List<SolrIndexField> solrFields = fetchSolrFields(solrClient, document.getCollection(), existingFieldMap);
+                    List<SolrIndexField> solrFields = fetchSolrFields(solrClient,
+                            document.getCollection(),
+                            existingFieldMap);
 
                     // Which fields are missing from Solr?
-                    final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
+                    final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(
+                            SolrIndexField::getFieldName,
+                            Function.identity()));
                     existingFieldMap.forEach((k, v) -> {
                         if (solrFieldMap.containsKey(k)) {
                             final SolrIndexField solrField = solrFieldMap.get(k);
@@ -227,7 +232,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     new DeleteField(field.getFieldName()).process(solrClient, document.getCollection());
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
-                                    final String message = "Failed to delete field '" + field.getFieldName() + "' - " + e.getMessage();
+                                    final String message = "Failed to delete field '" + field.getFieldName() +
+                                            "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }
@@ -261,7 +267,10 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         return store.writeDocument(document);
     }
 
-    private List<SolrIndexField> fetchSolrFields(final SolrClient solrClient, final String collection, Map<String, SolrIndexField> existingFieldMap) throws SolrServerException, IOException {
+    private List<SolrIndexField> fetchSolrFields(final SolrClient solrClient,
+                                                 final String collection,
+                                                 Map<String, SolrIndexField> existingFieldMap)
+            throws SolrServerException, IOException {
         final FieldsResponse response = new Fields().process(solrClient, collection);
         final List<Map<String, Object>> fields = response.getFields();
         return fields
@@ -367,12 +376,17 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         Function<SolrIndexDoc, SolrIndexDoc> filter = d -> {
             d.setSolrSynchState(null);
             return d;

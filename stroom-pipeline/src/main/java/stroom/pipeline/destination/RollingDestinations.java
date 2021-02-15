@@ -16,19 +16,21 @@
 
 package stroom.pipeline.destination;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class RollingDestinations {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
     private static final int MAX_TRY_COUNT = 1000;
@@ -97,7 +99,8 @@ public class RollingDestinations {
      *
      * @param key         The key that this destination is associated with.
      * @param destination The destination to lock and attempt to roll.
-     * @return The destination if it didn't need rolling and can be used, null otherwise. The returned destination is locked for exclusive use by the current thread.
+     * @return The destination if it didn't need rolling and can be used, null otherwise. The returned
+     * destination is locked for exclusive use by the current thread.
      * @throws IOException Could be thrown while attempting to flush or close the destination on roll.
      */
     private RollingDestination lockAndRoll(final Object key, final RollingDestination destination) throws IOException {

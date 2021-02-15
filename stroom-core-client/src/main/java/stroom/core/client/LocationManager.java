@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Window.Location;
 import javax.inject.Inject;
 
 public class LocationManager {
+
     private boolean ignoreClose;
 
     @Inject

@@ -16,10 +16,12 @@
 
 package stroom.processor.impl;
 
-import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.Test;
+
 class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrationTest {
+
     @Test
     void test() {
     }

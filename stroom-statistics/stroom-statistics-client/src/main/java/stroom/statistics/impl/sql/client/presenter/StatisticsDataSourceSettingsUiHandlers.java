@@ -19,5 +19,6 @@ package stroom.statistics.impl.sql.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface StatisticsDataSourceSettingsUiHandlers extends UiHandlers {
+
     void onChange();
 }

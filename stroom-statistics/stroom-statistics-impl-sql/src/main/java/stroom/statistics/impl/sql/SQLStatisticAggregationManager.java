@@ -24,12 +24,13 @@ import stroom.util.logging.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
 
 class SQLStatisticAggregationManager {
+
     /**
      * The number of records to add to the aggregate from the aggregate source
      * table on each pass

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InclusiveRanges {
+
     private final List<InclusiveRange> ranges;
 
     public InclusiveRanges() {
@@ -139,6 +140,7 @@ public class InclusiveRanges {
     }
 
     public static class InclusiveRange {
+
         private final long min;
         private final long max;
 

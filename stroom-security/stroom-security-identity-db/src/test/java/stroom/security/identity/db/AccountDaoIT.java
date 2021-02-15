@@ -1,15 +1,15 @@
 package stroom.security.identity.db;
 
+import stroom.config.common.CommonDbConfig;
+import stroom.security.identity.account.Account;
+import stroom.security.identity.account.AccountDao;
+import stroom.test.common.util.db.DbTestUtil;
+
 import junit.framework.TestCase;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.security.identity.account.Account;
-import stroom.security.identity.account.AccountDao;
-import stroom.config.common.CommonDbConfig;
-import stroom.test.common.util.db.DbTestUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -23,9 +23,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore("Temporarily ignore for auth migration")
-public class AccountDao_IT extends Database_IT {
+public class AccountDaoIT extends DatabaseIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountDao_IT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountDaoIT.class);
 
     @Test
     public void testNewButInactiveUserIsDisabled() {
@@ -304,14 +304,18 @@ public class AccountDao_IT extends Database_IT {
             assertThat(shouldNeedChange).isTrue();
 
             // Boundary cases
-            Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01, Duration.parse("P90D"), true);
+            Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+                    Duration.parse("P90D"),
+                    true);
             assertThat(shouldNotNeedChangeBoundaryCase).isTrue();
 
             accountDao.changePassword(user01, "new password");
             shouldNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT200M"), true);
             assertThat(shouldNeedChange).isFalse();
 
-            Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01, Duration.parse("PT91M"), true);
+            Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+                    Duration.parse("PT91M"),
+                    true);
             assertThat(shouldNeedChangeBoundaryCase).isFalse();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -362,7 +366,8 @@ public class AccountDao_IT extends Database_IT {
 
     private AccountDao getUserDao(Connection conn) {
         // We don't care about most config for this test, so we'll pass in null
-        AccountDao accountDao = new AccountDaoImpl(null, new AuthDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
+        AccountDao accountDao = new AccountDaoImpl(null,
+                new AuthDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
         // We're doing tests against elapsed time so we need to be able to move the clock.
         final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
 

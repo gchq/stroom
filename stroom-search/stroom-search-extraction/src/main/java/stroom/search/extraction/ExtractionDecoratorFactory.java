@@ -13,13 +13,14 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ExtractionDecoratorFactory {
+
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionConfig extractionConfig;
     private final MetaService metaService;

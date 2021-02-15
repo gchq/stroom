@@ -16,6 +16,9 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
+import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
+
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -28,10 +31,10 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
-import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
 
-public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers> implements DropDownPresenter.DropDrownView {
+public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
+        implements DropDownPresenter.DropDrownView {
+
     private final Widget widget;
     @UiField
     FlowPanel container;
@@ -39,6 +42,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers> imp
     Label label;
     @UiField
     Image button;
+
     @Inject
     public DropDownViewImpl(final Binder binder, final Resources resources) {
         widget = binder.createAndBindUi(this);
@@ -68,9 +72,11 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers> imp
     }
 
     public interface Binder extends UiBinder<Widget, DropDownViewImpl> {
+
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource popup();
     }
 }

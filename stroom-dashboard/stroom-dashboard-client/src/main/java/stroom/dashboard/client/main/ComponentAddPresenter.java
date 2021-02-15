@@ -16,31 +16,32 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.HoverResources;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent.Handler;
+import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
 
 public class ComponentAddPresenter extends MyPresenterWidget<CellTableView<ComponentType>>
         implements HasSelectionChangedHandlers {
+
     private final MySingleSelectionModel<ComponentType> selectionModel = new MySingleSelectionModel<>();
 
     @Inject
     public ComponentAddPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(true, (Resources) GWT.create(HoverResources.class)));
+        super(eventBus, new CellTableViewImpl<>(true, GWT.create(HoverResources.class)));
         // // Icon.
         // final Column<ElementType, ImageResource> iconColumn = new
         // Column<ElementType, ImageResource>(

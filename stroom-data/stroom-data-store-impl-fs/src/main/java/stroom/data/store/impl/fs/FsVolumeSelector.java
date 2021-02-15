@@ -21,6 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import java.util.List;
 
 public interface FsVolumeSelector {
+
     String getName();
 
     FsVolume select(List<FsVolume> list);

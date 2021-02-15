@@ -12,6 +12,7 @@ import javax.validation.constraints.Min;
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig
 public class CacheConfig extends AbstractConfig {
+
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
@@ -84,6 +85,7 @@ public class CacheConfig extends AbstractConfig {
     }
 
     public static final class Builder {
+
         private Long maximumSize;
         private StroomDuration expireAfterAccess;
         private StroomDuration expireAfterWrite;

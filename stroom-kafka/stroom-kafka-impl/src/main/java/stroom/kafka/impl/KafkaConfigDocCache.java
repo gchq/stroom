@@ -23,13 +23,14 @@ import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class KafkaConfigDocCache implements Clearable {
+
     private static final String CACHE_NAME = "Kafka Config Doc Cache";
 
     private final ICache<DocRef, Optional<KafkaConfigDoc>> cache;

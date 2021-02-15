@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class FlexLayout extends Composite implements RequiresResize, ProvidesResize {
+
     private static final int DRAG_ZONE = 20;
     private static final int MIN_COMPONENT_WIDTH = 50;
     private static final int SPLIT_SIZE = 4;
@@ -314,7 +315,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         }
     }
 
-    private boolean moveTab(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final LayoutConfig targetLayout, final Pos targetPos) {
+    private boolean moveTab(final MouseTarget mouseTarget,
+                            final List<TabConfig> tabGroup,
+                            final LayoutConfig targetLayout,
+                            final Pos targetPos) {
         boolean moved = false;
 
         if (targetLayout instanceof TabLayoutConfig) {
@@ -336,7 +340,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         return moved;
     }
 
-    private boolean moveTabOntoTab(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
+    private boolean moveTabOntoTab(final MouseTarget mouseTarget,
+                                   final List<TabConfig> tabGroup,
+                                   final TabLayoutConfig targetTabLayoutData,
+                                   final Pos targetPos) {
         boolean moved = false;
 
         for (final TabConfig tabConfig : tabGroup) {
@@ -395,7 +402,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         return moved;
     }
 
-    private boolean moveTabOutside(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
+    private boolean moveTabOutside(final MouseTarget mouseTarget,
+                                   final List<TabConfig> tabGroup,
+                                   final TabLayoutConfig targetTabLayoutData,
+                                   final Pos targetPos) {
         boolean moved = false;
 
         final SplitLayoutConfig parent = targetTabLayoutData.getParent();
@@ -480,7 +490,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         return moved;
     }
 
-    private boolean moveTabOntoSplit(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final SplitLayoutConfig targetSplitLayoutData, final Pos targetPos) {
+    private boolean moveTabOntoSplit(final MouseTarget mouseTarget,
+                                     final List<TabConfig> tabGroup,
+                                     final SplitLayoutConfig targetSplitLayoutData,
+                                     final Pos targetPos) {
         boolean moved = false;
 
         for (final TabConfig tabConfig : tabGroup) {
@@ -677,13 +690,22 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
      * @param y The mouse y coordinate.
      * @return An object describing the target layout, tab and target position.
      */
-    private MouseTarget getMouseTarget(final int x, final int y, final boolean includeSplitLayout, final boolean selecting) {
+    private MouseTarget getMouseTarget(final int x,
+                                       final int y,
+                                       final boolean includeSplitLayout,
+                                       final boolean selecting) {
         if (includeSplitLayout) {
             for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
                 if (entry.getKey() instanceof SplitLayoutConfig) {
                     final LayoutConfig layoutData = (LayoutConfig) entry.getKey();
                     final PositionAndSize positionAndSize = entry.getValue();
-                    final MouseTarget mouseTarget = findTargetLayout(x, y, true, layoutData, positionAndSize, selecting);
+                    final MouseTarget mouseTarget = findTargetLayout(
+                            x,
+                            y,
+                            true,
+                            layoutData,
+                            positionAndSize,
+                            selecting);
                     if (mouseTarget != null) {
                         return mouseTarget;
                     }
@@ -695,7 +717,13 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             if (entry.getKey() instanceof TabLayoutConfig) {
                 final LayoutConfig layoutData = (LayoutConfig) entry.getKey();
                 final PositionAndSize positionAndSize = entry.getValue();
-                final MouseTarget mouseTarget = findTargetLayout(x, y, false, layoutData, positionAndSize, selecting);
+                final MouseTarget mouseTarget = findTargetLayout(
+                        x,
+                        y,
+                        false,
+                        layoutData,
+                        positionAndSize,
+                        selecting);
                 if (mouseTarget != null) {
                     return mouseTarget;
                 }
@@ -741,7 +769,12 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         if (x >= left - border && x <= right + border && y >= top - border && y <= bottom + border) {
             if (!splitter) {
                 // If this isn't a splitter then test if the mouse is over a tab.
-                final MouseTarget mouseTarget = findTargetTab(x, y, (TabLayoutConfig) layoutConfig, positionAndSize, selecting);
+                final MouseTarget mouseTarget = findTargetTab(
+                        x,
+                        y,
+                        (TabLayoutConfig) layoutConfig,
+                        positionAndSize,
+                        selecting);
                 if (mouseTarget != null) {
                     return mouseTarget;
                 }
@@ -787,7 +820,14 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 return null;
             }
 
-            return new MouseTarget(layoutConfig, positionAndSize, pos, null, null, -1, null);
+            return new MouseTarget(
+                    layoutConfig,
+                    positionAndSize,
+                    pos,
+                    null,
+                    null,
+                    -1,
+                    null);
         }
 
         return null;
@@ -828,17 +868,38 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
 
                             if (mouseTarget == null) {
                                 // Select the first tab by default.
-                                mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.TAB, tabLayout, tabData, i, slideTab);
+                                mouseTarget = new MouseTarget(layoutConfig,
+                                        positionAndSize,
+                                        Pos.TAB,
+                                        tabLayout,
+                                        tabData,
+                                        i,
+                                        slideTab);
                             }
 
                             if (selecting) {
                                 if (x >= tabElement.getAbsoluteLeft()) {
-                                    // If the mouse position is left or equal to the right hand side of the tab then this tab might be the one to select.
-                                    mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.TAB, tabLayout, tabData, i, slideTab);
+                                    // If the mouse position is left or equal to the right hand side of the tab
+                                    // then this tab might be the one to select.
+                                    mouseTarget = new MouseTarget(layoutConfig,
+                                            positionAndSize,
+                                            Pos.TAB,
+                                            tabLayout,
+                                            tabData,
+                                            i,
+                                            slideTab);
                                 }
-                            } else if (x > tabElement.getAbsoluteRight() && (selection == null || !tabData.equals(selection.tab))) {
-                                // IF the mouse position is right of the right hand side of the tab then we might want to insert the tab we are dragging after the current tab.
-                                mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.AFTER_TAB, tabLayout, tabData, i + 1, slideTab);
+                            } else if (x > tabElement.getAbsoluteRight() && (selection == null || !tabData.equals(
+                                    selection.tab))) {
+                                // IF the mouse position is right of the right hand side of the tab then we might
+                                // want to insert the tab we are dragging after the current tab.
+                                mouseTarget = new MouseTarget(layoutConfig,
+                                        positionAndSize,
+                                        Pos.AFTER_TAB,
+                                        tabLayout,
+                                        tabData,
+                                        i + 1,
+                                        slideTab);
                             }
 
                             visibleTabIndex++;
@@ -860,10 +921,15 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
 
             switch (mouseTarget.pos) {
                 case TAB:
-                    marker.show(tabElement.getAbsoluteLeft(), tabElement.getAbsoluteTop(), 5, tabElement.getOffsetHeight());
+                    marker.show(tabElement.getAbsoluteLeft(),
+                            tabElement.getAbsoluteTop(),
+                            5,
+                            tabElement.getOffsetHeight());
                     break;
                 case AFTER_TAB:
-                    marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth() + 4, tabElement.getAbsoluteTop(), 5,
+                    marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth() + 4,
+                            tabElement.getAbsoluteTop(),
+                            5,
                             tabElement.getOffsetHeight());
                     break;
                 default:
@@ -1213,10 +1279,17 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     }
 
     private enum Pos {
-        TAB, AFTER_TAB, LEFT, RIGHT, TOP, BOTTOM, CENTER
+        TAB,
+        AFTER_TAB,
+        LEFT,
+        RIGHT,
+        TOP,
+        BOTTOM,
+        CENTER
     }
 
     public interface Style extends CssResource {
+
         String glass();
 
         String glassVisible();
@@ -1237,11 +1310,13 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("FlexLayout.css")
         Style style();
     }
 
     private static class MouseTarget {
+
         private final LayoutConfig layoutData;
         private final PositionAndSize positionAndSize;
         private final Pos pos;

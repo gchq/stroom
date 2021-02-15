@@ -28,10 +28,10 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
@@ -39,11 +39,11 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Help class to create some basic scenarios for testing.
  */
 public class CommonTestScenarioCreator {
+
     private final Store streamStore;
     private final ProcessorService streamProcessorService;
     private final ProcessorFilterService processorFilterService;

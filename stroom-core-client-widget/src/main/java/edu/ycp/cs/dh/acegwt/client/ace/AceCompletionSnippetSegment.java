@@ -33,5 +33,5 @@ public interface AceCompletionSnippetSegment {
      * @param tabStopNumber the tab stop number
      * @return the prepared textual representation of this snippet segment
      */
-    public String getPreparedText(int tabStopNumber);
+    String getPreparedText(int tabStopNumber);
 }

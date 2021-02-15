@@ -1,12 +1,12 @@
 package stroom.docstore.impl.db;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -14,10 +14,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDBPersistence extends AbstractCoreIntegrationTest {
+
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Inject

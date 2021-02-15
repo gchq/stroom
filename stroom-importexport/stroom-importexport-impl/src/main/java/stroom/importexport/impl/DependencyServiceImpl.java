@@ -10,14 +10,13 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaFieldSort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -29,8 +28,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
@@ -73,16 +74,19 @@ public class DependencyServiceImpl implements DependencyService {
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_TYPE, Dependency::getTo, DocRef::getType),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_NAME, Dependency::getTo, DocRef::getName),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_UUID, Dependency::getTo, DocRef::getUuid),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS, Dependency::isOk, bool -> bool ? "OK" : "Missing")
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS,
+                    Dependency::isOk,
+                    bool -> bool
+                            ? "OK"
+                            : "Missing")
     );
 
     //todo maybe better to introduce dependencies between packages in order to avoid this duplication
-    private static final DocRef [] ALL_PSEUDO_DOCREFS = {
-        new DocRef("Searchable", "Annotations", "Annotations"),
-        new DocRef("Searchable", "Meta Store", "Meta Store"),
-        new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
-        new DocRef("Searchable", "Task Manager", "Task Manager")
-    };
+    private static final DocRef[] ALL_PSEUDO_DOCREFS = {
+            new DocRef("Searchable", "Annotations", "Annotations"),
+            new DocRef("Searchable", "Meta Store", "Meta Store"),
+            new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
+            new DocRef("Searchable", "Task Manager", "Task Manager")};
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
@@ -143,7 +147,7 @@ public class DependencyServiceImpl implements DependencyService {
                                     parentDocRef,
                                     childDocRef,
                                     pseudoDocRefs.contains(childDocRef) ||
-                                    allDependencies.containsKey(childDocRef)));
+                                            allDependencies.containsKey(childDocRef)));
                 })
                 .filter(filterPredicate)
                 .sorted(sortListComparator)

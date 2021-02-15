@@ -17,5 +17,6 @@
 package stroom.widget.popup.client.view;
 
 public interface HasEnabled {
+
     void setEnabled(boolean enabled);
 }

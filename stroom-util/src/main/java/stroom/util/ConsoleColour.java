@@ -73,24 +73,31 @@ public enum ConsoleColour {
     public static void appendBlack(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.BLACK);
     }
+
     public static void appendRed(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.RED);
     }
+
     public static void appendGreen(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.GREEN);
     }
+
     public static void appendYellow(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.YELLOW);
     }
+
     public static void appendBlue(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.BLUE);
     }
+
     public static void appendMagenta(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.MAGENTA);
     }
+
     public static void appendCyan(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.CYAN);
     }
+
     public static void appendWhite(final StringBuilder stringBuilder, final String text) {
         appendColour(stringBuilder, text, ConsoleColour.WHITE);
     }
@@ -100,9 +107,9 @@ public enum ConsoleColour {
         Objects.requireNonNull(text);
         Objects.requireNonNull(colour);
         stringBuilder
-            .append(colour.colourCode)
-            .append(text)
-            .append(ConsoleColour.RESET.colourCode);
+                .append(colour.colourCode)
+                .append(text)
+                .append(ConsoleColour.RESET.colourCode);
     }
 
     public static ColouredStringBuilder colouredStringBuilder() {

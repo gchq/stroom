@@ -318,6 +318,7 @@ subprojects {
     //println "Configuring subproject ${project.name}"
 
     apply plugin: 'java'
+    apply plugin: 'checkstyle'
     apply plugin: 'idea'
     apply plugin: 'ca.cutterslade.analyze'
 //    apply plugin: 'java-library'
@@ -543,7 +544,20 @@ subprojects {
         justWarn = true
     }
 
+    // Check style plugin configuration
+    // config files in config/checkstyle
 
+    checkstyle {
+        ignoreFailures false
+        showViolations true
+        toolVersion = "8.40"
+    }
+
+    // These work in tandem with the suppression.xml
+    tasks.withType(Checkstyle) {
+        include("**/stroom/**/*.java")
+        exclude("**/db/jooq/**/*.java")
+    }
 }
 
 // configures only those projects in publishedProjectsPaths

@@ -16,21 +16,39 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.docstore.shared.Doc;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "fields", "volumeGroupName"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "maxDocsPerShard",
+        "partitionBy",
+        "partitionSize",
+        "shardsPerPartition",
+        "retentionDayAge",
+        "fields",
+        "volumeGroupName"})
 @JsonInclude(Include.NON_NULL)
 public class IndexDoc extends Doc {
+
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
     private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
@@ -170,11 +188,18 @@ public class IndexDoc extends Doc {
         this.volumeGroupName = volumeGroupName;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final IndexDoc indexDoc = (IndexDoc) o;
         return maxDocsPerShard == indexDoc.maxDocsPerShard &&
                 partitionSize == indexDoc.partitionSize &&
@@ -188,11 +213,23 @@ public class IndexDoc extends Doc {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, maxDocsPerShard, partitionBy, partitionSize, shardsPerPartition, retentionDayAge, fields, volumeGroupName);
+        return Objects.hash(
+                super.hashCode(),
+                description,
+                maxDocsPerShard,
+                partitionBy,
+                partitionSize,
+                shardsPerPartition,
+                retentionDayAge,
+                fields,
+                volumeGroupName);
     }
 
     public enum PartitionBy implements HasDisplayValue {
-        DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
+        DAY("Day"),
+        WEEK("Week"),
+        MONTH("Month"),
+        YEAR("Year");
 
         private final String displayValue;
 

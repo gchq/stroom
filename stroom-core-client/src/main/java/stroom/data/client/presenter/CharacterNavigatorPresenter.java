@@ -22,10 +22,12 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
     private HasCharacterData display;
 
     @Inject
-    public CharacterNavigatorPresenter(final EventBus eventBus,
-                                       final ProgressPresenter progressPresenter,
-                                       final CharacterNavigatorView view,
-                                       final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider) {
+    public CharacterNavigatorPresenter(
+            final EventBus eventBus,
+            final ProgressPresenter progressPresenter,
+            final CharacterNavigatorView view,
+            final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider) {
+
         super(eventBus, view);
         this.progressPresenter = progressPresenter;
         this.characterRangeSelectionPresenterProvider = characterRangeSelectionPresenterProvider;

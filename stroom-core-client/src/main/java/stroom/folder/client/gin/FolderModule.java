@@ -22,6 +22,7 @@ import stroom.folder.client.FolderPresenter;
 import stroom.folder.client.FolderRootPlugin;
 
 public class FolderModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(FolderRootPlugin.class);

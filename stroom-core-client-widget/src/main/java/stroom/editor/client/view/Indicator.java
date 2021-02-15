@@ -30,9 +30,10 @@ import java.util.Set;
  * Stores details of warnings, errors and fatal errors.
  */
 public class Indicator implements Serializable {
+
     private static final long serialVersionUID = 257135216859640487L;
 
-    private Map<Severity, Set<StoredError>> errorMap = new HashMap<>();
+    private final Map<Severity, Set<StoredError>> errorMap = new HashMap<>();
 
     public Indicator() {
     }

@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {
+
     private static Resources resources;
     private final HTML content;
 
@@ -56,10 +57,12 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     }
 
     public interface Style extends CssResource {
+
         String tooltip();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("Tooltip.css")
         Style style();
     }

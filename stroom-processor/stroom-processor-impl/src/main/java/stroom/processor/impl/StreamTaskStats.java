@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 public interface StreamTaskStats {
+
     Long getStartTimeMs();
 
     Long getEndTimeMs();

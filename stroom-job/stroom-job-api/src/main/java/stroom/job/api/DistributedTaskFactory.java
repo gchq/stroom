@@ -23,6 +23,7 @@ import java.util.List;
  * job system.
  */
 public interface DistributedTaskFactory {
+
     /**
      * Gets a list of tasks if available up to the number requested.
      */

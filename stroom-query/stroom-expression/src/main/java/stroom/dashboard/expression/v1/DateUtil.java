@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 public final class DateUtil {
+
     static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
     static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
     private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
@@ -98,8 +99,13 @@ public final class DateUtil {
         return formatter.format(Instant.ofEpochMilli(value).atZone(zoneId));
     }
 
-    private static ZonedDateTime parseInternal(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
-        final TemporalAccessor temporalAccessor = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+    private static ZonedDateTime parseInternal(final String value,
+                                               final DateTimeFormatter formatter,
+                                               final ZoneId zoneId) {
+        final TemporalAccessor temporalAccessor = formatter.parseBest(value,
+                ZonedDateTime::from,
+                LocalDateTime::from,
+                LocalDate::from);
         if (temporalAccessor instanceof ZonedDateTime) {
             return ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
         }

@@ -34,11 +34,13 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class MigrationTool {
+
     static boolean ignoreError;
     static boolean update;
 
     public static void main(final String[] args)
-            throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
+            throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException,
+            IllegalAccessException, ClassNotFoundException, IOException {
         final Map<String, String> map = ArgsUtil.parse(args);
 
         final String url = map.get("jdbcDriverUrl");

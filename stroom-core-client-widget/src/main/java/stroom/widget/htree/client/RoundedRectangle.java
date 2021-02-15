@@ -20,6 +20,7 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.FillStrokeStyle;
 
 public class RoundedRectangle {
+
     public void draw(final Context2d ctx, final double x, final double y, final double width, final double height,
                      final double radius, final FillStrokeStyle fill, final FillStrokeStyle stroke) {
         ctx.beginPath();

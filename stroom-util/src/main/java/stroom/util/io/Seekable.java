@@ -23,6 +23,7 @@ import java.io.IOException;
  * into the stream.
  */
 public interface Seekable {
+
     /**
      * @return the total size of this stream.
      */

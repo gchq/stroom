@@ -17,6 +17,7 @@
 package stroom.util.client;
 
 public final class SizeUtil {
+
     public static final String FULL_WIDTH = "100%";
     public static final String FULL_HEIGHT = "100%";
 

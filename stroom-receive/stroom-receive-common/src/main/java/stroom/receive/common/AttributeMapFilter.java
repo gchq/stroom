@@ -20,5 +20,6 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 
 public interface AttributeMapFilter {
+
     boolean filter(AttributeMap attributeMap);
 }

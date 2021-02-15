@@ -1,8 +1,5 @@
 package stroom.statistics.impl.hbase.internal;
 
-import com.google.common.base.Preconditions;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
@@ -16,13 +13,10 @@ import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
+import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -32,11 +26,20 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.inject.Inject;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 @SuppressWarnings("unused")
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
+
     private static final String STATISTICS_SCHEMA_VERSION = "4.0.0";
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+            StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
@@ -65,9 +68,13 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
-        final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
+        final DocRef kafkaConfigDocRef = new DocRef(
+                KafkaConfigDoc.DOCUMENT_TYPE,
+                internalStatisticsConfig.getKafkaConfigUuid());
 
-        try(SharedKafkaProducer sharedKafkaProducer = stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
+        try (SharedKafkaProducer sharedKafkaProducer =
+                stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
+
             sharedKafkaProducer.getKafkaProducer().ifPresentOrElse(
                     kafkaProducer ->
                             sendMessages(eventsMap, kafkaProducer),
@@ -78,7 +85,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         }
     }
 
-    private void sendMessages(final Map<DocRef, List<InternalStatisticEvent>> eventsMap, final KafkaProducer<String, byte[]> kafkaProducer) {
+    private void sendMessages(final Map<DocRef, List<InternalStatisticEvent>> eventsMap,
+                              final KafkaProducer<String, byte[]> kafkaProducer) {
         Preconditions.checkNotNull(eventsMap);
         final int batchSize = getBatchSize();
 
@@ -226,7 +234,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
             return internalStatisticsConfig.getKafkaTopicsConfig().getValue();
         }
 
-        throw new RuntimeException(String.format("Missing value for property %s, unable to send internal statistics", typeName));
+        throw new RuntimeException(String.format(
+                "Missing value for property %s, unable to send internal statistics", typeName));
     }
 
     private int getBatchSize() {

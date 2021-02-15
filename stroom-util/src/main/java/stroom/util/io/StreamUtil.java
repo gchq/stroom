@@ -39,6 +39,7 @@ import java.util.stream.Stream;
  * Helper class for resources.
  */
 public final class StreamUtil {
+
     /**
      * Buffer size to use.
      */
@@ -374,7 +375,7 @@ public final class StreamUtil {
         final PrintWriter printWriter = new PrintWriter(byteArrayOutputStream);
         throwable.printStackTrace(printWriter);
         printWriter.close();
-        return new String(byteArrayOutputStream.toByteArray(), StreamUtil.DEFAULT_CHARSET);
+        return byteArrayOutputStream.toString(StreamUtil.DEFAULT_CHARSET);
 
     }
 
@@ -410,6 +411,7 @@ public final class StreamUtil {
      * charset name.
      */
     private static class MyByteArrayOutputStream extends ByteArrayOutputStream {
+
         public synchronized String toString(final Charset charset) {
             return new String(buf, 0, count, charset);
         }

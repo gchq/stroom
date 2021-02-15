@@ -9,6 +9,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class SetStatusRequest {
+
     @JsonProperty
     private final List<Long> annotationIdList;
     @JsonProperty

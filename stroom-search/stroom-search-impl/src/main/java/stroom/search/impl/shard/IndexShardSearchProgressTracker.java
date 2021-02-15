@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 class IndexShardSearchProgressTracker {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchProgressTracker.class);
 
     private final int shardTotal;

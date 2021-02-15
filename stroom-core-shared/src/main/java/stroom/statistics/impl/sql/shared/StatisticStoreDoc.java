@@ -16,13 +16,14 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,9 +31,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "statisticType",
+        "rollUpType",
+        "precision",
+        "enabled",
+        "config"})
 @JsonInclude(Include.NON_NULL)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
+
     public static final String DOCUMENT_TYPE = "StatisticStore";
 
     // IndexFields names
@@ -172,8 +188,8 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         // rolledUpFieldNames not empty if we get here
 
         if (config == null) {
-            throw new RuntimeException(
-                    "isRollUpCombinationSupported called with non-empty list but data source has no statistic fields or custom roll up masks");
+            throw new RuntimeException("isRollUpCombinationSupported called with non-empty list but data source " +
+                    "has no statistic fields or custom roll up masks");
         }
 
         return config.isRollUpCombinationSupported(rolledUpFieldNames);
@@ -198,7 +214,9 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getFields().size();
+        return config == null
+                ? 0
+                : config.getFields().size();
     }
 
     @JsonIgnore
@@ -219,11 +237,18 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final StatisticStoreDoc that = (StatisticStoreDoc) o;
         return Objects.equals(description, that.description) &&
                 statisticType == that.statisticType &&

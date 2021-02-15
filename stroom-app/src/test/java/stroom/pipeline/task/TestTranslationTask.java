@@ -17,7 +17,6 @@
 package stroom.pipeline.task;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
@@ -29,16 +28,19 @@ import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTranslationTask extends AbstractProcessIntegrationTest {
+
     private static final int N3 = 3;
     private static final int N4 = 4;
 
@@ -78,7 +80,8 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
                 final byte[] data = streamStore.getFileData().get(streamId).get(meta.getTypeName());
 
                 // Write the actual XML out.
-                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
+                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir,
+                        "TestTranslationTask.out");
                 os.write(data);
                 os.flush();
                 os.close();
@@ -99,7 +102,8 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     void testInvalidResource() {
-        commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME, CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
+        commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME,
+                CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
         final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);

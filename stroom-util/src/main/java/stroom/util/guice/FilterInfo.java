@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class FilterInfo {
+
     private final String name;
     private final String urlPattern;
     private final Map<String, String> initParameters = new HashMap<>();
@@ -32,10 +33,15 @@ public class FilterInfo {
         return initParameters;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FilterInfo that = (FilterInfo) o;
         return name.equals(that.name) &&
                 urlPattern.equals(that.urlPattern) &&

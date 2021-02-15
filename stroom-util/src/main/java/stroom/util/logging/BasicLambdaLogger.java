@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class BasicLambdaLogger implements LambdaLogger {
+
     private final Logger logger;
 
     // Use a private constructor as this is only made via the static factory.
@@ -161,7 +162,9 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             try {
-                logger.trace("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.trace("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }

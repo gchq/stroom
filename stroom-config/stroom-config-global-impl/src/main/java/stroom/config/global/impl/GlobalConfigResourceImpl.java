@@ -9,14 +9,14 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
-import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
@@ -26,6 +26,8 @@ import event.logging.UpdateEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
@@ -33,8 +35,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.SyncInvoker;
 import javax.ws.rs.core.GenericType;
-import java.util.Objects;
-import java.util.Optional;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
@@ -121,7 +121,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 () ->
                         getYamlValueByName(propertyName),
                 SyncInvoker::get,
-                response -> response.readEntity(new GenericType<OverrideValue<String>>() {}));
+                response -> response.readEntity(new GenericType<OverrideValue<String>>() {
+                }));
     }
 
     @Timed

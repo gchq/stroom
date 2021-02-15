@@ -16,11 +16,13 @@
 
 package stroom.cell.valuespinner.client;
 
-import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.user.client.Timer;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.user.client.Timer;
+
 public class Spinner {
+
     private static final int INITIAL_SPEED = 7;
     private int step = 1;
     private int maxStep = 99;
@@ -30,7 +32,7 @@ public class Spinner {
     private long min = 0;
     private long max = 100;
     private boolean increment;
-    private boolean constrained = true;
+    private final boolean constrained = true;
     private InputElement input;
     private final Timer timer = new Timer() {
         private int counter = 0;

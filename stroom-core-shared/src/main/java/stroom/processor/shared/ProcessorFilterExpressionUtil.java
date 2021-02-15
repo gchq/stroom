@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public final class ProcessorFilterExpressionUtil {
+
     private ProcessorFilterExpressionUtil() {
         // Utility class.
     }

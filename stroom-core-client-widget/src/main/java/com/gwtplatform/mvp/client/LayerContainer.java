@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 
 public interface LayerContainer extends RequiresResize {
+
     void show(Layer layer);
 
     void clear();

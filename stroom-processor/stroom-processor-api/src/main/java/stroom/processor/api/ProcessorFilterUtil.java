@@ -16,8 +16,9 @@ public final class ProcessorFilterUtil {
 
     public static boolean shouldImport(final ProcessorFilter processorFilter) {
         if (processorFilter == null || processorFilter.getQueryData() == null ||
-                processorFilter.getQueryData().getExpression() == null)
+                processorFilter.getQueryData().getExpression() == null) {
             return false;
+        }
 
         ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
@@ -26,11 +27,13 @@ public final class ProcessorFilterUtil {
 
     public static boolean shouldExport(final ProcessorFilter processorFilter) {
         if (processorFilter == null || processorFilter.getQueryData() == null ||
-                processorFilter.getQueryData().getExpression() == null)
+                processorFilter.getQueryData().getExpression() == null) {
             return false;
+        }
 
-        if (processorFilter.isReprocess() || processorFilter.isDeleted())
+        if (processorFilter.isReprocess() || processorFilter.isDeleted()) {
             return false;
+        }
 
         ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
@@ -38,20 +41,25 @@ public final class ProcessorFilterUtil {
     }
 
     private static boolean containsIdField(ExpressionOperator expression) {
-        if (expression == null)
+        if (expression == null) {
             return false;
+        }
         for (ExpressionItem item : expression.getChildren()) {
             if (item instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) item;
-                if (MetaFields.ID.getName().equals(term.getField()))
+                if (MetaFields.ID.getName().equals(term.getField())) {
                     return true;
-                if (MetaFields.PARENT_ID.getName().equals(term.getField()))
+                }
+                if (MetaFields.PARENT_ID.getName().equals(term.getField())) {
                     return true;
-                if (MetaFields.META_INTERNAL_PROCESSOR_ID.equals(term.getField()))
+                }
+                if (MetaFields.META_INTERNAL_PROCESSOR_ID.equals(term.getField())) {
                     return true;
+                }
             } else if (item instanceof ExpressionOperator) {
-                if (containsIdField((ExpressionOperator) item))
+                if (containsIdField((ExpressionOperator) item)) {
                     return true;
+                }
             }
         }
         return false;

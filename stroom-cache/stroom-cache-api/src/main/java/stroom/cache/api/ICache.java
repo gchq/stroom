@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ICache<K, V> {
+
     V get(K key);
 
     void put(K key, V value);

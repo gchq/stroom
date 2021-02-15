@@ -1,15 +1,17 @@
 package stroom.search.solr;
 
+import stroom.search.solr.shared.SolrConnectionConfig;
+import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+
 import org.apache.http.client.HttpClient;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import stroom.search.solr.shared.SolrConnectionConfig;
-import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 
 import java.util.Optional;
 
 public class SolrClientFactory {
+
     private final HttpClient httpClient;
 
     public SolrClientFactory() {
@@ -37,7 +39,8 @@ public class SolrClientFactory {
             if (config.getZkHosts() == null || config.getZkHosts().size() == 0) {
                 throw new SolrIndexException("No ZK hosts have been provided");
             }
-            CloudSolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(), Optional.ofNullable(config.getZkPath()))
+            CloudSolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
+                    Optional.ofNullable(config.getZkPath()))
                     .withSocketTimeout(30000)
                     .withConnectionTimeout(15000);
             if (httpClient != null) {

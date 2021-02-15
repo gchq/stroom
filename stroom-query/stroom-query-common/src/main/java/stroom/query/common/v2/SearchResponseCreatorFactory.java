@@ -1,9 +1,10 @@
 package stroom.query.common.v2;
 
-import javax.inject.Inject;
 import java.time.Duration;
+import javax.inject.Inject;
 
 public class SearchResponseCreatorFactory {
+
     private final SizesProvider sizesProvider;
 
     @Inject

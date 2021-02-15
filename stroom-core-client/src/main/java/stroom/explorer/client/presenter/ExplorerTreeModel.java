@@ -38,8 +38,13 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    public static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRef.builder().uuid("").name("None").type("").build());
+    public static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRef.builder()
+            .uuid("")
+            .name("None")
+            .type("")
+            .build());
 
     private final OpenItems<String> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
@@ -134,15 +139,16 @@ public class ExplorerTreeModel {
                     rest.onSuccess(result -> {
                         fetching = false;
 
-                        //                    final Set<ExplorerNode> currentOpenItems = getOpenItems();
-                        //                    final ExplorerTreeFilter currentFilter = explorerTreeFilterBuilder.build();
+                        //       final Set<ExplorerNode> currentOpenItems = getOpenItems();
+                        //       final ExplorerTreeFilter currentFilter = explorerTreeFilterBuilder.build();
 
                         // Check if the filter settings have changed
                         // since we were asked to fetch.
-                        if (criteria != currentCriteria) {//!explorerTreeFilter.equals(currentFilter) || !openItems.equals(currentOpenItems)) {
+                        if (criteria != currentCriteria) {
+                            //!explorerTreeFilter.equals(currentFilter) || !openItems.equals(currentOpenItems)) {
+
                             // Some settings have changed so try again with the new settings.
                             refresh();
-
                         } else {
                             onDataChanged(result);
 
@@ -187,16 +193,19 @@ public class ExplorerTreeModel {
                                     nextSelection = null;
 
                                     if (result.getOpenedItems() != null) {
-                                        for (int i = result.getOpenedItems().size() - 1; i >= 0 && nextSelection == null; i--) {
+                                        final int openedItemsCnt = result.getOpenedItems().size();
+                                        for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
                                             final String item = result.getOpenedItems().get(i);
-                                            final ExplorerNode explorerNode = ExplorerNode.create(new DocRef(null, item));
+                                            final ExplorerNode explorerNode = ExplorerNode.create(
+                                                    new DocRef(null, item));
                                             if (rows.contains(explorerNode)) {
                                                 nextSelection = explorerNode;
                                             }
                                         }
                                     }
                                 } else {
-                                    // Reassign the selection because matches are only by UUID and this will ensure that we get the latest version with any new name it might have.
+                                    // Reassign the selection because matches are only by UUID and this will ensure
+                                    // that we get the latest version with any new name it might have.
                                     nextSelection = rows.get(index);
                                 }
 
@@ -299,6 +308,7 @@ public class ExplorerTreeModel {
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

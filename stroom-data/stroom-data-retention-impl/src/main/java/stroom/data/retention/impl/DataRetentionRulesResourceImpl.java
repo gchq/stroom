@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
+
     private final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider;
     private final Provider<MetaService> metaServiceProvider;
 

@@ -16,6 +16,9 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.dashboard.client.query.NamePresenter.NameView;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,10 +28,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.query.NamePresenter.NameView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements NameView {
+
     private final Widget widget;
     @UiField
     TextBox name;
@@ -67,5 +69,6 @@ public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements
     }
 
     public interface Binder extends UiBinder<Widget, NameViewImpl> {
+
     }
 }

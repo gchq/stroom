@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -29,7 +30,6 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.lmdb.PutOutcome;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -50,7 +50,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -75,10 +74,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefDataOnHeapStore {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
@@ -87,7 +88,8 @@ class TestRefDataOnHeapStore {
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1,
+            300).boxed().map(i -> "-").collect(Collectors.joining());
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
@@ -125,9 +127,12 @@ class TestRefDataOnHeapStore {
         treeMap.forEach((key, value) ->
                 LOGGER.info("{} => {}", key, value));
 
-        assertThat(treeMap.ceilingEntry(3L).getValue()).isEqualTo("three");
-        assertThat(treeMap.ceilingEntry(4L).getValue()).isEqualTo("three");
-        assertThat(treeMap.ceilingEntry(9L).getValue()).isEqualTo("seven");
+        assertThat(treeMap.ceilingEntry(3L).getValue())
+                .isEqualTo("three");
+        assertThat(treeMap.ceilingEntry(4L).getValue())
+                .isEqualTo("three");
+        assertThat(treeMap.ceilingEntry(9L).getValue())
+                .isEqualTo("seven");
 
         Map.Entry<Long, String> entryThree = treeMap.ceilingEntry(4L);
 
@@ -138,9 +143,12 @@ class TestRefDataOnHeapStore {
                 LOGGER.info("{} => {}", key, value));
 
 
-        assertThat(treeMap.floorEntry(-1L).getValue()).isEqualTo("one");
-        assertThat(treeMap.floorEntry(3L).getValue()).isEqualTo("three");
-        assertThat(treeMap.floorEntry(4L).getValue()).isEqualTo("five");
+        assertThat(treeMap.floorEntry(-1L).getValue())
+                .isEqualTo("one");
+        assertThat(treeMap.floorEntry(3L).getValue())
+                .isEqualTo("three");
+        assertThat(treeMap.floorEntry(4L).getValue())
+                .isEqualTo("five");
     }
 
     @Test
@@ -157,7 +165,8 @@ class TestRefDataOnHeapStore {
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
-        assertThat(isLoaded).isFalse();
+        assertThat(isLoaded)
+                .isFalse();
     }
 
     @Test
@@ -214,7 +223,8 @@ class TestRefDataOnHeapStore {
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         String key = "myKey";
 
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
@@ -242,7 +252,8 @@ class TestRefDataOnHeapStore {
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
                 .isEqualTo(expectedFinalValue);
 
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(1);
     }
 
     private void doKeyRangeValueOverwriteTest(final boolean overwriteExisting,
@@ -254,9 +265,10 @@ class TestRefDataOnHeapStore {
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
-        String key = "50";
+        final String key = "50";
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isEqualTo(0);
 
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
@@ -282,9 +294,11 @@ class TestRefDataOnHeapStore {
         });
 
         refDataStore.logAllContents();
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isEqualTo(1);
     }
 
     @Test
@@ -507,7 +521,7 @@ class TestRefDataOnHeapStore {
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
 
         LOGGER.info("-------------------------load starts here--------------------------------------");
-        List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
+        final List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
 
         assertDbCounts(
@@ -562,13 +576,15 @@ class TestRefDataOnHeapStore {
 
                     assertThat(optRefDataValue).isNotEmpty();
                     String value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
+                    assertThat(value)
+                            .isEqualTo(expectedValue);
 
                     //now do it in one hit
                     optRefDataValue = refDataStore.getValue(mapDefinition, queryKey);
                     assertThat(optRefDataValue).isNotEmpty();
                     value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
+                    assertThat(value)
+                            .isEqualTo(expectedValue);
                 }
             });
             LOGGER.info("Done {} queries in {} for {}",
@@ -646,10 +662,14 @@ class TestRefDataOnHeapStore {
             final int refStreamDefinitionOffset,
             final MapNamFunc mapNamFunc) {
 
-        assertThat(refStreamDefinitionCount).isGreaterThan(0);
-        assertThat(keyValueMapCount).isGreaterThanOrEqualTo(0);
-        assertThat(rangeValueMapCount).isGreaterThanOrEqualTo(0);
-        assertThat(entryCount).isGreaterThan(0);
+        assertThat(refStreamDefinitionCount)
+                .isGreaterThan(0);
+        assertThat(keyValueMapCount)
+                .isGreaterThanOrEqualTo(0);
+        assertThat(rangeValueMapCount)
+                .isGreaterThanOrEqualTo(0);
+        assertThat(entryCount)
+                .isGreaterThan(0);
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
@@ -686,7 +706,11 @@ class TestRefDataOnHeapStore {
                                     final int entryCount,
                                     final RefStreamDefinition refStreamDefinition,
                                     final RefDataLoader loader) {
-        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
+        loadRangeValueData(keyValueMapCount,
+                entryCount,
+                refStreamDefinition,
+                loader,
+                this::buildMapNameWithRefStreamDef);
     }
 
     private void loadRangeValueData(final int keyValueMapCount,
@@ -823,8 +847,10 @@ class TestRefDataOnHeapStore {
                     expectedNewEntries = putAttempts;
                 }
 
-                assertThat(endEntryCounts._1).isEqualTo(startEntryCounts._1 + expectedNewEntries);
-                assertThat(endEntryCounts._2).isEqualTo(startEntryCounts._2 + expectedNewEntries);
+                assertThat(endEntryCounts._1)
+                        .isEqualTo(startEntryCounts._1 + expectedNewEntries);
+                assertThat(endEntryCounts._2)
+                        .isEqualTo(startEntryCounts._2 + expectedNewEntries);
 
                 lastRefStreamDefinition.set(refStreamDefinition);
 
@@ -834,9 +860,11 @@ class TestRefDataOnHeapStore {
 
 //            ((RefDataOffHeapStore) refDataStore).logAllContents();
 
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
+            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition)
+                    .get();
 
-            assertThat(refDataProcessingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
+            assertThat(refDataProcessingInfo.getProcessingState())
+                    .isEqualTo(ProcessingState.COMPLETE);
 
         });
         assertLoadedKeyValueData(keyValueLoadedData);
@@ -853,11 +881,13 @@ class TestRefDataOnHeapStore {
             RefDataValue refDataValue = valueProxy.supplyValue().get();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
-            assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
+            assertThat((StringValue) refDataValue)
+                    .isEqualTo(tuple3._3);
         });
     }
 
-    private void assertLoadedKeyRangeValueData(final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) {
+    private void assertLoadedKeyRangeValueData(
+            final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) {
         keyRangeValueLoadedData.forEach(tuple3 -> {
 
             // build a variety of keys from the supplied range
@@ -885,11 +915,13 @@ class TestRefDataOnHeapStore {
 
                 Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
-                assertThat(optRefDataValue.isPresent()).isEqualTo(isValueExpected);
+                assertThat(optRefDataValue.isPresent())
+                        .isEqualTo(isValueExpected);
 
                 optRefDataValue.ifPresent(refDataValue -> {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
-                    assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
+                    assertThat((StringValue) refDataValue)
+                            .isEqualTo(tuple3._3);
                 });
             });
         });
@@ -945,14 +977,17 @@ class TestRefDataOnHeapStore {
                     loader.completeProcessing();
                 });
 
-        assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
+        assertThat(didLoadHappen)
+                .isEqualTo(isLoadExpectedToHappen);
 
         RefDataProcessingInfo processingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
 
-        assertThat(processingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
+        assertThat(processingInfo.getProcessingState())
+                .isEqualTo(ProcessingState.COMPLETE);
 
         boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
-        assertThat(isDataLoaded).isTrue();
+        assertThat(isDataLoaded)
+                .isTrue();
 
         return entriesPerMapDef * mapNames.size();
     }
@@ -962,6 +997,7 @@ class TestRefDataOnHeapStore {
     }
 
     private interface MapNamFunc {
+
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
     }

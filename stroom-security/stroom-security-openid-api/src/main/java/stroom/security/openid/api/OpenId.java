@@ -16,10 +16,11 @@
 
 package stroom.security.openid.api;
 
-import javax.ws.rs.core.UriBuilder;
 import java.util.Set;
+import javax.ws.rs.core.UriBuilder;
 
 public class OpenId {
+
     public static final String AUTH_USER = "authuser";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";

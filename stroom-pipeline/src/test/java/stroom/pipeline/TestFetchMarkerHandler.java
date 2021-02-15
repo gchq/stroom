@@ -17,13 +17,14 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -33,6 +34,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFetchMarkerHandler extends StroomUnitTest {
+
     @Test
     void test() throws IOException {
         doTest(4, 12);
@@ -44,7 +46,8 @@ class TestFetchMarkerHandler extends StroomUnitTest {
         doTest(12, 12, Severity.WARNING, Severity.ERROR);
     }
 
-    private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded) throws IOException {
+    private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded)
+            throws IOException {
         // Get the testing directory.
         final Path testDataDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path testDir = testDataDir.resolve("TestFetchMarkerHandler");

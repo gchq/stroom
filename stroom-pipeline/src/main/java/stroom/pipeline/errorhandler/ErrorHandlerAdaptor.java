@@ -16,17 +16,19 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.pipeline.LocationFactory;
+import stroom.util.shared.Location;
+import stroom.util.shared.Severity;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import stroom.pipeline.LocationFactory;
-import stroom.util.shared.Location;
-import stroom.util.shared.Severity;
 
 public class ErrorHandlerAdaptor implements ErrorHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorHandlerAdaptor.class);
 
     private final String elementId;

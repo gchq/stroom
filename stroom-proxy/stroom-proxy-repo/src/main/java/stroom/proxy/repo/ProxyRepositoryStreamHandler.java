@@ -1,20 +1,22 @@
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import javax.inject.Inject;
 
 /**
  * Factory to return back handlers for incoming and outgoing requests.
  */
 public class ProxyRepositoryStreamHandler implements StreamHandler {
-    private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
 
     private final ProxyRepositoryManager proxyRepositoryManager;
 

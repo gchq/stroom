@@ -16,8 +16,6 @@
 
 package stroom.importexport.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.importexport.client.event.ExportConfigEvent;
@@ -28,7 +26,11 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class ExportConfigPlugin extends Plugin {
+
     private final ClientSecurityContext securityContext;
 
     @Inject
@@ -49,6 +51,12 @@ public class ExportConfigPlugin extends Plugin {
     }
 
     private MenuItem createExportMenuItem() {
-        return new IconMenuItem(110, SvgPresets.DOWNLOAD, SvgPresets.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
+        return new IconMenuItem(110,
+                SvgPresets.DOWNLOAD,
+                SvgPresets.DOWNLOAD,
+                "Export",
+                null,
+                true,
+                () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
     }
 }

@@ -16,6 +16,10 @@
 
 package stroom.data.store.impl.fs.client.view;
 
+import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter.VolumeEditView;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.item.client.ItemListBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
@@ -23,11 +27,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter.VolumeEditView;
-import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
-import stroom.item.client.ItemListBox;
 
 public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
+
     private final Widget widget;
     @UiField
     TextBox path;
@@ -62,5 +64,6 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     }
 
     public interface Binder extends UiBinder<Widget, FSVolumeEditViewImpl> {
+
     }
 }

@@ -39,6 +39,11 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
@@ -47,15 +52,11 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
 
     private final SecurityContext securityContext;
@@ -91,7 +92,9 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         final Node updated = nodeDao.update(node);
 
         // Let all nodes know that the node has changed.
-        EntityEvent.fire(entityEventBus, new DocRef(Node.ENTITY_TYPE, String.valueOf(updated.getId()), updated.getName()), EntityAction.UPDATE);
+        EntityEvent.fire(entityEventBus,
+                new DocRef(Node.ENTITY_TYPE, String.valueOf(updated.getId()), updated.getName()),
+                EntityAction.UPDATE);
 
         return updated;
     }

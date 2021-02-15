@@ -10,6 +10,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class PermissionExceptionMapper implements ExceptionMapper<PermissionException> {
+
     @Override
     public Response toResponse(PermissionException exception) {
         final int forbiddenCode = Status.FORBIDDEN.getStatusCode();

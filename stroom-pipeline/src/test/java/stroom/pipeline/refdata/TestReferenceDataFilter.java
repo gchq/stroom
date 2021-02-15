@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -34,7 +35,6 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
-import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -89,6 +89,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestReferenceDataFilter extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataFilter.class);
 
     private static final String BASE_PATH = "TestReferenceDataFilter/";
@@ -168,9 +169,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -205,9 +207,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -285,9 +288,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room>" +
+                            "<Desk>desk[0-9]+<\\/Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -321,9 +325,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"reference-data:2\">(.|\\n)*<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                            "<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -332,7 +337,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
-                    assertThat(matcher.find()).isTrue();
+                    assertThat(matcher.find())
+                            .isTrue();
                     return matcher.group();
                 })
                 .collect(Collectors.toList());
@@ -357,9 +363,12 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room><xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
+                            "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
+                            "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
+                            "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -467,16 +476,18 @@ class TestReferenceDataFilter extends StroomUnitTest {
         final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer = new FastInfosetByteBufferConsumer(
                 xmlEmitter, pipelineConfiguration);
 
-        final RefDataValueByteBufferConsumer.Factory refDataValueByteBufferConsumerFactory = (receiver, pipelineConfiguration1)
-                -> fastInfosetByteBufferConsumer;
+        final RefDataValueByteBufferConsumer.Factory refDataValueByteBufferConsumerFactory =
+                (receiver, pipelineConfiguration1)
+                        -> fastInfosetByteBufferConsumer;
 
         final OffHeapRefDataValueProxyConsumer offHeapRefDataValueProxyConsumer = new OffHeapRefDataValueProxyConsumer(
                 xmlEmitter,
                 pipelineConfiguration,
                 Map.of(new ByteBufferConsumerId(FastInfosetValue.TYPE_ID), refDataValueByteBufferConsumerFactory));
 
-        final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory = (receiver, pipelineConfiguration12)
-                -> offHeapRefDataValueProxyConsumer;
+        final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory =
+                (receiver, pipelineConfiguration12)
+                        -> offHeapRefDataValueProxyConsumer;
 
         final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory = new RefDataValueProxyConsumerFactory(
                 xmlEmitter,
@@ -495,7 +506,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
             @Override
             public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
-                final TypedByteBuffer typedByteBuffer = new TypedByteBuffer(FastInfosetValue.TYPE_ID, fastInfosetValue.getByteBuffer());
+                final TypedByteBuffer typedByteBuffer = new TypedByteBuffer(FastInfosetValue.TYPE_ID,
+                        fastInfosetValue.getByteBuffer());
                 typedByteBufferConsumer.accept(typedByteBuffer);
                 return true;
             }
@@ -610,7 +622,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
         }
 
         @Override
-        public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+        public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
+                throws SAXException {
 
         }
 
@@ -641,6 +654,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     private static class LoadedRefDataValues {
+
         List<String> keyValueKeys;
         List<RefDataValue> keyValueValues;
         List<Range<Long>> rangeValueKeys;

@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.impl;
+
+import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-import stroom.util.shared.AbstractConfig;
-
 
 @Singleton
 public class LoggingConfig extends AbstractConfig {
+
     private boolean logEveryRestCallEnabled = false;
 
     private int maxListElements = 5;

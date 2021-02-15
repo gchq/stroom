@@ -40,6 +40,7 @@ import com.google.gwt.user.datepicker.client.DatePicker;
 import java.util.Date;
 
 public class MyDateBox extends Composite implements DateBoxView {
+
     private static final String DEFAULT_TIME = "T00:00:00.000Z";
 
     private final PopupPanel popup;

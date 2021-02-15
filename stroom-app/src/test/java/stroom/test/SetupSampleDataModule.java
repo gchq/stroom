@@ -19,6 +19,7 @@ import com.google.inject.AbstractModule;
 import java.nio.file.Path;
 
 public class SetupSampleDataModule extends AbstractModule {
+
     private final Config configuration;
     private final ConfigHolder configHolder;
 

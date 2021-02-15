@@ -16,15 +16,17 @@
 
 package stroom.entity.client.view;
 
+import stroom.entity.client.presenter.InfoDocumentPresenter;
+
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
 
 public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresenter.InfoDocumentView {
+
     private final TextArea widget;
 
     @Inject
@@ -46,12 +48,14 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_STYLE = "Info.css";
 
         String layout();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_STYLE)
         Style style();
     }

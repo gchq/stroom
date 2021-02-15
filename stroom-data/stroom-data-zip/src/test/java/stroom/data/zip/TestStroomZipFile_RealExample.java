@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 class TestStroomZipFile_RealExample {
+
     @Test
     void testRealZip1() throws IOException {
         final Path sourceFile = Paths.get("./src/test/resources/stroom/data/zip/BlankZip.zip");

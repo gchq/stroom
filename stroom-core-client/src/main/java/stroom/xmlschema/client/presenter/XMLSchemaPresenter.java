@@ -35,6 +35,7 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData GRAPHICAL = new TabDataImpl("Graphical");
     private static final TabData TEXT = new TabDataImpl("Text");

@@ -25,13 +25,14 @@ import java.io.Serializable;
         commonReturnType = ValString.class,
         commonReturnDescription = "The value as the string type.",
         signatures = @FunctionSignature(
-                description = "Converts the supplied value to a string, e.g. 1.23 becomes \"1.23\" and true() becomes " +
-                        "\"true\".",
+                description = "Converts the supplied value to a string, " +
+                        "e.g. 1.23 becomes \"1.23\" and true() becomes \"true\".",
                 args = @FunctionArg(
                         name = "value",
                         description = "Field, the result of another function or a constant.",
                         argType = Val.class)))
 class ToString extends AbstractCast implements Serializable {
+
     static final String NAME = "toString";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a string");
     private static final long serialVersionUID = -305845496003936297L;
@@ -47,6 +48,7 @@ class ToString extends AbstractCast implements Serializable {
     }
 
     private static class Cast extends AbstractCaster {
+
         @Override
         Val cast(final Val val) {
             if (!val.type().isValue()) {

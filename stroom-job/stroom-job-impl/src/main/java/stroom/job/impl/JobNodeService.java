@@ -17,8 +17,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
@@ -30,12 +28,16 @@ import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 class JobNodeService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
@@ -69,8 +71,8 @@ class JobNodeService {
 
     JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(
-            PermissionNames.MANAGE_JOBS_PERMISSION,
-            () -> jobNodeDao.find(findJobNodeCriteria));
+                PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> jobNodeDao.find(findJobNodeCriteria));
     }
 
     JobNodeInfo getInfo(final String jobName) {
@@ -145,7 +147,8 @@ class JobNodeService {
 //            for (final JobNode jobNode : jobNodes) {
 //                JobNodeInfo jobNodeInfo = null;
 //
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
+//                collector.getResponse(jobNode.getNodeName());
 //
 //                if (response == null) {
 //                    LOGGER.debug("No response for: {}", jobNode);
@@ -190,7 +193,8 @@ class JobNodeService {
 //            for (final JobNode jobNode : jobNodes) {
 //                JobNodeInfo jobNodeInfo = null;
 //
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
+//                collector.getResponse(jobNode.getNodeName());
 //
 //                if (response == null) {
 //                    LOGGER.debug("No response for: {}", jobNode);

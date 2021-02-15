@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 class DbClusterLockThreads {
+
     private final DbClusterLock dbClusterLock;
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -47,14 +48,14 @@ class DbClusterLockThreads {
     }
 
     void thread2(final String lock, final List<Integer> sequence) {
-            try {
-                countDownLatch.await();
-            } catch (final InterruptedException e) {
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
+        try {
+            countDownLatch.await();
+        } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
 
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            throw new RuntimeException(e.getMessage(), e);
+        }
 
         dbClusterLock.lock(lock, () -> {
             sequence.add(3);

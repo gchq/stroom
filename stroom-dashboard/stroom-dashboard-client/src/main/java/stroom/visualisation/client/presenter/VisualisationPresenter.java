@@ -17,8 +17,6 @@
 
 package stroom.visualisation.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
@@ -29,7 +27,11 @@ import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
+
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
 
     private final VisualisationSettingsPresenter settingsPresenter;
@@ -37,7 +39,9 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     private int loadCount;
 
     @Inject
-    public VisualisationPresenter(final EventBus eventBus, final LinkTabPanelView view, final VisualisationSettingsPresenter settingsPresenter,
+    public VisualisationPresenter(final EventBus eventBus,
+                                  final LinkTabPanelView view,
+                                  final VisualisationSettingsPresenter settingsPresenter,
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;

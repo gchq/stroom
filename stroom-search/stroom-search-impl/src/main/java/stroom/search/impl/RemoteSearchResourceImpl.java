@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.StreamingOutput;
 
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
+
     private final RemoteSearchService remoteSearchService;
 
     @Inject

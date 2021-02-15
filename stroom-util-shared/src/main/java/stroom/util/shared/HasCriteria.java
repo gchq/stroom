@@ -17,5 +17,6 @@
 package stroom.util.shared;
 
 public interface HasCriteria<C extends BaseCriteria> {
+
     C getCriteria();
 }

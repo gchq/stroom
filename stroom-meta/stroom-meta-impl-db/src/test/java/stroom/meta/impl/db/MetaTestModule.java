@@ -9,6 +9,7 @@ import com.google.inject.Provides;
 import java.util.Optional;
 
 public class MetaTestModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();

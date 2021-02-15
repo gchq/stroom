@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
+
     private final EventBus eventBus;
 
     @Inject
@@ -54,6 +55,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     }
 
     private static class RestImpl<R> implements Rest<R> {
+
         private final HasHandlers hasHandlers;
         private final REST<R> rest;
         private Consumer<R> resultConsumer;
@@ -104,7 +106,9 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         }
 
                         if (errorConsumer != null) {
-                            errorConsumer.accept(wrappedExcepton != null ? wrappedExcepton : exception);
+                            errorConsumer.accept(wrappedExcepton != null
+                                    ? wrappedExcepton
+                                    : exception);
                         } else {
                             GWT.log(msg, exception);
                             AlertEvent.fireError(hasHandlers, msg, null);

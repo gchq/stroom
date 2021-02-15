@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.api;
 
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -21,8 +22,9 @@ import javax.ws.rs.ext.WriterInterceptor;
 
 /**
  * Interface implemented in order to support Automatic logging for Java RS Remote resource method calls.
+ *
  * @see AutoLogged
  */
-public interface RestResourceAutoLogger extends ContainerRequestFilter, WriterInterceptor, ExceptionMapper<Throwable>
-{
+public interface RestResourceAutoLogger extends ContainerRequestFilter, WriterInterceptor, ExceptionMapper<Throwable> {
+
 }

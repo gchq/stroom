@@ -45,6 +45,7 @@ import java.util.function.Consumer;
 public class ActivityListPresenter
         extends MyPresenterWidget<DataGridView<Activity>>
         implements Refreshable {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
     protected RestDataProvider<Activity, ResultPage<Activity>> dataProvider;
 

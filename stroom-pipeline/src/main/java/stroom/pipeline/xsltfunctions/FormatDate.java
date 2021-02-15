@@ -16,11 +16,6 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.StringValue;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -29,7 +24,12 @@ import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.StringValue;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,8 +47,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 class FormatDate extends StroomExtensionFunctionCall {
+
     private static final Locale LOCALE = Locale.ENGLISH;
     private static final WeekFields WEEK_FIELDS = WeekFields.of(LOCALE);
 
@@ -75,7 +77,9 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     @Override
-    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+    void configure(final ErrorReceiver errorReceiver,
+                   final LocationFactory locationFactory,
+                   final List<PipelineReference> pipelineReferences) {
         super.configure(errorReceiver, locationFactory, pipelineReferences);
 
         // Reset the parser cache.
@@ -216,11 +220,14 @@ class FormatDate extends StroomExtensionFunctionCall {
 
     long parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
         final Key key = new Key(pattern, timeZone);
-        final Function<String, Long> parser = cachedParsers.computeIfAbsent(key, k -> createParser(context, k.pattern, k.timeZone));
+        final Function<String, Long> parser = cachedParsers.computeIfAbsent(key,
+                k -> createParser(context, k.pattern, k.timeZone));
         return parser.apply(value);
     }
 
-    private Function<String, Long> createParser(final XPathContext context, final String pattern, final String timeZone) {
+    private Function<String, Long> createParser(final XPathContext context,
+                                                final String pattern,
+                                                final String timeZone) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
                 .parseLenient()
@@ -246,7 +253,8 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     /**
-     * Parsing dates that use week fields has to be done differently as week based parsing does not seem to cope with conflicting default values for fields.
+     * Parsing dates that use week fields has to be done differently as week based parsing does not seem to
+     * cope with conflicting default values for fields.
      */
     private Function<String, Long> createWeekBasedParser(final FieldSet fieldSet,
                                                          final DateTimeFormatterBuilder builder,
@@ -261,7 +269,8 @@ class FormatDate extends StroomExtensionFunctionCall {
         if (!fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)) {
             if (!fieldSet.contains(WEEK_OF_YEAR)
                     && !fieldSet.contains(WEEK_OF_MONTH)) {
-                builder.parseDefaulting(WEEK_FIELDS.weekOfWeekBasedYear(), referenceDateTime.get(WEEK_FIELDS.weekOfWeekBasedYear()));
+                builder.parseDefaulting(WEEK_FIELDS.weekOfWeekBasedYear(),
+                        referenceDateTime.get(WEEK_FIELDS.weekOfWeekBasedYear()));
             } else if (fieldSet.contains(WEEK_OF_MONTH)) {
                 builder.parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR));
                 builder.parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA));
@@ -304,7 +313,9 @@ class FormatDate extends StroomExtensionFunctionCall {
 //        ZonedDateTime dateTime;
 //
 //        // Don't use the defaulting formatter if we can help it.
-//        if (pattern.contains(FULL_YEAR_PATTERN) && pattern.contains(FULL_MONTH_PATTERN) && pattern.contains(FULL_DAY_PATTERN)) {
+//        if (pattern.contains(FULL_YEAR_PATTERN)
+//        && pattern.contains(FULL_MONTH_PATTERN)
+//        && pattern.contains(FULL_DAY_PATTERN)) {
 //            final DateTimeFormatter formatter = DateFormatterCache.getFormatter(pattern);
 //            final ZoneId zoneId = getTimeZone(context, timeZone);
 //
@@ -365,7 +376,10 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static ZonedDateTime parseBest(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
-        final TemporalAccessor temporalAccessor = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+        final TemporalAccessor temporalAccessor = formatter.parseBest(value,
+                ZonedDateTime::from,
+                LocalDateTime::from,
+                LocalDate::from);
         if (temporalAccessor instanceof ZonedDateTime) {
             return ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
         }
@@ -376,6 +390,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static class FieldSet {
+
         private final String resolvedPattern;
 
         FieldSet(final DateTimeFormatter parseFormatter) {
@@ -388,6 +403,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static class Key {
+
         private final String pattern;
         private final String timeZone;
 
@@ -396,10 +412,15 @@ class FormatDate extends StroomExtensionFunctionCall {
             this.timeZone = timeZone;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return Objects.equals(pattern, key.pattern) &&
                     Objects.equals(timeZone, key.timeZone);
@@ -412,6 +433,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static class RegularParser implements Function<String, Long> {
+
         private final DateTimeFormatter formatter;
         private final ZoneId zoneId;
 
@@ -430,6 +452,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static class RegularParserWithReferenceTime implements Function<String, Long> {
+
         private final DateTimeFormatter formatter;
         private final ZoneId zoneId;
         private final ZonedDateTime referenceDateTime;
@@ -472,6 +495,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private static class WeekBasedParser implements Function<String, Long> {
+
         private final DateTimeFormatter formatter;
         private final ZoneId zoneId;
         private final ZonedDateTime referenceDateTime;

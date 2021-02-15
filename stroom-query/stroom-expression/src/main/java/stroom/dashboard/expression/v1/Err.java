@@ -24,8 +24,9 @@ package stroom.dashboard.expression.v1;
         commonReturnDescription = "An error.",
         signatures = @FunctionSignature(
                 description = "Returns an error.",
-                args = {} ))
+                args = {}))
 class Err extends AbstractStaticFunction {
+
     static final String NAME = "err";
 
     public Err(final String name) {

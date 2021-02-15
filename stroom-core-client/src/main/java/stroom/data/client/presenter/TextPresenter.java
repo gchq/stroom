@@ -37,6 +37,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import java.util.List;
 
 public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
+
     private final EditorPresenter editorPresenter;
 
     @Inject
@@ -196,6 +197,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+
         void setTextView(View view);
 
         void setPlayVisible(boolean visible);

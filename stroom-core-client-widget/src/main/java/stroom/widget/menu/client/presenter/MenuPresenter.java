@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item>> {
+
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
 
     private final Map<Item, Element> hoverItems = new HashMap<>();

@@ -30,6 +30,7 @@ import java.io.Serializable;
  * </p>
  */
 public class EffectiveMetaDataCriteria implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private Period effectivePeriod;

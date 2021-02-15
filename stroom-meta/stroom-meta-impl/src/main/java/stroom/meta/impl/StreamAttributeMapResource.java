@@ -27,12 +27,12 @@ import stroom.meta.shared.MetaRow;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaFieldSort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,6 +44,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.List;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -54,7 +55,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -63,6 +63,7 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
+
     private final Provider<MetaService> dataMetaService;
     private final Provider<SecurityContext> securityContext;
 
@@ -208,6 +209,7 @@ public class StreamAttributeMapResource implements RestResource {
 
     @JsonInclude(Include.NON_NULL)
     static class SearchResponse {
+
         @JsonProperty
         public final PageResponse pageResponse;
         @JsonProperty

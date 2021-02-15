@@ -22,17 +22,20 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import com.google.inject.AbstractModule;
 
 public class ClusterTaskModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

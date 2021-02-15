@@ -5,6 +5,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.util.Objects;
 
 final class PasswordHashUtil {
+
     private PasswordHashUtil() {
     }
 

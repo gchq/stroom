@@ -26,14 +26,15 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class FsDataStoreJobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PhysicalDelete.class, builder -> builder
                         .name("Data Delete")
-                        .description("Physically delete meta data and associated files that have been logically deleted " +
-                                "based on age of delete (stroom.data.store.deletePurgeAge)")
+                        .description("Physically delete meta data and associated files that have been logically " +
+                                "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
                         .schedule(CRON, "0 0 *")
                         .advanced(false))
                 .bindJobTo(FileSystemClean.class, builder -> builder
@@ -45,6 +46,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
     private static class PhysicalDelete extends RunnableWrapper {
+
         @Inject
         PhysicalDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
             super(physicalDeleteExecutor::exec);
@@ -52,6 +54,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
     private static class FileSystemClean extends RunnableWrapper {
+
         @Inject
         FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
             super(fileSystemCleanExecutor::clean);

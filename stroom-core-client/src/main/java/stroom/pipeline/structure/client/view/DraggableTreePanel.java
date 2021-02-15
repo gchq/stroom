@@ -16,6 +16,11 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.data.grid.client.MouseHelper;
+import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,14 +28,11 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.data.grid.client.MouseHelper;
-import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
-import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import java.util.List;
 
 public abstract class DraggableTreePanel<E> extends Composite implements HasContextMenuHandlers {
+
     private static final int DRAGGING_THRESHOLD = 20;
 
     private final TreePanel<E> treePanel;

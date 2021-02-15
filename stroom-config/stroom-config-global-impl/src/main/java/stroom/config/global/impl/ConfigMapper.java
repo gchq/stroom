@@ -45,8 +45,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.dropwizard.client.JerseyClientConfiguration;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -72,6 +70,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
@@ -80,6 +80,7 @@ import java.util.stream.StreamSupport;
  */
 @Singleton
 public class ConfigMapper {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigMapper.class);
 
     // In order of preference
@@ -93,8 +94,8 @@ public class ConfigMapper {
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
     public static final String DOCREF_EXAMPLE = ","
-        + DOCREF_PREFIX
-        + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
+            + DOCREF_PREFIX
+            + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
     // The guice bound appConfig
     private final AppConfig appConfig;
@@ -164,7 +165,7 @@ public class ConfigMapper {
 
     private AppConfig getVanillaAppConfig() {
         try {
-           return appConfig.getClass().getDeclaredConstructor().newInstance();
+            return appConfig.getClass().getDeclaredConstructor().newInstance();
         } catch (InstantiationException
                 | IllegalAccessException
                 | InvocationTargetException
@@ -256,28 +257,28 @@ public class ConfigMapper {
             // I.e. another node could have removed the db override.
 
             Map<PropertyPath, ConfigProperty> dbPropsMap = dbConfigProperties.stream()
-                .collect(Collectors.toMap(ConfigProperty::getName, Function.identity()));
+                    .collect(Collectors.toMap(ConfigProperty::getName, Function.identity()));
 
             globalPropertiesMap.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().hasDatabaseOverride())
-                .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
-                .forEach(entry -> {
-                    final ConfigProperty globalProp = entry.getValue();
-                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+                    .stream()
+                    .filter(entry -> entry.getValue().hasDatabaseOverride())
+                    .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
+                    .forEach(entry -> {
+                        final ConfigProperty globalProp = entry.getValue();
+                        globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
 
-                    final Prop prop = propertyMap.get(entry.getKey());
-                    if (prop != null) {
-                        // Now set the new effective value on our guice bound appConfig instance
-                        final Type genericType = prop.getValueType();
-                        final Object typedValue = convertToObject(
-                            globalProp.getEffectiveValue().orElse(null), genericType);
-                        prop.setValueOnConfigObject(typedValue);
-                    } else {
-                        throw new RuntimeException(LogUtil.message(
-                            "Not expecting prop to be null for {}", entry.getKey().toString()));
-                    }
-                });
+                        final Prop prop = propertyMap.get(entry.getKey());
+                        if (prop != null) {
+                            // Now set the new effective value on our guice bound appConfig instance
+                            final Type genericType = prop.getValueType();
+                            final Object typedValue = convertToObject(
+                                    globalProp.getEffectiveValue().orElse(null), genericType);
+                            prop.setValueOnConfigObject(typedValue);
+                        } else {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Not expecting prop to be null for {}", entry.getKey().toString()));
+                        }
+                    });
         }
     }
 
@@ -352,28 +353,41 @@ public class ConfigMapper {
 
             final Class<?> valueType = prop.getValueClass();
 
+            // Ignore the dropwiz jersey config in our config
             if (valueType != JerseyClientConfiguration.class) {
 
                 final Object value = prop.getValueFromConfigObject();
+//                if (isSupportedPropertyType(valueType) && !prop.hasAnnotation(JsonIgnore.class)) {
                 if (isSupportedPropertyType(valueType)) {
+
+                    if (!prop.hasSetter()) {
+                        throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
+                                prop.getName(),
+                                (prop.getParentObject() != null
+                                        ? prop.getParentObject().getClass().getName()
+                                        : "null")));
+                    }
                     // This is a leaf, i.e. a property so add it to our map
                     propertyMap.put(fullPath, prop);
 
                     // Now let the consumer do something to it
                     propConsumer.accept(fullPath, prop);
-            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
                     // This must be a branch, i.e. config object so recurse into that
                     if (value != null) {
-                    AbstractConfig childConfigObject = (AbstractConfig) value;
-                    addConfigObjectMethods(
-                        childConfigObject, fullPath, propertyMap, propConsumer);
+                        AbstractConfig childConfigObject = (AbstractConfig) value;
+                        addConfigObjectMethods(
+                                childConfigObject,
+                                fullPath,
+                                propertyMap,
+                                propConsumer);
                     }
                 } else {
                     // This is not expected
                     throw new RuntimeException(LogUtil.message(
                             "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                             valueType.getName(),
-                        AbstractConfig.class.getSimpleName()));
+                            AbstractConfig.class.getSimpleName()));
                 }
             }
         });
@@ -397,7 +411,8 @@ public class ConfigMapper {
 //        if (yamlValueAsStr == null && defaultValue == null) {
 //
 //        }
-//        if (configProperty.getDefaultValue() != null && configProperty.getDefaultValue().orElse(null).equals(yamlValueAsStr)) {
+//        if (configProperty.getDefaultValue() != null
+//        && configProperty.getDefaultValue().orElse(null).equals(yamlValueAsStr)) {
 //            configProperty.setYamlValue(null);
 //        } else {
 //            configProperty.setYamlValue(yamlValueAsStr);
@@ -497,7 +512,8 @@ public class ConfigMapper {
                 } else if (valueClass.equals(Enum.class)) {
                     dataTypeName = "Enumeration";
                 } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
-                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL,
+                            valueClass.getSimpleName()) + " of ";
                 } else {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
                 }
@@ -519,7 +535,7 @@ public class ConfigMapper {
             }
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
-                "Error getting type name for {}: {}", type, e.getMessage()));
+                    "Error getting type name for {}: {}", type, e.getMessage()));
         }
     }
 
@@ -553,16 +569,16 @@ public class ConfigMapper {
                                   final String exampleText) {
         if (serialisedForm.length() < delimiterPosition + 1) {
             throw new RuntimeException(LogUtil.message("Delimiter position {} is out of bounds for {}",
-                delimiterPosition, serialisedForm));
+                    delimiterPosition, serialisedForm));
         }
         final String delimiter = String.valueOf(serialisedForm.charAt(delimiterPosition));
 
         if (!VALID_DELIMITERS_SET.contains(delimiter)) {
             throw new RuntimeException(LogUtil.message(
-                "[{}] does not contain a valid delimiter as its {} character. " +
-                    "Valid delimiters are [{}]. " +
-                    "For example [{}]",
-                serialisedForm, positionName, String.join("", VALID_DELIMITERS_LIST), exampleText));
+                    "[{}] does not contain a valid delimiter as its {} character. " +
+                            "Valid delimiters are [{}]. " +
+                            "For example [{}]",
+                    serialisedForm, positionName, String.join("", VALID_DELIMITERS_LIST), exampleText));
         }
     }
 
@@ -583,7 +599,7 @@ public class ConfigMapper {
                 }
             } else {
                 throw new RuntimeException(LogUtil.message(
-                    "Value [{}] of type {}, is not a supported type",
+                        "Value [{}] of type {}, is not a supported type",
                         value, value.getClass().getName()));
             }
         } else {
@@ -660,42 +676,43 @@ public class ConfigMapper {
             // Don't include the original exception else gwt uses the msg of the
             // original which is not very user friendly. Enable debug to see the stack
             LOGGER.debug(() -> LogUtil.message(
-                "Unable to convert value [{}] to type {} due to: {}",
+                    "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
             throw new ConfigPropertyValidationException(LogUtil.message(
-                "Unable to convert value [{}] to type {} due to: {}",
+                    "Unable to convert value [{}] to type {} due to: {}",
                     value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
         throw new ConfigPropertyValidationException(LogUtil.message(
-            "Type [{}] is not supported for value [{}]", genericType, value));
+                "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
     private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
         List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
         if (genericsParamTypes.isEmpty()) {
-           throw new RuntimeException(LogUtil.message(
-               "Unable to get generics parameter {} for type {} as it has no parameterised types",
-               index, typeWithGenerics));
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to get generics parameter {} for type {} as it has no parameterised types",
+                    index, typeWithGenerics));
         }
         if (index >= genericsParamTypes.size()) {
             throw new IllegalArgumentException(LogUtil.message("Index {} is out of bounds for types {}",
-                index, genericsParamTypes));
+                    index, genericsParamTypes));
         }
 
         return getDataType(genericsParamTypes.get(index));
     }
 
     private static Boolean parseBoolean(final String str) {
-       if (str.equalsIgnoreCase("true")) {
-           return Boolean.TRUE;
-       } else if (str.equalsIgnoreCase("false")) {
-           return Boolean.FALSE;
-       } else {
-           throw new ConfigPropertyValidationException(
-               LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.", str));
-       }
+        if (str.equalsIgnoreCase("true")) {
+            return Boolean.TRUE;
+        } else if (str.equalsIgnoreCase("false")) {
+            return Boolean.FALSE;
+        } else {
+            throw new ConfigPropertyValidationException(
+                    LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.",
+                            str));
+        }
     }
 
 
@@ -750,19 +767,19 @@ public class ConfigMapper {
     private static String docRefToString(final DocRef docRef,
                                          final List<String> availableDelimiters) {
         String allText = String.join(
-            "", docRef.getType(), docRef.getUuid(), docRef.getName());
+                "", docRef.getType(), docRef.getUuid(), docRef.getName());
         String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
         return delimiter
-            + "docRef("
-            + String.join(
+                + "docRef("
+                + String.join(
                 delimiter,
                 docRef.getType(),
                 docRef.getUuid(),
                 docRef.getName())
-            + ")";
+                + ")";
     }
 
     private static String enumToString(final Enum<?> enumInstance) {
@@ -776,26 +793,26 @@ public class ConfigMapper {
         } else {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(
-                serialisedForm,
-                0,
-                "first",
-                LIST_EXAMPLE);
+                    serialisedForm,
+                    0,
+                    "first",
+                    LIST_EXAMPLE);
 
             try {
 
                 String delimitedValue = serialisedForm.substring(1);
 
                 return StreamSupport.stream(
-                    Splitter
-                        .on(delimiter)
-                        .split(delimitedValue)
-                        .spliterator(), false)
-                    .map(str -> convertToObject(str, type))
-                    .map(type::cast)
-                    .collect(Collectors.toList());
+                        Splitter
+                                .on(delimiter)
+                                .split(delimitedValue)
+                                .spliterator(), false)
+                        .map(str -> convertToObject(str, type))
+                        .map(type::cast)
+                        .collect(Collectors.toList());
             } catch (Exception e) {
                 throw new RuntimeException(LogUtil.message(
-                    "Error de-serialising a List<?> from [{}]", serialisedForm), e);
+                        "Error de-serialising a List<?> from [{}]", serialisedForm), e);
             }
         }
     }
@@ -810,40 +827,42 @@ public class ConfigMapper {
         } else {
 
             final String entryDelimiter = String.valueOf(serialisedForm.charAt(0));
-            validateDelimiter(serialisedForm,0,"first", MAP_EXAMPLE);
+            validateDelimiter(serialisedForm, 0, "first", MAP_EXAMPLE);
 
             final String keyValueDelimiter = String.valueOf(serialisedForm.charAt(1));
-            validateDelimiter(serialisedForm,1,"second", MAP_EXAMPLE);
+            validateDelimiter(serialisedForm, 1, "second", MAP_EXAMPLE);
 
             // now remove the delimiters from our value
             final String delimitedValue = serialisedForm.substring(2);
 
             return StreamSupport.stream(
-                Splitter
-                    .on(entryDelimiter)
-                    .split(delimitedValue)
-                    .spliterator(), false)
-                .map(keyValueStr -> {
-                    final List<String> parts = Splitter.on(keyValueDelimiter)
-                        .splitToList(keyValueStr);
+                    Splitter
+                            .on(entryDelimiter)
+                            .split(delimitedValue)
+                            .spliterator(), false)
+                    .map(keyValueStr -> {
+                        final List<String> parts = Splitter.on(keyValueDelimiter)
+                                .splitToList(keyValueStr);
 
-                    if (parts.size() < 1 || parts.size() > 2) {
-                        throw new RuntimeException(LogUtil.message(
-                            "Too many parts [{}] in value [{}], whole value [{}]",
-                            parts.size(), keyValueStr, serialisedForm));
-                    }
+                        if (parts.size() < 1 || parts.size() > 2) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Too many parts [{}] in value [{}], whole value [{}]",
+                                    parts.size(), keyValueStr, serialisedForm));
+                        }
 
-                    final String keyStr = parts.get(0);
-                    final String valueStr = parts.size() == 1 ? null : parts.get(1);
+                        final String keyStr = parts.get(0);
+                        final String valueStr = parts.size() == 1
+                                ? null
+                                : parts.get(1);
 
-                    final K key = keyType.cast(convertToObject(keyStr, keyType));
-                    final V value = valueStr != null
-                        ? valueType.cast(convertToObject(valueStr, valueType))
-                        : null;
+                        final K key = keyType.cast(convertToObject(keyStr, keyType));
+                        final V value = valueStr != null
+                                ? valueType.cast(convertToObject(valueStr, valueType))
+                                : null;
 
-                    return Map.entry(key, value);
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        return Map.entry(key, value);
+                    })
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
     }
 
@@ -858,7 +877,7 @@ public class ConfigMapper {
 
             if (!DOCREF_PATTERN.matcher(delimitedValue).matches()) {
                 throw new RuntimeException(LogUtil.message("Expecting [{}] to match [{}]",
-                    delimitedValue, DOCREF_PATTERN.pattern()));
+                        delimitedValue, DOCREF_PATTERN.pattern()));
             }
 
             delimitedValue = delimitedValue.replace(DOCREF_PREFIX + "(", "");
@@ -867,7 +886,7 @@ public class ConfigMapper {
             final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
             if (parts.size() != 3) {
                 throw new RuntimeException(LogUtil.message(
-                    "Expecting three parts to a docRef: type, UUID and name. Found {}", parts.size()));
+                        "Expecting three parts to a docRef: type, UUID and name. Found {}", parts.size()));
             }
 
             return DocRef.builder()
@@ -937,6 +956,7 @@ public class ConfigMapper {
     }
 
     public static class UnknownPropertyException extends RuntimeException {
+
         /**
          * Constructs a new runtime exception with the specified detail message.
          * The cause is not initialized, and may subsequently be initialized by a

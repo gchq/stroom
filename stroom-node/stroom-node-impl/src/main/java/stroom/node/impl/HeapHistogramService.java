@@ -1,19 +1,12 @@
 package stroom.node.impl;
 
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import com.sun.management.DiagnosticCommandMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +17,14 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
 
 /**
  * Class for generating a java heap map histogram using the gcClassHistogram action of the
@@ -32,15 +33,16 @@ import java.util.stream.Collectors;
 @Singleton
 @SuppressWarnings("unused")
 class HeapHistogramService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramService.class);
 
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
     static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
 
-    private final static String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
+    private static final String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
 
     private static final String ACTION_NAME = "gcClassHistogram";
-    private static String ID_REPLACEMENT = "--ID-REMOVED--";
+    private static final String ID_REPLACEMENT = "--ID-REMOVED--";
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
 
@@ -52,7 +54,7 @@ class HeapHistogramService {
     HeapHistogramService(final HeapHistogramConfig heapHistogramConfig) {
         this.heapHistogramConfig = heapHistogramConfig;
         this.lineMatchPattern = Pattern.compile(
-            "\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+                "\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
 
     /**
@@ -87,9 +89,9 @@ class HeapHistogramService {
                     new Object[]{null},
                     new String[]{String[].class.getName()});
         } catch (MalformedObjectNameException
-            | InstanceNotFoundException
-            | ReflectionException
-            | MBeanException e) {
+                | InstanceNotFoundException
+                | ReflectionException
+                | MBeanException e) {
             throw new RuntimeException(LogUtil.message("Error invoking action {}", ACTION_NAME), e);
         }
         return output;
@@ -137,7 +139,7 @@ class HeapHistogramService {
     }
 
     private Function<String, Optional<HeapHistogramEntry>> buildLineToEntryMapper(
-        final Function<String, String> classNameReplacer) {
+            final Function<String, String> classNameReplacer) {
 
         Preconditions.checkNotNull(classNameReplacer);
         return line -> {
@@ -165,20 +167,20 @@ class HeapHistogramService {
             final Predicate<String> classNamePredicate = getClassNameMatchPredicate();
             final Function<String, String> classNameReplacer = getClassReplacementMapper();
             final Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper =
-                buildLineToEntryMapper(classNameReplacer);
+                    buildLineToEntryMapper(classNameReplacer);
 
             String[] lines = output.split("\\r?\\n");
 
             LOGGER.debug("processing {} lines of stdout", lines.length);
 
             final List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays
-                .stream(lines)
-                .map(lineToEntryMapper)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(heapHistogramEntry ->
-                    classNamePredicate.test(heapHistogramEntry.getClassName()))
-                .collect(Collectors.toList());
+                    .stream(lines)
+                    .map(lineToEntryMapper)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .filter(heapHistogramEntry ->
+                            classNamePredicate.test(heapHistogramEntry.getClassName()))
+                    .collect(Collectors.toList());
 
             LOGGER.debug("histogramEntries size [{}]", histogramEntries.size());
             if (histogramEntries.size() == 0) {
@@ -193,6 +195,7 @@ class HeapHistogramService {
     }
 
     static class HeapHistogramEntry {
+
         private final String className;
         private final long instances;
         private final long bytes;
@@ -215,15 +218,24 @@ class HeapHistogramService {
             return bytes;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             final HeapHistogramEntry that = (HeapHistogramEntry) o;
 
-            if (instances != that.instances) return false;
-            if (bytes != that.bytes) return false;
+            if (instances != that.instances) {
+                return false;
+            }
+            if (bytes != that.bytes) {
+                return false;
+            }
             return className.equals(that.className);
         }
 

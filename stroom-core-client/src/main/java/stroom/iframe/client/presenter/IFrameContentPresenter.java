@@ -16,17 +16,20 @@
 
 package stroom.iframe.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.tab.client.presenter.TabData;
 
-public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView> implements TabData, IFrameLoadUiHandlers {
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView>
+        implements TabData, IFrameLoadUiHandlers {
+
     private Icon icon = SvgPresets.LINK;
 
     @Inject
@@ -74,6 +77,7 @@ public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPrese
     }
 
     public interface IFrameContentView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
+
         void setUrl(String url);
 
         void setCustomTitle(String customTitle);

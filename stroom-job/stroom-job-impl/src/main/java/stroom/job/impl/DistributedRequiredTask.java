@@ -19,10 +19,11 @@ package stroom.job.impl;
 import java.io.Serializable;
 
 class DistributedRequiredTask implements Serializable {
+
     private static final long serialVersionUID = 2651416970893054545L;
 
-    private String jobName;
-    private int requiredTaskCount;
+    private final String jobName;
+    private final int requiredTaskCount;
 
     DistributedRequiredTask(final String jobName, final int requiredTaskCount) {
         this.jobName = jobName;

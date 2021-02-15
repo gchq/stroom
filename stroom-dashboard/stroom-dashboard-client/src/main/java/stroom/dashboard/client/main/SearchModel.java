@@ -21,9 +21,9 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchModel {
+
     private final SearchBus searchBus;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
@@ -432,6 +433,8 @@ public class SearchModel {
     }
 
     public enum Mode {
-        ACTIVE, INACTIVE, PAUSED
+        ACTIVE,
+        INACTIVE,
+        PAUSED
     }
 }

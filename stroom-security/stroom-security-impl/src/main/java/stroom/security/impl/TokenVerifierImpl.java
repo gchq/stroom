@@ -8,11 +8,12 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.List;
+import javax.inject.Inject;
 
 class TokenVerifierImpl implements TokenVerifier {
+
     private final JwtContextFactory jwtContextFactory;
 
     @Inject

@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 class CheckComparator {
-    /**
-     * @param dailyReports
-     * @param comparator
-     */
+
     static <T> void checkConsitency(final List<T> dailyReports, final Comparator<T> comparator) {
         final Map<T, List<T>> objectMapSmallerOnes = new HashMap<>();
 
@@ -37,33 +34,22 @@ class CheckComparator {
         });
     }
 
-    /**
-     * @param objectMapSmallerOnes
-     * @param o1
-     * @param o2
-     */
     private static <T> void checkConsistency(final Map<T, List<T>> objectMapSmallerOnes, T o1, T o2) {
         final List<T> smallerThan = objectMapSmallerOnes.get(o1);
 
         if (smallerThan != null) {
             for (final T o : smallerThan) {
                 if (o == o2) {
-                    throw new IllegalStateException(o2 + "  cannot be smaller than " + o1 + " if it's supposed to be vice versa.");
+                    throw new IllegalStateException(
+                            o2 + "  cannot be smaller than " + o1 + " if it's supposed to be vice versa.");
                 }
                 checkConsistency(objectMapSmallerOnes, o, o2);
             }
         }
     }
 
-    /**
-     * @param keyMapValues
-     * @param key
-     * @param <Key>
-     * @param <Value>
-     * @return List<Value>
-     */
-    private static <Key, Value> List<Value> getListSafely(Map<Key, List<Value>> keyMapValues, Key key) {
-        List<Value> values = keyMapValues.get(key);
+    private static <K, V> List<V> getListSafely(Map<K, List<V>> keyMapValues, K key) {
+        List<V> values = keyMapValues.get(key);
 
         if (values == null) {
             keyMapValues.put(key, values = new LinkedList<>());
@@ -74,23 +60,14 @@ class CheckComparator {
 
     /**
      * @author Oku
-     *
-     * @param <T>
      */
     private interface IPairIteratorCallback<T> {
-        /**
-         * @param o1
-         * @param o2
-         */
+
         void pair(T o1, T o2);
     }
 
     /**
-     *
      * Iterates through each distinct unordered pair formed by the elements of a given iterator
-     *
-     * @param it
-     * @param callback
      */
     private static <T> void iterateDistinctPairs(final Iterator<T> it, IPairIteratorCallback<T> callback) {
         List<T> list = new ArrayList<>();

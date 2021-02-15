@@ -19,19 +19,20 @@ import event.logging.ViewEventAction;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.RedirectionException;
-import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.RedirectionException;
+import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 Add audit logging
 class OpenIdResourceImpl implements OpenIdResource {
+
     private final OpenIdService service;
     private final JwkCache jwkCache;
     private final JwkEventLog jwkEventLog;

@@ -16,13 +16,6 @@
 
 package stroom.ui.config.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.Timer;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -31,11 +24,20 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Timer;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class UiConfigCache implements HasHandlers {
+
     private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
     private static final int ONE_MINUTE = 1000 * 60;
 
@@ -53,7 +55,8 @@ public class UiConfigCache implements HasHandlers {
             public void run() {
                 // Don't auto refresh if we are already refreshing.
                 if (!refreshing) {
-                    // Don't auto refresh if we are not logged in as this will keep the user session alive unnecessarily.
+                    // Don't auto refresh if we are not logged in as this will keep the user session
+                    // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
                         refreshing = true;
                         refresh()
@@ -64,8 +67,9 @@ public class UiConfigCache implements HasHandlers {
             }
         };
 
-        // Refreshing the client properties keeps them current and also ensures that all actions on the server belonging
-        // to the logged in user are refreshed every minute so that the server doesn't try and terminate them.
+        // Refreshing the client properties keeps them current and also ensures that all actions on the
+        // server belonging to the logged in user are refreshed every minute so that the server doesn't
+        // try and terminate them.
         refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 
@@ -99,7 +103,9 @@ public class UiConfigCache implements HasHandlers {
             eventBus = new SimpleEventBus();
         }
 
-        final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(), this, handler);
+        final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(),
+                this,
+                handler);
         get().onSuccess(properties -> PropertyChangeEvent.fire(UiConfigCache.this, properties));
         return handlerRegistration;
     }

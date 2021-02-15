@@ -1,17 +1,18 @@
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
+
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,8 +27,8 @@ public class ConfigPropertyClusterValuesListPresenter
         extends MyPresenterWidget<DataGridView<ClusterValuesRow>> {
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
-    private ListDataProvider<ClusterValuesRow> dataProvider;
-    private ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
+    private final ListDataProvider<ClusterValuesRow> dataProvider;
+    private final ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
 
     private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
@@ -46,19 +47,19 @@ public class ConfigPropertyClusterValuesListPresenter
     // For DEV testing only, when you don't have two nodes
     private Map<String, Set<String>> makeDemoData() {
         Supplier<String> junkTextSupplier = () ->
-            IntStream.rangeClosed(1,5)
-                .boxed()
-                .map(i -> this.getClass().getCanonicalName())
-                .collect(Collectors.joining(" "));
+                IntStream.rangeClosed(1, 5)
+                        .boxed()
+                        .map(i -> this.getClass().getCanonicalName())
+                        .collect(Collectors.joining(" "));
 
-        Map<String, Set<String>>  demoMap = new HashMap<>();
+        Map<String, Set<String>> demoMap = new HashMap<>();
         IntStream.rangeClosed(1, 9)
-            .forEach(i -> {
-                demoMap.put("value " + i + junkTextSupplier.get(), IntStream.rangeClosed(i*10,(i*10)+9)
-                    .boxed()
-                    .map(j -> "node" + j)
-                    .collect(Collectors.toSet()));
-            });
+                .forEach(i -> {
+                    demoMap.put("value " + i + junkTextSupplier.get(), IntStream.rangeClosed(i * 10, (i * 10) + 9)
+                            .boxed()
+                            .map(j -> "node" + j)
+                            .collect(Collectors.toSet()));
+                });
         return demoMap;
     }
 
@@ -78,10 +79,11 @@ public class ConfigPropertyClusterValuesListPresenter
             public Expander getValue(final ClusterValuesRow row) {
                 return buildExpander(row);
             }
+
             @Override
             public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
             }
         };
         expanderColumn.setFieldUpdater((index, row, value) -> {
@@ -99,7 +101,9 @@ public class ConfigPropertyClusterValuesListPresenter
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {
         return buildBasicColumn(row ->
-            (row.getNodeCount() != null ? row.getNodeCount().toString() : ""));
+                (row.getNodeCount() != null
+                        ? row.getNodeCount().toString()
+                        : ""));
     }
 
     private Column<ClusterValuesRow, String> buildBasicColumn(final Function<ClusterValuesRow, String> valueFunc) {
@@ -128,7 +132,7 @@ public class ConfigPropertyClusterValuesListPresenter
             @Override
             public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                    + getView().getResources().dataGridStyle().dataGridCellWrapText();
+                        + getView().getResources().dataGridStyle().dataGridCellWrapText();
             }
         };
         return column;

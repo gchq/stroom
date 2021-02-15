@@ -17,12 +17,14 @@
 
 package stroom.document.client.event;
 
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerNode;
 
 public class ShowPermissionsDialogEvent extends GwtEvent<ShowPermissionsDialogEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final ExplorerNode explorerNode;
 
@@ -56,6 +58,7 @@ public class ShowPermissionsDialogEvent extends GwtEvent<ShowPermissionsDialogEv
     }
 
     public interface Handler extends EventHandler {
+
         void onPermissions(final ShowPermissionsDialogEvent event);
     }
 }

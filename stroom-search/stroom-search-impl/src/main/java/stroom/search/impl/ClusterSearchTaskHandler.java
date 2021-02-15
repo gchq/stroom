@@ -31,11 +31,12 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 class ClusterSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     private final IndexShardSearchFactory indexShardSearchFactory;
@@ -118,7 +119,8 @@ class ClusterSearchTaskHandler {
                                     coprocessor.getValuesCount().get() +
                                     " extractions");
 
-                            final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
+                            final boolean complete = coprocessor.getCompletionState().awaitCompletion(1,
+                                    TimeUnit.SECONDS);
                             if (!complete) {
                                 allComplete = false;
                             }

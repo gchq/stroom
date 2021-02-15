@@ -12,6 +12,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import com.google.inject.AbstractModule;
 
 public class CoreTestModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new AppConfigTestModule());

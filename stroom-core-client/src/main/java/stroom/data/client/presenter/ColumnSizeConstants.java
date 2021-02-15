@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 public final class ColumnSizeConstants {
+
     public static final int CHECKBOX_COL = 16;
     public static final int ICON_COL = 20;
     public static final int SMALL_COL = 70;

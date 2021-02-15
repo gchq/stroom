@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandler<T>> {
+
     private static Type<ChangeDataHandler<?>> TYPE;
     private final T data;
 
@@ -54,6 +55,7 @@ public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandl
     }
 
     public interface ChangeDataHandler<T> extends EventHandler {
+
         void onChange(ChangeDataEvent<T> event);
     }
 }

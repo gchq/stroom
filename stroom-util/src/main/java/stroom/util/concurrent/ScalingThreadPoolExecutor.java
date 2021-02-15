@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
+
     /**
      * number of threads that are actively executing tasks
      */
@@ -45,7 +46,11 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
         }
 
         final ScalingQueue<Runnable> queue = new ScalingQueue<>(maxQueueSize);
-        final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue);
+        final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                unit,
+                queue);
         executor.setRejectedExecutionHandler(new ForceQueuePolicy());
         queue.setThreadPoolExecutor(executor);
         return executor;
@@ -65,7 +70,12 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
         }
 
         final ScalingQueue<Runnable> queue = new ScalingQueue<>(maxQueueSize);
-        final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, threadFactory);
+        final ScalingThreadPoolExecutor executor = new ScalingThreadPoolExecutor(corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                unit,
+                queue,
+                threadFactory);
         executor.setRejectedExecutionHandler(new ForceQueuePolicy());
         queue.setThreadPoolExecutor(executor);
         return executor;
@@ -87,6 +97,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     private static class ScalingQueue<E> extends LinkedBlockingQueue<E> {
+
         /**
          * The executor this Queue belongs to
          */
@@ -126,6 +137,7 @@ public class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     private static class ForceQueuePolicy implements RejectedExecutionHandler {
+
         public void rejectedExecution(final Runnable r, final ThreadPoolExecutor executor) {
             try {
                 executor.getQueue().put(r);

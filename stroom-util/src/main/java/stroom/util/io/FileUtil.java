@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public final class FileUtil {
+
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileUtil.class);
@@ -237,7 +238,7 @@ public final class FileUtil {
         LOGGER.debug("Using lock file {}", lockFilePath.toAbsolutePath());
 
         try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFilePath.toFile());
-             final FileChannel channel = fileOutputStream.getChannel()) {
+                final FileChannel channel = fileOutputStream.getChannel()) {
             channel.lock();
 
             LOGGER.debug(() -> LogUtil.message("Waited {} for lock",
@@ -263,7 +264,7 @@ public final class FileUtil {
         LOGGER.debug("Using lock file {}", lockFilePath.toAbsolutePath());
 
         try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFilePath.toFile());
-             final FileChannel channel = fileOutputStream.getChannel()) {
+                final FileChannel channel = fileOutputStream.getChannel()) {
             channel.lock();
 
             LOGGER.debug(() -> LogUtil.message("Waited {} for lock",

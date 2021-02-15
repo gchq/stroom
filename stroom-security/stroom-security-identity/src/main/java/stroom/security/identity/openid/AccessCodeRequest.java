@@ -19,6 +19,7 @@
 package stroom.security.identity.openid;
 
 class AccessCodeRequest {
+
     private final String scope;
     private final String responseType;
     private final String clientId;
@@ -29,12 +30,12 @@ class AccessCodeRequest {
     private final String token;
 
     AccessCodeRequest(final String scope,
-                             final String responseType,
-                             final String clientId,
-                             final String redirectUri,
-                             final String nonce,
-                             final String state,
-                             final String prompt,
+                      final String responseType,
+                      final String clientId,
+                      final String redirectUri,
+                      final String nonce,
+                      final String state,
+                      final String prompt,
                       final String token) {
         this.scope = scope;
         this.responseType = responseType;

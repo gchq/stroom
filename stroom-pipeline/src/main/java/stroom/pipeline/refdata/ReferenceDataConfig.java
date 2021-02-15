@@ -15,6 +15,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
+
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
@@ -31,7 +32,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
-            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. "+
+            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "The directory will be created if it doesn't exist." +
             "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
     public String getLocalDir() {
@@ -46,9 +47,9 @@ public class ReferenceDataConfig extends AbstractConfig {
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path to a provided LMDB system library file. If unset the LMDB binary " +
             "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
-            "installed or want to make use of a package manager provided instance. If you set this property care needs " +
-            " to be taken over version compatibility between the version of LMDBJava (that Stroom uses to interact with " +
-            "LMDB) and the version of the LMDB binary.")
+            "installed or want to make use of a package manager provided instance. If you set this property care " +
+            "needs  to be taken over version compatibility between the version of LMDBJava (that Stroom uses to " +
+            "interact with LMDB) and the version of the LMDB binary.")
     public String getLmdbSystemLibraryPath() {
         return lmdbSystemLibraryPath;
     }

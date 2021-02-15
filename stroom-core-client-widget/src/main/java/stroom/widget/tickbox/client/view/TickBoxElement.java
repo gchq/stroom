@@ -16,18 +16,21 @@
 
 package stroom.widget.tickbox.client.view;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import stroom.cell.tickbox.shared.TickBoxState;
 
 public final class TickBoxElement extends ImageElement {
+
     private static final Resources RESOURCES = GWT.create(Resources.class);
     private static final String IMAGE_TICK = AbstractImagePrototype.create(RESOURCES.tick()).getHTML();
     private static final String IMAGE_HALF_TICK = AbstractImagePrototype.create(RESOURCES.halfTick()).getHTML();
     private static final String IMAGE_UNTICK = AbstractImagePrototype.create(RESOURCES.untick()).getHTML();
+
     protected TickBoxElement() {
     }
 
@@ -46,6 +49,7 @@ public final class TickBoxElement extends ImageElement {
     }
 
     interface Resources extends ClientBundle {
+
         ImageResource tick();
 
         ImageResource halfTick();

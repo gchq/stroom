@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
                                 "formatted using the default date format.",
                         argType = Val.class)))
 class RoundYear extends RoundDate {
+
     static final String NAME = "roundYear";
     private static final Calc CALC = new Calc();
 
@@ -46,6 +47,7 @@ class RoundYear extends RoundDate {
     }
 
     static class Calc extends RoundDateCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override

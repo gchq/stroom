@@ -16,21 +16,23 @@
 
 package stroom.search.solr.client.view;
 
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewImpl;
+
 import java.util.List;
 
 public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFieldEditView {
+
     private final Widget widget;
 
     @UiField
@@ -281,5 +283,6 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     }
 
     public interface Binder extends UiBinder<Widget, SolrIndexFieldEditViewImpl> {
+
     }
 }

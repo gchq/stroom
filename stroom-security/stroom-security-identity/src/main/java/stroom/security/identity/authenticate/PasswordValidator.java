@@ -3,13 +3,15 @@ package stroom.security.identity.authenticate;
 import java.util.Objects;
 
 public class PasswordValidator {
+
     public static void validateLength(final String newPassword,
                                       int minimumLength) {
         if (newPassword == null) {
             throw new RuntimeException("Password is null");
         }
         if (newPassword.length() < minimumLength) {
-            throw new RuntimeException("Password does not meet the minimum length requirement of " + minimumLength + " characters");
+            throw new RuntimeException("Password does not meet the minimum length requirement of " +
+                    minimumLength + " characters");
         }
     }
 

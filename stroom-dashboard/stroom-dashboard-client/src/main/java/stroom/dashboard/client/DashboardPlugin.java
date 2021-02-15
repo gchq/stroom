@@ -17,12 +17,6 @@
 
 package stroom.dashboard.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
@@ -39,11 +33,19 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.task.client.TaskStartEvent;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final Provider<DashboardPresenter> editorProvider;
@@ -60,7 +62,8 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
 
-        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getHref())));
+        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
+                event -> openParameterisedDashboard(event.getHref())));
     }
 
     @Override
@@ -120,7 +123,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                     continue;
                 }
 
-                String val = kv.length > 1 ? kv[1] : "";
+                String val = kv.length > 1
+                        ? kv[1]
+                        : "";
                 try {
                     val = URL.decodeQueryString(val);
                 } catch (final RuntimeException e) {
@@ -141,7 +146,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<DashboardDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<DashboardDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<DashboardDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -151,7 +158,10 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final DashboardDoc document, final Consumer<DashboardDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final DashboardDoc document,
+                     final Consumer<DashboardDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<DashboardDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

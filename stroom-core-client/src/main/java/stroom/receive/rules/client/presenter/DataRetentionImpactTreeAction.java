@@ -6,8 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class DataRetentionImpactTreeAction implements TreeAction<DataRetentionImpactRow> {
+
     private Set<DataRetentionImpactRow> expandedRows = new HashSet<>();
-    private Set<DataRetentionImpactRow> collapsedRows = new HashSet<>();
+    private final Set<DataRetentionImpactRow> collapsedRows = new HashSet<>();
 
     @Override
     public void setRowExpanded(final DataRetentionImpactRow row, final boolean expanded) {

@@ -22,7 +22,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
@@ -41,17 +40,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaServiceImpl {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaServiceImpl.class);
 
     private static final String FEED_1 = "FEED1";
@@ -94,6 +94,7 @@ class TestMetaServiceImpl {
         // Delete everything
         cleanup.cleanup();
     }
+
     @Test
     void testSummary() {
         final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
@@ -315,7 +316,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_period() {
 
-        List<DataRetentionRuleAction> ruleActions = List.of(
+        final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
                 buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
@@ -346,7 +347,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_period2() {
 
-        List<DataRetentionRuleAction> ruleActions = List.of(
+        final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
                 buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)

@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
+
     /**
      * Get the current maximum id of any data.
      *
@@ -46,7 +47,8 @@ public interface MetaService {
      *
      * @param id        The id of the meta data to retrieve.
      * @param anyStatus Whether to allow locked or deleted meta data records to be returned.
-     * @return An unlocked meta data for the supplied id or null if no unlocked meta data records can be found unless anyStatus is true.
+     * @return An unlocked meta data for the supplied id or null if no unlocked meta data records
+     * can be found unless anyStatus is true.
      */
     Meta getMeta(final long id, final boolean anyStatus);
 
@@ -81,7 +83,8 @@ public interface MetaService {
 
     /**
      * Delete meta data by id. Note that this method will only delete unlocked meta data records.
-     * Note that this method only changes the status of meta data to be deleted and does not actually delete the meta data.
+     * Note that this method only changes the status of meta data to be deleted and does not actually delete
+     * the meta data.
      *
      * @param id The id of the meta data to delete.
      * @return The number of meta data records deleted.
@@ -93,7 +96,8 @@ public interface MetaService {
 
     /**
      * Delete meta data by id with an option to delete regardless of lock status.
-     * Note that this method only changes the status of meta data to be deleted and does not actually delete the meta data.
+     * Note that this method only changes the status of meta data to be deleted and does not actually delete
+     * the meta data.
      *
      * @param id        The id of the meta data to delete.
      * @param lockCheck Choose if the service should only delete unlocked meta data records.
@@ -139,7 +143,8 @@ public interface MetaService {
     ResultPage<MetaRow> findRows(final FindMetaCriteria criteria);
 
     /**
-     * Find meta data records and attributes that match the specified criteria and are decorated with data retention information.
+     * Find meta data records and attributes that match the specified criteria and are decorated with data
+     * retention information.
      *
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
@@ -175,7 +180,8 @@ public interface MetaService {
      * Get a summary of the parent items of the current selection for reprocessing purposes.
      *
      * @param criteria The selection criteria.
-     * @return An object that provides a summary of the parent items of the current selection for reprocessing purposes.
+     * @return An object that provides a summary of the parent items of the current selection for
+     * reprocessing purposes.
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
