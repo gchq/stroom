@@ -42,7 +42,8 @@ class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
             return false;
         } else if (!statisticsDataSource.isEnabled()) {
             LOGGER.warn(
-                    "The StatisticDataSource with name {}, and type {} is not enabled, so no statistics will be recorded for it.",
+                    "The StatisticDataSource with name {}, and type {} is not enabled, so no statistics will be " +
+                            "recorded for it.",
                     statisticName,
                     statisticsDataSource.getStatisticType().toString());
             return false;

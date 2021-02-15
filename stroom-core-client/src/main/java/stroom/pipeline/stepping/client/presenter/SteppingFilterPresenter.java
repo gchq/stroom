@@ -41,7 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SteppingFilterPresenter extends
-        MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView, SteppingFilterPresenter.SteppingFilterSettingsProxy>
+        MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView,
+                SteppingFilterPresenter.SteppingFilterSettingsProxy>
         implements SteppingFilterUiHandlers, ShowSteppingFilterSettingsHandler, PopupUiHandlers {
 
     public static final String LIST = "LIST";

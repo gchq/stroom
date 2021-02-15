@@ -20,7 +20,8 @@ public class ServiceDiscoveryConfig extends AbstractConfig {
     private String zookeeperBasePath = "/stroom-services";
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("Set this to true to use Zookeeper for service discovery. Set this to false to use resolve all services locally, i.e. 127.0.0.1")
+    @JsonPropertyDescription("Set this to true to use Zookeeper for service discovery. Set this to false to use " +
+            "resolve all services locally, i.e. 127.0.0.1")
     public boolean isEnabled() {
         return enabled;
     }
@@ -30,7 +31,9 @@ public class ServiceDiscoveryConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath")
+    @JsonPropertyDescription("The Zookeeper quorum connection string, required for service discovery, in the " +
+            "form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the " +
+            "property stroom.serviceDiscovery.zookeeperBasePath")
     public String getZookeeperUrl() {
         return zookeeperUrl;
     }
@@ -40,7 +43,10 @@ public class ServiceDiscoveryConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances.")
+    @JsonPropertyDescription("The external facing address that stroom will register its services with service " +
+            "discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left " +
+            "blank in production to avoid having host specific configuration, unless the hostname is that of a load " +
+            "balancer in front of stroom instances.")
     public String getServicesHostNameOrIpAddress() {
         return servicesHostNameOrIpAddress;
     }
@@ -90,7 +96,9 @@ public class ServiceDiscoveryConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path. Must start with a '/'")
+    @JsonPropertyDescription("The base path to use in zookeeper for Curator service discover. All services " +
+            "registering or querying discoverable services must use the same value for this base path. " +
+            "Must start with a '/'")
     public String getZookeeperBasePath() {
         return zookeeperBasePath;
     }

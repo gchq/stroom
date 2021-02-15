@@ -69,7 +69,8 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 //
 //    private boolean testScroll() {
 //        if (!enabled) {
-//            if (getView().getScrollPanel().getVerticalScrollPosition() >= getView().getScrollPanel().getMaximumVerticalScrollPosition()) {
+//            if (getView().getScrollPanel().getVerticalScrollPosition()
+//            >= getView().getScrollPanel().getMaximumVerticalScrollPosition()) {
 //                EnablePopupEvent.fire(SplashPresenter.this, SplashPresenter.this);
 //                enabled = true;
 //            }

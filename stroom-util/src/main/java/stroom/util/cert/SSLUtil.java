@@ -62,9 +62,12 @@ public class SSLUtil {
 
         // Load the keystore
         if (sslConfig.getKeyStorePath() != null) {
-            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getKeyStorePath()))) {
+            try (final InputStream inputStream = new BufferedInputStream(
+                    new FileInputStream(sslConfig.getKeyStorePath()))) {
+
                 keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
-                LOGGER.info(() -> "Loading keystore " + sslConfig.getKeyStorePath() + " of type " + sslConfig.getKeyStoreType());
+                LOGGER.info(() ->
+                        "Loading keystore " + sslConfig.getKeyStorePath() + " of type " + sslConfig.getKeyStoreType());
                 keyStore.load(inputStream, sslConfig.getKeyStorePassword().toCharArray());
             } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                 throw new RuntimeException(LogUtil.message("Error locating and loading keystore {} with type {}: {}",
@@ -93,9 +96,12 @@ public class SSLUtil {
 
         // Load the truststore
         if (sslConfig.getTrustStorePath() != null) {
-            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getTrustStorePath()))) {
+            try (final InputStream inputStream = new BufferedInputStream(
+                    new FileInputStream(sslConfig.getTrustStorePath()))) {
                 trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
-                LOGGER.info(() -> "Loading truststore " + sslConfig.getTrustStorePath() + " of type " + sslConfig.getTrustStoreType());
+                LOGGER.info(() ->
+                        "Loading truststore " + sslConfig.getTrustStorePath() +
+                                " of type " + sslConfig.getTrustStoreType());
                 trustStore.load(inputStream, sslConfig.getTrustStorePassword().toCharArray());
             } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                 throw new RuntimeException(LogUtil.message("Error locating and loading truststore {} with type {}: {}",

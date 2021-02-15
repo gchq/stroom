@@ -189,7 +189,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         final StatisticsCustomMaskListPresenter thisInstance = this;
 
         ConfirmEvent.fire(this,
-                "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
+                "Are you sure you want to clear the existing roll-ups and generate all possible " +
+                        "permutations for the field list?",
                 result -> {
                     if (result) {
                         final Rest<List<CustomRollUpMask>> rest = restFactory.create();

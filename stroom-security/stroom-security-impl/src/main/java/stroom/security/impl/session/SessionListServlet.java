@@ -87,11 +87,19 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
         table.sort((l1, l2) -> l2.get(0).compareTo(l1.get(0)));
 
-        response.getWriter().write(
-                "<html><head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head><body>");
+        response.getWriter().write("<html>" +
+                "<head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head>" +
+                "<body>");
         response.getWriter().write("<table>");
-        response.getWriter().write(
-                "<thead><tr><th>Last Accessed</th><th>Created</th><th>User Id</th><th>Node</th><th>Agent</th></tr></thead>");
+        response.getWriter().write("<thead>" +
+                "<tr>" +
+                "<th>Last Accessed</th>" +
+                "<th>Created</th>" +
+                "<th>User Id</th>" +
+                "<th>Node</th>" +
+                "<th>Agent</th>" +
+                "</tr>" +
+                "</thead>");
 
         for (final List<String> row : table) {
             response.getWriter().write("<tr>");

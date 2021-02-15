@@ -62,12 +62,14 @@ public class SolrSearchResultCollector implements Store {
         this.coprocessors = coprocessors;
     }
 
-    public static SolrSearchResultCollector create(final Executor executor,
-                                                   final TaskContextFactory taskContextFactory,
-                                                   final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
-                                                   final SolrAsyncSearchTask task,
-                                                   final Set<String> highlights,
-                                                   final Coprocessors coprocessors) {
+    public static SolrSearchResultCollector create(
+            final Executor executor,
+            final TaskContextFactory taskContextFactory,
+            final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
+            final SolrAsyncSearchTask task,
+            final Set<String> highlights,
+            final Coprocessors coprocessors) {
+
         return new SolrSearchResultCollector(executor,
                 taskContextFactory,
                 solrAsyncSearchTaskHandlerProvider,

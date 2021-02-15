@@ -82,7 +82,8 @@ class SolrClusterSearchTaskHandler {
                     try {
                         coprocessors.getErrorConsumer().accept(e);
                     } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                        // If we failed to send the result or the source node rejected the result because the
+                        // source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
                         Thread.currentThread().interrupt();
                     }
@@ -142,7 +143,8 @@ class SolrClusterSearchTaskHandler {
                                 + coprocessor.getValuesCount().get() +
                                 " extractions");
 
-                        final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
+                        final boolean complete = coprocessor.getCompletionState()
+                                .awaitCompletion(1, TimeUnit.SECONDS);
                         if (!complete) {
                             allComplete = false;
                         }

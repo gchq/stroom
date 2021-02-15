@@ -66,7 +66,10 @@ public class StatusPresenter extends MyPresenterWidget<CellTableView<String>> {
 //        final Column<String, SafeHtml> iconColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
 //            @Override
 //            public SafeHtml getValue(final String status) {
-//                return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\"" + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
+//                return SafeHtmlUtils.fromTrustedString(
+//                "<img
+//                style=\"width:16px;height:16px;padding:2px\"
+//                src=\"" + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
 //            }
 //        };
 //        getView().addColumn(iconColumn);

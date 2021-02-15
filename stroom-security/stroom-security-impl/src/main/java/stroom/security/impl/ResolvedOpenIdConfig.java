@@ -85,7 +85,8 @@ public class ResolvedOpenIdConfig {
                         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                         openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
                     } else {
-                        throw new AuthenticationException("Received status " + response.getStatusLine() + " from " + configurationEndpoint);
+                        throw new AuthenticationException("Received status " + response.getStatusLine() +
+                                " from " + configurationEndpoint);
                     }
                 }
             } catch (final IOException e) {

@@ -30,7 +30,8 @@ import javax.xml.XMLConstants;
 /**
  * An XML filter for performing inline schema validation of XML.
  */
-@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
@@ -104,7 +105,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Limits the schemas that can be used to validate data to those with a matching schema group name.",
+            description = "Limits the schemas that can be used to validate data to those with a matching " +
+                    "schema group name.",
             displayPriority = 1)
     public void setSchemaGroup(final String schemaGroup) {
         if (schemaGroup != null && schemaGroup.trim().length() > 0) {
@@ -114,7 +116,9 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching namespace URI.",
+    @PipelineProperty(
+            description = "Limits the schemas that can be used to validate data to those with a matching " +
+                    "namespace URI.",
             displayPriority = 3)
     public void setNamespaceURI(final String namespaceURI) {
         if (namespaceURI != null && namespaceURI.trim().length() > 0) {
@@ -124,7 +128,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching system id.",
+    @PipelineProperty(
+            description = "Limits the schemas that can be used to validate data to those with a matching system id.",
             displayPriority = 2)
     public void setSystemId(final String systemId) {
         if (systemId != null && systemId.trim().length() > 0) {

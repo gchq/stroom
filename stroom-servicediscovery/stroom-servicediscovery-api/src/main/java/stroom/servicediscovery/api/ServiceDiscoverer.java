@@ -12,9 +12,9 @@ import java.util.Optional;
 public interface ServiceDiscoverer extends HasHealthCheck {
 
     /**
-     * Get a {@link ServiceInstance} object for the passed {@link ExternalService} definition. The instance of the service
-     * provider chosen will depend on the strategy defined in {@link ExternalService}. The instance will not be marked
-     * as disabled and will also not be deemed to be 'down' by Curator
+     * Get a {@link ServiceInstance} object for the passed {@link ExternalService} definition. The instance of
+     * the service provider chosen will depend on the strategy defined in {@link ExternalService}. The instance
+     * will not be marked as disabled and will also not be deemed to be 'down' by Curator
      * (see {@link org.apache.curator.x.discovery.details.DownInstanceManager)}
      *
      * @param externalService The definition of the service to get an instance of

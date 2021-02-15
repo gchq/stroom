@@ -106,9 +106,9 @@ public final class StoreCreationTool {
     private static final String INDEXING_PIPELINE_UUID = "fcef1b20-083e-436c-ab95-47a6ce453435";
     private static final String SEARCH_EXTRACTION_PIPELINE_UUID = "3d9d60e9-61c2-4c88-a57b-7bc584dd970e";
 
-    private static final Path EVENT_DATA_PIPELINE = StroomCoreServerTestFileUtil
-            .getFile(
-                    "samples/config/Feeds_and_Translations/Test/Event_Data_For_Junit.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
+    private static final Path EVENT_DATA_PIPELINE = StroomCoreServerTestFileUtil.getFile(
+            "samples/config/Feeds_and_Translations/Test/" +
+                    "Event_Data_For_Junit.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
     private static long effectiveMsOffset = 0;
 
     private final Store store;
@@ -317,12 +317,18 @@ public final class StoreCreationTool {
         }
         // Setup the xslt.
         final DocRef xslt = getXSLT(feedName, xsltLocation);
-        pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender",
-                "feed",
-                new DocRef(null, null, feedName)));
         pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamTypeNames.REFERENCE));
+                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
+        pipelineDoc.getPipelineData()
+                .addProperty(PipelineDataUtil.createProperty(
+                        "storeAppender",
+                        "feed",
+                        new DocRef(null, null, feedName)));
+        pipelineDoc.getPipelineData()
+                .addProperty(PipelineDataUtil.createProperty(
+                        "storeAppender",
+                        "streamType",
+                        StreamTypeNames.REFERENCE));
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -345,8 +351,18 @@ public final class StoreCreationTool {
                              final Path translationXsltLocation,
                              final Path dataLocation,
                              final Set<DocRef> referenceFeeds) throws IOException {
-        addEventData(feedName, translationTextConverterType, translationTextConverterLocation,
-                translationXsltLocation, null, null, null, null, dataLocation, null, referenceFeeds);
+        addEventData(
+                feedName,
+                translationTextConverterType,
+                translationTextConverterLocation,
+                translationXsltLocation,
+                null,
+                null,
+                null,
+                null,
+                dataLocation,
+                null,
+                referenceFeeds);
     }
 
     /**
@@ -396,7 +412,9 @@ public final class StoreCreationTool {
 
                 if (contextLocation != null) {
                     try (final InputStream inputStream = Files.newInputStream(contextLocation);
-                            final SegmentOutputStream outputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                            final SegmentOutputStream outputStream = outputStreamProvider.get(
+                                    StreamTypeNames.CONTEXT)) {
+
                         StreamUtil.streamToStream(inputStream, outputStream);
                     }
                 }
@@ -445,8 +463,12 @@ public final class StoreCreationTool {
         if (referenceFeeds != null && referenceFeeds.size() > 0) {
             final DocRef referenceLoaderPipeline = getReferenceLoaderPipeline();
             for (final DocRef refFeed : referenceFeeds) {
-                pipelineReferences.add(PipelineDataUtil.createReference("translationFilter", "pipelineReference",
-                        referenceLoaderPipeline, refFeed, StreamTypeNames.REFERENCE));
+                pipelineReferences.add(PipelineDataUtil.createReference(
+                        "translationFilter",
+                        "pipelineReference",
+                        referenceLoaderPipeline,
+                        refFeed,
+                        StreamTypeNames.REFERENCE));
             }
         }
 
@@ -496,7 +518,10 @@ public final class StoreCreationTool {
         }
         if (contextXSLT != null) {
             pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", contextXSLT));
+                    .addProperty(PipelineDataUtil.createProperty(
+                            "translationFilter",
+                            "xslt",
+                            contextXSLT));
         }
 
         pipelineStore.writeDocument(pipelineDoc);
@@ -547,7 +572,10 @@ public final class StoreCreationTool {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", translationXSLT));
+            pipelineData.addProperty(PipelineDataUtil.createProperty(
+                    "translationFilter",
+                    "xslt",
+                    translationXSLT));
         }
         if (pipelineReferences != null) {
             for (final PipelineReference pipelineReference : pipelineReferences) {
@@ -558,7 +586,10 @@ public final class StoreCreationTool {
             // final ElementType elementType = new ElementType("XSLTFilter");
             // final PropertyType propertyType = new PropertyType(elementType,
             // "xslt", "XSLT", false);
-            pipelineData.addProperty(PipelineDataUtil.createProperty("flattenFilter", "xslt", flatteningXSLT));
+            pipelineData.addProperty(PipelineDataUtil.createProperty(
+                    "flattenFilter",
+                    "xslt",
+                    flatteningXSLT));
         } else {
             pipelineData.removeLink(PipelineDataUtil.createLink("writeRecordCountFilter", "flattenFilter"));
         }
@@ -636,8 +667,10 @@ public final class StoreCreationTool {
                                     final TextConverterType textConverterType,
                                     final Path textConverterLocation) {
         // Try to find an existing one first.
-        final List<DocRef> refs = textConverterStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(
-                Collectors.toList());
+        final List<DocRef> refs = textConverterStore.list().stream()
+                .filter(docRef ->
+                        name.equals(docRef.getName()))
+                .collect(Collectors.toList());
         if (refs != null && refs.size() > 0) {
             return refs.get(0);
         }
@@ -646,7 +679,9 @@ public final class StoreCreationTool {
         String data = null;
         if (textConverterLocation != null) {
             data = StreamUtil.fileToString(textConverterLocation);
-            assertThat(data).as("Did not find " + FileUtil.getCanonicalPath(textConverterLocation)).isNotNull();
+            assertThat(data)
+                    .as("Did not find " + FileUtil.getCanonicalPath(textConverterLocation))
+                    .isNotNull();
         }
 
         // Create a new text converter entity.
@@ -666,8 +701,10 @@ public final class StoreCreationTool {
 
     private DocRef getXSLT(final String name, final Path xsltLocation) {
         // Try to find an existing one first.
-        final List<DocRef> refs = xsltStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(
-                Collectors.toList());
+        final List<DocRef> refs = xsltStore.list().stream()
+                .filter(docRef ->
+                        name.equals(docRef.getName()))
+                .collect(Collectors.toList());
         if (refs != null && refs.size() > 0) {
             return refs.get(0);
         }
@@ -676,7 +713,9 @@ public final class StoreCreationTool {
         String data = null;
         if (xsltLocation != null) {
             data = StreamUtil.fileToString(xsltLocation);
-            assertThat(data).as("Did not find " + xsltLocation).isNotNull();
+            assertThat(data)
+                    .as("Did not find " + xsltLocation)
+                    .isNotNull();
         }
 
         // Create the new XSLT entity.
@@ -820,7 +859,10 @@ public final class StoreCreationTool {
         indexFields.add(IndexField.createField("Command"));
         indexFields.add(IndexField.createField("Command (Keyword)", AnalyzerType.KEYWORD, true));
         indexFields.add(IndexField.createField("Description"));
-        indexFields.add(IndexField.createField("Description (Case Sensitive)", AnalyzerType.ALPHA_NUMERIC, true));
+        indexFields.add(IndexField.createField(
+                "Description (Case Sensitive)",
+                AnalyzerType.ALPHA_NUMERIC,
+                true));
         indexFields.add(IndexField.createField("Text", AnalyzerType.ALPHA_NUMERIC));
         return indexFields;
     }

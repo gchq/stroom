@@ -180,7 +180,9 @@ public class SolrSearchTaskHandler {
                     throw new SolrServerException("docListInfo is null");
                 }
 //                else if (docListInfo.getNumFound() != task.getTracker().getDocumentCount()) {
-//                    throw new SolrServerException("Unexpected hit count - numFound=" + docListInfo.getNumFound() + " hitCount=" + task.getTracker().getHitCount());
+//                    throw new SolrServerException(
+//                    "Unexpected hit count - numFound=" + docListInfo.getNumFound() +
+//                    " hitCount=" + task.getTracker().getHitCount());
 //                }
 
             } catch (final SolrServerException | IOException | RuntimeException e) {

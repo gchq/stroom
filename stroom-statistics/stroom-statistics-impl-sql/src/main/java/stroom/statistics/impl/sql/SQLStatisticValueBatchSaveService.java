@@ -163,9 +163,9 @@ class SQLStatisticValueBatchSaveService {
                         savedCount++;
                     } catch (final RuntimeException e) {
                         // log the error and carry on with the rest
-                        LOGGER.error(
-                                "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "
-                                        + "typePrimValue: [{}], type: [{}], value: [{}], count: [{}]",
+                        LOGGER.error("Error while tyring to insert a SQL statistic record.  SQL: [{}], " +
+                                        "createMs: [{}], name: [{}], typePrimValue: [{}], type: [{}], " +
+                                        "value: [{}], count: [{}]",
                                 SAVE_CALL,
                                 item.getCreateMs(),
                                 item.getName(),

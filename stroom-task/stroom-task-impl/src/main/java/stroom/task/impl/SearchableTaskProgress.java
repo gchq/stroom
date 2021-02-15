@@ -86,7 +86,9 @@ class SearchableTaskProgress implements Searchable {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
-            final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(TaskManagerFields.getFieldMap());
+            final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(
+                    TaskManagerFields.getFieldMap());
+
             nodeResponses.values()
                     .stream()
                     .map(ResultPage::getValues)

@@ -84,7 +84,9 @@ public class SearchResponseMapper {
 //            final List<Row> rows = tableResult.getRows();
 //            stroom.query.api.v2.OffsetRange resultRange = tableResult.getResultRange();
 //
-//            return new TableResult(tableResult.getComponentId(), fields, rows, resultRange, tableResult.getTotalResults(), tableResult.getError());
+//            return new TableResult(
+//            tableResult.getComponentId(), fields, rows,
+//            resultRange, tableResult.getTotalResults(), tableResult.getError());
         } else if (result instanceof FlatResult) {
             final FlatResult visResult = (FlatResult) result;
             return mapVisResult(visResult);
@@ -216,7 +218,8 @@ public class SearchResponseMapper {
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous,
+        // i.e. for abstract classes
 //        mapper.enableDefaultTyping();
         return mapper;
     }
@@ -315,7 +318,8 @@ public class SearchResponseMapper {
         return m1 + m2;
     }
 
-//    private Map<Object, Store> mapNodes(final Node[] nodes, final Field[][] structure, final int depth, final String[] types) {
+//    private Map<Object, Store> mapNodes(
+//    final Node[] nodes, final Field[][] structure, final int depth, final String[] types) {
 //        if (nodes == null) {
 //            return null;
 //        }
@@ -361,7 +365,8 @@ public class SearchResponseMapper {
 //        return map;
 //    }
 //
-//    private Object mapNode(final Map<String, Object> node, String keyType, final Field[] structure, final int depth, final String[] types) {
+//    private Object mapNode(
+//    final Map<String, Object> node, String keyType, final Field[] structure, final int depth, final String[] types) {
 //        Object key = node.get("key");
 //        Object values = node.get("values");
 //        Object min = node.get("min");
@@ -396,7 +401,8 @@ public class SearchResponseMapper {
 //        return store;
 //    }
 //
-//    private Object[] mapValues(final Object[][] values, final Field[] structure, final int depth, final String[] types) {
+//    private Object[] mapValues(
+//    final Object[][] values, final Field[] structure, final int depth, final String[] types) {
 //        if (values == null) {
 //            return null;
 //        }

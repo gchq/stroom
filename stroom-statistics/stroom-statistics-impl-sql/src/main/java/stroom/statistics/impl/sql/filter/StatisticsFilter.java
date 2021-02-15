@@ -207,7 +207,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
                         currentTagName = attValue;
                         if (!statisticStoreEntity.isValidField(currentTagName)) {
                             throw new RuntimeException(String.format(
-                                    "Statistic record contains a tag name [%s] that is not valid for this statistic data source [%s]",
+                                    "Statistic record contains a tag name [%s] that is not valid for this " +
+                                            "statistic data source [%s]",
                                     currentTagName,
                                     statisticStoreEntity.getName()));
                         }
@@ -311,7 +312,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
                 if (currentTagToValueMap.size() != statisticStoreEntity.getFieldNames().size()) {
                     throw new RuntimeException(String.format(
-                            "Number of tags in the data source [%s] does not agree with the number in the record passed to the filter [%s]",
+                            "Number of tags in the data source [%s] does not agree with the number in the record " +
+                                    "passed to the filter [%s]",
                             statisticStoreEntity.getFieldNames().size(),
                             currentTagToValueMap.size()));
                 }

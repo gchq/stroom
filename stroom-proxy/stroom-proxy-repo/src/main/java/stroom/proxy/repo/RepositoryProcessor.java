@@ -187,7 +187,8 @@ public final class RepositoryProcessor {
                                     return FileVisitResult.TERMINATE;
                                 }
 
-                                // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
+                                // Process only raw zip repo files, i.e. files that have not already been created
+                                // by the fragmenting process.
                                 final String fileName = file.getFileName().toString();
                                 if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
                                         !PartsPathUtil.isPart(file)) {
@@ -249,7 +250,8 @@ public final class RepositoryProcessor {
                                 if (PartsPathUtil.isPartsDir(dir)) {
                                     final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
 
-                                    // Make sure the parts directory that this file is in is not a partially fragmented output directory.
+                                    // Make sure the parts directory that this file is in is not a partially
+                                    // fragmented output directory.
                                     if (Files.exists(originalZipFile)) {
                                         return FileVisitResult.SKIP_SUBTREE;
                                     }
@@ -265,7 +267,8 @@ public final class RepositoryProcessor {
                                     return FileVisitResult.TERMINATE;
                                 }
 
-                                // Process only part files, i.e. files that have been created by the fragmenting process.
+                                // Process only part files, i.e. files that have been created by the fragmenting
+                                // process.
                                 if (PartsPathUtil.isPart(file)) {
                                     fileProcessor.process(file, attrs);
                                 }
@@ -346,10 +349,12 @@ public final class RepositoryProcessor {
 
                 FileSet fileSet = fileSetMap.computeIfAbsent(key, FileSet::new);
 
+
+                final long uncompressedSize = fileSet.getTotalUncompressedFileSize() + zipInfo.getUncompressedSize();
+                final long entryCount = fileSet.getTotalZipEntryCount() + zipInfo.getZipEntryCount();
                 // See if the file set will overflow if we add this file.
                 if (fileSet.getFiles().size() > 0 &&
-                        (fileSet.getTotalUncompressedFileSize() + zipInfo.getUncompressedSize() > maxUncompressedFileSize ||
-                                fileSet.getTotalZipEntryCount() + zipInfo.getZipEntryCount() > maxFilesPerAggregate)) {
+                        (uncompressedSize > maxUncompressedFileSize || entryCount > maxFilesPerAggregate)) {
 
                     // Send the file set for processing.
                     processFileSet(fileSet);
@@ -371,7 +376,8 @@ public final class RepositoryProcessor {
 
                 } else {
 
-                    // If we have reached the maximum number of concurrent mapped files then we need to send the largest set for processing.
+                    // If we have reached the maximum number of concurrent mapped files then we need to send the
+                    // largest set for processing.
                     if (totalMappedFiles >= maxConcurrentMappedFiles) {
                         final List<FileSet> sortedList = fileSetMap
                                 .values()
@@ -451,14 +457,17 @@ public final class RepositoryProcessor {
 
         public void process(final Path file) {
             try {
-                final Runnable runnable = taskContextFactory.context(parentContext, "Fragment", taskContext -> {
-                    // Process the file to extract ZipInfo
-                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
+                final Runnable runnable = taskContextFactory.context(
+                        parentContext,
+                        "Fragment",
+                        taskContext -> {
+                            // Process the file to extract ZipInfo
+                            taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-                    if (!Thread.currentThread().isInterrupted()) {
-                        zipFragmenter.fragment(file);
-                    }
-                });
+                            if (!Thread.currentThread().isInterrupted()) {
+                                zipFragmenter.fragment(file);
+                            }
+                        });
 
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
@@ -508,20 +517,23 @@ public final class RepositoryProcessor {
 
         public void process(final Path file, final BasicFileAttributes attrs) {
             try {
-                final Runnable runnable = taskContextFactory.context(parentContext, "Extract Zip Info", taskContext -> {
-                    // Process the file to extract ZipInfo
-                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
+                final Runnable runnable = taskContextFactory.context(
+                        parentContext,
+                        "Extract Zip Info",
+                        taskContext -> {
+                            // Process the file to extract ZipInfo
+                            taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-                    if (!Thread.currentThread().isInterrupted()) {
-                        final ZipInfo zipInfo = zipInfoExtractor.extract(file, attrs);
-                        if (zipInfo != null) {
-                            if (LOGGER.isTraceEnabled()) {
-                                LOGGER.trace("Consume: " + zipInfo);
+                            if (!Thread.currentThread().isInterrupted()) {
+                                final ZipInfo zipInfo = zipInfoExtractor.extract(file, attrs);
+                                if (zipInfo != null) {
+                                    if (LOGGER.isTraceEnabled()) {
+                                        LOGGER.trace("Consume: " + zipInfo);
+                                    }
+                                    processZipInfo(zipInfo);
+                                }
                             }
-                            processZipInfo(zipInfo);
-                        }
-                    }
-                });
+                        });
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
                 futures.add(completableFuture);

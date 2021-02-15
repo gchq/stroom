@@ -272,7 +272,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                         entity.getName()));
             }
 
-            final Predicate<StatisticEvent> insideProcessingThresholdPredicate = getInsideProcessingThresholdPredicate();
+            final Predicate<StatisticEvent> insideProcessingThresholdPredicate =
+                    getInsideProcessingThresholdPredicate();
 
             try {
                 final SQLStatisticAggregateMap statisticAggregateMap = objectPool.borrowObject();

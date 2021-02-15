@@ -31,8 +31,8 @@ public class SourceConfig extends AbstractConfig {
     @Min(0)
     @JsonProperty
     @JsonPropertyDescription("When displaying multi-line data in the Data Preview or Source views, the viewer will " +
-            "attempt to always show complete lines. It will go past the requested range by up to this many characters " +
-            "in order to complete the line.")
+            "attempt to always show complete lines. It will go past the requested range by up to this many " +
+            "characters in order to complete the line.")
     private long maxCharactersToCompleteLine;
 
     public SourceConfig() {

@@ -30,7 +30,8 @@ public class RequestLoggingConfig extends AbstractConfig {
     private boolean globalLoggingEnabled = false;
 
     @JsonProperty("globalLoggingEnabled")
-    @JsonPropertyDescription("Log additional RESTful service calls. N.B. This will result in some events being recorded twice.")
+    @JsonPropertyDescription("Log additional RESTful service calls. N.B. This will result in some events being " +
+            "recorded twice.")
     public boolean isGlobalLoggingEnabled() {
         return globalLoggingEnabled;
     }

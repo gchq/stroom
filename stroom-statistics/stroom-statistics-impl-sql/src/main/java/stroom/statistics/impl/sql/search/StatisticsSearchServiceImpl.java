@@ -489,7 +489,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         /**
          * Function for extracting values from a {@link ResultSet} and placing them into the passed String[]
          *
-         * @param resultSet       The {@link ResultSet} instance to extract data from. It is assumed the {@link ResultSet}
+         * @param resultSet       The {@link ResultSet} instance to extract data from. It is assumed
+         *                        the {@link ResultSet}
          *                        has already been positioned at the desired row. next() should not be called on the
          *                        resultSet.
          * @param data            The data array to populate

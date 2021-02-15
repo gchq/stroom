@@ -70,8 +70,9 @@ public class SQLStatisticAggregationTransactionHelper {
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+            SQLStatisticAggregationTransactionHelper.class);
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
 
     private static final String AGGREGATE_COUNT = "" +
@@ -271,7 +272,8 @@ public class SQLStatisticAggregationTransactionHelper {
         if (maxProcessingAge != null) {
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
-            final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNow.minus(maxProcessingAge.getDuration()));
+            final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(
+                    timeNow.minus(maxProcessingAge.getDuration()));
             try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
                 final long rowsAffected = doAggregateSQL_Update(
                         connection,

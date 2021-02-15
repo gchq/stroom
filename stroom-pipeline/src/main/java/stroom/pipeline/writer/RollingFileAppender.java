@@ -164,7 +164,9 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
     }
 
-    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+    @PipelineProperty(
+            description = "One or more destination paths for output files separated with commas. " +
+                    "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
@@ -195,7 +197,9 @@ public class RollingFileAppender extends AbstractRollingAppender {
         super.setSchedule(expression);
     }
 
-    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.",
+    @PipelineProperty(
+            description = "When the current output file exceeds this size it will be closed and a new one " +
+                    "created, e.g. 10M, 1G.",
             defaultValue = "100M",
             displayPriority = 6)
     public void setRollSize(final String rollSize) {

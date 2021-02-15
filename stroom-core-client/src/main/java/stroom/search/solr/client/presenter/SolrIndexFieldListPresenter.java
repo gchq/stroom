@@ -240,7 +240,9 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     private void onEdit() {
         final SolrIndexField existingField = dataGridView.getSelectionModel().getSelected();
         if (existingField != null) {
-            final Set<String> otherNames = fields.stream().map(SolrIndexField::getFieldName).collect(Collectors.toSet());
+            final Set<String> otherNames = fields.stream()
+                    .map(SolrIndexField::getFieldName)
+                    .collect(Collectors.toSet());
             otherNames.remove(existingField.getFieldName());
 
             fetchFieldTypes(fieldTypes -> {

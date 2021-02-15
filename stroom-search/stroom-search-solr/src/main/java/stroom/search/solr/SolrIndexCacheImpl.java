@@ -35,7 +35,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
+@EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {
+        EntityAction.CREATE,
+        EntityAction.DELETE,
+        EntityAction.UPDATE})
 class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearable {
 
     private static final String CACHE_NAME = "Solr Index Cache";
@@ -67,8 +70,8 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
             throw new SolrIndexException("No index fields have been set for: " + docRef);
         }
 
-        final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName,
-                Function.identity()));
+        final Map<String, SolrIndexField> fieldMap = fields.stream()
+                .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
         return new CachedSolrIndex(loaded, fields, fieldMap);
     }
 

@@ -174,8 +174,8 @@ public class ResultPage<T> implements Serializable {
                     // get to process more that 1 + that limit. If this fails it
                     // will be a coding error
                     // or not applying the limit.
-                    throw new IllegalStateException(
-                            "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
+                    throw new IllegalStateException("For some reason we returned more rows that we were limited to. " +
+                            "Did you apply the restriction criteria?");
                 }
 
                 // All our queries are + 1 to we need to remove the last element

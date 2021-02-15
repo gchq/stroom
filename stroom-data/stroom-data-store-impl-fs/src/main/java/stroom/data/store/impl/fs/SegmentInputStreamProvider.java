@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 public class SegmentInputStreamProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SegmentInputStreamProvider.class);
 
     private final InternalSource source;
@@ -64,7 +65,8 @@ public class SegmentInputStreamProvider {
                 return new SingleSegmentInputStreamImpl(segmentInputStream, size);
             }
 
-            final SegmentInputStream inputStream = new RASegmentInputStream(getData(), segmentIndex, entryByteOffsetStart, entryByteOffsetEnd);
+            final SegmentInputStream inputStream = new RASegmentInputStream(
+                    getData(), segmentIndex, entryByteOffsetStart, entryByteOffsetEnd);
 
             return new WrappedSegmentInputStream(inputStream) {
                 @Override

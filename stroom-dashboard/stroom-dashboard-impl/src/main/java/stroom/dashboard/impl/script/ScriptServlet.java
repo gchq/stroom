@@ -56,7 +56,8 @@ class ScriptServlet extends HttpServlet implements IsServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+        // Elevate the users permissions for the duration of this task so they can read the script if
+        // they have 'use' permission.
         securityContext.useAsRead(() -> {
             try {
                 response.setContentType("text/javascript");

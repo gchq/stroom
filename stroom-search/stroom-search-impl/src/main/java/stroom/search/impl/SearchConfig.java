@@ -39,7 +39,8 @@ public class SearchConfig extends AbstractConfig {
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
-    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
+    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }

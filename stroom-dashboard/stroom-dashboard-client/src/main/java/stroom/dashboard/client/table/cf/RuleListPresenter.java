@@ -54,58 +54,69 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
      */
     private void initTableColumns() {
         // Expression.
-        final Column<ConditionalFormattingRule, String> expressionColumn = new Column<ConditionalFormattingRule, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ConditionalFormattingRule row) {
-                return row.getExpression().toString();
-            }
-        };
+        final Column<ConditionalFormattingRule, String> expressionColumn =
+                new Column<ConditionalFormattingRule, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final ConditionalFormattingRule row) {
+                        return row.getExpression().toString();
+                    }
+                };
         getView().addResizableColumn(expressionColumn, "Expression", 200);
 
         // Background colour.
-        final Column<ConditionalFormattingRule, String> backgroundColumn = new Column<ConditionalFormattingRule, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final ConditionalFormattingRule row) {
-                return row.getBackgroundColor();
-            }
-        };
+        final Column<ConditionalFormattingRule, String> backgroundColumn =
+                new Column<ConditionalFormattingRule, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final ConditionalFormattingRule row) {
+                        return row.getBackgroundColor();
+                    }
+                };
         getView().addResizableColumn(backgroundColumn, "Background", ColumnSizeConstants.MEDIUM_COL);
 
         // Text colour.
-        final Column<ConditionalFormattingRule, String> textColumn = new Column<ConditionalFormattingRule, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConditionalFormattingRule row) {
-                return row.getTextColor();
-            }
-        };
+        final Column<ConditionalFormattingRule, String> textColumn =
+                new Column<ConditionalFormattingRule, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final ConditionalFormattingRule row) {
+                        return row.getTextColor();
+                    }
+                };
         getView().addResizableColumn(textColumn, "Text", ColumnSizeConstants.MEDIUM_COL);
 
         // Hide.
-        final Column<ConditionalFormattingRule, TickBoxState> hideColumn = new Column<ConditionalFormattingRule, TickBoxState>(
-                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
-            @Override
-            public TickBoxState getValue(final ConditionalFormattingRule row) {
-                if (row == null) {
-                    return null;
-                }
-                return TickBoxState.fromBoolean(row.isHide());
-            }
-        };
+        final Column<ConditionalFormattingRule, TickBoxState> hideColumn =
+                new Column<ConditionalFormattingRule, TickBoxState>(
+                        TickBoxCell.create(
+                                new TickBoxCell.NoBorderAppearance(),
+                                false,
+                                false,
+                                false)) {
+                    @Override
+                    public TickBoxState getValue(final ConditionalFormattingRule row) {
+                        if (row == null) {
+                            return null;
+                        }
+                        return TickBoxState.fromBoolean(row.isHide());
+                    }
+                };
         getView().addColumn(hideColumn, "Hide", 50);
 
         // Enabled.
-        final Column<ConditionalFormattingRule, TickBoxState> enabledColumn = new Column<ConditionalFormattingRule, TickBoxState>(
-                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
-            @Override
-            public TickBoxState getValue(final ConditionalFormattingRule row) {
-                if (row == null) {
-                    return null;
-                }
-                return TickBoxState.fromBoolean(row.isEnabled());
-            }
-        };
+        final Column<ConditionalFormattingRule, TickBoxState> enabledColumn =
+                new Column<ConditionalFormattingRule, TickBoxState>(
+                        TickBoxCell.create(
+                                new TickBoxCell.NoBorderAppearance(),
+                                false,
+                                false,
+                                false)) {
+                    @Override
+                    public TickBoxState getValue(final ConditionalFormattingRule row) {
+                        if (row == null) {
+                            return null;
+                        }
+                        return TickBoxState.fromBoolean(row.isEnabled());
+                    }
+                };
         getView().addColumn(enabledColumn, "Enabled", 50);
 
         getView().addEndColumn(new EndColumn<>());

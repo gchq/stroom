@@ -96,9 +96,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                                     .filter(docRef -> k.equals(docRef.getName()))
                                     .collect(Collectors.toList());
                             if (results.size() > 1) {
-                                throw new RuntimeException(String.format(
-                                        "Found multiple StatisticDataSource entities with name %s. This should not happen",
-                                        k));
+                                throw new RuntimeException(String.format("Found multiple StatisticDataSource " +
+                                        "entities with name %s. This should not happen", k));
                             } else if (results.size() == 1) {
                                 return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
                             } else {

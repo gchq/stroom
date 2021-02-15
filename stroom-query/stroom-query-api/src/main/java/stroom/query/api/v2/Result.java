@@ -44,7 +44,8 @@ public abstract class Result {
 
     //TODO add an example value
     @ApiModelProperty(
-            value = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
+            value = "The ID of the component that this result set was requested for. See ResultRequest in " +
+                    "SearchRequest",
             required = true)
     @JsonProperty
     private final String componentId;
@@ -117,7 +118,8 @@ public abstract class Result {
         }
 
         /**
-         * @param value The ID of the component that this result set was requested for. See ResultRequest in SearchRequest
+         * @param value The ID of the component that this result set was requested for. See ResultRequest in
+         *              SearchRequest
          * @return The {@link Builder}, enabling method chaining
          */
         public T_CHILD_CLASS componentId(final String componentId) {

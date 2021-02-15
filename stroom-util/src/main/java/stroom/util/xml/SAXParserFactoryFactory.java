@@ -35,7 +35,8 @@ public final class SAXParserFactoryFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
-    private static final String DEFAULT_SAX_PARSER_FACTORY = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
+    private static final String DEFAULT_SAX_PARSER_FACTORY =
+            "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
     private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
     private static final String END = "\".";
     private static final String SYSPROP_SAX_PARSER_FACTORY = "javax.xml.parsers.SAXParserFactory";

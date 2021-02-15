@@ -41,15 +41,15 @@ package stroom.dashboard.expression.v1;
                                         argType = ValLong.class),
                                 @FunctionArg(
                                         name = Stepping.ARG_PART_NO,
-                                        description = "The part number to begin the stepping in (one based). The part " +
-                                                "number is only applicable for non-segmented streams (i.e uncooked streams). " +
-                                                "If a stream is segmented or is not multi-part then the part number will " +
-                                                "be 1.",
+                                        description = "The part number to begin the stepping in (one based). The " +
+                                                "part number is only applicable for non-segmented streams (i.e " +
+                                                "uncooked streams). If a stream is segmented or is not multi-part " +
+                                                "then the part number will be 1.",
                                         argType = ValLong.class)
                         }),
                 @FunctionSignature(
-                        description = "Produces a hyperlink for opening a stepping tab for the requested stream, part " +
-                                "number and record number.",
+                        description = "Produces a hyperlink for opening a stepping tab for the requested stream, " +
+                                "part number and record number.",
                         args = {
                                 @FunctionArg(
                                         name = Stepping.ARG_ID,
@@ -57,16 +57,16 @@ package stroom.dashboard.expression.v1;
                                         argType = ValLong.class),
                                 @FunctionArg(
                                         name = Stepping.ARG_PART_NO,
-                                        description = "The part number to begin the stepping in (one based). The part " +
-                                                "number is only applicable for non-segmented streams (i.e uncooked streams). " +
-                                                "If a stream is segmented or is not multi-part then the part number will " +
-                                                "be 1.",
+                                        description = "The part number to begin the stepping in (one based). The " +
+                                                "part number is only applicable for non-segmented streams (i.e " +
+                                                "uncooked streams). If a stream is segmented or is not multi-part " +
+                                                "then the part number will be 1.",
                                         argType = ValLong.class),
                                 @FunctionArg(
                                         name = Stepping.ARG_RECORD_NO,
-                                        description = "The record number to begin the stepping at (one based). The record " +
-                                                "number is only applicable for segmented streams (i.e. cooked streams). " +
-                                                "Its value will be ignored for non-segmented streams.",
+                                        description = "The record number to begin the stepping at (one based). The " +
+                                                "record number is only applicable for segmented streams (i.e. " +
+                                                "cooked streams). Its value will be ignored for non-segmented streams.",
                                         argType = ValLong.class)
                         })
         })

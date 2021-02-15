@@ -79,7 +79,8 @@ public class PasswordPolicyConfig extends AbstractConfig {
     @JsonCreator
     public PasswordPolicyConfig(
             @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets,
-            @JsonProperty("neverUsedAccountDeactivationThreshold") final StroomDuration neverUsedAccountDeactivationThreshold,
+            @JsonProperty("neverUsedAccountDeactivationThreshold") final
+            StroomDuration neverUsedAccountDeactivationThreshold,
             @JsonProperty("unusedAccountDeactivationThreshold") final StroomDuration unusedAccountDeactivationThreshold,
             @JsonProperty("mandatoryPasswordChangeDuration") final StroomDuration mandatoryPasswordChangeDuration,
             @JsonProperty("forcePasswordChangeOnFirstLogin") final Boolean forcePasswordChangeOnFirstLogin,

@@ -99,7 +99,8 @@ public class RollingDestinations {
      *
      * @param key         The key that this destination is associated with.
      * @param destination The destination to lock and attempt to roll.
-     * @return The destination if it didn't need rolling and can be used, null otherwise. The returned destination is locked for exclusive use by the current thread.
+     * @return The destination if it didn't need rolling and can be used, null otherwise. The returned
+     * destination is locked for exclusive use by the current thread.
      * @throws IOException Could be thrown while attempting to flush or close the destination on roll.
      */
     private RollingDestination lockAndRoll(final Object key, final RollingDestination destination) throws IOException {

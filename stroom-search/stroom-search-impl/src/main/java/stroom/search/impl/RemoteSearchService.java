@@ -75,7 +75,8 @@ public class RemoteSearchService {
                     final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(),
                             taskContext -> {
                                 taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
-                                final ClusterSearchTaskHandler clusterSearchTaskHandler = clusterSearchTaskHandlerProvider.get();
+                                final ClusterSearchTaskHandler clusterSearchTaskHandler =
+                                        clusterSearchTaskHandlerProvider.get();
                                 clusterSearchTaskHandler.exec(taskContext,
                                         clusterSearchTask,
                                         coprocessors,

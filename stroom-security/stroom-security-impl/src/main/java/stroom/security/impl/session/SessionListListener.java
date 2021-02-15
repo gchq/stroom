@@ -168,14 +168,15 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                             return CompletableFuture
                                     .supplyAsync(listSessionsOnNodeTask)
                                     .exceptionally(throwable -> {
-                                        LOGGER.error(
-                                                "Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
+                                        LOGGER.error("Error getting session list for node [{}]: {}. " +
+                                                        "Enable DEBUG for stacktrace",
                                                 nodeName,
                                                 throwable.getMessage());
                                         LOGGER.debug("Error getting session list for node [{}]",
                                                 nodeName, throwable);
                                         // TODO do we want to silently ignore nodes that error?
-                                        // If we can't talk to one node we still want to see the results from the other nodes
+                                        // If we can't talk to one node we still want to see the results from the
+                                        // other nodes
                                         return SessionListResponse.empty();
                                     });
                         })

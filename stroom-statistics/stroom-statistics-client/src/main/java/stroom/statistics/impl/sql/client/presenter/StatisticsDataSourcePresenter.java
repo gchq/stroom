@@ -41,11 +41,14 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     private final TabContentProvider<StatisticStoreDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
-    public StatisticsDataSourcePresenter(final EventBus eventBus, final LinkTabPanelView view,
-                                         final Provider<StatisticsDataSourceSettingsPresenter> statisticsDataSourceSettingsPresenter,
-                                         final Provider<StatisticsFieldListPresenter> statisticsFieldListPresenter,
-                                         final Provider<StatisticsCustomMaskListPresenter> statisticsCustomMaskListPresenter,
-                                         final ClientSecurityContext securityContext) {
+    public StatisticsDataSourcePresenter(
+            final EventBus eventBus,
+            final LinkTabPanelView view,
+            final Provider<StatisticsDataSourceSettingsPresenter> statisticsDataSourceSettingsPresenter,
+            final Provider<StatisticsFieldListPresenter> statisticsFieldListPresenter,
+            final Provider<StatisticsCustomMaskListPresenter> statisticsCustomMaskListPresenter,
+            final ClientSecurityContext securityContext) {
+
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {

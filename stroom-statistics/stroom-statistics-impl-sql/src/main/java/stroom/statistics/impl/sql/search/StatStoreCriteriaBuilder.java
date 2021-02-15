@@ -84,8 +84,8 @@ public class StatStoreCriteriaBuilder {
                         }
                     } else if (expressionItem instanceof ExpressionOperator) {
                         if (((ExpressionOperator) expressionItem).op() == null) {
-                            throw new BadRequestException(
-                                    "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
+                            throw new BadRequestException("An operator in the query is missing a type, it should " +
+                                    "be one of " + ExpressionOperator.Op.values());
                         }
                     }
                 }
@@ -134,9 +134,9 @@ public class StatStoreCriteriaBuilder {
                         "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
             } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
                 if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
-                    throw new BadRequestException(String.format(
-                            "The query contains a combination of rolled up fields %s that is not in the list of custom roll-ups for the statistic data source",
-                            rolledUpFieldNames));
+                    throw new BadRequestException(String.format("The query contains a combination of rolled up " +
+                            "fields %s that is not in the list of custom roll-ups for the statistic data " +
+                            "source", rolledUpFieldNames));
                 }
             }
         }

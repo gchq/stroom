@@ -180,7 +180,8 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then test for `Use` instead of `Read`.
+        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
+        // test for `Use` instead of `Read`.
         String perm = permission;
         if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
             perm = DocumentPermissionNames.USE;

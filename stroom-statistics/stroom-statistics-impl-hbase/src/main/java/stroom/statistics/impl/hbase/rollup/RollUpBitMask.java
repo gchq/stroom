@@ -210,8 +210,8 @@ public class RollUpBitMask {
             rollUpBitMask = positionListToObjectMap.get(tagPositions);
 
             if (rollUpBitMask == null) {
-                throw new RuntimeException(String.format(
-                        "Position lists have not been loaded into the cache for a position list [%s] of size %s.  This should never happen",
+                throw new RuntimeException(String.format("Position lists have not been loaded into the cache for " +
+                                "a position list [%s] of size %s. This should never happen",
                         tagPositions.toString(),
                         tagPositions.size()));
             }
@@ -550,7 +550,8 @@ public class RollUpBitMask {
      */
     @Override
     public String toString() {
-        return String.format("%" + MASK_LENGTH + "s", Integer.toBinaryString(this.mask)).replace(' ', '0');
+        return String.format("%" + MASK_LENGTH + "s", Integer.toBinaryString(this.mask))
+                .replace(' ', '0');
     }
 
     @Override

@@ -83,7 +83,8 @@ class SolrIndexResourceImpl implements SolrIndexResource {
         try {
             final SolrClient solrClient = new SolrClientFactory().create(
                     solrIndexDoc.getSolrConnectionConfig());
-//            final SolrPingResponse response = new SolrPing().process(solrClient, action.getSolrIndex().getCollection());
+//            final SolrPingResponse response = new SolrPing()
+//            .process(solrClient, action.getSolrIndex().getCollection());
             final SolrPingResponse response = solrClient.ping();
 
             final StringBuilder sb = new StringBuilder();

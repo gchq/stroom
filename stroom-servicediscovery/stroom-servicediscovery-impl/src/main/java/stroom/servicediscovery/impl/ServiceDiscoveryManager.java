@@ -45,8 +45,8 @@ public class ServiceDiscoveryManager {
         boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
 
         if (isServiceDiscoveryEnabled) {
-            //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
-            //creation and application startup, then start ServiceDiscovery and notify any listeners
+            //try and start the connection with ZK in another thread to prevent connection problems from stopping
+            // the bean creation and application startup, then start ServiceDiscovery and notify any listeners
             CompletableFuture.runAsync(this::startCurator)
                     .thenRun(this::startServiceDiscovery)
                     .thenRun(this::notifyListeners)

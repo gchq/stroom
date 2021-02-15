@@ -48,7 +48,9 @@ public class ServletModule extends AbstractModule {
                         RejectPostFilter.class)
                 .bind(new FilterInfo(CacheControlFilter.class.getSimpleName(), MATCH_ALL_PATHS)
                                 .addparameter(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600")
-                                .addparameter(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex),
+                                .addparameter(
+                                        CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX,
+                                        cacheablePathsRegex),
                         CacheControlFilter.class);
 
         ServletBinder.create(binder())

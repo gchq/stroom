@@ -110,12 +110,13 @@ public class SolrIndexRetentionExecutor {
                             .size();
                     if (termCount > 0) {
                         final Map<String, SolrIndexField> indexFieldsMap = cachedSolrIndex.getFieldsMap();
-                        final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                dictionaryStore,
-                                indexFieldsMap,
-                                searchConfig.getMaxBooleanClauseCount(),
-                                null,
-                                System.currentTimeMillis());
+                        final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
+                                new SearchExpressionQueryBuilder(
+                                        dictionaryStore,
+                                        indexFieldsMap,
+                                        searchConfig.getMaxBooleanClauseCount(),
+                                        null,
+                                        System.currentTimeMillis());
                         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(
                                 solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();

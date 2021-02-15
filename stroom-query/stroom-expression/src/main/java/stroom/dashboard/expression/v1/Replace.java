@@ -73,8 +73,8 @@ class Replace extends AbstractManyChildFunction implements Serializable {
             final String replacement = params[2].toString();
 
             if (regex.length() == 0) {
-                throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function",
-                        0);
+                throw new ParseException(
+                        "An empty regex has been defined for second argument of '" + name + "' function", 0);
             }
 
             final Pattern pattern = PatternCache.get(regex);
@@ -86,8 +86,8 @@ class Replace extends AbstractManyChildFunction implements Serializable {
                 // Test regex is valid.
                 final String regex = params[1].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function",
-                            0);
+                    throw new ParseException(
+                            "An empty regex has been defined for second argument of '" + name + "' function", 0);
                 }
                 PatternCache.get(regex);
             }

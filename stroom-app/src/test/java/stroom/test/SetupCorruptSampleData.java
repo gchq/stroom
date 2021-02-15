@@ -48,7 +48,8 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
 //        appContext.getInstance(NodeInfo.class).get();
 //
 //        final CommonTestControl commonTestControl = appContext.getInstance(CommonTestControl.class);
-//        final CommonTestScenarioCreator commonTestScenarioCreator = appContext.getInstance(CommonTestScenarioCreator.class);
+//        final CommonTestScenarioCreator commonTestScenarioCreator =
+//        appContext.getInstance(CommonTestScenarioCreator.class);
 //        final StreamStore streamStore = appContext.getInstance(StreamStore.class);
 //
 //        final Feed feed = commonTestScenarioCreator.createSimpleFeed();

@@ -130,7 +130,8 @@ public class SearchRequestMapper {
     }
 
     private List<ResultRequest> mapResultRequests(final DashboardSearchRequest searchRequest) {
-        if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
+        if (searchRequest.getComponentResultRequests() == null
+                || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
 
@@ -155,8 +156,8 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = visResultRequest.getVisDashboardSettings().getTableSettings()
                         .copy()
                         .buildTableSettings();
-                final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(),
-                        parentTableSettings);
+                final TableSettings childTableSettings = mapVisSettingsToTableSettings(
+                        visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
@@ -299,7 +300,8 @@ public class SearchRequestMapper {
 //            type = Type.valueOf(format.getType().name());
 //        }
 //
-//        return new stroom.query.api.v2.Format(type, mapNumberFormat(format.getSettings()), mapDateTimeFormat(format.getSettings()));
+//        return new stroom.query.api.v2.Format(type, mapNumberFormat(
+//        format.getSettings()), mapDateTimeFormat(format.getSettings()));
 //    }
 //
 //    private NumberFormatSettings mapNumberFormat(final FormatSettings formatSettings) {
@@ -307,9 +309,11 @@ public class SearchRequestMapper {
 //            return null;
 //        }
 //
-//        final stroom.dashboard.shared.NumberFormatSettings numberFormatSettings = (stroom.dashboard.shared.NumberFormatSettings) formatSettings;
+//        final stroom.dashboard.shared.NumberFormatSettings numberFormatSettings =
+//        (stroom.dashboard.shared.NumberFormatSettings) formatSettings;
 //
-//        return new NumberFormatSettings(numberFormatSettings.getDecimalPlaces(), numberFormatSettings.getUseSeparator());
+//        return new NumberFormatSettings(
+//        numberFormatSettings.getDecimalPlaces(), numberFormatSettings.getUseSeparator());
 //    }
 //
 //    private DateTimeFormatSettings mapDateTimeFormat(final FormatSettings formatSettings) {
@@ -317,9 +321,11 @@ public class SearchRequestMapper {
 //            return null;
 //        }
 //
-//        final stroom.dashboard.shared.DateTimeFormatSettings dateTimeFormatSettings = (stroom.dashboard.shared.DateTimeFormatSettings) formatSettings;
+//        final stroom.dashboard.shared.DateTimeFormatSettings dateTimeFormatSettings =
+//        (stroom.dashboard.shared.DateTimeFormatSettings) formatSettings;
 //
-//        return new DateTimeFormatSettings(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
+//        return new DateTimeFormatSettings(
+//        dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
 //    }
 //
 //    private stroom.query.api.v2.TimeZone mapTimeZone(final TimeZone timeZone) {
@@ -327,10 +333,13 @@ public class SearchRequestMapper {
 //            return null;
 //        }
 //
-//        return new stroom.query.api.v2.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
+//        return new stroom.query.api.v2.TimeZone(
+//        Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(),
+//        timeZone.getOffsetMinutes());
 //    }
 
-//    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
+//    private TableSettings visStructureToTableSettings(
+//    final VisStructure visStructure, final TableSettings parentTableSettings) {
 //        final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
 //        if (parentTableSettings.getFields() != null) {
 //            for (final stroom.query.api.v2.Field field : parentTableSettings.getFields()) {
@@ -407,8 +416,10 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings,
-                                                                            final TableSettings parentTableSettings) {
+    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(
+            final VisComponentSettings visComponentSettings,
+            final TableSettings parentTableSettings) {
+
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
@@ -419,7 +430,9 @@ public class SearchRequestMapper {
 
             final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
-            if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
+            if (visualisation == null
+                    || visualisation.getSettings() == null
+                    || visualisation.getSettings().length() == 0) {
                 return null;
             }
 
@@ -509,7 +522,8 @@ public class SearchRequestMapper {
 //
 //            final Visualisation visualisation = visualisationStore.loadByUuid(docRef.getUuid());
 //
-//            if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
+//            if (visualisation == null
+//            || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
 //                return null;
 //            }
 //
@@ -520,7 +534,8 @@ public class SearchRequestMapper {
 //
 //            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
 //            if (visSettings != null && visSettings.getMeta() != null) {
-//                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJSON());
+//                final SettingResolver settingResolver = new SettingResolver(
+//                visSettings, visComponentSettings.getJSON());
 //                final Structure structure = visSettings.getMeta().getStructure();
 //                if (structure != null) {
 //                    copy = new VisStructure();

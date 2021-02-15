@@ -71,8 +71,8 @@ public class SolrSearchModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
                         .name("Solr Index Retention")
-                        .description(
-                                "Logically delete indexed documents in Solr indexes based on the specified deletion query")
+                        .description("Logically delete indexed documents in Solr indexes based on the specified " +
+                                "deletion query")
                         .schedule(CRON, "0 2 *"))
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
                         .name("Evict expired elements")

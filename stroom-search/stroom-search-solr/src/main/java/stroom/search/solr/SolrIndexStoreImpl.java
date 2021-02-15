@@ -232,7 +232,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     new DeleteField(field.getFieldName()).process(solrClient, document.getCollection());
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
-                                    final String message = "Failed to delete field '" + field.getFieldName() + "' - " + e.getMessage();
+                                    final String message = "Failed to delete field '" + field.getFieldName() +
+                                            "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }

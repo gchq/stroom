@@ -56,17 +56,15 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
             try {
                 hostOrIp = InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException e) {
-                LOGGER.warn(
-                        "Unable to determine hostname of this instance due to error. Will try to get IP address instead",
-                        e);
+                LOGGER.warn("Unable to determine hostname of this instance due to error. Will try to get IP " +
+                        "address instead", e);
             }
 
             if (hostOrIp == null || hostOrIp.isEmpty()) {
                 try {
                     hostOrIp = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e) {
-                    throw new RuntimeException(String.format(
-                            "Error establishing hostname or IP address of this instance"), e);
+                    throw new RuntimeException("Error establishing hostname or IP address of this instance", e);
                 }
             }
         }
@@ -105,7 +103,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                     ResourcePaths.buildAuthenticatedApiPath(registeredService.getVersionedPath()));
 
             final ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
-                    .serviceType(ServiceType.DYNAMIC) //==ephemeral zk nodes so instance will disappear if we lose zk conn
+                    .serviceType(ServiceType.DYNAMIC) //==ephemeral zk nodes so instance disappears if we lose zk conn
                     .uriSpec(uriSpec)
                     .name(registeredService.getVersionedServiceName())
                     .address(hostNameOrIpAddress)

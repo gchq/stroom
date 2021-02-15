@@ -89,7 +89,8 @@ class StandardJwtContextFactory implements JwtContextFactory {
                 publicJsonWebKey.getJsonWebKeys());
 
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
+                //                                   for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
                 .setExpectedAudience(openIdConfig.getClientId())

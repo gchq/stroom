@@ -55,7 +55,8 @@ import javax.inject.Inject;
 /**
  * The Solr index filter... takes the index XML and sends documents to Solr for indexing.
  */
-@ConfigurableElement(type = "SolrIndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "SolrIndexingFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.SOLR)
 class SolrIndexingFilter extends AbstractXMLFilter {
 
@@ -119,7 +120,9 @@ class SolrIndexingFilter extends AbstractXMLFilter {
             solrIndexClientCache.context(indexConfig.getIndex().getSolrConnectionConfig(), solrClient -> {
                 try {
                     final SolrPingResponse response = solrClient.ping();
-                    LOGGER.debug(() -> "Ping to Solr with status " + response.getStatus() + " in " + response.getElapsedTime() + "ms");
+                    LOGGER.debug(() ->
+                            "Ping to Solr with status " + response.getStatus() + " in " +
+                                    response.getElapsedTime() + "ms");
                 } catch (final IOException | SolrServerException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
                     // Terminate processing as this is a fatal error.
@@ -307,7 +310,8 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Perform a soft commit after every batch so that docs are available for searching immediately (if using NRT replicas).",
+            description = "Perform a soft commit after every batch so that docs are available for searching " +
+                    "immediately (if using NRT replicas).",
             defaultValue = "true",
             displayPriority = 4)
     public void setSoftCommit(final boolean softCommit) {

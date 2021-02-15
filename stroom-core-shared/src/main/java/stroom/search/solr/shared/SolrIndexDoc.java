@@ -30,7 +30,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state", "retentionExpression"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "collection",
+        "connection",
+        "indexBatchSize",
+        "fields",
+        "state",
+        "retentionExpression"})
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
 

@@ -60,8 +60,16 @@ class RequestInfo {
 
 
     private Object findRequestObj() {
-        int numberOfPathParms = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false).keySet().size();
-        int numberOfQueryParams = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false).keySet().size();
+        int numberOfPathParms = containerResourceInfo.getRequestContext()
+                .getUriInfo()
+                .getPathParameters(false)
+                .keySet()
+                .size();
+        int numberOfQueryParams = containerResourceInfo.getRequestContext()
+                .getUriInfo()
+                .getQueryParameters(false)
+                .keySet()
+                .size();
         int numberOfPathAndQueryParms = numberOfPathParms + numberOfQueryParams;
 
         if (numberOfPathAndQueryParms == 0) {
@@ -69,8 +77,9 @@ class RequestInfo {
         }
 
         if (numberOfPathAndQueryParms > 1) {
-            WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(
-                    false));
+            WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext()
+                    .getUriInfo()
+                    .getPathParameters(false));
             obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
             return obj;
         } else {
@@ -87,8 +96,9 @@ class RequestInfo {
             } else if ("uuid".equals(paramName)) {
                 return new ObjectUuid(paramValue);
             } else {
-                WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(
-                        false));
+                WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext()
+                        .getUriInfo()
+                        .getPathParameters(false));
                 obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
                 return obj;
             }

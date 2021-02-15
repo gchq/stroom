@@ -52,7 +52,8 @@ public class SQLStatisticSearchModule extends AbstractModule {
     private static class EvictExpiredElements extends RunnableWrapper {
 
         @Inject
-        EvictExpiredElements(final SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager) {
+        EvictExpiredElements(
+                final SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager) {
             super(sqlStatisticsSearchResponseCreatorManager::evictExpiredElements);
         }
     }
