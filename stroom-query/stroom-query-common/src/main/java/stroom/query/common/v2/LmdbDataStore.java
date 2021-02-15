@@ -672,7 +672,7 @@ public class LmdbDataStore implements DataStore {
 
             final int maxSize;
             if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.min(100, trimmedSize * 2);
+                maxSize = Math.max(1000, trimmedSize * 2);
             } else {
                 maxSize = Integer.MAX_VALUE;
             }
@@ -684,7 +684,7 @@ public class LmdbDataStore implements DataStore {
                 try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                    while (iterator.hasNext() && inRange) {
+                    while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
                         final Key key = keySerde.deserialize(keyVal.key());
 

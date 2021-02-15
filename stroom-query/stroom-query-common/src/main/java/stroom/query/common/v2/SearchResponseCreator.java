@@ -26,9 +26,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.query.util.LambdaLoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -40,7 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class SearchResponseCreator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchResponseCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseCreator.class);
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
@@ -126,27 +124,29 @@ public class SearchResponseCreator {
         final boolean didSearchComplete;
 
         if (!store.isComplete()) {
-            LOGGER.debug("Store not complete so will wait for completion or timeout");
+            LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
             try {
                 final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
 
-                LOGGER.debug("effectiveTimeout: {}", effectiveTimeout);
-
                 // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
                 // we will timeout
+                LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
                 didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
+                        effectiveTimeout +
+                        ", didSearchComplete=" +
+                        didSearchComplete);
 
                 if (!didSearchComplete && !searchRequest.incremental()) {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            Collections.singletonList(
-                                    LambdaLogger.buildMessage("The search timed out after {}", effectiveTimeout.toString())));
+                            Collections.singletonList("The search timed out after " + effectiveTimeout.toString()));
                 }
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOGGER.debug("Thread {} interrupted", Thread.currentThread().getName(), e);
+                LOGGER.debug(() -> "Thread " + Thread.currentThread().getName() + " interrupted", e);
                 return createErrorResponse(
                         store, Collections.singletonList("Thread was interrupted before the search could complete"));
             }
@@ -158,17 +158,24 @@ public class SearchResponseCreator {
             // Get completion state before we get results.
             final boolean complete = store.isComplete();
 
-            List<Result> results = getResults(searchRequest);
+            final List<Result> res = LOGGER.logDurationIfTraceEnabled(() ->
+                    getResults(searchRequest), "Getting results");
+            LOGGER.debug(() -> "Returning new SearchResponse with results: " +
+                    (res.size() == 0 ? "null" : res.size()) +
+                    ", complete: " +
+                    complete +
+                    ", isComplete: " +
+                    store.isComplete());
+
+            List<Result> results = res;
             if (results.size() == 0) {
                 results = null;
             }
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Returning new SearchResponse with results: {}, complete: {}, isComplete: {}",
-                        (results == null ? "null" : results.size()), complete, store.isComplete());
-            }
-
-            final SearchResponse searchResponse = new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+            final SearchResponse searchResponse = new SearchResponse(
+                    store.getHighlights(),
+                    results,
+                    store.getErrors(),
+                    complete);
 
             if (complete) {
                 SearchDebugUtil.writeRequest(searchRequest, false);
@@ -178,13 +185,12 @@ public class SearchResponseCreator {
             return searchResponse;
 
         } catch (final RuntimeException e) {
-            LOGGER.error("Error getting search results for query {}", searchRequest.getKey().toString(), e);
+            LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
 
-            return createErrorResponse(
-                    store, Collections.singletonList(
-                            LambdaLogger.buildMessage(
-                                    "Error getting search results: [{}], see service's logs for details",
-                                    e.getMessage())));
+            return createErrorResponse(store, Collections.singletonList(
+                    "Error getting search results: [" +
+                            e.getMessage() +
+                            "], see service's logs for details"));
         }
     }
 
@@ -216,29 +222,13 @@ public class SearchResponseCreator {
             // Only deliver data to components that actually want it.
             final Fetch fetch = resultRequest.getFetch();
             if (!Fetch.NONE.equals(fetch)) {
-                Result result = null;
-
-                final DataStore data = store.getData(componentId);
-                if (data != null) {
-                    try {
-                        final ResultCreator resultCreator = getResultCreator(
-                                searchRequest.getKey().getUuid(),
-                                componentId,
-                                resultRequest,
-                                searchRequest.getDateTimeLocale());
-                        if (resultCreator != null) {
-                            result = resultCreator.create(data, resultRequest);
-                        }
-                    } catch (final RuntimeException e) {
-                        result = new TableResult(componentId, null, null, null, 0, e.getMessage());
-                    }
-                }
+                final Result result = getResult(searchRequest, resultRequest);
 
                 if (result != null) {
                     if (fetch == null || Fetch.ALL.equals(fetch)) {
                         // If the fetch option has not been set or is set to ALL we deliver the full result.
                         results.add(result);
-                        LOGGER.info("Delivering " + result + " for " + componentId);
+                        LOGGER.info(() -> "Delivering " + result + " for " + componentId);
 
                     } else if (Fetch.CHANGES.equals(fetch)) {
                         // Cache the new result and get the previous one.
@@ -272,13 +262,37 @@ public class SearchResponseCreator {
                             // Either we haven't returned a result before or this result
                             // is different from the one delivered previously so deliver it to the client.
                             results.add(result);
-                            LOGGER.info("Delivering {} for {}", result, componentId);
+                            LOGGER.info(() -> "Delivering " + result + " for " + componentId);
                         }
                     }
                 }
             }
         }
         return results;
+    }
+
+    private Result getResult(final SearchRequest searchRequest,
+                             final ResultRequest resultRequest) {
+        final String componentId = resultRequest.getComponentId();
+        Result result = null;
+
+        final DataStore data = store.getData(componentId);
+        if (data != null) {
+            try {
+                final ResultCreator resultCreator = getResultCreator(
+                        searchRequest.getKey().getUuid(),
+                        componentId,
+                        resultRequest,
+                        searchRequest.getDateTimeLocale());
+                if (resultCreator != null) {
+                    result = resultCreator.create(data, resultRequest);
+                }
+            } catch (final RuntimeException e) {
+                result = new TableResult(componentId, null, null, null, 0, e.getMessage());
+            }
+        }
+
+        return result;
     }
 
     private ResultCreator getResultCreator(final String queryKey,
