@@ -25,7 +25,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     ID("Id", true),
     BOOLEAN("Boolean", false),
     NUMBER("Number", true),
-    DATE("Date", true),
+    DATE("Date", false),
     ARRAY("Array", false),
     TEXT("Text", false);
 

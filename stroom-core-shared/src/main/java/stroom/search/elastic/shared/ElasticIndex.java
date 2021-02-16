@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "retentionExpression"})
@@ -36,13 +35,9 @@ public class ElasticIndex extends Doc {
     private String indexName;
     private ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
 
-    private List<ElasticIndexField> fields;
-
     private ExpressionOperator retentionExpression;
 
-    public ElasticIndex() {
-        // TODO: Query fields from the Elastic index
-    }
+    public ElasticIndex() { }
 
     public String getDescription() { return description; }
 
@@ -70,16 +65,6 @@ public class ElasticIndex extends Doc {
         this.connectionConfig = connectionConfig;
     }
 
-    @JsonProperty("fields")
-    public List<ElasticIndexField> getFields() {
-        return fields;
-    }
-
-    @JsonProperty("fields")
-    public void setFields(final List<ElasticIndexField> fields) {
-        this.fields = fields;
-    }
-
     @JsonProperty("retentionExpression")
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
@@ -104,13 +89,12 @@ public class ElasticIndex extends Doc {
         final ElasticIndex ElasticIndex = (ElasticIndex) o;
         return Objects.equals(description, ElasticIndex.description) &&
                 Objects.equals(indexName, ElasticIndex.indexName) &&
-                Objects.equals(connectionConfig, ElasticIndex.connectionConfig) &&
-                Objects.equals(fields, ElasticIndex.fields);
+                Objects.equals(connectionConfig, ElasticIndex.connectionConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, connectionConfig, fields);
+        return Objects.hash(super.hashCode(), description, indexName, connectionConfig);
     }
 
     @Override
@@ -119,7 +103,6 @@ public class ElasticIndex extends Doc {
                 "description='" + description + '\'' +
                 ", indexName='" + indexName + '\'' +
                 ", connectionConfig=" + connectionConfig +
-                ", fields=" + fields +
                 '}';
     }
 }

@@ -1,0 +1,43 @@
+ext.moduleName = 'stroom.search.elastic'
+
+dependencies {
+    compile project(':stroom-annotation:stroom-annotation-api')
+    permitUnusedDeclared project(':stroom-annotation:stroom-annotation-api')
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-search:stroom-search-extraction')
+    compile project(':stroom-security-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile project(':stroom-connectors')
+    permitUnusedDeclared project(':stroom-connectors')
+
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.http_client
+    compile libs.lucene_core
+    compile libs.slf4j_api
+    compile libs.solrj
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.stroomExpression
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
+    compile libs.swagger_annotations
+    compile libs.javax_inject
+    compile libs.ws_rs_api
+    compile libs.xml_apis
+
+    testCompile project(':stroom-test-common')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile libs.commons_io
+    testCompile libs.junit
+}
