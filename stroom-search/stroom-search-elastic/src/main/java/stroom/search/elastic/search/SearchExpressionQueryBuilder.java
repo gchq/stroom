@@ -33,7 +33,6 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,6 @@ public class SearchExpressionQueryBuilder {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term);
-
             }
             else if (item instanceof ExpressionOperator) {
                 // Create queries for expression tree nodes.
@@ -98,6 +96,8 @@ public class SearchExpressionQueryBuilder {
                             innerChildQueries.forEach(boolQueryBuilder::mustNot);
                             break;
                     }
+
+                    return boolQueryBuilder;
                 }
             }
         }
@@ -179,7 +179,7 @@ public class SearchExpressionQueryBuilder {
                         throw new IllegalArgumentException("Two numbers needed for between query; " + between.length + " provided");
                     }
                     if (between[0] >= between[1]) {
-                        throw new IllegalArgumentException("From number must lower than to number");
+                        throw new IllegalArgumentException("From number must be lower than to number");
                     }
                     return QueryBuilders
                             .rangeQuery(fieldName)
@@ -270,10 +270,10 @@ public class SearchExpressionQueryBuilder {
 
     /**
      * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains" conditions
-     * @param expression - Example: "1 2 3"
-     * @return - Array of terms. Example: [ 1, 2, 3 ]
+     * @param expression - Example: "1,2, 3"
+     * @return - Array of terms. Example: [ "1", "2", "3" ]
      */
-    public String[] tokenizeExpression(final String expression) {
+    private String[] tokenizeExpression(final String expression) {
         if (expression != null) {
             return Arrays.stream(expression.split(DELIMITER))
                 .map(String::trim)
