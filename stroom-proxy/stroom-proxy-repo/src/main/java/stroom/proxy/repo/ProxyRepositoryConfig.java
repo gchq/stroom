@@ -1,16 +1,25 @@
 package stroom.proxy.repo;
 
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.util.io.FileUtil;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyRepositoryConfig {
+public class ProxyRepositoryConfig implements HasDbConfig {
 
     private boolean isStoringEnabled = false;
     private String repoDir;
     private String format = "${pathId}/${id}";
     private String rollCron;
+    private DbConfig dbConfig;
 
     @JsonProperty
     public boolean isStoringEnabled() {
@@ -71,5 +80,41 @@ public class ProxyRepositoryConfig {
     @JsonProperty
     public void setRollCron(final String rollCron) {
         this.rollCron = rollCron;
+    }
+
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        if (dbConfig == null) {
+            Path path;
+            if (repoDir == null) {
+                path = Paths.get("");
+            } else {
+                path = Paths.get(repoDir);
+            }
+            if (!Files.isDirectory(path)) {
+                throw new RuntimeException("Unable to find repo dir: " + FileUtil.getCanonicalPath(path));
+            }
+
+            path = path.resolve("db");
+            FileUtil.mkdirs(path);
+            path = path.resolve("proxy-repo");
+
+            final String fullPath = FileUtil.getCanonicalPath(path);
+
+            final ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setClassName("org.h2.Driver");
+            connectionConfig.setUrl("jdbc:h2:file:" + fullPath);
+            connectionConfig.setUser("sa");
+            connectionConfig.setPassword("sa");
+
+            dbConfig = new DbConfig();
+            dbConfig.setConnectionConfig(connectionConfig);
+        }
+
+        return dbConfig;
+    }
+
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 }

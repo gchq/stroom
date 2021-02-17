@@ -31,6 +31,7 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
+import stroom.proxy.repo.db.ProxyRepoDbModule;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResource;
@@ -99,6 +100,7 @@ public class ProxyModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new ProxyRepoDbModule());
         install(new MockCollectionModule());
 
         install(new DictionaryModule());

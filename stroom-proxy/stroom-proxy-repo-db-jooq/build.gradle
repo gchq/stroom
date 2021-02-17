@@ -1,0 +1,65 @@
+apply plugin: 'nu.studer.jooq'
+
+ext.moduleName = 'stroom.proxy.repo.db.jooq'
+
+dependencies {
+    compile libs.javax_annotation
+    permitUnusedDeclared libs.javax_annotation
+    compile libs.jooq
+
+    jooqRuntime libs.h2
+
+    // The following are required to put JAXB on the JOOQ classpath for the purpose of JOOQ code generation in J9+.
+    // Later versions of the JOOQ Gradle plugin should make this unnecessary.
+    jooqRuntime 'javax.activation:activation:1.1.1'
+    jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+    jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'
+    jooqRuntime 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
+}
+
+def propNameJooqGeneration = 'jooqGeneration'
+
+// to run the jooq code generation add the following to the gradle command arguments
+// -PjooqGeneration=true
+if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
+    configure(project) {
+        //configure jooq plugin to generate code
+        jooq {
+            version = versions.jooq
+            edition = 'OSS'
+            sample(sourceSets.main) {
+                jdbc {
+                    driver = 'org.h2.Driver'
+                    url = 'jdbc:h2:file:/home/stroomdev66/work/stroom/stroom-app/db/proxy-repo'
+                    user = 'sa'
+                    password = 'sa'
+                }
+                generator {
+                    name = 'org.jooq.codegen.JavaGenerator'
+                    database {
+//                        name = 'org.jooq.meta.mysql.MySQLDatabase'
+                        inputSchema = 'PUBLIC'
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
+                        includes = 'zip_source|zip_data|zip_entry|zip_dest|zip_dest_entry'
+                        // We don't want to include flyway versioning
+                        excludes = 'proxy_repo_schema_history'
+//                        // Specify 'version' for use in optimistic concurrency control
+//                        recordVersionFields = 'version'
+//                        // Treat tinyint(1) columns as booleans
+//                        forcedTypes {
+//                            forcedType {
+//                                name = 'BOOLEAN'
+//                                types = '(?i:TINYINT\\(1\\))'
+//                            }
+//                        }
+                    }
+                    target {
+                        packageName = 'stroom.proxy.repo.db.jooq'
+                        directory = 'src/main/java'
+                    }
+                }
+            }
+        }
+    }
+}

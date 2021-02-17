@@ -94,6 +94,11 @@ public class DbTestUtil {
     }
 
     public static DataSource createTestDataSource(final DbConfig dbConfig) {
+        if ("org.h2.Driver".equals(dbConfig.getConnectionConfig().getClassName())) {
+            final HikariConfig hikariConfig = HikariUtil.createConfig(dbConfig);
+            return new HikariDataSource(hikariConfig);
+        }
+
         // See if we have a local data source.
         DataSource dataSource = THREAD_LOCAL.get();
         if (dataSource == null) {

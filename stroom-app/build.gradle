@@ -83,6 +83,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-proxy:stroom-proxy-repo-db')
     compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-receive:stroom-receive-common')

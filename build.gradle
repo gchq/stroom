@@ -142,7 +142,7 @@ ext.libs = [
         caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
         commons_beanutils              : "commons-beanutils:commons-beanutils:1.9.4",
         commons_codec                  : "commons-codec:commons-codec:1.11",
-        commons_compress               : "org.apache.commons:commons-compress:1.18",
+        commons_compress               : "org.apache.commons:commons-compress:1.20",
         commons_csv                    : "org.apache.commons:commons-csv:1.7",
         commons_fileupload             : "commons-fileupload:commons-fileupload:1.3.3",
         commons_io                     : "commons-io:commons-io:2.6",
@@ -172,7 +172,7 @@ ext.libs = [
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
         dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
-        flyway_core                    : "org.flywaydb:flyway-core:5.2.4", // We are stuck on 5.2.4 as newer non-enterprise versions don't support mysql 5.6
+        flyway_core                    : "org.flywaydb:flyway-core:7.5.3",
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava", // version controlled by DW BOM
@@ -187,6 +187,7 @@ ext.libs = [
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                           : 'com.google.code.gson:gson:2.6.2',
+        h2                             : 'com.h2database:h2:1.4.200',
         hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
