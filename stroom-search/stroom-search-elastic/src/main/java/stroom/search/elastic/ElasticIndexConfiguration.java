@@ -37,6 +37,6 @@ public class ElasticIndexConfiguration {
     @Inject
     public ElasticIndexConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                      final ImportExportActionHandlers importExportActionHandlers) {
-        explorerActionHandlers.add(10, ElasticIndex.ENTITY_TYPE, "Elastic Index", null);
+        //explorerActionHandlers.add(10, ElasticIndex.ENTITY_TYPE, "Elastic Index", null);
     }
 }

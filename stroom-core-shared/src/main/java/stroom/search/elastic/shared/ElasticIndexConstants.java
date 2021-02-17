@@ -17,7 +17,7 @@
 package stroom.search.elastic.shared;
 
 public interface ElasticIndexConstants {
-    String STREAM_ID = "_streamId";
-    String EVENT_ID = "_eventId";
-    String FEED_ID = "_feedId";
+    String STREAM_ID = "StreamId";
+    String EVENT_ID = "EventId";
+    String FEED_ID = "FeedId";
 }
