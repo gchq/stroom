@@ -49,8 +49,11 @@ public class SearchExpressionQueryBuilder {
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final DictionaryStore dictionaryStore, final Map<String, ElasticIndexField> indexFieldsMap,
-                                        final String timeZoneId, final long nowEpochMilli) {
+    public SearchExpressionQueryBuilder(final DictionaryStore dictionaryStore,
+                                        final Map<String, ElasticIndexField> indexFieldsMap,
+                                        final String timeZoneId,
+                                        final long nowEpochMilli
+    ) {
         this.dictionaryStore = dictionaryStore;
         this.indexFieldsMap = indexFieldsMap;
         this.timeZoneId = timeZoneId;

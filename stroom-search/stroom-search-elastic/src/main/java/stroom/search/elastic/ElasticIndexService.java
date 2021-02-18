@@ -10,5 +10,9 @@ import java.util.Map;
 
 public interface ElasticIndexService {
     List<DataSourceField> getDataSourceFields(ElasticIndex index);
+
     Map<String, ElasticIndexField> getFieldsMap(DocRef docRef);
+    Map<String, ElasticIndexField> getFieldsMap(ElasticIndex index);
+
+    List<String> getStoredFields(ElasticIndex index);
 }

@@ -66,14 +66,43 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             throw new RuntimeException("Elasticsearch index not found for: '" + docRef.getUuid() + "'");
         }
 
+        return getFieldsMap(index);
+    }
+
+    @Override
+    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndex index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+        final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
-        // TODO: Convert to fields map
+        fieldMappings.values().forEach(mapping -> {
+            final Map<String, Object> properties = mapping.sourceAsMap();
+            final String fieldType = (String) properties.get("type");
+            final boolean stored = Boolean.parseBoolean((String) properties.get("stored"));
 
-        return null;
+            fieldsMap.put(mapping.fullName(), new ElasticIndexField(
+                    ElasticIndexFieldType.fromNativeType(mapping.fullName(), fieldType),
+                    mapping.fullName(),
+                    stored,
+                    true
+            ));
+        });
+
+        return fieldsMap;
+    }
+
+    /**
+     * Get a filtered list of any field mappings with `stored` equal to `true`
+     */
+    @Override
+    public List<String> getStoredFields(final ElasticIndex index) {
+        return getFieldMappings(index).values().stream()
+                .filter(field -> field.sourceAsMap().get("stored").equals("true"))
+                .map(FieldMappingMetadata::fullName)
+                .collect(Collectors.toList());
     }
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
+        // TODO: Support nested fields through recursion
         try {
             return elasticClientCache.contextResult(elasticIndex.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();

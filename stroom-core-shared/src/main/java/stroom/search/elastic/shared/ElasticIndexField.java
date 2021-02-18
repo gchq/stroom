@@ -56,10 +56,10 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
         // Default constructor necessary for GWT serialisation.
     }
 
-    private ElasticIndexField(final ElasticIndexFieldType fieldUse,
-                              final String fieldName,
-                              final boolean stored,
-                              final boolean indexed
+    public ElasticIndexField(final ElasticIndexFieldType fieldUse,
+                             final String fieldName,
+                             final boolean stored,
+                             final boolean indexed
     ) {
         setFieldUse(fieldUse);
         setFieldName(fieldName);
