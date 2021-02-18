@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2049** : Updated swagger and moved to the OpenAPI 3.0 Specification.
+* Issue **#2049** : Updated Swagger and moved to the OpenAPI 3.0 Specification.
 
 * Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading. 
 
