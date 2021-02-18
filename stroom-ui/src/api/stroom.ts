@@ -1,5 +1,5 @@
-/* eslint:disable */
-/* tslint-disable */
+/* eslint-disable */
+/* tslint:disable */
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -3295,11 +3295,11 @@ export class HttpClient<SecurityDataType = unknown> {
     const payloadFormatter = this.contentFormatters[type || ContentType.Json];
 
     return fetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
+      ...requestParams,
       headers: {
         ...(type ? { "Content-Type": type } : {}),
         ...(requestParams.headers || {}),
       },
-      ...requestParams,
       signal: cancelToken ? this.createAbortSignal(cancelToken) : void 0,
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
     }).then(async (response) => {
