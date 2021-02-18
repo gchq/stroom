@@ -72,6 +72,7 @@ import java.util.HashMap;
  * </pre>
  */
 public final class ImportKey {
+
     private ImportKey() {
         // Utility class
     }
@@ -114,7 +115,8 @@ public final class ImportKey {
             final CertificateFactory cf = CertificateFactory.getInstance("X.509");
             final byte[] bytes = Files.readAllBytes(Paths.get(certfile));
 
-            final Collection<Certificate> c = (Collection<Certificate>) cf.generateCertificates(new ByteArrayInputStream(bytes));
+            final Collection<Certificate> c = (Collection<Certificate>) cf.generateCertificates(
+                    new ByteArrayInputStream(bytes));
             Certificate[] certs = new Certificate[c.size()];
 
             if (c.size() == 1) {
@@ -130,7 +132,12 @@ public final class ImportKey {
             try (final OutputStream outputStream = Files.newOutputStream(Paths.get(keystore))) {
                 ks.store(outputStream, keyPass.toCharArray());
             }
-        } catch (final IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | NoSuchProviderException | InvalidKeySpecException e) {
+        } catch (final IOException
+                | NoSuchAlgorithmException
+                | CertificateException
+                | KeyStoreException
+                | NoSuchProviderException
+                | InvalidKeySpecException e) {
             e.printStackTrace();
         }
     }

@@ -21,6 +21,7 @@ package stroom.util.shared;
  * to GWT and so can unwrap all exceptions into nice messages for the user.
  */
 public class EntityDependencyServiceException extends EntityServiceException {
+
     private static final long serialVersionUID = -6840395605715731686L;
 
     private String missingEntityType = null;

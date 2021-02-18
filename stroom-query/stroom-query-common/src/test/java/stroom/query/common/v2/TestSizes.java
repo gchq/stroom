@@ -9,6 +9,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSizes {
+
     @Test
     void testSize_null() {
         test(null, 0, Sizes.FALLBACK);

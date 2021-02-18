@@ -16,17 +16,19 @@
 
 package stroom.query.client;
 
+import stroom.pipeline.structure.client.view.Box;
+import stroom.widget.htree.client.treelayout.TreeLayout;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.pipeline.structure.client.view.Box;
-import stroom.widget.htree.client.treelayout.TreeLayout;
-import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public class ExpressionItemBox extends Box<Item> {
+
     private static Resources resources;
     private final SimplePanel background = new SimplePanel();
     private final TreeLayout<Item> treeLayout;
@@ -118,6 +120,7 @@ public class ExpressionItemBox extends Box<Item> {
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT = "ExpressionItemBox.css";
 
         String background();
@@ -138,6 +141,7 @@ public class ExpressionItemBox extends Box<Item> {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT)
         Style style();
     }

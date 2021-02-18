@@ -17,22 +17,23 @@
 
 package stroom.node.mock;
 
-import stroom.node.api.NodeService;
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeService;
 
-import javax.inject.Singleton;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.inject.Singleton;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.Response;
 
 /**
  * Mock class that manages one node.
  */
 @Singleton
 public class MockNodeService implements NodeService {
+
     private MockNodeInfo nodeInfo = new MockNodeInfo();
 
     @Override

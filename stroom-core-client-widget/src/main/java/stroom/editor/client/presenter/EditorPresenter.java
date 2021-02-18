@@ -263,7 +263,8 @@ public class EditorPresenter
     /**
      * Registers completion providers specific to this editor instance and mode
      */
-    public void registerCompletionProviders(final AceEditorMode aceEditorMode, final AceCompletionProvider... completionProviders) {
+    public void registerCompletionProviders(final AceEditorMode aceEditorMode,
+                                            final AceCompletionProvider... completionProviders) {
         delegatingAceCompleter.registerCompletionProviders(
                 getEditorId(), aceEditorMode, completionProviders);
     }

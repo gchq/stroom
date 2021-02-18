@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class AbstractTab extends Widget {
+
     private boolean hidden;
 
     protected abstract void setSelected(boolean selected);

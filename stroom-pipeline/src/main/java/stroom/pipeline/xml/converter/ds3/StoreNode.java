@@ -16,10 +16,12 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 
+import org.xml.sax.SAXException;
+
 public abstract class StoreNode extends Node {
+
     private final int[] allReferencedGroups;
     private final int[] localReferencedGroups;
     private final int[] remoteReferencedGroups;

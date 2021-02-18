@@ -27,6 +27,7 @@ import stroom.security.api.SecurityContext;
 import javax.inject.Inject;
 
 class FeedStatusServiceImpl implements FeedStatusService {
+
     private final SecurityContext securityContext;
     private final FeedProperties feedProperties;
 
@@ -79,7 +80,8 @@ class FeedStatusServiceImpl implements FeedStatusService {
 //                // Check that the user identified by the cn is allowed to update
 //                // the feed.
 //
-//                if (!securityContext.hasDocumentPermission(Feed.DOCUMENT_TYPE, feed.getUuid(), DocumentPermissionNames.UPDATE)) {
+//                if (!securityContext.hasDocumentPermission(Feed.DOCUMENT_TYPE,
+//                feed.getUuid(), DocumentPermissionNames.UPDATE)) {
 //                    return GetFeedStatusResponse.createCertificateNotAuthorisedResponse();
 //                }
 //            }

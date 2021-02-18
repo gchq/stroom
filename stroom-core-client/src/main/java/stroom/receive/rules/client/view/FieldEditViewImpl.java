@@ -17,22 +17,25 @@
 
 package stroom.receive.rules.client.view;
 
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.item.client.StringListBox;
+import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.datasource.api.v2.FieldTypes;
-import stroom.item.client.StringListBox;
-import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
+
     private final Widget widget;
     @UiField
     StringListBox type;
     @UiField
     TextBox name;
+
     @Inject
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -65,5 +68,6 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
     public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {
+
     }
 }

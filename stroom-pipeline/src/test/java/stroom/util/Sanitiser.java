@@ -16,9 +16,6 @@
 
 package stroom.util;
 
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -31,27 +28,33 @@ import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 public class Sanitiser {
+
     private static final SAXParserFactory PARSER_FACTORY;
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
     }
 
-    public Sanitiser(final Path in, final Path out) throws IOException, TransformerConfigurationException, SAXException {
+    public Sanitiser(final Path in, final Path out)
+            throws IOException, TransformerConfigurationException, SAXException {
         process(in, out);
     }
 
@@ -63,9 +66,10 @@ public class Sanitiser {
         new Sanitiser(Paths.get(args[0]), Paths.get(args[1]));
     }
 
-    private void process(final Path in, final Path out) throws IOException, TransformerConfigurationException, SAXException {
+    private void process(final Path in, final Path out)
+            throws IOException, TransformerConfigurationException, SAXException {
         try (final Reader reader = Files.newBufferedReader(in, StreamUtil.DEFAULT_CHARSET);
-             final Writer writer = Files.newBufferedWriter(out, StreamUtil.DEFAULT_CHARSET)) {
+                final Writer writer = Files.newBufferedWriter(out, StreamUtil.DEFAULT_CHARSET)) {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 

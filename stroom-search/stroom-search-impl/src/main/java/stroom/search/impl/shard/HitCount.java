@@ -3,6 +3,7 @@ package stroom.search.impl.shard;
 import java.util.concurrent.atomic.AtomicLong;
 
 class HitCount {
+
     private final AtomicLong hitCount = new AtomicLong();
 
     long get() {

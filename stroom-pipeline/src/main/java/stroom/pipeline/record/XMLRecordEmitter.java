@@ -16,10 +16,6 @@
 
 package stroom.pipeline.record;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -35,6 +31,15 @@ import stroom.util.shared.Severity;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
+import java.io.CharArrayWriter;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -42,16 +47,13 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.CharArrayWriter;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This filter is used to buffer SAX events in memory if required. Having
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
+
     private final SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactoryFactory
             .newInstance();
     private final MyWriter outputStreamWriter = new MyWriter(1000);
@@ -71,6 +73,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     private String header;
     private String footer;
     private String body;
+
     public XMLRecordEmitter(final List<DestinationProvider> appenders) {
         this.appenders = appenders;
     }
@@ -309,6 +312,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     }
 
     private static class MyWriter extends CharArrayWriter {
+
         public MyWriter(final int initialSize) {
             super(initialSize);
         }

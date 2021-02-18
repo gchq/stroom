@@ -16,9 +16,9 @@
 
 package stroom.security.identity.account;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public final class AccountModule extends AbstractModule {
+
     @Override
     protected void configure() {
 

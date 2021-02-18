@@ -37,6 +37,7 @@ import javax.ws.rs.core.StreamingOutput;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface RemoteSearchResource extends RestResource {
+
     String BASE_PATH = "/remoteSearch" + ResourcePaths.V1;
     String START_PATH_PART = "/start";
     String POLL_PATH_PART = "/poll";

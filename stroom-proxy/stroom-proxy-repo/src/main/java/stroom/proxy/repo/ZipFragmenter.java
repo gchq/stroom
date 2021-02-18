@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.BufferSizeUtil;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
@@ -27,6 +25,9 @@ import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -39,6 +40,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
 class ZipFragmenter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipFragmenter.class);
 
     private final ErrorReceiver errorReceiver;
@@ -78,7 +80,8 @@ class ZipFragmenter {
                         errorReceiver.onError(path, "Unable to find any entry?");
 
                     } else if (baseNameSet.size() == 1) {
-                        // Remember that this zip contained a single base name as we will deal with this using a simple move.
+                        // Remember that this zip contained a single base name as we will deal with this using
+                        // a simple move.
                         moveOriginalFile = true;
 
                     } else {
@@ -96,9 +99,13 @@ class ZipFragmenter {
 
                             final Path outputFile = PartsPathUtil.createPart(currentDir, path, idString);
                             // If output file already exists then it ought to be overwritten automatically.
-                            try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(outputFile)) {
+                            try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(
+                                    outputFile)) {
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Meta);
-                                transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Context);
+                                transferEntry(stroomZipFile,
+                                        stroomZipOutputStream,
+                                        baseName,
+                                        StroomZipFileType.Context);
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Data);
                             }
                             i++;
@@ -142,9 +149,11 @@ class ZipFragmenter {
         try {
             final InputStream inputStream = stroomZipFile.getInputStream(baseName, type);
             if (inputStream != null) {
-                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, BufferSizeUtil.get())) {
+                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream,
+                        BufferSizeUtil.get())) {
                     final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
-                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(outputEntryName), BufferSizeUtil.get())) {
+                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(
+                            outputEntryName), BufferSizeUtil.get())) {
                         StreamUtil.streamToStream(bufferedInputStream, outputStream);
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);

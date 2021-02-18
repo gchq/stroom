@@ -1,10 +1,11 @@
 package stroom.security.impl.session;
 
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,7 @@ public class SessionListResponse extends ResultPage<SessionDetails> {
                 SessionListResponse.createPageResponse(Collections.emptyList()));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         return super.equals(o);

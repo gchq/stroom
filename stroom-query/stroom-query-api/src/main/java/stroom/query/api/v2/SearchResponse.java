@@ -24,6 +24,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -31,9 +34,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
@@ -46,6 +46,7 @@ import java.util.Objects;
 @ApiModel(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
 public final class SearchResponse {
+
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
     @ApiModelProperty(
@@ -130,10 +131,15 @@ public final class SearchResponse {
         return complete != null && complete;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SearchResponse that = (SearchResponse) o;
         return Objects.equals(highlights, that.highlights) &&
                 Objects.equals(results, that.results) &&
@@ -157,6 +163,7 @@ public final class SearchResponse {
     }
 
     public static class TableResultBuilder extends Builder<TableResult, TableResultBuilder> {
+
         @Override
         public TableResultBuilder self() {
             return this;
@@ -174,11 +181,12 @@ public final class SearchResponse {
     /**
      * Builder for constructing a {@link SearchResponse}
      *
-     * @param <ResultClass> The class of the popToWhenComplete builder, allows nested building
+     * @param <T_RESULT_CLASS> The class of the popToWhenComplete builder, allows nested building
      */
     private abstract static class Builder<
-            ResultClass extends Result,
-            CHILD_CLASS extends Builder<ResultClass, ?>> {
+            T_RESULT_CLASS extends Result,
+            T_CHILD_CLASS extends Builder<T_RESULT_CLASS, ?>> {
+
         // Mandatory parameters
         Boolean complete;
 
@@ -201,7 +209,7 @@ public final class SearchResponse {
          * @param value are the results considered complete
          * @return The {@link Builder}, enabling method chaining
          */
-        public final CHILD_CLASS complete(final Boolean value) {
+        public final T_CHILD_CLASS complete(final Boolean value) {
             this.complete = value;
             return self();
         }
@@ -240,17 +248,17 @@ public final class SearchResponse {
 //            return self();
 //        }
 
-        public CHILD_CLASS highlights(final List<String> highlights) {
+        public T_CHILD_CLASS highlights(final List<String> highlights) {
             this.highlights = highlights;
             return self();
         }
 
-        public CHILD_CLASS results(final List<Result> results) {
+        public T_CHILD_CLASS results(final List<Result> results) {
             this.results = results;
             return self();
         }
 
-        public CHILD_CLASS errors(final List<String> errors) {
+        public T_CHILD_CLASS errors(final List<String> errors) {
             this.errors = errors;
             return self();
         }
@@ -264,7 +272,7 @@ public final class SearchResponse {
             return new SearchResponse(highlights, results, errors, complete);
         }
 
-        protected abstract CHILD_CLASS self();
+        protected abstract T_CHILD_CLASS self();
     }
 
 }

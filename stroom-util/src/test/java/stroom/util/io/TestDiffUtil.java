@@ -104,12 +104,11 @@ class TestDiffUtil {
                 .isEqualTo(lineText);
     }
 
-    private static enum DiffState {
+    private enum DiffState {
         ADDED,
         DELETED,
         NO_CHANGE
     }
-
 
 
 }

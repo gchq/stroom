@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FlatResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
@@ -307,15 +308,18 @@ public class FlatResultCreator implements ResultCreator {
 
     @FunctionalInterface
     private interface RangeChecker {
+
         boolean check(long count);
     }
 
     @FunctionalInterface
     private interface OpenGroups {
+
         boolean isOpen(RawKey key);
     }
 
     private static class Mapper {
+
         private final int[] parentFieldIndices;
         private final DataStore dataStore;
         private final int maxItems;
@@ -374,7 +378,8 @@ public class FlatResultCreator implements ResultCreator {
                     for (int i = 0; i < parentFieldIndices.length; i++) {
                         final int index = parentFieldIndices[i];
                         if (index != -1) {
-                            final Val val = item.getValue(index); // TODO : @66 Currently evaluating more values than will be needed.
+                            // TODO : @66 Currently evaluating more values than will be needed.
+                            final Val val = item.getValue(index);
                             values[i] = val;
                         }
                     }
@@ -393,6 +398,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class RangeCheckerFactory {
+
         public static RangeChecker create(final OffsetRange range) {
             if (range == null) {
                 return count -> true;
@@ -405,6 +411,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class OpenGroupsFactory {
+
         public static OpenGroups create(final Set<RawKey> openGroups) {
             if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;

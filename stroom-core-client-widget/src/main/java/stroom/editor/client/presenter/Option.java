@@ -17,12 +17,13 @@
 package stroom.editor.client.presenter;
 
 public class Option {
-    private ChangeHandler changeHandler;
-    private String text;
+
+    private final ChangeHandler changeHandler;
+    private final String text;
     private boolean on;
     private boolean available;
-    private boolean defaultValue;
-    private boolean defaultAvailability;
+    private final boolean defaultValue;
+    private final boolean defaultAvailability;
 
     public Option(final String text,
                   final boolean on,
@@ -102,6 +103,7 @@ public class Option {
     }
 
     public interface ChangeHandler {
+
         void onChange(boolean setting);
     }
 }

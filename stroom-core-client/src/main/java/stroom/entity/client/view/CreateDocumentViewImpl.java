@@ -17,6 +17,11 @@
 
 package stroom.entity.client.view;
 
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.item.client.ItemListBox;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,12 +33,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.item.client.ItemListBox;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CreateDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements CreateDocumentView {
+
     private final Widget widget;
     @UiField
     SimplePanel foldersOuter;
@@ -104,5 +106,6 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> 
     }
 
     public interface Binder extends UiBinder<Widget, CreateDocumentViewImpl> {
+
     }
 }

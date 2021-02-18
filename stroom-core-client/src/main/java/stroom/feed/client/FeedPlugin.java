@@ -17,10 +17,6 @@
 
 package stroom.feed.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class FeedPlugin extends DocumentPlugin<FeedDoc> {
+
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
     private final Provider<FeedPresenter> editorProvider;
@@ -58,7 +60,9 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<FeedDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<FeedDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<FeedDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -68,7 +72,10 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final FeedDoc document, final Consumer<FeedDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final FeedDoc document,
+                     final Consumer<FeedDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<FeedDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

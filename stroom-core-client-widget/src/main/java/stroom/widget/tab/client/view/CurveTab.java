@@ -16,6 +16,10 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.widget.tab.client.presenter.ImageIcon;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
@@ -27,11 +31,9 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Image;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class CurveTab extends AbstractTab {
+
     private static final int MAX_TEXT_LENGTH = 50;
 
     private static Resources resources;
@@ -192,6 +194,7 @@ public class CurveTab extends AbstractTab {
     }
 
     public interface Style extends CssResource {
+
         String curveTab();
 
         String hover();
@@ -218,6 +221,7 @@ public class CurveTab extends AbstractTab {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("content.png")
         @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
         ImageResource content();

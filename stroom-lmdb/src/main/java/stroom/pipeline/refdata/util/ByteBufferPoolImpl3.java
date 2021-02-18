@@ -23,7 +23,6 @@ import stroom.util.sysinfo.SystemInfoResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +32,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 
 /*
@@ -337,6 +337,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
     }
 
     private static final class Key implements Comparable<Key> {
+
         private final int capacity;
         private final long insertionTime;
 
@@ -363,10 +364,15 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
             }
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return capacity == key.capacity &&
                     insertionTime == key.insertionTime;

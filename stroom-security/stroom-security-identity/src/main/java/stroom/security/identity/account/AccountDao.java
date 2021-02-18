@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
+
     AccountResultPage list();
 
     AccountResultPage search(SearchAccountRequest request);
@@ -30,7 +31,9 @@ public interface AccountDao {
 
     void changePassword(String userId, String newPassword);
 
-    Boolean needsPasswordChange(String userId, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
+    Boolean needsPasswordChange(String userId,
+                                Duration mandatoryPasswordChangeDuration,
+                                boolean forcePasswordChangeOnFirstLogin);
 
     int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold);
 

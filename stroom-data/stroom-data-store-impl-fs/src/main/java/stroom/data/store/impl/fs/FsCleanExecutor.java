@@ -32,8 +32,6 @@ import stroom.util.logging.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -44,11 +42,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Task to clean the stream store.
  */
 class FsCleanExecutor {
+
     private static final String DELETE_OUT = "delete.out";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanExecutor.class);
@@ -91,16 +92,23 @@ class FsCleanExecutor {
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             if (volumeList != null && volumeList.size() > 0) {
                 // Add to the task steps remaining.
-                final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
+                final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#",
+                        1,
+                        1,
+                        config.getFileSystemCleanBatchSize(),
+                        Integer.MAX_VALUE);
                 final Executor executor = executorProvider.get(threadPool);
 
                 final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
                 int i = 0;
                 for (final FsVolume volume : volumeList) {
                     if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
-                        final Runnable runnable = taskContextFactory.context(parentContext, "Cleaning: " + volume.getPath(), taskContext ->
-                                cleanVolume(taskContext, volume));
-                        final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
+                        final Runnable runnable = taskContextFactory.context(parentContext,
+                                "Cleaning: " + volume.getPath(),
+                                taskContext ->
+                                        cleanVolume(taskContext, volume));
+                        final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
+                                executor);
                         completableFutures[i++] = completableFuture;
                     }
                 }
@@ -120,7 +128,8 @@ class FsCleanExecutor {
             } else {
                 final Path deleteListFile = dir.resolve(DELETE_OUT);
                 try {
-                    try (final PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(deleteListFile, StreamUtil.DEFAULT_CHARSET))) {
+                    try (final PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(deleteListFile,
+                            StreamUtil.DEFAULT_CHARSET))) {
                         final Consumer<List<String>> deleteListConsumer = list -> {
                             synchronized (printWriter) {
                                 list.forEach(printWriter::println);

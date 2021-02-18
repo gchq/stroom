@@ -16,16 +16,18 @@
 
 package stroom.pipeline.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 
 public class XsltSettingsViewImpl extends ViewImpl implements XsltSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -52,5 +54,6 @@ public class XsltSettingsViewImpl extends ViewImpl implements XsltSettingsView, 
     }
 
     public interface Binder extends UiBinder<Widget, XsltSettingsViewImpl> {
+
     }
 }

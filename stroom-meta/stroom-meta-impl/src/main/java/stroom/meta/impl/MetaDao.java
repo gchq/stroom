@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public interface MetaDao {
+
     Long getMaxId();
 
     Meta create(MetaProperties metaProperties);

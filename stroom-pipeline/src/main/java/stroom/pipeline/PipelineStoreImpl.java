@@ -37,18 +37,19 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
+
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
@@ -140,17 +141,20 @@ public class PipelineStoreImpl implements PipelineStore {
         };
     }
 
-    public void remapPipelineProperties(final List<PipelineProperty> pipelineProperties, final DependencyRemapper dependencyRemapper) {
+    public void remapPipelineProperties(final List<PipelineProperty> pipelineProperties,
+                                        final DependencyRemapper dependencyRemapper) {
         if (pipelineProperties != null) {
             pipelineProperties.forEach(pipelineProperty -> {
                 if (pipelineProperty.getValue() != null) {
-                    pipelineProperty.getValue().setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
+                    pipelineProperty.getValue()
+                            .setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
                 }
             });
         }
     }
 
-    public void remapPipelineReferences(final List<PipelineReference> pipelineReferences, final DependencyRemapper dependencyRemapper) {
+    public void remapPipelineReferences(final List<PipelineReference> pipelineReferences,
+                                        final DependencyRemapper dependencyRemapper) {
         if (pipelineReferences != null) {
             pipelineReferences.forEach(pipelineReference -> {
                 pipelineReference.setFeed(dependencyRemapper.remap(pipelineReference.getFeed()));
@@ -192,12 +196,17 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

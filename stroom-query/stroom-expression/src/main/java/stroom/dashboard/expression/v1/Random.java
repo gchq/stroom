@@ -32,6 +32,7 @@ import com.esotericsoftware.kryo.io.Output;
                 args = {
                 }))
 class Random extends AbstractFunction {
+
     static final String NAME = "random";
 
     public Random(final String name) {
@@ -49,6 +50,7 @@ class Random extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = -7551073465232523106L;
 
         private Val value;

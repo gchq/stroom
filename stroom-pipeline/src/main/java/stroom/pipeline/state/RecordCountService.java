@@ -16,11 +16,12 @@
 
 package stroom.pipeline.state;
 
-import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Singleton;
 
 @Singleton
 public class RecordCountService {
+
     private final AtomicLong readCount = new AtomicLong();
     private final AtomicLong writeCount = new AtomicLong();
 

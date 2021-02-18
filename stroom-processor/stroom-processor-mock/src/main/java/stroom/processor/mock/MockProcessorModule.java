@@ -21,6 +21,7 @@ import stroom.processor.api.ProcessorTaskService;
 import com.google.inject.AbstractModule;
 
 public class MockProcessorModule extends AbstractModule {
+
     @Override
     protected void configure() {
 //        bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);

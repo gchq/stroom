@@ -24,6 +24,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInitialByteArrayOutputStream {
+
     @Test
     void testReuse() throws IOException {
         byte[] reuseBuffer = new byte[2];

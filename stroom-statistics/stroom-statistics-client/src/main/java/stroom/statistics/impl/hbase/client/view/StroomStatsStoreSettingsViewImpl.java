@@ -16,14 +16,6 @@
 
 package stroom.statistics.impl.hbase.client.view;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreSettingsPresenter;
@@ -33,8 +25,18 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
 public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomStatsStoreSettingsUiHandlers>
         implements StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView {
+
     private final Widget widget;
 
     @UiField
@@ -163,5 +165,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
     }
 
     public interface Binder extends UiBinder<Widget, StroomStatsStoreSettingsViewImpl> {
+
     }
 }

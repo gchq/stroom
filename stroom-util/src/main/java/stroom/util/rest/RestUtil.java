@@ -4,12 +4,12 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasUuid;
 
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 public class RestUtil {
 
@@ -37,7 +37,8 @@ public class RestUtil {
     /**
      * Used to validate a request argument and throw a {@link BadRequestException} if it is null
      */
-    public static void requireNonNull(final Object object, Supplier<String> messageSupplier) throws BadRequestException {
+    public static void requireNonNull(final Object object, Supplier<String> messageSupplier)
+            throws BadRequestException {
         if (object == null) {
             throw new BadRequestException(messageSupplier != null
                     ? messageSupplier.get()

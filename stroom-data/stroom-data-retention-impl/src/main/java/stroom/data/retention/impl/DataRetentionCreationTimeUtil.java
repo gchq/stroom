@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
  * A utility class to calculate times from supplied retention ages.
  */
 final class DataRetentionCreationTimeUtil {
+
     private DataRetentionCreationTimeUtil() {
         // Utility class.
     }
@@ -36,7 +37,7 @@ final class DataRetentionCreationTimeUtil {
             return Instant.EPOCH;
         }
 
-        LocalDateTime age = null;
+        final LocalDateTime age;
         final LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
@@ -57,6 +58,8 @@ final class DataRetentionCreationTimeUtil {
             case YEARS:
                 age = time.minusYears(rule.getAge());
                 break;
+            default:
+                age = null;
         }
 
         if (age == null) {
@@ -71,7 +74,7 @@ final class DataRetentionCreationTimeUtil {
             return Instant.EPOCH;
         }
 
-        LocalDateTime age = null;
+        final LocalDateTime age;
         final LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
@@ -92,6 +95,8 @@ final class DataRetentionCreationTimeUtil {
             case YEARS:
                 age = time.plusYears(rule.getAge());
                 break;
+            default:
+                age = null;
         }
 
         if (age == null) {

@@ -7,6 +7,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.ProvidesIntoSet;
 
 public class HasHealthCheckBinder {
+
     private final Multibinder<HasHealthCheck> multibinder;
 
     private HasHealthCheckBinder(final Binder binder) {

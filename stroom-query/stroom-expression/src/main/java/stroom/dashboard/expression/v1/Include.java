@@ -39,6 +39,7 @@ import java.io.Serializable;
                                 isVarargs = true,
                                 minVarargsCount = 1)}))
 class Include extends AbstractIncludeExclude implements Serializable {
+
     static final String NAME = "include";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -57,6 +58,7 @@ class Include extends AbstractIncludeExclude implements Serializable {
     }
 
     private static final class Gen extends AbstractGen {
+
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }

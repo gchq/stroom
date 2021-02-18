@@ -16,10 +16,12 @@
 
 package stroom.pipeline.filter;
 
-import net.sf.saxon.om.NodeInfo;
 import stroom.pipeline.xml.event.EventListUtils;
 
+import net.sf.saxon.om.NodeInfo;
+
 public class NodeInfoSerializer {
+
     private NodeInfo nodeInfo;
     private String xml;
 

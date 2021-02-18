@@ -30,6 +30,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
+
     @JsonProperty
     private String type;
     @JsonProperty
@@ -168,10 +169,15 @@ public class ExplorerNode implements HasDisplayValue {
         return name;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ExplorerNode that = (ExplorerNode) o;
         return uuid.equals(that.uuid);
     }
@@ -187,7 +193,9 @@ public class ExplorerNode implements HasDisplayValue {
     }
 
     public enum NodeState {
-        OPEN, CLOSED, LEAF
+        OPEN,
+        CLOSED,
+        LEAF
     }
 
     public static Builder builder() {
@@ -199,6 +207,7 @@ public class ExplorerNode implements HasDisplayValue {
     }
 
     public static final class Builder {
+
         private String type;
         private String uuid;
         private String name;

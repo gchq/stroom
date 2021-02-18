@@ -17,7 +17,6 @@
 package stroom.index.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.index.impl.selection.MostFreePercentVolumeSelector;
 import stroom.index.impl.selection.MostFreeVolumeSelector;
 import stroom.index.impl.selection.RandomVolumeSelector;
@@ -31,11 +30,14 @@ import stroom.index.shared.IndexVolume;
 import stroom.node.shared.Node;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVolumeSelector extends StroomUnitTest {
+
     @Test
     void testMostFree() {
         test(new MostFreeVolumeSelector());

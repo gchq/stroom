@@ -67,7 +67,8 @@ public final class SampleRepositoryCreator {
 //        // Load config.
 //        importExportSerializer.read(testDir, null, ImportMode.IGNORE_CONFIRMATION);
 //
-//        final Path repoDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve( "SampleRepositoryCreator/repo");
+//        final Path repoDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+//        .resolve( "SampleRepositoryCreator/repo");
 //        Files.createDirectories(repoDir);
 //        FileUtil.deleteContents(repoDir);
 //

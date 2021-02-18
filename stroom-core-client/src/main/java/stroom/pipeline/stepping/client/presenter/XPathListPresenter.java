@@ -16,12 +16,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.ListDataProvider;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
@@ -30,10 +24,18 @@ import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.ListDataProvider;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 
 public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilter>>
         implements Refreshable {
+
     private final ListDataProvider<XPathFilter> dataProvider;
 
     @Inject

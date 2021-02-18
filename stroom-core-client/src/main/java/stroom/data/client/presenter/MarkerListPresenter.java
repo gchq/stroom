@@ -50,7 +50,8 @@ import java.util.HashSet;
 import java.util.List;
 
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
-    private static HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
+
+    private static final HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;

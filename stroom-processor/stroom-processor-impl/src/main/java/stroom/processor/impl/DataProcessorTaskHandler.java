@@ -36,13 +36,14 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DataProcessorTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
 
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
@@ -101,7 +102,8 @@ public class DataProcessorTaskHandler {
                 Processor destStreamProcessor = null;
                 ProcessorFilter destProcessorFilter = null;
                 if (processorTask.getProcessorFilter() != null) {
-                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(null);
+                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
+                            null);
                     if (destProcessorFilter != null) {
                         destStreamProcessor = processorCache
                                 .get(destProcessorFilter.getProcessor().getId()).orElse(null);
@@ -129,7 +131,8 @@ public class DataProcessorTaskHandler {
                     // Avoid having to do another fetch
                     processorTask.setProcessorFilter(destProcessorFilter);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
+                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(
+                            destStreamProcessor.getTaskType()));
                     final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
 
                     try {
@@ -153,7 +156,10 @@ public class DataProcessorTaskHandler {
                 processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                         startTime, System.currentTimeMillis());
             } else {
-                processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                processorTaskDao.changeTaskStatus(processorTask,
+                        nodeInfo.getThisNodeName(),
+                        TaskStatus.FAILED,
+                        startTime,
                         System.currentTimeMillis());
             }
         }

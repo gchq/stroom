@@ -19,8 +19,9 @@ package stroom.test.common.util.test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CheckedLimit {
+
     final int limit;
-    private AtomicInteger atomicInteger = new AtomicInteger(0);
+    private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
     public CheckedLimit(int limit) {
         this.limit = limit;

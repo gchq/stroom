@@ -1,15 +1,12 @@
 package stroom.config.global.impl.validation;
 
-import stroom.util.shared.validation.ValidationSeverity;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidationSeverity;
 
-import javax.inject.Inject;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +16,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 
 public class ConfigValidator {
 
@@ -71,25 +71,25 @@ public class ConfigValidator {
         // We could do this by setting @Valid on each config getter but that is liable to
         // be forgotten on new config objects
         PropertyUtil.walkObjectTree(
-            config,
-            prop ->
-                // Only want to validate config objects
-                AbstractConfig.class.isAssignableFrom(prop.getValueClass())
-                    && prop.getValueFromConfigObject() != null,
-            prop -> {
-                final AbstractConfig configObject = (AbstractConfig) prop.getValueFromConfigObject();
-                final ConfigValidator.Result result = validate(configObject);
-                if (result.hasErrorsOrWarnings()) {
-                    resultList.add(result);
-                }
-            });
+                config,
+                prop ->
+                        // Only want to validate config objects
+                        AbstractConfig.class.isAssignableFrom(prop.getValueClass())
+                                && prop.getValueFromConfigObject() != null,
+                prop -> {
+                    final AbstractConfig configObject = (AbstractConfig) prop.getValueFromConfigObject();
+                    final ConfigValidator.Result result = validate(configObject);
+                    if (result.hasErrorsOrWarnings()) {
+                        resultList.add(result);
+                    }
+                });
 
         return ConfigValidator.Result.of(resultList);
     }
 
     public static void logConstraintViolation(
-        final ConstraintViolation<? extends AbstractConfig> constraintViolation,
-        final ValidationSeverity severity) {
+            final ConstraintViolation<? extends AbstractConfig> constraintViolation,
+            final ValidationSeverity severity) {
 
         final Consumer<String> logFunc;
         final String severityStr;
@@ -110,13 +110,14 @@ public class ConfigValidator {
         final String path = config.getFullPath(propName);
 
         logFunc.accept(LogUtil.message("  Validation {} for {} [{}] - {}",
-            severityStr,
-            path,
-            constraintViolation.getInvalidValue(),
-            constraintViolation.getMessage()));
+                severityStr,
+                path,
+                constraintViolation.getInvalidValue(),
+                constraintViolation.getMessage()));
     }
 
     public static class Result {
+
         private static final Result EMPTY = new Result(Collections.emptySet());
 
         private final int errorCount;
@@ -137,8 +138,8 @@ public class ConfigValidator {
                             constraintViolation.getPropertyPath().toString(),
                             constraintViolation.getInvalidValue(),
                             constraintViolation.getLeafBean() != null
-                                ? constraintViolation.getLeafBean().getClass().getCanonicalName()
-                                : "NULL"));
+                                    ? constraintViolation.getLeafBean().getClass().getCanonicalName()
+                                    : "NULL"));
 
                     final ValidationSeverity severity = ValidationSeverity.fromPayloads(
                             constraintViolation.getConstraintDescriptor().getPayload());
@@ -155,7 +156,9 @@ public class ConfigValidator {
             }
         }
 
-        public static Result of(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+        public static Result of(
+                final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+
             if (constraintViolations == null || constraintViolations.isEmpty()) {
                 return empty();
             } else {
@@ -192,13 +195,13 @@ public class ConfigValidator {
          * errors or warnings the consumer will not be called.
          */
         public void handleViolations(
-                final BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> constraintViolationConsumer) {
+                final BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> consumer) {
 
             for (final ConstraintViolation<? extends AbstractConfig> constraintViolation : constraintViolations) {
                 final ValidationSeverity severity = ValidationSeverity.fromPayloads(
                         constraintViolation.getConstraintDescriptor().getPayload());
 
-                constraintViolationConsumer.accept(constraintViolation, severity);
+                consumer.accept(constraintViolation, severity);
             }
         }
 
@@ -257,9 +260,9 @@ public class ConfigValidator {
         @Override
         public String toString() {
             return "Result{" +
-                "errorCount=" + errorCount +
-                ", warningCount=" + warningCount +
-                '}';
+                    "errorCount=" + errorCount +
+                    ", warningCount=" + warningCount +
+                    '}';
         }
     }
 }

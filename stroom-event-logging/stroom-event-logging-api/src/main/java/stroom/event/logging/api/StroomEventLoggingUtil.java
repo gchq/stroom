@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
+
     private StroomEventLoggingUtil() {
     }
 
@@ -154,32 +155,32 @@ public class StroomEventLoggingUtil {
                 final AdvancedQueryItem operator;
                 if (expressionOperator.op().equals(Op.AND)) {
                     operator = And.builder()
-                            .withQueryItems(expressionOperator.getChildren()== null
+                            .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren().stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.OR)) {
                     operator = Or.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.NOT)) {
                     operator = Not.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else {
                     throw new RuntimeException("Unknown op " + expressionOperator.op());

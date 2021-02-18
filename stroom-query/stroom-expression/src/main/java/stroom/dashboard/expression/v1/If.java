@@ -43,6 +43,7 @@ import java.text.ParseException;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)}))
 class If extends AbstractManyChildFunction implements Serializable {
+
     static final String NAME = "if";
     private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
@@ -105,6 +106,7 @@ class If extends AbstractManyChildFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {

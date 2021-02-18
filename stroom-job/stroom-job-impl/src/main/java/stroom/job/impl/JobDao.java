@@ -6,6 +6,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Optional;
 
 public interface JobDao {
+
     Job create(Job job);
 
     Job update(Job job);

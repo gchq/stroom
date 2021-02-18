@@ -17,5 +17,6 @@
 package stroom.query.common.v2;
 
 public interface Items extends Iterable<Item> {
+
     int size();
 }

@@ -17,9 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.lmdb.Serde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

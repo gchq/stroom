@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelectionHandler<I>> {
+
     /**
      * Handler type.
      */
@@ -96,6 +97,7 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
     }
 
     public interface DataSelectionHandler<I> extends EventHandler {
+
         void onSelection(DataSelectionEvent<I> event);
     }
 }

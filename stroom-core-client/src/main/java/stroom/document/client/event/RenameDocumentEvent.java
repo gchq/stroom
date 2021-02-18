@@ -17,13 +17,15 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.docref.DocRef;
 
 public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenter;
     private final DocRef docRef;
@@ -74,6 +76,7 @@ public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onRename(final RenameDocumentEvent event);
     }
 }

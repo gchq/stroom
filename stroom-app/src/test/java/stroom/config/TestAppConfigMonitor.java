@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.validation.Validator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +24,11 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.validation.Validator;
 
 class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
     @Inject

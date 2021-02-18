@@ -17,15 +17,17 @@
 
 package stroom.entity.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.inject.client.Ginjector;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.entity.client.presenter.NameDocumentPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.inject.client.Ginjector;
+
 public interface EntityGinjector extends Ginjector {
+
     AsyncProvider<CreateDocumentPresenter> getCreateEntityPresenter();
 
     AsyncProvider<CopyDocumentPresenter> getCopyEntityPresenter();

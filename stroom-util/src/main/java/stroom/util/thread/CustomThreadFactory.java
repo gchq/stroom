@@ -20,11 +20,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CustomThreadFactory implements ThreadFactory {
-    private String prefix;
+
+    private final String prefix;
     private ThreadGroup threadGroup;
     private int priority = Thread.NORM_PRIORITY;
     private boolean daemon = false;
-    private AtomicInteger threadNo = new AtomicInteger();
+    private final AtomicInteger threadNo = new AtomicInteger();
 
     public CustomThreadFactory(final String prefix) {
         this.prefix = prefix;

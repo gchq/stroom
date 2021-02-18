@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsNumber extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isNumber";
     private static final long serialVersionUID = -305145496413936297L;
     private static final NumberTest TEST = new NumberTest();
@@ -47,6 +48,7 @@ class IsNumber extends AbstractIsFunction implements Serializable {
     }
 
     private static class NumberTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val.type().isNumber());

@@ -25,13 +25,14 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
+
     private static final String CACHE_NAME = "Index Config Cache";
 
     private final IndexStore indexStore;

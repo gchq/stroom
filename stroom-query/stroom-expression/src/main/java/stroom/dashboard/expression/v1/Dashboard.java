@@ -50,6 +50,7 @@ package stroom.dashboard.expression.v1;
                                         description = "A String of space separated parameters to pass into the " +
                                                 "dashboard, e.g. 'usedId=user1 building=hq'")})})
 class Dashboard extends AbstractLink {
+
     static final String NAME = "dashboard";
 
     public Dashboard(final String name) {
@@ -62,6 +63,7 @@ class Dashboard extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

@@ -28,8 +28,9 @@ import java.util.Set;
         signatures = @FunctionSignature(
                 description = "Returns all the query parameters for the current query, e.g. 'user=jbloggs site=HQ'.",
                 returnDescription = "All query parameters as a space delimited string.",
-                args = { }))
+                args = {}))
 class QueryParams extends AbstractFunction {
+
     private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
 
     static final String NAME = "params";

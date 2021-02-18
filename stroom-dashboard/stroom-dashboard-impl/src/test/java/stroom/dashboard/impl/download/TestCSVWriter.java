@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 class TestCSVWriter {
+
     @Test
     void test() throws IOException {
         final StringWriter writer = new StringWriter();

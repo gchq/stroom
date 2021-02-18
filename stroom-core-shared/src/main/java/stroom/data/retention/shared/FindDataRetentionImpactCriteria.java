@@ -2,8 +2,8 @@ package stroom.data.retention.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

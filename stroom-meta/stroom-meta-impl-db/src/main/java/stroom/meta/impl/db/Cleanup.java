@@ -2,10 +2,11 @@ package stroom.meta.impl.db;
 
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class Cleanup {
+
     private final Set<Clearable> clearables;
 
     @Inject

@@ -3,6 +3,7 @@ package stroom.util;
 import java.util.Map;
 
 public final class ArgsUtil {
+
     private ArgsUtil() {
         // Utility class.
     }

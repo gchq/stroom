@@ -32,6 +32,7 @@ import java.util.Objects;
 @ApiModel(description = "The timezone to apply to a date time value")
 @JsonInclude(Include.NON_NULL)
 public final class TimeZone {
+
     @ApiModelProperty(
             value = "How the time zone will be specified, e.g. " +
                     "from provided client 'Local' time, " +
@@ -103,10 +104,15 @@ public final class TimeZone {
         return offsetMinutes;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TimeZone timeZone = (TimeZone) o;
         return use == timeZone.use &&
                 Objects.equals(id, timeZone.id) &&
@@ -164,6 +170,7 @@ public final class TimeZone {
      * Builder for constructing a {@link TimeZone timeZone}
      */
     public static final class Builder {
+
         private Use use;
         private String id;
         private Integer offsetHours;

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LocationAwareLogger;
 
 public final class LambdaLoggerFactory {
+
     private LambdaLoggerFactory() {
         // Factory.
     }

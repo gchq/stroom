@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class TooltipUtil {
+
     private static final SafeHtml BREAK = SafeHtmlUtils.fromSafeConstant("<br/>");
     private static final SafeHtml SEPARATOR = SafeHtmlUtils.fromSafeConstant("<hr/>");
     private static final SafeHtml ITAlIC_OPEN = SafeHtmlUtils.fromSafeConstant("<i>");
@@ -71,7 +72,8 @@ public final class TooltipUtil {
                 SPAN_CLOSE);
     }
 
-    public static SafeHtml styledParagraph(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+    public static SafeHtml styledParagraph(final Object value,
+                                           final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
 
         SafeStylesBuilder builder = new SafeStylesBuilder();
         if (stylesBuilderConsumer != null) {
@@ -130,7 +132,7 @@ public final class TooltipUtil {
             } else {
                 String str = String.valueOf(value);
                 if (str.length() > 0) {
-                   safeHtmlBuilder.appendEscaped(str);
+                    safeHtmlBuilder.appendEscaped(str);
                 } else {
                     safeHtmlBuilder.append(BLANK);
                 }
@@ -166,6 +168,7 @@ public final class TooltipUtil {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static final class Builder {
+
         private final SafeHtmlBuilder buffer;
         private final Consumer<SafeStylesBuilder> safeStylesBuilderConsumer;
 
@@ -234,6 +237,7 @@ public final class TooltipUtil {
             buffer.append(BREAK);
             return this;
         }
+
         public Builder addSafeHtml(final SafeHtml safeHtml) {
             buffer.append(safeHtml);
             return this;
@@ -303,6 +307,7 @@ public final class TooltipUtil {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static class TableBuilder2 {
+
         private final SafeHtmlBuilder buffer;
 
         public TableBuilder2() {
@@ -348,20 +353,20 @@ public final class TooltipUtil {
 //        }
 
         public TableBuilder2 addRow(final Object key,
-                                   final Object value) {
+                                    final Object value) {
             return addRow(key, value, false, null);
         }
 
         public TableBuilder2 addRow(final Object key,
-                                   final Object value,
-                                   final boolean showBlank) {
+                                    final Object value,
+                                    final boolean showBlank) {
             return addRow(key, value, showBlank, null);
         }
 
         public TableBuilder2 addRow(final Object key,
-                                   final Object value,
-                                   final boolean showBlank,
-                                   final SafeStyles safeStyles) {
+                                    final Object value,
+                                    final boolean showBlank,
+                                    final SafeStyles safeStyles) {
             Objects.requireNonNull(key);
             final SafeHtml safeKey = objectToSafeHtml(key);
             final String cellStyles = safeStyles != null
@@ -410,6 +415,7 @@ public final class TooltipUtil {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static class TableBuilder3 {
+
         private final SafeHtmlBuilder buffer;
 
         public TableBuilder3() {

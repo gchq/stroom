@@ -41,7 +41,7 @@ public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, Sourc
         return "Source";
     }
 
-        /**
+    /**
      * 4. This method will open the source and show it in the content pane.
      */
     @SuppressWarnings("unchecked")

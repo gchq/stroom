@@ -26,6 +26,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * Represents a cursor position.
  */
 public class AceEditorCursorPosition {
+
     private final int row, column;
 
     /**

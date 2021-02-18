@@ -32,6 +32,7 @@ import stroom.util.date.DateUtil;
 import javax.inject.Inject;
 
 class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject

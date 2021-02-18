@@ -16,6 +16,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class JobNode implements HasAuditInfo, HasIntegerId {
+
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -236,8 +237,12 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final JobNode jobNode = (JobNode) o;
         return Objects.equals(id, jobNode.id);
     }

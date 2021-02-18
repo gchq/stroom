@@ -24,9 +24,9 @@ import stroom.util.logging.LogUtil;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import javax.xml.bind.DatatypeConverter;
 
 public class ByteBufferUtils {
 

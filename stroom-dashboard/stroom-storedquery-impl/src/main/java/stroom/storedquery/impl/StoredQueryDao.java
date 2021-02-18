@@ -8,6 +8,7 @@ import stroom.util.shared.ResultPage;
 import java.util.List;
 
 public interface StoredQueryDao extends HasIntCrud<StoredQuery> {
+
     ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria);
 
     void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs);

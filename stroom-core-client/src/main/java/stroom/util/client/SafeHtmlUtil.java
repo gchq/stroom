@@ -15,8 +15,8 @@ public class SafeHtmlUtil {
 
     private static String nullSafe(final String string) {
         return string != null
-            ? string
-            : "";
+                ? string
+                : "";
     }
 
     /**

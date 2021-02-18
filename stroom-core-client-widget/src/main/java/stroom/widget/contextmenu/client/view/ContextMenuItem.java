@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 
 public class ContextMenuItem extends Composite {
+
     private static final Binder binder = GWT.create(Binder.class);
     private final ContextMenu contextMenu;
     private final Command command;
@@ -37,7 +38,8 @@ public class ContextMenuItem extends Composite {
     @UiField
     Style style;
 
-    private FlowPanel layout;
+    private final FlowPanel layout;
+
     public ContextMenuItem(final ContextMenu contextMenu, final String text, final Command command) {
         this.contextMenu = contextMenu;
         this.command = command;
@@ -77,9 +79,11 @@ public class ContextMenuItem extends Composite {
     }
 
     interface Binder extends UiBinder<FlowPanel, ContextMenuItem> {
+
     }
 
     interface Style extends CssResource {
+
         String selected();
     }
 }

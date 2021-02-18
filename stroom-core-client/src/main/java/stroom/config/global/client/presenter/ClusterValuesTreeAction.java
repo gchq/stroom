@@ -6,8 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClusterValuesTreeAction implements TreeAction<ClusterValuesRow> {
+
     private Set<ClusterValuesRow> expandedRows = new HashSet<>();
-    private Set<ClusterValuesRow> collapsedRows = new HashSet<>();
+    private final Set<ClusterValuesRow> collapsedRows = new HashSet<>();
 
     @Override
     public void setRowExpanded(final ClusterValuesRow row, final boolean expanded) {

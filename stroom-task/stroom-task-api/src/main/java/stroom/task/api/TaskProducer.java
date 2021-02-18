@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public abstract class TaskProducer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
     private final AtomicInteger threadsUsed = new AtomicInteger();
@@ -88,9 +89,11 @@ public abstract class TaskProducer {
     protected abstract Consumer<TaskContext> getNext();
 
     /**
-     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued
+     * have completed processing.
      *
-     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued
+     * have completed processing.
      */
     protected abstract boolean isComplete();
 

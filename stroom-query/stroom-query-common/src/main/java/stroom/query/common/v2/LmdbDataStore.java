@@ -21,7 +21,6 @@ import stroom.dashboard.expression.v1.Any.AnySelector;
 import stroom.dashboard.expression.v1.Bottom.BottomSelector;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.First.FirstSelector;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Last.LastSelector;
 import stroom.dashboard.expression.v1.Nth.NthSelector;
@@ -49,7 +48,6 @@ import org.lmdbjava.Dbi;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -70,8 +68,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import javax.annotation.Nonnull;
 
 public class LmdbDataStore implements DataStore {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
     private static final long COMMIT_FREQUENCY_MS = 1000;
     private static RawKey ROOT_RAW_KEY;
@@ -146,7 +146,8 @@ public class LmdbDataStore implements DataStore {
 
         // Start transfer loop.
         addedData = new CountDownLatch(1);
-        final Executor executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
+        // TODO : Use provided executor but don't allow it to be terminated by search termination.
+        final Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(this::transfer);
     }
 
@@ -400,7 +401,8 @@ public class LmdbDataStore implements DataStore {
                         lock.lock();
                         try {
                             // See if we can find an existing item.
-                            final ByteBuffer existing = Metrics.measure("Grouped get", () -> lmdbDbi.get(txn, keyBuffer));
+                            final ByteBuffer existing = Metrics.measure("Grouped get",
+                                    () -> lmdbDbi.get(txn, keyBuffer));
                             ByteBuffer valueBuffer;
                             if (existing != null) {
                                 final Generator[] existingValue = valueSerde.deserialize(existing);
@@ -597,7 +599,8 @@ public class LmdbDataStore implements DataStore {
                             KeyPart lastPart = key.getLast();
                             if (lastPart != null && !lastPart.isGrouped()) {
                                 // Ensure sequence numbers are unique for this data store.
-                                ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                                ((UngroupedKeyPart) lastPart).setSequenceNumber(
+                                        ungroupedItemSequenceNumber.incrementAndGet());
                             }
 
                             put(key, value);
@@ -672,7 +675,7 @@ public class LmdbDataStore implements DataStore {
 
             final int maxSize;
             if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.min(100, trimmedSize * 2);
+                maxSize = Math.max(1000, trimmedSize * 2);
             } else {
                 maxSize = Integer.MAX_VALUE;
             }
@@ -684,7 +687,7 @@ public class LmdbDataStore implements DataStore {
                 try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                    while (iterator.hasNext() && inRange) {
+                    while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
                         final Key key = keySerde.deserialize(keyVal.key());
 
@@ -732,6 +735,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private static class ItemArrayList {
+
         private final int minArraySize;
         private ItemImpl[] array;
         private int size;
@@ -779,6 +783,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     public static class ItemImpl implements Item, HasGenerators {
+
         private final LmdbDataStore lmdbDataStore;
         private final RawKey rawKey;
         private final Key key;
@@ -817,7 +822,7 @@ public class LmdbDataStore implements DataStore {
 
                     if (generator instanceof AnySelector) {
                         sort = false;
-                    } else if (generator instanceof FirstSelector) {
+//                    } else if (generator instanceof FirstSelector) {
                     } else if (generator instanceof LastSelector) {
                         trimTop = true;
                     } else if (generator instanceof TopSelector) {
@@ -869,6 +874,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private static class QueueItem {
+
         private final Key key;
         private final Generator[] generators;
 

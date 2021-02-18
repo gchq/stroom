@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.internal.util;
 
 import java.util.Iterator;
@@ -36,6 +37,7 @@ import java.util.List;
  * Util (general purpose) methods dealing with {@link Iterable}.
  */
 public class IterableUtil {
+
     /**
      * Returns an {@link Iterable} with an iterator iterating the given list
      * from the end to the start.
@@ -57,7 +59,8 @@ public class IterableUtil {
     }
 
     private static class ReverseIterable<T> implements Iterable<T> {
-        private List<T> list;
+
+        private final List<T> list;
 
         public ReverseIterable(List<T> list) {
             this.list = list;

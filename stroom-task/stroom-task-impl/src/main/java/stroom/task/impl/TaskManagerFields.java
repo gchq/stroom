@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TaskManagerFields {
+
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";

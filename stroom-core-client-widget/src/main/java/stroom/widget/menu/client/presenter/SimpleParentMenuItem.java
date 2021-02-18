@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import java.util.List;
 
 public class SimpleParentMenuItem extends SimpleMenuItem implements HasChildren {
+
     private final List<Item> children;
 
     public SimpleParentMenuItem(final int priority,

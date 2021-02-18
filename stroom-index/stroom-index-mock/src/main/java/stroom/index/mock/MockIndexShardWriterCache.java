@@ -23,13 +23,14 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
+
     private final int maxDocumentCount;
 
     private final IndexShardService indexShardService;
@@ -55,7 +56,9 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
         return openWritersByShardKey.computeIfAbsent(indexShardKey, k -> {
             final IndexShard indexShard = indexShardService.createIndexShard(k, null);
-            final IndexShardWriter indexShardWriter = new MockIndexShardWriter(indexShardKey, indexShard, maxDocumentCount);
+            final IndexShardWriter indexShardWriter = new MockIndexShardWriter(indexShardKey,
+                    indexShard,
+                    maxDocumentCount);
             openWritersByShardId.put(indexShard.getId(), indexShardWriter);
             return indexShardWriter;
         });

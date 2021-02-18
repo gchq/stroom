@@ -28,6 +28,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class DashboardModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DashboardStore.class).to(DashboardStoreImpl.class);

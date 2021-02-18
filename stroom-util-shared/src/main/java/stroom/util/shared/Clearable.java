@@ -20,5 +20,6 @@ package stroom.util.shared;
  * Implemented by services that can clear down.
  */
 public interface Clearable {
+
     void clear();
 }

@@ -24,6 +24,8 @@ import stroom.security.identity.exceptions.NoSuchUserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -31,11 +33,10 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.Response.Status;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 // TODO : @66 Add audit logging
 class AuthenticationResourceImpl implements AuthenticationResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResourceImpl.class);
 
     private final Provider<AuthenticationServiceImpl> serviceProvider;
@@ -99,7 +100,8 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Override
     public final ChangePasswordResponse resetPassword(final HttpServletRequest request,
                                                       final ResetPasswordRequest resetPasswordRequest) {
-        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request, resetPasswordRequest);
+        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request,
+                resetPasswordRequest);
         if (changePasswordResponse != null) {
             return changePasswordResponse;
         }

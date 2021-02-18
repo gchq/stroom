@@ -17,12 +17,12 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.lmdb.PutOutcome;
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
+import stroom.lmdb.PutOutcome;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -41,10 +41,10 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalInt;
+import javax.inject.Inject;
 
 /**
  * This store holds meta data about the corresponding entries in {@link ValueStoreDb}.
@@ -214,6 +214,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     }
 
     public interface Factory {
+
         ValueStoreMetaDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

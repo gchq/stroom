@@ -1,6 +1,5 @@
 package stroom.index.impl;
 
-import com.codahale.metrics.annotation.Timed;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -9,13 +8,16 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.shared.IndexDoc;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
+import com.codahale.metrics.annotation.Timed;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 
 public class NewUIIndexResourceImpl implements NewUIIndexResource {
+
     private final IndexStore indexStore;
 
     @Inject
@@ -34,12 +36,16 @@ public class NewUIIndexResourceImpl implements NewUIIndexResource {
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result = indexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result = indexStore.importDocument(documentData.getDocRef(),
+                documentData.getDataMap(),
+                importState,
+                ImportMode.IGNORE_CONFIRMATION);
 
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @Override

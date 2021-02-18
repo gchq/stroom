@@ -22,6 +22,7 @@ import com.google.gwt.cell.client.ValueUpdater;
  * The {@code ViewData} for this cell.
  */
 public class ViewData<E> {
+
     /**
      * The last value that was updated.
      */
@@ -46,7 +47,7 @@ public class ViewData<E> {
      * Return true if the last and current values of this ViewData object are
      * equal to those of the other object.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "checkstyle:needbraces"})
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ViewData)) {
@@ -103,6 +104,8 @@ public class ViewData<E> {
     }
 
     private boolean equalsOrNull(Object a, Object b) {
-        return (a != null) ? a.equals(b) : ((b == null));
+        return (a != null)
+                ? a.equals(b)
+                : ((b == null));
     }
 }

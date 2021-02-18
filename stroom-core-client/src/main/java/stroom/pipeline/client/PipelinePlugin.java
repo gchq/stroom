@@ -17,10 +17,6 @@
 
 package stroom.pipeline.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -36,9 +32,15 @@ import stroom.pipeline.shared.PipelineResource;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.shared.Processor;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
+
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
 
     private final Provider<PipelinePresenter> editorProvider;
@@ -69,7 +71,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getProcessorFilter()));
+            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS,
+                    content -> ((ProcessorPresenter) content).refresh(event.getProcessorFilter()));
         }));
     }
 
@@ -79,7 +82,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<PipelineDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<PipelineDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<PipelineDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -89,7 +94,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final PipelineDoc document, final Consumer<PipelineDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final PipelineDoc document,
+                     final Consumer<PipelineDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<PipelineDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

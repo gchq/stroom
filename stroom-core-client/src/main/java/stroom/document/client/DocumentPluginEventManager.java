@@ -70,11 +70,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.ImageUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -102,11 +102,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DocumentPluginEventManager extends Plugin {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final KeyTest CTRL_S = event -> event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
-    private static final KeyTest CTRL_SHIFT_S = event -> event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
-    private static final KeyTest ALT_W = event -> event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
-    private static final KeyTest ALT_SHIFT_W = event -> event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
+    private static final KeyTest CTRL_S = event ->
+            event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
+    private static final KeyTest CTRL_SHIFT_S = event ->
+            event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
+    private static final KeyTest ALT_W = event ->
+            event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
+    private static final KeyTest ALT_SHIFT_W = event ->
+            event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
@@ -142,7 +147,8 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> selectedTab = e.getTabData()));
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
+                e -> selectedTab = e.getTabData()));
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -198,7 +204,8 @@ public class DocumentPluginEventManager extends Plugin {
 //                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
 //                                final Hyperlink hyperlink = new Hyperlink.Builder()
 //                                        .text("Permissions")
-//                                        .href(uiConfig.getUrl().getDocumentPermissions() + event.getExplorerNode().getUuid())
+//                                        .href(uiConfig.getUrl().getDocumentPermissions() +
+//                                        event.getExplorerNode().getUuid())
 //                                        .type(HyperlinkType.TAB + "|Document Permissions")
 //                                        .icon(SvgPresets.PERMISSIONS)
 //                                        .build();
@@ -240,15 +247,19 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 1. Handle entity creation events.
         registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event -> {
-            create(event.getDocType(), event.getDocName(), event.getDestinationFolderRef(), event.getPermissionInheritance(), docRef -> {
-                // Hide the create document presenter.
-                HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+            create(event.getDocType(),
+                    event.getDocName(),
+                    event.getDestinationFolderRef(),
+                    event.getPermissionInheritance(),
+                    docRef -> {
+                        // Hide the create document presenter.
+                        HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                highlight(docRef);
+                        highlight(docRef);
 
-                // The initiator of this event can now do what they want with the docref.
-                event.getNewDocConsumer().accept(docRef);
-            });
+                        // The initiator of this event can now do what they want with the docref.
+                        event.getNewDocConsumer().accept(docRef);
+                    });
         }));
 
         // 8.1. Handle entity copy events.
@@ -258,7 +269,10 @@ public class DocumentPluginEventManager extends Plugin {
                 HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
                 if (result.getMessage().length() > 0) {
-                    AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to copy some items", result.getMessage(), null);
+                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                            "Unable to copy some items",
+                            result.getMessage(),
+                            null);
                 }
 
                 if (result.getDocRefs().size() > 0) {
@@ -274,7 +288,10 @@ public class DocumentPluginEventManager extends Plugin {
                 HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
                 if (result.getMessage().length() > 0) {
-                    AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to move some items", result.getMessage(), null);
+                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                            "Unable to move some items",
+                            result.getMessage(),
+                            null);
                 }
 
                 if (result.getDocRefs().size() > 0) {
@@ -299,7 +316,10 @@ public class DocumentPluginEventManager extends Plugin {
             if (getSelectedItems().size() > 0) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap ->
                         documentTypeCache.fetch(documentTypes -> {
-                            final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
+                            final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
+                                    documentPermissionMap,
+                                    DocumentPermissionNames.DELETE,
+                                    false);
                             if (deletableItems.size() > 0) {
                                 deleteItems(deletableItems);
                             }
@@ -337,13 +357,21 @@ public class DocumentPluginEventManager extends Plugin {
                             final List<Item> menuItems = new ArrayList<>();
 
                             // Only allow the new menu to appear if we have a single selection.
-                            addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                            addNewMenuItem(menuItems,
+                                    singleSelection,
+                                    documentPermissionMap,
+                                    primarySelection,
+                                    documentTypes);
                             addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
                             menuListPresenter.setData(menuItems);
                             final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                            ShowPopupEvent.fire(DocumentPluginEventManager.this, menuListPresenter, PopupType.POPUP,
-                                    popupPosition, null);
+                            ShowPopupEvent.fire(
+                                    DocumentPluginEventManager.this,
+                                    menuListPresenter,
+                                    PopupType.POPUP,
+                                    popupPosition,
+                                    null);
                         })
                 );
             }
@@ -377,20 +405,27 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList) {
         if (explorerNodeList != null) {
-            final List<DocRef> docRefs = explorerNodeList.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+            final List<DocRef> docRefs = explorerNodeList.stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
             if (docRefs.size() > 0) {
-                ConfirmEvent.fire(DocumentPluginEventManager.this, "Are you sure you want to delete these items?", ok -> {
-                    if (ok) {
-                        delete(docRefs, result -> {
-                            if (result.getMessage().length() > 0) {
-                                AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to delete some items", result.getMessage(), null);
-                            }
+                ConfirmEvent.fire(DocumentPluginEventManager.this,
+                        "Are you sure you want to delete these items?",
+                        ok -> {
+                            if (ok) {
+                                delete(docRefs, result -> {
+                                    if (result.getMessage().length() > 0) {
+                                        AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                                                "Unable to delete some items",
+                                                result.getMessage(),
+                                                null);
+                                    }
 
-                            // Refresh the explorer tree so the documents are marked as deleted.
-                            RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                                    // Refresh the explorer tree so the documents are marked as deleted.
+                                    RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                                });
+                            }
                         });
-                    }
-                });
             }
         }
     }
@@ -423,15 +458,25 @@ public class DocumentPluginEventManager extends Plugin {
 //    }
 
 
-    public void create(final String docType, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance, final Consumer<DocRef> consumer) {
+    public void create(final String docType,
+                       final String docName,
+                       final DocRef destinationFolderRef,
+                       final PermissionInheritance permissionInheritance,
+                       final Consumer<DocRef> consumer) {
         final Rest<DocRef> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .create(new ExplorerServiceCreateRequest(docType, docName, destinationFolderRef, permissionInheritance));
+                .create(new ExplorerServiceCreateRequest(docType,
+                        docName,
+                        destinationFolderRef,
+                        permissionInheritance));
     }
 
-    private void copy(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance, final Consumer<BulkActionResult> consumer) {
+    private void copy(final List<DocRef> docRefs,
+                      final DocRef destinationFolderRef,
+                      final PermissionInheritance permissionInheritance,
+                      final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
@@ -439,7 +484,10 @@ public class DocumentPluginEventManager extends Plugin {
                 .copy(new ExplorerServiceCopyRequest(docRefs, destinationFolderRef, permissionInheritance));
     }
 
-    private void move(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance, final Consumer<BulkActionResult> consumer) {
+    private void move(final List<DocRef> docRefs,
+                      final DocRef destinationFolderRef,
+                      final PermissionInheritance permissionInheritance,
+                      final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
@@ -473,10 +521,14 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
 
-    private List<ExplorerNode> getExplorerNodeListWithPermission(final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap, final String permission, final boolean includeSystemNodes) {
+    private List<ExplorerNode> getExplorerNodeListWithPermission(
+            final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
+            final String permission,
+            final boolean includeSystemNodes) {
         final List<ExplorerNode> list = new ArrayList<>();
         for (final Map.Entry<ExplorerNode, ExplorerNodePermissions> entry : documentPermissionMap.entrySet()) {
-            if ((includeSystemNodes || !DocumentTypes.isSystem(entry.getKey().getType())) && entry.getValue().hasDocumentPermission(permission)) {
+            if ((includeSystemNodes || !DocumentTypes.isSystem(entry.getKey().getType()))
+                    && entry.getValue().hasDocumentPermission(permission)) {
                 list.add(entry.getKey());
             }
         }
@@ -490,32 +542,38 @@ public class DocumentPluginEventManager extends Plugin {
         super.onReveal(event);
 
         // Add menu bar item menu.
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem(1, "Item", null) {
-            @Override
-            public Future<List<Item>> getChildren() {
-                final FutureImpl<List<Item>> future = new FutureImpl<>();
-                final List<ExplorerNode> selectedItems = getSelectedItems();
-                final boolean singleSelection = selectedItems.size() == 1;
-                final ExplorerNode primarySelection = getPrimarySelection();
+        event.getMenuItems()
+                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem(1, "Item", null) {
+                    @Override
+                    public Future<List<Item>> getChildren() {
+                        final FutureImpl<List<Item>> future = new FutureImpl<>();
+                        final List<ExplorerNode> selectedItems = getSelectedItems();
+                        final boolean singleSelection = selectedItems.size() == 1;
+                        final ExplorerNode primarySelection = getPrimarySelection();
 
-                fetchPermissions(selectedItems, documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
-                    final List<Item> menuItems = new ArrayList<>();
+                        fetchPermissions(selectedItems,
+                                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
+                                    final List<Item> menuItems = new ArrayList<>();
 
-                    // Only allow the new menu to appear if we have a single selection.
-                    addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                    menuItems.add(new Separator(5));
-                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-                    menuItems.add(new Separator(9));
-                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                                    // Only allow the new menu to appear if we have a single selection.
+                                    addNewMenuItem(menuItems,
+                                            singleSelection,
+                                            documentPermissionMap,
+                                            primarySelection,
+                                            documentTypes);
+                                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+                                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+                                    menuItems.add(new Separator(5));
+                                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+                                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
+                                    menuItems.add(new Separator(9));
+                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                    future.setResult(menuItems);
-                }));
-                return future;
-            }
-        });
+                                    future.setResult(menuItems);
+                                }));
+                        return future;
+                    }
+                });
     }
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
@@ -528,15 +586,20 @@ public class DocumentPluginEventManager extends Plugin {
 
         fetchPermissions(explorerNodes, documentPermissions ->
                 documentTypeCache.fetch(documentTypes ->
-                        future.setResult(createNewMenuItems(explorerNode, documentPermissions.get(explorerNode), documentTypes))));
+                        future.setResult(createNewMenuItems(explorerNode,
+                                documentPermissions.get(explorerNode),
+                                documentTypes))));
         return future;
     }
 
-    private void fetchPermissions(final List<ExplorerNode> explorerNodes, final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
+    private void fetchPermissions(final List<ExplorerNode> explorerNodes,
+                                  final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
         final Rest<Set<ExplorerNodePermissions>> rest = restFactory.create();
         rest
                 .onSuccess(response -> {
-                    final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(ExplorerNodePermissions::getExplorerNode, Function.identity()));
+                    final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(
+                            ExplorerNodePermissions::getExplorerNode,
+                            Function.identity()));
                     consumer.accept(map);
                 })
                 .call(EXPLORER_RESOURCE)
@@ -552,7 +615,11 @@ public class DocumentPluginEventManager extends Plugin {
 //        return docRef;
 //    }
 
-    private void addNewMenuItem(final List<Item> menuItems, final boolean singleSelection, final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap, final ExplorerNode primarySelection, final DocumentTypes documentTypes) {
+    private void addNewMenuItem(final List<Item> menuItems,
+                                final boolean singleSelection,
+                                final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
+                                final ExplorerNode primarySelection,
+                                final DocumentTypes documentTypes) {
         // Only allow the new menu to appear if we have a single selection.
         if (singleSelection) {
             // Add 'New' menu item.
@@ -562,8 +629,14 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean allowNew = children.size() > 0;
 
             if (allowNew) {
-                final Item newItem = new IconParentMenuItem(1, SvgPresets.NEW_ITEM, SvgPresets.NEW_ITEM, "New",
-                        null, true, null) {
+                final Item newItem = new IconParentMenuItem(
+                        1,
+                        SvgPresets.NEW_ITEM,
+                        SvgPresets.NEW_ITEM,
+                        "New",
+                        null,
+                        true,
+                        null) {
                     @Override
                     public Future<List<Item>> getChildren() {
                         final FutureImpl<List<Item>> future = new FutureImpl<>();
@@ -615,10 +688,18 @@ public class DocumentPluginEventManager extends Plugin {
         return children;
     }
 
-    private void addModifyMenuItems(final List<Item> menuItems, final boolean singleSelection, final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap) {
-        final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.READ, false);
-        final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.UPDATE, false);
-        final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE, false);
+    private void addModifyMenuItems(final List<Item> menuItems,
+                                    final boolean singleSelection,
+                                    final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap) {
+        final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap,
+                DocumentPermissionNames.READ,
+                false);
+        final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap,
+                DocumentPermissionNames.UPDATE,
+                false);
+        final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap,
+                DocumentPermissionNames.DELETE,
+                false);
 
         // Actions allowed based on permissions of selection
         final boolean allowRead = readableItems.size() > 0;
@@ -633,7 +714,9 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
-            final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.OWNER, true);
+            final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap,
+                    DocumentPermissionNames.OWNER,
+                    true);
             if (ownedItems.size() == 1) {
                 menuItems.add(new Separator(8));
                 menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 8, true));
@@ -650,7 +733,13 @@ public class DocumentPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(ALT_W, command);
 
-        return new IconMenuItem(3, SvgPresets.CLOSE, SvgPresets.CLOSE, "Close", "Alt+W", enabled,
+        return new IconMenuItem(
+                3,
+                SvgPresets.CLOSE,
+                SvgPresets.CLOSE,
+                "Close",
+                "Alt+W",
+                enabled,
                 command);
     }
 
@@ -690,13 +779,20 @@ public class DocumentPluginEventManager extends Plugin {
                 "Ctrl+Shift+S", enabled, command);
     }
 
-    private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
+    private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList,
+                                        final int priority,
+                                        final boolean enabled) {
         final Command command = () ->
                 explorerNodeList.forEach(explorerNode -> {
                     final Rest<DocRefInfo> rest = restFactory.create();
                     rest
-                            .onSuccess(s -> ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
-                            .onFailure(t -> AlertEvent.fireError(DocumentPluginEventManager.this, t.getMessage(), null))
+                            .onSuccess(s ->
+                                    ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
+                            .onFailure(t ->
+                                    AlertEvent.fireError(
+                                            DocumentPluginEventManager.this,
+                                            t.getMessage(),
+                                            null))
                             .call(EXPLORER_RESOURCE)
                             .info(explorerNode.getDocRef());
                 });
@@ -705,43 +801,63 @@ public class DocumentPluginEventManager extends Plugin {
                 enabled, command);
     }
 
-    private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
-        final Command command = () -> ShowCopyDocumentDialogEvent.fire(DocumentPluginEventManager.this, explorerNodeList);
+    private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList,
+                                        final int priority,
+                                        final boolean enabled) {
+        final Command command = () -> ShowCopyDocumentDialogEvent.fire(DocumentPluginEventManager.this,
+                explorerNodeList);
 
-        return new IconMenuItem(priority, SvgPresets.COPY, SvgPresets.COPY, "Copy", null, enabled,
-                command);
+        return new IconMenuItem(
+                priority, SvgPresets.COPY, SvgPresets.COPY, "Copy", null, enabled, command);
     }
 
-    private MenuItem createMoveMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
-        final Command command = () -> ShowMoveDocumentDialogEvent.fire(DocumentPluginEventManager.this, explorerNodeList);
+    private MenuItem createMoveMenuItem(final List<ExplorerNode> explorerNodeList,
+                                        final int priority,
+                                        final boolean enabled) {
+        final Command command = () -> ShowMoveDocumentDialogEvent.fire(DocumentPluginEventManager.this,
+                explorerNodeList);
 
-        return new IconMenuItem(priority, SvgPresets.MOVE, SvgPresets.MOVE, "Move", null, enabled,
-                command);
+        return new IconMenuItem(
+                priority, SvgPresets.MOVE, SvgPresets.MOVE, "Move", null, enabled, command);
     }
 
-    private MenuItem createRenameMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
-        final Command command = () -> renameItems(explorerNodeList);
+    private MenuItem createRenameMenuItem(final List<ExplorerNode> explorerNodeList,
+                                          final int priority,
+                                          final boolean enabled) {
+        final Command command = () ->
+                renameItems(explorerNodeList);
 
-        return new IconMenuItem(priority, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null,
-                enabled, command);
+        return new IconMenuItem(
+                priority, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, enabled, command);
     }
 
-    private MenuItem createDeleteMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
-        final Command command = () -> deleteItems(explorerNodeList);
+    private MenuItem createDeleteMenuItem(final List<ExplorerNode> explorerNodeList,
+                                          final int priority,
+                                          final boolean enabled) {
+        final Command command = () ->
+                deleteItems(explorerNodeList);
 
-        return new IconMenuItem(priority, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
-                enabled, command);
+        return new IconMenuItem(
+                priority, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null, enabled, command);
     }
 
-    private MenuItem createPermissionsMenuItem(final ExplorerNode explorerNode, final int priority, final boolean enabled) {
+    private MenuItem createPermissionsMenuItem(final ExplorerNode explorerNode,
+                                               final int priority,
+                                               final boolean enabled) {
         final Command command = () -> {
             if (explorerNode != null) {
                 ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode);
             }
         };
 
-        return new IconMenuItem(priority, SvgPresets.LOCKED_AMBER, SvgPresets.LOCKED_AMBER, "Permissions", null,
-                enabled, command);
+        return new IconMenuItem(
+                priority,
+                SvgPresets.LOCKED_AMBER,
+                SvgPresets.LOCKED_AMBER,
+                "Permissions",
+                null,
+                enabled,
+                command);
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {
@@ -756,9 +872,7 @@ public class DocumentPluginEventManager extends Plugin {
     private boolean isDirty(final TabData tabData) {
         if (tabData instanceof HasSave) {
             final HasSave hasSave = (HasSave) tabData;
-            if (hasSave.isDirty()) {
-                return true;
-            }
+            return hasSave.isDirty();
         }
 
         return false;

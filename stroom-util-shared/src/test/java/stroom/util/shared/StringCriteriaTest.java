@@ -25,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StringCriteriaTest {
+
     @Test
     void testConvertStringList() {
         List<String> strings = new ArrayList<>();
@@ -34,7 +35,7 @@ class StringCriteriaTest {
         List<StringCriteria> criteriaList = StringCriteria.convertStringList(strings);
 
         for (int i = 0; i < strings.size(); i++) {
-            assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i).toString());
+            assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i));
         }
     }
 }

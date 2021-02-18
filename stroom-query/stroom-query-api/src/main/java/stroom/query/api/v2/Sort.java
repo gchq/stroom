@@ -32,6 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "Describes the sorting applied to a field")
 public final class Sort {
+
     @ApiModelProperty(
             value = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
                     "field to sort on",
@@ -62,10 +63,15 @@ public final class Sort {
         return direction;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Sort sort = (Sort) o;
         return Objects.equals(order, sort.order) &&
                 direction == sort.direction;
@@ -85,7 +91,8 @@ public final class Sort {
     }
 
     public enum SortDirection implements HasDisplayValue {
-        ASCENDING("Ascending"), DESCENDING("Descending");
+        ASCENDING("Ascending"),
+        DESCENDING("Descending");
 
         private final String displayValue;
 
@@ -111,6 +118,7 @@ public final class Sort {
      * Builder for constructing a {@link Sort sort}
      */
     public static final class Builder {
+
         private Integer order;
         private SortDirection direction;
 

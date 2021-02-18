@@ -26,7 +26,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
@@ -39,14 +38,15 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
+
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 

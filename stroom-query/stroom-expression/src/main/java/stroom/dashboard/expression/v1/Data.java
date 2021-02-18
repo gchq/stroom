@@ -37,8 +37,8 @@ package stroom.dashboard.expression.v1;
                                 argType = ValLong.class),
                         @FunctionArg(
                                 name = Data.ARG_RECORD_NO,
-                                description = "The record number (one based). The record number is only applicable for " +
-                                        "segmented streams (i.e. cooked streams). Its value will be ignored for " +
+                                description = "The record number (one based). The record number is only applicable " +
+                                        "for segmented streams (i.e. cooked streams). Its value will be ignored for " +
                                         "non-segmented streams.",
                                 isOptional = true,
                                 argType = ValLong.class),
@@ -68,21 +68,22 @@ package stroom.dashboard.expression.v1;
                                 argType = ValInteger.class),
                         @FunctionArg(
                                 name = Data.ARG_VIEW_TYPE,
-                                description = "The view of the data to display. 'preview' shows a formatted portion of " +
-                                        "the data starting, 'source' shows the un-formatted raw view of the data. " +
+                                description = "The view of the data to display. 'preview' shows a formatted portion " +
+                                        "of the data starting, 'source' shows the un-formatted raw view of the data. " +
                                         "Defaults to 'preview'.",
                                 isOptional = true,
-                                allowedValues = { "preview", "source" },
+                                allowedValues = {"preview", "source"},
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = Data.ARG_DISPLAY_TYPE,
                                 description = "How the data will be displayed in the user interface. Defaults to " +
                                         "'dialog'.",
                                 isOptional = true,
-                                allowedValues = { "dialog", "tab" },
+                                allowedValues = {"dialog", "tab"},
                                 argType = ValString.class),
                 }))
 class Data extends AbstractLink {
+
     static final String NAME = "data";
 
     static final String ARG_ID = "id";
@@ -105,6 +106,7 @@ class Data extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

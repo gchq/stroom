@@ -16,12 +16,14 @@
 
 package stroom.ui.config.client;
 
+import stroom.ui.config.shared.UiConfig;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.ui.config.shared.UiConfig;
 
 public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final UiConfig clientProperties;
 
@@ -59,6 +61,7 @@ public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onChange(PropertyChangeEvent event);
     }
 }

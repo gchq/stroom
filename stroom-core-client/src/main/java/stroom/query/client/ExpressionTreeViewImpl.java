@@ -16,12 +16,6 @@
 
 package stroom.query.client;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -32,9 +26,17 @@ import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
 import java.util.List;
 
 public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
+
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
     private MySingleSelectionModel<Item> selectionModel;

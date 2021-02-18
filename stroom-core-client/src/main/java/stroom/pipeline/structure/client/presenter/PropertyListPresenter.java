@@ -17,18 +17,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -56,6 +44,19 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -67,6 +68,7 @@ import java.util.stream.Collectors;
 
 public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
@@ -418,7 +420,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 final PipelineProperty removed = getActualProperty(
                         pipelineModel.getPipelineData().getRemovedProperties(), property);
                 if (removed == null) {
-                    // Get the inherited property as we haven't set the property or removed (shadowed) the parent property.
+                    // Get the inherited property as we haven't set the property or removed (shadowed) the
+                    // parent property.
                     final PipelineProperty inherited = getInheritedProperty(property);
                     if (inherited != null) {
                         property = inherited;
@@ -428,7 +431,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             // Add the property.
             propertyList.add(property);
 
-            // If the property is a doc ref then we will have to look it up on the server to get the current name for the entity.
+            // If the property is a doc ref then we will have to look it up on the server to get the current
+            // name for the entity.
             if (property.getValue() != null && property.getValue().getEntity() != null) {
                 docRefs.add(property.getValue().getEntity());
             }
@@ -542,7 +546,9 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     public enum Source implements HasDisplayValue {
-        LOCAL("Local"), INHERIT("Inherit"), DEFAULT("Default");
+        LOCAL("Local"),
+        INHERIT("Inherit"),
+        DEFAULT("Default");
 
         private final String displayValue;
 

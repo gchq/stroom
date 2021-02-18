@@ -23,7 +23,6 @@ import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
-import javax.inject.Singleton;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,9 +33,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Singleton;
 
 @Singleton
 public class ExecutorProviderImpl implements ExecutorProvider {
+
     public static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool(2);
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
 

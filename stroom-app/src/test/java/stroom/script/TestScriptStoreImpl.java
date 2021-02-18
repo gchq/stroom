@@ -18,23 +18,26 @@
 package stroom.script;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private ScriptStore scriptStore;
 
     @Test
     void testUTF8Resource() {
-        final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, d3_radians = π / 180, d3_degrees = 180 / π;";
+        final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, " +
+                "d3_radians = π / 180, d3_degrees = 180 / π;";
 
         final DocRef docRef = scriptStore.createDocument("test");
         final ScriptDoc script = scriptStore.readDocument(docRef);

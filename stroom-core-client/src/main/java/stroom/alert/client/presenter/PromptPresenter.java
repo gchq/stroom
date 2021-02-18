@@ -16,6 +16,8 @@
 
 package stroom.alert.client.presenter;
 
+import stroom.alert.client.event.PromptEvent;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -23,10 +25,10 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.alert.client.event.PromptEvent;
 
 public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, PromptPresenter.PromptProxy>
         implements PromptEvent.Handler {
+
     @Inject
     public PromptPresenter(EventBus eventBus, final PromptView view, final PromptProxy proxy) {
         super(eventBus, view, proxy);
@@ -46,9 +48,11 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
 
     @ProxyStandard
     public interface PromptProxy extends Proxy<PromptPresenter> {
+
     }
 
     public interface PromptView extends View {
+
         String prompt(String message, String initialValue);
     }
 }

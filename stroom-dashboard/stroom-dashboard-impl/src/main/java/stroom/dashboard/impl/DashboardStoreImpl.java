@@ -40,8 +40,6 @@ import stroom.util.shared.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -49,9 +47,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class DashboardStoreImpl implements DashboardStore {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardStoreImpl.class);
 
     private final Store<DashboardDoc> store;
@@ -159,20 +160,27 @@ class DashboardStoreImpl implements DashboardStore {
                         ComponentSettings componentSettings = componentConfig.getSettings();
                         if (componentSettings != null) {
                             if (componentSettings instanceof QueryComponentSettings) {
-                                final QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentSettings;
-                                componentSettings = remapQueryComponentSettings(queryComponentSettings, dependencyRemapper);
+                                final QueryComponentSettings queryComponentSettings =
+                                        (QueryComponentSettings) componentSettings;
+                                componentSettings = remapQueryComponentSettings(queryComponentSettings,
+                                        dependencyRemapper);
 
                             } else if (componentSettings instanceof TableComponentSettings) {
-                                final TableComponentSettings tableComponentSettings = (TableComponentSettings) componentSettings;
-                                componentSettings = remapTableComponentSettings(tableComponentSettings, dependencyRemapper);
+                                final TableComponentSettings tableComponentSettings =
+                                        (TableComponentSettings) componentSettings;
+                                componentSettings = remapTableComponentSettings(tableComponentSettings,
+                                        dependencyRemapper);
 
                             } else if (componentSettings instanceof VisComponentSettings) {
-                                final VisComponentSettings visComponentSettings = (VisComponentSettings) componentSettings;
+                                final VisComponentSettings visComponentSettings =
+                                        (VisComponentSettings) componentSettings;
                                 componentSettings = remapVisComponentSettings(visComponentSettings, dependencyRemapper);
 
                             } else if (componentSettings instanceof TextComponentSettings) {
-                                final TextComponentSettings textComponentSettings = (TextComponentSettings) componentSettings;
-                                componentSettings = remapTextComponentSettings(textComponentSettings, dependencyRemapper);
+                                final TextComponentSettings textComponentSettings =
+                                        (TextComponentSettings) componentSettings;
+                                componentSettings = remapTextComponentSettings(textComponentSettings,
+                                        dependencyRemapper);
                             }
                         }
 
@@ -189,7 +197,8 @@ class DashboardStoreImpl implements DashboardStore {
         };
     }
 
-    private QueryComponentSettings remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings, final DependencyRemapper dependencyRemapper) {
+    private QueryComponentSettings remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings,
+                                                               final DependencyRemapper dependencyRemapper) {
         final QueryComponentSettings.Builder builder = queryComponentSettings.copy();
 
         builder.dataSource(dependencyRemapper.remap(queryComponentSettings.getDataSource()));
@@ -201,7 +210,8 @@ class DashboardStoreImpl implements DashboardStore {
         return builder.build();
     }
 
-    private TableComponentSettings remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
+    private TableComponentSettings remapTableComponentSettings(final TableComponentSettings tableComponentSettings,
+                                                               final DependencyRemapper dependencyRemapper) {
         final TableComponentSettings.Builder builder = tableComponentSettings.copy();
 
         if (tableComponentSettings.getExtractionPipeline() != null &&
@@ -213,19 +223,22 @@ class DashboardStoreImpl implements DashboardStore {
         return builder.build();
     }
 
-    private VisComponentSettings remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {
+    private VisComponentSettings remapVisComponentSettings(final VisComponentSettings visComponentSettings,
+                                                           final DependencyRemapper dependencyRemapper) {
         final VisComponentSettings.Builder builder = visComponentSettings.copy();
 
         builder.visualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
 
         if (visComponentSettings.getTableSettings() != null) {
-            builder.tableSettings(remapTableComponentSettings(visComponentSettings.getTableSettings(), dependencyRemapper));
+            builder.tableSettings(remapTableComponentSettings(visComponentSettings.getTableSettings(),
+                    dependencyRemapper));
         }
 
         return builder.build();
     }
 
-    private TextComponentSettings remapTextComponentSettings(final TextComponentSettings textComponentSettings, final DependencyRemapper dependencyRemapper) {
+    private TextComponentSettings remapTextComponentSettings(final TextComponentSettings textComponentSettings,
+                                                             final DependencyRemapper dependencyRemapper) {
         final TextComponentSettings.Builder builder = textComponentSettings.copy();
         builder.pipeline(dependencyRemapper.remap(textComponentSettings.getPipeline()));
         return builder.build();
@@ -263,12 +276,17 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

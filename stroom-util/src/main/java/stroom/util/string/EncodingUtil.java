@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public final class EncodingUtil {
+
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private EncodingUtil() {

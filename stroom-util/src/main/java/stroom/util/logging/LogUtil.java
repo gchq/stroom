@@ -3,6 +3,7 @@ package stroom.util.logging;
 import org.slf4j.helpers.MessageFormatter;
 
 public final class LogUtil {
+
     private LogUtil() {
         // Utility class.
     }

@@ -116,7 +116,8 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //     * @param loggedWork A function to perform the work that is being logged and to return the {@link EventAction}
 //     *                   and the result of the work. This allows a new {@link EventAction} to be returned
 //     *                   based on the result of the work. The skeleton {@link EventAction} is passed in
-//     *                   to allow it to be copied. The result of the work must be returned within a {@link LoggedResult}
+//     *                   to allow it to be copied. The result of the work must be returned within a
+//     {@link LoggedResult}
 //     *                   along with the desired {@link EventAction}.
 //     * @param exceptionHandler A function to allow you to provide a different {@link EventAction} based on
 //     *                         the exception. The skeleton {@link EventAction} is passed in to allow it to be
@@ -140,6 +141,7 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     *
      * @param object POJO
      * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
@@ -198,6 +200,7 @@ public interface StroomEventLoggingService extends EventLoggingService {
 
     /**
      * Provide a textual summary of the supplied POJO as a string.
+     *
      * @param object POJO to describe
      * @return description
      */
@@ -206,6 +209,7 @@ public interface StroomEventLoggingService extends EventLoggingService {
 
     /**
      * Create {@link Data} items from properties of the supplied POJO
+     *
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */

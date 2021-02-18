@@ -20,18 +20,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
-    private final NodeExtentProvider<TreeNode> nodeExtentProvider;
-    private final Configuration<TreeNode> configuration;
-    private TreeForTreeLayout<TreeNode> tree;
-    private Map<TreeNode, Bounds> boundsMap;
+public class CenteredParentTreeLayout<T_TREE_NODE> implements TreeLayout<T_TREE_NODE> {
+
+    private final NodeExtentProvider<T_TREE_NODE> nodeExtentProvider;
+    private final Configuration<T_TREE_NODE> configuration;
+    private TreeForTreeLayout<T_TREE_NODE> tree;
+    private Map<T_TREE_NODE, Bounds> boundsMap;
     private double boundsX;
     private double boundsY;
     private double boundsWidth;
     private double boundsHeight;
 
-    public CenteredParentTreeLayout(final NodeExtentProvider<TreeNode> nodeExtentProvider,
-                                    final Configuration<TreeNode> configuration) {
+    public CenteredParentTreeLayout(final NodeExtentProvider<T_TREE_NODE> nodeExtentProvider,
+                                    final Configuration<T_TREE_NODE> configuration) {
         this.nodeExtentProvider = nodeExtentProvider;
         this.configuration = configuration;
     }
@@ -48,7 +49,7 @@ public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> 
         }
     }
 
-    private Bounds calculate(final TreeNode node, final double x, final double y, final int depth) {
+    private Bounds calculate(final T_TREE_NODE node, final double x, final double y, final int depth) {
         final Dimension dimension = nodeExtentProvider.getExtents(node);
         final double width = dimension.getWidth();
         final double height = dimension.getHeight();
@@ -56,7 +57,7 @@ public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> 
         final double outerMinY = y;
         double outerMaxY = y + height;
 
-        final List<TreeNode> children = tree.getChildren(node);
+        final List<T_TREE_NODE> children = tree.getChildren(node);
         if (children != null && children.size() > 0) {
             final double childX = x + width + configuration.getGapBetweenLevels(depth);
             double childY = y;
@@ -65,7 +66,7 @@ public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> 
             double innerMaxY = y + height;
 
             for (int i = 0; i < children.size(); i++) {
-                final TreeNode child = children.get(i);
+                final T_TREE_NODE child = children.get(i);
 
                 if (i > 0) {
                     final double space = configuration.getGapBetweenNodes(child, children.get(i - 1));
@@ -112,17 +113,17 @@ public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> 
     }
 
     @Override
-    public Map<TreeNode, Bounds> getNodeBounds() {
+    public Map<T_TREE_NODE, Bounds> getNodeBounds() {
         return boundsMap;
     }
 
     @Override
-    public TreeForTreeLayout<TreeNode> getTree() {
+    public TreeForTreeLayout<T_TREE_NODE> getTree() {
         return tree;
     }
 
     @Override
-    public void setTree(final TreeForTreeLayout<TreeNode> tree) {
+    public void setTree(final TreeForTreeLayout<T_TREE_NODE> tree) {
         this.tree = tree;
     }
 }

@@ -26,13 +26,14 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
+
     private final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
@@ -61,18 +62,18 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     @Override
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState
-                (documentData.getDocRef(),
-                        documentData.getDocRef().getName());
+        final ImportState importState = new ImportState(documentData.getDocRef(),
+                documentData.getDocRef().getName());
         final ImportExportActionHandler.ImpexDetails result = ruleSetServiceProvider.get().importDocument(
                 documentData.getDocRef(),
                 documentData.getDataMap(),
                 importState,
                 ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @Override

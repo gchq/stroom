@@ -65,8 +65,10 @@ import java.time.format.DateTimeFormatter;
                                         argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'")},
                         returnDescription = "A date string in the supplied date format pattern.",
-                        description = "Convert the date to a string using the supplied date format pattern and timezone.")})
+                        description = "Convert the date to a string using the supplied date format" +
+                                "pattern and timezone.")})
 class FormatDate extends AbstractFunction implements Serializable {
+
     static final String NAME = "formatDate";
     private static final long serialVersionUID = -305845496003936297L;
     private String pattern = DateUtil.DEFAULT_PATTERN;
@@ -128,6 +130,7 @@ class FormatDate extends AbstractFunction implements Serializable {
     }
 
     private static class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String pattern;

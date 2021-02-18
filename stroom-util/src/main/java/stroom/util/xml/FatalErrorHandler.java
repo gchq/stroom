@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 class FatalErrorHandler implements ErrorHandler {
+
     @Override
     public void warning(final SAXParseException exception) throws SAXException {
     }

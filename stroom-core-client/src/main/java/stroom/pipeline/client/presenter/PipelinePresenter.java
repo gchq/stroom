@@ -17,9 +17,6 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
@@ -35,7 +32,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView, PipelineDoc> {
+
     public static final TabData SETTINGS = new TabDataImpl("Settings");
     public static final TabData DATA = new TabDataImpl("Data");
     public static final TabData STRUCTURE = new TabDataImpl("Structure");

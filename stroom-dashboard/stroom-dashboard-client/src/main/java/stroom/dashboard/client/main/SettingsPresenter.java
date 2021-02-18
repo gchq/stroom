@@ -16,21 +16,22 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 
 public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
+
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final Map<TabData, ComponentDataModifier> modifiers = new HashMap<>();
 

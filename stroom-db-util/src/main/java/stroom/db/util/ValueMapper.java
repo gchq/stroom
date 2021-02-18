@@ -1,10 +1,11 @@
 package stroom.db.util;
 
-import org.jooq.Field;
-import org.jooq.Record;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.datasource.api.v2.AbstractField;
+
+import org.jooq.Field;
+import org.jooq.Record;
 
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ValueMapper {
+
     private final Map<AbstractField, Field<?>> fieldMap = new HashMap<>();
     private final Map<AbstractField, Mapper<?>> mappers = new HashMap<>();
 
@@ -35,6 +37,7 @@ public class ValueMapper {
     }
 
     public static class Mapper<T> {
+
         private final Field<T> field;
         private final Function<T, Val> handler;
 

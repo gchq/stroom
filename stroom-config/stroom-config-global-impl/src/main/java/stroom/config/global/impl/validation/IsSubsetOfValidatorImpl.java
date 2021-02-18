@@ -3,10 +3,10 @@ package stroom.config.global.impl.validation;
 import stroom.util.shared.validation.IsSubsetOf;
 import stroom.util.shared.validation.IsSubsetOfValidator;
 
-import javax.validation.ConstraintValidatorContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintValidatorContext;
 
 public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
 
@@ -24,7 +24,7 @@ public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
      * This method can be accessed concurrently, thread-safety must be ensured
      * by the implementation.
      *
-     * @param values   object to validate
+     * @param values  object to validate
      * @param context context in which the constraint is evaluated
      * @return {@code false} if {@code value} does not pass the constraint
      */

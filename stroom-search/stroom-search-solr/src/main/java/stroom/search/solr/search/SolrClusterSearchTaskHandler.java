@@ -31,11 +31,12 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 class SolrClusterSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrClusterSearchTaskHandler.class);
 
     private final SolrSearchFactory solrSearchFactory;
@@ -81,7 +82,8 @@ class SolrClusterSearchTaskHandler {
                     try {
                         coprocessors.getErrorConsumer().accept(e);
                     } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                        // If we failed to send the result or the source node rejected the result because the
+                        // source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
                         Thread.currentThread().interrupt();
                     }
@@ -106,7 +108,10 @@ class SolrClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext,
+                    storedFields,
+                    coprocessors,
+                    query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -114,7 +119,14 @@ class SolrClusterSearchTaskHandler {
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            solrSearchFactory.search(cachedSolrIndex, storedFields, now, expression, extractionReceiver, taskContext, hitCount, dateTimeLocale);
+            solrSearchFactory.search(cachedSolrIndex,
+                    storedFields,
+                    now,
+                    expression,
+                    extractionReceiver,
+                    taskContext,
+                    hitCount,
+                    dateTimeLocale);
 
             // Wait for search completion.
             boolean allComplete = false;
@@ -131,7 +143,8 @@ class SolrClusterSearchTaskHandler {
                                 + coprocessor.getValuesCount().get() +
                                 " extractions");
 
-                        final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
+                        final boolean complete = coprocessor.getCompletionState()
+                                .awaitCompletion(1, TimeUnit.SECONDS);
                         if (!complete) {
                             allComplete = false;
                         }

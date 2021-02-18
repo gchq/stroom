@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public class StreamEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -203,7 +204,8 @@ public class StreamEventLog {
 //            }
 //
 //            for (long id : findMetaCriteria.getSelectedIdSet()) {
-//                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
+//                idSetOp.getAdvancedQueryItems()
+//                .add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
 //            }
 //
 //            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
@@ -212,7 +214,6 @@ public class StreamEventLog {
 //            appendOperator(items, findMetaCriteria.getExpression());
 //        }
 //    }
-
 
 
 }

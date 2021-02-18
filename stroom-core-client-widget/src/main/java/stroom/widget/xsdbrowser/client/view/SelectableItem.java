@@ -17,6 +17,7 @@
 package stroom.widget.xsdbrowser.client.view;
 
 public interface SelectableItem {
+
     boolean isSelected();
 
     void setSelected(boolean selected);

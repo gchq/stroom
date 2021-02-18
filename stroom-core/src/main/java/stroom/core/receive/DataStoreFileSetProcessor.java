@@ -35,7 +35,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
  * then both stroom-proxy and stroom can use it.
  */
 public final class DataStoreFileSetProcessor implements FileSetProcessor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataStoreFileSetProcessor.class);
 
     private final Store store;
@@ -152,9 +153,17 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         }
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName, final String typeName, final boolean oneByOne) {
-        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(store,
-                feedProperties, metaStatistics, feedName, typeName, oneByOne);
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName,
+                                                                     final String typeName,
+                                                                     final boolean oneByOne) {
+
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
+                store,
+                feedProperties,
+                metaStatistics,
+                feedName,
+                typeName,
+                oneByOne);
 
         final AttributeMap globalMetaMap = new AttributeMap();
         globalMetaMap.put(StandardHeaderArguments.FEED, feedName);
@@ -168,7 +177,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         return list;
     }
 
-    private List<StreamTargetStroomStreamHandler> closeStreamHandlers(final List<StreamTargetStroomStreamHandler> handlers) {
+    private List<StreamTargetStroomStreamHandler> closeStreamHandlers(
+            final List<StreamTargetStroomStreamHandler> handlers) {
         if (handlers != null) {
             handlers.forEach(StreamTargetStroomStreamHandler::close);
         }

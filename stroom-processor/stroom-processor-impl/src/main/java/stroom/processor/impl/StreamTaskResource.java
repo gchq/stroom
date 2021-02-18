@@ -35,6 +35,9 @@ import stroom.util.shared.ResultPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -46,9 +49,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 import static java.util.Comparator.comparingInt;
 import static stroom.processor.impl.SearchKeywords.SORT_NEXT;
@@ -127,7 +127,8 @@ public class StreamTaskResource implements RestResource {
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.
                 // Percentage is a calculated variable so it has to be done after retrieval.
-                // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
+                // This poses a problem for paging and at the moment sorting by tracker % won't work correctly
+                // when paging.
             } else {
                 return RestUtil.badRequest("Invalid sortBy field");
             }
@@ -188,7 +189,7 @@ public class StreamTaskResource implements RestResource {
 
         final List<StreamTask> streamTasks = new ArrayList<>();
         for (ProcessorFilter filter : processorFilters.getValues()) {
-            StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
+            final StreamTask.StreamTaskBuilder builder = StreamTask.builder();
 
             // Indented to make the source easier to read
             builder

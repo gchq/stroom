@@ -36,6 +36,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ClusterLockResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/cluster/lock" + ResourcePaths.V1;
     String TRY_PATH_PART = "/try";
     String RELEASE_PATH_PART = "/release";
@@ -45,18 +46,18 @@ public interface ClusterLockResource extends RestResource, DirectRestService {
     @PUT
     @Path(TRY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Try to lock")
-    Boolean tryLock(@PathParam("nodeName") String nodeName, 
+    Boolean tryLock(@PathParam("nodeName") String nodeName,
                     @ApiParam("key") ClusterLockKey key);
 
     @PUT
     @Path(RELEASE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Release a lock")
-    Boolean releaseLock(@PathParam("nodeName") String nodeName, 
+    Boolean releaseLock(@PathParam("nodeName") String nodeName,
                         @ApiParam("key") ClusterLockKey key);
 
     @PUT
     @Path(KEEP_ALIVE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Keep a lock alive")
-    Boolean keepLockAlive(@PathParam("nodeName") String nodeName, 
+    Boolean keepLockAlive(@PathParam("nodeName") String nodeName,
                           @ApiParam("key") ClusterLockKey key);
 }

@@ -19,6 +19,7 @@ package stroom.util;
 import java.io.Serializable;
 
 public class CharBuffer implements CharSequence, Serializable {
+
     private static final char SPACE = ' ';
 
     private static final long serialVersionUID = -3021087453916074085L;
@@ -218,6 +219,7 @@ public class CharBuffer implements CharSequence, Serializable {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

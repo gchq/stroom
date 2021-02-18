@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 
 class Put extends StroomExtensionFunctionCall {
+
     private final TaskScopeMap map;
 
     @Inject

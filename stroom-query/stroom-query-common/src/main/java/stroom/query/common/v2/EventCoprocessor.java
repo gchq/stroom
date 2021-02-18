@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public class EventCoprocessor implements Coprocessor {
+
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 

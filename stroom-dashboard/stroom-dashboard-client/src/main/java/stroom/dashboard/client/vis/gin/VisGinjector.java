@@ -16,11 +16,13 @@
 
 package stroom.dashboard.client.vis.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.dashboard.client.vis.VisPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface VisGinjector {
+
     AsyncProvider<VisPlugin> getVisPlugin();
 
     AsyncProvider<VisPresenter> getVisPresenter();

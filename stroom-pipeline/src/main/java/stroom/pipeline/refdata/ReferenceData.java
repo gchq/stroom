@@ -45,7 +45,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,8 +53,10 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class ReferenceData {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
 
@@ -234,9 +235,9 @@ public class ReferenceData {
      * to this stream only.
      */
     private RefStreamDefinition getNestedStreamEventList(final PipelineReference pipelineReference,
-                                                                   final String mapName,
-                                                                   final String keyName,
-                                                                   final ReferenceDataResult result) {
+                                                         final String mapName,
+                                                         final String keyName,
+                                                         final ReferenceDataResult result) {
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, map {}, key {}",
@@ -415,10 +416,14 @@ public class ReferenceData {
                 if (effectiveStream != null) {
 
                     result.log(Severity.INFO, () ->
-                            "Using stream: " + effectiveStream.getStreamId() +
-                                    " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
-                                    ") for event time: " + Instant.ofEpochMilli(time).toString() +
-                                    ", feed: " + effectiveStreamKey.getFeed());
+                            "Using stream: " +
+                                    effectiveStream.getStreamId() +
+                                    " (effective date: " +
+                                    Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
+                                    ") for event time: " +
+                                    Instant.ofEpochMilli(time).toString() +
+                                    ", feed: " +
+                                    effectiveStreamKey.getFeed());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
@@ -437,7 +442,8 @@ public class ReferenceData {
                         // we don't know what the load state is for this refStreamDefinition so need to find out
                         // by querying the store. This will also update the last accessed time so will prevent
                         // (unless the purge age is very small) a purge from removing the data we are about to use
-                        final boolean isEffectiveStreamDataLoaded = offHeapRefDataStore.isDataLoaded(refStreamDefinition);
+                        final boolean isEffectiveStreamDataLoaded = offHeapRefDataStore.isDataLoaded(
+                                refStreamDefinition);
 
                         if (!isEffectiveStreamDataLoaded) {
                             // we don't have the complete data so kick off a process to load it all

@@ -20,6 +20,7 @@ package stroom.util.shared;
  * A GWT friendly version of commons EqualsBuilder.
  */
 public class EqualsBuilder {
+
     private boolean isEquals = true;
 
     public EqualsBuilder appendSuper(final boolean value) {

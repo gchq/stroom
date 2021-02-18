@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.script.shared.ScriptDoc;
+import stroom.visualisation.client.presenter.VisFunction;
+import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
+
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
@@ -28,18 +32,16 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.script.shared.ScriptDoc;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
 import java.util.List;
 
 public class VisFrame extends Frame implements VisPane {
+
     private final MessageSupport messageSupport;
     private VisFunction function;
 
     public VisFrame(final EventBus eventBus) {
-        super("vis.html");// + "?time=" + System.currentTimeMillis());
+        super("vis.html"); // + "?time=" + System.currentTimeMillis());
 
         final Style style = getElement().getStyle();
         style.setPosition(Position.ABSOLUTE);

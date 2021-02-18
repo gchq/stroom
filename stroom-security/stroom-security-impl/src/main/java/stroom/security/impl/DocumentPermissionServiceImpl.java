@@ -30,16 +30,17 @@ import stroom.security.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private final DocumentPermissionDao documentPermissionDao;
@@ -69,7 +70,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final Map<String, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(docUuid);
+            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(
+                    docUuid);
 
             documentPermission.forEach((userUuid, permissions) -> {
                 userDao.getByUuid(userUuid)
@@ -81,7 +83,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                             }
                             userPermissions.put(user.getUuid(), permissions);
                         });
-                });
+            });
         } catch (final RuntimeException e) {
             LOGGER.error("getPermissionsForDocument()", e);
             throw e;
@@ -154,7 +156,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {
         if (sourceUuid != null) {
-            final stroom.security.shared.DocumentPermissions documentPermissions = getPermissionsForDocument(sourceUuid);
+            final stroom.security.shared.DocumentPermissions documentPermissions =
+                    getPermissionsForDocument(sourceUuid);
             if (documentPermissions != null) {
                 final Map<String, Set<String>> userPermissions = documentPermissions.getPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {

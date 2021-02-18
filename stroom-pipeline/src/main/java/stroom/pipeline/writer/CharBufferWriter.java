@@ -64,7 +64,7 @@ public class CharBufferWriter extends Writer {
      * @param len  Number of characters to write
      */
     @Override
-    public void write(final char cbuf[], final int off, final int len) {
+    public void write(final char[] cbuf, final int off, final int len) {
         if ((off < 0) || (off > cbuf.length) || (len < 0) || ((off + len) > cbuf.length) || ((off + len) < 0)) {
             throw new IndexOutOfBoundsException();
         } else if (len == 0) {
@@ -119,10 +119,11 @@ public class CharBufferWriter extends Writer {
      */
     @Override
     public CharBufferWriter append(final CharSequence csq) {
-        if (csq == null)
+        if (csq == null) {
             write("null");
-        else
+        } else {
             write(csq.toString());
+        }
         return this;
     }
 

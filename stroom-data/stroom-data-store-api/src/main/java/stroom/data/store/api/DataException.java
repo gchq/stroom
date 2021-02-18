@@ -20,6 +20,7 @@ package stroom.data.store.api;
  * Unchecked error in the data store.
  */
 public class DataException extends RuntimeException {
+
     private static final long serialVersionUID = 4306974171835279325L;
 
     public DataException(final String msg) {

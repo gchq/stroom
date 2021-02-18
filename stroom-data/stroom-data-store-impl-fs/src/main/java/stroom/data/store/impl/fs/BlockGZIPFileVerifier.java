@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,11 +28,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
+import javax.annotation.Nonnull;
 
 /**
  * Class used to check a Block GZIP file.
  */
 class BlockGZIPFileVerifier {
+
     // File being read
     private final Path path;
     private final RandomAccessFile raFile;
@@ -192,10 +193,10 @@ class BlockGZIPFileVerifier {
 
         fillBuffer(stream, magicMarkerRawBufffer, 0, magicMarkerRawBufffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.MAGIC_MARKER, magicMarkerRawBufffer)) {
-            byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
+            final byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
 
             getRaFile().seek(Math.max(0, pos - 10));
-            int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
+            final int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
 
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Failed to find block sync point at ");
@@ -217,7 +218,9 @@ class BlockGZIPFileVerifier {
     private void readHeaderMarker() throws IOException {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(path) + "\"");
+            throw new IOException("Does not look like a Block GZIP V1 Stream \"" +
+                    FileUtil.getCanonicalPath(path) +
+                    "\"");
         }
     }
 
@@ -225,6 +228,7 @@ class BlockGZIPFileVerifier {
      * Class to interface a stream to a random access file.
      */
     class RAInputStreamAdaptor extends InputStream {
+
         @Override
         public int read() throws IOException {
             return getRaFile().read();

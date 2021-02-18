@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class OpenIdConfig extends AbstractConfig {
+
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
 
@@ -46,7 +47,8 @@ public class OpenIdConfig extends AbstractConfig {
         this.useInternal = useInternal;
     }
 
-    @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid settings. Without this the other endpoints etc must be set manually.")
+    @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid " +
+            "settings. Without this the other endpoints etc must be set manually.")
     @JsonProperty
     public String getOpenIdConfigurationEndpoint() {
         return openIdConfigurationEndpoint;

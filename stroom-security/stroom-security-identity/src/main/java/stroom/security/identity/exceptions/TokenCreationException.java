@@ -21,6 +21,7 @@ package stroom.security.identity.exceptions;
 import stroom.security.identity.token.TokenType;
 
 public class TokenCreationException extends RuntimeException {
+
     private TokenType tokenType;
     private String errorMessage;
 

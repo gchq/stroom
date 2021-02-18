@@ -16,6 +16,10 @@
 
 package stroom.main.client.view;
 
+import stroom.main.client.presenter.MainPresenter;
+import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
+import stroom.util.shared.EqualsUtil;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -28,11 +32,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.main.client.presenter.MainPresenter;
-import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
-import stroom.util.shared.EqualsUtil;
 
 public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
+
     private final Widget widget;
     @UiField
     SimplePanel banner;
@@ -50,6 +52,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     private Widget westWidget;
     private Widget centerWidget;
     private String currentBanner;
+
     @Inject
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
@@ -147,5 +150,6 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     public interface Binder extends UiBinder<Widget, MainViewImpl> {
+
     }
 }

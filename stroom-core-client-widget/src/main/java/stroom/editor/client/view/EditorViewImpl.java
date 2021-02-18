@@ -59,13 +59,13 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * This is a widget that can be used to edit text. It provides useful
@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
  * markers.
  */
 public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> implements EditorView {
+
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static final boolean SHOW_INDICATORS_DEFAULT = false;
     private static volatile Binder binder;
@@ -291,6 +292,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                             case FATAL_ERROR:
                                 annotationType = AceAnnotationType.FATAL_ERROR;
                                 break;
+                            default:
+                                throw new RuntimeException("Unexpected severity " + severity);
                         }
 
                         // Ace munges all the msgs together in one popup for annotaions on the same line/col
@@ -542,6 +545,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
      * Declare styles.
      */
     public interface Style extends CssResource {
+
         String filterButtons();
 
         String filterButton();
@@ -551,6 +555,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
      * Bundle for the indicator icons and styles.
      */
     public interface Resources extends ClientBundle {
+
         ImageResource filterActive();
 
         ImageResource filterInactive();
@@ -560,5 +565,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
+
     }
 }

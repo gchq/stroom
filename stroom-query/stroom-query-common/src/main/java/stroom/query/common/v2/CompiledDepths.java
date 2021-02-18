@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import java.util.Arrays;
 
 class CompiledDepths {
+
     private final int maxGroupDepth;
     private final int maxDepth;
     private final int[] groupSizeByDepth;

@@ -16,8 +16,9 @@
 
 package stroom.receive.common;
 
-import org.junit.jupiter.api.Test;
 import stroom.proxy.StroomStatusCode;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.zip.ZipException;
@@ -25,6 +26,7 @@ import java.util.zip.ZipException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestStroomStreamException {
+
     @Test
     void testCompressedStreamCorrupt() {
         doTest(new ZipException("test"), StroomStatusCode.COMPRESSED_STREAM_INVALID, "test");
@@ -40,6 +42,9 @@ class TestStroomStreamException {
     }
 
     private void doTest(Exception exception, StroomStatusCode stroomStatusCode, String msg) {
-        assertThatThrownBy(() -> StroomStreamException.create(exception)).hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " + stroomStatusCode.getMessage() + " - " + msg);
+        assertThatThrownBy(() ->
+                StroomStreamException.create(exception))
+                .hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " +
+                        stroomStatusCode.getMessage() + " - " + msg);
     }
 }

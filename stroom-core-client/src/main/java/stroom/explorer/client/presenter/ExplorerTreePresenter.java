@@ -136,10 +136,14 @@ public class ExplorerTreePresenter
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
-        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
+        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
+                typeFilterPresenter.getIncludedTypes())));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
+        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event ->
+                getEventBus().fireEvent(new ExplorerTreeSelectEvent(
+                        explorerTree.getSelectionModel(),
+                        event.getSelectionType()))));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
 
         registerHandler(activityContainer.addClickHandler(event -> currentActivity.showActivityChooser()));
@@ -195,7 +199,13 @@ public class ExplorerTreePresenter
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
                 target.getAbsoluteTop() + target.getClientHeight() + 2);
-        ShowPopupEvent.fire(this, typeFilterPresenter, PopupType.POPUP, popupPosition, null, target);
+        ShowPopupEvent.fire(
+                this,
+                typeFilterPresenter,
+                PopupType.POPUP,
+                popupPosition,
+                null,
+                target);
     }
 
     @ProxyEvent
@@ -251,6 +261,7 @@ public class ExplorerTreePresenter
     }
 
     public interface ExplorerTreeView extends View, HasUiHandlers<ExplorerTreeUiHandlers> {
+
         void setCellTree(Widget widget);
 
         void setDeleteEnabled(boolean enable);
@@ -258,5 +269,6 @@ public class ExplorerTreePresenter
 
     @ProxyCodeSplit
     public interface ExplorerTreeProxy extends Proxy<ExplorerTreePresenter> {
+
     }
 }

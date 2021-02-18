@@ -78,6 +78,7 @@ import stroom.processor.client.view.ProcessorViewImpl;
 import com.google.inject.Singleton;
 
 public class PipelineModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(TextConverterPlugin.class);

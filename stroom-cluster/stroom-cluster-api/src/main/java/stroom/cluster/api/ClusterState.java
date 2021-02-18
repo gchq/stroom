@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class ClusterState {
+
     private transient Set<String> allNodes = Collections.emptySet();
     private transient Set<String> enabledActiveNodes = Collections.emptySet();
     private transient Set<String> enabledNodes = Collections.emptySet();

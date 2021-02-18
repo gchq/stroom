@@ -16,17 +16,19 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class DashboardLayoutPresenter extends MyPresenterWidget<DashboardLayoutPresenter.DashboardLayoutView> {
+
     @Inject
     public DashboardLayoutPresenter(final EventBus eventBus, final DashboardLayoutView view) {
         super(eventBus, view);
@@ -65,6 +67,7 @@ public class DashboardLayoutPresenter extends MyPresenterWidget<DashboardLayoutP
     }
 
     public interface DashboardLayoutView extends View {
+
         void setComponents(Components components);
 
         LayoutConfig getLayoutData();

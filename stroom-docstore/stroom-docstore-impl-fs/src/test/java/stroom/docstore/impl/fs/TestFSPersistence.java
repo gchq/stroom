@@ -20,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFSPersistence {
+
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Test
@@ -92,5 +93,6 @@ class TestFSPersistence {
     }
 
     private static class GenericDoc extends Doc {
+
     }
 }

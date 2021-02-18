@@ -22,6 +22,7 @@ import java.io.Serializable;
  * Wrapper for build versions
  */
 public class Version implements Serializable, Comparable<Version> {
+
     private static final long serialVersionUID = -302774034712796288L;
 
     private Integer major;
@@ -107,7 +108,13 @@ public class Version implements Serializable, Comparable<Version> {
     }
 
     private int[] toArray(final Version v) {
-        return new int[]{v.major != null ? v.major : 0, v.minor != null ? v.minor : 0, v.patch != null ? v.patch : 0};
+        return new int[]{v.major != null
+                ? v.major
+                : 0, v.minor != null
+                ? v.minor
+                : 0, v.patch != null
+                ? v.patch
+                : 0};
     }
 
     public Integer getMajor() {
@@ -145,6 +152,7 @@ public class Version implements Serializable, Comparable<Version> {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Version)) {

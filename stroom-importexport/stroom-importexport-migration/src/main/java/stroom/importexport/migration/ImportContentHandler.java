@@ -19,9 +19,11 @@ package stroom.importexport.migration;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import stroom.docref.DocRef;
 
 public abstract class ImportContentHandler extends DefaultHandler {
+
     int depth = 0;
 
     private StringBuilder content = new StringBuilder();

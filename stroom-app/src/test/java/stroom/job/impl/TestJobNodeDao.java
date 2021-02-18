@@ -18,8 +18,6 @@
 package stroom.job.impl;
 
 
-import org.jooq.exception.DataChangedException;
-import org.junit.jupiter.api.Test;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
@@ -27,11 +25,15 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.AuditUtil;
 
+import org.jooq.exception.DataChangedException;
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobNodeDao extends AbstractCoreIntegrationTest {
+
     @Inject
     private JobDao jobDao;
     @Inject

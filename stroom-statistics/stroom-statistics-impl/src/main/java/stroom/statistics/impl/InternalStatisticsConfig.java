@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -21,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 public class InternalStatisticsConfig extends AbstractConfig {
@@ -151,7 +151,8 @@ public class InternalStatisticsConfig extends AbstractConfig {
         this.eventsPerSecondDocRefs = eventsPerSecondDocRefs;
     }
 
-    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of bytes used by each class.")
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
+            "bytes used by each class.")
     @JsonProperty("heapHistogramBytes")
     public List<DocRef> getHeapHistogramBytesDocRefs() {
         return heapHistogramBytesDocRefs;
@@ -162,7 +163,8 @@ public class InternalStatisticsConfig extends AbstractConfig {
         this.heapHistogramBytesDocRefs = heapHistogramBytesDocRefs;
     }
 
-    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of instances used by each class.")
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
+            "instances used by each class.")
     @JsonProperty("heapHistogramInstances")
     public List<DocRef> getHeapHistogramInstancesDocRefs() {
         return heapHistogramInstancesDocRefs;
@@ -260,7 +262,7 @@ public class InternalStatisticsConfig extends AbstractConfig {
         return func.apply(this).stream()
                 .filter(docRef -> enabledStoreTypes.contains(docRef.getType()))
                 .collect(Collectors.toList());
-   }
+    }
 
     @Override
     public String toString() {

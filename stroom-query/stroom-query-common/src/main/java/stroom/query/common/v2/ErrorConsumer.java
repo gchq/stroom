@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ErrorConsumer implements Consumer<Throwable> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorConsumer.class);
 
     private final List<String> errors = new ArrayList<>();

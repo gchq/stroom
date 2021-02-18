@@ -22,7 +22,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class ClassificationWrapperPresenter extends
-        MyPresenterWidget<ClassificationWrapperPresenter.ClassificationWrapperView> implements ClassificationUiHandlers {
+        MyPresenterWidget<ClassificationWrapperPresenter.ClassificationWrapperView>
+        implements ClassificationUiHandlers {
+
     @Inject
     public ClassificationWrapperPresenter(final EventBus eventBus, final ClassificationWrapperView view) {
         super(eventBus, view);
@@ -34,6 +36,7 @@ public class ClassificationWrapperPresenter extends
     }
 
     public interface ClassificationWrapperView extends View {
+
         String CONTENT = "CONTENT";
 
         void setClassification(String classification);

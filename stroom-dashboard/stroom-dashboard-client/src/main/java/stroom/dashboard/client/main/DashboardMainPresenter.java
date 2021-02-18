@@ -17,19 +17,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ContentSlot;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
-import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.CorePresenter;
@@ -44,11 +31,26 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ContentSlot;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.annotations.ProxyStandard;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+
 import javax.inject.Inject;
 
 public class DashboardMainPresenter
         extends MyPresenter<DashboardMainView, DashboardMainProxy>
         implements CurrentUserChangedHandler {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     @ContentSlot
@@ -57,8 +59,8 @@ public class DashboardMainPresenter
     private final DashboardPresenter dashboardPresenter;
     private final RestFactory restFactory;
 
-    private String type;
-    private String uuid;
+    private final String type;
+    private final String uuid;
 
     @Inject
     public DashboardMainPresenter(final EventBus eventBus,
@@ -90,7 +92,8 @@ public class DashboardMainPresenter
         dashboardPresenter.addDirtyHandler(event -> Window.setTitle(dashboardPresenter.getLabel()));
         Window.addWindowClosingHandler(event -> {
             if (dashboardPresenter.isDirty()) {
-                event.setMessage("Dashboard '" + dashboardPresenter.getTitle() + "' has unsaved changes. Are you sure you want to close it?");
+                event.setMessage("Dashboard '" + dashboardPresenter.getTitle() + "' " +
+                        "has unsaved changes. Are you sure you want to close it?");
             }
         });
     }
@@ -137,8 +140,10 @@ public class DashboardMainPresenter
 
     @ProxyStandard
     public interface DashboardMainProxy extends Proxy<DashboardMainPresenter> {
+
     }
 
     public interface DashboardMainView extends View {
+
     }
 }

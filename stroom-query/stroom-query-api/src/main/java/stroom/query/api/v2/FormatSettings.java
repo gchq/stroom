@@ -19,10 +19,6 @@ package stroom.query.api.v2;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlSeeAlso;
-
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -32,5 +28,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
         @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date")
 })
 public interface FormatSettings {
+
     boolean isDefault();
 }

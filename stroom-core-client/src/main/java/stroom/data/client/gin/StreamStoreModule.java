@@ -78,6 +78,7 @@ import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
 
 public class StreamStoreModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(DataTypeUiManager.class).asEagerSingleton();

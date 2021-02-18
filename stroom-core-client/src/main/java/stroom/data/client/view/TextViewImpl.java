@@ -16,6 +16,11 @@
 
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.client.presenter.TextUiHandlers;
+import stroom.widget.button.client.FabButton;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,17 +29,15 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.client.presenter.TextUiHandlers;
-import stroom.widget.button.client.FabButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
+
     private final Widget widget;
     @UiField
     ResizeSimplePanel textContainer;
     @UiField
     FabButton playButton;
+
     @Inject
     public TextViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -63,5 +66,6 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     public interface Binder extends UiBinder<Widget, TextViewImpl> {
+
     }
 }

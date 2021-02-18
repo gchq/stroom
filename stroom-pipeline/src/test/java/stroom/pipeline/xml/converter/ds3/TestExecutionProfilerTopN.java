@@ -17,8 +17,9 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExecutionProfilerTopN extends StroomUnitTest {
+
     @Test
     void test() {
         final List<ExecutionProfiler> list = new ArrayList<>();
@@ -41,6 +43,7 @@ class TestExecutionProfilerTopN extends StroomUnitTest {
     }
 
     class SimpleExecutionProfiler implements ExecutionProfiler {
+
         int id;
 
         public SimpleExecutionProfiler(final int id) {

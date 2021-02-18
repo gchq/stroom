@@ -22,6 +22,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class DatabaseTestControlModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(CommonTestControl.class).to(DatabaseCommonTestControl.class);

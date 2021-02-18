@@ -16,14 +16,15 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.HasTargets;
 import stroom.pipeline.factory.Processor;
 import stroom.pipeline.factory.Target;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import java.util.List;
 

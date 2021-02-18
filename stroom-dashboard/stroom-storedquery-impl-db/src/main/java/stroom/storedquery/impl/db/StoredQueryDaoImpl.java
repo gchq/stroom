@@ -14,17 +14,18 @@ import org.jooq.OrderField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
 class StoredQueryDaoImpl implements StoredQueryDao {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(stroom.storedquery.impl.StoredQueryDao.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(

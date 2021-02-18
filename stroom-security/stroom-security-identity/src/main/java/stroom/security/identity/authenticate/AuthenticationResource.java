@@ -45,6 +45,7 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(tags = "Authentication")
 public interface AuthenticationResource extends RestResource {
+
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
     @GET

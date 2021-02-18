@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class IgnoreCloseInputStream extends WrappedInputStream {
+
     public IgnoreCloseInputStream(final InputStream inputStream) {
         super(inputStream);
     }

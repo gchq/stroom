@@ -23,6 +23,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class SearchableModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SearchableProvider.class).to(SearchableProviderImpl.class);

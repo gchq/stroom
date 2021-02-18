@@ -16,6 +16,9 @@
 
 package stroom.data.table.client;
 
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.widget.util.client.MySingleSelectionModel;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
@@ -32,12 +35,11 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
-import stroom.data.grid.client.DataGridViewImpl;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.List;
 
 public class MenuCellTable<R> extends Composite {
+
     /**
      * The main DataGrid.
      */
@@ -49,7 +51,7 @@ public class MenuCellTable<R> extends Composite {
     }
 
     public MenuCellTable(final boolean supportsSelection) {
-        this(supportsSelection, (Resources) GWT.create(BasicResources.class));
+        this(supportsSelection, GWT.create(BasicResources.class));
     }
 
     public MenuCellTable(final boolean supportsSelection, final Resources resources) {
@@ -166,10 +168,12 @@ public class MenuCellTable<R> extends Composite {
 
     @ImportedWithPrefix("gwt-CellTable")
     public interface BasicStyle extends Style {
+
         String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
     }
 
     public interface BasicResources extends Resources {
+
         @Override
         @Source(BasicStyle.DEFAULT_CSS)
         BasicStyle cellTableStyle();
@@ -177,10 +181,12 @@ public class MenuCellTable<R> extends Composite {
 
     @ImportedWithPrefix("gwt-CellTable")
     public interface DefaultStyle extends Style {
+
         String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
     }
 
     public interface DefaultResources extends Resources {
+
         @Override
         @Source(DefaultStyle.DEFAULT_CSS)
         DefaultStyle cellTableStyle();
@@ -188,10 +194,12 @@ public class MenuCellTable<R> extends Composite {
 
     @ImportedWithPrefix("gwt-CellTable")
     public interface DisabledStyle extends Style {
+
         String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
     }
 
     public interface DisabledResources extends Resources {
+
         @Override
         @Source(DisabledStyle.DEFAULT_CSS)
         DisabledStyle cellTableStyle();
@@ -199,16 +207,19 @@ public class MenuCellTable<R> extends Composite {
 
     @ImportedWithPrefix("gwt-CellTable")
     public interface HoverStyle extends Style {
+
         String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
     }
 
     public interface HoverResources extends Resources {
+
         @Override
         @Source(HoverStyle.DEFAULT_CSS)
         HoverStyle cellTableStyle();
     }
 
     public interface MenuResources extends Resources {
+
         @Override
         @Source("MenuCellTable.css")
         Style cellTableStyle();

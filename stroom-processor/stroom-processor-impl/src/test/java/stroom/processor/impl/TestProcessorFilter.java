@@ -17,10 +17,11 @@
 package stroom.processor.impl;
 
 
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.Test;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 class TestProcessorFilter {
+
     @Test
     void testCompare() {
         final ProcessorFilter t1 = new ProcessorFilter();

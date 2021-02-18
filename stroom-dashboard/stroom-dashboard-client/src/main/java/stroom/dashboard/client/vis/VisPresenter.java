@@ -33,7 +33,6 @@ import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -70,11 +69,12 @@ import java.util.List;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {
+
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
-//    private static final int MAX_RESULTS = 1000;
+    //    private static final int MAX_RESULTS = 1000;
     private static final long UPDATE_INTERVAL = 2000;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
@@ -191,7 +191,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(), event.getComponentId())) {
+            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+                    event.getComponentId())) {
                 updateTableId(event.getComponentId());
             }
         }));
@@ -406,7 +407,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                             }
                         }
                     } else {
-                        failure(function, "No visualisaton found for: " + getVisSettings().getVisualisation());
+                        failure(function,
+                                "No visualisation found for: " + getVisSettings().getVisualisation());
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
@@ -654,6 +656,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     public interface VisView extends View {
+
         void setRefreshing(boolean refreshing);
 
         void showMessage(String message);

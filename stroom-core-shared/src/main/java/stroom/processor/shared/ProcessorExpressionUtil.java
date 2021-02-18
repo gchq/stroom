@@ -3,11 +3,11 @@ package stroom.processor.shared;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public final class ProcessorExpressionUtil {
+
     private ProcessorExpressionUtil() {
         // Utility class.
     }
@@ -49,12 +49,14 @@ public final class ProcessorExpressionUtil {
     }
 
     public interface ExpressionOperatorVisitor {
+
         void accept(final ExpressionOperator parent,
                     final int childOffset,
                     final ExpressionOperator operator);
     }
 
     public interface ExpressionTermVisitor {
+
         void accept(final ExpressionOperator parent,
                     final int childOffset,
                     final ExpressionTerm operator);

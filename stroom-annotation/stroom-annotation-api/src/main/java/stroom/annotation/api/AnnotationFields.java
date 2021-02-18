@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public interface AnnotationFields {
+
     String CURRENT_USER_FUNCTION = "currentUser()";
 
     String NAMESPACE = "annotation";
@@ -29,7 +30,7 @@ public interface AnnotationFields {
     String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
 
     AbstractField ID_FIELD = new IdField(ID);
-//    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
+    //    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
 //    AbstractField EVENT_ID_FIELD = new IdField(IndexConstants.EVENT_ID);
     AbstractField CREATED_ON_FIELD = new DateField(CREATED_ON);
     AbstractField CREATED_BY_FIELD = new TextField(CREATED_BY);

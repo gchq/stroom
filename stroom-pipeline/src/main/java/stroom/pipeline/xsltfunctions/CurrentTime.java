@@ -16,14 +16,16 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.date.DateUtil;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import stroom.util.date.DateUtil;
-import stroom.util.shared.Severity;
 
 class CurrentTime extends StroomExtensionFunctionCall {
+
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
         String result = null;

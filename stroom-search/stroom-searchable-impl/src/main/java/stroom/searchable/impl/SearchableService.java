@@ -22,14 +22,15 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 // Used by DI
 class SearchableService {
+
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableService.class);
@@ -69,8 +70,10 @@ class SearchableService {
                             Preconditions.checkNotNull(searchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                    "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                    "searchRequest must have at least one resultRequest");
 
             final Searchable searchable = searchableProvider.get(docRef);
             if (searchable == null) {

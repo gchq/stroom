@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTaskId {
+
     @Test
     void testSimple() {
         final TaskId p1 = new TaskId("P1", null);

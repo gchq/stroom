@@ -18,9 +18,9 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
-import stroom.util.shared.CriteriaFieldSort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +31,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindFsVolumeCriteria extends BaseCriteria {
+
     public static final String FIELD_ID = "Id";
 
     @JsonProperty

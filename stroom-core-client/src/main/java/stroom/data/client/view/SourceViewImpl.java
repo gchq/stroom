@@ -20,7 +20,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SourceViewImpl extends ViewImpl implements SourceView {
 
-    private Widget widget;
+    private final Widget widget;
 
     @UiField
     Label lblFeed;
@@ -48,7 +48,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         widget = binder.createAndBindUi(this);
     }
 
-   @Override
+    @Override
     public void addToSlot(final Object slot, final Widget content) {
 
     }
@@ -110,5 +110,6 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {
+
     }
 }

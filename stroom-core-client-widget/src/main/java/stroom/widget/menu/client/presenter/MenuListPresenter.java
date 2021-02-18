@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MenuListPresenter extends MenuPresenter {
+
     private final Provider<MenuListPresenter> menuListPresenterProvider;
     private MenuListPresenter currentMenu;
     private MenuItem currentItem;

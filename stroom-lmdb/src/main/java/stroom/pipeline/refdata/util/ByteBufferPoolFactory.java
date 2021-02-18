@@ -9,6 +9,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class ByteBufferPoolFactory {
+
     private final ByteBufferPool byteBufferPool;
 
     public ByteBufferPoolFactory() {
@@ -16,8 +17,8 @@ public class ByteBufferPoolFactory {
     }
 
     @Inject
-    public ByteBufferPoolFactory(final ByteBufferPoolConfig ByteBufferPoolConfig) {
-        this.byteBufferPool = new ByteBufferPoolImpl4(ByteBufferPoolConfig);
+    public ByteBufferPoolFactory(final ByteBufferPoolConfig byteBufferPoolConfig) {
+        this.byteBufferPool = new ByteBufferPoolImpl4(byteBufferPoolConfig);
     }
 
     public ByteBufferPool getByteBufferPool() {

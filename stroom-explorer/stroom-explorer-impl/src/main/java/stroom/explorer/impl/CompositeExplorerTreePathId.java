@@ -21,6 +21,7 @@ import stroom.util.shared.EqualsBuilder;
 import java.io.Serializable;
 
 class CompositeExplorerTreePathId implements Serializable {
+
     private long ancestor;
     private long descendant;
 
@@ -40,6 +41,7 @@ class CompositeExplorerTreePathId implements Serializable {
         this.descendant = descendantId;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

@@ -32,6 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.BiConsumer;
 
 public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> implements PopupUiHandlers {
+
     private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
@@ -106,6 +107,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
     }
 
     public interface FilterView extends View {
+
         String getIncludes();
 
         void setIncludes(String includes);

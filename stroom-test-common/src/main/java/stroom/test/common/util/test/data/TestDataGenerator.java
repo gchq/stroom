@@ -87,7 +87,9 @@ public class TestDataGenerator {
                     values.get(indexSequence.getNext());
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -103,7 +105,8 @@ public class TestDataGenerator {
                     values.get(random.nextInt(values.size()));
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomValueField, %s, %s", name, e.getMessage()),
+                    e);
         }
     }
 
@@ -127,7 +130,9 @@ public class TestDataGenerator {
                     String.format(format, random.nextInt(maxNumberExc));
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomNumberedValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomNumberedValueField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -159,7 +164,9 @@ public class TestDataGenerator {
 
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building sequentiallyNumberedValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentiallyNumberedValueField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -181,7 +188,9 @@ public class TestDataGenerator {
 
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -199,7 +208,9 @@ public class TestDataGenerator {
                     name,
                     () -> Integer.toString(buildRandomNumberSupplier(startInc, endExc).getAsInt()));
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentialValueField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -219,7 +230,8 @@ public class TestDataGenerator {
                             intSupplier.getAsInt());
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomIpV4Field, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomIpV4Field, %s, %s", name, e.getMessage()),
+                    e);
         }
     }
 
@@ -240,7 +252,9 @@ public class TestDataGenerator {
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
             return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -273,7 +287,9 @@ public class TestDataGenerator {
             };
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -290,7 +306,9 @@ public class TestDataGenerator {
             return sequentialDateTimeField(name, startDateInc, delta, dateTimeFormatter);
         } catch (final RuntimeException e) {
             e.printStackTrace();
-            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -316,7 +334,9 @@ public class TestDataGenerator {
             };
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building sequentialDateTimeField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -353,7 +373,9 @@ public class TestDataGenerator {
 
             return randomWordsField(name, minCount, maxCount, classNames);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomClassNamesField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomClassNamesField, %s, %s",
+                    name,
+                    e.getMessage()), e);
         }
     }
 
@@ -387,7 +409,8 @@ public class TestDataGenerator {
 
             return new Field(name, supplier);
         } catch (final RuntimeException e) {
-            throw new RuntimeException(String.format("Error building randomWordsField, %s, %s", name, e.getMessage()), e);
+            throw new RuntimeException(String.format("Error building randomWordsField, %s, %s", name, e.getMessage()),
+                    e);
         }
     }
 
@@ -413,7 +436,8 @@ public class TestDataGenerator {
      * Holder class for the static class names list to allow for lazy initialisation
      */
     private static class ClassNamesListHolder {
-        private static List<String> classNames;
+
+        private static final List<String> classNames;
 
         public static final List<String> NOT_FOUND_LIST = Collections.singletonList("ERROR_NO_CLASS_NAMES_FOUND");
 
@@ -453,7 +477,7 @@ public class TestDataGenerator {
 
     public static class DefinitionBuilder {
 
-        private List<Field> fieldDefinitions = new ArrayList<>();
+        private final List<Field> fieldDefinitions = new ArrayList<>();
         private Consumer<Stream<String>> rowStreamConsumer;
         private int rowCount = 1;
         private DataWriter dataWriter;

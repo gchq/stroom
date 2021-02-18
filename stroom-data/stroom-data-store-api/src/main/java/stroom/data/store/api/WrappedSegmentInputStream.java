@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class WrappedSegmentInputStream extends SegmentInputStream {
+
     private final SegmentInputStream segmentInputStream;
 
     public WrappedSegmentInputStream(final SegmentInputStream segmentInputStream) {

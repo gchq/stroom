@@ -18,7 +18,6 @@ package stroom.util.io;
 
 import com.google.common.base.Strings;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -28,8 +27,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class PathCreator {
+
     private static final String STROOM_TEMP = "stroom.temp";
     private static final String STROOM_HOME = "stroom.home";
     private static final String[] NON_ENV_VARS = {
@@ -164,9 +165,9 @@ public class PathCreator {
     }
 
     protected String replace(final String path,
-                   final String type,
-                   final LongSupplier replacementSupplier,
-                   final int pad) {
+                             final String type,
+                             final LongSupplier replacementSupplier,
+                             final int pad) {
 
         //convert the long supplier into a string supplier to prevent the
         //evaluation of the long supplier

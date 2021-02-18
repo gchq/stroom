@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.81] - 2021-02-16
+
+* Issue **#2042** : Fixed an issue sorting search results that was making sorting very slow causing searches with large numbers of results to hang. 
+
 * Issue **#2043** : Removed an artificial limit on the number of data points that will be returned to a dashboard visualisation. The UI code had been written to only request a maximum of 1000 data points which meant that some visualisations were missing expected data. It may be necessary to add some limitation to avoid the UI being overloaded but the limitation has been removed for now as it was not configurable and did not warn the user when the limit had been reached.
 
 * Migrated new UI to use Swagger generated endpoints and types.
@@ -3057,7 +3062,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.80...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.81...HEAD
+[v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
 [v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
 [v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
 [v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78

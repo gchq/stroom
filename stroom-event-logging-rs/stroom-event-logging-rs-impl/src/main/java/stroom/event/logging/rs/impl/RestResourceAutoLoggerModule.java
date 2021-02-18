@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
@@ -20,6 +21,7 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import com.google.inject.AbstractModule;
 
 public class RestResourceAutoLoggerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(RestResourceAutoLogger.class).to(RestResourceAutoLoggerImpl.class);

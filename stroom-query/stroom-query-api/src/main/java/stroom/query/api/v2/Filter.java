@@ -27,9 +27,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
-        "both can be supplied")
+@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
+        "Either or both can be supplied")
 public final class Filter {
+
     @ApiModelProperty(
             value = "Only results matching this filter will be included",
             example = "^[0-9]{3}$")
@@ -57,10 +58,15 @@ public final class Filter {
         return excludes;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Filter filter = (Filter) o;
         return Objects.equals(includes, filter.includes) &&
                 Objects.equals(excludes, filter.excludes);
@@ -91,6 +97,7 @@ public final class Filter {
      * Builder for constructing a {@link Filter}
      */
     public static final class Builder {
+
         private String includes;
         private String excludes;
 

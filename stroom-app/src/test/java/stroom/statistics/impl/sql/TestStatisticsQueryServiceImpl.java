@@ -22,13 +22,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.ParamUtil;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,10 +67,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStatisticsQueryServiceImpl.class);
 
     private static final String STAT_NAME = "MyStat";
@@ -104,7 +105,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             TAG1, 3,
             TAG2, 5);
 
-//    private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
+//    private static final DocRef DOC_REF = new DocRef(
+//    StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
 
     @Inject
@@ -132,7 +134,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private StatisticStoreDoc statisticStoreDoc;
 
-    private boolean ignoreAllTests = false;
+    private final boolean ignoreAllTests = false;
 
     @BeforeEach
     void setup() {
@@ -316,9 +318,10 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 .forEach(tableResult -> {
                     String id = tableResult.getComponentId();
                     LOGGER.debug("id: {}", id);
-                    tableResult.getRows().forEach(row -> LOGGER.debug(row.getValues().stream().collect(Collectors.joining(","))));
+                    tableResult.getRows().forEach(row -> LOGGER.debug(String.join(",", row.getValues())));
 
-                    assertThat(tableResult.getTotalResults()).isEqualTo(expectedRowCount);
+                    assertThat(tableResult.getTotalResults())
+                            .isEqualTo(expectedRowCount);
 
                     List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(id);
                     assertThat(fields).isNotNull();
@@ -463,14 +466,17 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         sqlStatisticAggregationManager.aggregate();
 
-        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)).isEqualTo(3);
-        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME)).isEqualTo(3);
+        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME))
+                .isEqualTo(3);
+        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME))
+                .isEqualTo(3);
     }
 
     private int getRowCount(final String tableName) throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);

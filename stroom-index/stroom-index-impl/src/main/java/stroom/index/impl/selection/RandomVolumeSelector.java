@@ -21,6 +21,7 @@ import stroom.index.shared.IndexVolume;
 import java.util.List;
 
 public class RandomVolumeSelector implements VolumeSelector {
+
     public static final String NAME = "Random";
 
     @Override

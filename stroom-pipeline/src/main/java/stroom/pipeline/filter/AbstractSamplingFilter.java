@@ -16,12 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -29,19 +23,27 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * A filter used to sample the output produced by SAX events at any point in the
  * XML pipeline. Many instances of this filter can be used.
  */
 public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSamplingFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;

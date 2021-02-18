@@ -25,20 +25,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Comparator;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Comparator;
-import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
+@XmlType(name = "DataRetentionRule", propOrder = {
+        "ruleNumber",
+        "creationTime",
+        "name",
+        "enabled",
+        "expression",
+        "age",
+        "timeUnit",
+        "forever"})
 @XmlRootElement(name = "dataRetentionRule")
 @JsonInclude(Include.NON_NULL)
 public class DataRetentionRule {
+
     public static final String FOREVER = "Forever";
 
     @XmlElement(name = "ruleNumber")
@@ -158,10 +167,15 @@ public class DataRetentionRule {
         return sb.toString();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionRule that = (DataRetentionRule) o;
         return ruleNumber == that.ruleNumber &&
                 creationTime == that.creationTime &&

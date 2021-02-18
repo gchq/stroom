@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface HasDependencies {
+
     /**
      * Get a map of dependencies for all documents.
      *

@@ -16,15 +16,17 @@
 
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import stroom.docref.DocRef;
 
 public abstract class ImportContentHandler extends DefaultHandler {
+
     int depth = 0;
 
-    private StringBuilder content = new StringBuilder();
+    private final StringBuilder content = new StringBuilder();
     private String type;
     private String uuid;
     private String name;

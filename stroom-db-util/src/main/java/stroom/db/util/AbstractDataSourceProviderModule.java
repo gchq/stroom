@@ -9,27 +9,26 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @param <T_Config>       A config class that implements {@link HasDbConfig}
- * @param <T_ConnProvider> A class that extends {@link DataSource}
+ * @param <T_CONFIG>    A config class that implements {@link HasDbConfig}
+ * @param <T_CONN_PROV> A class that extends {@link DataSource}
  */
-public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource> extends AbstractModule {
+public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
+        extends AbstractModule {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
     protected abstract String getModuleName();
 
-    protected abstract Class<T_ConnProvider> getConnectionProviderType();
+    protected abstract Class<T_CONN_PROV> getConnectionProviderType();
 
-    protected abstract T_ConnProvider createConnectionProvider(DataSource dataSource);
+    protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
     private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
@@ -49,9 +48,11 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
      */
     @Provides
     @Singleton
-    public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final DataSourceFactory dataSourceFactory,
-                                                @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
+    public T_CONN_PROV getConnectionProvider(
+            final Provider<T_CONFIG> configProvider,
+            final DataSourceFactory dataSourceFactory,
+            @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
+
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
@@ -77,11 +78,13 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
 
     protected abstract void performMigration(DataSource dataSource);
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

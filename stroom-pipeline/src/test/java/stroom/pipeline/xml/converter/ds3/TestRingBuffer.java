@@ -17,14 +17,16 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestRingBuffer extends StroomUnitTest {
+
     @Test
     void testString() {
         test(Mode.STRING);
@@ -383,6 +385,9 @@ class TestRingBuffer extends StroomUnitTest {
     }
 
     private enum Mode {
-        STRING, CHAR_ARRAY, UNSAFE_COPY, COPY
+        STRING,
+        CHAR_ARRAY,
+        UNSAFE_COPY,
+        COPY
     }
 }

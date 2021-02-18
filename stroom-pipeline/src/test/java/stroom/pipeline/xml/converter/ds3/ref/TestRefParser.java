@@ -17,14 +17,17 @@
 package stroom.pipeline.xml.converter.ds3.ref;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefParser extends StroomUnitTest {
+
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     @Test
     void testSingle() {
         final RefParser refParser = new RefParser();
@@ -138,6 +141,7 @@ class TestRefParser extends StroomUnitTest {
         assertThat(matchIndex.getIndex()).isEqualTo(-2);
     }
 
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     @Test
     void testComposite() {
         StoreRefFactory refDesc = null;

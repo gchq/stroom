@@ -16,10 +16,12 @@
 
 package stroom.editor.client.event;
 
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.editor.client.event.IndicatorEvent.IndicatorHandler;
 
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 public interface HasIndicatorHandlers extends HasHandlers {
+
     HandlerRegistration addIndicatorHandler(IndicatorHandler handler);
 }

@@ -16,11 +16,13 @@
 
 package stroom.node.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 
+import com.google.inject.AbstractModule;
+
 public class MockNodeServiceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(NodeService.class).to(MockNodeService.class);

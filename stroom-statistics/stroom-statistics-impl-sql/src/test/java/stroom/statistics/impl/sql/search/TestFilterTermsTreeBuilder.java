@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.search;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -26,12 +25,15 @@ import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFilterTermsTreeBuilder extends StroomUnitTest {
+
     private Set<String> fieldBlackList = Set.of(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
     /**
@@ -151,7 +153,8 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term2field", Condition.EQUALS, "123456789");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         // if we get here without an exception then it has worked as planned
         assertThat(filterTermsTree != null).isTrue();
@@ -164,7 +167,8 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "123456789");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
@@ -179,7 +183,8 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 

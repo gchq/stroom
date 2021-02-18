@@ -16,12 +16,14 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.main.ComponentRegistry;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dashboard.client.main.ComponentRegistry;
 
 public class TablePlugin {
+
     @Inject
     public TablePlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
                        final Provider<TablePresenter> provider) {

@@ -48,7 +48,8 @@ public class FastInfosetContentHandler extends ReceivingContentHandler {
     }
 
     @Override
-    public void startElement(final String uri, final String localname, final String rawname, final Attributes atts) throws SAXException {
+    public void startElement(final String uri, final String localname, final String rawname, final Attributes atts)
+            throws SAXException {
         LOGGER.trace("startElement {} {} {}", uri, localname, rawname);
         super.startElement(uri, localname, rawname, atts);
     }

@@ -17,10 +17,11 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import com.google.common.collect.ImmutableMap;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
+
+import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
 import java.util.Map;

@@ -38,7 +38,7 @@ public enum ExternalService {
     /**
      * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
      */
-    private static ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
     //The serviceKey is a stroom specific abstraction of the service name, allowing the name to be set in properties
     //rather than hardcoded here.  The name that corresponds the serviceKey is what Curator registers services against.
     private final String serviceKey;

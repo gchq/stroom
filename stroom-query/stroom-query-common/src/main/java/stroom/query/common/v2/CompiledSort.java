@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 public class CompiledSort implements Serializable {
+
     private static final long serialVersionUID = 719372020029496497L;
 
     private final int fieldIndex;

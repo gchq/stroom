@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 public class TestStreamEventMap {
+
     private static final int TOTAL_EVENTS = 1000000;
 
     @Test

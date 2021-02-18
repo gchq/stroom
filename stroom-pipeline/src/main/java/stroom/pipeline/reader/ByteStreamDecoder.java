@@ -5,19 +5,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.util.Objects;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class ByteStreamDecoder {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
 
-    private final Charset charset;
     private final CharsetDecoder charsetDecoder;
 //    private final Supplier<Byte> byteSupplier;
 
@@ -38,14 +38,11 @@ public class ByteStreamDecoder {
     }
 
     public ByteStreamDecoder(final Charset charset) {
-        this.charset = Objects.requireNonNull(charset);
-        this.charsetDecoder = charset.newDecoder();
+        this.charsetDecoder = Objects.requireNonNull(charset)
+                .newDecoder();
     }
 
     public DecodedChar decodeNextChar(final Supplier<Byte> byteSupplier) {
-        boolean charDecoded = false;
-        int loopCnt = 0;
-        int byteCnt = 0;
         // Clear the buffers ready for a new char's bytes
         inputBuffer.clear();
         outputBuffer.clear();
@@ -58,7 +55,10 @@ public class ByteStreamDecoder {
 
         // Start trying to decode a char from this position
 //            int byteOffset = startOffset;
-        
+
+        boolean charDecoded = false;
+        int loopCnt = 0;
+        int byteCnt = 0;
         while (!charDecoded && loopCnt++ < MAX_BYTES_PER_CHAR) {
             byte b = 0;
             try {
@@ -84,7 +84,8 @@ public class ByteStreamDecoder {
                     true);
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("coderResult: {}, loopCnt: {}, inPos: {}, inLimit: {}, inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
+                LOGGER.trace("coderResult: {}, loopCnt: {}, inPos: {}, inLimit: {}, " +
+                                "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
                         coderResult,
                         loopCnt,
                         inputBuffer.position(),
@@ -138,19 +139,20 @@ public class ByteStreamDecoder {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public static interface ByteSupplier {
+    public interface ByteSupplier {
+
         /**
          * @return The byte represented as an unsigned value 0-255 or -1 if there are
          * no more bytes to supply. This is equivalent to {@link InputStream#read()}.
-         *
+         * <p>
          * Care need to be taken when comparing signed byte values to the result of this
          * method. Testing for -1 should be done before any kind of conversion/comparison
          * to another value.
-         *
+         * <p>
          * e.g.
          * int b = supplyUnsignedByte();
          * if (b == -1) {
-         *     break;
+         * break;
          * }
          * if (arr[i] == (byte)
          */
@@ -166,6 +168,7 @@ public class ByteStreamDecoder {
      * along with the number of bytes used to represent that char.
      */
     public static class DecodedChar {
+
         private final String str;
         private final int byteCount;
         private static final char BYTE_ORDER_MARK = '\ufeff';

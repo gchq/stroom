@@ -18,5 +18,6 @@
 package stroom.meta.impl;
 
 public interface MetaProcessorDao {
+
     Integer getOrCreate(String processorUuid, String pipelineUuid);
 }

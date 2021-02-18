@@ -26,6 +26,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 public class DelimitedTarget implements SearchResultWriter.Target {
+
     private final OutputStream outputStream;
     private final String delimiter;
 

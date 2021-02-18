@@ -43,6 +43,7 @@ import stroom.receive.rules.client.view.RuleSetSettingsViewImpl;
 import stroom.receive.rules.client.view.RuleViewImpl;
 
 public class PolicyModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(RuleSetPlugin.class);
@@ -52,7 +53,11 @@ public class PolicyModule extends PluginModule {
         bindPresenterWidget(RuleSetSettingsPresenter.class, RuleSetSettingsView.class, RuleSetSettingsViewImpl.class);
         bindPresenterWidget(FieldEditPresenter.class, FieldEditView.class, FieldEditViewImpl.class);
         bindPresenterWidget(DataRetentionPresenter.class, DataRetentionView.class, DataRetentionViewImpl.class);
-        bindPresenterWidget(DataRetentionRulePresenter.class, DataRetentionRuleView.class, DataRetentionRuleViewImpl.class);
-        bindPresenterWidget(DataRetentionPolicyPresenter.class, DataRetentionPolicyView.class, DataRetentionPolicyViewImpl.class);
+        bindPresenterWidget(DataRetentionRulePresenter.class,
+                DataRetentionRuleView.class,
+                DataRetentionRuleViewImpl.class);
+        bindPresenterWidget(DataRetentionPolicyPresenter.class,
+                DataRetentionPolicyView.class,
+                DataRetentionPolicyViewImpl.class);
     }
 }

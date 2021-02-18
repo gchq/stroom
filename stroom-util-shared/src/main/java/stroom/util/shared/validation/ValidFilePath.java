@@ -1,11 +1,11 @@
 package stroom.util.shared.validation;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.constraints.NotNull;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import javax.validation.constraints.NotNull;
 
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.CONSTRUCTOR;
@@ -21,7 +21,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Null values will not fail validation.
  * {@link NotNull} can be used in addition to ensure a path is supplied.
  */
-@Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
+@Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {ValidFilePathValidator.class})
 @Documented
@@ -29,15 +29,16 @@ public @interface ValidFilePath {
 
     String message() default "path does not exist or is not a regular file";
 
-    Class<?>[] groups() default { };
+    Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default { };
+    Class<? extends Payload>[] payload() default {};
 
     // Allows for multiple annotations on the same element
-    @Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER })
+    @Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER})
     @Retention(RUNTIME)
     @Documented
     @interface List {
+
         NotNull[] value();
     }
 }

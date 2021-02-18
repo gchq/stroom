@@ -26,6 +26,7 @@ import java.time.ZonedDateTime;
  * wanting to import all of apache commons.
  */
 public final class PeriodUtil {
+
     private static final ZoneOffset UTC = ZoneOffset.UTC;
 
     private PeriodUtil() {

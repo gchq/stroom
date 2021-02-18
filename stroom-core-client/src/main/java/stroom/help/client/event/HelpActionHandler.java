@@ -19,5 +19,6 @@ package stroom.help.client.event;
 import com.google.gwt.event.shared.EventHandler;
 
 public interface HelpActionHandler extends EventHandler {
+
     void onHelp(HelpActionEvent event);
 }

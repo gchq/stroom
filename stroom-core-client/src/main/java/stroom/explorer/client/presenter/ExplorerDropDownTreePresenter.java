@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
+
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
     private ExplorerNode selectedExplorerNode;
@@ -67,7 +68,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                        final boolean initial) {
         // Is the selection type valid?
         if (isSelectionAllowed(selectedItem)) {
-            // Drop down presenters need to know what the initial selection was so that they can update the name of their selected item properly.
+            // Drop down presenters need to know what the initial selection was so that they can
+            // update the name of their selected item properly.
             if (initial) {
                 DataSelectionEvent.fire(this, selectedItem, false);
             } else if (selectionType.isDoubleSelect()) {
@@ -175,9 +177,11 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private static class ExtendedExplorerTree extends ExplorerTree {
+
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
-        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final RestFactory restFactory) {
+        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter,
+                                    final RestFactory restFactory) {
             super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         }
@@ -185,7 +189,9 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         @Override
         protected void setInitialSelectedItem(final ExplorerNode selection) {
             super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), new SelectionType(false, false), true);
+            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection),
+                    new SelectionType(false, false),
+                    true);
         }
 
         @Override

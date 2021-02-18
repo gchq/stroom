@@ -27,6 +27,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -37,7 +38,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(tags = "Activities")
 @Path("/activity" + ResourcePaths.V1)
@@ -51,11 +51,11 @@ public interface ActivityResource extends RestResource, DirectRestService, ReadW
 
     @GET
     @Path("/fields")
-    @ApiOperation( value = "Lists activity field definitions")
+    @ApiOperation(value = "Lists activity field definitions")
     List<FilterFieldDefinition> listFieldDefinitions();
 
     @POST
-    @ApiOperation( value = "Create an Activity")
+    @ApiOperation(value = "Create an Activity")
     Activity create();
 
     @Override

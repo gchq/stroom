@@ -19,10 +19,6 @@ package stroom.util.config;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -35,24 +31,31 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 /**
  * Usage java stroom.util.config.Configure
  * <pre><code>{@code <parameter file> <files to process>}</code></pre>
  */
 public class Configure extends AbstractCommandLineTool {
+
     private String parameterFilePath = null;
     private String processFilePath = null;
     private boolean readParameter = true;
     private boolean exitOnError = true;
 
-    private List<Path> processFile = new ArrayList<>();
+    private final List<Path> processFile = new ArrayList<>();
     private ParameterFile parameterFile;
     private final JAXBContext jaxbContext;
 
     public static void printUsage() {
         System.out.println(
-                "java stroom.util.config.Configure parameterFile=<parameter file> processFile=<comma delimited files to process>");
+                "java stroom.util.config.Configure " +
+                        "parameterFile=<parameter file> " +
+                        "processFile=<comma delimited files to process>");
     }
 
     public static void main(String[] args) {
@@ -178,7 +181,7 @@ public class Configure extends AbstractCommandLineTool {
         Files.deleteIfExists(newFile);
         int replaceCount = 0;
         try (BufferedReader buffReader = new BufferedReader(Files.newBufferedReader(file));
-             BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
+                BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
             String line;
             int lineCount = 0;
             while ((line = buffReader.readLine()) != null) {
@@ -187,8 +190,9 @@ public class Configure extends AbstractCommandLineTool {
                     if (line.contains(parameter.getName())) {
                         line = line.replace(parameter.getName(), parameter.getValue());
                         replaceCount++;
-                        System.out.println(FileUtil.getCanonicalPath(file) + ": Replaced " + parameter.getName() + " with "
-                                + parameter.getValue() + " at line " + lineCount);
+                        System.out.println(FileUtil.getCanonicalPath(file) +
+                                ": Replaced " + parameter.getName() + " with " + parameter.getValue() +
+                                " at line " + lineCount);
                     }
                 }
                 buffWriter.write(line);

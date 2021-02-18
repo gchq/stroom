@@ -16,11 +16,6 @@
 
 package stroom.statistics.impl.sql.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -43,11 +38,17 @@ import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  * The statistic filter used to gather event based statistics.
@@ -56,6 +57,7 @@ import java.util.Map;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STATISTICS)
 public class StatisticsFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsFilter.class);
 
     /**
@@ -205,8 +207,10 @@ public class StatisticsFilter extends AbstractXMLFilter {
                         currentTagName = attValue;
                         if (!statisticStoreEntity.isValidField(currentTagName)) {
                             throw new RuntimeException(String.format(
-                                    "Statistic record contains a tag name [%s] that is not valid for this statistic data source [%s]",
-                                    currentTagName, statisticStoreEntity.getName()));
+                                    "Statistic record contains a tag name [%s] that is not valid for this " +
+                                            "statistic data source [%s]",
+                                    currentTagName,
+                                    statisticStoreEntity.getName()));
                         }
                     } else if (TAG_VALUE.equals(attLocalName)) {
                         currentTagValue = attValue;
@@ -308,8 +312,10 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
                 if (currentTagToValueMap.size() != statisticStoreEntity.getFieldNames().size()) {
                     throw new RuntimeException(String.format(
-                            "Number of tags in the data source [%s] does not agree with the number in the record passed to the filter [%s]",
-                            statisticStoreEntity.getFieldNames().size(), currentTagToValueMap.size()));
+                            "Number of tags in the data source [%s] does not agree with the number in the record " +
+                                    "passed to the filter [%s]",
+                            statisticStoreEntity.getFieldNames().size(),
+                            currentTagToValueMap.size()));
                 }
 
                 if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {

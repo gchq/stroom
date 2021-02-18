@@ -17,15 +17,6 @@
 
 package stroom.feed.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.data.client.presenter.DataTypeUiManager;
@@ -42,9 +33,20 @@ import stroom.item.client.StringListBox;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 
 public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
+
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
     @Inject
@@ -161,6 +163,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     public interface FeedSettingsView extends View {
+
         TextArea getDescription();
 
         TextBox getClassification();

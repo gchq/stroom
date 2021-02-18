@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import stroom.pipeline.factory.PipelineElementModule;
 
 class ExtractionElementModule extends PipelineElementModule {
+
     @Override
     protected void configureElements() {
         bindElement(SearchResultOutputFilter.class);

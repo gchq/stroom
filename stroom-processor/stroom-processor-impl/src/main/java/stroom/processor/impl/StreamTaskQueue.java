@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
+
     private final LinkedBlockingQueue<ProcessorTask> queue = new LinkedBlockingQueue<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 

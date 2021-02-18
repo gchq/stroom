@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ConnectionUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConnectionUtil.class);
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -59,7 +60,8 @@ public class ConnectionUtil {
 //        LOGGER.debug(">>> {}", sql);
 //        final List<Long> keyList = new ArrayList<>();
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-//        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+//        try (final PreparedStatement preparedStatement =
+//        connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 //            PreparedStatementUtil.setArguments(preparedStatement, args);
 //            final int result = preparedStatement.executeUpdate();
 //
@@ -82,7 +84,8 @@ public class ConnectionUtil {
         executeStatements(connection, Collections.singletonList(sql));
     }
 
-    public static void executeStatements(final Connection connection, final List<String> sqlStatements) throws SQLException {
+    public static void executeStatements(final Connection connection, final List<String> sqlStatements)
+            throws SQLException {
         LOGGER.debug(() -> ">>> " + sqlStatements.stream()
                 .map(ConnectionUtil::cleanSqlForLogs)
                 .collect(Collectors.joining("; ")));
@@ -158,12 +161,14 @@ public class ConnectionUtil {
         return number.longValue();
     }
 
-//    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
-//                                                                               final String sql,
-//                                                                               final int numberKeys,
-//                                                                               final List<Object> args,
-//                                                                               final List<? extends HasPrimitiveValue> stats,
-//                                                                               final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
+//    public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(
+//    final Connection connection,
+//    final String sql,
+//    final int numberKeys,
+//    final List<Object> args,
+//    final List<? extends HasPrimitiveValue> stats,
+//    final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
+//
 //        LOGGER.debug(">>> %s", sql);
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 //        final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataDownloadResult {
+
     private static final long serialVersionUID = -5012089569913789389L;
 
     private long recordsWritten = 0;
@@ -61,12 +62,12 @@ public class DataDownloadResult {
         this.hitMaxFileParts = hitMaxFileParts;
     }
 
-    public List<Message> getMessageList(){
+    public List<Message> getMessageList() {
         return messageList;
     }
 
-    public void addMessage(Message message){
-        if (messageList == null){
+    public void addMessage(Message message) {
+        if (messageList == null) {
             messageList = new ArrayList<>();
         }
         messageList.add(message);

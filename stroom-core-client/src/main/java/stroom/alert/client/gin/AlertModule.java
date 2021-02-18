@@ -27,6 +27,7 @@ import stroom.alert.client.view.PromptViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AlertModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(AlertPlugin.class).asEagerSingleton();

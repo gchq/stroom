@@ -16,19 +16,21 @@
 
 package stroom.pipeline.factory;
 
+import stroom.pipeline.factory.PipelineElementModule.ElementType;
+
 import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.factory.PipelineElementModule.ElementType;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
     private final Map<ElementType, Provider<Element>> elementMap;

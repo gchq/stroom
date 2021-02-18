@@ -7,6 +7,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.HttpHeaders;
 
 public class ClientSecurityUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientSecurityUtil.class);
 
     public static void addAuthorisationHeader(final Invocation.Builder builder, final SecurityContext securityContext) {

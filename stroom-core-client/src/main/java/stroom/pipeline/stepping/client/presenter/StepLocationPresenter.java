@@ -16,18 +16,20 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
 public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresenter.StepLocationView>
         implements StepLocationUIHandlers {
+
     @Inject
     public StepLocationPresenter(final EventBus eventBus, final StepLocationView view) {
         super(eventBus, view);
@@ -48,6 +50,7 @@ public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresent
     }
 
     public interface StepLocationView extends View, HasUiHandlers<StepLocationUIHandlers> {
+
         void setStepLocation(StepLocation stepLocation);
     }
 }

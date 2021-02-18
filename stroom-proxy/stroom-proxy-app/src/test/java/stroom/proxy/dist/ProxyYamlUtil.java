@@ -48,6 +48,7 @@ public class ProxyYamlUtil {
 
     /**
      * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
+     *
      * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
@@ -55,7 +56,8 @@ public class ProxyYamlUtil {
                 new FileConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false));
 
-        final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
+                new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(
@@ -82,6 +84,7 @@ public class ProxyYamlUtil {
         mapper.writeValue(outputStream, config);
 
     }
+
     public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
         config.setProxyConfig(proxyConfig);

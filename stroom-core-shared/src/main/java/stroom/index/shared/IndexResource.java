@@ -64,12 +64,12 @@ public interface IndexResource extends RestResource, DirectRestService, ReadWith
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
     @ApiOperation("Delete matching index shards")
-    Long deleteIndexShards(@QueryParam("nodeName") String nodeName, 
+    Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
                            @ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
     @ApiOperation("Flush matching index shards")
-    Long flushIndexShards(@QueryParam("nodeName") String nodeName, 
+    Long flushIndexShards(@QueryParam("nodeName") String nodeName,
                           @ApiParam("criteria") FindIndexShardCriteria criteria);
 }

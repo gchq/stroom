@@ -28,11 +28,12 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
 import java.util.Optional;
 import java.util.UUID;
+import javax.inject.Inject;
 
 public class ProcessorServiceImpl implements ProcessorService {
+
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
     private final SecurityContext securityContext;

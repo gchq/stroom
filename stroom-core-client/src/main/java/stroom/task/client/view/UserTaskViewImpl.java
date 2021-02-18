@@ -16,6 +16,11 @@
 
 package stroom.task.client.view;
 
+import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
+import stroom.task.client.presenter.UserTaskUiHandlers;
+import stroom.task.shared.TaskProgress;
+import stroom.widget.button.client.ImageButton;
+
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,12 +32,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
-import stroom.task.client.presenter.UserTaskUiHandlers;
-import stroom.task.shared.TaskProgress;
-import stroom.widget.button.client.ImageButton;
 
 public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> implements UserTaskView {
+
     private final Widget widget;
     @UiField
     HorizontalPanel layout;
@@ -90,5 +92,6 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
     }
 
     public interface Binder extends UiBinder<Widget, UserTaskViewImpl> {
+
     }
 }

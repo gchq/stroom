@@ -17,17 +17,19 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.value.StringValue;
 import stroom.feed.api.FeedProperties;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.value.StringValue;
+
 import javax.inject.Inject;
 
 class Classification extends StroomExtensionFunctionCall {
+
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
 

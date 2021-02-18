@@ -20,6 +20,7 @@ package stroom.meta.impl;
 import java.util.List;
 
 public interface MetaFeedDao {
+
     Integer getOrCreate(String name);
 
     List<String> list();

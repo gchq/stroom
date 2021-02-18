@@ -16,8 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -26,8 +24,11 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 
-import javax.inject.Inject;
+import org.apache.commons.text.StringEscapeUtils;
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
+import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.
@@ -36,6 +37,7 @@ import java.io.IOException;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.TEXT)
 public class TextWriter extends AbstractWriter {
+
     private byte[] header;
     private byte[] footer;
 

@@ -26,6 +26,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import java.io.IOException;
 
 public class TestStandardAnalyser {
+
     public static void main(final String[] args) throws IOException {
         new TestStandardAnalyser().test();
     }
@@ -60,8 +61,9 @@ public class TestStandardAnalyser {
         final CharTermAttribute termAtt = stream.addAttribute(CharTermAttribute.class);
 
         for (; ; ) {
-            if (!hasMoreTokens)
+            if (!hasMoreTokens) {
                 break;
+            }
 
             // Get the text of this term.
             final char[] tokenText = termAtt.buffer();

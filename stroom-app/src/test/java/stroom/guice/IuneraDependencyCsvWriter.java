@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.fail;
  * https://github.com/iunera/codeanalysis
  */
 class IuneraDependencyCsvWriter implements Closeable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IuneraDependencyCsvWriter.class);
 
     private final Class<?> testClass;

@@ -33,6 +33,7 @@ package stroom.dashboard.expression.v1;
                         isVarargs = true,
                         minVarargsCount = 2)))
 class Add extends NumericFunction {
+
     static final String NAME = "add";
     static final String ALIAS = "+";
     private static final Calc CALC = new Calc();
@@ -52,6 +53,7 @@ class Add extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override
@@ -61,6 +63,7 @@ class Add extends NumericFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         private final Calculator calculator;

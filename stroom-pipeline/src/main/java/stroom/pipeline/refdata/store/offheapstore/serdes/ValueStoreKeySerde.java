@@ -17,8 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.lmdb.Serde;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.util.logging.LogUtil;
 
 import org.apache.hadoop.hbase.util.ByteBufferUtils;

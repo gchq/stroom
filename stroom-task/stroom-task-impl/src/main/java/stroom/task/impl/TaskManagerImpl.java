@@ -36,8 +36,6 @@ import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -46,9 +44,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class TaskManagerImpl implements TaskManager {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
 
     public static final FilterFieldMappers<TaskProgress> FIELD_MAPPERS = FilterFieldMappers.of(
@@ -56,7 +57,7 @@ class TaskManagerImpl implements TaskManager {
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NAME, TaskProgress::getTaskName),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_USER, TaskProgress::getUserName),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_SUBMIT_TIME, (TaskProgress taskProgress) ->
-                            Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString()),
+                    Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString()),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo)
     );
 
@@ -115,9 +116,11 @@ class TaskManagerImpl implements TaskManager {
                 if (waiting) {
                     // Output some debug to list the tasks that are executing
                     // and queued.
-                    LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, taskRegistry.list().stream()
-                            .map(TaskContextImpl::toString)
-                            .collect(Collectors.joining(", ")));
+                    LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}",
+                            currentCount,
+                            taskRegistry.list().stream()
+                                    .map(TaskContextImpl::toString)
+                                    .collect(Collectors.joining(", ")));
 
                     // Wait 1 second.
                     Thread.sleep(1000);
@@ -166,7 +169,8 @@ class TaskManagerImpl implements TaskManager {
 //        return securityContext.getUserIdentity();
 //    }
 //
-//    <R> Supplier<R> wrap(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+//    <R> Supplier<R> wrap(
+//    final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 //        final TaskId parentTaskId = getParentTaskId(parentContext);
 //        final TaskId taskId = TaskIdFactory.create(parentTaskId);
@@ -295,7 +299,9 @@ class TaskManagerImpl implements TaskManager {
 
             // If we are forced to kill then kill the associated thread.
             if (kill) {
-                LOGGER.trace(() -> LogUtil.message("killing task {} on thread {}", taskId, taskContext.getThreadName()));
+                LOGGER.trace(() -> LogUtil.message("killing task {} on thread {}",
+                        taskId,
+                        taskContext.getThreadName()));
                 taskContext.kill();
             }
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
@@ -309,7 +315,8 @@ class TaskManagerImpl implements TaskManager {
                 findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
 
         if (sessionMatch) {
-            // Always allow a user to see tasks for their own session if tasks for the current session have been requested.
+            // Always allow a user to see tasks for their own session if tasks for the current session
+            // have been requested.
             return doFind(findTaskProgressCriteria);
         } else {
             return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () ->
@@ -323,7 +330,7 @@ class TaskManagerImpl implements TaskManager {
         final long timeNowMs = System.currentTimeMillis();
 
         final Predicate<TaskProgress> fuzzyMatchPredicate;
-        if (findTaskProgressCriteria != null ) {
+        if (findTaskProgressCriteria != null) {
             fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     findTaskProgressCriteria.getNameFilter(),
                     FIELD_MAPPERS);
@@ -449,9 +456,11 @@ class TaskManagerImpl implements TaskManager {
         return taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
-                    TaskId grandparentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), null);
-                    TaskId parentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), grandparentTaskId);
-                    TaskId childTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), parentTaskId);
+                    TaskId grandparentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
+                    TaskId parentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
+                            grandparentTaskId);
+                    TaskId childTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
+                            parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),
                             Tuple.of(taskname + "-parent", parentTaskId),
@@ -471,7 +480,8 @@ class TaskManagerImpl implements TaskManager {
                     taskProgress.setTimeNowMs(now.toEpochMilli());
                     taskProgress.setNodeName(nodeInfo.getThisNodeName());
 
-                    taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
+                    taskProgress.setFilterMatchState(
+                            FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
                     return taskProgress;
 
                 })

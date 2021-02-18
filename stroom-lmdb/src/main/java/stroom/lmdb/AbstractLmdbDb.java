@@ -67,10 +67,10 @@ import java.util.stream.StreamSupport;
  * DO NOT open a new txn while inside a txn, e.g. calling get("key") while inside a txn.
  * DO ensure any {@link PooledByteBuffer}s are released/closed after use.
  * DO be aware that a get() call is using a cursor underneath, so each call to get() will move the txn's
- *   cursor to the position of the new key. Therefore:
- *   v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
- *   Thus if you are making multiple get() calls you may need to copy/deserialise/use the returned value before
- *   doing the next get().
+ * cursor to the position of the new key. Therefore:
+ * v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
+ * Thus if you are making multiple get() calls you may need to copy/deserialise/use the returned value before
+ * doing the next get().
  *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
@@ -130,7 +130,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         LOGGER.debug("Opening LMDB database with name: {}", name);
         final DbiFlags[] flags = dbiFlags.length > 0
                 ? dbiFlags
-                : (new DbiFlags[] {DbiFlags.MDB_CREATE});
+                : (new DbiFlags[]{DbiFlags.MDB_CREATE});
         try {
             return env.openDbi(name, flags);
         } catch (Exception e) {
@@ -295,6 +295,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     /**
      * Stream all entries found in keyRange in the order they are found in the DB.
+     *
      * @param streamFunction A function to map a {@link Stream} to a return value T
      * @return The result of the stream mapping function.
      */
@@ -303,7 +304,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                                final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
 
         try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
-             final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
                     stopKeyPooledBuffer,
@@ -341,7 +342,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                              final Consumer<Tuple2<K, V>> keyValueTupleConsumer) {
 
         try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
-             final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
                     stopKeyPooledBuffer,
@@ -399,7 +400,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public <T> T mapValue(final K key, final Function<V, T> valueMapper) {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnRead();
-             final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
 
             final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             serializeKey(keyBuffer, key);
@@ -413,7 +414,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public void consumeValue(final K key, final Consumer<V> valueConsumer) {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnRead();
-             final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
 
             final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             serializeKey(keyBuffer, key);
@@ -430,7 +431,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                           final V value,
                           final boolean overwriteExisting) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
-             final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+                final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
             final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
@@ -486,7 +487,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                             ? PutOutcome.replacedEntry()
                             : PutOutcome.failed();
                 } else {
-                   putOutcome = PutOutcome.failed();
+                    putOutcome = PutOutcome.failed();
                 }
             }
 
@@ -511,7 +512,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
             entries.forEach((key, value) -> {
                 try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
-                     final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+                        final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
                     final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
                     final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
@@ -593,6 +594,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     /**
      * This will fail if you are already inside a txn.
+     *
      * @see AbstractLmdbDb#updateValue(Txn, Object, Consumer)
      */
     public void updateValue(final K key, final Consumer<ByteBuffer> valueBufferConsumer) {
@@ -665,7 +667,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public void deleteAll(final Collection<K> keys) {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite();
-             final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keys.forEach(key -> {
                 try {
                     final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();

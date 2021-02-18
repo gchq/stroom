@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FunctionSignature {
+
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -142,12 +143,23 @@ public class FunctionSignature {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FunctionSignature that = (FunctionSignature) o;
-        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && Objects.equals(categoryPath, that.categoryPath) && Objects.equals(args, that.args) && returnType == that.returnType && Objects.equals(returnDescription, that.returnDescription) && Objects.equals(description, that.description);
+        return Objects.equals(name, that.name)
+                && Objects.equals(aliases, that.aliases)
+                && Objects.equals(categoryPath, that.categoryPath)
+                && Objects.equals(args, that.args)
+                && returnType == that.returnType
+                && Objects.equals(returnDescription, that.returnDescription)
+                && Objects.equals(description, that.description);
     }
 
     @Override
@@ -159,6 +171,7 @@ public class FunctionSignature {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Arg {
+
         @JsonProperty
         private final String name;
         @JsonProperty
@@ -227,22 +240,40 @@ public class FunctionSignature {
             return defaultValue;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Arg arg = (Arg) o;
-            return optional == arg.optional && varargs == arg.varargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues) && Objects.equals(defaultValue, arg.defaultValue);
+            return optional == arg.optional
+                    && varargs == arg.varargs
+                    && minVarargsCount == arg.minVarargsCount
+                    && Objects.equals(name, arg.name)
+                    && argType == arg.argType
+                    && Objects.equals(description, arg.description)
+                    && Objects.equals(allowedValues, arg.allowedValues)
+                    && Objects.equals(defaultValue, arg.defaultValue);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, argType, optional, varargs, minVarargsCount, description, allowedValues, defaultValue);
+            return Objects.hash(name,
+                    argType,
+                    optional,
+                    varargs,
+                    minVarargsCount,
+                    description,
+                    allowedValues,
+                    defaultValue);
         }
 
         @Override
-        public String
-        toString() {
+        public String toString() {
             return "Arg{" +
                     "name='" + name + '\'' +
                     ", argType=" + argType +

@@ -23,6 +23,7 @@ package stroom.cluster.lock.api;
  * lock uses the database
  */
 public interface ClusterLockService {
+
     void tryLock(String lockName, Runnable runnable);
 
     void lock(String lockName, Runnable runnable);

@@ -23,6 +23,7 @@ import java.io.Serializable;
  * based index processing. e.g. size = 10, index = 0, outputs "1/10"
  */
 public class LogItemProgress implements Serializable {
+
     private static final long serialVersionUID = -8931028520798738334L;
 
     private long pos = 0;

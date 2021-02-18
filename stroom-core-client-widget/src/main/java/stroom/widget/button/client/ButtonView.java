@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 
 public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers {
+
     boolean isEnabled();
 
     void setEnabled(boolean enabled);

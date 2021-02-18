@@ -21,6 +21,7 @@ import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
 
 public class PipelineImageUtil {
+
     public static SvgIcon getIcon(final PipelineElementType pipelineElementType) {
         if (pipelineElementType.getIcon() == null || pipelineElementType.getIcon().length() == 0) {
             return null;

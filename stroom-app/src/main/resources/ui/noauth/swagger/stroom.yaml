@@ -69,7 +69,7 @@ paths:
                 type: boolean
           description: default response
     get:
-      operationId: read_18
+      operationId: read_17
       parameters:
       - in: path
         name: id
@@ -786,7 +786,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
-  /config/v1/clusterProperties/{propertyName}/dbOverrideValue:
+  /config/v1/clusterProperties/{propertyName}:
     put:
       operationId: update_1
       parameters:
@@ -1086,9 +1086,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
-  /data/v1/info/{id}:
+  /data/v1/fetch:
+    post:
+      operationId: fetch_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FetchDataRequest'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbstractFetchDataResult'
+          description: default response
+  /data/v1/upload:
+    post:
+      operationId: upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDataRequest'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceKey'
+          description: default response
+  /data/v1/{id}/info:
     get:
-      operationId: info_1
+      operationId: viewInfo
       parameters:
       - in: path
         name: id
@@ -1105,20 +1135,31 @@ paths:
                 items:
                   $ref: '#/components/schemas/DataInfoSection'
           description: default response
-  /data/v1/upload:
-    post:
-      operationId: upload
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UploadDataRequest'
+  /data/v1/{id}/parts/{partNo}/child-types:
+    get:
+      operationId: getChildStreamTypes
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - in: path
+        name: partNo
+        required: true
+        schema:
+          type: integer
+          format: int64
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceKey'
+                type: array
+                items:
+                  type: string
+                uniqueItems: true
           description: default response
   /dataRetentionRules/v1/impactSummary:
     post:
@@ -1307,7 +1348,7 @@ paths:
           description: default response
   /dictionary/v1/{dictionaryUuid}:
     get:
-      operationId: fetch
+      operationId: fetch_2
       parameters:
       - in: path
         name: dictionaryUuid
@@ -1749,7 +1790,7 @@ paths:
           description: default response
   /explorer/v2/fetchExplorerNodes:
     post:
-      operationId: fetch_1
+      operationId: fetch_3
       requestBody:
         content:
           application/json:
@@ -1784,7 +1825,7 @@ paths:
           description: default response
   /explorer/v2/info:
     post:
-      operationId: info_2
+      operationId: info_1
       requestBody:
         content:
           application/json:
@@ -1833,7 +1874,7 @@ paths:
       responses:
         default:
           content:
-            '*/*': {}
+            application/octet-stream: {}
           description: default response
   /feed/v1/fetchSupportedEncodings:
     get:
@@ -2031,7 +2072,7 @@ paths:
           description: default response
   /index/v1/{indexUuid}:
     get:
-      operationId: fetch_2
+      operationId: fetch_4
       parameters:
       - in: path
         name: indexUuid
@@ -2382,7 +2423,7 @@ paths:
           description: default response
   /jobNode/v1/info:
     get:
-      operationId: info_3
+      operationId: info_2
       parameters:
       - in: query
         name: jobName
@@ -2633,7 +2674,7 @@ paths:
           description: default response
   /node/v1/info/{nodeName}:
     get:
-      operationId: info_4
+      operationId: info_3
       parameters:
       - in: path
         name: nodeName
@@ -3067,7 +3108,7 @@ paths:
           description: default response
   /pipelines/v1/{pipelineId}:
     get:
-      operationId: fetch_3
+      operationId: fetch_5
       parameters:
       - in: path
         name: pipelineId
@@ -3149,7 +3190,7 @@ paths:
           description: default response
   /processorFilter/v1/find:
     post:
-      operationId: find_5
+      operationId: find_6
       requestBody:
         content:
           application/json:
@@ -3195,7 +3236,7 @@ paths:
             application/json: {}
           description: default response
     get:
-      operationId: read_14
+      operationId: read_13
       parameters:
       - in: path
         name: id
@@ -3316,7 +3357,7 @@ paths:
           description: default response
   /processorTask/v1/find:
     post:
-      operationId: find_6
+      operationId: find_7
       requestBody:
         content:
           application/json:
@@ -3394,7 +3435,7 @@ paths:
           description: default response
   /remoteSearch/v1/destroy:
     get:
-      operationId: destroy_2
+      operationId: destroy_1
       parameters:
       - in: query
         name: queryKey
@@ -3409,7 +3450,7 @@ paths:
           description: default response
   /remoteSearch/v1/poll:
     get:
-      operationId: poll_2
+      operationId: poll_1
       parameters:
       - in: query
         name: queryKey
@@ -3422,7 +3463,7 @@ paths:
           description: default response
   /remoteSearch/v1/start:
     post:
-      operationId: start_1
+      operationId: start
       requestBody:
         content:
           application/json:
@@ -3480,7 +3521,7 @@ paths:
           description: default response
   /ruleset/v2/read:
     post:
-      operationId: read_15
+      operationId: read_14
       requestBody:
         content:
           application/json:
@@ -3542,7 +3583,7 @@ paths:
           description: default response
   /script/v1/read:
     post:
-      operationId: read_16
+      operationId: read_15
       requestBody:
         content:
           application/json:
@@ -3731,7 +3772,7 @@ paths:
           description: default response
   /solrIndex/v1/read:
     post:
-      operationId: read_17
+      operationId: read_16
       requestBody:
         content:
           application/json:
@@ -3874,7 +3915,7 @@ paths:
           description: default response
   /statistic/v1/read:
     post:
-      operationId: read_22
+      operationId: read_21
       requestBody:
         content:
           application/json:
@@ -3953,7 +3994,7 @@ paths:
           description: default response
   /statsStore/v1/read:
     post:
-      operationId: read_21
+      operationId: read_20
       requestBody:
         content:
           application/json:
@@ -4188,7 +4229,7 @@ paths:
           description: default response
   /streamtasks/v1:
     get:
-      operationId: fetch_6
+      operationId: find_5
       parameters:
       - in: query
         name: offset
@@ -4422,7 +4463,7 @@ paths:
           description: default response
   /stroom-solr-index/v2/destroy:
     post:
-      operationId: destroy_1
+      operationId: destroy_2
       requestBody:
         content:
           application/json:
@@ -4533,7 +4574,7 @@ paths:
           description: default response
   /task/v1/find/{nodeName}:
     post:
-      operationId: find_8
+      operationId: find_10
       parameters:
       - in: path
         name: nodeName
@@ -4688,7 +4729,7 @@ paths:
                 format: int32
           description: default response
     get:
-      operationId: read_20
+      operationId: read_19
       parameters:
       - in: path
         name: token
@@ -4757,7 +4798,7 @@ paths:
                 format: int32
           description: default response
     get:
-      operationId: read_19
+      operationId: read_18
       parameters:
       - in: path
         name: id
@@ -4797,7 +4838,7 @@ paths:
           description: default response
   /users/v1:
     get:
-      operationId: get_6
+      operationId: find_9
       parameters:
       - in: query
         name: name
@@ -4860,7 +4901,7 @@ paths:
           description: default response
   /users/v1/find:
     post:
-      operationId: find_7
+      operationId: find_8
       requestBody:
         content:
           application/json:
@@ -4895,7 +4936,7 @@ paths:
           description: default response
   /users/v1/{userUuid}:
     get:
-      operationId: get_5
+      operationId: fetch_8
       parameters:
       - in: path
         name: userUuid
@@ -4966,53 +5007,15 @@ paths:
               schema:
                 type: boolean
           description: default response
-  /viewData/v1/fetch:
-    post:
-      operationId: fetch_4
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FetchDataRequest'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbstractFetchDataResult'
-          description: default response
-  /viewData/v1/listChildTypes:
+  /visualisation/v1:
     get:
-      operationId: getChildStreamTypes
+      operationId: fetch_9
       parameters:
-      - in: query
-        name: id
+      - in: path
+        name: uuid
+        required: true
         schema:
-          type: integer
-          format: int64
-      - in: query
-        name: partNo
-        schema:
-          type: integer
-          format: int64
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-                uniqueItems: true
-          description: default response
-  /visualisation/v1/read:
-    post:
-      operationId: read_23
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+          type: string
       responses:
         default:
           content:
@@ -5020,7 +5023,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/VisualisationDoc'
           description: default response
-  /visualisation/v1/update:
     put:
       operationId: update_24
       requestBody:
@@ -5037,28 +5039,13 @@ paths:
           description: default response
   /welcome/v1:
     get:
-      operationId: welcome
+      operationId: fetch
       responses:
         default:
           content:
             application/json: {}
           description: default response
-  /xmlSchema/v1/read:
-    post:
-      operationId: read_24
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XmlSchemaDoc'
-          description: default response
-  /xmlSchema/v1/update:
+  /xmlSchema/v1:
     put:
       operationId: update_25
       requestBody:
@@ -5073,22 +5060,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/XmlSchemaDoc'
           description: default response
-  /xslt/v1/read:
-    post:
-      operationId: read_13
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /xmlSchema/v1/{uuid}:
+    get:
+      operationId: fetch_10
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/XsltDoc'
+                $ref: '#/components/schemas/XmlSchemaDoc'
           description: default response
-  /xslt/v1/update:
+  /xslt/v1:
     put:
       operationId: update_16
       requestBody:
@@ -5105,7 +5093,7 @@ paths:
           description: default response
   /xslt/v1/{xsltId}:
     get:
-      operationId: fetch_5
+      operationId: fetch_6
       parameters:
       - in: path
         name: xsltId

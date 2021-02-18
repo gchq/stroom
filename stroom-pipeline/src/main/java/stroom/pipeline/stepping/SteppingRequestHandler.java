@@ -58,15 +58,16 @@ import stroom.util.date.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 class SteppingRequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingRequestHandler.class);
 
     private final Store streamStore;
@@ -139,7 +140,8 @@ class SteppingRequestHandler {
         taskContext.info(() -> "Started stepping");
 
         return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
+            // on can be read.
             return securityContext.useAsReadResult(() -> {
                 // Set the current user so they are visible during translation.
                 currentUserHolder.setCurrentUser(securityContext.getUserId());
@@ -321,7 +323,8 @@ class SteppingRequestHandler {
                         processStream(controller, feedName, childStreamTypeName, source);
 
                         if (controller.isFound()) {
-                            // Set the offset in the task list where we will be able to find this task. This will enable us to show the right stream list page.
+                            // Set the offset in the task list where we will be able to find this task. This will
+                            // enable us to show the right stream list page.
                             if (allStreamIdList != null) {
                                 curentStreamOffset = allStreamIdList.indexOf(streamId);
                             }
@@ -391,7 +394,8 @@ class SteppingRequestHandler {
         if (filteredStreamIdList == null) {
             List<Long> filteredList = Collections.emptyList();
 
-//            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
+//            if (criteria.getSelectedIdSet() == null
+//            || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
 //                // Don't get back more than 1000 streams or we might run out of
 //                // memory.
 //                criteria.obtainPageRequest().setOffset(0L);
@@ -405,7 +409,8 @@ class SteppingRequestHandler {
                 allStreamIdList.add(meta.getId());
             }
 
-//            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
+//            if (criteria.getSelectedIdSet() == null
+//            || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
             // If we are including all tasks then don't filter the list.
             filteredList = new ArrayList<>(allStreamList.size());
             for (final Meta meta : allStreamList) {

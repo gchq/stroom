@@ -14,6 +14,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * A bundle for serving static asset files from the classpath.
  */
 public class BrowserRouterAssetsBundle implements Bundle {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowserRouterAssetsBundle.class);
 
     private final String singlePagePrefix;
@@ -29,8 +30,12 @@ public class BrowserRouterAssetsBundle implements Bundle {
                                      final String singlePagePrefix) {
         checkArgument(resourcePath.startsWith("/"), "%s is not an absolute path", resourcePath);
         checkArgument(!"/".equals(resourcePath), "%s is the classpath root", resourcePath);
-        this.resourcePath = resourcePath.endsWith("/") ? resourcePath : (resourcePath + '/');
-        this.uriPath = uriPath.endsWith("/") ? uriPath : (uriPath + '/');
+        this.resourcePath = resourcePath.endsWith("/")
+                ? resourcePath
+                : (resourcePath + '/');
+        this.uriPath = uriPath.endsWith("/")
+                ? uriPath
+                : (uriPath + '/');
         this.indexFile = indexFile;
         this.assetsName = assetsName;
         this.singlePagePrefix = singlePagePrefix;
@@ -52,6 +57,10 @@ public class BrowserRouterAssetsBundle implements Bundle {
     }
 
     protected BrowserRouterAssetServlet createServlet() {
-        return new BrowserRouterAssetServlet(resourcePath, uriPath, indexFile, StandardCharsets.UTF_8, singlePagePrefix);
+        return new BrowserRouterAssetServlet(resourcePath,
+                uriPath,
+                indexFile,
+                StandardCharsets.UTF_8,
+                singlePagePrefix);
     }
 }

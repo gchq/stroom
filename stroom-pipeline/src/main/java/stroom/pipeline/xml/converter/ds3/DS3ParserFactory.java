@@ -16,24 +16,26 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
-import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
+import stroom.util.xml.SAXParserFactoryFactory;
 
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+import java.io.IOException;
+import java.io.Reader;
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
-import java.io.Reader;
 
 public class DS3ParserFactory implements ParserFactory {
+
     public static final String SCHEMA_NAME = "data-splitter-v3.0";
     public static final String NAMESPACE_URI = "data-splitter:3";
     public static final String SYSTEM_ID = "file://data-splitter-v3.0.xsd";

@@ -3,16 +3,17 @@ package stroom.util.io;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class HomeDirProviderImpl implements HomeDirProvider {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HomeDirProviderImpl.class);
 
     private final PathConfig pathConfig;

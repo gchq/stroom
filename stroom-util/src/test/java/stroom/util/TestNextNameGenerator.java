@@ -8,6 +8,7 @@ import java.util.Arrays;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNextNameGenerator {
+
     @Test
     void simple() {
         var names = Arrays.asList("New group", "New group (1)", "New group (2)");

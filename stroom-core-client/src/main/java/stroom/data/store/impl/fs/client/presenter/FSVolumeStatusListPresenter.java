@@ -42,6 +42,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.function.Consumer;
 
 public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
+
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
@@ -58,7 +59,8 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final FindFsVolumeCriteria criteria = FindFsVolumeCriteria.matchAll();
         dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus, criteria.obtainPageRequest()) {
             @Override
-            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<FsVolume>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(criteria);
             }

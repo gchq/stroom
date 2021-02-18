@@ -24,8 +24,9 @@ package stroom.dashboard.expression.v1;
         commonReturnDescription = "A null value.",
         signatures = @FunctionSignature(
                 description = "Returns a null value.",
-                args = {} ))
+                args = {}))
 class Null extends AbstractStaticFunction {
+
     static final String NAME = "null";
 
     public Null(final String name) {

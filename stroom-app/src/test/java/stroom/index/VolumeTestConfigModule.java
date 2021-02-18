@@ -19,6 +19,7 @@ package stroom.index;
 import com.google.inject.AbstractModule;
 
 public class VolumeTestConfigModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(VolumeCreator.class).to(VolumeCreatorForTesting.class);

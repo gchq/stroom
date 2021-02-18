@@ -185,8 +185,12 @@ public class AnnotationEditPresenter
     private boolean hasChanged(final String oldValue, final String newValue) {
         // Treat empty strings as null so null and "" are treated as equal
         return !Objects.equals(
-                (oldValue != null && oldValue.isEmpty() ? null : oldValue),
-                (newValue != null && newValue.isEmpty() ? null : newValue));
+                (oldValue != null && oldValue.isEmpty()
+                        ? null
+                        : oldValue),
+                (newValue != null && newValue.isEmpty()
+                        ? null
+                        : newValue));
     }
 
     private void changeStatus(final String selected, final boolean addEntry) {
@@ -866,6 +870,7 @@ public class AnnotationEditPresenter
     }
 
     public interface AnnotationEditView extends View, HasUiHandlers<AnnotationEditUiHandlers> {
+
         String getTitle();
 
         void setTitle(String title);

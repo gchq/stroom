@@ -22,6 +22,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class PermissionChangeEventModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(PermissionChangeEventBus.class).to(PermissionChangeEventBusImpl.class);
@@ -33,11 +34,13 @@ public class PermissionChangeEventModule extends AbstractModule {
         RestResourcesBinder.create(binder()).bind(PermissionChangeResourceImpl.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

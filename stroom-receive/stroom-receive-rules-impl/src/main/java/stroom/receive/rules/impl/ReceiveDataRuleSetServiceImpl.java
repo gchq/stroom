@@ -33,21 +33,23 @@ import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.shared.Message;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
+
     private final Store<ReceiveDataRules> store;
 
     @Inject
     public ReceiveDataRuleSetServiceImpl(final StoreFactory storeFactory,
                                          final Serialiser2Factory serialiser2Factory) {
-        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(ReceiveDataRules.class);
+        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
+                ReceiveDataRules.class);
         this.store = storeFactory.createStore(serialiser, ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRules.class);
     }
 
@@ -160,12 +162,17 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

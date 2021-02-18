@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
+
     private final Map<String, ClusterNodeInfo> expectedClusterNodeInfoMap = new HashMap<>();
     private final Map<String, NodeServiceImpl> nodeServiceMap = new HashMap<>();
 

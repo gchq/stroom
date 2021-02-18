@@ -3,10 +3,10 @@ package stroom.config.global.impl.validation;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.assertj.core.api.Assertions;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import java.util.Set;
 
 @IncludeModule(ValidationModule.class)
 abstract class AbstractValidatorTest {

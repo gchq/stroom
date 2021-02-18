@@ -59,10 +59,6 @@ import event.logging.util.DeviceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -76,9 +72,14 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
+
     /**
      * Logger - should not be used for event logs
      */
@@ -323,7 +324,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public BaseObject convert(final Object object, final boolean useInfoProviders) {
-        if (object == null){
+        if (object == null) {
             return null;
         }
 
@@ -371,7 +372,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private ObjectInfoProvider getInfoAppender(final Class<?> type) {
-        if (type == null){
+        if (type == null) {
             return null;
         }
         ObjectInfoProvider appender = null;
@@ -414,7 +415,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public String describe(final Object object) {
-        if (object == null){
+        if (object == null) {
             return null;
         }
         final StringBuilder desc = new StringBuilder();
@@ -489,11 +490,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     /**
      * Create {@link Data} items from properties of the supplied POJO
+     *
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
     public List<Data> getDataItems(Object obj) {
-        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0){
+        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
             return null;
         }
         // Construct a Jackson JavaType for the class
@@ -506,8 +508,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final List<BeanPropertyDefinition> properties = beanDescription.findProperties();
 
         // Get class level ignored properties
-        final Set<String> ignoredProperties = objectMapper.getSerializationConfig().getAnnotationIntrospector()
-                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();// Filter properties removing the class level ignored ones
+        final Set<String> ignoredProperties = objectMapper.getSerializationConfig()
+                .getAnnotationIntrospector()
+                .findPropertyIgnorals(beanDescription.getClassInfo())
+                .getIgnored(); // Filter properties removing the class level ignored ones
 
         final List<BeanPropertyDefinition> availableProperties = properties.stream()
                 .filter(property -> !ignoredProperties.contains(property.getName()))
@@ -518,15 +522,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     final Data.Builder<?> builder = Data.builder().withName(beanPropDef.getName());
                     final Object valObj = extractPropVal(beanPropDef, obj);
                     if (valObj != null) {
-                        if (valObj instanceof Collection<?>){
+                        if (valObj instanceof Collection<?>) {
                             Collection<?> collection = (Collection<?>) valObj;
 
-                            if (loggingConfig.getMaxListElements() >= 0 && collection.size() > loggingConfig.getMaxListElements()){
+                            if (loggingConfig.getMaxListElements() >= 0
+                                    && collection.size() > loggingConfig.getMaxListElements()) {
                                 final String collectionValue = collection.stream()
                                         .limit(loggingConfig.getMaxListElements())
                                         .map(Objects::toString)
                                         .collect(Collectors.joining(", "));
-                                builder.withValue(collectionValue + "...(" + collection.size() + " elements in total).");
+                                builder.withValue(collectionValue + "...(" + collection.size() +
+                                        " elements in total).");
                             } else {
                                 final String collectionValue = collection.stream()
                                         .map(Objects::toString)
@@ -538,10 +544,11 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                             if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
                                 value = "********";
                             } else {
-                                if (loggingConfig.getMaxDataElementStringLength() > 0){
+                                if (loggingConfig.getMaxDataElementStringLength() > 0) {
                                     final String stringVal = valObj.toString();
-                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()){
-                                        value = stringVal.substring(0, loggingConfig.getMaxDataElementStringLength() - 1)
+                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()) {
+                                        value = stringVal.substring(0,
+                                                loggingConfig.getMaxDataElementStringLength() - 1)
                                                 + "...";
                                     } else {
                                         value = stringVal;
@@ -587,26 +594,28 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 Date.class.isAssignableFrom(type) ||
                 Instant.class.isAssignableFrom(type) ||
                 (type.isArray() &&
-                            (type.getComponentType().equals(Byte.class) ||
-                             type.getComponentType().equals(byte.class) ||
-                             type.getComponentType().equals(Character.class) ||
-                             type.getComponentType().equals(char.class)));
+                        (type.getComponentType().equals(Byte.class) ||
+                                type.getComponentType().equals(byte.class) ||
+                                type.getComponentType().equals(Character.class) ||
+                                type.getComponentType().equals(char.class)));
 
         LOGGER.trace("isLeafPropertyType({}), returning: {}", type, isLeaf);
         return isLeaf;
     }
 
-    private static Object extractPropVal (final BeanPropertyDefinition beanPropDef, final Object obj){
+    private static Object extractPropVal(final BeanPropertyDefinition beanPropDef, final Object obj) {
         final AnnotatedMethod method = beanPropDef.getGetter();
 
         if (method != null) {
             try {
                 return method.callOn(obj);
             } catch (Exception e) {
-                LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " + obj.getClass().getSimpleName(), e);
+                LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " +
+                        obj.getClass().getSimpleName(), e);
             }
         } else {
-            LOGGER.debug("No getter for property " + beanPropDef.getName() + " of class " + obj.getClass().getSimpleName());
+            LOGGER.debug("No getter for property " + beanPropDef.getName() + " of class " +
+                    obj.getClass().getSimpleName());
         }
 
         return null;
@@ -616,7 +625,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     //itself is logged, e.g. due to configuration settings
     //Assess whether this field should be redacted
     public boolean shouldRedact(String propNameLowercase, Class<?> type) {
-        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)){
+        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)) {
             return false; //Don't redact boolean types
         }
 

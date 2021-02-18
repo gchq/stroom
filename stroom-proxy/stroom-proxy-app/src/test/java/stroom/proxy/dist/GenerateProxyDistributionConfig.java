@@ -113,16 +113,16 @@ public class GenerateProxyDistributionConfig {
      * to produce /stroomAdmin or ${ADMIN_CONTEXT_PATH:-/stroomAdmin}
      * {{ 8080 | envVar('STROOM_APP_PORT') }}
      * to produce 8080 or ${STROOM_APP_PORT:-8080}
-     *
-     *depending on the value of USE_VARIABLE_SUBSTITUTION_KEY
+     * <p>
+     * depending on the value of USE_VARIABLE_SUBSTITUTION_KEY
      */
     private static class EnvVarSubstitutionFilter implements Filter {
 
         /**
-         * @param var The value being piped into the filter
+         * @param var         The value being piped into the filter
          * @param interpreter
-         * @param args The filter args. One argument, the name of the env var to use for
-         *             substitution.
+         * @param args        The filter args. One argument, the name of the env var to use for
+         *                    substitution.
          * @return The value as a bash style variable substitution
          */
         @Override

@@ -2,7 +2,6 @@ package stroom.pipeline.shared.stepping;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,6 +12,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindElementDocRequest {
+
     @JsonProperty
     private final PipelineElement pipelineElement;
     @JsonProperty
@@ -58,6 +58,7 @@ public class FindElementDocRequest {
     }
 
     public static final class Builder {
+
         private PipelineElement pipelineElement;
         private List<PipelineProperty> properties;
         private String feedName;

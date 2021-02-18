@@ -16,11 +16,6 @@
 
 package stroom.welcome.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -32,7 +27,14 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
+
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
     public static final String WELCOME = "Welcome";
@@ -74,6 +76,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     }
 
     public interface WelcomeView extends View {
+
         void setHTML(String html);
 
         HasText getBuildVersion();

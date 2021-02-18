@@ -21,14 +21,15 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class KeyboardInterceptor {
+
     private final Map<KeyTest, Command> keyTests = new HashMap<>();
 
     @Inject
@@ -61,6 +62,7 @@ public class KeyboardInterceptor {
     }
 
     public interface KeyTest {
+
         boolean match(NativeEvent event);
     }
 }

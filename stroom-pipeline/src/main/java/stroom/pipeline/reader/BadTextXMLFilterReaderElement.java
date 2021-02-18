@@ -25,8 +25,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
 import java.io.Reader;
+import javax.inject.Inject;
 
 @ConfigurableElement(type = "BadTextXMLFilterReader",
         category = Category.READER,
@@ -37,6 +37,7 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
+
     private final ErrorReceiver errorReceiver;
 
     private BadTextXMLFilterReader badTextXMLFilterReader;
@@ -62,7 +63,8 @@ public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(
-            description = "A comma separated list of XML elements between which non-escaped characters will be escaped.",
+            description = "A comma separated list of XML elements between which non-escaped characters " +
+                    "will be escaped.",
             displayPriority = 1)
     public void setTags(final String leafList) {
         if (leafList != null) {

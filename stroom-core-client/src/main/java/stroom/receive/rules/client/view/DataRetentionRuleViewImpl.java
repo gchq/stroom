@@ -37,6 +37,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetentionRuleView {
+
     private final Widget widget;
 
     @UiField
@@ -135,5 +136,6 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     }
 
     public interface Binder extends UiBinder<Widget, DataRetentionRuleViewImpl> {
+
     }
 }

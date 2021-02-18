@@ -16,13 +16,15 @@
 
 package stroom.statistics.impl.sql.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.statistics.impl.sql.client.StatisticsPlugin;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter;
 import stroom.statistics.impl.sql.client.presenter.StatisticsFieldEditPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface StatisticsGinjector {
+
     // Statistics Data Source
     AsyncProvider<StatisticsPlugin> getStatisticPlugin();
 

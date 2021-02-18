@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.text.gin;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.dashboard.client.text.BasicTextSettingsViewImpl;
@@ -25,7 +24,10 @@ import stroom.dashboard.client.text.TextPresenter;
 import stroom.dashboard.client.text.TextPresenter.TextView;
 import stroom.dashboard.client.text.TextViewImpl;
 
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public class TextModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bind(TextPlugin.class).asEagerSingleton();

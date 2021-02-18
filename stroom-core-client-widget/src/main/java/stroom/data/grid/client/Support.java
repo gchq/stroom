@@ -16,11 +16,13 @@
 
 package stroom.data.grid.client;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+
 public abstract class Support {
+
     protected Heading getHeading(final Element tableElement, final NativeEvent event) {
         final Element target = event.getEventTarget().cast();
         int childIndex = -1;

@@ -25,6 +25,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 public class ButtonPanel extends FlowPanel {
+
     private static volatile Resources resources;
     private boolean vertical;
 
@@ -70,7 +71,8 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-//    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
+//    public ImageButtonView add(
+//    final String title, final ImageResource enabledImage, final ImageResource disabledImage,
 //            final boolean enabled) {
 //        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
 //        add(button);
@@ -95,10 +97,12 @@ public class ButtonPanel extends FlowPanel {
 //    }
 
     public interface Style extends CssResource {
+
         String layout();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("ButtonPanel.css")
         Style style();
     }

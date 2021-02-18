@@ -33,6 +33,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.function.Supplier;
 
 public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers> implements DropDownTreeView {
+
     private final Widget widget;
     @UiField
     QuickFilter nameFilter;
@@ -73,5 +74,6 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     }
 
     public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {
+
     }
 }

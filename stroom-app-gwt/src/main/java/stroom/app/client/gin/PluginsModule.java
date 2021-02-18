@@ -26,6 +26,7 @@ import stroom.trackers.client.TrackersPlugin;
 import stroom.users.client.UsersPlugin;
 
 public class PluginsModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(DocumentPluginEventManager.class);

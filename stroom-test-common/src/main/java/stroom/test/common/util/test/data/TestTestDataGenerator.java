@@ -217,7 +217,17 @@ class TestTestDataGenerator {
                         "randomWordsField",
                         0,
                         3,
-                        Arrays.asList("attractive", "bald", "beautiful", "chubby", "drab", "elegant", "scruffy", "fit", "glamorous", "handsome", "unkempt")));
+                        Arrays.asList("attractive",
+                                "bald",
+                                "beautiful",
+                                "chubby",
+                                "drab",
+                                "elegant",
+                                "scruffy",
+                                "fit",
+                                "glamorous",
+                                "handsome",
+                                "unkempt")));
     }
 
 }

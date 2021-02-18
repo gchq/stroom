@@ -16,19 +16,21 @@
 
 package stroom.script.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.docref.DocRef;
 import stroom.security.client.api.event.LogoutEvent;
 
-import javax.inject.Singleton;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Singleton;
 
 @Singleton
 public class ScriptCache {
+
     private final EventBus eventBus;
     private final HandlerRegistry handlerRegistry = new HandlerRegistry();
 

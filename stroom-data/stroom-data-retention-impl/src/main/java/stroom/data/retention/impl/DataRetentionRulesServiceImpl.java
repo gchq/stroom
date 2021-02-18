@@ -37,18 +37,19 @@ import stroom.util.shared.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
 
@@ -60,7 +61,8 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                                   final Serialiser2Factory serialiser2Factory,
                                   final SecurityContext securityContext) {
         this.securityContext = securityContext;
-        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
+        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
+                DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
     }
 
@@ -178,12 +180,17 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

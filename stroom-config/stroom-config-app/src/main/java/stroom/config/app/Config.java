@@ -3,6 +3,7 @@ package stroom.config.app;
 import io.dropwizard.Configuration;
 
 public class Config extends Configuration {
+
     private AppConfig appConfig;
 
     public AppConfig getAppConfig() {

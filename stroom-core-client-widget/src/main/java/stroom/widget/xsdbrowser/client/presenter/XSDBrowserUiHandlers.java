@@ -19,6 +19,7 @@ package stroom.widget.xsdbrowser.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface XSDBrowserUiHandlers extends UiHandlers {
+
     void home();
 
     void back();

@@ -7,8 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TaskManagerTreeAction implements TreeAction<TaskProgress> {
+
     private Set<TaskProgress> expandedRows = new HashSet<>();
-    private Set<TaskProgress> collapsedRows = new HashSet<>();
+    private final Set<TaskProgress> collapsedRows = new HashSet<>();
     private boolean expandAllRequested = false;
 
     @Override

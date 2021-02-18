@@ -16,10 +16,12 @@
 
 package stroom.meta.statistics.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.meta.statistics.api.MetaStatistics;
 
+import com.google.inject.AbstractModule;
+
 public class MockMetaStatisticsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(MetaStatistics.class).to(MockMetaStatistics.class);

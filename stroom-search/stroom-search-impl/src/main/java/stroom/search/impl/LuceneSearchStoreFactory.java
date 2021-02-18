@@ -38,12 +38,13 @@ import stroom.security.api.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class LuceneSearchStoreFactory implements StoreFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
 
     private final IndexStore indexStore;
@@ -131,7 +132,10 @@ public class LuceneSearchStoreFactory implements StoreFactory {
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final IndexDoc index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
+    private Set<String> getHighlights(final IndexDoc index,
+                                      final ExpressionOperator expression,
+                                      final String timeZoneId,
+                                      final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {

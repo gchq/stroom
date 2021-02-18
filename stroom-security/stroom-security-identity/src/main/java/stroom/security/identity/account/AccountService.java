@@ -3,6 +3,7 @@ package stroom.security.identity.account;
 import java.util.Optional;
 
 public interface AccountService {
+
     AccountResultPage list();
 
     AccountResultPage search(SearchAccountRequest request);

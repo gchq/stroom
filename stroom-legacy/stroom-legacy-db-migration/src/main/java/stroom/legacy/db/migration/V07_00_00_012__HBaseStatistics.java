@@ -17,8 +17,8 @@
 package stroom.legacy.db.migration;
 
 import stroom.docstore.impl.Serialiser2FactoryImpl;
-import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.db.ObjectMarshaller;
+import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreSerialiser;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
@@ -38,10 +38,12 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_012__HBaseStatistics extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final StroomStatsStoreSerialiser serialiser = new StroomStatsStoreSerialiser(new Serialiser2FactoryImpl());
-        final ObjectMarshaller<StroomStatsStoreEntityData> stroomStatsStoreEntityDataMarshaller = new ObjectMarshaller<>(StroomStatsStoreEntityData.class);
+        final ObjectMarshaller<StroomStatsStoreEntityData> stroomStatsStoreEntityDataMarshaller = new ObjectMarshaller<>(
+                StroomStatsStoreEntityData.class);
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
                 "SELECT " +
@@ -88,7 +90,8 @@ public class V07_00_00_012__HBaseStatistics extends BaseJavaMigration {
                     document.setPrecision(EventStoreTimeIntervalEnum.valueOf(pres));
                     document.setEnabled(enbl);
 
-                    final StroomStatsStoreEntityData stroomStatsStoreEntityData = stroomStatsStoreEntityDataMarshaller.unmarshal(dat);
+                    final StroomStatsStoreEntityData stroomStatsStoreEntityData = stroomStatsStoreEntityDataMarshaller.unmarshal(
+                            dat);
                     if (stroomStatsStoreEntityData != null) {
                         document.setConfig(MappingUtil.map(stroomStatsStoreEntityData));
                     }

@@ -26,6 +26,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class DashboardSearchRequest {
+
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty
@@ -36,10 +37,12 @@ public class DashboardSearchRequest {
     private final String dateTimeLocale;
 
     @JsonCreator
-    public DashboardSearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
-                                  @JsonProperty("search") final Search search,
-                                  @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
-                                  @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
+    public DashboardSearchRequest(
+            @JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
+            @JsonProperty("search") final Search search,
+            @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
+            @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
+
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
@@ -64,8 +67,12 @@ public class DashboardSearchRequest {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DashboardSearchRequest that = (DashboardSearchRequest) o;
         return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
                 Objects.equals(search, that.search) &&
@@ -97,6 +104,7 @@ public class DashboardSearchRequest {
     }
 
     public static final class Builder {
+
         private DashboardQueryKey dashboardQueryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;

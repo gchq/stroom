@@ -16,22 +16,23 @@
 
 package stroom.security.identity.token;
 
-import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.jose4j.jwk.PublicJsonWebKey;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class JwkCache {
+
     private static final String KEY = "key";
     private final LoadingCache<String, List<PublicJsonWebKey>> cache;
 

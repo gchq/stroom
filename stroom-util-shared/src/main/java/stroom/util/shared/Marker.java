@@ -28,5 +28,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = Summary.class, name = "summary")
 })
 public interface Marker {
+
     Severity getSeverity();
 }

@@ -18,10 +18,6 @@
 package stroom.receive;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.mock.MockStore;
@@ -31,9 +27,11 @@ import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,6 +40,9 @@ import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * context.
  */
 class TestReceiveDataServlet {
+
     @Inject
     private ReceiveDataServlet receiveDataServlet;
     @Inject
@@ -82,12 +84,17 @@ class TestReceiveDataServlet {
     }
 
     private void checkError(final int code, final String msg) {
-        assertThat(response.getResponseCode()).isEqualTo(code);
-        assertThat(response.getSendErrorMessage().contains(msg)).as("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'").isTrue();
+        assertThat(response.getResponseCode())
+                .isEqualTo(code);
+        assertThat(response.getSendErrorMessage().contains(msg))
+                .as("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'")
+                .isTrue();
     }
 
     private void checkOK() {
-        assertThat(response.getResponseCode()).as(response.getSendErrorMessage()).isEqualTo(HttpServletResponse.SC_OK);
+        assertThat(response.getResponseCode())
+                .as(response.getSendErrorMessage())
+                .isEqualTo(HttpServletResponse.SC_OK);
     }
 
     @Test
@@ -100,7 +107,8 @@ class TestReceiveDataServlet {
         receiveDataServlet.doPost(request, response);
 
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Unknown compression");
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
     }
 
     @Test
@@ -115,8 +123,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -131,8 +141,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -149,8 +161,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -166,8 +180,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -223,7 +239,7 @@ class TestReceiveDataServlet {
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         request.setInputStream(outputStream.toByteArray());
@@ -233,7 +249,8 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
         }
     }
 
@@ -245,11 +262,11 @@ class TestReceiveDataServlet {
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("LINE1\n".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         try (final InputStream inputStream = new ByteArrayInputStream("LINE2\n".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         request.setInputStream(outputStream.toByteArray());
@@ -259,7 +276,8 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("LINE1\nLINE2\n");
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("LINE1\nLINE2\n");
         }
     }
 
@@ -286,7 +304,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
             StreamUtil.streamToStream(inputStream, zipOutputStream);
         }
@@ -303,12 +321,15 @@ class TestReceiveDataServlet {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         receiveDataServlet.doPost(request, response);
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -322,17 +343,20 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
 
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         receiveDataServlet.doPost(request, response);
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -346,16 +370,19 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
             StreamUtil.streamToStream(inputStream, zipOutputStream);
         }
 
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
         receiveDataServlet.doPost(request, response);
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }

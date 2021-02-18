@@ -16,16 +16,18 @@
 
 package stroom.pipeline.xml.event.simple;
 
+import stroom.pipeline.xml.event.BaseEvent;
+import stroom.pipeline.xml.event.Event;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import stroom.pipeline.xml.event.BaseEvent;
-import stroom.pipeline.xml.event.Event;
 
 /**
  * A class used to store a startElement SAX event.
  */
 public final class StartElement extends BaseEvent {
+
     private static final String COLON = ":";
     private static final String START_ELEMENT = "startElement:";
     private static final String COMMA = ",";

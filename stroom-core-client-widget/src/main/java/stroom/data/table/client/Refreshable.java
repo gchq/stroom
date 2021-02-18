@@ -17,5 +17,6 @@
 package stroom.data.table.client;
 
 public interface Refreshable {
+
     void refresh();
 }

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSimpleExecutor {
+
     @Test
     void testSimpleShutDownNow() throws InterruptedException {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
@@ -106,6 +107,7 @@ class TestSimpleExecutor {
     }
 
     static class TestRunnable implements Runnable {
+
         int time;
 
         TestRunnable(int time) {

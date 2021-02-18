@@ -33,16 +33,19 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
+
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
-    private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable", "Processor Tasks", "Processor Tasks");
+    private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable",
+            "Processor Tasks",
+            "Processor Tasks");
 
     private final ProcessorTaskDao processorTaskDao;
     private final DocRefInfoService docRefInfoService;
@@ -62,7 +65,8 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
         return securityContext.secureResult(PERMISSION, () -> {
             final ResultPage<ProcessorTask> resultPage = processorTaskDao.find(criteria);
             resultPage.getValues().forEach(processorTask -> {
-                final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, processorTask.getProcessorFilter().getPipelineUuid());
+                final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                        processorTask.getProcessorFilter().getPipelineUuid());
                 final Optional<String> name = docRefInfoService.name(docRef);
                 processorTask.getProcessorFilter().setPipelineName(name.orElse(null));
             });
@@ -77,7 +81,9 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         securityContext.secure(PERMISSION, () ->
                 processorTaskDao.search(criteria, fields, consumer));
     }

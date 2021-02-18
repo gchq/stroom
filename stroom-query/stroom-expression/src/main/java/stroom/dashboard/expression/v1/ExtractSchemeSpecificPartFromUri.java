@@ -27,9 +27,12 @@ import java.net.URISyntaxException;
         name = ExtractSchemeSpecificPartFromUri.NAME,
         commonCategory = FunctionCategory.URI,
         commonReturnType = ValString.class,
-        commonReturnDescription = "The scheme specific part from the URI or null if not found or the URI is mall-formed. e.g. " +
-                ExtractSchemeSpecificPartFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
-                "p1=v1&p2=v2#more-details') returns '//foo:bar@w1.superman.com:8080/very/long/path.html?p1=v1&p2=v2'.",
+        commonReturnDescription =
+                "The scheme specific part from the URI or null if not found or the URI is mall-formed. e.g. " +
+                        ExtractSchemeSpecificPartFromUri.NAME +
+                        "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                        "p1=v1&p2=v2#more-details') returns " +
+                        "'//foo:bar@w1.superman.com:8080/very/long/path.html?p1=v1&p2=v2'.",
         signatures = @FunctionSignature(
                 description = "Extract the scheme specific part component from a URI.",
                 args = {
@@ -39,6 +42,7 @@ import java.net.URISyntaxException;
                                 argType = ValString.class)
                 }))
 class ExtractSchemeSpecificPartFromUri extends ExtractionFunction {
+
     static final String NAME = "extractSchemeSpecificPartFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();
 
@@ -52,6 +56,7 @@ class ExtractSchemeSpecificPartFromUri extends ExtractionFunction {
     }
 
     static class ExtractorImpl implements Extractor {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ExtractorImpl.class);

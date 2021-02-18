@@ -19,5 +19,6 @@ package stroom.query.common.v2.format;
 import stroom.dashboard.expression.v1.Val;
 
 public interface Formatter {
+
     String format(Val value);
 }

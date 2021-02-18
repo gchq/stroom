@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HandlerRegistry {
+
     private List<HandlerRegistration> handlerRegistrations;
 
     public void unbind() {

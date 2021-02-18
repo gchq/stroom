@@ -17,11 +17,12 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RollUpBitMaskUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSQLStatKey extends StroomUnitTest {
+
     private long time = 1234L;
     private String statName = "MyStatName";
 

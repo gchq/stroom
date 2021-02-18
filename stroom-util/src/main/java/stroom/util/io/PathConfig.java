@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class PathConfig extends AbstractConfig {
+
     private String home = ".";
     private String temp = "/tmp/stroom";
 

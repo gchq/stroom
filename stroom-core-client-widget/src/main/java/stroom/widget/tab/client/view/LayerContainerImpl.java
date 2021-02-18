@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class LayerContainerImpl extends Composite implements LayerContainer, RequiresResize, ProvidesResize {
+
     private static Resources resources;
     private final FlowPanel panel;
     private final Set<Layer> layers = new HashSet<>();
@@ -129,17 +130,20 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     }
 
     public interface Style extends CssResource {
+
         String container();
 
         String layer();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("LayerContainer.css")
         Style style();
     }
 
     private static class TransitionTimer extends Timer {
+
         private static final int FREQUENCY = 40;
 
         private final Set<Layer> layers;

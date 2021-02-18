@@ -17,8 +17,8 @@
 package stroom.task.shared;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,6 +33,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class FindTaskProgressCriteria extends BaseCriteria {
+
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
@@ -43,7 +44,9 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     public static final FilterFieldDefinition FIELD_DEF_NODE = FilterFieldDefinition.qualifiedField(FIELD_NODE);
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
     public static final FilterFieldDefinition FIELD_DEF_USER = FilterFieldDefinition.qualifiedField(FIELD_USER);
-    public static final FilterFieldDefinition FIELD_DEF_SUBMIT_TIME = FilterFieldDefinition.qualifiedField(FIELD_SUBMIT_TIME, "time");
+    public static final FilterFieldDefinition FIELD_DEF_SUBMIT_TIME = FilterFieldDefinition.qualifiedField(
+            FIELD_SUBMIT_TIME,
+            "time");
     public static final FilterFieldDefinition FIELD_DEF_INFO = FilterFieldDefinition.qualifiedField(FIELD_INFO);
 
     public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
@@ -124,7 +127,9 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
-            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false, true);
+            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+                    false,
+                    true);
             this.getSortList().add(defaultSort);
         } else {
             for (CriteriaFieldSort sort : this.getSortList()) {
@@ -135,8 +140,8 @@ public class FindTaskProgressCriteria extends BaseCriteria {
                         FindTaskProgressCriteria.FIELD_NODE,
                         FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                         FindTaskProgressCriteria.FIELD_USER).contains(sort.getId())) {
-                    throw new IllegalArgumentException(
-                            "A sort field of " + sort.getId() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
+                    throw new IllegalArgumentException("A sort field of " + sort.getId() +
+                            " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
                 }
             }
         }

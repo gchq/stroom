@@ -29,14 +29,6 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -47,8 +39,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 
 class OpenIdManager {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
     private final ResolvedOpenIdConfig openIdConfig;
@@ -142,7 +143,7 @@ class OpenIdManager {
 
         } else {
             // Invalidate the current session.
-            HttpSession session = request.getSession(false);
+            final HttpSession session = request.getSession(false);
             UserAgentSessionUtil.set(request);
 
             final String tokenEndpoint = openIdConfig.getTokenEndpoint();

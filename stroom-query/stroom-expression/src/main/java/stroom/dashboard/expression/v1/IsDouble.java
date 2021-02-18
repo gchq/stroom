@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsDouble extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isDouble";
     private static final long serialVersionUID = -305145496413936297L;
     private static final DoubleTest TEST = new DoubleTest();
@@ -47,6 +48,7 @@ class IsDouble extends AbstractIsFunction implements Serializable {
     }
 
     private static class DoubleTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValDouble);

@@ -21,6 +21,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 @ArchitecturalFunction
 class Ref extends AbstractFunction {
+
     private static final NullGen NULL_GEN = new NullGen();
     private final String text;
     private final int fieldIndex;
@@ -53,6 +54,7 @@ class Ref extends AbstractFunction {
     }
 
     private static final class NullGen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         @Override
@@ -67,6 +69,7 @@ class Ref extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final int fieldIndex;

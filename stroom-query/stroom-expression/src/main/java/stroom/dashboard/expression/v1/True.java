@@ -24,8 +24,9 @@ package stroom.dashboard.expression.v1;
         commonReturnDescription = "The boolean true.",
         signatures = @FunctionSignature(
                 description = "Returns the boolean true.",
-                args = {} ))
+                args = {}))
 class True extends AbstractStaticFunction {
+
     static final String NAME = "true";
 
     public True(final String name) {

@@ -27,6 +27,7 @@ import java.nio.CharBuffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBadTextXMLFilterReader {
+
     static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<TopLevelEntity>"
             + " <Level1>First level one text</Level1>" + " <Level1>Second level one text</Level1>"
             + "</TopLevelEntity>");
@@ -52,8 +53,9 @@ class TestBadTextXMLFilterReader {
         final Reader filtered = getReader(in.toCharArray());
         while (true) {
             final int ch = filtered.read();
-            if (ch == -1)
+            if (ch == -1) {
                 break;
+            }
             res.put((char) ch);
         }
         final String filteredVal = String.copyValueOf(res.array(), 0, res.position());
@@ -72,14 +74,16 @@ class TestBadTextXMLFilterReader {
             for (int chunk = 0; chunk < num_chunks; chunk++) {
                 final int rret = filtered.read(res);
                 assertThat(chunkSize).isEqualTo(rret);
-                for (int ch = 0; ch != rret; ch++)
+                for (int ch = 0; ch != rret; ch++) {
                     assertThat(correctChars[chunk * chunkSize + ch]).isEqualTo(res[ch]);
+                }
             }
             if (trail_size > 0) {
                 final int rret = filtered.read(res);
                 assertThat(trail_size).isEqualTo(rret);
-                for (int ch = 0; ch != rret; ch++)
+                for (int ch = 0; ch != rret; ch++) {
                     assertThat(correctChars[num_chunks * chunkSize + ch]).isEqualTo(res[ch]);
+                }
             }
             final int rret = filtered.read(res);
             assertThat(-1).isEqualTo(rret);

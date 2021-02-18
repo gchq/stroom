@@ -32,6 +32,7 @@ import java.util.List;
  * {@link TimeAgnosticStatisticEvent} objects which are built on the fly.
  */
 public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEvent> {
+
     private final StatisticEvent originalStatisticEvent;
     private final List<List<StatisticTag>> tagListPermutations;
 
@@ -122,31 +123,40 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((originalStatisticEvent == null) ? 0 : originalStatisticEvent.hashCode());
-        result = prime * result + ((tagListPermutations == null) ? 0 : tagListPermutations.hashCode());
+        result = prime * result + ((originalStatisticEvent == null)
+                ? 0
+                : originalStatisticEvent.hashCode());
+        result = prime * result + ((tagListPermutations == null)
+                ? 0
+                : tagListPermutations.hashCode());
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RolledUpStatisticEvent other = (RolledUpStatisticEvent) obj;
         if (originalStatisticEvent == null) {
-            if (other.originalStatisticEvent != null)
+            if (other.originalStatisticEvent != null) {
                 return false;
-        } else if (!originalStatisticEvent.equals(other.originalStatisticEvent))
+            }
+        } else if (!originalStatisticEvent.equals(other.originalStatisticEvent)) {
             return false;
+        }
         if (tagListPermutations == null) {
-            if (other.tagListPermutations != null)
-                return false;
-        } else if (!tagListPermutations.equals(other.tagListPermutations))
-            return false;
-        return true;
+            return other.tagListPermutations == null;
+        } else {
+            return tagListPermutations.equals(other.tagListPermutations);
+        }
     }
 
     @Override

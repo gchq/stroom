@@ -17,20 +17,22 @@
 package stroom.pipeline.destination;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Target;
 import stroom.data.store.mock.MockStore;
-import stroom.meta.mock.MockMetaService;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.mock.MockMetaService;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRollingStreamDestination {
+
     private MockStore streamStore = new MockStore(new MockMetaService());
 
     @Test

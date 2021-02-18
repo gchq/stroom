@@ -16,28 +16,30 @@
 
 package stroom.pipeline.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.LSResourceResolverImpl;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
+import java.io.InputStream;
 import javax.inject.Inject;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import java.io.IOException;
-import java.io.InputStream;
 
 public class SchemaLoaderImpl implements SchemaLoader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SchemaLoaderImpl.class);
 
     private final XmlSchemaCache xmlSchemaCache;

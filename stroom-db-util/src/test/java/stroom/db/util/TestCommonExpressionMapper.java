@@ -306,6 +306,7 @@ class TestCommonExpressionMapper {
     }
 
     private static class MyDbField extends AbstractField {
+
         private final String name;
 
         public MyDbField(String name) {

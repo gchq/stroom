@@ -19,7 +19,7 @@ class TestAutoComparator {
         // The values in this test came from the keys in the ref data store
         // when the following error happened:
         // java.lang.IllegalArgumentException: Comparison method violates its general contract!
-        //	at java.util.TimSort.mergeHi(TimSort.java:899)
+        // at java.util.TimSort.mergeHi(TimSort.java:899)
         //
         // The order of these values (pre-sorting) is important. The number of items in the list
         // appears to impact how TimSort approaches the sort, so reducing the items means

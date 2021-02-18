@@ -78,7 +78,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import javax.inject.Provider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -86,6 +85,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<DataGridView<MetaRow>>
@@ -159,11 +159,7 @@ public abstract class AbstractMetaListPresenter
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();
             }
         });
@@ -327,8 +323,8 @@ public abstract class AbstractMetaListPresenter
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
                         ClientDateUtil.toISOString(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
-                        .build()
-                ,"Created",
+                        .build(),
+                "Created",
                 ColumnSizeConstants.DATE_COL);
     }
 
@@ -405,11 +401,7 @@ public abstract class AbstractMetaListPresenter
 
         final Function<MetaRow, String> extractor = metaRow -> {
             final String value = metaRow.getAttributeValue(attribute.getName());
-            if (value == null) {
-                return null;
-            } else {
-                return value;
-            }
+            return value;
         };
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
@@ -428,11 +420,7 @@ public abstract class AbstractMetaListPresenter
 
         final Function<MetaRow, String> extractor = metaRow -> {
             final String value = metaRow.getAttributeValue(attribute.getName());
-            if (value == null) {
-                return null;
-            } else {
-                return value;
-            }
+            return value;
         };
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
@@ -630,7 +618,9 @@ public abstract class AbstractMetaListPresenter
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
                                     AbstractMetaListPresenter.this,
-                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""),
+                                    text + " " + result + " record" + ((result.longValue() > 1)
+                                            ? "s"
+                                            : ""),
                                     this::refresh))
                     .call(META_RESOURCE)
                     .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
@@ -731,6 +721,8 @@ public abstract class AbstractMetaListPresenter
                                             sb.toString().trim(),
                                             null);
                                     break;
+                                default:
+                                    throw new RuntimeException("Unknown severity " + maxSeverity);
                             }
                         }
                     }
@@ -764,7 +756,9 @@ public abstract class AbstractMetaListPresenter
                         if (confirm) {
                             if (selection.isMatchAll()) {
                                 ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
-                                        "You have selected all items.  Are you sure you want to " + actionType + " all the selected items?",
+                                        "You have selected all items.  Are you sure you want to " +
+                                                actionType +
+                                                " all the selected items?",
                                         confirm1 -> {
                                             if (confirm1) {
                                                 runnable.run();

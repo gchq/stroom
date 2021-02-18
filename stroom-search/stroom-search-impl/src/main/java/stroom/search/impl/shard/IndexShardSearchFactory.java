@@ -22,16 +22,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class IndexShardSearchFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchFactory.class);
 
     private final IndexStore indexStore;
@@ -121,11 +122,13 @@ public class IndexShardSearchFactory {
         receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
-    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task,
-                                                                final ExpressionOperator expression,
-                                                                final IndexFieldsMap indexFieldsMap,
-                                                                final Map<Version, Optional<SearchExpressionQuery>> queryMap,
-                                                                final Consumer<Throwable> errorConsumer) {
+    private IndexShardQueryFactory createIndexShardQueryFactory(
+            final ClusterSearchTask task,
+            final ExpressionOperator expression,
+            final IndexFieldsMap indexFieldsMap,
+            final Map<Version, Optional<SearchExpressionQuery>> queryMap,
+            final Consumer<Throwable> errorConsumer) {
+
         return new IndexShardQueryFactory() {
             @Override
             public Query getQuery(final Version luceneVersion) {
@@ -136,7 +139,8 @@ public class IndexShardSearchFactory {
                 return optional.map(SearchExpressionQuery::getQuery).orElse(null);
             }
 
-            private Optional<SearchExpressionQuery> getQuery(final Version version, final ExpressionOperator expression,
+            private Optional<SearchExpressionQuery> getQuery(final Version version,
+                                                             final ExpressionOperator expression,
                                                              final IndexFieldsMap indexFieldsMap) {
                 try {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(

@@ -16,10 +16,11 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

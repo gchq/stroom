@@ -26,6 +26,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class StroomStatsStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(StroomStatsStoreStore.class).to(StroomStatsStoreStoreImpl.class);

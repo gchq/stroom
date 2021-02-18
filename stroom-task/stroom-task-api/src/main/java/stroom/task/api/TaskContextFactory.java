@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface TaskContextFactory {
+
     Runnable context(String taskName, Consumer<TaskContext> consumer);
 
     Runnable context(TaskContext parentContext, String taskName, Consumer<TaskContext> consumer);

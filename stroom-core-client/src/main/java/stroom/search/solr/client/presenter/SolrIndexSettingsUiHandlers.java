@@ -19,6 +19,7 @@ package stroom.search.solr.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface SolrIndexSettingsUiHandlers extends UiHandlers {
+
     void onChange();
 
     void onTestConnection();

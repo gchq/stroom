@@ -45,7 +45,7 @@ interface HttpResponse<D extends unknown, E extends unknown = unknown>
 //   <T>(arg: T): void;
 // }
 
-type ApiConsumer<T> = (api: Api) => Promise<HttpResponse<T>>;
+type ApiConsumer<T> = (api: Api<any>) => Promise<HttpResponse<T>>;
 type Consumer<T> = (arg: T) => void;
 type Exec<T> = (
   // promise: Promise<HttpResponse<T>>,

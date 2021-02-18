@@ -17,6 +17,12 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -25,13 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, RequiresResize, ProvidesResize {
+
     private final Widget widget;
 
     @UiField
@@ -72,5 +74,6 @@ public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, Re
     }
 
     public interface Binder extends UiBinder<Widget, LinkedEventViewImpl> {
+
     }
 }

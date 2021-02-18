@@ -27,17 +27,21 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataReceiptPolicyAttributeMapFilterFactory {
+
     private final ReceiveDataRuleSetService ruleSetService;
     private final ExpressionMatcherFactory expressionMatcherFactory;
 
     @Inject
-    public DataReceiptPolicyAttributeMapFilterFactoryImpl(final ReceiveDataRuleSetService ruleSetService, final ExpressionMatcherFactory expressionMatcherFactory) {
+    public DataReceiptPolicyAttributeMapFilterFactoryImpl(final ReceiveDataRuleSetService ruleSetService,
+                                                          final ExpressionMatcherFactory expressionMatcherFactory) {
         this.ruleSetService = ruleSetService;
         this.expressionMatcherFactory = expressionMatcherFactory;
     }
 
     @Override
     public AttributeMapFilter create(final DocRef policyRef) {
-        return new DataReceiptPolicyAttributeMapFilter(new ReceiveDataPolicyChecker(ruleSetService, expressionMatcherFactory, policyRef));
+        return new DataReceiptPolicyAttributeMapFilter(new ReceiveDataPolicyChecker(ruleSetService,
+                expressionMatcherFactory,
+                policyRef));
     }
 }

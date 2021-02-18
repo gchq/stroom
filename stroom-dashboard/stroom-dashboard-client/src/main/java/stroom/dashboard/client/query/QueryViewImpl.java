@@ -16,6 +16,14 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.dashboard.client.main.SearchModel.Mode;
+import stroom.dashboard.client.query.QueryPresenter.QueryView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.FabButton;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,16 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.main.SearchModel.Mode;
-import stroom.dashboard.client.query.QueryPresenter.QueryView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.FabButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
         implements QueryView, RequiresResize, ProvidesResize {
+
     private final Widget widget;
 
     @UiField
@@ -110,5 +112,6 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     }
 
     public interface Binder extends UiBinder<Widget, QueryViewImpl> {
+
     }
 }

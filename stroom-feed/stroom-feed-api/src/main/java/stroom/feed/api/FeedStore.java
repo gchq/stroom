@@ -25,5 +25,6 @@ import stroom.feed.shared.FeedDoc;
 import java.util.List;
 
 public interface FeedStore extends DocumentStore<FeedDoc>, HasFindByName {
+
     List<DocRef> list();
 }

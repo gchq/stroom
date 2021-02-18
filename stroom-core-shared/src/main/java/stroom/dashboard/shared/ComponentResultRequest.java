@@ -36,6 +36,7 @@ import io.swagger.annotations.ApiModelProperty;
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class ComponentResultRequest {
+
     @ApiModelProperty(
             value = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)

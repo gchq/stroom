@@ -19,5 +19,6 @@ package stroom.activity.client;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ManageActivityUiHandlers extends UiHandlers {
+
     void changeNameFilter(String name);
 }

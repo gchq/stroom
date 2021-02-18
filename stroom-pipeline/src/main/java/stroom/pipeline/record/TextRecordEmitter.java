@@ -16,8 +16,6 @@
 
 package stroom.pipeline.record;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -26,12 +24,16 @@ import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import javax.inject.Inject;
 
 public class TextRecordEmitter extends XMLFilterAdaptor {
+
     private final List<DestinationProvider> destinationProviders;
     private final StringBuilder builder = new StringBuilder();
     @Inject
@@ -60,9 +62,10 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
                 try {
                     final Destination destination = destinationProvider.borrowDestination();
                     final OutputStream outputStream = destination.getOutputStream(null, null);
-                    if (outputStream != null) {
-                    }
+//                    if (outputStream != null) {
+//                    }
                 } catch (final IOException e) {
+                    // TODO @AT Not sure this should be swallowed
                 }
             }
         }

@@ -39,11 +39,15 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
+
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
+
     }
 
     private static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
-    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg", "Change Assigned To", true);
+    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg",
+            "Change Assigned To",
+            true);
     private static final SvgPreset CHOOSE_COMMENT = new SvgPreset("images/tree-open.svg", "Choose Comment", true);
 
     @UiField

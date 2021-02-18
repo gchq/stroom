@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 public class EventRefsSerialiser {
+
     public static final EventRef[] EMPTY_REFS = new EventRef[0];
 
     static EventRef read(final Input input) {

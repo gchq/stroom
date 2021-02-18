@@ -109,7 +109,7 @@
         }
       },
       "get" : {
-        "operationId" : "read_18",
+        "operationId" : "read_17",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -1267,7 +1267,7 @@
         }
       }
     },
-    "/config/v1/clusterProperties/{propertyName}/dbOverrideValue" : {
+    "/config/v1/clusterProperties/{propertyName}" : {
       "put" : {
         "operationId" : "update_1",
         "parameters" : [ {
@@ -1770,27 +1770,24 @@
         }
       }
     },
-    "/data/v1/info/{id}" : {
-      "get" : {
-        "operationId" : "info_1",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
+    "/data/v1/fetch" : {
+      "post" : {
+        "operationId" : "fetch_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchDataRequest"
+              }
+            }
           }
-        } ],
+        },
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/DataInfoSection"
-                  }
+                  "$ref" : "#/components/schemas/AbstractFetchDataResult"
                 }
               }
             },
@@ -1817,6 +1814,73 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ResourceKey"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        }
+      }
+    },
+    "/data/v1/{id}/info" : {
+      "get" : {
+        "operationId" : "viewInfo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DataInfoSection"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        }
+      }
+    },
+    "/data/v1/{id}/parts/{partNo}/child-types" : {
+      "get" : {
+        "operationId" : "getChildStreamTypes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "partNo",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  },
+                  "uniqueItems" : true
                 }
               }
             },
@@ -2142,7 +2206,7 @@
     },
     "/dictionary/v1/{dictionaryUuid}" : {
       "get" : {
-        "operationId" : "fetch",
+        "operationId" : "fetch_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "dictionaryUuid",
@@ -2845,7 +2909,7 @@
     },
     "/explorer/v2/fetchExplorerNodes" : {
       "post" : {
-        "operationId" : "fetch_1",
+        "operationId" : "fetch_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2904,7 +2968,7 @@
     },
     "/explorer/v2/info" : {
       "post" : {
-        "operationId" : "info_2",
+        "operationId" : "info_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2986,7 +3050,7 @@
         "responses" : {
           "default" : {
             "content" : {
-              "*/*" : { }
+              "application/octet-stream" : { }
             },
             "description" : "default response"
           }
@@ -3318,7 +3382,7 @@
     },
     "/index/v1/{indexUuid}" : {
       "get" : {
-        "operationId" : "fetch_2",
+        "operationId" : "fetch_4",
         "parameters" : [ {
           "in" : "path",
           "name" : "indexUuid",
@@ -3885,7 +3949,7 @@
     },
     "/jobNode/v1/info" : {
       "get" : {
-        "operationId" : "info_3",
+        "operationId" : "info_2",
         "parameters" : [ {
           "in" : "query",
           "name" : "jobName",
@@ -4299,7 +4363,7 @@
     },
     "/node/v1/info/{nodeName}" : {
       "get" : {
-        "operationId" : "info_4",
+        "operationId" : "info_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -5011,7 +5075,7 @@
     },
     "/pipelines/v1/{pipelineId}" : {
       "get" : {
-        "operationId" : "fetch_3",
+        "operationId" : "fetch_5",
         "parameters" : [ {
           "in" : "path",
           "name" : "pipelineId",
@@ -5139,7 +5203,7 @@
     },
     "/processorFilter/v1/find" : {
       "post" : {
-        "operationId" : "find_5",
+        "operationId" : "find_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5214,7 +5278,7 @@
         }
       },
       "get" : {
-        "operationId" : "read_14",
+        "operationId" : "read_13",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -5404,7 +5468,7 @@
     },
     "/processorTask/v1/find" : {
       "post" : {
-        "operationId" : "find_6",
+        "operationId" : "find_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5532,7 +5596,7 @@
     },
     "/remoteSearch/v1/destroy" : {
       "get" : {
-        "operationId" : "destroy_2",
+        "operationId" : "destroy_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "queryKey",
@@ -5556,7 +5620,7 @@
     },
     "/remoteSearch/v1/poll" : {
       "get" : {
-        "operationId" : "poll_2",
+        "operationId" : "poll_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "queryKey",
@@ -5576,7 +5640,7 @@
     },
     "/remoteSearch/v1/start" : {
       "post" : {
-        "operationId" : "start_1",
+        "operationId" : "start",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5675,7 +5739,7 @@
     },
     "/ruleset/v2/read" : {
       "post" : {
-        "operationId" : "read_15",
+        "operationId" : "read_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5782,7 +5846,7 @@
     },
     "/script/v1/read" : {
       "post" : {
-        "operationId" : "read_16",
+        "operationId" : "read_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6100,7 +6164,7 @@
     },
     "/solrIndex/v1/read" : {
       "post" : {
-        "operationId" : "read_17",
+        "operationId" : "read_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6345,7 +6409,7 @@
     },
     "/statistic/v1/read" : {
       "post" : {
-        "operationId" : "read_22",
+        "operationId" : "read_21",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6480,7 +6544,7 @@
     },
     "/statsStore/v1/read" : {
       "post" : {
-        "operationId" : "read_21",
+        "operationId" : "read_20",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6867,7 +6931,7 @@
     },
     "/streamtasks/v1" : {
       "get" : {
-        "operationId" : "fetch_6",
+        "operationId" : "find_5",
         "parameters" : [ {
           "in" : "query",
           "name" : "offset",
@@ -7240,7 +7304,7 @@
     },
     "/stroom-solr-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroy_1",
+        "operationId" : "destroy_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7425,7 +7489,7 @@
     },
     "/task/v1/find/{nodeName}" : {
       "post" : {
-        "operationId" : "find_8",
+        "operationId" : "find_10",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -7677,7 +7741,7 @@
         }
       },
       "get" : {
-        "operationId" : "read_20",
+        "operationId" : "read_19",
         "parameters" : [ {
           "in" : "path",
           "name" : "token",
@@ -7788,7 +7852,7 @@
         }
       },
       "get" : {
-        "operationId" : "read_19",
+        "operationId" : "read_18",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -7848,7 +7912,7 @@
     },
     "/users/v1" : {
       "get" : {
-        "operationId" : "get_6",
+        "operationId" : "find_9",
         "parameters" : [ {
           "in" : "query",
           "name" : "name",
@@ -7946,7 +8010,7 @@
     },
     "/users/v1/find" : {
       "post" : {
-        "operationId" : "find_7",
+        "operationId" : "find_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8003,7 +8067,7 @@
     },
     "/users/v1/{userUuid}" : {
       "get" : {
-        "operationId" : "get_5",
+        "operationId" : "fetch_8",
         "parameters" : [ {
           "in" : "path",
           "name" : "userUuid",
@@ -8113,80 +8177,17 @@
         }
       }
     },
-    "/viewData/v1/fetch" : {
-      "post" : {
-        "operationId" : "fetch_4",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FetchDataRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/AbstractFetchDataResult"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        }
-      }
-    },
-    "/viewData/v1/listChildTypes" : {
+    "/visualisation/v1" : {
       "get" : {
-        "operationId" : "getChildStreamTypes",
+        "operationId" : "fetch_9",
         "parameters" : [ {
-          "in" : "query",
-          "name" : "id",
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
           "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "in" : "query",
-          "name" : "partNo",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
+            "type" : "string"
           }
         } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  },
-                  "uniqueItems" : true
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        }
-      }
-    },
-    "/visualisation/v1/read" : {
-      "post" : {
-        "operationId" : "read_23",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          }
-        },
         "responses" : {
           "default" : {
             "content" : {
@@ -8199,9 +8200,7 @@
             "description" : "default response"
           }
         }
-      }
-    },
-    "/visualisation/v1/update" : {
+      },
       "put" : {
         "operationId" : "update_24",
         "requestBody" : {
@@ -8229,7 +8228,7 @@
     },
     "/welcome/v1" : {
       "get" : {
-        "operationId" : "welcome",
+        "operationId" : "fetch",
         "responses" : {
           "default" : {
             "content" : {
@@ -8240,33 +8239,7 @@
         }
       }
     },
-    "/xmlSchema/v1/read" : {
-      "post" : {
-        "operationId" : "read_24",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/XmlSchemaDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        }
-      }
-    },
-    "/xmlSchema/v1/update" : {
+    "/xmlSchema/v1" : {
       "put" : {
         "operationId" : "update_25",
         "requestBody" : {
@@ -8292,24 +8265,23 @@
         }
       }
     },
-    "/xslt/v1/read" : {
-      "post" : {
-        "operationId" : "read_13",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
+    "/xmlSchema/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetch_10",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
           }
-        },
+        } ],
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/XsltDoc"
+                  "$ref" : "#/components/schemas/XmlSchemaDoc"
                 }
               }
             },
@@ -8318,7 +8290,7 @@
         }
       }
     },
-    "/xslt/v1/update" : {
+    "/xslt/v1" : {
       "put" : {
         "operationId" : "update_16",
         "requestBody" : {
@@ -8346,7 +8318,7 @@
     },
     "/xslt/v1/{xsltId}" : {
       "get" : {
-        "operationId" : "fetch_5",
+        "operationId" : "fetch_6",
         "parameters" : [ {
           "in" : "path",
           "name" : "xsltId",

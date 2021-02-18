@@ -1,13 +1,15 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Record;
 import stroom.processor.shared.ProcessorFilterTracker;
+
+import org.jooq.Record;
 
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 
 class RecordToProcessorFilterTrackerMapper implements Function<Record, ProcessorFilterTracker> {
+
     @Override
     public ProcessorFilterTracker apply(final Record record) {
         final ProcessorFilterTracker processorFilterTracker = new ProcessorFilterTracker();

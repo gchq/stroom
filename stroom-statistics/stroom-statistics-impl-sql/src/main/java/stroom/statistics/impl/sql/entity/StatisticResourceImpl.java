@@ -24,6 +24,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import javax.inject.Inject;
 
 class StatisticResourceImpl implements StatisticResource {
+
     private final StatisticStoreStore statisticStoreStore;
     private final DocumentResourceHelper documentResourceHelper;
 

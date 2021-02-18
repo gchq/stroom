@@ -49,6 +49,7 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
     }
 
     public interface DataPreviewTabView extends View {
+
         void setContentView(final ClassificationWrapperView sourceView);
     }
 }

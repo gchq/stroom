@@ -16,20 +16,22 @@
 
 package stroom.security.impl.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent.Handler;
 import stroom.util.shared.PermissionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.HashSet;
-import java.util.Set;
 
 @Singleton
 class PermissionChangeEventHandlers {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventHandlers.class);
     private final Set<Handler> handlers = new HashSet<>();
     private volatile boolean initialised;
@@ -46,7 +48,8 @@ class PermissionChangeEventHandlers {
 
     public void fireLocally(final PermissionChangeEvent event) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(), "Only the processing user can fire permission change events");
+            throw new PermissionException(securityContext.getUserId(),
+                    "Only the processing user can fire permission change events");
         }
 
         try {

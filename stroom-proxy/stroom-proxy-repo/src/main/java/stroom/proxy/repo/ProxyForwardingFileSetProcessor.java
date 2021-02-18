@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
  * then both stroom-proxy and stroom can use it.
  */
 public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyForwardingFileSetProcessor.class);
 
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";

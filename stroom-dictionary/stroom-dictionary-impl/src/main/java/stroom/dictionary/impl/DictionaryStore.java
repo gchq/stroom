@@ -24,5 +24,6 @@ import stroom.docstore.api.DocumentStore;
 import java.util.List;
 
 public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
+
     List<DocRef> list();
 }

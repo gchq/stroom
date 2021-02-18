@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
+
     private final CommonExpressionMapper expressionMapper;
     private final MetaKeyDao metaKeyDao;
     private final String keyFieldName;
@@ -52,7 +53,11 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             int id = idOptional.get();
             Field valueField = createValueField(id);
 
-            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
+            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField,
+                    valueField,
+                    value -> List.of(Long.valueOf(value)),
+                    wordListProvider,
+                    collectionService);
 
             final MetaTermHandler handler = new MetaTermHandler(
                     createKeyField(id),
@@ -62,10 +67,14 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         }
     }
 
-    public SelectJoinStep<?> addJoins(SelectJoinStep<?> query, final Field metaIdField,
-                                      final Set<Integer> usedValKeys) {
+    public SelectJoinStep<?> addJoins(
+            SelectJoinStep<?> query,
+            final Field metaIdField,
+            final Set<Integer> usedValKeys) {
+
         for (Integer id : usedValKeys) {
-            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id)).on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id))
+                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
     }
@@ -92,6 +101,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     static class MetaTermHandler implements Function<ExpressionTerm, Condition> {
+
         private final Field<Integer> keyField;
         private final Integer id;
         private final TermHandler<Long> valueHandler;

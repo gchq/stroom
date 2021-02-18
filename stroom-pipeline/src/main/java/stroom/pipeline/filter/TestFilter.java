@@ -16,17 +16,18 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.SAXException;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 
-import javax.inject.Inject;
+import org.xml.sax.SAXException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 /**
  * A filter used to sample the output produced by SAX events at any point in the

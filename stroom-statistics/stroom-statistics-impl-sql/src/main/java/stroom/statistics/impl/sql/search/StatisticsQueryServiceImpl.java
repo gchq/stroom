@@ -24,10 +24,10 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused") //used by DI
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
@@ -70,8 +70,10 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                             Preconditions.checkNotNull(searchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                    "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                    "searchRequest must have at least one resultRequest");
 
             final StatisticStoreDoc statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
 

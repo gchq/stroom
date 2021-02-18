@@ -28,6 +28,7 @@ import java.io.Closeable;
  * </p>
  */
 public interface Target extends Closeable {
+
     /**
      * Get the meta data associated with this target.
      *

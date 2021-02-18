@@ -29,13 +29,14 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourceGeneration;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged
 class DashboardResourceImpl implements DashboardResource {
+
     private final Provider<DashboardService> dashboardServiceProvider;
 
     @Inject
@@ -56,7 +57,7 @@ class DashboardResourceImpl implements DashboardResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ValidateExpressionResult validateExpression(final String expressionString) {
-       return dashboardServiceProvider.get().validateExpression(expressionString);
+        return dashboardServiceProvider.get().validateExpression(expressionString);
     }
 
     @Override

@@ -16,11 +16,14 @@
 
 package stroom.security.impl;
 
-import com.google.common.base.Strings;
-import com.google.common.net.HttpHeaders;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.common.base.Strings;
+import com.google.common.net.HttpHeaders;
+
+import java.io.IOException;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -30,10 +33,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Objects;
 
 public class ContentSecurityFilter implements Filter {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentSecurityFilter.class);
 
     private static final String HEADER_IE_X_CONTENT_SECURITY_POLICY = "X-Content-Security-Policy";
@@ -59,7 +61,8 @@ public class ContentSecurityFilter implements Filter {
     }
 
     @Override
-    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
+            throws IOException, ServletException {
         Objects.requireNonNull(request);
         Objects.requireNonNull(response);
         Objects.requireNonNull(chain);

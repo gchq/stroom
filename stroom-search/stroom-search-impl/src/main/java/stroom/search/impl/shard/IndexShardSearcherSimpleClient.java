@@ -20,6 +20,7 @@ package stroom.search.impl.shard;
 import stroom.util.AbstractCommandLineTool;
 
 public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
+
     private String searchField = null;
     private String searchValue = null;
 

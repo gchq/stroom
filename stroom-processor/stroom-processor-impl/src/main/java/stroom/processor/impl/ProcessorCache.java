@@ -23,12 +23,13 @@ import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 public class ProcessorCache implements Clearable {
+
     private static final String CACHE_NAME = "Processor Cache";
 
     private final ICache<Integer, Optional<Processor>> cache;

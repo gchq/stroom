@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 @Singleton
 public class NodeConfig extends AbstractConfig implements HasDbConfig {
+
     public static final String PROP_NAME_NAME = "name";
     public static final String PROP_NAME_STATUS = "status";
 

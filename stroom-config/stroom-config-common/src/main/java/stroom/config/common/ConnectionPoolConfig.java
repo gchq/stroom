@@ -23,19 +23,19 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.validation.constraints.Min;
 import java.util.Objects;
+import javax.validation.constraints.Min;
 
 @NotInjectableConfig
 public class ConnectionPoolConfig extends AbstractConfig {
 
     public static final String COMMON_CONN_POOL_DESC = "See " +
-        "https://github.com/brettwooldridge/HikariCP for further " +
-        "details on configuring the connection pool.";
+            "https://github.com/brettwooldridge/HikariCP for further " +
+            "details on configuring the connection pool.";
 
     public static final String COMMON_JDBC_DESC = "See " +
-        "https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration for further " +
-        "details on configuring the MySQL JDBC driver properties.";
+            "https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration for further " +
+            "details on configuring the MySQL JDBC driver properties.";
 
     // JDBC driver level props
     private boolean cachePrepStmts = false;
@@ -51,9 +51,9 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "Sets the cachePrepStmts property on the at the JDBC driver level. Set to true to " +
-        "enable caching of prepared statements at the JDBC driver level. " +
-        COMMON_JDBC_DESC)
+            "Sets the cachePrepStmts property on the at the JDBC driver level. Set to true to " +
+                    "enable caching of prepared statements at the JDBC driver level. " +
+                    COMMON_JDBC_DESC)
     public boolean getCachePrepStmts() {
         return cachePrepStmts;
     }
@@ -65,9 +65,9 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "Sets the prepStmtCacheSize property on the at the JDBC driver level. " +
-        "The number of prepared statements that the driver will cache per connection. " +
-        COMMON_JDBC_DESC)
+            "Sets the prepStmtCacheSize property on the at the JDBC driver level. " +
+                    "The number of prepared statements that the driver will cache per connection. " +
+                    COMMON_JDBC_DESC)
     @Min(0)
     public int getPrepStmtCacheSize() {
         return prepStmtCacheSize;
@@ -79,9 +79,9 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "Sets the prepStmtCacheSqlLimit property on the at the JDBC driver level. The " +
-        "maximum length for a prepared SQL statement that can be cached. " +
-        COMMON_JDBC_DESC)
+            "Sets the prepStmtCacheSqlLimit property on the at the JDBC driver level. The " +
+                    "maximum length for a prepared SQL statement that can be cached. " +
+                    COMMON_JDBC_DESC)
     @Min(0)
     public int getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
@@ -94,8 +94,8 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum amount of time that a client will wait for a connection from the pool. " +
-        COMMON_CONN_POOL_DESC)
+            "The maximum amount of time that a client will wait for a connection from the pool. " +
+                    COMMON_CONN_POOL_DESC)
     public StroomDuration getConnectionTimeout() {
         return connectionTimeout;
     }
@@ -107,9 +107,9 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum amount of time that a connection can sit idle in the pool. " +
-        "Only applies when minimumIdle is defined to be less than maximumPoolSize. " +
-        COMMON_CONN_POOL_DESC)
+            "The maximum amount of time that a connection can sit idle in the pool. " +
+                    "Only applies when minimumIdle is defined to be less than maximumPoolSize. " +
+                    COMMON_CONN_POOL_DESC)
     public StroomDuration getIdleTimeout() {
         return idleTimeout;
     }
@@ -121,8 +121,8 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum lifetime of a connection in the pool. " +
-        COMMON_CONN_POOL_DESC)
+            "The maximum lifetime of a connection in the pool. " +
+                    COMMON_CONN_POOL_DESC)
     public StroomDuration getMaxLifetime() {
         return maxLifetime;
     }
@@ -134,8 +134,8 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The minimum number of idle connections that Hikari tries to maintain in the pool. " +
-        COMMON_CONN_POOL_DESC)
+            "The minimum number of idle connections that Hikari tries to maintain in the pool. " +
+                    COMMON_CONN_POOL_DESC)
     @Min(0)
     public int getMinimumIdle() {
         return minimumIdle;
@@ -148,8 +148,8 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum size that the pool is allowed to reach, including both idle and in-use connections. " +
-        COMMON_CONN_POOL_DESC)
+            "The maximum size that the pool is allowed to reach, including both idle and in-use connections. " +
+                    COMMON_CONN_POOL_DESC)
     @Min(0)
     public int getMaxPoolSize() {
         return maxPoolSize;
@@ -160,10 +160,15 @@ public class ConnectionPoolConfig extends AbstractConfig {
         this.maxPoolSize = maxPoolSize;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
         return cachePrepStmts == that.cachePrepStmts &&
                 prepStmtCacheSize == that.prepStmtCacheSize &&
@@ -175,6 +180,11 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit, idleTimeout, maxLifetime, maxPoolSize);
+        return Objects.hash(cachePrepStmts,
+                prepStmtCacheSize,
+                prepStmtCacheSqlLimit,
+                idleTimeout,
+                maxLifetime,
+                maxPoolSize);
     }
 }

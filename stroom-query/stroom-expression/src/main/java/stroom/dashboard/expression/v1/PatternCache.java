@@ -10,23 +10,29 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 final class PatternCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PatternCache.class);
 
     // Create cache
     private static final int MAX_ENTRIES = 1000;
 
-    private static final Map<String, CachedPattern> MAP = Collections.synchronizedMap(new LinkedHashMap<String, CachedPattern>(MAX_ENTRIES + 1, .75F, true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old pattern: " + eldest.getKey());
+    private static final Map<String, CachedPattern> MAP = Collections.synchronizedMap(
+            new LinkedHashMap<String, CachedPattern>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old pattern: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
     private PatternCache() {
         // Utility
@@ -51,6 +57,7 @@ final class PatternCache {
     }
 
     private static class CachedPattern {
+
         private final Pattern pattern;
         private final RuntimeException exception;
 

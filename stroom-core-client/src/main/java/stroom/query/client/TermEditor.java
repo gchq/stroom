@@ -24,7 +24,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import com.google.gwt.event.dom.client.InputEvent;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -32,6 +31,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TermEditor extends Composite {
+
     private static final int WIDE_VALUE = 400;
     private static final int NARROW_VALUE = 175;
 
@@ -610,6 +611,7 @@ public class TermEditor extends Composite {
     }
 
     public interface Style extends CssResource {
+
         String layout();
 
         String item();
@@ -618,6 +620,7 @@ public class TermEditor extends Composite {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("TermEditor.css")
         Style style();
     }

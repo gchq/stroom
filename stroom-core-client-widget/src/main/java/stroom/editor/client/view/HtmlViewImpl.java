@@ -16,14 +16,16 @@
 
 package stroom.editor.client.view;
 
+import stroom.editor.client.presenter.HtmlPresenter.HtmlView;
+
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.editor.client.presenter.HtmlPresenter.HtmlView;
 
 public class HtmlViewImpl extends ViewImpl implements HtmlView {
-    private ScrollPanel scrollPanel;
+
+    private final ScrollPanel scrollPanel;
 
     public HtmlViewImpl() {
         this.scrollPanel = new ScrollPanel();

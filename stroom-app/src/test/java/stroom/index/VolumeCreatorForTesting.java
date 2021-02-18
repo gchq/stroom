@@ -28,19 +28,20 @@ import stroom.node.impl.NodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class VolumeCreatorForTesting implements VolumeCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCreatorForTesting.class);
 
-    private final String NODE1 = "node1a";
-    private final String NODE2 = "node2a";
+    private static final String NODE1 = "node1a";
+    private static final String NODE2 = "node2a";
 
     private final NodeConfig nodeConfig;
     private final IndexVolumeService volumeService;

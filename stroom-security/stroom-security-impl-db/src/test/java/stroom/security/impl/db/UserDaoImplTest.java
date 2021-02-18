@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserDaoImplTest {
+
     private static UserDao userDao;
 
     @BeforeAll

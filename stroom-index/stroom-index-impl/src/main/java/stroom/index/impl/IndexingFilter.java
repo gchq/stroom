@@ -16,13 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -45,6 +38,14 @@ import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import javax.inject.Inject;
 
 /**
@@ -53,6 +54,7 @@ import javax.inject.Inject;
 @ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 class IndexingFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);
 
     private static final String RECORD = "record";

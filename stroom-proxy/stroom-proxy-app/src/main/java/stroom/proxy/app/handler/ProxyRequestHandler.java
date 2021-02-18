@@ -15,13 +15,13 @@ import stroom.util.io.ByteCountInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Main entry point to handling proxy requests.
@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dynamic mini proxy.
  */
 public class ProxyRequestHandler implements RequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRequestHandler.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);

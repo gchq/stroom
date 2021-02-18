@@ -1,13 +1,14 @@
 package stroom.security.identity.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.security.identity.db.jooq.tables.TokenType;
 import stroom.security.identity.token.TokenTypeDao;
-import stroom.db.util.JooqUtil;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 class TokenTypeDaoImpl implements TokenTypeDao {
+
     private final AuthDbConnProvider authDbConnProvider;
 
     @Inject

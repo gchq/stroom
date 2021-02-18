@@ -43,6 +43,6 @@ public interface EntityEventResource extends RestResource {
     @PUT
     @Path(NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sends an entity event")
-    Boolean fireEvent(@PathParam("nodeName") String nodeName, 
+    Boolean fireEvent(@PathParam("nodeName") String nodeName,
                       @ApiParam("entityevent") EntityEvent entityEvent);
 }

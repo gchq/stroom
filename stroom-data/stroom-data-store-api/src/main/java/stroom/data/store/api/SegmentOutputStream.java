@@ -27,6 +27,7 @@ import java.io.OutputStream;
  * </p>
  */
 public abstract class SegmentOutputStream extends OutputStream {
+
     /**
      * Adds a segment boundary to the output stream. All bytes written between
      * the start of the output or the last boundary will be considered a segment

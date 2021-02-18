@@ -16,6 +16,8 @@
 
 package stroom.task.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -26,8 +28,6 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
-import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -41,6 +41,7 @@ import javax.ws.rs.client.Entity;
 
 //@AutoLogged  see
 class TaskResourceImpl implements TaskResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final Provider<TaskManagerImpl> taskManagerProvider;
@@ -116,16 +117,16 @@ class TaskResourceImpl implements TaskResource {
 
         // TODO @AT Add custom logging to set the Process.Action to TERMINATE
 //        Runnable work = () -> {
-            nodeServiceProvider.get()
-                    .remoteRestCall(
-                            nodeName,
-                            path,
-                            () ->
-                                    taskManagerProvider.get().terminate(
-                                            request.getCriteria(),
-                                            request.isKill()),
-                            builder ->
-                                    builder.post(Entity.json(request)));
+        nodeServiceProvider.get()
+                .remoteRestCall(
+                        nodeName,
+                        path,
+                        () ->
+                                taskManagerProvider.get().terminate(
+                                        request.getCriteria(),
+                                        request.isKill()),
+                        builder ->
+                                builder.post(Entity.json(request)));
 //        };
 
 //        stroomEventLoggingService.loggedAction(
@@ -143,6 +144,7 @@ class TaskResourceImpl implements TaskResource {
     }
 
     static interface EventActionDecorator<T extends EventAction> {
+
         T decorate(final T eventAction);
     }
 

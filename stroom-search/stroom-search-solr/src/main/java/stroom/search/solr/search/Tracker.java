@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 class Tracker {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Tracker.class);
 
     private final AtomicLong hitCount;

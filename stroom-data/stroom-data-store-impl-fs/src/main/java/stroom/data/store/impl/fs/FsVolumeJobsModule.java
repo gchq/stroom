@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
 

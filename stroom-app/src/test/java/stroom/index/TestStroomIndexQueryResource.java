@@ -24,16 +24,16 @@ import org.glassfish.jersey.client.ClientResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,7 +67,11 @@ class TestStroomIndexQueryResource {
         List<ResultRequest> resultRequestList = new ArrayList<>();
         String datetimeLocale = "en-gb";
         boolean incremental = false;
-        SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequestList, datetimeLocale, incremental);
+        SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequestList,
+                datetimeLocale,
+                incremental);
         return searchRequest;
     }
 
@@ -76,7 +80,8 @@ class TestStroomIndexQueryResource {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract
+        // classes
 //        mapper.enableDefaultTyping();
         return mapper;
     }
@@ -87,11 +92,13 @@ class TestStroomIndexQueryResource {
     }
 
     @Disabled
-    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/test/resources/searchRequest.json")));
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get(
+                "src/test/resources/searchRequest.json")));
         ObjectMapper objectMapper = new ObjectMapper();
         SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
@@ -113,7 +120,8 @@ class TestStroomIndexQueryResource {
     }
 
     @Disabled
-    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void test() throws JsonProcessingException {
         // Given

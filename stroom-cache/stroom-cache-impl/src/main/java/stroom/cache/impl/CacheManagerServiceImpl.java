@@ -16,15 +16,15 @@
 
 package stroom.cache.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -32,8 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class CacheManagerServiceImpl implements CacheManagerService, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
     private final CacheManagerImpl cacheManager;

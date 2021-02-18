@@ -14,6 +14,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class SearchConfig extends AbstractConfig {
+
     /**
      * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -38,7 +39,8 @@ public class SearchConfig extends AbstractConfig {
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
-    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
+    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }

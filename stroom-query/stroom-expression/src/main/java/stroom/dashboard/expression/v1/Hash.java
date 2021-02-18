@@ -65,8 +65,9 @@ import java.text.ParseException;
                                 @FunctionArg(
                                         name = "salt",
                                         description = "The salt value to create the hash with.",
-                                        argType = ValString.class) }) })
+                                        argType = ValString.class)})})
 class Hash extends AbstractFunction implements Serializable {
+
     static final String NAME = "hash";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -105,7 +106,7 @@ class Hash extends AbstractFunction implements Serializable {
             algorithm = ParamParseUtil.parseStringParam(params, 1, name);
         }
         if (params.length >= 3) {
-            salt = ParamParseUtil.parseStringParam(params,2, name);
+            salt = ParamParseUtil.parseStringParam(params, 2, name);
         }
 
         try {
@@ -120,7 +121,8 @@ class Hash extends AbstractFunction implements Serializable {
             } else {
                 final String string = param.toString();
                 if (string == null) {
-                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string", 0);
+                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string",
+                            0);
                 }
                 gen = new StaticValueFunction(ValString.create(hash(string, algorithm, salt))).createGenerator();
             }
@@ -145,6 +147,7 @@ class Hash extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String algorithm;

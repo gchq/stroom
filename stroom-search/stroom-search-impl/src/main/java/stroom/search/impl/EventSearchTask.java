@@ -21,6 +21,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.EventRef;
 
 public class EventSearchTask {
+
     private final QueryKey key;
     private final Query query;
     private final EventRef minEvent;

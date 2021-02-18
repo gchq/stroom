@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class UpdateStatusRequest {
+
     @JsonProperty
     private final FindMetaCriteria criteria;
     @JsonProperty

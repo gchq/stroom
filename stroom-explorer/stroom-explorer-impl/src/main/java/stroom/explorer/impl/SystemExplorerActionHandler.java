@@ -10,13 +10,14 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.inject.Inject;
 
 class SystemExplorerActionHandler implements ExplorerActionHandler {
+
     private static final String SYSTEM = ExplorerConstants.SYSTEM;
     private static final String FOLDER = ExplorerConstants.FOLDER;
     private final SecurityContext securityContext;
@@ -42,7 +43,8 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to read (" + FOLDER + ")");
         }
 
         final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);

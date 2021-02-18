@@ -44,6 +44,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SearchableResource implements RestResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableResource.class);
 
     private final SearchableService searchableService;

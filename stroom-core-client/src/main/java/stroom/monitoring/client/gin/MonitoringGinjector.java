@@ -16,7 +16,6 @@
 
 package stroom.monitoring.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesListPresenter;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
@@ -32,7 +31,10 @@ import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface MonitoringGinjector {
+
     AsyncProvider<DatabaseTablesMonitoringPlugin> getDatabaseTablesMonitoringPlugin();
 
     AsyncProvider<DatabaseTablesMonitoringPresenter> getDatabaseTablesMonitoringPresenter();

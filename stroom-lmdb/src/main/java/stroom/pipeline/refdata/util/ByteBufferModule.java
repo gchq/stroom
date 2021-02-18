@@ -22,6 +22,7 @@ import stroom.util.guice.HasSystemInfoBinder;
 import com.google.inject.AbstractModule;
 
 public class ByteBufferModule extends AbstractModule {
+
     @Override
     protected void configure() {
         // If you switch impl here make sure also to do it in the SystemInfo binder below

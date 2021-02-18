@@ -43,6 +43,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import javax.inject.Provider;
 
 public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView, KafkaConfigDoc> {
+
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData CONFIG_TAB = new TabDataImpl("Config");
@@ -60,8 +61,11 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private DocRef docRef;
 
     @Inject
-    public KafkaConfigPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final KafkaConfigSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider,
+    public KafkaConfigPresenter(final EventBus eventBus,
+                                final LinkTabPanelView view,
+                                final KafkaConfigSettingsPresenter settingsPresenter,
+                                final ClientSecurityContext securityContext,
+                                final Provider<EditorPresenter> editorPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
         super(eventBus, view, securityContext);
@@ -148,7 +152,6 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private EditorPresenter getOrCreateCodePresenter() {
         if (editorPresenter == null) {
             editorPresenter = editorPresenterProvider.get();
-;
             editorPresenter.setMode(AceEditorMode.PROPERTIES);
             registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));

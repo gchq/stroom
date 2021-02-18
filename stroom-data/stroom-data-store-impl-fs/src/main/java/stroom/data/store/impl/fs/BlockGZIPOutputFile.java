@@ -21,7 +21,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,11 +30,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.zip.GZIPOutputStream;
+import javax.annotation.Nonnull;
 
 /**
  * @see BlockGZIPConstants
  */
 class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
+
     // We have in built locking while open
     private final Path finalFile;
     private final Path lockFile;
@@ -88,7 +89,11 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         FileUtil.deleteFile(finalFile);
         FileUtil.deleteFile(lockFile);
 
-        this.raFile = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+        this.raFile = FileChannel.open(
+                lockFile,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.READ,
+                StandardOpenOption.WRITE);
         try {
             // Write a marker
             mainBuffer.write(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER);

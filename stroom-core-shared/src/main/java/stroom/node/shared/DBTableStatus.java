@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(Include.NON_NULL)
 public class DBTableStatus {
+
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";
     public static final String FIELD_ROW_COUNT = "Count";

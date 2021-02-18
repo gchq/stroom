@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 public class WrappedWriter extends Writer {
+
     private final Writer writer;
 
     public WrappedWriter(final Writer writer) {

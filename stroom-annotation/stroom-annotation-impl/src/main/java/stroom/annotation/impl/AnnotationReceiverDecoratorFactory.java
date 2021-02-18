@@ -20,7 +20,6 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,8 +30,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
@@ -127,7 +128,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             for (final Annotation annotation : annotations) {
                 try {
                     if (filter == null || filter.apply(annotation)) {
-                        // If we have more that one annotation then copy the original values into a new values object for each new row.
+                        // If we have more that one annotation then copy the original values into a new
+                        // values object for each new row.
                         if (annotations.size() > 1 || values.length < fieldIndex.size()) {
                             final Val[] copy = Arrays.copyOf(v, fieldIndex.size());
                             values = copy;
@@ -145,8 +147,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             }
         };
 
-        // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in which
-        //   case we would increment the completion count after providing values.
+        // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in
+        //  which case we would increment the completion count after providing values.
         return new ExtractionReceiver(
                 valuesConsumer,
                 receiver.getErrorConsumer(),
@@ -225,7 +227,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             } else {
                 if (value instanceof String) {
                     return ValString.create((String) value);
-                } if (value instanceof Long) {
+                }
+                if (value instanceof Long) {
                     return ValLong.create((Long) value);
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());

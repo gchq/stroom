@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class ValueSpinner extends Composite {
+
     private final Spinner spinner;
     private final TextBox valueBox = new TextBox();
 

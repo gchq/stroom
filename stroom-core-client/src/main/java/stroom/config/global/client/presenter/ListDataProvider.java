@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ListDataProvider<R> extends AsyncDataProvider<R> {
+
     private Consumer<Range> listUpdater;
     private List<R> list;
     private Range requestedRange;
@@ -49,7 +50,7 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
         redraw(requestedRange);
     }
 
-//    public void setPartialList(final List<R> list, final Range range, final int totalSize) {
+    //    public void setPartialList(final List<R> list, final Range range, final int totalSize) {
 //        this.list = list;
 //        this.requestedRange = range;
 //        this.totalSize = totalSize;

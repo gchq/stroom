@@ -17,6 +17,7 @@
 package stroom.cell.valuespinner.shared;
 
 public class ConstrainedLong extends EditableLong implements Editable, HasSpinnerConstraints {
+
     private static final long serialVersionUID = -5468699731097143387L;
 
     private int step = 1;

@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_1502__Index extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1502__Index.class);
 
     @Override
@@ -323,7 +324,8 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         document.setDescription(descrip);
                         document.setMaxDocsPerShard(maxDoc);
                         document.setShardsPerPartition(maxShrd);
-                        document.setPartitionBy(IndexDoc.PartitionBy.valueOf(Index.PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy).name()));
+                        document.setPartitionBy(IndexDoc.PartitionBy.valueOf(Index.PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                                partBy).name()));
                         document.setPartitionSize(partSz);
                         document.setRetentionDayAge(retenDayAge);
                         document.setFields(MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(fields)));

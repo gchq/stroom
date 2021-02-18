@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,6 +43,7 @@ import java.util.stream.Collectors;
  * A file system implementation of Source.
  */
 final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsSource.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -56,7 +56,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     private InputStream inputStream;
     private Path file;
 
-    private Meta meta;
+    private final Meta meta;
     private boolean closed;
     private Long count;
 
@@ -223,7 +223,8 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         // We wan't to ignore the internal .bdy., .seg. and .mf. ones
         // and boil it down to (in this case) Raw Events, Meta & Context
 
-        final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(getFile());
+        final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(
+                getFile());
         return allDescendantStreamFileList.stream()
                 .map(fileSystemStreamPathHelper::decodeStreamType)
                 .collect(Collectors.toSet());

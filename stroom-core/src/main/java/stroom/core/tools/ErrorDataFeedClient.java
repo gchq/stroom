@@ -16,10 +16,10 @@
 
 package stroom.core.tools;
 
-import org.apache.commons.lang3.RandomUtils;
 import stroom.util.io.StreamUtil;
 
-import javax.net.ssl.HttpsURLConnection;
+import org.apache.commons.lang3.RandomUtils;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <p>
@@ -40,6 +41,7 @@ import java.util.zip.ZipOutputStream;
  * </p>
  */
 public final class ErrorDataFeedClient {
+
     private static final String ARG_URL = "url";
     private static final String ARG_COMPRESSION = "compression";
     private static final String ZIP = "zip";
@@ -97,9 +99,15 @@ public final class ErrorDataFeedClient {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
 
-            final int bufferSize = argsMap.containsKey(BUFFER_SIZE) ? Integer.parseInt(argsMap.get(BUFFER_SIZE)) : 100;
-            final int chunkSize = argsMap.containsKey(CHUNK_SIZE) ? Integer.parseInt(argsMap.get(CHUNK_SIZE)) : 100;
-            final int writeSize = argsMap.containsKey(WRITE_SIZE) ? Integer.parseInt(argsMap.get(WRITE_SIZE)) : 1000;
+            final int bufferSize = argsMap.containsKey(BUFFER_SIZE)
+                    ? Integer.parseInt(argsMap.get(BUFFER_SIZE))
+                    : 100;
+            final int chunkSize = argsMap.containsKey(CHUNK_SIZE)
+                    ? Integer.parseInt(argsMap.get(CHUNK_SIZE))
+                    : 100;
+            final int writeSize = argsMap.containsKey(WRITE_SIZE)
+                    ? Integer.parseInt(argsMap.get(WRITE_SIZE))
+                    : 1000;
 
             connection.setChunkedStreamingMode(chunkSize);
             connection.connect();

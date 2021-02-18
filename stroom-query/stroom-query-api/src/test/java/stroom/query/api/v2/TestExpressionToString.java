@@ -23,8 +23,9 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionToString {
+
     @Test
-    void TestSingleLine() {
+    void testSingleLine() {
         ExpressionOperator.Builder builder = ExpressionOperator.builder().enabled(false);
         single("", builder);
 
@@ -75,7 +76,7 @@ class TestExpressionToString {
     }
 
     @Test
-    void TestMultiLine() {
+    void testMultiLine() {
         ExpressionOperator.Builder builder = ExpressionOperator.builder().enabled(false);
         multi("", builder);
 

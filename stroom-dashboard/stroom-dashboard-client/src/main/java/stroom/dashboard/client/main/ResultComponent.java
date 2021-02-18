@@ -21,6 +21,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.query.api.v2.Result;
 
 public interface ResultComponent {
+
     ComponentSettings getSettings();
 
     ComponentResultRequest getResultRequest();

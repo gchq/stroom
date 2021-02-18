@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ProcessorTaskFields {
+
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
 

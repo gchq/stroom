@@ -36,6 +36,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "A row of data in a result set")
 public final class Row {
+
     @ApiModelProperty(
             value = "TODO",
             required = true)
@@ -95,10 +96,15 @@ public final class Row {
         return textColor;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Row row = (Row) o;
         return Objects.equals(groupKey, row.groupKey) &&
                 Objects.equals(values, row.values) &&
@@ -135,6 +141,7 @@ public final class Row {
      * Builder for constructing a {@link Row}
      */
     public static final class Builder {
+
         private String groupKey;
         private List<String> values;
         private Integer depth;

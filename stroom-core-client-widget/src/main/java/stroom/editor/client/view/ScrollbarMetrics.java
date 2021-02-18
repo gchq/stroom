@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public final class ScrollbarMetrics {
+
     private static final SimplePanel inner = new SimplePanel();
     private static final SimplePanel outer = new SimplePanel();
     private static int horizontalScrollBarWidth = -1;

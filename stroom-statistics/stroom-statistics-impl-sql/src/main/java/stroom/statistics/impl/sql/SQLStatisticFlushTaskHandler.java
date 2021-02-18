@@ -25,7 +25,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,9 +32,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 
 public class SQLStatisticFlushTaskHandler {
+
     /**
      * The number of records to flush to the DB in one go.
      */

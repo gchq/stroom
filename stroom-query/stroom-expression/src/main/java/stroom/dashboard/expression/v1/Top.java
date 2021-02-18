@@ -43,6 +43,7 @@ import java.text.ParseException;
                                 argType = ValInteger.class)
                 }))
 public class Top extends AbstractSelectorFunction implements Serializable {
+
     static final String NAME = "top";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -70,6 +71,7 @@ public class Top extends AbstractSelectorFunction implements Serializable {
     }
 
     public static class TopSelector extends Selector {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;

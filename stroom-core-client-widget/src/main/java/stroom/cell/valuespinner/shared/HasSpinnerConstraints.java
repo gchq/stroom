@@ -17,6 +17,7 @@
 package stroom.cell.valuespinner.shared;
 
 public interface HasSpinnerConstraints {
+
     int getStep();
 
     int getMaxStep();

@@ -26,8 +26,8 @@ public class NodeUriConfig extends UriConfig {
         return super.getPort();
     }
 
-    @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the inter-node communication" +
-            "goes via some form of gateway where the paths are mapped to something else.")
+    @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the inter-node " +
+            "communication goes via some form of gateway where the paths are mapped to something else.")
     public String getPathPrefix() {
         return super.getPathPrefix();
     }

@@ -21,6 +21,7 @@ import stroom.data.zip.StroomZipEntry;
 import java.io.IOException;
 
 public interface StroomStreamHandler {
+
     void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException;
 
     void handleEntryData(byte[] data, int off, int len) throws IOException;

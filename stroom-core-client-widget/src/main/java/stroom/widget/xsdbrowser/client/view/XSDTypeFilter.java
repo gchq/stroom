@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class XSDTypeFilter {
+
     public static final XSDTypeFilter ATTRIBUTE_FILTER = new XSDTypeFilter(XSDType.ATTRIBUTE);
     public static final XSDTypeFilter TYPE_FILTER = new XSDTypeFilter(XSDType.COMPLEX_TYPE, XSDType.SIMPLE_TYPE);
     public static final XSDTypeFilter COMPLEX_CONTENT_FILTER = new XSDTypeFilter(XSDType.COMPLEX_CONTENT);

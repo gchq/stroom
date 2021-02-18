@@ -3,9 +3,9 @@ package stroom.config.global.impl.validation;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 
-import javax.validation.ConstraintValidatorContext;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.validation.ConstraintValidatorContext;
 
 public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValidator {
 

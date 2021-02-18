@@ -1,11 +1,12 @@
 package stroom.data.zip;
 
 
+import stroom.meta.api.AttributeMap;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMap;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -13,6 +14,7 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPathCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPathCreator.class);
 
     private final AttributeMap attributeMap = new AttributeMap();

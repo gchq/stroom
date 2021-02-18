@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecordingEventBus extends EventBus {
+
     private final List<Event<?>> firedEvents = new ArrayList<>();
     private final List<Event<?>> firedSourceEvents = new ArrayList<>();
     private final EventBus wrapped;

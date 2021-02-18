@@ -18,104 +18,107 @@
 package stroom.svg.client;
 
 public final class SvgPresets {
-    public static final SvgPreset ABOUT = new SvgPreset("images/oo.svg", "About", true);
-    public static final SvgPreset ADD = new SvgPreset("images/add.svg", "Add", true);
-    public static final SvgPreset ALERT = new SvgPreset("images/alert.svg", "Alert", true);
-    public static final SvgPreset ANNOTATE = new SvgPreset("images/edit.svg", "Annotate", false);
-    public static final SvgPreset ANNOTATIONS = new SvgPreset("images/document/AnnotationsIndex.svg", "Annotations", true);
-    public static final SvgPreset CLEAR = new SvgPreset("images/clear.svg", "Clear", false);
-    public static final SvgPreset CLOSE = new SvgPreset("images/close.svg", "Close", false);
-    public static final SvgPreset COPY = new SvgPreset("images/copy.svg", "Copy", false);
-    public static final SvgPreset DATABASE = new SvgPreset("images/database.svg", "Database", true);
-    public static final SvgPreset DELETE = new SvgPreset("images/delete.svg", "Delete", false);
-    public static final SvgPreset DELETED = new SvgPreset("images/deleted.svg", "Deleted", false);
-    public static final SvgPreset DEPENDENCIES = new SvgPreset("images/dependencies.svg", "Dependencies", true);
-    public static final SvgPreset DISABLE = new SvgPreset("images/disable.svg", "Disable", false);
-    public static final SvgPreset DOWN = new SvgPreset("images/down.svg", "Down", false);
-    public static final SvgPreset DOWNLOAD = new SvgPreset("images/download.svg", "Download", false);
-    public static final SvgPreset EDIT = new SvgPreset("images/edit.svg", "Edit", false);
-    public static final SvgPreset ELASTIC_SEARCH = new SvgPreset("images/document/ElasticIndex.svg", "Elastic Search", true);
-    public static final SvgPreset ERROR = new SvgPreset("images/error.svg", "Error", true);
-    public static final SvgPreset EXPLORER = new SvgPreset("images/explorer.svg", "Explorer", true);
-    public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
-    public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
-    public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
-    public static final SvgPreset FIELD = new SvgPreset("images/field.svg", "Field", true);
-    public static final SvgPreset FILE = new SvgPreset("images/file.svg", "File", true);
-    public static final SvgPreset FILE_RAW = new SvgPreset("images/file-raw.svg", "Raw File", true);
-    public static final SvgPreset FILE_FORMATTED = new SvgPreset("images/file-formatted.svg", "Formatted File", true);
-    public static final SvgPreset FILTER = new SvgPreset("images/filter.svg", "Filter", true);
-    public static final SvgPreset FOLDER = new SvgPreset("images/folder.svg", "Folder", true);
-    public static final SvgPreset FOLDER_TREE = new SvgPreset("images/folder-tree.svg", "Folder Tree", true);
-    public static final SvgPreset FORMAT = new SvgPreset("images/format.svg", "Format & Indent", true);
-    public static final SvgPreset FUNCTION = new SvgPreset("images/function.svg", "Function", true);
-    public static final SvgPreset GENERATE = new SvgPreset("images/generate.svg", "Auto-generate roll-up permutations", true);
-    public static final SvgPreset HELP = new SvgPreset("images/help.svg", "Help", true);
-    public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);
-    public static final SvgPreset INFO = new SvgPreset("images/info.svg", "Info", true);
-    public static final SvgPreset INFO_DELETED = new SvgPreset("images/info-deleted.svg", "Info (Deleted)", true);
-    public static final SvgPreset INFO_WARNING = new SvgPreset("images/info-warning.svg", "Info (Warning)", true);
-    public static final SvgPreset INSERT_ABOVE = new SvgPreset("images/insert-above.svg", "Insert above", true);
-    public static final SvgPreset INSERT_BELOW = new SvgPreset("images/insert-below.svg", "Insert below", true);
-    public static final SvgPreset JOBS = new SvgPreset("images/jobs.svg", "Jobs", true);
-    public static final SvgPreset KEY = new SvgPreset("images/key.svg", "API Keys", true);
-    public static final SvgPreset LINK = new SvgPreset("images/dependencies.svg", "Dependencies", true);
-    public static final SvgPreset LOGOUT = new SvgPreset("images/logout.svg", "Logout", true);
-    public static final SvgPreset MONITORING = new SvgPreset("images/monitoring.svg", "Monitor", true);
-    public static final SvgPreset MOVE = new SvgPreset("images/move.svg", "Move", false);
-    public static final SvgPreset NEW_ITEM = new SvgPreset("images/add.svg", "New", true);
-    public static final SvgPreset NODES = new SvgPreset("images/nodes.svg", "Nodes", true);
-    public static final SvgPreset OPEN = new SvgPreset("images/edit.svg", "Open", false);
-    public static final SvgPreset OPERATOR = new SvgPreset("images/operator.svg", "Add Operator", true);
-    public static final SvgPreset PASSWORD = new SvgPreset("images/password.svg", "Change Password", true);
-    public static final SvgPreset PROCESS = new SvgPreset("images/process.svg", "Process", false);
-    public static final SvgPreset PROPERTIES = new SvgPreset("images/properties.svg", "Properties", true);
-    public static final SvgPreset RAW = new SvgPreset("images/raw.svg", "Raw", false);
-    public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
-    public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
-    public static final SvgPreset RUN = new SvgPreset("images/play-green.svg", "Run", true);
-    public static final SvgPreset STOP = new SvgPreset("images/stop-red.svg", "Stop", true);
-    public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
-    public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", false);
-    public static final SvgPreset SETTINGS = new SvgPreset("images/settings.svg", "Settings", true);
-    public static final SvgPreset SETTINGS_BLUE = new SvgPreset("images/settings-blue.svg", "Settings", true);
-    public static final SvgPreset SHARD_CLOSE = new SvgPreset("images/shard-close.svg", "Close Selected Shards", false);
-    public static final SvgPreset SHARD_FLUSH = new SvgPreset("images/shard-flush.svg", "Flush Selected Shards", false);
-    public static final SvgPreset SPINNER = new SvgPreset("images/spinner.svg", null, true);
-    public static final SvgPreset TABLE = new SvgPreset("images/table.svg", "Table", true);
-    public static final SvgPreset TABLE_NESTED = new SvgPreset("images/table-nested.svg", "Nested Table", true);
-    public static final SvgPreset UNDO = new SvgPreset("images/undo.svg", "Undo", false);
-    public static final SvgPreset UP = new SvgPreset("images/up.svg", "Up", false);
-    public static final SvgPreset UPLOAD = new SvgPreset("images/upload.svg", "Upload", true);
-    public static final SvgPreset USER = new SvgPreset("images/user.svg", "User", true);
-    public static final SvgPreset USER_DISABLED = new SvgPreset("images/user-disabled.svg", "User", true);
-    public static final SvgPreset USER_GROUP = new SvgPreset("images/users.svg", "User Group", true);
-    public static final SvgPreset USER_GROUP_DISABLED = new SvgPreset("images/users-disabled.svg", "User Group", true);
-    public static final SvgPreset VOLUMES = new SvgPreset("images/volumes.svg", "Volumes", true);
 
-    public static final SvgPreset COLLAPSE_UP = new SvgPreset("images/collapse-up.svg", "Collapse", true);
-    public static final SvgPreset EXPAND_DOWN = new SvgPreset("images/expand-down.svg", "Expand", true);
+    private static final String IMAGES_PATH = "images/";
 
-    public static final SvgPreset UNLOCKED_GREEN = new SvgPreset("images/unlocked-green.svg", "Unlocked", true);
-    public static final SvgPreset LOCKED_AMBER = new SvgPreset("images/locked-amber.svg", "Locked", true);
+    public static final SvgPreset ABOUT = enabled("oo.svg", "About");
+    public static final SvgPreset ADD = enabled("add.svg", "Add");
+    public static final SvgPreset ALERT = enabled("alert.svg", "Alert");
+    public static final SvgPreset ANNOTATE = disabled("edit.svg", "Annotate");
+    public static final SvgPreset ANNOTATIONS = enabled("document/AnnotationsIndex.svg", "Annotations");
+    public static final SvgPreset CLEAR = disabled("clear.svg", "Clear");
+    public static final SvgPreset CLOSE = disabled("close.svg", "Close");
+    public static final SvgPreset COPY = disabled("copy.svg", "Copy");
+    public static final SvgPreset DATABASE = enabled("database.svg", "Database");
+    public static final SvgPreset DELETE = disabled("delete.svg", "Delete");
+    public static final SvgPreset DELETED = disabled("deleted.svg", "Deleted");
+    public static final SvgPreset DEPENDENCIES = enabled("dependencies.svg", "Dependencies");
+    public static final SvgPreset DISABLE = disabled("disable.svg", "Disable");
+    public static final SvgPreset DOWN = disabled("down.svg", "Down");
+    public static final SvgPreset DOWNLOAD = disabled("download.svg", "Download");
+    public static final SvgPreset EDIT = disabled("edit.svg", "Edit");
+    public static final SvgPreset ELASTIC_SEARCH = enabled("document/ElasticIndex.svg", "Elastic Search");
+    public static final SvgPreset ERROR = enabled("error.svg", "Error");
+    public static final SvgPreset EXPLORER = enabled("explorer.svg", "Explorer");
+    public static final SvgPreset FATAL = enabled("fatal.svg", "Fatal");
+    public static final SvgPreset FAVOURITES = disabled("favourites.svg", "Favourites");
+    public static final SvgPreset FEED = enabled("feed.svg", "Feed");
+    public static final SvgPreset FIELD = enabled("field.svg", "Field");
+    public static final SvgPreset FILE = enabled("file.svg", "File");
+    public static final SvgPreset FILE_RAW = enabled("file-raw.svg", "Raw File");
+    public static final SvgPreset FILE_FORMATTED = enabled("file-formatted.svg", "Formatted File");
+    public static final SvgPreset FILTER = enabled("filter.svg", "Filter");
+    public static final SvgPreset FOLDER = enabled("folder.svg", "Folder");
+    public static final SvgPreset FOLDER_TREE = enabled("folder-tree.svg", "Folder Tree");
+    public static final SvgPreset FORMAT = enabled("format.svg", "Format & Indent");
+    public static final SvgPreset FUNCTION = enabled("function.svg", "Function");
+    public static final SvgPreset GENERATE = enabled("generate.svg", "Auto-generate roll-up permutations");
+    public static final SvgPreset HELP = enabled("help.svg", "Help");
+    public static final SvgPreset HISTORY = disabled("history.svg", "History");
+    public static final SvgPreset INFO = enabled("info.svg", "Info");
+    public static final SvgPreset INFO_DELETED = enabled("info-deleted.svg", "Info (Deleted)");
+    public static final SvgPreset INFO_WARNING = enabled("info-warning.svg", "Info (Warning)");
+    public static final SvgPreset INSERT_ABOVE = enabled("insert-above.svg", "Insert above");
+    public static final SvgPreset INSERT_BELOW = enabled("insert-below.svg", "Insert below");
+    public static final SvgPreset JOBS = enabled("jobs.svg", "Jobs");
+    public static final SvgPreset KEY = enabled("key.svg", "API Keys");
+    public static final SvgPreset LINK = enabled("dependencies.svg", "Dependencies");
+    public static final SvgPreset LOGOUT = enabled("logout.svg", "Logout");
+    public static final SvgPreset MONITORING = enabled("monitoring.svg", "Monitor");
+    public static final SvgPreset MOVE = disabled("move.svg", "Move");
+    public static final SvgPreset NEW_ITEM = enabled("add.svg", "New");
+    public static final SvgPreset NODES = enabled("nodes.svg", "Nodes");
+    public static final SvgPreset OPEN = disabled("edit.svg", "Open");
+    public static final SvgPreset OPERATOR = enabled("operator.svg", "Add Operator");
+    public static final SvgPreset PASSWORD = enabled("password.svg", "Change Password");
+    public static final SvgPreset PROCESS = disabled("process.svg", "Process");
+    public static final SvgPreset PROPERTIES = enabled("properties.svg", "Properties");
+    public static final SvgPreset RAW = disabled("raw.svg", "Raw");
+    public static final SvgPreset REMOVE = disabled("remove.svg", "Remove");
+    public static final SvgPreset RULESET = enabled("ruleset.svg", "Rule Set");
+    public static final SvgPreset RUN = enabled("play-green.svg", "Run");
+    public static final SvgPreset STOP = enabled("stop-red.svg", "Stop");
+    public static final SvgPreset SAVE = disabled("save.svg", "Save");
+    public static final SvgPreset SAVE_AS = disabled("saveas.svg", "Save As");
+    public static final SvgPreset SETTINGS = enabled("settings.svg", "Settings");
+    public static final SvgPreset SETTINGS_BLUE = enabled("settings-blue.svg", "Settings");
+    public static final SvgPreset SHARD_CLOSE = disabled("shard-close.svg", "Close Selected Shards");
+    public static final SvgPreset SHARD_FLUSH = disabled("shard-flush.svg", "Flush Selected Shards");
+    public static final SvgPreset SPINNER = enabled("spinner.svg", null);
+    public static final SvgPreset TABLE = enabled("table.svg", "Table");
+    public static final SvgPreset TABLE_NESTED = enabled("table-nested.svg", "Nested Table");
+    public static final SvgPreset UNDO = disabled("undo.svg", "Undo");
+    public static final SvgPreset UP = disabled("up.svg", "Up");
+    public static final SvgPreset UPLOAD = enabled("upload.svg", "Upload");
+    public static final SvgPreset USER = enabled("user.svg", "User");
+    public static final SvgPreset USER_DISABLED = enabled("user-disabled.svg", "User");
+    public static final SvgPreset USER_GROUP = enabled("users.svg", "User Group");
+    public static final SvgPreset USER_GROUP_DISABLED = enabled("users-disabled.svg", "User Group");
+    public static final SvgPreset VOLUMES = enabled("volumes.svg", "Volumes");
 
-    public static final SvgPreset UNLOCK_AMBER = new SvgPreset("images/unlock-amber.svg", "Unlock", true);
-    public static final SvgPreset LOCK_GREEN = new SvgPreset("images/lock-green.svg", "Lock", true);
+    public static final SvgPreset COLLAPSE_UP = enabled("collapse-up.svg", "Collapse");
+    public static final SvgPreset EXPAND_DOWN = enabled("expand-down.svg", "Expand");
 
-    public static final SvgPreset FAST_BACKWARD_BLUE = new SvgPreset("images/fast-backward.svg", "First", false);
-    public static final SvgPreset STEP_BACKWARD_BLUE = new SvgPreset("images/step-backward.svg", "Backward", false);
-    public static final SvgPreset STEP_FORWARD_BLUE = new SvgPreset("images/step-forward.svg", "Forward", false);
-    public static final SvgPreset FAST_FORWARD_BLUE = new SvgPreset("images/fast-forward.svg", "Last", false);
-    public static final SvgPreset REFRESH_BLUE = new SvgPreset("images/refresh.svg", "Refresh", true);
+    public static final SvgPreset UNLOCKED_GREEN = enabled("unlocked-green.svg", "Unlocked");
+    public static final SvgPreset LOCKED_AMBER = enabled("locked-amber.svg", "Locked");
 
-    public static final SvgPreset FAST_BACKWARD_GREEN = new SvgPreset("images/fast-backward-green.svg", "First", false);
-    public static final SvgPreset STEP_BACKWARD_GREEN = new SvgPreset("images/step-backward-green.svg", "Backward", false);
-    public static final SvgPreset STEP_FORWARD_GREEN = new SvgPreset("images/step-forward-green.svg", "Forward", false);
-    public static final SvgPreset FAST_FORWARD_GREEN = new SvgPreset("images/fast-forward-green.svg", "Last", false);
-    public static final SvgPreset REFRESH_GREEN = new SvgPreset("images/refresh-green.svg", "Refresh", true);
+    public static final SvgPreset UNLOCK_AMBER = enabled("unlock-amber.svg", "Unlock");
+    public static final SvgPreset LOCK_GREEN = enabled("lock-green.svg", "Lock");
 
-    public static final SvgPreset SHOW = new SvgPreset("images/show.svg", "Show", true);
-    public static final SvgPreset HIDE = new SvgPreset("images/hide.svg", "Hide", true);
+    public static final SvgPreset FAST_BACKWARD_BLUE = disabled("fast-backward.svg", "First");
+    public static final SvgPreset STEP_BACKWARD_BLUE = disabled("step-backward.svg", "Backward");
+    public static final SvgPreset STEP_FORWARD_BLUE = disabled("step-forward.svg", "Forward");
+    public static final SvgPreset FAST_FORWARD_BLUE = disabled("fast-forward.svg", "Last");
+    public static final SvgPreset REFRESH_BLUE = enabled("refresh.svg", "Refresh");
+
+    public static final SvgPreset FAST_BACKWARD_GREEN = disabled("fast-backward-green.svg", "First");
+    public static final SvgPreset STEP_BACKWARD_GREEN = disabled("step-backward-green.svg", "Backward");
+    public static final SvgPreset STEP_FORWARD_GREEN = disabled("step-forward-green.svg", "Forward");
+    public static final SvgPreset FAST_FORWARD_GREEN = disabled("fast-forward-green.svg", "Last");
+    public static final SvgPreset REFRESH_GREEN = enabled("refresh-green.svg", "Refresh");
+
+    public static final SvgPreset SHOW = enabled("show.svg", "Show");
+    public static final SvgPreset HIDE = enabled("hide.svg", "Hide");
 
     private SvgPresets() {
         // Utility class.
@@ -125,4 +128,11 @@ public final class SvgPresets {
         return svgPreset.with(title, enabled);
     }
 
+    private static SvgPreset enabled(final String url, final String title) {
+        return new SvgPreset(IMAGES_PATH + url, title, true);
+    }
+
+    private static SvgPreset disabled(final String url, final String title) {
+        return new SvgPreset(IMAGES_PATH + url, title, false);
+    }
 }

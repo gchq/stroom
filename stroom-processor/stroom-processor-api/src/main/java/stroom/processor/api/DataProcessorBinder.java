@@ -4,6 +4,7 @@ import com.google.inject.Binder;
 import com.google.inject.multibindings.MapBinder;
 
 public class DataProcessorBinder {
+
     private final MapBinder<TaskType, DataProcessorTaskExecutor> mapBinder;
 
     private DataProcessorBinder(final Binder binder) {

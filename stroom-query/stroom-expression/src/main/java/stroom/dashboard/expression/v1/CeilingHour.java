@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
                                         "formatted using the default date format.",
                                 argType = Val.class)}))
 class CeilingHour extends RoundDate {
+
     static final String NAME = "ceilingHour";
     private static final Calc CALC = new Calc();
 
@@ -48,6 +49,7 @@ class CeilingHour extends RoundDate {
     }
 
     static class Calc extends RoundDateCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override

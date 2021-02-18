@@ -20,5 +20,6 @@ package stroom.util.shared;
  * Something in our model that can produce a copy.
  */
 public interface Copyable<T> {
+
     void copyFrom(T t);
 }

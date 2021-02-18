@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account implements HasIntegerId {
+
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -94,7 +95,8 @@ public class Account implements HasIntegerId {
 //
 //        String validationMessages = validationErrors.stream()
 //                .map(AccountValidationError::getMessage)
-//                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2).orElse("");
+//                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2)
+//                .orElse("");
 //        boolean isValid = validationErrors.size() == 0;
 //        return Pair.of(isValid, validationMessages);
 //    }

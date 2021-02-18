@@ -1,5 +1,9 @@
 package stroom.node.impl;
 
+import stroom.node.api.NodeInfo;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticsReceiver;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,9 +14,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import stroom.node.api.NodeInfo;
-import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.api.InternalStatisticsReceiver;
 
 import java.util.List;
 import java.util.function.Function;
@@ -23,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestHeapHistogramStatisticsExecutor {
-    private static Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->
+
+    private static final Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->
             event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
     @Mock
     private InternalStatisticsReceiver mockInternalStatisticsReceiver;
@@ -32,14 +34,16 @@ class TestHeapHistogramStatisticsExecutor {
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
     private HeapHistogramStatisticsExecutor executor;
-    private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
+    private final HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
     @BeforeEach
     void setup() {
         try {
             Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
             final HeapHistogramService heapHistogramService = new HeapHistogramService(heapHistogramConfig);
-            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeInfo);
+            executor = new HeapHistogramStatisticsExecutor(heapHistogramService,
+                    mockInternalStatisticsReceiver,
+                    nodeInfo);
         } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
         }

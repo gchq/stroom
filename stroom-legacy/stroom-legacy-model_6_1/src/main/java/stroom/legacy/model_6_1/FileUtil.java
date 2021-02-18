@@ -41,7 +41,7 @@ public final class FileUtil {
     /**
      * JVM wide temp dir
      */
-    private volatile static Path tempDir = null;
+    private static volatile Path tempDir = null;
 
     private FileUtil() {
         // Utility.

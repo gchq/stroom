@@ -6,10 +6,10 @@ import stroom.util.HasHealthCheck;
 
 import com.codahale.metrics.health.HealthCheck;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import javax.inject.Inject;
 
 @Deprecated
 public class DbHealthCheck implements HasHealthCheck {
@@ -42,7 +42,7 @@ public class DbHealthCheck implements HasHealthCheck {
                         Optional.ofNullable(commonConnectionConfig.getUser())
                                 .orElse(coreConnectionConfig.getUser()));
 
-        try (Connection connection = legacyDbConnProvider.getConnection()){
+        try (Connection connection = legacyDbConnProvider.getConnection()) {
             builder.healthy();
         } catch (RuntimeException | SQLException e) {
             builder.unhealthy(e);

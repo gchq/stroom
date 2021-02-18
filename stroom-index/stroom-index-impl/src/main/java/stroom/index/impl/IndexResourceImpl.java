@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
@@ -11,7 +12,6 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
-import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response.Status;
 
 @AutoLogged
 class IndexResourceImpl implements IndexResource {
+
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final IndexShardManager indexShardManager;
@@ -72,7 +73,10 @@ class IndexResourceImpl implements IndexResource {
         return performShardAction(nodeName, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
     }
 
-    private Long performShardAction(final String nodeName, final FindIndexShardCriteria criteria, final String subPath, final IndexShardAction action) {
+    private Long performShardAction(final String nodeName,
+                                    final FindIndexShardCriteria criteria,
+                                    final String subPath,
+                                    final IndexShardAction action) {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         // If this is the node that was contacted then just resolve it locally

@@ -16,17 +16,19 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import java.util.List;
 
 @Singleton
 public class TimeZones {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private String timeZone;
@@ -37,6 +39,7 @@ public class TimeZones {
         try {
             timeZone = getIntlTimeZone();
         } catch (final RuntimeException e) {
+            timeZone = null;
         }
 
         final Rest<List<String>> rest = restFactory.create();

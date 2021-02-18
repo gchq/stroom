@@ -29,6 +29,9 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -40,9 +43,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -50,6 +50,7 @@ import java.util.regex.Pattern;
  * </p>
  */
 public class ProxySecurityFilter implements Filter {
+
     private static final String IGNORE_URI_REGEX = "ignoreUri";
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
@@ -106,7 +107,7 @@ public class ProxySecurityFilter implements Filter {
     private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
-        if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS)) {
+        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
             chain.doFilter(request, response);
 

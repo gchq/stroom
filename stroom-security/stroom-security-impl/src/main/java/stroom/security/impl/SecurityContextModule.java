@@ -16,10 +16,12 @@
 
 package stroom.security.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.security.api.SecurityContext;
 
+import com.google.inject.AbstractModule;
+
 public class SecurityContextModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(SecurityContextImpl.class);

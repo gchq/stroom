@@ -19,5 +19,6 @@ package stroom.explorer.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface EntityTreeUiHandlers extends UiHandlers {
+
     void changeFilter(String filter);
 }

@@ -28,6 +28,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_5_0_1__PipelineProperties extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_5_0_1__PipelineProperties.class);
 
     @Override
@@ -61,7 +62,8 @@ public class V5_5_0_1__PipelineProperties extends BaseJavaMigration {
                         if (!newData.equals(data)) {
                             LOGGER.info("Modifying pipeline");
 
-                            try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
+                            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                                    "UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();

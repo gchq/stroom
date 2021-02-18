@@ -22,12 +22,12 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
-import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.Count;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ReadWithLongId;
@@ -40,10 +40,10 @@ import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.ViewEventAction;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged
 class DataResourceImpl implements DataResource, ReadWithLongId<List<DataInfoSection>> {

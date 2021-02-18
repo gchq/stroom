@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
 public class MyDoubleSerialiser extends JsonSerializer<Double> {
+
     @Override
     public void serialize(final Double value, final JsonGenerator gen, final SerializerProvider serializers)
             throws IOException {

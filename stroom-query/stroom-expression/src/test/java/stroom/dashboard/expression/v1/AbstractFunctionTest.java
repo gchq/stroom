@@ -32,7 +32,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
     private DynamicTest createDynamicTest(final T function, final TestCase testCase) {
 
         return DynamicTest.dynamicTest(
-                function.getClass().getSimpleName() + "(" + testCase.getTestVariantName() +")",
+                function.getClass().getSimpleName() + "(" + testCase.getTestVariantName() + ")",
                 () -> {
                     try {
                         LOGGER.info("Function: {}, test variant: {}, args: {}, expecting: {}",
@@ -70,7 +70,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
                         LOGGER.info("Return val: {}", argToString(returnVal));
 
                         if (returnVal instanceof ValDouble
-                                && testCase.getExpectedReturn() instanceof  ValDouble) {
+                                && testCase.getExpectedReturn() instanceof ValDouble) {
                             double expected = testCase.getExpectedReturn().toDouble();
                             double actual = returnVal.toDouble();
                             Assertions.assertThat(actual)
@@ -138,6 +138,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
     }
 
     static class TestCase {
+
         private final String testVariantName;
         private final Val expectedReturn;
         private final List<Param> params;

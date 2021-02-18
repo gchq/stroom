@@ -14,14 +14,14 @@ public interface AceCommandLine {
      *
      * @param listener listener for command entering event
      */
-    public void setCommandLineListener(AceCommandLineListener listener);
+    void setCommandLineListener(AceCommandLineListener listener);
 
     /**
      * Give current text which command line contains.
      *
      * @return command stored in command line
      */
-    public String getValue();
+    String getValue();
 
     /**
      * Set text into command line. It could be for instance a result of
@@ -29,5 +29,5 @@ public interface AceCommandLine {
      *
      * @param value text to be placed into command line
      */
-    public void setValue(String value);
+    void setValue(String value);
 }

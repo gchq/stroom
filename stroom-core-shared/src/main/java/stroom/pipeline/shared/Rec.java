@@ -23,10 +23,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class Rec {
+
     @JsonProperty
-    private long streamId;
+    private final long streamId;
     @JsonProperty
-    private long recordNo;
+    private final long recordNo;
 
     @JsonCreator
     public Rec(@JsonProperty("streamId") final long streamId,

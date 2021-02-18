@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.vis.VisPresenter.VisView;
+import stroom.widget.layout.client.view.ResizeFlowPanel;
+import stroom.widget.spinner.client.SpinnerSmall;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -25,11 +29,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dashboard.client.vis.VisPresenter.VisView;
-import stroom.widget.layout.client.view.ResizeFlowPanel;
-import stroom.widget.spinner.client.SpinnerSmall;
 
 public class VisViewImpl extends ViewImpl implements VisView {
+
     private static VisResources resources;
     private final ResizeFlowPanel widget;
     private final SimplePanel visContainer;

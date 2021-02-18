@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
  * A popup that displays a warning/error message for a given indicator.
  */
 public class IndicatorPopup extends PopupPanel {
+
     private static volatile Resources resources;
     private final HTML content;
 
@@ -63,10 +64,12 @@ public class IndicatorPopup extends PopupPanel {
     }
 
     public interface Style extends CssResource {
+
         String indicatorPopup();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("indicatorpopup.css")
         Style style();
     }

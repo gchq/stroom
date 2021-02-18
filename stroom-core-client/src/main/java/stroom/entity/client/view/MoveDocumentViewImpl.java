@@ -17,6 +17,10 @@
 
 package stroom.entity.client.view;
 
+import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.item.client.ItemListBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -24,11 +28,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.item.client.ItemListBox;
 
 public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
+
     private final Widget widget;
     @UiField
     SimplePanel foldersInner;
@@ -69,5 +71,6 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
     }
 
     public interface Binder extends UiBinder<Widget, MoveDocumentViewImpl> {
+
     }
 }

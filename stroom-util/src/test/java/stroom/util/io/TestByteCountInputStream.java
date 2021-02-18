@@ -25,9 +25,11 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestByteCountInputStream {
+
     @Test
     void test1() throws IOException {
-        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(new ByteArrayInputStream(new byte[10]));
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(
+                new ByteArrayInputStream(new byte[10]));
         while (byteCountInputStream.read() != -1) {
         }
         assertThat(byteCountInputStream.getCount()).isEqualTo(10);
@@ -35,7 +37,8 @@ class TestByteCountInputStream {
 
     @Test
     void test2() throws IOException {
-        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(new ByteArrayInputStream(new byte[10]));
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(
+                new ByteArrayInputStream(new byte[10]));
         while (byteCountInputStream.read(new byte[10]) != -1) {
         }
         assertThat(byteCountInputStream.getCount()).isEqualTo(10);
@@ -43,7 +46,8 @@ class TestByteCountInputStream {
 
     @Test
     void test3() throws IOException {
-        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(new ByteArrayInputStream(new byte[10]));
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(
+                new ByteArrayInputStream(new byte[10]));
         while (byteCountInputStream.read(new byte[10], 0, 10) != -1) {
         }
         assertThat(byteCountInputStream.getCount()).isEqualTo(10);

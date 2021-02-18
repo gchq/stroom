@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class CurrentActivityImpl implements CurrentActivity {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CurrentActivity.class);
 
     private static final String NAME = "SESSION_ACTIVITY";

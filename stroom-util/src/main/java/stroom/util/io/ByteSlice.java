@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 public class ByteSlice {
+
     private final byte[] array;
     private final int off;
     private final int len;

@@ -23,19 +23,22 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 class ScriptResourceImpl implements ScriptResource {
+
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
     private final DocumentResourceHelper documentResourceHelper;
 
     @Inject
-    ScriptResourceImpl(final ScriptStore scriptStore, final SecurityContext securityContext, final DocumentResourceHelper documentResourceHelper) {
+    ScriptResourceImpl(final ScriptStore scriptStore,
+                       final SecurityContext securityContext,
+                       final DocumentResourceHelper documentResourceHelper) {
         this.scriptStore = scriptStore;
         this.securityContext = securityContext;
         this.documentResourceHelper = documentResourceHelper;
@@ -54,7 +57,8 @@ class ScriptResourceImpl implements ScriptResource {
     @Override
     public List<ScriptDoc> fetchLinkedScripts(final FetchLinkedScriptRequest request) {
         return securityContext.secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+            // Elevate the users permissions for the duration of this task so they can read the script if
+            // they have 'use' permission.
             return securityContext.useAsReadResult(() -> {
                 final List<ScriptDoc> scripts = new ArrayList<>();
 
@@ -71,7 +75,9 @@ class ScriptResourceImpl implements ScriptResource {
         });
     }
 
-    private void loadScripts(final DocRef docRef, final Set<DocRef> uiLoadedScripts, final Set<DocRef> loadedScripts,
+    private void loadScripts(final DocRef docRef,
+                             final Set<DocRef> uiLoadedScripts,
+                             final Set<DocRef> loadedScripts,
                              final List<ScriptDoc> scripts) {
         // Prevent circular reference loading with this set.
         if (!loadedScripts.contains(docRef)) {

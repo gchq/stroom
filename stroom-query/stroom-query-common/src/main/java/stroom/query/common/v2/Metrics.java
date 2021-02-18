@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public class Metrics {
+
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
     private static boolean enabled;
 
@@ -50,6 +51,7 @@ public class Metrics {
     }
 
     private static class Metric {
+
         private final AtomicLong elapsedNanos = new AtomicLong();
         private final AtomicLong calls = new AtomicLong();
 

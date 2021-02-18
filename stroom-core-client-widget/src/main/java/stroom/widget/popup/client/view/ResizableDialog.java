@@ -45,8 +45,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class ResizableDialog extends AbstractPopupPanel {
+
     private static final Resources RESOURCES = GWT.create(Resources.class);
-    private static Binder binder = GWT.create(Binder.class);
+    private static final Binder binder = GWT.create(Binder.class);
 
     private final PopupUiHandlers popupUiHandlers;
     private final PopupSize popupSize;
@@ -60,7 +61,8 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     private DragType dragType;
     private boolean dragging;
-    private int dragStartX, dragStartY;
+    private int dragStartX;
+    private int dragStartY;
     private int windowWidth;
     private int windowHeight;
     private HandlerRegistration resizeHandlerRegistration;
@@ -306,13 +308,16 @@ public class ResizableDialog extends AbstractPopupPanel {
     }
 
     private enum DragType {
-        MOVE, RESIZE
+        MOVE,
+        RESIZE
     }
 
     public interface Binder extends UiBinder<Widget, ResizableDialog> {
+
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_STYLE = "ResizableDialog.css";
 
         String popup();
@@ -331,6 +336,7 @@ public class ResizableDialog extends AbstractPopupPanel {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("resizeBottomRight.png")
         ImageResource resizeBottomRight();
 
@@ -339,6 +345,7 @@ public class ResizableDialog extends AbstractPopupPanel {
     }
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
+
         @Override
         public void onMouseDown(final MouseDownEvent event) {
             if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {

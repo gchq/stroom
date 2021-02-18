@@ -16,8 +16,10 @@
 
 package stroom.util.logging;
 
-import org.slf4j.Logger;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,20 +34,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Utility to log messages to log4j from a print writer.
  */
 public class LoggerPrintStream extends PrintStream {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggerPrintStream.class);
+
     /**
      * This logger can also look out for lines being written in the log.
      */
     private Map<String, AtomicInteger> watchTerms;
-    private Logger logger;
-    private boolean debug;
-    private LoggerBuffer loggerBuffer;
+    private final Logger logger;
+    private final boolean debug;
+    private final LoggerBuffer loggerBuffer;
 
     public LoggerPrintStream(Logger logger, boolean debug) throws UnsupportedEncodingException {
         this(logger, debug, new LoggerBuffer());
     }
+
     public LoggerPrintStream(Logger logger) throws UnsupportedEncodingException {
         this(logger, true, new LoggerBuffer());
     }
+
     private LoggerPrintStream(Logger logger, boolean debug, LoggerBuffer os) throws UnsupportedEncodingException {
         super(os, false, StreamUtil.DEFAULT_CHARSET_NAME);
         this.logger = logger;
@@ -88,7 +95,7 @@ public class LoggerPrintStream extends PrintStream {
     void doFlush() {
         if (logger != null && loggerBuffer != null) {
             if ((logger.isDebugEnabled() && debug) || logger.isInfoEnabled() && !debug) {
-                String logLine = new String(loggerBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET);
+                String logLine = loggerBuffer.toString(StreamUtil.DEFAULT_CHARSET);
                 if (logLine.endsWith("\n")) {
                     logLine = logLine.substring(0, logLine.length() - 1);
                 }
@@ -114,6 +121,7 @@ public class LoggerPrintStream extends PrintStream {
     }
 
     static class LoggerBuffer extends ByteArrayOutputStream {
+
         LoggerPrintStream parent;
 
         @Override
@@ -121,6 +129,7 @@ public class LoggerPrintStream extends PrintStream {
             try {
                 super.flush();
             } catch (IOException e) {
+                LOGGER.error("Unable to flush stream", e);
             }
             if (parent != null) {
                 parent.doFlush();

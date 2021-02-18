@@ -47,7 +47,7 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}")
     @ApiOperation("Updates an index volume")
-    IndexVolume update(@PathParam("id") Integer id, 
+    IndexVolume update(@PathParam("id") Integer id,
                        @ApiParam("indexVolume") IndexVolume indexVolume);
 
     @DELETE

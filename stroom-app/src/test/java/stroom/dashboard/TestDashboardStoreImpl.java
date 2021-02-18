@@ -36,11 +36,12 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private DashboardStore dashboardStore;
     @Inject
@@ -53,8 +54,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         final VisComponentSettings visSettings = getVisSettings();
 
         final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");
-        ;
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -96,6 +96,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
         dashboardData.setLayout(down);
 
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
         dashboard.setDashboardConfig(dashboardData);
 
         dashboard = dashboardStore.writeDocument(dashboard);

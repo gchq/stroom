@@ -1,9 +1,10 @@
 package stroom.util.pipeline.scope;
 
-import javax.inject.Inject;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class PipelineScopeRunnable {
+
     private final PipelineScope scope;
 
     @Inject

@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 
 public class BorderUtil {
+
     public static void addBorder(final Element element) {
         final Style style = element.getStyle();
         style.setBorderWidth(1, Unit.PX);

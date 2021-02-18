@@ -17,29 +17,31 @@
 
 package stroom.core.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
 
 /**
  * Public un-authenticated servlet for client systems to monitor stroom's availability.
  */
 @Unauthenticated
 public class StatusServlet extends HttpServlet implements IsServlet {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatusServlet.class);
 
     private static final Set<String> PATH_SPECS = Set.of("/status");

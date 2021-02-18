@@ -7,6 +7,7 @@ import java.util.List;
  * Simple doc ref tree that can be used to populate the Doc Explorer in the UI.
  */
 class SimpleDocRefTreeDTO {
+
     private final String uuid;
     private final String type;
     private final String name;
@@ -35,7 +36,9 @@ class SimpleDocRefTreeDTO {
     }
 
     public List<SimpleDocRefTreeDTO> getChildren() {
-        return (children.size() > 0) ? children : null;
+        return (children.size() > 0)
+                ? children
+                : null;
     }
 
     public void addChild(final SimpleDocRefTreeDTO child) {

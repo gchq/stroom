@@ -29,6 +29,7 @@ import java.util.Set;
 @JsonPropertyOrder({"addSet", "removeSet"})
 @JsonInclude(Include.NON_NULL)
 public class ChangeSet<T> {
+
     @JsonProperty
     private final Set<T> addSet;
     @JsonProperty

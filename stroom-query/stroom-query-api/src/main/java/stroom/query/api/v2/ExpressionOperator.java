@@ -36,18 +36,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlType;
 
 @JsonPropertyOrder({"op", "children"})
 @JsonInclude(Include.NON_NULL)
@@ -58,6 +58,7 @@ import java.util.Objects;
         description = "A logical addOperator term in a query expression tree",
         parent = ExpressionItem.class)
 public final class ExpressionOperator extends ExpressionItem {
+
     private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")
@@ -73,7 +74,8 @@ public final class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     @JsonProperty
-    private List<ExpressionItem> children; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private List<ExpressionItem> children;
 
     public ExpressionOperator() {
         // TODO : XML serilisation still requires no-arg constructor and mutable fields
@@ -103,11 +105,18 @@ public final class ExpressionOperator extends ExpressionItem {
         return children;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         ExpressionOperator that = (ExpressionOperator) o;
         return op == that.op &&
                 Objects.equals(children, that.children);
@@ -153,7 +162,9 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     public enum Op implements HasDisplayValue {
-        AND("AND"), OR("OR"), NOT("NOT");
+        AND("AND"),
+        OR("OR"),
+        NOT("NOT");
 
         private final String displayValue;
 
@@ -179,6 +190,7 @@ public final class ExpressionOperator extends ExpressionItem {
      * Builder for constructing a {@link ExpressionOperator}
      */
     public static final class Builder extends ExpressionItem.Builder<ExpressionOperator, Builder> {
+
         private Op op;
         private List<ExpressionItem> children = new ArrayList<>();
 

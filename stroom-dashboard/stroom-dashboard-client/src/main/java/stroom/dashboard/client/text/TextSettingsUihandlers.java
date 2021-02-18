@@ -17,5 +17,6 @@
 package stroom.dashboard.client.text;
 
 public interface TextSettingsUihandlers {
+
     void setTableId(String tableId);
 }

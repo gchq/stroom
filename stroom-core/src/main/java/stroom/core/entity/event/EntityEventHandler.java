@@ -24,17 +24,18 @@ import stroom.util.entityevent.EntityEvent.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class EntityEventHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventHandler.class);
     private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;
@@ -143,7 +144,8 @@ class EntityEventHandler {
         if (!initialised) {
             try {
                 for (final Handler handler : entityEventHandlerProvider.get()) {
-                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass().getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
+                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass()
+                            .getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
                     if (annotation != null) {
                         final String type = annotation.type();
                         addHandler(handler, type, annotation.action());

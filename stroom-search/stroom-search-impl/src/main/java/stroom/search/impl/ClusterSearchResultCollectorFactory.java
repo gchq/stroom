@@ -19,12 +19,13 @@ package stroom.search.impl;
 import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ClusterSearchResultCollectorFactory {
+
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;

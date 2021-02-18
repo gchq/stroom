@@ -80,6 +80,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
+
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
@@ -230,7 +231,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 this,
                 currentSourceLocation,
                 DataViewType.SOURCE,
-                (displayMode != null ? displayMode : DisplayMode.STROOM_TAB));
+                (displayMode != null
+                        ? displayMode
+                        : DisplayMode.STROOM_TAB));
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
@@ -311,23 +314,23 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void updateEditorMode(final String streamType, final TabData tabData) {
-       if (tabData != null && streamType != null) {
-           final String tabName = tabData.getLabel();
-           if (INFO_TAB_NAME.equals(tabName)) {
-               editorMode = AceEditorMode.TEXT;
-           } else if (isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
-               // Not a text editor
-           } else if (!isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
-               editorMode = AceEditorMode.TEXT;
-           } else if (META_TAB_NAME.equals(tabName)) {
-               editorMode = AceEditorMode.PROPERTIES;
-           } else if (CONTEXT_TAB_NAME.equals(tabName)) {
-               editorMode = AceEditorMode.XML;
-           } else {
-               // Default to xml mode
-               editorMode = AceEditorMode.XML;
-           }
-       }
+        if (tabData != null && streamType != null) {
+            final String tabName = tabData.getLabel();
+            if (INFO_TAB_NAME.equals(tabName)) {
+                editorMode = AceEditorMode.TEXT;
+            } else if (isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
+                // Not a text editor
+            } else if (!isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
+                editorMode = AceEditorMode.TEXT;
+            } else if (META_TAB_NAME.equals(tabName)) {
+                editorMode = AceEditorMode.PROPERTIES;
+            } else if (CONTEXT_TAB_NAME.equals(tabName)) {
+                editorMode = AceEditorMode.XML;
+            } else {
+                // Default to xml mode
+                editorMode = AceEditorMode.XML;
+            }
+        }
     }
 
     private boolean isInErrorMarkerMode() {
@@ -486,7 +489,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
                 update(fireEvents, streamTypeName, currentAvailableStreamTypes);
             } else {
-                    // Different stream/part so we need to check which child stream types are available
+                // Different stream/part so we need to check which child stream types are available
                 // and pick an appropriate one.
                 currentAvailableStreamTypes = null;
 
@@ -510,8 +513,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void update(final boolean fireEvents,
-                       final String streamTypeName,
-                       final Set<String> availableChildStreamTypes) {
+                        final String streamTypeName,
+                        final Set<String> availableChildStreamTypes) {
         if (INFO_PSEUDO_STREAM_TYPE.equals(effectiveChildStreamType)) {
             updateAvailableAndSelectedTabs(streamTypeName, availableChildStreamTypes);
             refreshMetaInfoPresenterContent(currentSourceLocation.getId());
@@ -576,7 +579,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         .withChildStreamType(currentSourceLocation.getChildType());
 
                 if (highlights != null && !highlights.isEmpty()) {
-                        builder.withHighlight(highlights.get(0));
+                    builder.withHighlight(highlights.get(0));
                 }
             });
 
@@ -693,13 +696,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    + " Length: " + dataPagerLength
 //                    + " Total: " + dataPagerCount
 //                    + " Exact: " + (dataPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
+//                    + " type: " + (result instanceof FetchDataResult
+//                    ? ((FetchDataResult) result).getDataType()
+//                    : "-"));
 //
 //            GWT.log("Data Pager Offset: " + commonPagerOffset
 //                    + " Length: " + commonPagerLength
 //                    + " Total: " + commonPagerCount
 //                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
+//                    + " type: " + (result instanceof FetchDataResult
+//                    ? ((FetchDataResult) result).getDataType()
+//                    : "-"));
     }
 
     long getCurrentErrorsPageOffset() {
@@ -1059,7 +1066,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public OffsetRange getItemRange() {
-            return new OffsetRange(0L,1L);
+            return new OffsetRange(0L, 1L);
         }
 
         @Override

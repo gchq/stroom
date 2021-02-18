@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.resources.client.CssResource;
 
 public interface VisStyle extends CssResource {
+
     String outerLayout();
 
     String innerLayout();

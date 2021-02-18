@@ -33,7 +33,7 @@ public class SolrAsyncSearchTask {
     private final String dateTimeLocale;
     private final long now;
 
-    private volatile transient SolrSearchResultCollector resultCollector;
+    private transient volatile SolrSearchResultCollector resultCollector;
 
     public SolrAsyncSearchTask(final QueryKey key,
                                final String searchName,

@@ -36,6 +36,7 @@ package stroom.dashboard.expression.v1;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)}))
 class Equals extends AbstractEqualityFunction {
+
     static final String NAME = "=";
     static final String ALIAS = "equals";
     private static final EqualsEvaluator EVALUATOR = new EqualsEvaluator();
@@ -50,6 +51,7 @@ class Equals extends AbstractEqualityFunction {
     }
 
     private static class EqualsEvaluator extends Evaluator {
+
         @Override
         protected Val evaluate(final Val a, final Val b) {
             if (a.getClass().equals(b.getClass())) {

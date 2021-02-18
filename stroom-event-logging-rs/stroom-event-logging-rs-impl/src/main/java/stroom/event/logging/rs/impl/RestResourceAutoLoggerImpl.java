@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.glassfish.jersey.message.MessageUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
@@ -37,10 +39,10 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
-    static final Logger LOGGER = LoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
+
+    static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
@@ -62,8 +64,10 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
 
     @Inject
-    RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
-                               final LoggingConfig config, final DelegatingExceptionMapper delegatingExceptionMapper) {
+    RestResourceAutoLoggerImpl(final SecurityContext securityContext,
+                               final RequestEventLog requestEventLog,
+                               final LoggingConfig config,
+                               final DelegatingExceptionMapper delegatingExceptionMapper) {
         this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
@@ -136,22 +140,26 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     public void filter(final ContainerRequestContext context) throws IOException {
         ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
-        if (containerResourceInfo.shouldLog(config)){
+        if (containerResourceInfo.shouldLog(config)) {
             if (context.hasEntity()) {
-                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo, context.getEntityStream(),
-                        objectMapper, MessageUtils.getCharset(context.getMediaType()));
+                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo,
+                        context.getEntityStream(),
+                        objectMapper,
+                        MessageUtils.getCharset(context.getMediaType()));
                 context.setEntityStream(stream);
 
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(securityContext, containerResourceInfo, stream.getRequestEntity()));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
+                        new RequestInfo(securityContext, containerResourceInfo, stream.getRequestEntity()));
             } else {
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(securityContext, containerResourceInfo));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
+                        new RequestInfo(securityContext, containerResourceInfo));
             }
         }
     }
 
 
     //Needed for some unit tests
-    void setResourceContext(final ResourceContext resourceContext){
+    void setResourceContext(final ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
     }
 

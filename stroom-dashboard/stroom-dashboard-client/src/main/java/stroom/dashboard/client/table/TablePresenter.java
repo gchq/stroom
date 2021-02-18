@@ -35,10 +35,10 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
@@ -117,6 +117,7 @@ import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
@@ -262,7 +263,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
                     ConfirmEvent.fire(TablePresenter.this,
-                            "Search still in progress. Do you want to download the current results? Note that these may be incomplete.",
+                            "Search still in progress. Do you want to download the current results? " +
+                                    "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -276,7 +278,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(), getTableSettings(), dataGrid.getSelectionModel().getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(),
+                        getTableSettings(),
+                        dataGrid.getSelectionModel().getSelectedItems());
             }
         }));
     }
@@ -302,7 +306,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
                     if (indexFieldName.startsWith("annotation:")) {
-                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader().getDataSourceFieldsMap().get(indexFieldName);
+                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader()
+                                .getDataSourceFieldsMap().get(indexFieldName);
                         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
                             fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
                         } else {
@@ -377,7 +382,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowPopupEvent.fire(this, fieldAddPresenter, PopupType.POPUP, popupPosition, popupUiHandlers, target);
+            ShowPopupEvent.fire(
+                    this,
+                    fieldAddPresenter,
+                    PopupType.POPUP,
+                    popupPosition,
+                    popupUiHandlers,
+                    target);
         }
     }
 
@@ -422,19 +433,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
-                            final DashboardSearchRequest searchRequest = new DashboardSearchRequest(queryKey, search, requests, timeZones.getTimeZone());
-
-                            final DownloadSearchResultsRequest downloadSearchResultsRequest = new DownloadSearchResultsRequest(
-                                    applicationInstanceIdProvider.get(),
-                                    searchRequest,
-                                    getComponentConfig().getId(),
-                                    downloadPresenter.getFileType(),
-                                    downloadPresenter.isSample(),
-                                    downloadPresenter.getPercent(),
+                            final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
+                                    queryKey,
+                                    search,
+                                    requests,
                                     timeZones.getTimeZone());
+
+                            final DownloadSearchResultsRequest downloadSearchResultsRequest =
+                                    new DownloadSearchResultsRequest(
+                                            applicationInstanceIdProvider.get(),
+                                            searchRequest,
+                                            getComponentConfig().getId(),
+                                            downloadPresenter.getFileType(),
+                                            downloadPresenter.isSample(),
+                                            downloadPresenter.getPercent(),
+                                            timeZones.getTimeZone());
                             final Rest<ResourceGeneration> rest = restFactory.create();
                             rest
-                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                            null,
+                                            result))
                                     .call(DASHBOARD_RESOURCE)
                                     .downloadSearchResults(downloadSearchResultsRequest);
                         }
@@ -455,7 +473,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> idList = annotationManager.getEventIdList(getTableSettings(), dataGrid.getSelectionModel().getSelectedItems());
+        final List<EventId> idList = annotationManager.getEventIdList(getTableSettings(),
+                dataGrid.getSelectionModel().getSelectedItems());
         final boolean enabled = idList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
@@ -980,12 +999,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public interface TableView extends View {
+
         void setTableView(View view);
 
         void setRefreshing(boolean refreshing);
     }
 
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+
         private final FieldAddPresenter presenter;
 
         AddSelectionHandler(final FieldAddPresenter presenter) {
@@ -1001,7 +1022,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final String fieldName = field.getName();
                 String suffix = "";
                 int count = 1;
-                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(Collectors.toSet());
+                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(
+                        Collectors.toSet());
                 while (currentFields.contains(fieldName + suffix)) {
                     count++;
                     suffix = " " + count;

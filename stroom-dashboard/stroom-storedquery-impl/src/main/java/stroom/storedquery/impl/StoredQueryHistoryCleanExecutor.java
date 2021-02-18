@@ -22,16 +22,17 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 /**
  * Task to clean out old query history items.
  */
 public class StoredQueryHistoryCleanExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredQueryHistoryCleanExecutor.class);
 
     private final StoredQueryDao storedQueryDao;

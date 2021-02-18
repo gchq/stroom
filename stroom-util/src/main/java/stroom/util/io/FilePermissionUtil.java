@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FilePermissionUtil {
+
     static final long MS_IN_DAY = 24L * 60L * 60L * 1000L;
 
     public static void tracePath(Path file) throws IOException {
@@ -67,7 +68,8 @@ public class FilePermissionUtil {
             }
         }
 
-        Files.setPosixFilePermissions(file, new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
+        Files.setPosixFilePermissions(file,
+                new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
 
         FileTime newFileAccessTime = FileTime.fromMillis(
                 Files.readAttributes(file, BasicFileAttributes.class).lastAccessTime().toMillis() + MS_IN_DAY);

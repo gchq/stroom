@@ -7,9 +7,6 @@ import stroom.docstore.impl.Persistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,9 +15,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 @Singleton
 public class DBPersistence implements Persistence {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
@@ -256,7 +257,11 @@ public class DBPersistence implements Persistence {
         }
     }
 
-    private void update(final Connection connection, final Long id, final DocRef docRef, final String ext, final byte[] bytes) {
+    private void update(final Connection connection,
+                        final Long id,
+                        final DocRef docRef,
+                        final String ext,
+                        final byte[] bytes) {
         final String sql = "" +
                 "UPDATE doc " +
                 "SET " +

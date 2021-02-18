@@ -16,10 +16,12 @@
 
 package stroom.core.client.gin;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.core.client.presenter.Plugin;
 
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public abstract class PluginModule extends AbstractPresenterModule {
+
     protected <P extends Plugin> void bindPlugin(Class<P> plugin) {
         bind(plugin).asEagerSingleton();
     }

@@ -45,6 +45,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
+
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     private DocRef feedRef;
@@ -181,6 +182,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
     }
 
     public interface DataUploadView extends View {
+
         FormPanel getForm();
 
         StringListBox getType();

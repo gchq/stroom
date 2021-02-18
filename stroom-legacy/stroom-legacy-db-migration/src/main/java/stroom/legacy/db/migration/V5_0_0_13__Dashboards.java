@@ -30,6 +30,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_0_0_13__Dashboards extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_13__Dashboards.class);
 
     @Override
@@ -64,7 +65,8 @@ public class V5_0_0_13__Dashboards extends BaseJavaMigration {
                         if (!newData.equals(data)) {
                             LOGGER.info("Modifying dashboard");
 
-                            try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE DASH SET DAT = ? WHERE ID = ?")) {
+                            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                                    "UPDATE DASH SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();

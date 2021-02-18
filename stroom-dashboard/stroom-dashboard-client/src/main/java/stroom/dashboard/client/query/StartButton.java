@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.widget.button.client.FabButton;
 
 public class StartButton extends FabButton {
+
     public StartButton() {
         searchMode();
     }

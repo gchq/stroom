@@ -37,7 +37,6 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.impl.LuceneSearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,10 +46,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
+
     @Inject
     private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 
@@ -87,13 +88,22 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                    Collections.singletonList(tableSettings),
+                    null,
+                    null,
+                    ResultRequest.ResultStyle.TABLE,
+                    Fetch.CHANGES);
             resultRequests.add(tableResultRequest);
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();

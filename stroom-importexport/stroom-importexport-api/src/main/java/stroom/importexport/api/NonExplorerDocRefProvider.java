@@ -14,15 +14,18 @@
  * limitations under the License.
  *
  */
+
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
 
 
 public interface NonExplorerDocRefProvider {
+
     /**
      * Find a docref in the explorer tree that is nearest to the provided non-explorer based docref,
      * so that a suitable location can be found, e.g. for keeping serialised content together
+     *
      * @param docref the non-explorer based docref known to this instance
      * @return an explorer docref that is located in a suitable location for association with the supplied docref
      * (or null if no suitable explorer docref is found)
@@ -31,6 +34,7 @@ public interface NonExplorerDocRefProvider {
 
     /**
      * Allows an alternative name to be provided for a docref
+     *
      * @param docRef the non-explorer based docref known to this instance
      * @return A string that represents a suitable name for this docref.
      */
@@ -38,8 +42,9 @@ public interface NonExplorerDocRefProvider {
 
     /**
      * Check whether this DocRef is already known to this instance
+     *
      * @param docRef non-explorer based docref that might be known to this instance
      * @return true if the non-explorer based docref is known to this instance
      */
-    boolean docExists (DocRef docRef);
+    boolean docExists(DocRef docRef);
 }

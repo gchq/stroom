@@ -16,10 +16,10 @@
 
 package stroom.legacy.db.migration;
 
-import stroom.legacy.model_6_1.OldDictionaryDoc;
 import stroom.legacy.model_6_1.DocDocRefUtil;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.legacy.model_6_1.JsonSerialiser;
+import stroom.legacy.model_6_1.OldDictionaryDoc;
 import stroom.legacy.model_6_1.Serialiser;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
@@ -35,6 +35,7 @@ import java.util.UUID;
 
 @Deprecated
 public class V6_0_0_21__Dictionary extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context flywayContext) throws Exception {
         migrate(flywayContext.getConnection());
@@ -43,7 +44,8 @@ public class V6_0_0_21__Dictionary extends BaseJavaMigration {
     private void migrate(final Connection connection) throws Exception {
         final Serialiser<OldDictionaryDoc> serialiser = new JsonSerialiser<>();
         try (final Statement statement = connection.createStatement()) {
-            try (final ResultSet resultSet = statement.executeQuery("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, UUID, NAME, DAT FROM DICT")) {
+            try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, UUID, NAME, DAT FROM DICT")) {
                 while (resultSet.next()) {
                     final long crtMs = resultSet.getLong(1);
                     final String crtUser = resultSet.getString(2);
@@ -75,7 +77,8 @@ public class V6_0_0_21__Dictionary extends BaseJavaMigration {
 
     private void insert(final Connection connection, final DocRef docRef, final byte[] data) throws SQLException {
         // Insert node entry.
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, data) VALUES (?, ?, ?, ?)")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "INSERT INTO doc (type, uuid, name, data) VALUES (?, ?, ?, ?)")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());

@@ -17,18 +17,18 @@
 
 package stroom.node.api;
 
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.Response;
 
 /**
  * <p>
  * Class to manage nodes.
  * </p>
  */
-public interface NodeService  {
+public interface NodeService {
 
     String getBaseEndpointUrl(String nodeName);
 

@@ -35,8 +35,6 @@ import stroom.util.shared.ResourceKey;
 
 import io.swagger.annotations.ApiParam;
 
-import javax.inject.Inject;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -44,8 +42,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.ws.rs.PathParam;
 
 class DictionaryResourceImpl implements DictionaryResource {
+
     private final DictionaryStore dictionaryStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -115,11 +116,15 @@ class DictionaryResourceImpl implements DictionaryResource {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
 
-        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        final ImportExportActionHandler.ImpexDetails result = dictionaryStore.importDocument(documentData.getDocRef(),
+                documentData.getDataMap(),
+                importState,
+                ImportState.ImportMode.IGNORE_CONFIRMATION);
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
@@ -134,7 +139,8 @@ class DictionaryResourceImpl implements DictionaryResource {
     }
 
     public DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        // A user should be allowed to read pipelines that they are inheriting from as
+        // long as they have 'use' permission on them.
         return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
     }
 
@@ -148,7 +154,8 @@ class DictionaryResourceImpl implements DictionaryResource {
     public void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
                      final DictionaryDTO updates) {
         System.out.println("DEBUG in save");
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        // A user should be allowed to read pipelines that they are inheriting from as long as
+        // they have 'use' permission on them.
         securityContext.useAsRead(() -> {
             final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
 

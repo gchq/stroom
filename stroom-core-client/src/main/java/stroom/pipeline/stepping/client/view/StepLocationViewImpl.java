@@ -16,6 +16,10 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
+import stroom.pipeline.stepping.client.presenter.StepLocationUIHandlers;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -28,11 +32,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
-import stroom.pipeline.stepping.client.presenter.StepLocationUIHandlers;
 
 public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandlers> implements StepLocationView {
+
     private static final String EMPTY = "&nbsp;-&nbsp;";
     private final Widget widget;
     @UiField
@@ -49,6 +51,7 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
     TextBox txtRecordNo;
     private StepLocation stepLocation;
     private boolean editing;
+
     @Inject
     public StepLocationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -179,11 +182,11 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         try {
             return Long.valueOf(textBox.getText().trim());
         } catch (final NumberFormatException e) {
+            return null;
         }
-
-        return null;
     }
 
     public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {
+
     }
 }

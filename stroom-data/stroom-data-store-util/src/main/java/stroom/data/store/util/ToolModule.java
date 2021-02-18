@@ -35,6 +35,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 public class ToolModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new stroom.activity.mock.MockActivityModule());

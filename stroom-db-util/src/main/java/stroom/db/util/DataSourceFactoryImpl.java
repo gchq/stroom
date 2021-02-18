@@ -9,14 +9,15 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class DataSourceFactoryImpl implements DataSourceFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
     private final CommonDbConfig commonDbConfig;

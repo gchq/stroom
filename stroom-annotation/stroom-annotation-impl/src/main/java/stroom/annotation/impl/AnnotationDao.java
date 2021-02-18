@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public interface AnnotationDao {
+
     Annotation get(long annotationId);
 
     AnnotationDetail getDetail(long annotationId);

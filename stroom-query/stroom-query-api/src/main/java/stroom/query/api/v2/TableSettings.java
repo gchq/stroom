@@ -45,6 +45,7 @@ import java.util.Objects;
 @ApiModel(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
+
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
 
     @ApiModelProperty(
@@ -74,9 +75,9 @@ public final class TableSettings {
     private final List<Integer> maxResults;
 
     @ApiModelProperty(
-            value = "When grouping is used a value of true indicates that the results will include the full detail of " +
-                    "any results aggregated into a group as well as their aggregates. A value of false will only " +
-                    "include the aggregated values for each group. Defaults to false.")
+            value = "When grouping is used a value of true indicates that the results will include the full " +
+                    "detail of any results aggregated into a group as well as their aggregates. A value of false " +
+                    "will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
@@ -91,15 +92,18 @@ public final class TableSettings {
     @JsonProperty("modelVersion")
     private final String modelVersion;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
-    public TableSettings(@JsonProperty("queryId") final String queryId,
-                         @JsonProperty("fields") final List<Field> fields,
-                         @JsonProperty("extractValues") final Boolean extractValues,
-                         @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-                         @JsonProperty("maxResults") final List<Integer> maxResults,
-                         @JsonProperty("showDetail") final Boolean showDetail,
-                         @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-                         @JsonProperty("modelVersion") final String modelVersion) {
+    public TableSettings(
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("extractValues") final Boolean extractValues,
+            @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
+            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("showDetail") final Boolean showDetail,
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion) {
+
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
@@ -156,10 +160,15 @@ public final class TableSettings {
         return modelVersion;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
@@ -173,7 +182,14 @@ public final class TableSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryId, fields, extractValues, extractionPipeline, maxResults, showDetail, conditionalFormattingRules, modelVersion);
+        return Objects.hash(queryId,
+                fields,
+                extractValues,
+                extractionPipeline,
+                maxResults,
+                showDetail,
+                conditionalFormattingRules,
+                modelVersion);
     }
 
     @Override
@@ -202,6 +218,7 @@ public final class TableSettings {
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static final class Builder {
+
         protected String queryId;
         protected List<Field> fields;
         protected Boolean extractValues;
@@ -217,14 +234,17 @@ public final class TableSettings {
         private Builder(final TableSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
             this.fields = tableSettings.getFields() == null
-                    ? null : new ArrayList<>(tableSettings.getFields());
+                    ? null
+                    : new ArrayList<>(tableSettings.getFields());
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
-                    ? null : new ArrayList<>(tableSettings.getMaxResults());
+                    ? null
+                    : new ArrayList<>(tableSettings.getMaxResults());
             this.showDetail = tableSettings.getShowDetail();
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
-                    ? null : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+                    ? null
+                    : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.modelVersion = tableSettings.getModelVersion();
         }
 

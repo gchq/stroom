@@ -1,11 +1,5 @@
 package stroom.job.impl;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
@@ -15,6 +9,13 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.shared.ResourcePaths;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +31,13 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResource> {
+
     private static final JobNode JOB_NODE_1 = buildJobNode(1, 1, "node1");
     private static final JobNode JOB_NODE_2 = buildJobNode(2, 1, "node2");
 
     private static final JobNodeListResponse JOB_NODES = JobNodeListResponse.createUnboundedJobeNodeResponse(List.of(
-        JOB_NODE_1,
-        JOB_NODE_2));
+            JOB_NODE_1,
+            JOB_NODE_2));
 
     private final Map<String, JobNodeService> jobNodeServiceMap = new HashMap<>();
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
@@ -69,20 +71,20 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
 
         final JobNodeListResponse response = doGetTest(
-            subPath,
-            JobNodeListResponse.class,
-            JOB_NODES,
-            webTarget -> webTarget.queryParam("jobName", "myJob"),
-            webTarget -> webTarget.queryParam("nodeName", "node1")
+                subPath,
+                JobNodeListResponse.class,
+                JOB_NODES,
+                webTarget -> webTarget.queryParam("jobName", "myJob"),
+                webTarget -> webTarget.queryParam("nodeName", "node1")
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
-            .find(criteriaCaptor.capture());
+                .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().getString())
-            .isEqualTo("myJob");
+                .isEqualTo("myJob");
         assertThat(criteriaCaptor.getValue().getNodeName().getString())
-            .isEqualTo("node1");
+                .isEqualTo("node1");
 
     }
 
@@ -96,17 +98,17 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
 
         final JobNodeListResponse response = doGetTest(
-            subPath,
-            JobNodeListResponse.class,
-            JOB_NODES);
+                subPath,
+                JobNodeListResponse.class,
+                JOB_NODES);
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
-            .find(criteriaCaptor.capture());
+                .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-            .isFalse();
+                .isFalse();
         assertThat(criteriaCaptor.getValue().getNodeName().isConstrained())
-            .isFalse();
+                .isFalse();
     }
 
     @Test
@@ -119,19 +121,19 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
 
         final JobNodeListResponse response = doGetTest(
-            subPath,
-            JobNodeListResponse.class,
-            JOB_NODES,
-            webTarget -> webTarget.queryParam("nodeName", "node1")
+                subPath,
+                JobNodeListResponse.class,
+                JOB_NODES,
+                webTarget -> webTarget.queryParam("nodeName", "node1")
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
-            .find(criteriaCaptor.capture());
+                .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-            .isFalse();
+                .isFalse();
         assertThat(criteriaCaptor.getValue().getNodeName().getString())
-            .isEqualTo("node1");
+                .isEqualTo("node1");
     }
 
     @Test
@@ -143,19 +145,19 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT, 2L, 3L);
 
         final JobNodeInfo response = doGetTest(
-            subPath,
-            JobNodeInfo.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("jobName", "myJob"),
-            webTarget -> webTarget.queryParam("nodeName", "node1")
+                subPath,
+                JobNodeInfo.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("jobName", "myJob"),
+                webTarget -> webTarget.queryParam("nodeName", "node1")
         );
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -167,19 +169,19 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT + 1, 2L, 3L);
 
         final JobNodeInfo response = doGetTest(
-            subPath,
-            JobNodeInfo.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("jobName", "myJob"),
-            webTarget -> webTarget.queryParam("nodeName", "node2")
+                subPath,
+                JobNodeInfo.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("jobName", "myJob"),
+                webTarget -> webTarget.queryParam("nodeName", "node2")
         );
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -192,35 +194,35 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final Integer newTaskLimit = 500;
 
         doPutTest(
-            subPath,
-            newTaskLimit);
+                subPath,
+                newTaskLimit);
 
         final ArgumentCaptor<JobNode> jobNodeCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(jobNodeServiceMap.get("node1"), times(1))
-            .update(jobNodeCaptor.capture());
+                .update(jobNodeCaptor.capture());
 
         assertThat(jobNodeCaptor.getValue().getTaskLimit())
-            .isEqualTo(newTaskLimit);
+                .isEqualTo(newTaskLimit);
 
         final ArgumentCaptor<JobNode> beforeCaptor = ArgumentCaptor.forClass(JobNode.class);
         final ArgumentCaptor<JobNode> afterCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(documentEventLogMap.get("node1"), times(1))
-            .update(beforeCaptor.capture(), afterCaptor.capture(), any());
+                .update(beforeCaptor.capture(), afterCaptor.capture(), any());
 
         // equal apart from version
         assertThat(beforeCaptor.getValue())
-            .isEqualTo(afterCaptor.getValue());
+                .isEqualTo(afterCaptor.getValue());
 
         assertThat(beforeCaptor.getValue().getVersion())
-            .isNotEqualTo(afterCaptor.getValue().getVersion());
+                .isNotEqualTo(afterCaptor.getValue().getVersion());
 
         assertThat(afterCaptor.getValue().getTaskLimit())
-            .isEqualTo(newTaskLimit.intValue());
+                .isEqualTo(newTaskLimit.intValue());
 
         assertThat(afterCaptor.getValue().getTaskLimit())
-            .isNotEqualTo(JOB_NODE_1.getTaskLimit());
+                .isNotEqualTo(JOB_NODE_1.getTaskLimit());
     }
 
     @Test
@@ -233,35 +235,35 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final String newSchedule = "1 1 1";
 
         doPutTest(
-            subPath,
-            newSchedule);
+                subPath,
+                newSchedule);
 
         final ArgumentCaptor<JobNode> jobNodeCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(jobNodeServiceMap.get("node1"), times(1))
-            .update(jobNodeCaptor.capture());
+                .update(jobNodeCaptor.capture());
 
         assertThat(jobNodeCaptor.getValue().getSchedule())
-            .isEqualTo(newSchedule);
+                .isEqualTo(newSchedule);
 
         final ArgumentCaptor<JobNode> beforeCaptor = ArgumentCaptor.forClass(JobNode.class);
         final ArgumentCaptor<JobNode> afterCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(documentEventLogMap.get("node1"), times(1))
-            .update(beforeCaptor.capture(), afterCaptor.capture(), any());
+                .update(beforeCaptor.capture(), afterCaptor.capture(), any());
 
         // equal apart from version
         assertThat(beforeCaptor.getValue())
-            .isEqualTo(afterCaptor.getValue());
+                .isEqualTo(afterCaptor.getValue());
 
         assertThat(beforeCaptor.getValue().getVersion())
-            .isNotEqualTo(afterCaptor.getValue().getVersion());
+                .isNotEqualTo(afterCaptor.getValue().getVersion());
 
         assertThat(afterCaptor.getValue().getSchedule())
-            .isEqualTo(newSchedule);
+                .isEqualTo(newSchedule);
 
         assertThat(afterCaptor.getValue().getSchedule())
-            .isNotEqualTo(JOB_NODE_1.getSchedule());
+                .isNotEqualTo(JOB_NODE_1.getSchedule());
     }
 
     @Test
@@ -273,35 +275,35 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final boolean newIsEnabled = true;
 
         doPutTest(
-            subPath,
-            newIsEnabled);
+                subPath,
+                newIsEnabled);
 
         final ArgumentCaptor<JobNode> jobNodeCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(jobNodeServiceMap.get("node1"), times(1))
-            .update(jobNodeCaptor.capture());
+                .update(jobNodeCaptor.capture());
 
         assertThat(jobNodeCaptor.getValue().isEnabled())
-            .isEqualTo(newIsEnabled);
+                .isEqualTo(newIsEnabled);
 
         final ArgumentCaptor<JobNode> beforeCaptor = ArgumentCaptor.forClass(JobNode.class);
         final ArgumentCaptor<JobNode> afterCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(documentEventLogMap.get("node1"), times(1))
-            .update(beforeCaptor.capture(), afterCaptor.capture(), any());
+                .update(beforeCaptor.capture(), afterCaptor.capture(), any());
 
         // equal apart from version
         assertThat(beforeCaptor.getValue())
-            .isEqualTo(afterCaptor.getValue());
+                .isEqualTo(afterCaptor.getValue());
 
         assertThat(beforeCaptor.getValue().getVersion())
-            .isNotEqualTo(afterCaptor.getValue().getVersion());
+                .isNotEqualTo(afterCaptor.getValue().getVersion());
 
         assertThat(afterCaptor.getValue().isEnabled())
-            .isEqualTo(newIsEnabled);
+                .isEqualTo(newIsEnabled);
 
         assertThat(afterCaptor.getValue().isEnabled())
-            .isNotEqualTo(JOB_NODE_1.isEnabled());
+                .isNotEqualTo(JOB_NODE_1.isEnabled());
     }
 
     @Override
@@ -318,25 +320,25 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         // Use the port as a unique task count
         when(jobNodeService.getInfo(any()))
-            .thenReturn(new JobNodeInfo(node.getPort(), 2L, 3L));
+                .thenReturn(new JobNodeInfo(node.getPort(), 2L, 3L));
 
         when(jobNodeService.find(any()))
-            .thenReturn(JOB_NODES);
+                .thenReturn(JOB_NODES);
 
         when(jobNodeService.fetch(anyInt()))
-            .thenReturn(Optional.of(buildJobNode(1, 1, "node1")));
+                .thenReturn(Optional.of(buildJobNode(1, 1, "node1")));
 
         when(jobNodeService.update(any()))
-            .then(invocation -> {
-                final JobNode input = invocation.getArgument(0);
+                .then(invocation -> {
+                    final JobNode input = invocation.getArgument(0);
 
-                final JobNode output = buildJobNode(input.getId(), input.getVersion() + 1, input.getNodeName());
-                output.setTaskLimit(input.getTaskLimit());
-                output.setSchedule(input.getSchedule());
-                output.setEnabled(input.isEnabled());
+                    final JobNode output = buildJobNode(input.getId(), input.getVersion() + 1, input.getNodeName());
+                    output.setTaskLimit(input.getTaskLimit());
+                    output.setSchedule(input.getSchedule());
+                    output.setEnabled(input.isEnabled());
 
-                return output;
-            });
+                    return output;
+                });
 
         jobNodeServiceMap.put(node.getNodeName(), jobNodeService);
 
@@ -344,30 +346,30 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final NodeService nodeService = createNamedMock(NodeService.class, node);
 
         when(nodeService.isEnabled(Mockito.anyString()))
-            .then(invocation ->
-                allNodes.stream()
-                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                    .anyMatch(TestNode::isEnabled));
+                .then(invocation ->
+                        allNodes.stream()
+                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-            .then(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .then(invocation -> baseEndPointUrls.get(invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 
         final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
 
         when(nodeInfo.getThisNodeName())
-            .thenReturn(node.getNodeName());
+                .thenReturn(node.getNodeName());
 
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
 
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new JobNodeResourceImpl(
-            jobNodeService,
-            nodeService,
-            nodeInfo,
-            webTargetFactory(),
-            documentEventLog);
+                jobNodeService,
+                nodeService,
+                nodeInfo,
+                webTargetFactory(),
+                documentEventLog);
     }
 }

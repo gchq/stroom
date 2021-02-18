@@ -16,10 +16,12 @@
 
 package stroom.editor.client.event;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
+
 public interface HasFormatHandlers extends HasHandlers {
+
     HandlerRegistration addFormatHandler(FormatHandler handler);
 }

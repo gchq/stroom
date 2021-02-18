@@ -16,11 +16,12 @@
 
 package stroom.pipeline.shared.stepping;
 
+import stroom.docref.DocRef;
+import stroom.meta.shared.FindMetaCriteria;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.meta.shared.FindMetaCriteria;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.Map.Entry;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PipelineStepRequest {
+
     /**
      * This is what chooses the input to the translation.
      */

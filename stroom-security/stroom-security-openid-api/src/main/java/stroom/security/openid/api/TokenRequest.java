@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class TokenRequest {
+
     @JsonProperty(OpenId.GRANT_TYPE)
     private final String grantType;
     @JsonProperty(OpenId.CLIENT_ID)
@@ -20,10 +21,10 @@ public class TokenRequest {
 
     @JsonCreator
     TokenRequest(@JsonProperty(OpenId.GRANT_TYPE) final String grantType,
-                        @JsonProperty(OpenId.CLIENT_ID) final String clientId,
-                        @JsonProperty(OpenId.CLIENT_SECRET) final String clientSecret,
-                        @JsonProperty(OpenId.REDIRECT_URI) final String redirectUri,
-                        @JsonProperty(OpenId.CODE) final String code) {
+                 @JsonProperty(OpenId.CLIENT_ID) final String clientId,
+                 @JsonProperty(OpenId.CLIENT_SECRET) final String clientSecret,
+                 @JsonProperty(OpenId.REDIRECT_URI) final String redirectUri,
+                 @JsonProperty(OpenId.CODE) final String code) {
         this.grantType = grantType;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -60,6 +61,7 @@ public class TokenRequest {
     }
 
     public static final class Builder {
+
         private String grantType;
         private String clientId;
         private String clientSecret;

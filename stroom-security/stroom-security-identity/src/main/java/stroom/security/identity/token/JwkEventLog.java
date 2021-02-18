@@ -24,6 +24,7 @@ import javax.inject.Inject;
  * A service to allow other components to easily create Stroom logging events.
  */
 public class JwkEventLog {
+
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject

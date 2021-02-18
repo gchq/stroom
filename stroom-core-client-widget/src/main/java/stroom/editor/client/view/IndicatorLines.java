@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IndicatorLines {
+
     private final Indicators indicators;
     private final Map<Integer, Indicator> map;
 

@@ -1,11 +1,5 @@
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -15,16 +9,23 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.Map;
 import java.util.Set;
 
 public class ConfigPropertyClusterValuesPresenter
-    extends MyPresenterWidget<ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView>
-    implements ConfigPropertyClusterValuesUiHandlers, Refreshable {
+        extends MyPresenterWidget<ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView>
+        implements ConfigPropertyClusterValuesUiHandlers, Refreshable {
 
     public static final String LIST = "LIST";
 
-    private ConfigPropertyClusterValuesListPresenter listPresenter;
+    private final ConfigPropertyClusterValuesListPresenter listPresenter;
 
     @Inject
     public ConfigPropertyClusterValuesPresenter(final EventBus eventBus,
@@ -76,16 +77,16 @@ public class ConfigPropertyClusterValuesPresenter
 
     protected void hide() {
         HidePopupEvent.fire(
-            ConfigPropertyClusterValuesPresenter.this,
-            ConfigPropertyClusterValuesPresenter.this);
+                ConfigPropertyClusterValuesPresenter.this,
+                ConfigPropertyClusterValuesPresenter.this);
     }
 
     protected PopupSize getPopupSize() {
         return new PopupSize(
-            900, 700,
-            700, 700,
-            1500, 1500,
-            true);
+                900, 700,
+                700, 700,
+                1500, 1500,
+                true);
     }
 
     private String getEntityDisplayType() {
@@ -93,7 +94,7 @@ public class ConfigPropertyClusterValuesPresenter
     }
 
     public interface ConfigPropertyClusterValuesView
-        extends View, HasUiHandlers<ConfigPropertyClusterValuesUiHandlers> {
+            extends View, HasUiHandlers<ConfigPropertyClusterValuesUiHandlers> {
 
         void setList(Widget widget);
     }

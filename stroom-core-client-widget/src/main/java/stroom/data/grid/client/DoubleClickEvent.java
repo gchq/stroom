@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class DoubleClickEvent extends GwtEvent<DoubleClickEvent.Handler> {
+
     private static GwtEvent.Type<Handler> TYPE;
 
     private DoubleClickEvent() {
@@ -49,6 +50,7 @@ public class DoubleClickEvent extends GwtEvent<DoubleClickEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onDoubleClick(DoubleClickEvent event);
     }
 }

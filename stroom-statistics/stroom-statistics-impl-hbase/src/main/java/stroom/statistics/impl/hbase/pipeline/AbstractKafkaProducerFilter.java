@@ -1,11 +1,5 @@
 package stroom.statistics.impl.hbase.pipeline;
 
-import com.google.common.base.Strings;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
@@ -22,12 +16,20 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import com.google.common.base.Strings;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
 
     private boolean flushOnSend;

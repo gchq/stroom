@@ -24,7 +24,7 @@ import java.io.Serializable;
         commonReturnType = Val.class,
         signatures = @FunctionSignature(
                 description = "Selects the first value found in the group that is not " + Null.NAME + "() or " +
-                Err.NAME + "(). If no explicit ordering is set then " +
+                        Err.NAME + "(). If no explicit ordering is set then " +
                         "the value selected is indeterminate.",
                 returnDescription = "The first value of the group.",
                 args = {
@@ -34,6 +34,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 public class Any extends AbstractSelectorFunction implements Serializable {
+
     static final String NAME = "any";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -47,6 +48,7 @@ public class Any extends AbstractSelectorFunction implements Serializable {
     }
 
     public static class AnySelector extends Selector {
+
         private static final long serialVersionUID = 8153777070911899616L;
         private Val val;
 

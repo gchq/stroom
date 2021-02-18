@@ -5,12 +5,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 /**
  * Useful methods to create various {@link Predicate<String>}
@@ -73,7 +73,8 @@ public class StringPredicateFactory {
      * Null userInput results in an always true predicate.
      * Broadly it has five match modes:
      * Regex match: "/(wo|^)man" matches "a woman", "manly"
-     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
+     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not
+     * "the cat sat on there mat"
      * Starts with: "^prefix" matches "PrefixToSomeText" (case insensitive)
      * Ends with "suffix$" matches "TextWithSuffix" (case insensitive)
      * Exact match: "^sometext$" matches "sometext" (case insensitive)
@@ -98,7 +99,7 @@ public class StringPredicateFactory {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
-        }else {
+        } else {
             if (modifiedInput.startsWith(NOT_OPERATOR_STR)) {
                 modifiedInput = modifiedInput.substring(1);
                 LOGGER.debug("Input after NOT operator removal [{}]", modifiedInput);
@@ -119,7 +120,8 @@ public class StringPredicateFactory {
                 predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
             } else if (modifiedInput.endsWith("$")) {
                 // remove the $ marker char from the end
-                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0, modifiedInput.length() - 1));
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0,
+                        modifiedInput.length() - 1));
             } else if (modifiedInput.startsWith("^")) {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
@@ -160,7 +162,9 @@ public class StringPredicateFactory {
     public static Predicate<String> toLoggingPredicate(final Predicate<String> predicate) {
         return str -> {
             boolean result = predicate.test(str);
-            final ConsoleColour colour = result ? ConsoleColour.GREEN : ConsoleColour.RED;
+            final ConsoleColour colour = result
+                    ? ConsoleColour.GREEN
+                    : ConsoleColour.RED;
 
             String msg = ConsoleColour.colourise(LogUtil.message("String under test [{}], result: {}",
                     str, result), colour);

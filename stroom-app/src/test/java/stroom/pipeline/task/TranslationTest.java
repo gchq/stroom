@@ -72,7 +72,6 @@ import stroom.util.shared.Indicators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -87,11 +86,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
@@ -171,8 +172,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     priority++;
                 }
 
-                final String streamType = feed.isReference() ?
-                        StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
+                final String streamType = feed.isReference()
+                        ?
+                        StreamTypeNames.RAW_REFERENCE
+                        : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.builder()
@@ -247,7 +250,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                             final Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
 //                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
-//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
+//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(
+//                                inputStreamProvider.get());
                             LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
                                     meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
@@ -285,7 +289,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final Path actualFile = outputDir.resolve(stem + num + ".out_tmp");
                     final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
-                    try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
+                    try (final OutputStream outputStream = new BufferedOutputStream(
+                            Files.newOutputStream(actualFile))) {
                         copyStream(meta, outputStream);
                     }
 
@@ -352,7 +357,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedProperties, null, feed.getName(), feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
+                handlerList,
+                new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(Files.newInputStream(file), "test");
@@ -433,9 +440,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getOutputIndicators() != null
-                    && elementData.getOutputIndicators().getMaxSeverity() != null).as("Translation stepping has output indicators.").isFalse();
+                    && elementData.getOutputIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has output indicators.").isFalse();
             assertThat(elementData.getCodeIndicators() != null
-                    && elementData.getCodeIndicators().getMaxSeverity() != null).as("Translation stepping has code indicators.").isFalse();
+                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has code indicators.").isFalse();
 
             final String stem = feedName + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {

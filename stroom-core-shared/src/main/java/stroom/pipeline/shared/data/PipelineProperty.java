@@ -16,21 +16,22 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.CompareBuilder;
+import stroom.util.shared.Copyable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.Copyable;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 /**
  * <p>
@@ -59,6 +60,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"propertyType", "source", "element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
+
     @XmlTransient
     @JsonProperty
     private PipelinePropertyType propertyType;
@@ -136,10 +138,15 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
         this.value = value;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PipelineProperty that = (PipelineProperty) o;
         return element.equals(that.element) &&
                 name.equals(that.name);

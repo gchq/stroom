@@ -28,6 +28,7 @@ import java.util.Map;
 
 @Singleton
 public class ComponentRegistry {
+
     private final Map<ComponentType, Provider<?>> providers = new HashMap<>();
     private final Map<String, Provider<?>> providersByTypeString = new HashMap<>();
 
@@ -65,6 +66,7 @@ public class ComponentRegistry {
     }
 
     public static class ComponentType {
+
         private final int priority;
         private final String id;
         private final String name;
@@ -95,6 +97,7 @@ public class ComponentRegistry {
     }
 
     private static class ComponentTypeComparator implements Comparator<ComponentType> {
+
         @Override
         public int compare(final ComponentType o1, final ComponentType o2) {
             return Integer.compare(o1.priority, o2.priority);

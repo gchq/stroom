@@ -16,13 +16,15 @@
 
 package stroom.processor.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import com.google.inject.AbstractModule;
+
 public class MockProcessorModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ProcessorTaskManager.class).to(MockProcessorTaskManager.class);

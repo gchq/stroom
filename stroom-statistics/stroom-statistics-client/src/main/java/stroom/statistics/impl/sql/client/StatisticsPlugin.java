@@ -17,11 +17,6 @@
 
 package stroom.statistics.impl.sql.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
@@ -40,11 +35,18 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
+
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
 
     private final Provider<StatisticsDataSourcePresenter> editorProvider;
@@ -80,21 +82,25 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     @Override
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StatisticStoreDoc> presenter = (DocumentEditPresenter<?, StatisticStoreDoc>) tabData;
+            final DocumentEditPresenter<?, StatisticStoreDoc> presenter =
+                    (DocumentEditPresenter<?, StatisticStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StatisticStoreDoc entity = presenter.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb), throwable -> {
-                });
+                load(DocRefUtil.create(entity),
+                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb),
+                        throwable -> {
+                        });
             }
         }
     }
 
     private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
-                               final StatisticStoreDoc entity, final StatisticStoreDoc entityFromDb) {
+                               final StatisticStoreDoc entity,
+                               final StatisticStoreDoc entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -111,11 +117,13 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
                 || !prevFieldList.equals(entity.getStatisticFields())
                 || !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
-            ConfirmEvent.fireWarn(this, SafeHtmlUtils
-                            .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
-                                    + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
-                                    + "can potentially cause corruption of the existing statistics data. Please ensure you "
-                                    + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
+            ConfirmEvent.fireWarn(
+                    this,
+                    SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
+                            "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
+                            "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
+                            "existing statistics data. Please ensure you understand the full consequences of the " +
+                            "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
                             doSave(presenter, entity);
@@ -137,7 +145,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<StatisticStoreDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<StatisticStoreDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -147,7 +157,10 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final StatisticStoreDoc document, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final StatisticStoreDoc document,
+                     final Consumer<StatisticStoreDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<StatisticStoreDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

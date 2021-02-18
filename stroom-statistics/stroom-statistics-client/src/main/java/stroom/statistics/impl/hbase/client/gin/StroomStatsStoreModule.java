@@ -25,6 +25,7 @@ import stroom.statistics.impl.hbase.client.view.StroomStatsStoreFieldEditViewImp
 import stroom.statistics.impl.hbase.client.view.StroomStatsStoreSettingsViewImpl;
 
 public class StroomStatsStoreModule extends PluginModule {
+
     @Override
     protected void configure() {
 

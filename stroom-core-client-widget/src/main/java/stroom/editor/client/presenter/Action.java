@@ -17,10 +17,11 @@
 package stroom.editor.client.presenter;
 
 public class Action {
-    private Runnable executeHandler;
-    private String text;
+
+    private final Runnable executeHandler;
+    private final String text;
     private boolean available;
-    private boolean defaultAvailability;
+    private final boolean defaultAvailability;
 
     public Action(final String text, final boolean available, final Runnable executeHandler) {
         this.text = text;

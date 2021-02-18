@@ -30,6 +30,7 @@ import java.util.Date;
  */
 @SuppressWarnings(/* Required to use Date API in gwt */{"deprecation"})
 public class CustomCalendarModel extends CalendarModel {
+
     /**
      * The number of weeks normally displayed in a month.
      */
@@ -42,7 +43,7 @@ public class CustomCalendarModel extends CalendarModel {
 
     private static final String[] dayOfWeekNames = new String[7];
 
-    private static String[] dayOfMonthNames = new String[32];
+    private static final String[] dayOfMonthNames = new String[32];
 
     private final Date currentMonth;
 
@@ -140,7 +141,8 @@ public class CustomCalendarModel extends CalendarModel {
             return new Date(currentMonth.getTime());
         } else {
             Date d = new Date(currentMonth.getTime());
-            int offset = wkDayOfMonth1st - start > 0 ? wkDayOfMonth1st - start
+            int offset = wkDayOfMonth1st - start > 0
+                    ? wkDayOfMonth1st - start
                     : DAYS_IN_WEEK - (start - wkDayOfMonth1st);
             CalendarUtil.addDaysToDate(d, -offset);
             return d;

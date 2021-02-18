@@ -28,13 +28,13 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
-import stroom.query.api.v2.ParamUtil;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
@@ -44,8 +44,6 @@ import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,10 +55,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInteractiveSearch extends AbstractSearchTest {
+
     private static boolean doneSetup;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
@@ -396,7 +397,9 @@ class TestInteractiveSearch extends AbstractSearchTest {
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionOperator.Builder expressionIn,
+                      final int expectResultCount,
+                      final List<String> componentIds,
                       final boolean extractValues) {
         testInteractive(expressionIn, expectResultCount, componentIds, extractValues);
         testEvents(expressionIn, expectResultCount);
@@ -454,8 +457,10 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-//        StroomProperties.setOverrideProperty("stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-//        StroomProperties.setOverrideProperty("stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         assertThat(indexRef).as("Index is null").isNotNull();
@@ -544,8 +549,12 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 .build();
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
-                                                       final String to, final String wordsField, final String wordsTerm) {
+    private ExpressionOperator.Builder buildExpression(final String userField,
+                                                       final String userTerm,
+                                                       final String from,
+                                                       final String to,
+                                                       final String wordsField,
+                                                       final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
@@ -553,8 +562,12 @@ class TestInteractiveSearch extends AbstractSearchTest {
         return operator;
     }
 
-    private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
-                                                         final String to, final String wordsField, final String wordsTerm) {
+    private ExpressionOperator.Builder buildInExpression(final String userField,
+                                                         final String userTerm,
+                                                         final String from,
+                                                         final String to,
+                                                         final String wordsField,
+                                                         final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

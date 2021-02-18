@@ -35,6 +35,7 @@ package stroom.dashboard.expression.v1;
                         isVarargs = true,
                         minVarargsCount = 2)))
 class Subtract extends NumericFunction {
+
     static final String NAME = "-";
     static final String ALIAS = "subtract";
     private static final Calc CALC = new Calc();
@@ -49,6 +50,7 @@ class Subtract extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

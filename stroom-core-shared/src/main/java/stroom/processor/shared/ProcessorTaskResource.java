@@ -38,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ProcessorTaskResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/processorTask" + ResourcePaths.V1;
     String ASSIGN_TASKS_PATH_PART = "/assign";
     String ABANDON_TASKS_PATH_PART = "/abandon";
@@ -56,12 +57,12 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @POST
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation("Assign some tasks")
-    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName, 
+    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
                                   @ApiParam("request") AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation("Abandon some tasks")
-    Boolean abandonTasks(@PathParam("nodeName") String nodeName, 
+    Boolean abandonTasks(@PathParam("nodeName") String nodeName,
                          @ApiParam("request") ProcessorTaskList request);
 }

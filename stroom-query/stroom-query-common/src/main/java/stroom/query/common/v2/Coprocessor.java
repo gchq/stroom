@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface Coprocessor extends Receiver {
+
     AtomicLong getValuesCount();
 
     boolean readPayload(Input input);

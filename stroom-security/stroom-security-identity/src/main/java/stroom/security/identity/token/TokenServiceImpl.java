@@ -17,14 +17,15 @@ import stroom.util.shared.ResultPage;
 import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwk.JsonWebKey;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 
 public class TokenServiceImpl implements TokenService, HasHealthCheck {
+
     private final JwkCache jwkCache;
     private final TokenDao tokenDao;
     private final AccountDao accountDao;

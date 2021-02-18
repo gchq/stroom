@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.util.shared.DataRange;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -28,15 +27,17 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class SteppingController {
+
     private static final TextRange DEFAULT_TEXT_RANGE = new TextRange(
             new DefaultLocation(1, 1),
             new DefaultLocation(1, 1));

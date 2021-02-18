@@ -17,6 +17,7 @@
 package stroom.pipeline.shared;
 
 public final class ElementIcons {
+
     public static final String FILE = "file.svg";
     public static final String FILES = "files.svg";
     public static final String HADOOP = "hadoop-elephant-logo.svg";

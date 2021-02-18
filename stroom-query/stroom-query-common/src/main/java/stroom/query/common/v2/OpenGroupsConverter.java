@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OpenGroupsConverter {
+
     static Set<RawKey> convertSet(final Set<String> openGroups) {
         return Metrics.measure("Converting open groups", () -> {
             Set<RawKey> rawKeys = Collections.emptySet();

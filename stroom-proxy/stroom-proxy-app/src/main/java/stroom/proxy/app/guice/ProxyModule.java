@@ -71,13 +71,14 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.nio.file.Paths;
-import java.util.Optional;
 
 public class ProxyModule extends AbstractModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
 
     // This name is used by dropwizard metrics

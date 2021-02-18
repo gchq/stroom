@@ -26,6 +26,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class DictionaryHandlerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsNull extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isNull";
     private static final long serialVersionUID = -305845496413936297L;
     private static final NullTest TEST = new NullTest();
@@ -47,6 +48,7 @@ class IsNull extends AbstractIsFunction implements Serializable {
     }
 
     private static class NullTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val.type().isNull());

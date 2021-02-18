@@ -20,6 +20,7 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class PasswordPolicyConfig extends AbstractConfig {
+
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
     private Boolean allowPasswordResets;
@@ -76,15 +77,18 @@ public class PasswordPolicyConfig extends AbstractConfig {
     }
 
     @JsonCreator
-    public PasswordPolicyConfig(@JsonProperty("allowPasswordResets") final Boolean allowPasswordResets,
-                                @JsonProperty("neverUsedAccountDeactivationThreshold") final StroomDuration neverUsedAccountDeactivationThreshold,
-                                @JsonProperty("unusedAccountDeactivationThreshold") final StroomDuration unusedAccountDeactivationThreshold,
-                                @JsonProperty("mandatoryPasswordChangeDuration") final StroomDuration mandatoryPasswordChangeDuration,
-                                @JsonProperty("forcePasswordChangeOnFirstLogin") final Boolean forcePasswordChangeOnFirstLogin,
-                                @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
-                                @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
-                                @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
-                                @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
+    public PasswordPolicyConfig(
+            @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets,
+            @JsonProperty("neverUsedAccountDeactivationThreshold") final
+            StroomDuration neverUsedAccountDeactivationThreshold,
+            @JsonProperty("unusedAccountDeactivationThreshold") final StroomDuration unusedAccountDeactivationThreshold,
+            @JsonProperty("mandatoryPasswordChangeDuration") final StroomDuration mandatoryPasswordChangeDuration,
+            @JsonProperty("forcePasswordChangeOnFirstLogin") final Boolean forcePasswordChangeOnFirstLogin,
+            @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
+            @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
+            @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
+            @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
+
         this.allowPasswordResets = allowPasswordResets;
         this.neverUsedAccountDeactivationThreshold = neverUsedAccountDeactivationThreshold;
         this.unusedAccountDeactivationThreshold = unusedAccountDeactivationThreshold;

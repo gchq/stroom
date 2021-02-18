@@ -17,12 +17,14 @@
 
 package stroom.document.client.event;
 
+import stroom.document.client.DocumentTabData;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.document.client.DocumentTabData;
 
 public class WriteDocumentEvent extends GwtEvent<WriteDocumentEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final DocumentTabData tabData;
 
@@ -56,6 +58,7 @@ public class WriteDocumentEvent extends GwtEvent<WriteDocumentEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onSave(final WriteDocumentEvent event);
     }
 }

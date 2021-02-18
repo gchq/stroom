@@ -33,13 +33,14 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class PipelineResourceImpl implements PipelineResource {
+
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final PipelineStackLoader pipelineStackLoader;
@@ -71,8 +72,8 @@ class PipelineResourceImpl implements PipelineResource {
     }
 
     @Override
-    public PipelineDoc update(final PipelineDoc doc) {
-        return documentResourceHelper.update(pipelineStore, doc);
+    public PipelineDoc update(final PipelineDoc pipelineDoc) {
+        return documentResourceHelper.update(pipelineStore, pipelineDoc);
     }
 
     @Override
@@ -111,7 +112,8 @@ class PipelineResourceImpl implements PipelineResource {
             try {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
 
-                // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+                // A user should be allowed to read pipelines that they are inheriting from as
+                // long as they have 'use' permission on them.
                 return securityContext.useAsReadResult(() -> {
                     final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
                     final List<PipelineData> result = new ArrayList<>(pipelines.size());

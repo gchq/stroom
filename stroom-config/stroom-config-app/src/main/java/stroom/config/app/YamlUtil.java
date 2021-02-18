@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class YamlUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(YamlUtil.class);
 
     private YamlUtil() {
@@ -73,7 +74,8 @@ public class YamlUtil {
         }
 
         if (path == null) {
-            throw new RuntimeException("Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
+            throw new RuntimeException(
+                    "Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
         }
 
         Path realConfigFile = null;
@@ -94,8 +96,6 @@ public class YamlUtil {
     /**
      * Reads a yaml file that matches the structure of a complete DropWizard {@link Config}
      * object tree. The file undergoes substitution and validation.
-     *
-     * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
         final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
@@ -103,7 +103,8 @@ public class YamlUtil {
                         new FileConfigurationSourceProvider(),
                         new EnvironmentVariableSubstitutor(false)));
 
-        final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
+                new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(
@@ -125,8 +126,6 @@ public class YamlUtil {
 
     /**
      * Reads a YAML string that has already been through the drop wizard env var substitution.
-     *
-     * @throws IOException
      */
     public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
 

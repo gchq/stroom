@@ -16,6 +16,8 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
 
 public class NewElementViewImpl extends ViewImpl implements NewElementView {
+
     private final Widget widget;
     @UiField
     TextBox id;
@@ -58,5 +60,6 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
     }
 
     public interface Binder extends UiBinder<Widget, NewElementViewImpl> {
+
     }
 }

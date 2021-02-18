@@ -1,7 +1,7 @@
 package stroom.core.receive;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
 
@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class ProxyAggregationJobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();
@@ -22,6 +23,7 @@ public class ProxyAggregationJobsModule extends AbstractModule {
     }
 
     private static class ProxyAggregation extends RunnableWrapper {
+
         @Inject
         ProxyAggregation(final ProxyAggregationExecutor proxyAggregationExecutor) {
             super(proxyAggregationExecutor::exec);

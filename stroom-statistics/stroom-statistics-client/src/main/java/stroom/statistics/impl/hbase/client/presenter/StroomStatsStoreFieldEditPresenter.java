@@ -16,10 +16,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.ui.config.client.UiConfigCache;
@@ -29,10 +25,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 
 public class StroomStatsStoreFieldEditPresenter
         extends MyPresenterWidget<StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView> {
+
     private static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private String fieldNamePattern;
@@ -56,7 +58,9 @@ public class StroomStatsStoreFieldEditPresenter
 
                     thisPresenter.setFieldNamePattern(fieldNamePattern);
                 })
-                .onFailure(caught -> AlertEvent.fireError(StroomStatsStoreFieldEditPresenter.this, caught.getMessage(), null));
+                .onFailure(caught -> AlertEvent.fireError(StroomStatsStoreFieldEditPresenter.this,
+                        caught.getMessage(),
+                        null));
     }
 
     public void read(final StatisticField field, final List<StatisticField> otherFields) {
@@ -103,6 +107,7 @@ public class StroomStatsStoreFieldEditPresenter
     }
 
     public interface StroomStatsStoreFieldEditView extends View {
+
         String getFieldName();
 
         void setFieldName(final String fieldName);

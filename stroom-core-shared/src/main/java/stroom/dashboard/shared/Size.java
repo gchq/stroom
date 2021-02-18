@@ -34,6 +34,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonPropertyOrder({"width", "height"})
 @JsonInclude(Include.NON_NULL)
 public class Size {
+
     @XmlElement(name = "width")
     @JsonProperty("width")
     private int width;

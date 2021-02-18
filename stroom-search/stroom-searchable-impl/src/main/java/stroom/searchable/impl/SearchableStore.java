@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class SearchableStore implements Store {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableStore.class);
 
     private static final String TASK_NAME = "DB Search";

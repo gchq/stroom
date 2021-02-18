@@ -26,13 +26,14 @@ import event.logging.OtherObject.Builder;
 import event.logging.util.EventLoggingUtil;
 
 class MetaObjectInfoProvider implements ObjectInfoProvider {
+
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final Meta meta = (Meta) obj;
 
         final Builder<Void> builder = OtherObject.builder()
-        .withType("Data")
-        .withId(String.valueOf(meta.getId()));
+                .withType("Data")
+                .withId(String.valueOf(meta.getId()));
 
         if (meta.getFeedName() != null) {
             builder.addData(EventLoggingUtil.createData("Feed", meta.getFeedName()));

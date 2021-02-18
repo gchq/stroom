@@ -25,6 +25,7 @@ import java.util.Map;
  * Helper to build meta data classes.
  */
 public final class StreamFactory {
+
     @Deprecated
     private static final String PERIOD_START_TIME = "periodStartTime";
 

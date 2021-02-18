@@ -10,6 +10,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class GetStatusResponse implements Serializable {
+
     private static final long serialVersionUID = 8200506344347303608L;
 
     @JsonProperty
@@ -25,14 +26,17 @@ public class GetStatusResponse implements Serializable {
     }
 
     public enum Status {
-        Error, Warn, Info
+        Error,
+        Warn,
+        Info
     }
 
     public static class StatusEntry implements Serializable {
+
         private static final long serialVersionUID = 4610323736148802674L;
-        private Status status;
-        private String area;
-        private String message;
+        private final Status status;
+        private final String area;
+        private final String message;
 
         public StatusEntry(Status status, String area, String message) {
             this.status = status;

@@ -62,18 +62,19 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.validation.ValidatorFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.inject.Inject;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.SessionCookieConfig;
+import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
@@ -150,8 +151,9 @@ public class App extends Application<Config> {
                 "index.html",
                 "ui"));
 
-        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
-        // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
+        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React
+        // BrowserRouter. This always needs the root page to be served regardless of the path requested so we
+        // need to use a special asset bundle to achieve this.
         bootstrap.addBundle(new BrowserRouterAssetsBundle(
                 "/new-ui",
                 "/",
@@ -262,7 +264,8 @@ public class App extends Application<Config> {
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
         if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath("useDefaultOpenIdCredentials");
+            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath(
+                    "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
@@ -354,6 +357,7 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
         // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'

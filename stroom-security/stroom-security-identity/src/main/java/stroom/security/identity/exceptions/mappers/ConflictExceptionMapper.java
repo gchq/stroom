@@ -18,10 +18,10 @@
 
 package stroom.security.identity.exceptions.mappers;
 
+import stroom.security.identity.exceptions.ConflictException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.security.identity.exceptions.ConflictException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -29,6 +29,7 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class ConflictExceptionMapper implements ExceptionMapper<ConflictException> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConflictExceptionMapper.class);
 
     @Override

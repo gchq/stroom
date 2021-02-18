@@ -17,6 +17,7 @@ public class QuickFilterTooltipUtil {
     public static SafeHtml createTooltip(final String header) {
         return createTooltip(header, Collections.emptyList());
     }
+
     public static SafeHtml createTooltip(final String header,
                                          final List<FilterFieldDefinition> fieldDefinitions) {
 
@@ -30,8 +31,10 @@ public class QuickFilterTooltipUtil {
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
         final String description = "By default matches on " +
-                (defaultFieldNames != null ?  defaultFieldNames  + " " : "") +
-        "with the characters input appearing anywhere (in order) in the matches.";
+                (defaultFieldNames != null
+                        ? defaultFieldNames + " "
+                        : "") +
+                "with the characters input appearing anywhere (in order) in the matches.";
         // All this help content needs to match what happens in QuickFilterPredicateFactory
         final Builder builder = TooltipUtil.builder()
                 .addHeading(header)
@@ -50,13 +53,19 @@ public class QuickFilterTooltipUtil {
                 .addTwoColTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
-                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
-                            .addRow(TooltipUtil.fixedWidthText("/abc"), "Regular expression matching (matches 'xxabcxx').")
-                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching (matches 'AlphaBravoCharlie').")
-                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match (matches 'abc'.")
+                            .addRow(TooltipUtil.fixedWidthText("abc"),
+                                    "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
+                            .addRow(TooltipUtil.fixedWidthText("/abc"),
+                                    "Regular expression matching (matches 'xxabcxx').")
+                            .addRow(TooltipUtil.fixedWidthText("?ABC"),
+                                    "Word boundary matching (matches 'AlphaBravoCharlie').")
+                            .addRow(TooltipUtil.fixedWidthText("^abc$"),
+                                    "Exact match (matches 'abc'.")
                             .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match (matches 'xxxabc')")
-                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix match (matches abcxxx').")
-                            .addRow(TooltipUtil.fixedWidthText("!abc"), "Negated match (matches 'xxx').");
+                            .addRow(TooltipUtil.fixedWidthText("^abc"),
+                                    "Prefix match (matches abcxxx').")
+                            .addRow(TooltipUtil.fixedWidthText("!abc"),
+                                    "Negated match (matches 'xxx').");
 
                     if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
                         tableBuilder
@@ -140,10 +149,12 @@ public class QuickFilterTooltipUtil {
                                     "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
-                                    "Matches Name field with 'abc' chars anywhere and Type field with regex '(error|warn)'")
+                                    "Matches Name field with 'abc' chars anywhere and Type field with " +
+                                            "regex '(error|warn)'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:?ABC type:!/error"),
-                                    "Matches Name field with word first letters A, B, C and Type field that doesn't match regex 'error'")
+                                    "Matches Name field with word first letters A, B, C and Type field that " +
+                                            "doesn't match regex 'error'")
                             .build());
         }
     }

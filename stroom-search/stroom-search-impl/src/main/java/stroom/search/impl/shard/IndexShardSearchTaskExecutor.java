@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardSearchTaskExecutor extends TaskExecutor {
+
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Search Index Shard",
             5,

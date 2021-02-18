@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.api.SecurityContext;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
@@ -27,10 +28,10 @@ import stroom.util.shared.ReadWithDocRef;
 import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ReadWithLongId;
 
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.MultivaluedMap;
 
 import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 
@@ -43,18 +44,20 @@ class RequestInfo {
     public RequestInfo(final SecurityContext securityContext, final ContainerResourceInfo containerResourceInfo) {
         this.containerResourceInfo = containerResourceInfo;
         this.requestObj = findRequestObj();
-        this.beforeCallObj = securityContext.asProcessingUserResult
-                (()->findBeforeCallObj(containerResourceInfo.getResource(), requestObj));
+        this.beforeCallObj = securityContext.asProcessingUserResult(
+                () -> findBeforeCallObj(containerResourceInfo.getResource(), requestObj));
     }
 
-    public RequestInfo(final SecurityContext securityContext, final ContainerResourceInfo containerResourceInfo, Object requestObj) {
+    public RequestInfo(final SecurityContext securityContext,
+                       final ContainerResourceInfo containerResourceInfo,
+                       Object requestObj) {
         this.containerResourceInfo = containerResourceInfo;
-        if (requestObj == null){
+        if (requestObj == null) {
             requestObj = findRequestObj();
         }
         this.requestObj = requestObj;
-        this.beforeCallObj = securityContext.asProcessingUserResult
-                (()->findBeforeCallObj(containerResourceInfo.getResource(), this.requestObj));
+        this.beforeCallObj = securityContext.asProcessingUserResult(
+                () -> findBeforeCallObj(containerResourceInfo.getResource(), this.requestObj));
     }
 
     public Object getRequestObj() {
@@ -69,7 +72,7 @@ class RequestInfo {
         return containerResourceInfo;
     }
 
-    private Object findBeforeCallObj(Object resource, Object template){
+    private Object findBeforeCallObj(Object resource, Object template) {
         if (template == null || resource == null) {
             return null;
         }
@@ -98,39 +101,40 @@ class RequestInfo {
                                 template.getClass().getSimpleName());
                     }
                 } else if (resource instanceof ReadWithLongId<?>) {
-                        ReadWithLongId<?> integerReadSupportingResource = (ReadWithLongId<?>) resource;
-                        if (template instanceof HasIntegerId) {
-                            result = integerReadSupportingResource.read(((HasIntegerId) template).getId().longValue());
-                        } else if (template instanceof HasId) {
-                            HasId hasId = (HasId) template;
-                            if (hasId.getId() > Integer.MAX_VALUE){
-                                RestResourceAutoLoggerImpl.LOGGER.error("ID out of range for int in request of type " +
-                                        template.getClass().getSimpleName());
-                            } else {
-                                result = integerReadSupportingResource.read(((HasId) template).getId());
-                            }
-                        } else  {
-                            RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
+                    ReadWithLongId<?> integerReadSupportingResource = (ReadWithLongId<?>) resource;
+                    if (template instanceof HasIntegerId) {
+                        result = integerReadSupportingResource.read(((HasIntegerId) template).getId().longValue());
+                    } else if (template instanceof HasId) {
+                        HasId hasId = (HasId) template;
+                        if (hasId.getId() > Integer.MAX_VALUE) {
+                            RestResourceAutoLoggerImpl.LOGGER.error("ID out of range for int in request of type " +
                                     template.getClass().getSimpleName());
+                        } else {
+                            result = integerReadSupportingResource.read(((HasId) template).getId());
                         }
-                } else if  (resource instanceof ReadWithDocRef<?>) {
+                    } else {
+                        RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
+                                template.getClass().getSimpleName());
+                    }
+                } else if (resource instanceof ReadWithDocRef<?>) {
                     ReadWithDocRef<?> docrefReadSupportingResource = (ReadWithDocRef<?>) resource;
                     if (template instanceof HasUuid && template instanceof HasType) {
-                        String type = ((HasType)template).getType();
+                        String type = ((HasType) template).getType();
                         String uuid = ((HasUuid) template).getUuid();
                         result = docrefReadSupportingResource.read(new DocRef(type, uuid));
                     } else {
-                        RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract uuid and type from request of type " +
-                                template.getClass().getSimpleName());
+                        RestResourceAutoLoggerImpl.LOGGER.error(
+                                "Unable to extract uuid and type from request of type " +
+                                        template.getClass().getSimpleName());
                     }
                 } else {
                     //Need to either implement the interface or switch to MANUALLY_LOGGED
                     RestResourceAutoLoggerImpl.LOGGER.warn("Remote resource " +
                             resource.getClass().getSimpleName() + " is not correctly configured for autologging." +
-                                    " Before operation object will not be available.");
+                            " Before operation object will not be available.");
                 }
 
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 RestResourceAutoLoggerImpl.LOGGER.info("Unable to find existing/previous version of object", ex);
             }
 
@@ -139,23 +143,31 @@ class RequestInfo {
         return result;
     }
 
-    private Object findRequestObj(){
-        int numberOfPathParms = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false).keySet().size();
-        int numberOfQueryParams = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false).keySet().size();
+    private Object findRequestObj() {
+        int numberOfPathParms = containerResourceInfo.getRequestContext()
+                .getUriInfo()
+                .getPathParameters(false)
+                .keySet()
+                .size();
+        int numberOfQueryParams = containerResourceInfo.getRequestContext()
+                .getUriInfo()
+                .getQueryParameters(false)
+                .keySet()
+                .size();
         int numberOfPathAndQueryParms = numberOfPathParms + numberOfQueryParams;
 
         if (numberOfPathAndQueryParms == 0) {
             return null;
         }
 
-        if (numberOfPathAndQueryParms > 1){
-            WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
+        if (numberOfPathAndQueryParms > 1) {
+            WithParameters obj = new WithParameters(
+                    containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
             obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
             return obj;
-        }
-        else {
+        } else {
             final MultivaluedMap<String, String> paramMap;
-            if (numberOfPathParms == 1){
+            if (numberOfPathParms == 1) {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false);
             } else {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false);
@@ -167,7 +179,8 @@ class RequestInfo {
             } else if ("uuid".equals(paramName)) {
                 return new ObjectUuid(paramValue);
             } else {
-                WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
+                WithParameters obj = new WithParameters(
+                        containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
                 obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
                 return obj;
             }
@@ -176,9 +189,10 @@ class RequestInfo {
     }
 
     public static class ObjectId implements HasId {
+
         private final long id;
 
-        public ObjectId(String val){
+        public ObjectId(String val) {
             long id = 0;
             try {
                 id = Long.parseLong(val);
@@ -196,9 +210,10 @@ class RequestInfo {
     }
 
     public static class ObjectUuid implements HasUuid {
+
         private final String uuid;
 
-        public ObjectUuid(String uuid){
+        public ObjectUuid(String uuid) {
             this.uuid = uuid;
         }
 
@@ -209,39 +224,49 @@ class RequestInfo {
     }
 
     public static class WithParameters implements HasName {
+
         private String name;
 
-        public WithParameters (MultivaluedMap<String, String> origParms){
+        public WithParameters(MultivaluedMap<String, String> origParms) {
             Set<Entry<String, String>> parms = createParms(origParms);
 
-            name = parms.stream().map(e ->
-            {return e.getKey() + " = " + e.getValue();}).collect(Collectors.joining(", "));
+            name = parms.stream()
+                    .map(e ->
+                            e.getKey() + " = " + e.getValue())
+                    .collect(Collectors.joining(", "));
         }
 
-        private Set<Entry<String, String>> createParms (MultivaluedMap<String, String> origParms){
-            return  origParms.keySet().stream().map(k -> {return new Entry<String, String>() {
-                @Override
-                public String getKey() {
-                    return k;
-                }
+        private Set<Entry<String, String>> createParms(MultivaluedMap<String, String> origParms) {
+            return origParms.keySet().stream().map(k -> {
+                return new Entry<String, String>() {
+                    @Override
+                    public String getKey() {
+                        return k;
+                    }
 
-                @Override
-                public String getValue() {
-                    return origParms.get(k).stream().collect(Collectors.joining(", "));
-                }
+                    @Override
+                    public String getValue() {
+                        return origParms.get(k).stream().collect(Collectors.joining(", "));
+                    }
 
-                @Override
-                public String setValue(final String value) {
-                    return null;
-                }
-            };}).collect(Collectors.toSet());
+                    @Override
+                    public String setValue(final String value) {
+                        return null;
+                    }
+                };
+            }).collect(Collectors.toSet());
         }
 
-        public void addParams (MultivaluedMap<String, String> origParms){
-            name = name.length() > 0 ? name + ", " : "" +
-                    createParms(origParms).stream().map(e ->
-                    {return e.getKey() + " = " + e.getValue();}).collect(Collectors.joining(", "));
+        public void addParams(MultivaluedMap<String, String> origParms) {
+            name = name.length() > 0
+                    ? name + ", "
+                    : "" +
+                            createParms(origParms).stream()
+                                    .map(e ->
+                                            e.getKey() + " = " + e.getValue())
+                                    .collect(Collectors.joining(", "));
         }
+
         @Override
         public String getName() {
             return name;

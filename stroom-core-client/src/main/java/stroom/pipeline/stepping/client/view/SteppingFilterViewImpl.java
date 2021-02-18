@@ -16,6 +16,14 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsView;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
+import stroom.svg.client.SvgPresets;
+import stroom.util.shared.OutputState;
+import stroom.util.shared.Severity;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,16 +33,10 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsView;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
-import stroom.svg.client.SvgPresets;
-import stroom.util.shared.OutputState;
-import stroom.util.shared.Severity;
-import stroom.widget.button.client.SvgButton;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {
+
     private final Widget widget;
     @UiField
     ListBox skipToErrors;
@@ -48,6 +50,7 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     SvgButton removeXPath;
     @UiField
     SimplePanel xPathList;
+
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
         addXPath = SvgButton.create(SvgPresets.ADD);
@@ -162,5 +165,6 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     }
 
     public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {
+
     }
 }

@@ -28,6 +28,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ExplorerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);

@@ -10,6 +10,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class KafkaConfigHandlerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

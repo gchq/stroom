@@ -64,6 +64,7 @@ import java.util.Set;
  * to be different we must throw an exception.
  */
 public class StreamTargetStroomStreamHandler implements StroomStreamHandler, StroomHeaderStreamHandler, Closeable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
     private final Store store;
@@ -181,11 +182,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     /**
      * Layers are used to synchronise writing context, meta and actual data to the current output stream provider.
+     *
      * @param type The type that needs to be added to the current layer.
      */
     private void checkLayer(final StroomZipFileType type) {
         if (currentLayer == null || currentLayer.hasType(type)) {
-            // We have either not initialised any layer or the current layer already includes this type so start a new layer.
+            // We have either not initialised any layer or the current layer already includes this type so start
+            // a new layer.
             currentLayer = new Layer();
             // Tell the new layer that it will contain the requested type.
             currentLayer.hasType(type);
@@ -251,11 +254,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
                     // Have we stored some data or context
                     if (lastDatStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastDatStroomZipEntry.getFullName()).equals(currentBaseName)) {
+                            && stroomZipNameSet.getBaseName(lastDatStroomZipEntry.getFullName())
+                            .equals(currentBaseName)) {
                         throw new IOException("Header and Data out of order for multiple feed data");
                     }
                     if (lastCtxStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastCtxStroomZipEntry.getFullName()).equals(currentBaseName)) {
+                            && stroomZipNameSet.getBaseName(lastCtxStroomZipEntry.getFullName())
+                            .equals(currentBaseName)) {
                         throw new IOException("Header and Data out of order for multiple feed data");
                     }
                 }
@@ -389,7 +394,9 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     private static class Layer {
+
         final Set<StroomZipFileType> types = new HashSet<>();
+
         boolean hasType(final StroomZipFileType type) {
             return !types.add(type);
         }

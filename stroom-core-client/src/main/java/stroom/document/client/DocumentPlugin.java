@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
+
     private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
     private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
     private final ContentManager contentManager;
@@ -67,7 +68,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    /**
 //     * 1. This method will create a new document and show it in the content pane.
 //     */
-//    void createDocument(final Presenter<?, ?> popup, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+//    void createDocument(final Presenter<?, ?> popup,
+//    final DocRef folder,
+//    final String name,
+//    final PermissionInheritance permissionInheritance) {
 //        create(getType(), name, folder, permissionInheritance).onSuccess(docRef -> {
 //            // Hide the create document presenter.
 //            HidePopupEvent.fire(DocumentPlugin.this, popup);
@@ -132,7 +136,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         return presenter;
     }
 
-    protected void showTab(final DocRef docRef, final MyPresenterWidget<?> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
+    protected void showTab(final DocRef docRef,
+                           final MyPresenterWidget<?> documentEditPresenter,
+                           final CloseHandler closeHandler,
+                           final DocumentTabData tabData) {
         final Consumer<Throwable> errorConsumer = caught -> {
             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
             // Stop spinning.
@@ -301,7 +308,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //     * 8.2. This method will move an document.
 //     */
 //    @SuppressWarnings("unchecked")
-//    void moveDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance) {
+//    void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    final DocRef folder, final PermissionInheritance permissionInheritance) {
 //        // Find out if we currently have the document open.
 //        final DocumentTabData tabData = documentToTabDataMap.get(document);
 //        if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
@@ -326,7 +334,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //        }
 //    }
 //
-//    private void moveDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance,
+//    private void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    final DocRef folder, final PermissionInheritance permissionInheritance,
 //                              final EntityEditPresenter<?, D> editPresenter) {
 //        move(document, folder, permissionInheritance).onSuccess(newDocRef -> {
 //            // Hide the copy document presenter.
@@ -483,15 +492,21 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     protected abstract MyPresenterWidget<?> createEditor();
 
-    public abstract void load(final DocRef docRef, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
+    public abstract void load(final DocRef docRef,
+                              final Consumer<D> resultConsumer,
+                              final Consumer<Throwable> errorConsumer);
 
-    public abstract void save(final DocRef docRef, final D document, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
+    public abstract void save(final DocRef docRef,
+                              final D document,
+                              final Consumer<D> resultConsumer,
+                              final Consumer<Throwable> errorConsumer);
 
     protected abstract DocRef getDocRef(D document);
 
     public abstract String getType();
 
     private class EntityCloseHandler implements CloseHandler {
+
         private final DocumentTabData tabData;
 
         EntityCloseHandler(final DocumentTabData tabData) {
