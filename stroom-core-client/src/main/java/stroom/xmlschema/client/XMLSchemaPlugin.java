@@ -81,7 +81,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(XML_SCHEMA_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

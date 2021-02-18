@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -26,7 +27,6 @@ import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,21 +37,22 @@ import javax.ws.rs.core.MediaType;
 @Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface XsltResource extends RestResource, DirectRestService {
-
-    @PUT
-    @Path("/")
-    @ApiOperation("Update an xslt doc")
-    XsltDoc update(XsltDoc xslt);
+public interface XsltResource extends RestResource, DirectRestService, FetchWithUuid<XsltDoc> {
 
     @GET
-    @Path("/{xsltId}")
+    @Path("/{uuid}")
     @ApiOperation("Fetch an xslt doc by its UUID")
-    XsltDoc fetch(@PathParam("xsltId") final String xsltId);
+    XsltDoc fetch(@PathParam("uuid") String uuid);
 
-    @POST
-    @Path("/{xsltId}")
-    @ApiOperation("Update an xslt doc")
-    void save(@PathParam("xsltId") final String xsltId,
-              @ApiParam("xsltDto") final XsltDTO xsltDto);
+    @PUT
+    @Path("/{uuid}")
+    @ApiOperation("Update a an xslt doc")
+    XsltDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") XsltDoc doc);
+
+//    // TODO : THis is for the React UI, can probably be removed at some point.
+//    @POST
+//    @Path("/{uuid}")
+//    @ApiOperation("Update an xslt doc")
+//    void save(@PathParam("uuid") final String uuid,
+//              @ApiParam("xsltDto") final XsltDTO xsltDto);
 }

@@ -68,7 +68,7 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DICTIONARY_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DICTIONARY_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

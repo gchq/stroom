@@ -67,7 +67,7 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -80,7 +80,7 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

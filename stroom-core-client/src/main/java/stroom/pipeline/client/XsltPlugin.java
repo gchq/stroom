@@ -81,7 +81,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(XSLT_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

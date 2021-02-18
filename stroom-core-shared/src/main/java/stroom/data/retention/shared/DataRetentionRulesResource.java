@@ -26,6 +26,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -39,25 +40,19 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataRetentionRulesResource extends RestResource, DirectRestService {
 
-    @POST
-    @Path("/read")
-    @ApiOperation(
-            value = "Get data retention rules",
-            response = DataRetentionRules.class)
-    DataRetentionRules read();
+    @GET
+    @Path("/")
+    @ApiOperation("Get data retention rules")
+    DataRetentionRules fetch();
 
     @PUT
-    @Path("/update")
-    @ApiOperation(
-            value = "Update data retention rules",
-            response = DataRetentionRules.class)
+    @Path("/")
+    @ApiOperation(value = "Update data retention rules")
     DataRetentionRules update(@ApiParam("dataRetentionRules") DataRetentionRules dataRetentionRules);
 
     @POST
     @Path("/impactSummary")
-    @ApiOperation(
-            value = "Get a summary of meta deletions with the passed data retention rules",
-            response = DataRetentionDeleteSummary.class)
+    @ApiOperation(value = "Get a summary of meta deletions with the passed data retention rules")
     DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
             @ApiParam("request") DataRetentionDeleteSummaryRequest request);
 

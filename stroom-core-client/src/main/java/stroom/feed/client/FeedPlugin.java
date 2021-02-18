@@ -68,7 +68,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(FEED_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(FEED_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

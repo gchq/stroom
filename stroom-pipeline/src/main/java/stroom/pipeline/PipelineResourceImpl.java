@@ -31,6 +31,7 @@ import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
 import java.util.ArrayList;
@@ -67,13 +68,23 @@ class PipelineResourceImpl implements PipelineResource {
     }
 
     @Override
-    public PipelineDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(pipelineStore, docRef);
+    public PipelineDoc fetch(final String uuid) {
+        return documentResourceHelper.read(pipelineStore, getDocRef(uuid));
     }
 
     @Override
-    public PipelineDoc update(final PipelineDoc pipelineDoc) {
-        return documentResourceHelper.update(pipelineStore, pipelineDoc);
+    public PipelineDoc update(final String uuid, final PipelineDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelper.update(pipelineStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(PipelineDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

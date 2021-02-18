@@ -16,6 +16,7 @@
 
 package stroom.visualisation.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -36,15 +37,15 @@ import javax.ws.rs.core.MediaType;
 @Path("/visualisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface VisualisationResource extends RestResource, DirectRestService {
+public interface VisualisationResource extends RestResource, DirectRestService, FetchWithUuid<VisualisationDoc> {
 
     @GET
-    @Path("/")
-    @ApiOperation("Get a visualisation doc")
-    VisualisationDoc fetch(@PathParam("uuid") final String uuid);
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a visualisation doc by its UUID")
+    VisualisationDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/")
+    @Path("/{uuid}")
     @ApiOperation("Update a visualisation doc")
-    VisualisationDoc update(@ApiParam("visualisationDoc") final VisualisationDoc visualisationDoc);
+    VisualisationDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") VisualisationDoc doc);
 }

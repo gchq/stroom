@@ -153,7 +153,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATISTIC_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -166,6 +166,6 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATISTIC_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 }

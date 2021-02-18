@@ -68,7 +68,7 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

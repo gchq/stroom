@@ -16,15 +16,14 @@
 
 package stroom.event.logging.rs.impl;
 
-import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasType;
 import stroom.util.shared.HasUuid;
-import stroom.util.shared.ReadWithDocRef;
 import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ReadWithLongId;
 
@@ -116,12 +115,11 @@ class RequestInfo {
                         RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
                                 template.getClass().getSimpleName());
                     }
-                } else if (resource instanceof ReadWithDocRef<?>) {
-                    ReadWithDocRef<?> docrefReadSupportingResource = (ReadWithDocRef<?>) resource;
+                } else if (resource instanceof FetchWithUuid<?>) {
+                    FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
                     if (template instanceof HasUuid && template instanceof HasType) {
-                        String type = ((HasType) template).getType();
                         String uuid = ((HasUuid) template).getUuid();
-                        result = docrefReadSupportingResource.read(new DocRef(type, uuid));
+                        result = docrefReadSupportingResource.fetch(uuid);
                     } else {
                         RestResourceAutoLoggerImpl.LOGGER.error(
                                 "Unable to extract uuid and type from request of type " +

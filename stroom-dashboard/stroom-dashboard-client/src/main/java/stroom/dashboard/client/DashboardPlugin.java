@@ -154,7 +154,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DASHBOARD_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -167,7 +167,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DASHBOARD_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

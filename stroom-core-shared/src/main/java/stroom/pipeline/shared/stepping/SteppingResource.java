@@ -17,7 +17,6 @@
 package stroom.pipeline.shared.stepping;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -40,22 +39,16 @@ public interface SteppingResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/getPipelineForStepping")
-    @ApiOperation(
-            value = "Get a pipeline for stepping",
-            response = DocRef.class)
+    @ApiOperation(value = "Get a pipeline for stepping")
     DocRef getPipelineForStepping(@ApiParam("request") GetPipelineForMetaRequest request);
 
     @POST
     @Path("/findElementDoc")
-    @ApiOperation(
-            value = "Load the document for an element",
-            response = Doc.class)
+    @ApiOperation(value = "Load the document for an element")
     DocRef findElementDoc(FindElementDocRequest request);
 
     @POST
     @Path("/step")
-    @ApiOperation(
-            value = "Step a pipeline",
-            response = SteppingResult.class)
+    @ApiOperation(value = "Step a pipeline")
     SteppingResult step(@ApiParam("request") PipelineStepRequest request);
 }

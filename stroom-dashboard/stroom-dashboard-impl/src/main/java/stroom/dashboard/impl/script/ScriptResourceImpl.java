@@ -22,6 +22,7 @@ import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.EntityServiceException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,13 +46,23 @@ class ScriptResourceImpl implements ScriptResource {
     }
 
     @Override
-    public ScriptDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(scriptStore, docRef);
+    public ScriptDoc fetch(final String uuid) {
+        return documentResourceHelper.read(scriptStore, getDocRef(uuid));
     }
 
     @Override
-    public ScriptDoc update(final ScriptDoc doc) {
+    public ScriptDoc update(final String uuid, final ScriptDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(scriptStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(ScriptDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

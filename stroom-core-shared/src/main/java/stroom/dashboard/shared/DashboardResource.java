@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.DocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -33,6 +33,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -40,17 +41,17 @@ import javax.ws.rs.core.MediaType;
 @Path("/dashboard" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface DashboardResource extends RestResource, DirectRestService {
+public interface DashboardResource extends RestResource, DirectRestService, FetchWithUuid<DashboardDoc> {
 
-    @POST
-    @Path("/read")
-    @ApiOperation(value = "Get a dashboard doc")
-    DashboardDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a dashboard doc by its UUID")
+    DashboardDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
-    @ApiOperation(value = "Update a dashboard doc")
-    DashboardDoc update(DashboardDoc doc);
+    @Path("/{uuid}")
+    @ApiOperation("Update a dashboard doc")
+    DashboardDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") DashboardDoc doc);
 
     @POST
     @Path("/validateExpression")

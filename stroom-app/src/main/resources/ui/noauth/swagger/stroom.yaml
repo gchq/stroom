@@ -69,7 +69,7 @@ paths:
                 type: boolean
           description: default response
     get:
-      operationId: read_17
+      operationId: read_6
       parameters:
       - in: path
         name: id
@@ -1026,36 +1026,6 @@ paths:
                   $ref: '#/components/schemas/DashboardSearchResponse'
                 uniqueItems: true
           description: default response
-  /dashboard/v1/read:
-    post:
-      operationId: read_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardDoc'
-          description: default response
-  /dashboard/v1/update:
-    put:
-      operationId: update_2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DashboardDoc'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardDoc'
-          description: default response
   /dashboard/v1/validateExpression:
     post:
       operationId: validateExpression
@@ -1070,6 +1040,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidateExpressionResult'
+          description: default response
+  /dashboard/v1/{uuid}:
+    get:
+      operationId: fetch_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardDoc'
+          description: default response
+    put:
+      operationId: update_2
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardDoc'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardDoc'
           description: default response
   /data/v1/download:
     post:
@@ -1088,7 +1094,7 @@ paths:
           description: default response
   /data/v1/fetch:
     post:
-      operationId: fetch_1
+      operationId: fetch_3
       requestBody:
         content:
           application/json:
@@ -1161,6 +1167,30 @@ paths:
                   type: string
                 uniqueItems: true
           description: default response
+  /dataRetentionRules/v1:
+    get:
+      operationId: fetch_2
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRetentionRules'
+          description: default response
+    put:
+      operationId: update_4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRetentionRules'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRetentionRules'
+          description: default response
   /dataRetentionRules/v1/impactSummary:
     post:
       operationId: getRetentionDeletionSummary
@@ -1191,31 +1221,6 @@ paths:
             application/json:
               schema:
                 type: boolean
-          description: default response
-  /dataRetentionRules/v1/read:
-    post:
-      operationId: read_3
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataRetentionRules'
-          description: default response
-  /dataRetentionRules/v1/update:
-    put:
-      operationId: update_4
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DataRetentionRules'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataRetentionRules'
           description: default response
   /dataSource/v1/fetchFields:
     post:
@@ -1273,57 +1278,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
-  /dictionary/v1/export:
-    post:
-      operationId: exportDocument_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Base64EncodedDocumentData'
-          description: default response
-  /dictionary/v1/import:
-    post:
-      operationId: importDocument_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Base64EncodedDocumentData'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocRef'
-          description: default response
-  /dictionary/v1/list:
+  /dictionary/v1/{uuid}:
     get:
-      operationId: listDocuments_1
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DocRef'
-                uniqueItems: true
-          description: default response
-  /dictionary/v1/read:
-    post:
-      operationId: read_5
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+      operationId: fetch_4
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -1331,9 +1294,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/DictionaryDoc'
           description: default response
-  /dictionary/v1/update:
     put:
       operationId: update_6
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -1345,40 +1313,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DictionaryDoc'
-          description: default response
-  /dictionary/v1/{dictionaryUuid}:
-    get:
-      operationId: fetch_2
-      parameters:
-      - in: path
-        name: dictionaryUuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DictionaryDTO'
-          description: default response
-    post:
-      operationId: save
-      parameters:
-      - in: path
-        name: dictionaryUuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DictionaryDTO'
-      responses:
-        default:
-          content:
-            application/json: {}
           description: default response
   /dictionary/v2/export:
     post:
@@ -1790,7 +1724,7 @@ paths:
           description: default response
   /explorer/v2/fetchExplorerNodes:
     post:
-      operationId: fetch_3
+      operationId: fetch_5
       requestBody:
         content:
           application/json:
@@ -1888,14 +1822,15 @@ paths:
                 items:
                   type: string
           description: default response
-  /feed/v1/read:
-    post:
-      operationId: read_6
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /feed/v1/{uuid}:
+    get:
+      operationId: fetch_6
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -1903,9 +1838,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/FeedDoc'
           description: default response
-  /feed/v1/update:
     put:
       operationId: update_7
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -1991,7 +1931,7 @@ paths:
                 type: boolean
           description: default response
     get:
-      operationId: read_4
+      operationId: read_2
       parameters:
       - in: path
         name: id
@@ -2029,7 +1969,7 @@ paths:
           description: default response
   /index/v1/export:
     post:
-      operationId: exportDocument_2
+      operationId: exportDocument_1
       requestBody:
         content:
           application/json:
@@ -2044,7 +1984,7 @@ paths:
           description: default response
   /index/v1/import:
     post:
-      operationId: importDocument_2
+      operationId: importDocument_1
       requestBody:
         content:
           application/json:
@@ -2059,7 +1999,7 @@ paths:
           description: default response
   /index/v1/list:
     get:
-      operationId: listDocuments_2
+      operationId: listDocuments_1
       responses:
         default:
           content:
@@ -2070,12 +2010,12 @@ paths:
                   $ref: '#/components/schemas/DocRef'
                 uniqueItems: true
           description: default response
-  /index/v1/{indexUuid}:
+  /index/v1/{uuid}:
     get:
-      operationId: fetch_4
+      operationId: fetch_7
       parameters:
       - in: path
-        name: indexUuid
+        name: uuid
         required: true
         schema:
           type: string
@@ -2085,10 +2025,10 @@ paths:
             application/json: {}
           description: default response
     post:
-      operationId: save_1
+      operationId: save
       parameters:
       - in: path
-        name: indexUuid
+        name: uuid
         required: true
         schema:
           type: string
@@ -2101,21 +2041,6 @@ paths:
         default:
           content:
             application/json: {}
-          description: default response
-  /index/v2/read:
-    post:
-      operationId: read_7
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IndexDoc'
           description: default response
   /index/v2/shard/delete:
     post:
@@ -2174,9 +2099,30 @@ paths:
                 type: integer
                 format: int64
           description: default response
-  /index/v2/update:
+  /index/v2/{uuid}:
+    get:
+      operationId: fetch_8
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexDoc'
+          description: default response
     put:
       operationId: update_10
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -2252,7 +2198,7 @@ paths:
                 type: boolean
           description: default response
     get:
-      operationId: read_9
+      operationId: read_4
       parameters:
       - in: path
         name: id
@@ -2336,7 +2282,7 @@ paths:
                 type: boolean
           description: default response
     get:
-      operationId: read_8
+      operationId: read_3
       parameters:
       - in: path
         name: id
@@ -2516,14 +2462,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
-  /kafkaConfig/v1/read:
-    post:
-      operationId: read_10
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /kafkaConfig/v1/{uuid}:
+    get:
+      operationId: fetch_9
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -2531,9 +2478,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/KafkaConfigDoc'
           description: default response
-  /kafkaConfig/v1/update:
     put:
       operationId: update_13
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3019,21 +2971,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/FetchPropertyTypesResult'
           description: default response
-  /pipeline/v1/read:
-    post:
-      operationId: read_11
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PipelineDoc'
-          description: default response
   /pipeline/v1/savePipelineXml:
     put:
       operationId: savePipelineXml
@@ -3049,9 +2986,30 @@ paths:
               schema:
                 type: boolean
           description: default response
-  /pipeline/v1/update:
+  /pipeline/v1/{uuid}:
+    get:
+      operationId: fetch_11
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineDoc'
+          description: default response
     put:
       operationId: update_14
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3106,12 +3064,12 @@ paths:
           content:
             application/json: {}
           description: default response
-  /pipelines/v1/{pipelineId}:
+  /pipelines/v1/{uuid}:
     get:
-      operationId: fetch_5
+      operationId: fetch_10
       parameters:
       - in: path
-        name: pipelineId
+        name: uuid
         required: true
         schema:
           type: string
@@ -3121,10 +3079,10 @@ paths:
             application/json: {}
           description: default response
     post:
-      operationId: save_2
+      operationId: save_1
       parameters:
       - in: path
-        name: pipelineId
+        name: uuid
         required: true
         schema:
           type: string
@@ -3236,7 +3194,7 @@ paths:
             application/json: {}
           description: default response
     get:
-      operationId: read_13
+      operationId: read_5
       parameters:
       - in: path
         name: id
@@ -3478,7 +3436,7 @@ paths:
           description: default response
   /ruleset/v2/export:
     post:
-      operationId: exportDocument_3
+      operationId: exportDocument_2
       requestBody:
         content:
           application/json:
@@ -3493,7 +3451,7 @@ paths:
           description: default response
   /ruleset/v2/import:
     post:
-      operationId: importDocument_3
+      operationId: importDocument_2
       requestBody:
         content:
           application/json:
@@ -3508,7 +3466,7 @@ paths:
           description: default response
   /ruleset/v2/list:
     get:
-      operationId: listDocuments_3
+      operationId: listDocuments_2
       responses:
         default:
           content:
@@ -3519,14 +3477,15 @@ paths:
                   $ref: '#/components/schemas/DocRef'
                 uniqueItems: true
           description: default response
-  /ruleset/v2/read:
-    post:
-      operationId: read_14
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /ruleset/v2/{uuid}:
+    get:
+      operationId: fetch_15
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3534,9 +3493,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReceiveDataRules'
           description: default response
-  /ruleset/v2/update:
     put:
       operationId: update_18
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3581,14 +3545,15 @@ paths:
                 items:
                   $ref: '#/components/schemas/ScriptDoc'
           description: default response
-  /script/v1/read:
-    post:
-      operationId: read_15
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /script/v1/{uuid}:
+    get:
+      operationId: fetch_16
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3596,9 +3561,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScriptDoc'
           description: default response
-  /script/v1/update:
     put:
       operationId: update_19
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3712,7 +3682,7 @@ paths:
           description: default response
   /solr/index/v1/export:
     post:
-      operationId: exportDocument_4
+      operationId: exportDocument_3
       requestBody:
         content:
           application/json:
@@ -3727,7 +3697,7 @@ paths:
           description: default response
   /solr/index/v1/import:
     post:
-      operationId: importDocument_4
+      operationId: importDocument_3
       requestBody:
         content:
           application/json:
@@ -3742,7 +3712,7 @@ paths:
           description: default response
   /solr/index/v1/list:
     get:
-      operationId: listDocuments_4
+      operationId: listDocuments_3
       responses:
         default:
           content:
@@ -3770,21 +3740,6 @@ paths:
                 items:
                   type: string
           description: default response
-  /solrIndex/v1/read:
-    post:
-      operationId: read_16
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SolrIndexDoc'
-          description: default response
   /solrIndex/v1/solrConnectionTest:
     post:
       operationId: solrConnectionTest
@@ -3800,9 +3755,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/SolrConnectionTestResponse'
           description: default response
-  /solrIndex/v1/update:
+  /solrIndex/v1/{uuid}:
+    get:
+      operationId: fetch_17
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolrIndexDoc'
+          description: default response
     put:
       operationId: update_20
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3913,14 +3889,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatisticsDataSourceData'
           description: default response
-  /statistic/v1/read:
-    post:
-      operationId: read_21
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /statistic/v1/{uuid}:
+    get:
+      operationId: fetch_20
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3928,9 +3905,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatisticStoreDoc'
           description: default response
-  /statistic/v1/update:
     put:
       operationId: update_23
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3992,14 +3974,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/StroomStatsStoreEntityData'
           description: default response
-  /statsStore/v1/read:
-    post:
-      operationId: read_20
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /statsStore/v1/{uuid}:
+    get:
+      operationId: fetch_19
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -4007,9 +3990,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/StroomStatsStoreDoc'
           description: default response
-  /statsStore/v1/update:
     put:
       operationId: update_22
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -4114,7 +4102,7 @@ paths:
           description: default response
   /storedQuery/v1/read:
     post:
-      operationId: read_2
+      operationId: read_1
       requestBody:
         content:
           application/json:
@@ -4519,7 +4507,7 @@ paths:
           description: default response
   /suggest/v1:
     post:
-      operationId: fetch_7
+      operationId: fetch_14
       requestBody:
         content:
           application/json:
@@ -4646,14 +4634,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskProgressResponse'
           description: default response
-  /textConverter/v1/read:
-    post:
-      operationId: read_12
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
+  /textConverter/v1/{uuid}:
+    get:
+      operationId: fetch_12
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -4661,9 +4650,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/TextConverterDoc'
           description: default response
-  /textConverter/v1/update:
     put:
       operationId: update_15
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -4729,7 +4723,7 @@ paths:
                 format: int32
           description: default response
     get:
-      operationId: read_19
+      operationId: read_8
       parameters:
       - in: path
         name: token
@@ -4798,7 +4792,7 @@ paths:
                 format: int32
           description: default response
     get:
-      operationId: read_18
+      operationId: read_7
       parameters:
       - in: path
         name: id
@@ -4936,7 +4930,7 @@ paths:
           description: default response
   /users/v1/{userUuid}:
     get:
-      operationId: fetch_8
+      operationId: fetch_18
       parameters:
       - in: path
         name: userUuid
@@ -5007,9 +5001,9 @@ paths:
               schema:
                 type: boolean
           description: default response
-  /visualisation/v1:
+  /visualisation/v1/{uuid}:
     get:
-      operationId: fetch_9
+      operationId: fetch_21
       parameters:
       - in: path
         name: uuid
@@ -5025,6 +5019,12 @@ paths:
           description: default response
     put:
       operationId: update_24
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -5045,24 +5045,9 @@ paths:
           content:
             application/json: {}
           description: default response
-  /xmlSchema/v1:
-    put:
-      operationId: update_25
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/XmlSchemaDoc'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XmlSchemaDoc'
-          description: default response
   /xmlSchema/v1/{uuid}:
     get:
-      operationId: fetch_10
+      operationId: fetch_22
       parameters:
       - in: path
         name: uuid
@@ -5076,9 +5061,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/XmlSchemaDoc'
           description: default response
-  /xslt/v1:
+    put:
+      operationId: update_25
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XmlSchemaDoc'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XmlSchemaDoc'
+          description: default response
+  /xslt/v1/{uuid}:
+    get:
+      operationId: fetch_13
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XsltDoc'
+          description: default response
     put:
       operationId: update_16
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -5090,40 +5116,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XsltDoc'
-          description: default response
-  /xslt/v1/{xsltId}:
-    get:
-      operationId: fetch_6
-      parameters:
-      - in: path
-        name: xsltId
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XsltDoc'
-          description: default response
-    post:
-      operationId: save_3
-      parameters:
-      - in: path
-        name: xsltId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/XsltDTO'
-      responses:
-        default:
-          content:
-            application/json: {}
           description: default response
 components:
   schemas:
@@ -6209,25 +6201,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-    DictionaryDTO:
-      type: object
-      properties:
-        data:
-          type: string
-        description:
-          type: string
-        imports:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocRef'
-        name:
-          type: string
-        type:
-          type: string
-        uuid:
-          type: string
-      xml:
-        name: doc
     DictionaryDoc:
       type: object
       properties:
@@ -10496,21 +10469,6 @@ components:
           type: string
         version:
           type: string
-    XsltDTO:
-      type: object
-      properties:
-        data:
-          type: string
-        description:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        uuid:
-          type: string
-      xml:
-        name: doc
     XsltDoc:
       type: object
       properties:

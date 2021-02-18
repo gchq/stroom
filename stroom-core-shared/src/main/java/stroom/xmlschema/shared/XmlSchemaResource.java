@@ -16,11 +16,13 @@
 
 package stroom.xmlschema.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -35,15 +37,15 @@ import javax.ws.rs.core.MediaType;
 @Path("/xmlSchema" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface XmlSchemaResource extends RestResource, DirectRestService {
+public interface XmlSchemaResource extends RestResource, DirectRestService, FetchWithUuid<XmlSchemaDoc> {
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Get an xml schema doc")
+    @ApiOperation("Fetch a xml schema doc by its UUID")
     XmlSchemaDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/")
-    @ApiOperation("Update an xml schema doc")
-    XmlSchemaDoc update(XmlSchemaDoc xslt);
+    @Path("/{uuid}")
+    @ApiOperation("Update a xml schema doc")
+    XmlSchemaDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") XmlSchemaDoc doc);
 }

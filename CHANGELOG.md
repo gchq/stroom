@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading. 
+
 
 ## [v7.0-beta.81] - 2021-02-16
 

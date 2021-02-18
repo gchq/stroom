@@ -41,13 +41,23 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource {
     }
 
     @Override
-    public KafkaConfigDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(kafkaConfigStore, docRef);
+    public KafkaConfigDoc fetch(final String uuid) {
+        return documentResourceHelper.read(kafkaConfigStore, getDocRef(uuid));
     }
 
     @Override
-    public KafkaConfigDoc update(final KafkaConfigDoc doc) {
+    public KafkaConfigDoc update(final String uuid, final KafkaConfigDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(kafkaConfigStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(KafkaConfigDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

@@ -73,9 +73,7 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
+    @ApiOperation(value = "Submit a request for a data source definition, supplying the DocRef for the data source")
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
@@ -86,9 +84,7 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
+    @ApiOperation(value = "Submit a search request")
     public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
 
         //if this is the first call for this query key then it will create a searchResponseCreator (& store) that have
