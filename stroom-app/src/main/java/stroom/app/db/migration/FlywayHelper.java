@@ -30,7 +30,7 @@ public class FlywayHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FlywayHelper.class);
 
-    @Parameter(description = "The flyway action to perform.")
+    @Parameter(description = "The flyway action to perform.", required = true)
     String action;
 
     @Parameter(names = {"--url", "-l"})

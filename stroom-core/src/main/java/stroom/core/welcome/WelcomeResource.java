@@ -11,8 +11,8 @@ import stroom.util.shared.RestResource;
 import event.logging.Banner;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.ViewEventAction;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -22,7 +22,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Welcome")
+@Tag(name = "Welcome")
 @Path("/welcome" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,7 +40,7 @@ public class WelcomeResource implements RestResource {
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @GET
-    @ApiOperation(value = "Get the configured HTML welcome message")
+    @Operation(summary = "Get the configured HTML welcome message")
     public Welcome fetch() {
         return stroomEventLoggingServiceProvider.get().loggedResult(
                 StroomEventLoggingUtil.buildTypeId(this, "fetch"),

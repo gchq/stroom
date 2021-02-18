@@ -20,9 +20,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -34,7 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Jobs (Node)")
+@Tag(name = "Jobs (Node)")
 @Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,31 +48,31 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @ApiOperation("Lists job nodes")
+    @Operation(summary = "Lists job nodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO_PATH_PART)
-    @ApiOperation("Gets current info for a job node")
+    @Operation(summary = "Gets current info for a job node")
     JobNodeInfo info(@QueryParam("jobName") String jobName,
                      @QueryParam("nodeName") String nodeName);
 
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
-    @ApiOperation(value = "Sets the task limit for the job node")
+    @Operation(summary = "Sets the task limit for the job node")
     void setTaskLimit(@PathParam("id") Integer id,
-                      @ApiParam("taskLimit") Integer taskLimit);
+                      @Parameter(description = "taskLimit", required = true) Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
-    @ApiOperation(value = "Sets the schedule job node")
+    @Operation(summary = "Sets the schedule job node")
     void setSchedule(@PathParam("id") Integer id,
-                     @ApiParam("schedule") String schedule);
+                     @Parameter(description = "schedule", required = true) String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
-    @ApiOperation(value = "Sets the enabled status of the job node")
+    @Operation(summary = "Sets the enabled status of the job node")
     void setEnabled(@PathParam("id") Integer id,
-                    @ApiParam("enabled") Boolean enabled);
+                    @Parameter(description = "enabled", required = true) Boolean enabled);
 }

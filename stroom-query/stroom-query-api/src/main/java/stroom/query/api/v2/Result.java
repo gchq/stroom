@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -37,20 +36,19 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = VisResult.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
-@ApiModel(
+@Schema(
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class, VisResult.class})
 public abstract class Result {
 
     //TODO add an example value
-    @ApiModelProperty(
-            value = "The ID of the component that this result set was requested for. See ResultRequest in " +
-                    "SearchRequest",
+    @Schema(description = "The ID of the component that this result set was requested for. See ResultRequest in " +
+            "SearchRequest",
             required = true)
     @JsonProperty
     private final String componentId;
 
-    @ApiModelProperty(value = "If an error has occurred producing this result set then this will have details " +
+    @Schema(description = "If an error has occurred producing this result set then this will have details " +
             "of the error")
     @JsonProperty
     private final String error;

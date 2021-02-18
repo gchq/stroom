@@ -22,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -44,11 +44,11 @@ import java.util.stream.Stream;
  * List that knows how big the whole set is.
  */
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "A page of results.")
+@Schema(description = "A page of results.")
 public class ResultPage<T> implements Serializable {
 
     @JsonProperty
-    @ApiModelProperty(value = "The values in this page of data.")
+    @JsonPropertyDescription("The values in this page of data.")
     private final List<T> values;
 
     @JsonProperty

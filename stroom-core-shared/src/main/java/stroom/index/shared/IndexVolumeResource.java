@@ -5,9 +5,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -21,7 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Index Volumes")
+@Tag(name = "Index Volumes")
 @Path(IndexVolumeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -32,31 +32,31 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @ApiOperation("Finds index volumes matching request")
-    ResultPage<IndexVolume> find(@ApiParam("request") ExpressionCriteria request);
+    @Operation(summary = "Finds index volumes matching request")
+    ResultPage<IndexVolume> find(@Parameter(description = "request", required = true) ExpressionCriteria request);
 
     @POST
-    @ApiOperation("Creates an index volume")
-    IndexVolume create(@ApiParam("request") IndexVolume request);
+    @Operation(summary = "Creates an index volume")
+    IndexVolume create(@Parameter(description = "request", required = true) IndexVolume request);
 
     @GET
     @Path("/{id}")
-    @ApiOperation("Gets an index volume")
+    @Operation(summary = "Gets an index volume")
     IndexVolume read(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation("Updates an index volume")
+    @Operation(summary = "Updates an index volume")
     IndexVolume update(@PathParam("id") Integer id,
-                       @ApiParam("indexVolume") IndexVolume indexVolume);
+                       @Parameter(description = "indexVolume", required = true) IndexVolume indexVolume);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation("Deletes an index volume")
+    @Operation(summary = "Deletes an index volume")
     Boolean delete(@PathParam("id") Integer id);
 
     @DELETE
     @Path(RESCAN_SUB_PATH)
-    @ApiOperation("Rescans index volumes")
+    @Operation(summary = "Rescans index volumes")
     Boolean rescan(@QueryParam("nodeName") String nodeName);
 }

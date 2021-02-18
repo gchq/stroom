@@ -5,8 +5,8 @@ import stroom.util.shared.RestResource;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import javax.ws.rs.Consumes;
@@ -16,7 +16,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "System Info")
+@Tag(name = "System Info")
 @Path(SystemInfoResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -26,16 +26,16 @@ public interface SystemInfoResource extends RestResource {
     String NAMES_PATH_PART = "/names";
 
     @GET
-    @ApiOperation(value = "Get all system info results")
+    @Operation(summary = "Get all system info results")
     SystemInfoResultList getAll();
 
     @GET
     @Path(NAMES_PATH_PART)
-    @ApiOperation(value = "Get all system info result names")
+    @Operation(summary = "Get all system info result names")
     List<String> getNames();
 
     @GET
     @Path("/{name}")
-    @ApiOperation(value = "Get a system info result by name")
+    @Operation(summary = "Get a system info result by name")
     SystemInfoResult get(@PathParam("name") final String name);
 }

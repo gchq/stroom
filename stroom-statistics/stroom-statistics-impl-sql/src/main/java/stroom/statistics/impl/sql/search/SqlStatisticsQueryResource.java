@@ -27,9 +27,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Sql Statistics Query")
+@Tag(name = "Sql Statistics Query")
 @Path("/sqlstatistics" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -59,8 +59,8 @@ public class SqlStatisticsQueryResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
-    public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
+    @Operation(summary = "Submit a request for a data source definition, supplying the DocRef for the data source")
+    public DataSource getDataSource(@Parameter(description = "DocRef", required = true) final DocRef docRef) {
 
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
@@ -72,8 +72,9 @@ public class SqlStatisticsQueryResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @ApiOperation("Submit a search request")
-    public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
+    @Operation(summary = "Submit a search request")
+    public SearchResponse search(
+            @Parameter(description = "SearchRequest", required = true) final SearchRequest request) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(request);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
@@ -85,8 +86,8 @@ public class SqlStatisticsQueryResource implements RestResource {
     @POST
     @Path("/destroy")
     @Timed
-    @ApiOperation("Destroy a running query")
-    public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
+    @Operation(summary = "Destroy a running query")
+    public Boolean destroy(@Parameter(description = "QueryKey", required = true) final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);

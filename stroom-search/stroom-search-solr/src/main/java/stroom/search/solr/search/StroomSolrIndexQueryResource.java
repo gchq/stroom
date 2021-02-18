@@ -37,9 +37,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -49,7 +49,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Solr Queries")
+@Tag(name = "Solr Queries")
 @Path("/stroom-solr-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -73,8 +73,8 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @ApiOperation(value = "Submit a request for a data source definition, supplying the DocRef for the data source")
-    public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
+    @Operation(summary = "Submit a request for a data source definition, supplying the DocRef for the data source")
+    public DataSource getDataSource(@Parameter(description = "DocRef", required = true) final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
             return new DataSource(SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
@@ -84,8 +84,9 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @ApiOperation(value = "Submit a search request")
-    public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
+    @Operation(summary = "Submit a search request")
+    public SearchResponse search(
+            @Parameter(description = "SearchRequest", required = true) final SearchRequest request) {
 
         //if this is the first call for this query key then it will create a searchResponseCreator (& store) that have
         //a lifespan beyond the scope of this request and then begin the search for the data
@@ -103,8 +104,9 @@ public class StroomSolrIndexQueryResource implements RestResource {
         return searchResponse;
     }
 
-    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request,
-                                             final SearchResponse searchResponse) {
+    private String getResponseInfoForLogging(
+            @Parameter(description = "SearchRequest", required = true) final SearchRequest request,
+            final SearchResponse searchResponse) {
         String resultInfo;
 
         if (searchResponse.getResults() != null) {
@@ -146,10 +148,8 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/destroy")
     @Timed
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
-    public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
+    @Operation(summary = "Destroy a running query")
+    public Boolean destroy(@Parameter(description = "QueryKey", required = true) final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
     }

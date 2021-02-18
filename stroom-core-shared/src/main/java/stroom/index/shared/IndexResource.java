@@ -21,9 +21,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -36,7 +36,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Indexes (v2)")
+@Tag(name = "Indexes (v2)")
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,28 +48,30 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a index doc by its UUID")
+    @Operation(summary = "Fetch a index doc by its UUID")
     IndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update an index doc")
-    IndexDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") IndexDoc doc);
+    @Operation(summary = "Update an index doc")
+    IndexDoc update(@PathParam("uuid") String uuid,
+                    @Parameter(description = "doc", required = true) IndexDoc doc);
 
     @POST
     @Path("/shard/find")
-    @ApiOperation("Find matching index shards")
-    ResultPage<IndexShard> findIndexShards(@ApiParam("criteria") FindIndexShardCriteria criteria);
+    @Operation(summary = "Find matching index shards")
+    ResultPage<IndexShard> findIndexShards(
+            @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
-    @ApiOperation("Delete matching index shards")
+    @Operation(summary = "Delete matching index shards")
     Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
-                           @ApiParam("criteria") FindIndexShardCriteria criteria);
+                           @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
-    @ApiOperation("Flush matching index shards")
+    @Operation(summary = "Flush matching index shards")
     Long flushIndexShards(@QueryParam("nodeName") String nodeName,
-                          @ApiParam("criteria") FindIndexShardCriteria criteria);
+                          @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 }

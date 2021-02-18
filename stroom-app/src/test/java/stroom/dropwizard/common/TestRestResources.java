@@ -7,8 +7,9 @@ import stroom.util.shared.RestResource;
 import com.google.common.base.Strings;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple4;
@@ -42,7 +43,6 @@ import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
 
 class TestRestResources {
 
@@ -208,7 +208,7 @@ class TestRestResources {
 
                 doSwaggerAnnotationAsserts(resourceClass, typeName, softAssertions);
             } else {
-                LOGGER.info("@Api/@ApiOperation assertions handled by interface");
+                LOGGER.info("@Api/@Operation assertions handled by interface");
                 // This is a class that implements an iface that extends RestResource so
                 // that will be dealt with when it looks at that iface directly.
             }
@@ -310,28 +310,31 @@ class TestRestResources {
                                             final SoftAssertions softAssertions) {
         LOGGER.info("Doing @Api... asserts");
 
-        final boolean classHasApiAnnotation = resourceClass.isAnnotationPresent(Api.class);
+        final boolean classHasApiAnnotation = resourceClass.isAnnotationPresent(Tag.class);
         final String[] apiAnnotationTags = classHasApiAnnotation
-                ? resourceClass.getAnnotation(Api.class).tags()
+                ? Arrays
+                .stream(resourceClass.getAnnotationsByType(Tag.class))
+                .map(Tag::name).collect(Collectors.toList())
+                .toArray(new String[0])
                 : new String[0];
 
         softAssertions.assertThat(classHasApiAnnotation)
                 .withFailMessage(() -> typeName + " must have class annotation like " +
-                        "@Api(tags = \"Nodes\")")
+                        "@Tag(tags = \"Nodes\")")
                 .isTrue();
 
         if (classHasApiAnnotation) {
-            LOGGER.info("Class has @Api annotation");
+            LOGGER.info("Class has @Tag annotation");
             softAssertions.assertThat(apiAnnotationTags.length)
-                    .withFailMessage(() -> "@Api must have tags property set, e.g. @Api(tags = \"Nodes\")")
+                    .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
                     .isGreaterThanOrEqualTo(1);
             if (apiAnnotationTags.length >= 1) {
                 softAssertions.assertThat(apiAnnotationTags[0])
-                        .withFailMessage(() -> "@Api must have tags property set, e.g. @Api(tags = \"Nodes\")")
+                        .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
                         .isNotEmpty();
             }
         } else {
-            LOGGER.info("Class doesn't have @Api annotation");
+            LOGGER.info("Class doesn't have @Tag annotation");
         }
 
         Arrays.stream(resourceClass.getMethods())
@@ -347,32 +350,33 @@ class TestRestResources {
 
                     LOGGER.debug("Found annotations {}", methodAnnotationTypes);
 
-                    final boolean hasApiOpAnno = methodAnnotationTypes.contains(ApiOperation.class);
+                    final boolean hasApiOpAnno = methodAnnotationTypes.contains(Operation.class);
 
                     softAssertions.assertThat(hasApiOpAnno)
                             .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
-                                    "with @ApiOperation(value = \"Some description of what the method does\")")
+                                    "with @Operation(summary = \"Some description of what the method does\")")
                             .isTrue();
 
                     if (hasApiOpAnno) {
                         final Class<?> methodReturnClass = method.getReturnType();
-                        final ApiOperation apiOperation = method.getAnnotation(ApiOperation.class);
-                        final Optional<? extends Class<?>> optApiOpResponseClass = Optional.of(apiOperation.response())
-                                .filter(clazz -> !Void.class.equals(clazz));
+                        final Operation apiOperation = method.getAnnotation(Operation.class);
+                        final ApiResponse[] responses = apiOperation.responses();
 
-                        // Only need to set response when Response is used
-                        if (Response.class.equals(methodReturnClass)) {
-                            softAssertions.assertThat(optApiOpResponseClass)
-                                    .withFailMessage(() -> "Method " + method.getName() + "(...) must have response " +
-                                            "set in @ApiOperation, e.g. @ApiOperation(value = \"xxx\" " +
-                                            "response = Node.class)")
-                                    .isPresent();
-                        } else {
-                            if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
-                                softAssertions.fail("Method " + method.getName() + "(...) does not need " +
-                                        "to have response set on @ApiOperation, remove it.");
-                            }
-                        }
+                        // FIXME : @66 FIX THIS
+//                        // Only need to set response when Response is used
+//                        if (Response.class.equals(methodReturnClass)) {
+//                            softAssertions.assertThat(responses[0].)
+//                                    .withFailMessage(() ->
+//                                    "Method " + method.getName() + "(...) must have response " +
+//                                            "set in @Operation, e.g. @Operation(summary = \"xxx\" " +
+//                                            "response = Node.class)")
+//                                    .isPresent();
+//                        } else {
+//                            if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
+//                                softAssertions.fail("Method " + method.getName() + "(...) does not need " +
+//                                        "to have response set on @Operation, remove it.");
+//                            }
+//                        }
                     }
                 });
     }

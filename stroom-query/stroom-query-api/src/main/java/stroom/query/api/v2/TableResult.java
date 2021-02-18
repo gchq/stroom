@@ -20,33 +20,31 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(
-        description = "Object for describing a set of results in a table form that supports grouped data",
-        parent = Result.class)
+@Schema(description = "Object for describing a set of results in a table form that supports grouped data")
 public class TableResult extends Result {
 
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     @JsonProperty
     private final List<Field> fields;
 
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     @JsonProperty
     private final List<Row> rows;
 
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     @JsonProperty
     private final OffsetRange resultRange;
 
-    @ApiModelProperty(value = "The total number of results in this result set")
+    @JsonPropertyDescription("The total number of results in this result set")
     @JsonProperty
     private final Integer totalResults;
 

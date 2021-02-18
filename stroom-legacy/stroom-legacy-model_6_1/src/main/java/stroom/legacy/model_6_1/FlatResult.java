@@ -16,23 +16,21 @@
 
 package stroom.legacy.model_6_1;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
-        description = "A result structure used primarily for visualisation data",
-        parent = Result.class)
+@Schema(description = "A result structure used primarily for visualisation data")
 @Deprecated
 public final class FlatResult extends Result {
 
@@ -42,12 +40,12 @@ public final class FlatResult extends Result {
     private List<Field> structure;
 
     @XmlElement
-    @ApiModelProperty(value = "The 2 dimensional array containing the result set. The positions in the inner array " +
+    @JsonPropertyDescription("The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
     private List<List<Object>> values;
 
     @XmlElement
-    @ApiModelProperty(value = "The size of the result set being returned")
+    @JsonPropertyDescription("The size of the result set being returned")
     private Long size;
 
     private FlatResult() {
@@ -88,9 +86,15 @@ public final class FlatResult extends Result {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final FlatResult that = (FlatResult) o;
         return Objects.equals(structure, that.structure) &&
                 Objects.equals(values, that.values) &&
@@ -122,10 +126,9 @@ public final class FlatResult extends Result {
          * Add headings to our data
          *
          * @param fields the fields which act as headings for our data
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addFields(final Field...fields) {
+        public Builder addFields(final Field... fields) {
             structure.addAll(Arrays.asList(fields));
             return this;
         }
@@ -134,7 +137,6 @@ public final class FlatResult extends Result {
          * Singular Add headings to our data
          *
          * @param field the field which act as headings for our data
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder addField(final Field field) {
@@ -155,7 +157,6 @@ public final class FlatResult extends Result {
 
         /**
          * @param values A collection of 'rows' to add to our values
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder addValues(final List<Object> values) {
@@ -165,6 +166,7 @@ public final class FlatResult extends Result {
 
         /**
          * Fix the reported size of the result set.
+         *
          * @param value The size to use
          * @return The {@link Builder}, enabling method chaining
          */

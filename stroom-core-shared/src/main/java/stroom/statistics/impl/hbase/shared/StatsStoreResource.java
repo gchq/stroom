@@ -20,9 +20,9 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -33,7 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Stroom Stats Stores")
+@Tag(name = "Stroom Stats Stores")
 @Path("/statsStore" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,11 +41,12 @@ public interface StatsStoreResource extends RestResource, DirectRestService, Fet
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a store doc doc by its UUID")
+    @Operation(summary = "Fetch a store doc doc by its UUID")
     StroomStatsStoreDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a stats store doc")
-    StroomStatsStoreDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") StroomStatsStoreDoc doc);
+    @Operation(summary = "Update a stats store doc")
+    StroomStatsStoreDoc update(
+            @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) StroomStatsStoreDoc doc);
 }

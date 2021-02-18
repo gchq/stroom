@@ -20,9 +20,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Annotations")
+@Tag(name = "Annotations")
 @Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,45 +45,45 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     List<FilterFieldDefinition> NO_FIELD_DEFINITIONS = Collections.emptyList();
 
     @GET
-    @ApiOperation(value = "Gets an annotation")
+    @Operation(summary = "Gets an annotation")
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
-    @ApiOperation(value = "Gets an annotation")
-    AnnotationDetail createEntry(@ApiParam("request") CreateEntryRequest request);
+    @Operation(summary = "Gets an annotation")
+    AnnotationDetail createEntry(@Parameter(description = "request", required = true) CreateEntryRequest request);
 
     @GET
     @Path("status")
-    @ApiOperation(value = "Gets a list of allowed statuses")
+    @Operation(summary = "Gets a list of allowed statuses")
     List<String> getStatus(@QueryParam("filter") String filter);
 
     @GET
     @Path("comment")
-    @ApiOperation(value = "Gets a list of predefined comments")
+    @Operation(summary = "Gets a list of predefined comments")
     List<String> getComment(@QueryParam("filter") String filter);
 
     @GET
     @Path("linkedEvents")
-    @ApiOperation(value = "Gets a list of events linked to this annotation")
+    @Operation(summary = "Gets a list of events linked to this annotation")
     List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
 
     @POST
     @Path("link")
-    @ApiOperation(value = "Links an annotation to an event")
-    List<EventId> link(@ApiParam("eventLink") EventLink eventLink);
+    @Operation(summary = "Links an annotation to an event")
+    List<EventId> link(@Parameter(description = "eventLink", required = true) EventLink eventLink);
 
     @POST
     @Path("unlink")
-    @ApiOperation(value = "Unlinks an annotation from an event")
-    List<EventId> unlink(@ApiParam("eventLink") EventLink eventLink);
+    @Operation(summary = "Unlinks an annotation from an event")
+    List<EventId> unlink(@Parameter(description = "eventLink", required = true) EventLink eventLink);
 
     @POST
     @Path("setStatus")
-    @ApiOperation(value = "Bulk action to set the status for several annotations")
-    Integer setStatus(@ApiParam("request") SetStatusRequest request);
+    @Operation(summary = "Bulk action to set the status for several annotations")
+    Integer setStatus(@Parameter(description = "request", required = true) SetStatusRequest request);
 
     @POST
     @Path("setAssignedTo")
-    @ApiOperation(value = "Bulk action to set the assignment for several annotations")
-    Integer setAssignedTo(@ApiParam("request") SetAssignedToRequest request);
+    @Operation(summary = "Bulk action to set the assignment for several annotations")
+    Integer setAssignedTo(@Parameter(description = "request", required = true) SetAssignedToRequest request);
 }

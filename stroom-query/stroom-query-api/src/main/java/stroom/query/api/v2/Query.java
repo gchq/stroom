@@ -21,9 +21,9 @@ import stroom.docref.DocRef;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,24 +35,21 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(description = Query.CLASS_DESC)
+@Schema(description = Query.CLASS_DESC)
 public final class Query {
 
     public static final String CLASS_DESC = "The query terms for the search";
 
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     @JsonProperty
     private final DocRef dataSource;
 
-    @ApiModelProperty(
-            value = "The root logical operator in the query expression tree",
+    @Schema(description = "The root logical operator in the query expression tree",
             required = true)
     @JsonProperty
     private final ExpressionOperator expression;
 
-    @ApiModelProperty(
-            value = "A list of key/value pairs that provide additional information about the query")
+    @JsonPropertyDescription("A list of key/value pairs that provide additional information about the query")
     @JsonProperty
     private final List<Param> params;
 

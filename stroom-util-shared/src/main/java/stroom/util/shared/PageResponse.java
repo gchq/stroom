@@ -20,32 +20,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "Details of the page of results being returned.")
+@Schema(description = "Details of the page of results being returned.")
 public class PageResponse implements Serializable {
 
     private static final long serialVersionUID = -8613411971150227752L;
 
     @JsonProperty
-    @ApiModelProperty(value = "The offset of the first item in the page relative to the full result set, zero based.")
+    @JsonPropertyDescription("The offset of the first item in the page relative to the full result set, zero based.")
     private final long offset;
 
     @JsonProperty
-    @ApiModelProperty(value = "The number of items in this page of results.")
+    @JsonPropertyDescription("The number of items in this page of results.")
     private final int length;
 
     @JsonProperty
-    @ApiModelProperty(value = "The total number of items in the full result set.")
+    @JsonPropertyDescription("The total number of items in the full result set.")
     private final Long total;
 
     @JsonProperty
-    @ApiModelProperty(value = "True if the total is exact, false if not known or an estimate.")
+    @JsonPropertyDescription("True if the total is exact, false if not known or an estimate.")
     private final boolean exact;
 
     @JsonCreator

@@ -17,15 +17,14 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * Class for describing the format to use for formatting a date time value
@@ -33,21 +32,19 @@ import java.util.Objects;
 @JsonPropertyOrder({"pattern", "timeZone"})
 @XmlType(name = "DateTimeFormat", propOrder = {"pattern", "timeZone"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The string formatting to apply to a date value")
+@Schema(description = "The string formatting to apply to a date value")
 @Deprecated
 public final class DateTimeFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "A date time formatting pattern string conforming to the specification of " +
+    @Schema(description = "A date time formatting pattern string conforming to the specification of " +
                     "java.time.format.DateTimeFormatter",
             required = true)
     private String pattern;
 
     @XmlElement
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     private TimeZone timeZone;
 
     /**

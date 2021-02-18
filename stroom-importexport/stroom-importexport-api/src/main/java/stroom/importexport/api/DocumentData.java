@@ -3,8 +3,7 @@ package stroom.importexport.api;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Base64;
@@ -20,18 +19,17 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "DocumentData")
 @XmlRootElement(name = "documentData")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "Raw data representation of a document")
+@Schema(description = "Raw data representation of a document")
 public class DocumentData implements Serializable {
 
     @XmlElement(name = "docRef")
-    @ApiModelProperty(
-            value = "The document reference for the document",
+    @Schema(description = "The document reference for the document",
             required = true)
     private DocRef docRef;
 
     @XmlElement(name = "data")
-    @ApiModelProperty(
-            value = "A map of file extensions to file contents that are used to represent all of the document contents",
+    @Schema(description = "A map of file extensions to file contents that are used to represent all of the document " +
+            "contents",
             required = true)
     private Map<String, byte[]> dataMap;
 

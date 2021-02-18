@@ -17,48 +17,43 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The timezone to apply to a date time value")
+@Schema(description = "The timezone to apply to a date time value")
 @Deprecated
 public final class TimeZone implements Serializable {
     private static final long serialVersionUID = 1200175661441813029L;
 
     @XmlElement
     //TODO needs better description
-    @ApiModelProperty(
-            value = "The required type of time zone",
+    @Schema(description = "The required type of time zone",
             required = true)
     private Use use;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The id of the time zone, conforming to java.time.ZoneId",
+    @Schema(description = "The id of the time zone, conforming to java.time.ZoneId",
             example = "GMT",
             required = false)
     private String id;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The number of hours this timezone is offset from UTC",
+    @Schema(description = "The number of hours this timezone is offset from UTC",
             example = "-1",
             required = false)
     private Integer offsetHours;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The number of minutes this timezone is offset from UTC",
+    @Schema(description = "The number of minutes this timezone is offset from UTC",
             example = "-30",
             required = false)
     private Integer offsetMinutes;
@@ -118,8 +113,12 @@ public final class TimeZone implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TimeZone timeZone = (TimeZone) o;
         return use == timeZone.use &&
                 Objects.equals(id, timeZone.id) &&
@@ -190,7 +189,6 @@ public final class TimeZone implements Serializable {
 
         /**
          * @param value The required type of time zone
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder use(final Use value) {
@@ -200,7 +198,6 @@ public final class TimeZone implements Serializable {
 
         /**
          * @param value The id of the time zone, conforming to java.time.ZoneId
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder id(final String value) {
@@ -210,7 +207,6 @@ public final class TimeZone implements Serializable {
 
         /**
          * @param value The number of hours this timezone is offset from UTC
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder offsetHours(final Integer value) {
@@ -220,7 +216,6 @@ public final class TimeZone implements Serializable {
 
         /**
          * @param value The number of minutes this timezone is offset from UTC
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder offsetMinutes(final Integer value) {

@@ -20,9 +20,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -32,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Stroom Stats RollUps")
+@Tag(name = "Stroom Stats RollUps")
 @Path("/statsStore/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,16 +40,19 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @ApiOperation("Create rollup bit mask")
-    ResultPage<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
+    @Operation(summary = "Create rollup bit mask")
+    ResultPage<CustomRollUpMask> bitMaskPermGeneration(
+            @Parameter(description = "fieldCount", required = true) Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @ApiOperation("Get rollup bit mask")
-    ResultPage<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
+    @Operation(summary = "Get rollup bit mask")
+    ResultPage<CustomRollUpMaskFields> bitMaskConversion(
+            @Parameter(description = "maskValues", required = true) List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @ApiOperation("Change fields")
-    StroomStatsStoreEntityData fieldChange(@ApiParam("request") StroomStatsStoreFieldChangeRequest request);
+    @Operation(summary = "Change fields")
+    StroomStatsStoreEntityData fieldChange(
+            @Parameter(description = "request", required = true) StroomStatsStoreFieldChangeRequest request);
 }

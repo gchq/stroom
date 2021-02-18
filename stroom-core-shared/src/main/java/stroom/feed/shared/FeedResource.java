@@ -20,9 +20,9 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -34,7 +34,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Feeds")
+@Tag(name = "Feeds")
 @Path("/feed" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,16 +42,17 @@ public interface FeedResource extends RestResource, DirectRestService, FetchWith
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a feed doc by its UUID")
+    @Operation(summary = "Fetch a feed doc by its UUID")
     FeedDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a feed doc")
-    FeedDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") FeedDoc doc);
+    @Operation(summary = "Update a feed doc")
+    FeedDoc update(@PathParam("uuid") String uuid,
+                   @Parameter(description = "doc", required = true) FeedDoc doc);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @ApiOperation("Fetch supported encodings")
+    @Operation(summary = "Fetch supported encodings")
     List<String> fetchSupportedEncodings();
 }

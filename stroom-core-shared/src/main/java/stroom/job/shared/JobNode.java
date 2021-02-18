@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -190,7 +190,7 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.enabled = enabled;
     }
 
-    @ApiModel
+    @Schema
     public enum JobType implements HasPrimitiveValue {
         UNKNOWN("UNKNOWN", 0),
         CRON("Cron", 1),

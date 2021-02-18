@@ -9,8 +9,8 @@ import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,7 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(tags = "Export")
+@Tag(name = "Export")
 @Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
 
@@ -48,7 +48,7 @@ public class ExportConfigResource implements RestResource {
     }
 
     @GET
-    @ApiOperation(value = "Exports all configuration to a file.")
+    @Operation(summary = "Exports all configuration to a file.")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response export() {
         final ResourceStore resourceStore = resourceStoreProvider.get();

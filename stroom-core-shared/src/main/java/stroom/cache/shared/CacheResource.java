@@ -19,8 +19,8 @@ package stroom.cache.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -32,7 +32,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Caches")
+@Tag(name = "Caches")
 @Path(CacheResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,18 +43,18 @@ public interface CacheResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO;
 
     @GET
-    @ApiOperation(value = "Lists caches")
+    @Operation(summary = "Lists caches")
     List<String> list();
 
     @GET
     @Path(INFO)
-    @ApiOperation(value = "Gets cache info")
+    @Operation(summary = "Gets cache info")
     CacheInfoResponse info(
             @QueryParam("cacheName") String cacheName,
             @QueryParam("nodeName") String nodeName);
 
     @DELETE
-    @ApiOperation(value = "Clears a cache")
+    @Operation(summary = "Clears a cache")
     Long clear(
             @QueryParam("cacheName") String cacheName,
             @QueryParam("nodeName") String nodeName);

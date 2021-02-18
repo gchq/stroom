@@ -21,9 +21,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -33,7 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Processor Tasks")
+@Tag(name = "Processor Tasks")
 @Path(ProcessorTaskResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,23 +46,25 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @ApiOperation("Finds processors tasks")
-    ResultPage<ProcessorTask> find(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
+    @Operation(summary = "Finds processors tasks")
+    ResultPage<ProcessorTask> find(
+            @Parameter(description = "expressionCriteria", required = true) ExpressionCriteria expressionCriteria);
 
     @POST
     @Path("summary")
-    @ApiOperation("Finds processor task summaries")
-    ResultPage<ProcessorTaskSummary> findSummary(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
+    @Operation(summary = "Finds processor task summaries")
+    ResultPage<ProcessorTaskSummary> findSummary(
+            @Parameter(description = "expressionCriteria", required = true) ExpressionCriteria expressionCriteria);
 
     @POST
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Assign some tasks")
+    @Operation(summary = "Assign some tasks")
     ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
-                                  @ApiParam("request") AssignTasksRequest request);
+                                  @Parameter(description = "request", required = true) AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Abandon some tasks")
+    @Operation(summary = "Abandon some tasks")
     Boolean abandonTasks(@PathParam("nodeName") String nodeName,
-                         @ApiParam("request") ProcessorTaskList request);
+                         @Parameter(description = "request", required = true) ProcessorTaskList request);
 }

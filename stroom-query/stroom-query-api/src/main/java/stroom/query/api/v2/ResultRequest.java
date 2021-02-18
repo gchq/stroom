@@ -20,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,41 +33,37 @@ import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
+@Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
         "e.g. sorted, grouped, limited, etc.")
 public final class ResultRequest {
 
-    @ApiModelProperty(
-            value = "The ID of the component that will receive the results corresponding to this ResultRequest",
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
     @JsonProperty
     private final String componentId;
 
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     @JsonProperty
     private final List<TableSettings> mappings;
 
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     @JsonProperty
     private final OffsetRange requestedRange;
 
     //TODO complete documentation
-    @ApiModelProperty(
-            value = "TODO",
+    @Schema(description = "TODO",
             required = true)
     @JsonProperty
     private final Set<String> openGroups;
 
-    @ApiModelProperty(
-            value = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
-                    "provide a TableResult object",
+    @Schema(description = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
+            "provide a TableResult object",
             required = true)
     @JsonProperty
     private final ResultStyle resultStyle;
 
-    @ApiModelProperty(
-            value = "The fetch mode for the query. NONE means fetch no data, ALL means fetch all known results, " +
-                    "CHANGES means fetch only those records not see in previous requests")
+    @JsonPropertyDescription("The fetch mode for the query. NONE means fetch no data, ALL means fetch all known " +
+            "results, CHANGES means fetch only those records not see in previous requests")
     @JsonProperty
     private final Fetch fetch;
 

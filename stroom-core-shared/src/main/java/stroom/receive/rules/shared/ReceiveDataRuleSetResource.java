@@ -22,9 +22,9 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Set;
@@ -37,7 +37,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Rule Set")
+@Tag(name = "Rule Set")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -47,26 +47,28 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a rules doc by its UUID")
+    @Operation(summary = "Fetch a rules doc by its UUID")
     ReceiveDataRules fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a rules doc")
-    ReceiveDataRules update(@PathParam("uuid") String uuid, @ApiParam("doc") ReceiveDataRules doc);
+    @Operation(summary = "Update a rules doc")
+    ReceiveDataRules update(@PathParam("uuid") String uuid,
+                            @Parameter(description = "doc", required = true) ReceiveDataRules doc);
 
     @GET
     @Path("/list")
-    @ApiOperation("Submit a request for a list of doc refs held by this service")
+    @Operation(summary = "Submit a request for a list of doc refs held by this service")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @ApiOperation("Submit an import request")
-    DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
+    @Operation(summary = "Submit an import request")
+    DocRef importDocument(
+            @Parameter(description = "DocumentData", required = true) Base64EncodedDocumentData documentData);
 
     @POST
     @Path("/export")
-    @ApiOperation("Submit an export request")
-    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
+    @Operation(summary = "Submit an export request")
+    Base64EncodedDocumentData exportDocument(@Parameter(description = "DocRef", required = true) DocRef docRef);
 }

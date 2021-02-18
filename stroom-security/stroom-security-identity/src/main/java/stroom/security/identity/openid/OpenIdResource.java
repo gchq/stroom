@@ -6,9 +6,8 @@ import stroom.security.openid.api.TokenResponse;
 import stroom.util.shared.RestResource;
 
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Api
 @Singleton
 @Path("/oauth2/v1/noauth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -38,8 +36,8 @@ public interface OpenIdResource extends RestResource {
     @GET
     @Path("auth")
     @Timed
-    @ApiOperation(
-            value = "Submit an OpenId AuthenticationRequest.",
+    @Operation(
+            summary = "Submit an OpenId AuthenticationRequest.",
             tags = AUTHENTICATION_TAG)
     void auth(
             @Context HttpServletRequest request,
@@ -54,13 +52,13 @@ public interface OpenIdResource extends RestResource {
     @POST
     @Path("token")
     @Timed
-    @ApiOperation(
-            value = "Get a token from an access code",
+    @Operation(
+            summary = "Get a token from an access code",
             tags = AUTHENTICATION_TAG)
-    TokenResponse token(@ApiParam("tokenRequest") TokenRequest tokenRequest);
+    TokenResponse token(@Parameter(description = "tokenRequest", required = true) TokenRequest tokenRequest);
 
-    @ApiOperation(
-            value = "Provides access to this service's current public key. " +
+    @Operation(
+            summary = "Provides access to this service's current public key. " +
                     "A client may use these keys to verify JWTs issued by this service.",
             tags = API_KEYS_TAG)
     @GET
@@ -68,8 +66,8 @@ public interface OpenIdResource extends RestResource {
     @Timed
     Map<String, List<Map<String, Object>>> certs(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @ApiOperation(
-            value = "Provides discovery for openid configuration",
+    @Operation(
+            summary = "Provides discovery for openid configuration",
             tags = API_KEYS_TAG)
     @GET
     @Path(".well-known/openid-configuration")

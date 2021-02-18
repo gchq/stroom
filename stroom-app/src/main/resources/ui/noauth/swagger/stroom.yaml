@@ -12,7 +12,7 @@ info:
 paths:
   /account/v1:
     get:
-      operationId: list_5
+      operationId: listAccounts
       responses:
         default:
           content:
@@ -20,13 +20,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccountResultPage'
           description: default response
+      summary: Get all accounts.
+      tags:
+      - Account
     post:
-      operationId: create_8
+      operationId: createAccount
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateAccountRequest'
+        description: account
         required: true
       responses:
         default:
@@ -36,14 +40,19 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Create an account.
+      tags:
+      - Account
   /account/v1/search:
     post:
-      operationId: search_3
+      operationId: searchAccounts
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchAccountRequest'
+        description: account
+        required: true
       responses:
         default:
           content:
@@ -51,9 +60,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccountResultPage'
           description: default response
+      summary: Search for an account by email.
+      tags:
+      - Account
   /account/v1/{id}:
     delete:
-      operationId: delete_8
+      operationId: deleteAccount
       parameters:
       - in: path
         name: id
@@ -68,8 +80,11 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Delete an account by ID.
+      tags:
+      - Account
     get:
-      operationId: read_6
+      operationId: fetchAccount
       parameters:
       - in: path
         name: id
@@ -84,8 +99,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Account'
           description: default response
+      summary: Get an account by ID.
+      tags:
+      - Account
     put:
-      operationId: update_19
+      operationId: updateAccount
       parameters:
       - in: path
         name: id
@@ -98,6 +116,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateAccountRequest'
+        description: account
         required: true
       responses:
         default:
@@ -106,6 +125,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Update an account.
+      tags:
+      - Account
   /activity/v1:
     get:
       operationId: list
@@ -121,6 +143,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageActivity'
           description: default response
+      summary: Lists activities
+      tags:
+      - Activities
     post:
       operationId: create
       responses:
@@ -130,6 +155,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
+      summary: Create an Activity
+      tags:
+      - Activities
   /activity/v1/acknowledge:
     post:
       operationId: acknowledgeSplash
@@ -138,6 +166,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AcknowledgeSplashRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -145,6 +175,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Acknowledge the slash screen
+      tags:
+      - Activities
   /activity/v1/current:
     get:
       operationId: getCurrentActivity
@@ -155,6 +188,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
+      summary: Gets the current activity
+      tags:
+      - Activities
     put:
       operationId: setCurrentActivity
       requestBody:
@@ -169,6 +205,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
+      summary: Gets the current activity
+      tags:
+      - Activities
   /activity/v1/fields:
     get:
       operationId: listFieldDefinitions
@@ -181,6 +220,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/FilterFieldDefinition'
           description: default response
+      summary: Lists activity field definitions
+      tags:
+      - Activities
   /activity/v1/validate:
     post:
       operationId: validate
@@ -189,6 +231,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Activity'
+        description: activity
+        required: true
       responses:
         default:
           content:
@@ -196,6 +240,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActivityValidationResult'
           description: default response
+      summary: Create an Activity
+      tags:
+      - Activities
   /activity/v1/{id}:
     delete:
       operationId: delete
@@ -213,6 +260,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Delete an activity
+      tags:
+      - Activities
     get:
       operationId: read
       parameters:
@@ -229,6 +279,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
+      summary: Get an Activity
+      tags:
+      - Activities
     put:
       operationId: update
       parameters:
@@ -250,6 +303,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
+      summary: Update an Activity
+      tags:
+      - Activities
   /annotation/v1:
     get:
       operationId: get
@@ -266,6 +322,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnnotationDetail'
           description: default response
+      summary: Gets an annotation
+      tags:
+      - Annotations
     post:
       operationId: createEntry
       requestBody:
@@ -273,6 +332,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateEntryRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -280,6 +341,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnnotationDetail'
           description: default response
+      summary: Gets an annotation
+      tags:
+      - Annotations
   /annotation/v1/comment:
     get:
       operationId: getComment
@@ -297,6 +361,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Gets a list of predefined comments
+      tags:
+      - Annotations
   /annotation/v1/link:
     post:
       operationId: link
@@ -305,6 +372,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventLink'
+        description: eventLink
+        required: true
       responses:
         default:
           content:
@@ -314,6 +383,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/EventId'
           description: default response
+      summary: Links an annotation to an event
+      tags:
+      - Annotations
   /annotation/v1/linkedEvents:
     get:
       operationId: getLinkedEvents
@@ -332,6 +404,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/EventId'
           description: default response
+      summary: Gets a list of events linked to this annotation
+      tags:
+      - Annotations
   /annotation/v1/setAssignedTo:
     post:
       operationId: setAssignedTo
@@ -340,6 +415,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SetAssignedToRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -348,6 +425,9 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Bulk action to set the assignment for several annotations
+      tags:
+      - Annotations
   /annotation/v1/setStatus:
     post:
       operationId: setStatus
@@ -356,6 +436,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SetStatusRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -364,6 +446,9 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Bulk action to set the status for several annotations
+      tags:
+      - Annotations
   /annotation/v1/status:
     get:
       operationId: getStatus
@@ -381,6 +466,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Gets a list of allowed statuses
+      tags:
+      - Annotations
   /annotation/v1/unlink:
     post:
       operationId: unlink
@@ -389,6 +477,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventLink'
+        description: eventLink
+        required: true
       responses:
         default:
           content:
@@ -398,6 +488,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/EventId'
           description: default response
+      summary: Unlinks an annotation from an event
+      tags:
+      - Annotations
   /authentication/v1/logout:
     get:
       operationId: logout
@@ -414,6 +507,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Log a user out of their session
+      tags:
+      - Authentication
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -429,6 +525,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Check if a user's password needs changing.
+      tags:
+      - Authentication
   /authentication/v1/noauth/changePassword:
     post:
       operationId: changePassword
@@ -437,6 +536,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangePasswordRequest'
+        description: changePasswordRequest
         required: true
       responses:
         default:
@@ -445,6 +545,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChangePasswordResponse'
           description: default response
+      summary: Change a user's password.
+      tags:
+      - Authentication
   /authentication/v1/noauth/confirmPassword:
     post:
       operationId: confirmPassword
@@ -453,6 +556,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfirmPasswordRequest'
+        description: confirmPasswordRequest
         required: true
       responses:
         default:
@@ -461,6 +565,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfirmPasswordResponse'
           description: default response
+      summary: Confirm an authenticated users current password.
+      tags:
+      - Authentication
   /authentication/v1/noauth/fetchPasswordPolicy:
     get:
       operationId: fetchPasswordPolicy
@@ -471,6 +578,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PasswordPolicyConfig'
           description: default response
+      summary: Get the password policy
+      tags:
+      - Authentication
   /authentication/v1/noauth/getAuthenticationState:
     get:
       operationId: getAuthenticationState
@@ -481,6 +591,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthenticationState'
           description: default response
+      summary: Get the current authentication state
+      tags:
+      - Authentication
   /authentication/v1/noauth/login:
     post:
       operationId: login
@@ -489,6 +602,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
+        description: Credentials
         required: true
       responses:
         default:
@@ -497,6 +611,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
           description: default response
+      summary: Handle a login request made using username and password credentials.
+      tags:
+      - Authentication
   /authentication/v1/noauth/reset/{email}:
     get:
       operationId: resetEmail
@@ -513,6 +630,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Reset a user account using an email address.
+      tags:
+      - Authentication
   /authentication/v1/resetPassword:
     post:
       operationId: resetPassword
@@ -521,6 +641,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResetPasswordRequest'
+        description: changePasswordRequest
         required: true
       responses:
         default:
@@ -529,6 +650,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChangePasswordResponse'
           description: default response
+      summary: Reset an authenticated user's password.
+      tags:
+      - Authentication
   /cache/v1:
     delete:
       operationId: clear
@@ -549,6 +673,9 @@ paths:
                 type: integer
                 format: int64
           description: default response
+      summary: Clears a cache
+      tags:
+      - Caches
     get:
       operationId: list_1
       responses:
@@ -560,6 +687,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Lists caches
+      tags:
+      - Caches
   /cache/v1/info:
     get:
       operationId: info
@@ -579,6 +709,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CacheInfoResponse'
           description: default response
+      summary: Gets cache info
+      tags:
+      - Caches
   /cluster/lock/v1/keepALive/{nodeName}:
     put:
       operationId: keepLockAlive
@@ -593,6 +726,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ClusterLockKey'
+        description: key
+        required: true
       responses:
         default:
           content:
@@ -600,6 +735,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Keep a lock alive
+      tags:
+      - Cluster lock
   /cluster/lock/v1/release/{nodeName}:
     put:
       operationId: releaseLock
@@ -614,6 +752,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ClusterLockKey'
+        description: key
+        required: true
       responses:
         default:
           content:
@@ -621,6 +761,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Release a lock
+      tags:
+      - Cluster lock
   /cluster/lock/v1/try/{nodeName}:
     put:
       operationId: tryLock
@@ -635,6 +778,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ClusterLockKey'
+        description: key
+        required: true
       responses:
         default:
           content:
@@ -642,6 +787,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Try to lock
+      tags:
+      - Cluster lock
   /config/v1:
     post:
       operationId: create_1
@@ -650,6 +798,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfigProperty'
+        description: configProperty
+        required: true
       responses:
         default:
           content:
@@ -657,6 +807,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
+      summary: Create a configuration property
+      tags:
+      - Global Config
   /config/v1/clusterProperties/{propertyName}:
     put:
       operationId: update_1
@@ -671,6 +824,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfigProperty'
+        description: configProperty
+        required: true
       responses:
         default:
           content:
@@ -678,6 +833,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
+      summary: Update a configuration property
+      tags:
+      - Global Config
   /config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}:
     get:
       operationId: getYamlValueByNodeAndName
@@ -699,6 +857,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverrideValueString'
           description: default response
+      summary: Get the property value from the YAML configuration in the specified
+        node.
+      tags:
+      - Global Config
   /config/v1/noauth/fetchUiConfig:
     get:
       operationId: fetchUiConfig
@@ -709,6 +871,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/UiConfig'
           description: default response
+      summary: Fetch the UI configuration
+      tags:
+      - Global Config
   /config/v1/nodeProperties/{nodeName}:
     post:
       operationId: listByNode
@@ -723,6 +888,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GlobalConfigCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -730,6 +897,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListConfigResponse'
           description: default response
+      summary: List all properties matching the criteria on the requested node.
+      tags:
+      - Global Config
   /config/v1/properties:
     post:
       operationId: list_2
@@ -738,6 +908,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GlobalConfigCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -745,6 +917,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListConfigResponse'
           description: default response
+      summary: List all properties matching the criteria on the current node.
+      tags:
+      - Global Config
   /config/v1/properties/{propertyName}:
     get:
       operationId: getPropertyByName
@@ -761,6 +936,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
+      summary: Fetch a property by its name, e.g. 'stroom.path.home'
+      tags:
+      - Global Config
   /content/v1/confirmImport:
     post:
       operationId: confirmImport
@@ -769,6 +947,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResourceKey'
+        description: resourceKey
+        required: true
       responses:
         default:
           content:
@@ -778,6 +958,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/ImportState'
           description: default response
+      summary: Get import confirmation state
+      tags:
+      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -786,6 +969,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRefs'
+        description: docRefs
         required: true
       responses:
         default:
@@ -794,6 +978,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Export content
+      tags:
+      - Content
   /content/v1/fetchDependencies:
     post:
       operationId: fetchDependencies
@@ -802,6 +989,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DependencyCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -809,6 +998,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageDependency'
           description: default response
+      summary: Fetch content dependencies
+      tags:
+      - Content
   /content/v1/import:
     post:
       operationId: importContent
@@ -817,6 +1009,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ImportConfigRequest'
+        description: request
         required: true
       responses:
         default:
@@ -825,6 +1018,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceKey'
           description: default response
+      summary: Import content
+      tags:
+      - Content
   /dashboard/v1/downloadQuery:
     post:
       operationId: downloadQuery
@@ -833,6 +1029,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DownloadQueryRequest'
+        description: downloadQueryRequest
+        required: true
       responses:
         default:
           content:
@@ -840,6 +1038,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Download a query
+      tags:
+      - Dashboards
   /dashboard/v1/downloadSearchResults:
     post:
       operationId: downloadSearchResults
@@ -848,6 +1049,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DownloadSearchResultsRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -855,6 +1058,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Download search results
+      tags:
+      - Dashboards
   /dashboard/v1/fetchTimeZones:
     get:
       operationId: fetchTimeZones
@@ -867,6 +1073,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Fetch time zone data from the server
+      tags:
+      - Dashboards
   /dashboard/v1/functions:
     get:
       operationId: fetchFunctions
@@ -879,6 +1088,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/FunctionSignature'
           description: default response
+      summary: Fetch all expression functions
+      tags:
+      - Dashboards
   /dashboard/v1/poll:
     post:
       operationId: poll
@@ -887,6 +1099,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchBusPollRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -897,6 +1111,9 @@ paths:
                   $ref: '#/components/schemas/DashboardSearchResponse'
                 uniqueItems: true
           description: default response
+      summary: Poll for new search results
+      tags:
+      - Dashboards
   /dashboard/v1/validateExpression:
     post:
       operationId: validateExpression
@@ -905,6 +1122,8 @@ paths:
           application/json:
             schema:
               type: string
+        description: expression
+        required: true
       responses:
         default:
           content:
@@ -912,6 +1131,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateExpressionResult'
           description: default response
+      summary: Validate an expression
+      tags:
+      - Dashboards
   /dashboard/v1/{uuid}:
     get:
       operationId: fetch_1
@@ -928,6 +1150,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DashboardDoc'
           description: default response
+      summary: Fetch a dashboard doc by its UUID
+      tags:
+      - Dashboards
     put:
       operationId: update_2
       parameters:
@@ -941,6 +1166,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DashboardDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -948,6 +1175,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DashboardDoc'
           description: default response
+      summary: Update a dashboard doc
+      tags:
+      - Dashboards
   /data/v1/download:
     post:
       operationId: download
@@ -956,6 +1186,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -963,6 +1195,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Download matching data
+      tags:
+      - Data
   /data/v1/fetch:
     post:
       operationId: fetch_3
@@ -971,6 +1206,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchDataRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -978,6 +1215,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AbstractFetchDataResult'
           description: default response
+      summary: Fetch matching data
+      tags:
+      - Data
   /data/v1/upload:
     post:
       operationId: upload
@@ -986,6 +1226,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UploadDataRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -993,6 +1235,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceKey'
           description: default response
+      summary: Upload data
+      tags:
+      - Data
   /data/v1/{id}/info:
     get:
       operationId: viewInfo
@@ -1012,6 +1257,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/DataInfoSection'
           description: default response
+      summary: Find full info about a data item
+      tags:
+      - Data
   /data/v1/{id}/parts/{partNo}/child-types:
     get:
       operationId: getChildStreamTypes
@@ -1038,6 +1286,9 @@ paths:
                   type: string
                 uniqueItems: true
           description: default response
+      summary: List child types for a stream
+      tags:
+      - Data
   /dataRetentionRules/v1:
     get:
       operationId: fetch_2
@@ -1048,6 +1299,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataRetentionRules'
           description: default response
+      summary: Get data retention rules
+      tags:
+      - Data Retention Rules
     put:
       operationId: update_4
       requestBody:
@@ -1055,6 +1309,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DataRetentionRules'
+        description: dataRetentionRules
+        required: true
       responses:
         default:
           content:
@@ -1062,6 +1318,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataRetentionRules'
           description: default response
+      summary: Update data retention rules
+      tags:
+      - Data Retention Rules
   /dataRetentionRules/v1/impactSummary:
     post:
       operationId: getRetentionDeletionSummary
@@ -1070,6 +1329,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DataRetentionDeleteSummaryRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1077,8 +1338,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataRetentionDeleteSummaryResponse'
           description: default response
+      summary: Get a summary of meta deletions with the passed data retention rules
+      tags:
+      - Data Retention Rules
   /dataRetentionRules/v1/impactSummary/{queryId}:
     delete:
+      description: Delete a running query
       operationId: cancelQuery
       parameters:
       - in: path
@@ -1093,6 +1358,8 @@ paths:
               schema:
                 type: boolean
           description: default response
+      tags:
+      - Data Retention Rules
   /dataSource/v1/fetchFields:
     post:
       operationId: fetchFields
@@ -1101,6 +1368,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: dataSourceRef
+        required: true
       responses:
         default:
           content:
@@ -1110,6 +1379,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/AbstractField'
           description: default response
+      summary: Fetch data source fields
+      tags:
+      - Data Sources
   /dbStatus/v1:
     get:
       operationId: getSystemTableStatus
@@ -1120,6 +1392,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageDBTableStatus'
           description: default response
+      summary: Find status of the DB
+      tags:
+      - Database Status
     post:
       operationId: findSystemTableStatus
       requestBody:
@@ -1127,6 +1402,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindDBTableCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1134,6 +1411,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageDBTableStatus'
           description: default response
+      summary: Find status of the DB
+      tags:
+      - Database Status
   /dictionary/v1/download:
     post:
       operationId: download_1
@@ -1149,6 +1429,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Download a dictionary doc
+      tags:
+      - Dictionaries (v1)
   /dictionary/v1/{uuid}:
     get:
       operationId: fetch_4
@@ -1165,6 +1448,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DictionaryDoc'
           description: default response
+      summary: Fetch a dictionary doc by its UUID
+      tags:
+      - Dictionaries (v1)
     put:
       operationId: update_6
       parameters:
@@ -1178,6 +1464,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DictionaryDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -1185,6 +1473,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DictionaryDoc'
           description: default response
+      summary: Update a dictionary doc
+      tags:
+      - Dictionaries (v1)
   /entityEvent/v1/{nodeName}:
     put:
       operationId: fireEvent
@@ -1199,6 +1490,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EntityEvent'
+        description: entityevent
+        required: true
       responses:
         default:
           content:
@@ -1206,6 +1499,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Sends an entity event
+      tags:
+      - Entity Events
   /explorer/v2/copy:
     post:
       operationId: copy
@@ -1214,6 +1510,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExplorerServiceCopyRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1221,6 +1519,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkActionResult'
           description: default response
+      summary: Copy explorer items
+      tags:
+      - Explorer (v2)
   /explorer/v2/create:
     post:
       operationId: create_4
@@ -1229,6 +1530,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExplorerServiceCreateRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1236,6 +1539,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
+      summary: Create explorer item
+      tags:
+      - Explorer (v2)
   /explorer/v2/delete:
     delete:
       operationId: delete_3
@@ -1244,6 +1550,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExplorerServiceDeleteRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1251,6 +1559,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkActionResult'
           description: default response
+      summary: Delete explorer items
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchDocRefs:
     post:
       operationId: fetchDocRefs
@@ -1262,6 +1573,8 @@ paths:
               items:
                 $ref: '#/components/schemas/DocRef'
               uniqueItems: true
+        description: docRefs
+        required: true
       responses:
         default:
           content:
@@ -1272,6 +1585,9 @@ paths:
                   $ref: '#/components/schemas/DocRef'
                 uniqueItems: true
           description: default response
+      summary: Fetch document references
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchDocumentTypes:
     get:
       operationId: fetchDocumentTypes
@@ -1282,6 +1598,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocumentTypes'
           description: default response
+      summary: Fetch document types
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchExplorerNodes:
     post:
       operationId: fetch_5
@@ -1290,6 +1609,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindExplorerNodeCriteria'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1297,6 +1618,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FetchExplorerNodeResult'
           description: default response
+      summary: Fetch explorer nodes
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchExplorerPermissions:
     post:
       operationId: fetchExplorerPermissions
@@ -1307,6 +1631,8 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/ExplorerNode'
+        description: explorerNodes
+        required: true
       responses:
         default:
           content:
@@ -1317,6 +1643,9 @@ paths:
                   $ref: '#/components/schemas/ExplorerNodePermissions'
                 uniqueItems: true
           description: default response
+      summary: Fetch permissions for explorer items
+      tags:
+      - Explorer (v2)
   /explorer/v2/info:
     post:
       operationId: info_1
@@ -1325,6 +1654,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
       responses:
         default:
           content:
@@ -1332,6 +1663,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRefInfo'
           description: default response
+      summary: Get document info
+      tags:
+      - Explorer (v2)
   /explorer/v2/move:
     put:
       operationId: move
@@ -1340,6 +1674,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExplorerServiceMoveRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1347,6 +1683,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkActionResult'
           description: default response
+      summary: Move explorer items
+      tags:
+      - Explorer (v2)
   /explorer/v2/rename:
     put:
       operationId: rename
@@ -1355,6 +1694,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExplorerServiceRenameRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1362,6 +1703,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
+      summary: Rename explorer items
+      tags:
+      - Explorer (v2)
   /export/v1:
     get:
       operationId: export
@@ -1370,6 +1714,9 @@ paths:
           content:
             application/octet-stream: {}
           description: default response
+      summary: Exports all configuration to a file.
+      tags:
+      - Export
   /feed/v1/fetchSupportedEncodings:
     get:
       operationId: fetchSupportedEncodings
@@ -1382,6 +1729,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Fetch supported encodings
+      tags:
+      - Feeds
   /feed/v1/{uuid}:
     get:
       operationId: fetch_6
@@ -1398,6 +1748,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FeedDoc'
           description: default response
+      summary: Fetch a feed doc by its UUID
+      tags:
+      - Feeds
     put:
       operationId: update_7
       parameters:
@@ -1411,6 +1764,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FeedDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -1418,6 +1773,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FeedDoc'
           description: default response
+      summary: Update a feed doc
+      tags:
+      - Feeds
   /feedStatus/v1/getFeedStatus:
     post:
       operationId: getFeedStatus
@@ -1426,6 +1784,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetFeedStatusRequest'
+        description: GetFeedStatusRequest
+        required: true
       responses:
         default:
           content:
@@ -1433,6 +1793,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetFeedStatusResponse'
           description: default response
+      summary: Submit a request to get the status of a feed
+      tags:
+      - Feed Status
   /fsVolume/v1:
     post:
       operationId: create_3
@@ -1448,6 +1811,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/FsVolume'
           description: default response
+      tags:
+      - Filesystem Volumes
   /fsVolume/v1/find:
     post:
       operationId: find_1
@@ -1456,6 +1821,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindFsVolumeCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1463,6 +1830,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageFsVolume'
           description: default response
+      summary: Finds volumes
+      tags:
+      - Filesystem Volumes
   /fsVolume/v1/rescan:
     get:
       operationId: rescan
@@ -1473,6 +1843,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Rescans volumes
+      tags:
+      - Filesystem Volumes
   /fsVolume/v1/{id}:
     delete:
       operationId: delete_2
@@ -1490,6 +1863,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Delete a volume
+      tags:
+      - Filesystem Volumes
     get:
       operationId: read_2
       parameters:
@@ -1506,6 +1882,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FsVolume'
           description: default response
+      summary: Get a volume
+      tags:
+      - Filesystem Volumes
     put:
       operationId: update_5
       parameters:
@@ -1520,6 +1899,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FsVolume'
+        description: volume
+        required: true
       responses:
         default:
           content:
@@ -1527,6 +1908,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FsVolume'
           description: default response
+      summary: Update a volume
+      tags:
+      - Filesystem Volumes
   /index/v2/shard/delete:
     post:
       operationId: deleteIndexShards
@@ -1540,6 +1924,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindIndexShardCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1548,6 +1934,9 @@ paths:
                 type: integer
                 format: int64
           description: default response
+      summary: Delete matching index shards
+      tags:
+      - Indexes (v2)
   /index/v2/shard/find:
     post:
       operationId: findIndexShards
@@ -1556,6 +1945,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindIndexShardCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1563,6 +1954,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageIndexShard'
           description: default response
+      summary: Find matching index shards
+      tags:
+      - Indexes (v2)
   /index/v2/shard/flush:
     post:
       operationId: flushIndexShards
@@ -1576,6 +1970,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindIndexShardCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1584,6 +1980,9 @@ paths:
                 type: integer
                 format: int64
           description: default response
+      summary: Flush matching index shards
+      tags:
+      - Indexes (v2)
   /index/v2/{uuid}:
     get:
       operationId: fetch_7
@@ -1600,6 +1999,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexDoc'
           description: default response
+      summary: Fetch a index doc by its UUID
+      tags:
+      - Indexes (v2)
     put:
       operationId: update_8
       parameters:
@@ -1613,6 +2015,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IndexDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -1620,6 +2024,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexDoc'
           description: default response
+      summary: Update an index doc
+      tags:
+      - Indexes (v2)
   /index/volume/v2:
     post:
       operationId: create_6
@@ -1628,6 +2035,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IndexVolume'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1635,6 +2044,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolume'
           description: default response
+      summary: Creates an index volume
+      tags:
+      - Index Volumes
   /index/volume/v2/find:
     post:
       operationId: find_3
@@ -1643,6 +2055,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpressionCriteria'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1650,6 +2064,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageIndexVolume'
           description: default response
+      summary: Finds index volumes matching request
+      tags:
+      - Index Volumes
   /index/volume/v2/rescan:
     delete:
       operationId: rescan_1
@@ -1665,6 +2082,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Rescans index volumes
+      tags:
+      - Index Volumes
   /index/volume/v2/{id}:
     delete:
       operationId: delete_5
@@ -1682,6 +2102,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Deletes an index volume
+      tags:
+      - Index Volumes
     get:
       operationId: read_4
       parameters:
@@ -1698,6 +2121,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolume'
           description: default response
+      summary: Gets an index volume
+      tags:
+      - Index Volumes
     put:
       operationId: update_10
       parameters:
@@ -1712,6 +2138,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IndexVolume'
+        description: indexVolume
+        required: true
       responses:
         default:
           content:
@@ -1719,6 +2147,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolume'
           description: default response
+      summary: Updates an index volume
+      tags:
+      - Index Volumes
   /index/volumeGroup/v2:
     post:
       operationId: create_5
@@ -1727,6 +2158,8 @@ paths:
           application/json:
             schema:
               type: string
+        description: name
+        required: true
       responses:
         default:
           content:
@@ -1734,6 +2167,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolumeGroup'
           description: default response
+      summary: Creates an index volume group
+      tags:
+      - Index Volume Groups
   /index/volumeGroup/v2/find:
     post:
       operationId: find_2
@@ -1742,6 +2178,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpressionCriteria'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -1749,6 +2187,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageIndexVolumeGroup'
           description: default response
+      summary: Finds index volume groups matching request
+      tags:
+      - Index Volume Groups
   /index/volumeGroup/v2/{id}:
     delete:
       operationId: delete_4
@@ -1766,6 +2207,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Deletes an index volume group
+      tags:
+      - Index Volume Groups
     get:
       operationId: read_3
       parameters:
@@ -1782,6 +2226,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolumeGroup'
           description: default response
+      summary: Gets an index volume group
+      tags:
+      - Index Volume Groups
     put:
       operationId: update_9
       parameters:
@@ -1803,6 +2250,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolumeGroup'
           description: default response
+      summary: Updates an index volume group
+      tags:
+      - Index Volume Groups
   /job/v1:
     get:
       operationId: list_4
@@ -1813,6 +2263,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageJob'
           description: default response
+      summary: Lists jobs
+      tags:
+      - Jobs
   /job/v1/{id}/enabled:
     put:
       operationId: setEnabled_1
@@ -1828,11 +2281,16 @@ paths:
           application/json:
             schema:
               type: boolean
+        description: enabled
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the enabled status of the job
+      tags:
+      - Jobs
   /jobNode/v1:
     get:
       operationId: list_3
@@ -1852,6 +2310,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageJobNode'
           description: default response
+      summary: Lists job nodes
+      tags:
+      - Jobs (Node)
   /jobNode/v1/info:
     get:
       operationId: info_2
@@ -1871,6 +2332,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/JobNodeInfo'
           description: default response
+      summary: Gets current info for a job node
+      tags:
+      - Jobs (Node)
   /jobNode/v1/{id}/enabled:
     put:
       operationId: setEnabled
@@ -1886,11 +2350,16 @@ paths:
           application/json:
             schema:
               type: boolean
+        description: enabled
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the enabled status of the job node
+      tags:
+      - Jobs (Node)
   /jobNode/v1/{id}/schedule:
     put:
       operationId: setSchedule
@@ -1906,11 +2375,16 @@ paths:
           application/json:
             schema:
               type: string
+        description: schedule
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the schedule job node
+      tags:
+      - Jobs (Node)
   /jobNode/v1/{id}/taskLimit:
     put:
       operationId: setTaskLimit
@@ -1927,11 +2401,16 @@ paths:
             schema:
               type: integer
               format: int32
+        description: taskLimit
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the task limit for the job node
+      tags:
+      - Jobs (Node)
   /kafkaConfig/v1/download:
     post:
       operationId: download_2
@@ -1940,6 +2419,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
       responses:
         default:
           content:
@@ -1947,6 +2428,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceGeneration'
           description: default response
+      summary: Download a kafkaConfig doc
+      tags:
+      - Kafka Config
   /kafkaConfig/v1/{uuid}:
     get:
       operationId: fetch_8
@@ -1963,6 +2447,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/KafkaConfigDoc'
           description: default response
+      summary: Fetch a kafkaConfig doc by its UUID
+      tags:
+      - Kafka Config
     put:
       operationId: update_11
       parameters:
@@ -1976,6 +2463,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/KafkaConfigDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -1983,6 +2472,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/KafkaConfigDoc'
           description: default response
+      summary: Update a kafkaConfig doc
+      tags:
+      - Kafka Config
   /meta/v1/find:
     post:
       operationId: findMetaRow
@@ -1991,6 +2483,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -1998,6 +2492,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageMetaRow'
           description: default response
+      summary: Find matching meta data
+      tags:
+      - Meta
   /meta/v1/getReprocessSelectionSummary:
     post:
       operationId: getReprocessSelectionSummary
@@ -2006,6 +2503,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -2013,6 +2512,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SelectionSummary'
           description: default response
+      summary: Get a summary of the parent items of the selected meta data
+      tags:
+      - Meta
   /meta/v1/getSelectionSummary:
     post:
       operationId: getSelectionSummary
@@ -2021,6 +2523,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -2028,6 +2532,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SelectionSummary'
           description: default response
+      summary: Get a summary of the selected meta data
+      tags:
+      - Meta
   /meta/v1/getTypes:
     get:
       operationId: getTypes
@@ -2040,6 +2547,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Get a list of possible stream types
+      tags:
+      - Meta
   /meta/v1/update/status:
     put:
       operationId: updateStatus
@@ -2056,6 +2566,9 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Update status on matching meta data
+      tags:
+      - Meta
   /node/v1:
     get:
       operationId: find_4
@@ -2066,6 +2579,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FetchNodeStatusResponse'
           description: default response
+      summary: Lists nodes
+      tags:
+      - Nodes
   /node/v1/all:
     get:
       operationId: listAllNodes
@@ -2078,6 +2594,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Lists all nodes
+      tags:
+      - Nodes
   /node/v1/enabled:
     get:
       operationId: listEnabledNodes
@@ -2090,6 +2609,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Lists enabled nodes
+      tags:
+      - Nodes
   /node/v1/enabled/{nodeName}:
     put:
       operationId: setEnabled_2
@@ -2104,11 +2626,16 @@ paths:
           application/json:
             schema:
               type: boolean
+        description: enabled
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets whether a node is enabled
+      tags:
+      - Nodes
   /node/v1/info/{nodeName}:
     get:
       operationId: info_3
@@ -2125,6 +2652,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ClusterNodeInfo'
           description: default response
+      summary: Gets detailed information about a node
+      tags:
+      - Nodes
   /node/v1/ping/{nodeName}:
     get:
       operationId: ping
@@ -2142,6 +2672,9 @@ paths:
                 type: integer
                 format: int64
           description: default response
+      summary: Gets a ping time for a node
+      tags:
+      - Nodes
   /node/v1/priority/{nodeName}:
     put:
       operationId: setPriority
@@ -2157,11 +2690,16 @@ paths:
             schema:
               type: integer
               format: int32
+        description: nodeName
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the priority of a node
+      tags:
+      - Nodes
   /oauth2/v1/noauth/.well-known/openid-configuration:
     get:
       operationId: openIdConfiguration
@@ -2172,6 +2710,9 @@ paths:
               schema:
                 type: string
           description: default response
+      summary: Provides discovery for openid configuration
+      tags:
+      - API Keys
   /oauth2/v1/noauth/auth:
     get:
       operationId: auth
@@ -2213,6 +2754,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Submit an OpenId AuthenticationRequest.
+      tags:
+      - Authentication
   /oauth2/v1/noauth/certs:
     get:
       operationId: certs
@@ -2229,6 +2773,10 @@ paths:
                     additionalProperties:
                       type: object
           description: default response
+      summary: Provides access to this service's current public key. A client may
+        use these keys to verify JWTs issued by this service.
+      tags:
+      - API Keys
   /oauth2/v1/noauth/token:
     post:
       operationId: token
@@ -2237,6 +2785,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TokenRequest'
+        description: tokenRequest
+        required: true
       responses:
         default:
           content:
@@ -2244,6 +2794,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
           description: default response
+      summary: Get a token from an access code
+      tags:
+      - Authentication
   /permission/app/v1:
     get:
       operationId: getUserAndPermissions
@@ -2254,6 +2807,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAndPermissions'
           description: default response
+      summary: User and app permissions for the current session
+      tags:
+      - Application Permissions
   /permission/app/v1/changeUser:
     post:
       operationId: changeUser
@@ -2262,6 +2818,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeUserRequest'
+        description: changeUserRequest
+        required: true
       responses:
         default:
           content:
@@ -2269,6 +2827,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: User and app permissions for the current session
+      tags:
+      - Application Permissions
   /permission/app/v1/fetchAllPermissions:
     get:
       operationId: fetchAllPermissions
@@ -2281,6 +2842,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Get all possible permissions
+      tags:
+      - Application Permissions
   /permission/app/v1/fetchUserAppPermissions:
     post:
       operationId: fetchUserAppPermissions
@@ -2289,6 +2853,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
+        description: user
+        required: true
       responses:
         default:
           content:
@@ -2296,6 +2862,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAndPermissions'
           description: default response
+      summary: User and app permissions for the specified user
+      tags:
+      - Application Permissions
   /permission/changeEvent/v1/fireChange/{nodeName}:
     post:
       operationId: fireChange
@@ -2310,6 +2879,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PermissionChangeRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2317,6 +2888,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Fires a permission change event
+      tags:
+      - Application Permissions
   /permission/doc/v1/changeDocumentPermissions:
     post:
       operationId: changeDocumentPermissions
@@ -2325,6 +2899,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2332,6 +2908,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Change document permissions
+      tags:
+      - Doc Permissions
   /permission/doc/v1/checkDocumentPermission:
     post:
       operationId: checkDocumentPermission
@@ -2340,6 +2919,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CheckDocumentPermissionRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2347,6 +2928,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Check document permission
+      tags:
+      - Doc Permissions
   /permission/doc/v1/copyPermissionsFromParent:
     post:
       operationId: copyPermissionFromParent
@@ -2355,6 +2939,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CopyPermissionsFromParentRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2362,6 +2948,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocumentPermissions'
           description: default response
+      summary: Copy permissions from parent
+      tags:
+      - Doc Permissions
   /permission/doc/v1/fetchAllDocumentPermissions:
     post:
       operationId: fetchAllDocumentPermissions
@@ -2370,6 +2959,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchAllDocumentPermissionsRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2377,6 +2968,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocumentPermissions'
           description: default response
+      summary: Fetch document permissions
+      tags:
+      - Doc Permissions
   /permission/doc/v1/filterUsers:
     post:
       operationId: filterUsers
@@ -2394,6 +2988,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
           description: default response
+      summary: Get all permissions for a given document type
+      tags:
+      - Doc Permissions
   /permission/doc/v1/getPermissionForDocType/${docType}:
     get:
       operationId: getPermissionForDocType
@@ -2412,6 +3009,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Get all permissions for a given document type
+      tags:
+      - Doc Permissions
   /pipeline/v1/fetchPipelineData:
     post:
       operationId: fetchPipelineData
@@ -2420,6 +3020,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: pipeline
+        required: true
       responses:
         default:
           content:
@@ -2429,6 +3031,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/PipelineData'
           description: default response
+      summary: Fetch data for a pipeline
+      tags:
+      - Pipelines
   /pipeline/v1/fetchPipelineXml:
     post:
       operationId: fetchPipelineXml
@@ -2437,6 +3042,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: pipeline
+        required: true
       responses:
         default:
           content:
@@ -2444,6 +3051,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/FetchPipelineXmlResponse'
           description: default response
+      summary: Fetch the XML for a pipeline
+      tags:
+      - Pipelines
   /pipeline/v1/propertyTypes:
     get:
       operationId: getPropertyTypes
@@ -2456,6 +3066,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/FetchPropertyTypesResult'
           description: default response
+      summary: Get pipeline property types
+      tags:
+      - Pipelines
   /pipeline/v1/savePipelineXml:
     put:
       operationId: savePipelineXml
@@ -2464,6 +3077,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SavePipelineXmlRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2471,6 +3086,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Update a pipeline doc with XML directly
+      tags:
+      - Pipelines
   /pipeline/v1/{uuid}:
     get:
       operationId: fetch_9
@@ -2487,6 +3105,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PipelineDoc'
           description: default response
+      summary: Fetch a pipeline doc by its UUID
+      tags:
+      - Pipelines
     put:
       operationId: update_12
       parameters:
@@ -2500,6 +3121,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PipelineDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -2507,6 +3130,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PipelineDoc'
           description: default response
+      summary: Update a pipeline doc
+      tags:
+      - Pipelines
   /processor/v1/{id}:
     delete:
       operationId: delete_7
@@ -2522,6 +3148,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Deletes a processor
+      tags:
+      - Processors
   /processor/v1/{id}/enabled:
     put:
       operationId: setEnabled_4
@@ -2537,11 +3166,16 @@ paths:
           application/json:
             schema:
               type: boolean
+        description: enabled
+        required: true
       responses:
         default:
           content:
             application/json: {}
           description: default response
+      summary: Sets the enabled/disabled state for a processor
+      tags:
+      - Processors
   /processorFilter/v1:
     post:
       operationId: create_7
@@ -2550,6 +3184,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateProcessFilterRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2557,6 +3193,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorFilter'
           description: default response
+      summary: Creates a filter
+      tags:
+      - Processor Filters
   /processorFilter/v1/find:
     post:
       operationId: find_5
@@ -2565,6 +3204,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchProcessorRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2572,6 +3213,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorListRowResultPage'
           description: default response
+      summary: Finds processors and filters matching request
+      tags:
+      - Processor Filters
   /processorFilter/v1/reprocess:
     post:
       operationId: reprocess
@@ -2580,6 +3224,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateReprocessFilterRequest'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -2589,6 +3235,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/ReprocessDataInfo'
           description: default response
+      summary: Create filters to reprocess data
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}:
     delete:
       operationId: delete_6
@@ -2604,6 +3253,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Deletes a filter
+      tags:
+      - Processor Filters
     get:
       operationId: read_5
       parameters:
@@ -2620,6 +3272,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorFilter'
           description: default response
+      summary: Gets a filter
+      tags:
+      - Processor Filters
     put:
       operationId: update_15
       parameters:
@@ -2641,6 +3296,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorFilter'
           description: default response
+      summary: Updates a filter
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}/enabled:
     put:
       operationId: setEnabled_3
@@ -2661,6 +3319,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Sets the enabled/disabled state for a filter
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}/priority:
     put:
       operationId: setPriority_1
@@ -2682,6 +3343,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Sets the priority for a filter
+      tags:
+      - Processor Filters
   /processorTask/v1/abandon/{nodeName}:
     post:
       operationId: abandonTasks
@@ -2696,6 +3360,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProcessorTaskList'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2703,6 +3369,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Abandon some tasks
+      tags:
+      - Processor Tasks
   /processorTask/v1/assign/{nodeName}:
     post:
       operationId: assignTasks
@@ -2717,6 +3386,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AssignTasksRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2724,6 +3395,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorTaskList'
           description: default response
+      summary: Assign some tasks
+      tags:
+      - Processor Tasks
   /processorTask/v1/find:
     post:
       operationId: find_6
@@ -2732,6 +3406,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpressionCriteria'
+        description: expressionCriteria
+        required: true
       responses:
         default:
           content:
@@ -2739,6 +3415,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageProcessorTask'
           description: default response
+      summary: Finds processors tasks
+      tags:
+      - Processor Tasks
   /processorTask/v1/summary:
     post:
       operationId: findSummary
@@ -2747,6 +3426,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpressionCriteria'
+        description: expressionCriteria
+        required: true
       responses:
         default:
           content:
@@ -2754,6 +3435,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageProcessorTaskSummary'
           description: default response
+      summary: Finds processor task summaries
+      tags:
+      - Processor Tasks
   /refData/v1/entries:
     get:
       operationId: entries
@@ -2772,6 +3456,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/RefStoreEntry'
           description: default response
+      summary: List entries from the reference data store on the node called. This
+        is primarily intended for small scale debugging in non-production environments.
+        If no limit is set a default limit is applied else the results will be limited
+        to limit entries.
+      tags:
+      - Reference Data
   /refData/v1/lookup:
     post:
       operationId: lookup
@@ -2788,6 +3478,9 @@ paths:
               schema:
                 type: string
           description: default response
+      summary: Perform a reference data lookup using the supplied lookup request.
+      tags:
+      - Reference Data
   /refData/v1/purge/{purgeAge}:
     delete:
       operationId: purge
@@ -2802,6 +3495,9 @@ paths:
           content:
             application/json: {}
           description: default response
+      summary: Explicitly delete all entries that are older than purgeAge.
+      tags:
+      - Reference Data
   /remoteSearch/v1/destroy:
     get:
       operationId: destroy_1
@@ -2817,6 +3513,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Destroy search results
+      tags:
+      - Remote Search
   /remoteSearch/v1/poll:
     get:
       operationId: poll_1
@@ -2830,6 +3529,9 @@ paths:
           content:
             application/octet-stream: {}
           description: default response
+      summary: Poll the server for search results for the supplied queryKey
+      tags:
+      - Remote Search
   /remoteSearch/v1/start:
     post:
       operationId: start
@@ -2845,6 +3547,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Start a search
+      tags:
+      - Remote Search
   /ruleset/v2/export:
     post:
       operationId: exportDocument
@@ -2853,6 +3558,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: DocRef
+        required: true
       responses:
         default:
           content:
@@ -2860,6 +3567,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Base64EncodedDocumentData'
           description: default response
+      summary: Submit an export request
+      tags:
+      - Rule Set
   /ruleset/v2/import:
     post:
       operationId: importDocument
@@ -2868,6 +3578,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Base64EncodedDocumentData'
+        description: DocumentData
+        required: true
       responses:
         default:
           content:
@@ -2875,6 +3587,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
+      summary: Submit an import request
+      tags:
+      - Rule Set
   /ruleset/v2/list:
     get:
       operationId: listDocuments
@@ -2888,6 +3603,9 @@ paths:
                   $ref: '#/components/schemas/DocRef'
                 uniqueItems: true
           description: default response
+      summary: Submit a request for a list of doc refs held by this service
+      tags:
+      - Rule Set
   /ruleset/v2/{uuid}:
     get:
       operationId: fetch_13
@@ -2904,6 +3622,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReceiveDataRules'
           description: default response
+      summary: Fetch a rules doc by its UUID
+      tags:
+      - Rule Set
     put:
       operationId: update_16
       parameters:
@@ -2917,6 +3638,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReceiveDataRules'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -2924,6 +3647,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReceiveDataRules'
           description: default response
+      summary: Update a rules doc
+      tags:
+      - Rule Set
   /scheduledTime/v1:
     post:
       operationId: get_1
@@ -2932,6 +3658,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetScheduledTimesRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2939,6 +3667,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScheduledTimes'
           description: default response
+      summary: Gets scheduled time info
+      tags:
+      - Scheduled Time
   /script/v1/fetchLinkedScripts:
     post:
       operationId: fetchLinkedScripts
@@ -2947,6 +3678,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchLinkedScriptRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -2956,9 +3689,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/ScriptDoc'
           description: default response
+      summary: Fetch related scripts
+      tags:
+      - Scripts
   /script/v1/{uuid}:
     get:
-      operationId: fetch_14
+      operationId: fetchScript
       parameters:
       - in: path
         name: uuid
@@ -2972,8 +3708,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScriptDoc'
           description: default response
+      summary: Fetch a script doc by its UUID
+      tags:
+      - Scripts
     put:
-      operationId: update_17
+      operationId: updateScript
       parameters:
       - in: path
         name: uuid
@@ -2985,6 +3724,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ScriptDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -2992,6 +3733,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScriptDoc'
           description: default response
+      summary: Update a script doc
+      tags:
+      - Scripts
   /searchable/v2/dataSource:
     post:
       operationId: getDataSource_2
@@ -3000,6 +3744,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: DocRef
+        required: true
       responses:
         default:
           content:
@@ -3007,6 +3753,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataSource'
           description: default response
+      summary: Submit a request for a data source definition, supplying the DocRef
+        for the data source
+      tags:
+      - Searchable
   /searchable/v2/destroy:
     post:
       operationId: destroy_3
@@ -3015,6 +3765,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
       responses:
         default:
           content:
@@ -3022,6 +3774,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Destroy a running query
+      tags:
+      - Searchable
   /searchable/v2/search:
     post:
       operationId: search_2
@@ -3030,6 +3785,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchRequest'
+        description: SearchRequest
+        required: true
       responses:
         default:
           content:
@@ -3037,9 +3794,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
           description: default response
+      summary: Submit a search request
+      tags:
+      - Searchable
   /session/v1/list:
     get:
-      operationId: list_7
+      operationId: list_5
       parameters:
       - in: query
         name: nodeName
@@ -3052,6 +3812,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionListResponse'
           description: default response
+      summary: Lists user sessions for a node, or all nodes in the cluster if nodeName
+        is null
+      tags:
+      - Sessions
   /session/v1/logout/{sessionId}:
     get:
       operationId: logout_1
@@ -3068,6 +3832,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Logs the specified session out of Stroom
+      tags:
+      - Sessions
   /session/v1/noauth/login:
     get:
       operationId: login_1
@@ -3081,8 +3848,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/SessionLoginResponse'
           description: default response
+      summary: Checks if the current session is authenticated and redirects to an
+        auth flow if it is not
+      tags:
+      - Sessions
   /sessionInfo/v1:
     get:
       operationId: get_3
@@ -3093,6 +3864,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionInfo'
           description: default response
+      tags:
+      - Session Info
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes
@@ -3101,6 +3874,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SolrIndexDoc'
+        description: solrIndexDoc
+        required: true
       responses:
         default:
           content:
@@ -3110,6 +3885,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Fetch Solr types
+      tags:
+      - Solr Indices
   /solrIndex/v1/solrConnectionTest:
     post:
       operationId: solrConnectionTest
@@ -3118,6 +3896,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SolrIndexDoc'
+        description: solrIndexDoc
+        required: true
       responses:
         default:
           content:
@@ -3125,9 +3905,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/SolrConnectionTestResponse'
           description: default response
+      summary: Test connection to Solr
+      tags:
+      - Solr Indices
   /solrIndex/v1/{uuid}:
     get:
-      operationId: fetch_15
+      operationId: fetch_14
       parameters:
       - in: path
         name: uuid
@@ -3141,8 +3924,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SolrIndexDoc'
           description: default response
+      summary: Fetch a solr index doc by its UUID
+      tags:
+      - Solr Indices
     put:
-      operationId: update_18
+      operationId: update_17
       parameters:
       - in: path
         name: uuid
@@ -3154,6 +3940,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SolrIndexDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -3161,6 +3949,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SolrIndexDoc'
           description: default response
+      summary: Update a solr index doc
+      tags:
+      - Solr Indices
   /sqlstatistics/v2/dataSource:
     post:
       operationId: getDataSource_3
@@ -3169,6 +3960,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: DocRef
+        required: true
       responses:
         default:
           content:
@@ -3176,6 +3969,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataSource'
           description: default response
+      summary: Submit a request for a data source definition, supplying the DocRef
+        for the data source
+      tags:
+      - Sql Statistics Query
   /sqlstatistics/v2/destroy:
     post:
       operationId: destroy_4
@@ -3184,6 +3981,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
       responses:
         default:
           content:
@@ -3191,14 +3990,19 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Destroy a running query
+      tags:
+      - Sql Statistics Query
   /sqlstatistics/v2/search:
     post:
-      operationId: search_5
+      operationId: search_3
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchRequest'
+        description: SearchRequest
+        required: true
       responses:
         default:
           content:
@@ -3206,6 +4010,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
           description: default response
+      summary: Submit a search request
+      tags:
+      - Sql Statistics Query
   /statistic/rollUp/v1/bitMaskConversion:
     post:
       operationId: bitMaskConversion_1
@@ -3217,6 +4024,8 @@ paths:
               items:
                 type: integer
                 format: int32
+        description: maskValues
+        required: true
       responses:
         default:
           content:
@@ -3226,6 +4035,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/CustomRollUpMaskFields'
           description: default response
+      summary: Get rollup bit mask
+      tags:
+      - SQL Statistics RollUps
   /statistic/rollUp/v1/bitMaskPermGeneration:
     post:
       operationId: bitMaskPermGeneration_1
@@ -3235,6 +4047,8 @@ paths:
             schema:
               type: integer
               format: int32
+        description: fieldCount
+        required: true
       responses:
         default:
           content:
@@ -3244,6 +4058,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/CustomRollUpMask'
           description: default response
+      summary: Create rollup bit mask
+      tags:
+      - SQL Statistics RollUps
   /statistic/rollUp/v1/dataSourceFieldChange:
     post:
       operationId: fieldChange_1
@@ -3252,6 +4069,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StatisticsDataSourceFieldChangeRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3259,92 +4078,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatisticsDataSourceData'
           description: default response
+      summary: Change fields
+      tags:
+      - SQL Statistics RollUps
   /statistic/v1/{uuid}:
-    get:
-      operationId: fetch_18
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatisticStoreDoc'
-          description: default response
-    put:
-      operationId: update_21
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StatisticStoreDoc'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatisticStoreDoc'
-          description: default response
-  /statsStore/rollUp/v1/bitMaskConversion:
-    post:
-      operationId: bitMaskConversion
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageCustomRollUpMaskFields'
-          description: default response
-  /statsStore/rollUp/v1/bitMaskPermGeneration:
-    post:
-      operationId: bitMaskPermGeneration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageCustomRollUpMask'
-          description: default response
-  /statsStore/rollUp/v1/dataSourceFieldChange:
-    post:
-      operationId: fieldChange
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StroomStatsStoreFieldChangeRequest'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StroomStatsStoreEntityData'
-          description: default response
-  /statsStore/v1/{uuid}:
     get:
       operationId: fetch_17
       parameters:
@@ -3358,10 +4095,121 @@ paths:
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/StatisticStoreDoc'
+          description: default response
+      summary: Fetch a statistic doc by its UUID
+      tags:
+      - SQL Statistics Stores
+    put:
+      operationId: update_19
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatisticStoreDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticStoreDoc'
+          description: default response
+      summary: Update a statistic doc
+      tags:
+      - SQL Statistics Stores
+  /statsStore/rollUp/v1/bitMaskConversion:
+    post:
+      operationId: bitMaskConversion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                format: int32
+        description: maskValues
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageCustomRollUpMaskFields'
+          description: default response
+      summary: Get rollup bit mask
+      tags:
+      - Stroom Stats RollUps
+  /statsStore/rollUp/v1/bitMaskPermGeneration:
+    post:
+      operationId: bitMaskPermGeneration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int32
+        description: fieldCount
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageCustomRollUpMask'
+          description: default response
+      summary: Create rollup bit mask
+      tags:
+      - Stroom Stats RollUps
+  /statsStore/rollUp/v1/dataSourceFieldChange:
+    post:
+      operationId: fieldChange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StroomStatsStoreFieldChangeRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StroomStatsStoreEntityData'
+          description: default response
+      summary: Change fields
+      tags:
+      - Stroom Stats RollUps
+  /statsStore/v1/{uuid}:
+    get:
+      operationId: fetch_16
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/StroomStatsStoreDoc'
           description: default response
+      summary: Fetch a store doc doc by its UUID
+      tags:
+      - Stroom Stats Stores
     put:
-      operationId: update_20
+      operationId: update_18
       parameters:
       - in: path
         name: uuid
@@ -3373,6 +4221,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StroomStatsStoreDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -3380,6 +4230,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StroomStatsStoreDoc'
           description: default response
+      summary: Update a stats store doc
+      tags:
+      - Stroom Stats Stores
   /stepping/v1/findElementDoc:
     post:
       operationId: findElementDoc
@@ -3395,6 +4248,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
+      summary: Load the document for an element
+      tags:
+      - Stepping
   /stepping/v1/getPipelineForStepping:
     post:
       operationId: getPipelineForStepping
@@ -3403,6 +4259,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetPipelineForMetaRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3410,6 +4268,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
+      summary: Get a pipeline for stepping
+      tags:
+      - Stepping
   /stepping/v1/step:
     post:
       operationId: step
@@ -3418,6 +4279,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PipelineStepRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3425,6 +4288,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SteppingResult'
           description: default response
+      summary: Step a pipeline
+      tags:
+      - Stepping
   /storedQuery/v1/create:
     post:
       operationId: create_2
@@ -3433,6 +4299,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StoredQuery'
+        description: storedQuery
+        required: true
       responses:
         default:
           content:
@@ -3440,6 +4308,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoredQuery'
           description: default response
+      summary: Create a stored query
+      tags:
+      - Stored Queries
   /storedQuery/v1/delete:
     delete:
       operationId: delete_1
@@ -3455,6 +4326,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Delete a stored query
+      tags:
+      - Stored Queries
   /storedQuery/v1/find:
     post:
       operationId: find
@@ -3463,6 +4337,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindStoredQueryCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -3470,6 +4346,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageStoredQuery'
           description: default response
+      summary: Find stored queries
+      tags:
+      - Stored Queries
   /storedQuery/v1/read:
     post:
       operationId: read_1
@@ -3478,6 +4357,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StoredQuery'
+        description: storedQuery
+        required: true
       responses:
         default:
           content:
@@ -3485,6 +4366,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoredQuery'
           description: default response
+      summary: Get a stored query
+      tags:
+      - Stored Queries
   /storedQuery/v1/update:
     put:
       operationId: update_3
@@ -3500,6 +4384,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoredQuery'
           description: default response
+      summary: Update a stored query
+      tags:
+      - Stored Queries
   /stroom-index/v2/dataSource:
     post:
       operationId: getDataSource
@@ -3508,6 +4395,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: DocRef
+        required: true
       responses:
         default:
           content:
@@ -3515,6 +4404,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataSource'
           description: default response
+      summary: Submit a request for a data source definition, supplying the DocRef
+        for the data source
+      tags:
+      - Stroom-Index Queries
   /stroom-index/v2/destroy:
     post:
       operationId: destroy
@@ -3523,6 +4416,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
       responses:
         default:
           content:
@@ -3530,6 +4425,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Destroy a running query
+      tags:
+      - Stroom-Index Queries
   /stroom-index/v2/search:
     post:
       operationId: search
@@ -3538,6 +4436,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchRequest'
+        description: SearchRequest
+        required: true
       responses:
         default:
           content:
@@ -3545,6 +4445,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
           description: default response
+      summary: Submit a search request
+      tags:
+      - Stroom-Index Queries
   /stroom-solr-index/v2/dataSource:
     post:
       operationId: getDataSource_1
@@ -3553,6 +4456,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocRef'
+        description: DocRef
+        required: true
       responses:
         default:
           content:
@@ -3560,6 +4465,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataSource'
           description: default response
+      summary: Submit a request for a data source definition, supplying the DocRef
+        for the data source
+      tags:
+      - Solr Queries
   /stroom-solr-index/v2/destroy:
     post:
       operationId: destroy_2
@@ -3568,6 +4477,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
       responses:
         default:
           content:
@@ -3575,6 +4486,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Destroy a running query
+      tags:
+      - Solr Queries
   /stroom-solr-index/v2/search:
     post:
       operationId: search_1
@@ -3583,6 +4497,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchRequest'
+        description: SearchRequest
+        required: true
       responses:
         default:
           content:
@@ -3590,6 +4506,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
           description: default response
+      summary: Submit a search request
+      tags:
+      - Solr Queries
   /stroomSession/v1/invalidate:
     get:
       operationId: invalidate_1
@@ -3600,6 +4519,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Invalidate the current session
+      tags:
+      - Stroom Sessions
   /stroomSession/v1/noauth/validateSession:
     get:
       operationId: validateSession
@@ -3616,6 +4538,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateSessionResponse'
           description: default response
+      summary: Validate the current session, return a redirect Uri if invalid.
+      tags:
+      - Stroom Sessions
   /suggest/v1:
     post:
       operationId: fetch_12
@@ -3624,6 +4549,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchSuggestionsRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3633,6 +4560,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Fetch some suggestions
+      tags:
+      - Suggestions
   /systemInfo/v1:
     get:
       operationId: getAll
@@ -3643,6 +4573,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SystemInfoResultList'
           description: default response
+      summary: Get all system info results
+      tags:
+      - System Info
   /systemInfo/v1/names:
     get:
       operationId: getNames
@@ -3655,6 +4588,9 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Get all system info result names
+      tags:
+      - System Info
   /systemInfo/v1/{name}:
     get:
       operationId: get_2
@@ -3671,6 +4607,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SystemInfoResult'
           description: default response
+      summary: Get a system info result by name
+      tags:
+      - System Info
   /task/v1/find/{nodeName}:
     post:
       operationId: find_9
@@ -3685,6 +4624,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindTaskProgressRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3692,9 +4633,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskProgressResponse'
           description: default response
+      summary: Finds tasks for a node
+      tags:
+      - Tasks
   /task/v1/list/{nodeName}:
     get:
-      operationId: list_8
+      operationId: list_6
       parameters:
       - in: path
         name: nodeName
@@ -3708,6 +4652,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskProgressResponse'
           description: default response
+      summary: Lists tasks for a node
+      tags:
+      - Tasks
   /task/v1/terminate/{nodeName}:
     post:
       operationId: terminate
@@ -3722,6 +4669,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TerminateTaskProgressRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
@@ -3729,6 +4678,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Terminates tasks for a node
+      tags:
+      - Tasks
   /task/v1/user/{nodeName}:
     get:
       operationId: userTasks
@@ -3745,6 +4697,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskProgressResponse'
           description: default response
+      summary: Lists tasks for a node
+      tags:
+      - Tasks
   /textConverter/v1/{uuid}:
     get:
       operationId: fetch_10
@@ -3761,6 +4716,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TextConverterDoc'
           description: default response
+      summary: Fetch a text converter doc by its UUID
+      tags:
+      - Text Converters
     put:
       operationId: update_13
       parameters:
@@ -3774,6 +4732,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TextConverterDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -3781,9 +4741,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/TextConverterDoc'
           description: default response
+      summary: Update a text converter doc
+      tags:
+      - Text Converters
   /token/v1:
     delete:
-      operationId: deleteAll
+      operationId: deleteAllTokens
       responses:
         default:
           content:
@@ -3792,8 +4755,11 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Delete all tokens.
+      tags:
+      - Api Keys
     get:
-      operationId: list_6
+      operationId: listTokens
       responses:
         default:
           content:
@@ -3801,13 +4767,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResultPage'
           description: default response
+      summary: Get all tokens.
+      tags:
+      - Api Keys
     post:
-      operationId: create_9
+      operationId: createToken
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateTokenRequest'
+        description: CreateTokenRequest
         required: true
       responses:
         default:
@@ -3816,9 +4786,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Token'
           description: default response
+      summary: Create a new token.
+      tags:
+      - Api Keys
   /token/v1/byToken/{token}:
     delete:
-      operationId: deleteByToken
+      operationId: deleteTokenByContent
       parameters:
       - in: path
         name: token
@@ -3833,8 +4806,11 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Delete a token by the token string itself.
+      tags:
+      - Api Keys
     get:
-      operationId: read_8
+      operationId: fetchTokenByContent
       parameters:
       - in: path
         name: token
@@ -3848,6 +4824,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Token'
           description: default response
+      summary: Read a token by the token string itself.
+      tags:
+      - Api Keys
   /token/v1/noauth/fetchTokenConfig:
     get:
       operationId: fetchTokenConfig
@@ -3858,6 +4837,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenConfig'
           description: default response
+      summary: Get the token configuration
+      tags:
+      - Api Keys
   /token/v1/publickey:
     get:
       operationId: getPublicKey
@@ -3868,14 +4850,19 @@ paths:
               schema:
                 type: string
           description: default response
+      summary: Provides access to this service's current public key. A client may
+        use these keys to verify JWTs issued by this service.
+      tags:
+      - Api Keys
   /token/v1/search:
     post:
-      operationId: search_4
+      operationId: searchTokens
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchTokenRequest'
+        description: SearchRequest
         required: true
       responses:
         default:
@@ -3884,9 +4871,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResultPage'
           description: default response
+      summary: Submit a search request for tokens
+      tags:
+      - Api Keys
   /token/v1/{id}:
     delete:
-      operationId: delete_9
+      operationId: deleteToken
       parameters:
       - in: path
         name: id
@@ -3902,8 +4892,11 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Delete a token by ID.
+      tags:
+      - Api Keys
     get:
-      operationId: read_7
+      operationId: fetchToken
       parameters:
       - in: path
         name: id
@@ -3918,9 +4911,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Token'
           description: default response
+      summary: Read a token by ID.
+      tags:
+      - Api Keys
   /token/v1/{id}/enabled:
     get:
-      operationId: toggleEnabled
+      operationId: toggleTokenEnabled
       parameters:
       - in: path
         name: id
@@ -3941,6 +4937,9 @@ paths:
                 type: integer
                 format: int32
           description: default response
+      summary: Enable or disable the state of a token.
+      tags:
+      - Api Keys
   /users/v1:
     get:
       operationId: find_8
@@ -3966,6 +4965,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
           description: default response
+      summary: Find the users matching the supplied criteria
+      tags:
+      - Authorisation
   /users/v1/associates:
     get:
       operationId: getAssociates
@@ -3983,9 +4985,12 @@ paths:
                 items:
                   type: string
           description: default response
+      summary: Gets a list of associated users
+      tags:
+      - Authorisation
   /users/v1/create/{name}/{isGroup}:
     post:
-      operationId: create_10
+      operationId: create_8
       parameters:
       - in: path
         name: name
@@ -4004,6 +5009,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
+      summary: Creates a user or group with the supplied name
+      tags:
+      - Authorisation
   /users/v1/find:
     post:
       operationId: find_7
@@ -4012,6 +5020,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FindUserCriteria'
+        description: criteria
+        required: true
       responses:
         default:
           content:
@@ -4019,6 +5029,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResultPageUser'
           description: default response
+      summary: Find the users matching the supplied criteria
+      tags:
+      - Authorisation
   /users/v1/{userName}/status:
     put:
       operationId: setStatus_1
@@ -4039,9 +5052,12 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Enables/disables the Stroom user with the supplied username
+      tags:
+      - Authorisation
   /users/v1/{userUuid}:
     get:
-      operationId: fetch_16
+      operationId: fetch_15
       parameters:
       - in: path
         name: userUuid
@@ -4055,6 +5071,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
+      summary: Fetches the user with the supplied UUID
+      tags:
+      - Authorisation
   /users/v1/{userUuid}/{groupUuid}:
     delete:
       operationId: removeUserFromGroup
@@ -4076,6 +5095,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Removes user with UUID userUuid from the group with UUID groupUuid
+      tags:
+      - Authorisation
     put:
       operationId: addUserToGroup
       parameters:
@@ -4096,6 +5118,9 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Adds user with UUID userUuid to the group with UUID groupUuid
+      tags:
+      - Authorisation
   /users/v1/{uuid}:
     delete:
       operationId: deleteUser
@@ -4112,7 +5137,67 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Deletes the user with the supplied UUID
+      tags:
+      - Authorisation
   /visualisation/v1/{uuid}:
+    get:
+      operationId: fetch_18
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualisationDoc'
+          description: default response
+      summary: Fetch a visualisation doc by its UUID
+      tags:
+      - Visualisations
+    put:
+      operationId: update_20
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisualisationDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualisationDoc'
+          description: default response
+      summary: Update a visualisation doc
+      tags:
+      - Visualisations
+  /welcome/v1:
+    get:
+      operationId: fetch
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Welcome'
+          description: default response
+      summary: Get the configured HTML welcome message
+      tags:
+      - Welcome
+  /xmlSchema/v1/{uuid}:
     get:
       operationId: fetch_19
       parameters:
@@ -4126,56 +5211,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VisualisationDoc'
-          description: default response
-    put:
-      operationId: update_22
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VisualisationDoc'
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VisualisationDoc'
-          description: default response
-  /welcome/v1:
-    get:
-      operationId: fetch
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Welcome'
-          description: default response
-  /xmlSchema/v1/{uuid}:
-    get:
-      operationId: fetch_20
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
                 $ref: '#/components/schemas/XmlSchemaDoc'
           description: default response
+      summary: Fetch a xml schema doc by its UUID
+      tags:
+      - XML Schemas
     put:
-      operationId: update_23
+      operationId: update_21
       parameters:
       - in: path
         name: uuid
@@ -4187,6 +5229,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/XmlSchemaDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -4194,6 +5238,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/XmlSchemaDoc'
           description: default response
+      summary: Update a xml schema doc
+      tags:
+      - XML Schemas
   /xslt/v1/{uuid}:
     get:
       operationId: fetch_11
@@ -4210,6 +5257,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/XsltDoc'
           description: default response
+      summary: Fetch an xslt doc by its UUID
+      tags:
+      - XSLTs
     put:
       operationId: update_14
       parameters:
@@ -4223,6 +5273,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/XsltDoc'
+        description: doc
+        required: true
       responses:
         default:
           content:
@@ -4230,6 +5282,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/XsltDoc'
           description: default response
+      summary: Update a an xslt doc
+      tags:
+      - XSLTs
 components:
   schemas:
     AbstractFetchDataResult:
@@ -4778,6 +5833,8 @@ components:
       properties:
         componentId:
           type: string
+          description: The ID of the component that will receive the results corresponding
+            to this ResultRequest
         fetch:
           type: string
           enum:
@@ -4787,6 +5844,7 @@ components:
         type:
           type: string
       required:
+      - componentId
       - type
     ComponentSettings:
       type: object
@@ -4797,21 +5855,6 @@ components:
           type: string
       required:
       - type
-    ConditionalFormattingRule:
-      type: object
-      properties:
-        backgroundColor:
-          type: string
-        enabled:
-          type: boolean
-        expression:
-          $ref: '#/components/schemas/ExpressionOperator'
-        hide:
-          type: boolean
-        id:
-          type: string
-        textColor:
-          type: string
     ConfigProperty:
       type: object
       properties:
@@ -5253,8 +6296,14 @@ components:
         properties:
           pattern:
             type: string
+            description: A date time formatting pattern string conforming to the specification
+              of java.time.format.DateTimeFormatter
           timeZone:
             $ref: '#/components/schemas/TimeZone'
+      description: The string formatting to apply to a date value
+      required:
+      - pattern
+      - timeZone
     DefaultLocation:
       type: object
       allOf:
@@ -5319,13 +6368,25 @@ components:
           type: string
     DocRef:
       type: object
+      description: A class for describing a unique reference to a 'document' in stroom.  A
+        'document' is an entity in stroom such as a data source dictionary or pipeline.
       properties:
         name:
           type: string
+          description: The name for the data source
+          example: MyStatistic
         type:
           type: string
+          description: The type of the 'document' that this DocRef refers to
+          example: StroomStatsStore
         uuid:
           type: string
+          description: The unique identifier for this 'document'
+          example: 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
+      required:
+      - name
+      - type
+      - uuid
       xml:
         name: doc
     DocRefField:
@@ -5654,17 +6715,21 @@ components:
             $ref: '#/components/schemas/CriteriaFieldSort'
     ExpressionItem:
       type: object
+      description: Base type for an item in an expression tree
       discriminator:
         propertyName: type
       properties:
         enabled:
           type: boolean
+          description: Whether this item in the expression tree is enabled or not
+          example: true
         type:
           type: string
       required:
       - type
     ExpressionOperator:
       type: object
+      description: A logical addOperator term in a query expression tree
       properties:
         children:
           type: array
@@ -5674,12 +6739,17 @@ components:
             wrapped: true
         enabled:
           type: boolean
+          description: Whether this item in the expression tree is enabled or not
+          example: true
         op:
           type: string
+          description: The logical addOperator type
           enum:
           - AND
           - OR
           - NOT
+      required:
+      - op
     ExpressionTerm:
       type: object
       allOf:
@@ -5688,6 +6758,7 @@ components:
         properties:
           condition:
             type: string
+            description: The condition of the predicate term
             enum:
             - CONTAINS
             - EQUALS
@@ -5706,8 +6777,16 @@ components:
             $ref: '#/components/schemas/DocRef'
           field:
             type: string
+            description: The name of the field that is being evaluated in this predicate
+              term
           value:
             type: string
+            description: The value that the field value is being evaluated against.
+              Not required if a dictionary is supplied
+      description: A predicate term in a query expression tree
+      required:
+      - condition
+      - field
     FeedDoc:
       type: object
       properties:
@@ -5888,9 +6967,13 @@ components:
       - field
     Field:
       type: object
+      description: Describes a field in a result set. The field can have various expressions
+        applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
       properties:
         expression:
           type: string
+          description: The expression to use to generate the value for this field
+          example: SUM(${count})
         filter:
           $ref: '#/components/schemas/Filter'
         format:
@@ -5904,20 +6987,21 @@ components:
           type: string
         sort:
           $ref: '#/components/schemas/Sort'
-        special:
-          type: boolean
-        visible:
-          type: boolean
-        width:
-          type: integer
-          format: int32
+      required:
+      - expression
     Filter:
       type: object
+      description: A pair of regular expression filters (inclusion and exclusion)
+        to apply to the field.  Either or both can be supplied
       properties:
         excludes:
           type: string
+          description: Only results NOT matching this filter will be included
+          example: ^[0-9]{3}$
         includes:
           type: string
+          description: Only results matching this filter will be included
+          example: ^[0-9]{3}$
     FilterFieldDefinition:
       type: object
       properties:
@@ -6156,24 +7240,32 @@ components:
               type: array
               items:
                 type: object
+      description: A result structure used primarily for visualisation data
+      required:
+      - componentId
     FloatField:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
     Format:
       type: object
+      description: Describes the formatting that will be applied to values in a field
       properties:
         settings:
           $ref: '#/components/schemas/FormatSettings'
         type:
           type: string
+          description: The formatting type to apply
           enum:
           - GENERAL
           - NUMBER
           - DATE_TIME
           - TEXT
+          example: NUMBER
         wrap:
           type: boolean
+      required:
+      - type
     FormatSettings:
       type: object
       discriminator:
@@ -6754,6 +7846,7 @@ components:
         name: limits
     ListConfigResponse:
       type: object
+      description: List of config properties
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -6786,10 +7879,12 @@ components:
     LoginResponse:
       type: object
       properties:
-        authenticated:
+        loginSuccessful:
           type: boolean
-        redirectUri:
+        message:
           type: string
+        requirePasswordChange:
+          type: boolean
     LongField:
       type: object
       allOf:
@@ -6916,17 +8011,35 @@ components:
           decimalPlaces:
             type: integer
             format: int32
+            description: The number of decimal places
+            example: 2
           useSeparator:
             type: boolean
+            description: Whether to use a thousands separator or not. Defaults to
+              false
+            example: true
+      description: The definition of a format to apply to numeric data
+      required:
+      - decimalPlaces
     OffsetRange:
       type: object
+      description: The offset and length of a range of data in a sub-set of a query
+        result set
       properties:
         length:
           type: integer
           format: int64
+          description: The length in records of the sub-set of results
+          example: 100
         offset:
           type: integer
           format: int64
+          description: The start offset for this sub-set of data, where zero is the
+            offset of the first record in the full result set
+          example: 0
+      required:
+      - length
+      - offset
     OverrideValueString:
       type: object
       properties:
@@ -6945,6 +8058,7 @@ components:
           format: int64
     PageResponse:
       type: object
+      description: Details of the page of results being returned.
       properties:
         exact:
           type: boolean
@@ -6959,11 +8073,17 @@ components:
           format: int64
     Param:
       type: object
+      description: A key value pair that describes a property of a query
       properties:
         key:
           type: string
+          description: The property key
         value:
           type: string
+          description: The property value
+      required:
+      - key
+      - value
     PasswordPolicyConfig:
       type: object
       properties:
@@ -7526,6 +8646,7 @@ components:
             type: string
     Query:
       type: object
+      description: The query terms for the search
       properties:
         dataSource:
           $ref: '#/components/schemas/DocRef'
@@ -7535,6 +8656,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Param'
+      required:
+      - dataSource
+      - expression
     QueryComponentSettings:
       type: object
       allOf:
@@ -7565,9 +8689,16 @@ components:
         name: query
     QueryKey:
       type: object
+      description: A unique key to identify the instance of the search by. This key
+        is used to identify multiple requests for the same search when running in
+        incremental mode.
       properties:
         uuid:
           type: string
+          description: The UUID that makes up the query key
+          example: 7740bcd0-a49e-4c22-8540-044f85770716
+      required:
+      - uuid
     RangeInteger:
       type: object
       properties:
@@ -7780,19 +8911,26 @@ components:
           type: string
     Result:
       type: object
+      description: Base object for describing a set of result data
       discriminator:
         propertyName: type
       properties:
         componentId:
           type: string
+          description: The ID of the component that this result set was requested
+            for. See ResultRequest in SearchRequest
         error:
           type: string
+          description: If an error has occurred producing this result set then this
+            will have details of the error
         type:
           type: string
       required:
+      - componentId
       - type
     ResultPageActivity:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7802,6 +8940,7 @@ components:
             $ref: '#/components/schemas/Activity'
     ResultPageCustomRollUpMask:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7811,6 +8950,7 @@ components:
             $ref: '#/components/schemas/CustomRollUpMask'
     ResultPageCustomRollUpMaskFields:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7820,6 +8960,7 @@ components:
             $ref: '#/components/schemas/CustomRollUpMaskFields'
     ResultPageDBTableStatus:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7829,6 +8970,7 @@ components:
             $ref: '#/components/schemas/DBTableStatus'
     ResultPageDependency:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7838,6 +8980,7 @@ components:
             $ref: '#/components/schemas/Dependency'
     ResultPageFsVolume:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7847,6 +8990,7 @@ components:
             $ref: '#/components/schemas/FsVolume'
     ResultPageIndexShard:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7856,6 +9000,7 @@ components:
             $ref: '#/components/schemas/IndexShard'
     ResultPageIndexVolume:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7865,6 +9010,7 @@ components:
             $ref: '#/components/schemas/IndexVolume'
     ResultPageIndexVolumeGroup:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7874,6 +9020,7 @@ components:
             $ref: '#/components/schemas/IndexVolumeGroup'
     ResultPageJob:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7883,6 +9030,7 @@ components:
             $ref: '#/components/schemas/Job'
     ResultPageJobNode:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7892,6 +9040,7 @@ components:
             $ref: '#/components/schemas/JobNode'
     ResultPageMetaRow:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7901,6 +9050,7 @@ components:
             $ref: '#/components/schemas/MetaRow'
     ResultPageProcessorTask:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7910,6 +9060,7 @@ components:
             $ref: '#/components/schemas/ProcessorTask'
     ResultPageProcessorTaskSummary:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7919,6 +9070,7 @@ components:
             $ref: '#/components/schemas/ProcessorTaskSummary'
     ResultPageStoredQuery:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7928,6 +9080,7 @@ components:
             $ref: '#/components/schemas/StoredQuery'
     ResultPageUser:
       type: object
+      description: A page of results.
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
@@ -7937,9 +9090,13 @@ components:
             $ref: '#/components/schemas/User'
     ResultRequest:
       type: object
+      description: A definition for how to return the raw results of the query in
+        the SearchResponse, e.g. sorted, grouped, limited, etc.
       properties:
         componentId:
           type: string
+          description: The ID of the component that will receive the results corresponding
+            to this ResultRequest
         fetch:
           type: string
           enum:
@@ -7952,34 +9109,55 @@ components:
             $ref: '#/components/schemas/TableSettings'
         openGroups:
           type: array
+          description: TODO
           items:
             type: string
+            description: TODO
           uniqueItems: true
         requestedRange:
           $ref: '#/components/schemas/OffsetRange'
         resultStyle:
           type: string
+          description: The style of results required. FLAT will provide a FlatResult
+            object, while TABLE will provide a TableResult object
           enum:
           - FLAT
           - TABLE
+      required:
+      - componentId
+      - mappings
+      - openGroups
+      - requestedRange
+      - resultStyle
     Row:
       type: object
+      description: A row of data in a result set
       properties:
         backgroundColor:
           type: string
         depth:
           type: integer
           format: int32
+          description: The grouping depth, where 0 is the top level of grouping, or
+            where there is no grouping
+          example: 0
         groupKey:
           type: string
+          description: TODO
         textColor:
           type: string
         values:
           type: array
+          description: The value for this row of data. The values in the list are
+            in the same order as the fields in the ResultRequest
           items:
             type: string
-            xml:
-              name: highlight
+            description: The value for this row of data. The values in the list are
+              in the same order as the fields in the ResultRequest
+      required:
+      - depth
+      - groupKey
+      - values
     SavePipelineXmlRequest:
       type: object
       properties:
@@ -8076,11 +9254,20 @@ components:
           uniqueItems: true
     SearchRequest:
       type: object
+      description: A request for new search or a follow up request for more data for
+        an existing iterative search
       properties:
         dateTimeLocale:
           type: string
+          description: The locale to use when formatting date values in the search
+            results. The value is the string form of a java.time.ZoneId
         incremental:
           type: boolean
+          description: If true the response will contain all results found so far,
+            typically no results on the first request. Future requests for the same
+            query key may return more results. Intended for use on longer running
+            searches to allow partial result sets to be returned as soon as they are
+            available rather than waiting for the full result set.
         key:
           $ref: '#/components/schemas/QueryKey'
         query:
@@ -8094,10 +9281,29 @@ components:
         timeout:
           type: integer
           format: int64
+          description: Set the maximum time (in ms) for the server to wait for a complete
+            result set. The timeout applies to both incremental and non incremental
+            queries, though the behaviour is slightly different. The timeout will
+            make the server wait for which ever comes first out of the query completing
+            or the timeout period being reached. If no value is supplied then for
+            an incremental query a default value of 0 will be used (i.e. returning
+            immediately) and for a non-incremental query the server's default timeout
+            period will be used. For an incremental query, if the query has not completed
+            by the end of the timeout period, it will return the currently know results
+            with complete=false, however for a non-incremental query it will return
+            no results, complete=false and details of the timeout in the error field
+      required:
+      - dateTimeLocale
+      - incremental
+      - key
+      - query
+      - resultRequests
       xml:
         name: searchRequest
     SearchResponse:
       type: object
+      description: The response to a search request, that may or may not contain results.
+        The results may only be a partial set if an iterative screech was requested
       properties:
         complete:
           type: boolean
@@ -8111,8 +9317,12 @@ components:
             wrapped: true
         highlights:
           type: array
+          description: A list of strings to highlight in the UI that should correlate
+            with the search query.
           items:
             type: string
+            description: A list of strings to highlight in the UI that should correlate
+              with the search query.
             xml:
               name: highlight
           xml:
@@ -8123,6 +9333,8 @@ components:
             $ref: '#/components/schemas/Result'
           xml:
             wrapped: true
+      required:
+      - highlights
       xml:
         name: searchResponse
     SearchTokenRequest:
@@ -8259,6 +9471,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SessionDetails'
+    SessionLoginResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        redirectUri:
+          type: string
     SetAssignedToRequest:
       type: object
       properties:
@@ -8469,15 +9688,24 @@ components:
             type: string
     Sort:
       type: object
+      description: Describes the sorting applied to a field
       properties:
         direction:
           type: string
+          description: The direction to sort in, ASCENDING or DESCENDING
           enum:
           - ASCENDING
           - DESCENDING
+          example: ASCENDING
         order:
           type: integer
           format: int32
+          description: Where multiple fields are sorted this value describes the sort
+            order, with 0 being the first field to sort on
+          example: 0
+      required:
+      - direction
+      - order
     SourceConfig:
       type: object
       properties:
@@ -8872,12 +10100,9 @@ components:
     TableComponentSettings:
       type: object
       properties:
-        conditionalFormattingRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConditionalFormattingRule'
         extractValues:
           type: boolean
+          description: TODO
         extractionPipeline:
           $ref: '#/components/schemas/DocRef'
         fields:
@@ -8886,15 +10111,26 @@ components:
             $ref: '#/components/schemas/Field'
         maxResults:
           type: array
+          description: Defines the maximum number of results to return at each grouping
+            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
+            1 and 1 at level 2. In the absence of this field system defaults will
+            apply
+          example: 1000,10,1
           items:
             type: integer
             format: int32
-        modelVersion:
-          type: string
+            description: Defines the maximum number of results to return at each grouping
+              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
+              1 and 1 at level 2. In the absence of this field system defaults will
+              apply
         queryId:
           type: string
+          description: TODO
         showDetail:
           type: boolean
+      required:
+      - fields
+      - queryId
     TableCoprocessorSettings:
       type: object
       allOf:
@@ -8926,6 +10162,13 @@ components:
           totalResults:
             type: integer
             format: int32
+      description: Object for describing a set of results in a table form that supports
+        grouped data
+      required:
+      - componentId
+      - fields
+      - resultRange
+      - rows
     TableResultRequest:
       type: object
       allOf:
@@ -8941,13 +10184,14 @@ components:
             $ref: '#/components/schemas/OffsetRange'
           tableSettings:
             $ref: '#/components/schemas/TableSettings'
+      required:
+      - componentId
     TableSettings:
       type: object
+      description: An object to describe how the query results should be returned,
+        including which fields should be included and what sorting, grouping, filtering,
+        limiting, etc. should be applied
       properties:
-        conditionalFormattingRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConditionalFormattingRule'
         extractValues:
           type: boolean
         extractionPipeline:
@@ -8958,15 +10202,30 @@ components:
             $ref: '#/components/schemas/Field'
         maxResults:
           type: array
+          description: Defines the maximum number of results to return at each grouping
+            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
+            1 and 1 at level 2. In the absence of this field system defaults will
+            apply
+          example: 1000,10,1
           items:
             type: integer
             format: int32
-        modelVersion:
-          type: string
+            description: Defines the maximum number of results to return at each grouping
+              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
+              1 and 1 at level 2. In the absence of this field system defaults will
+              apply
         queryId:
           type: string
+          description: TODO
         showDetail:
           type: boolean
+          description: When grouping is used a value of true indicates that the results
+            will include the full detail of any results aggregated into a group as
+            well as their aggregates. A value of false will only include the aggregated
+            values for each group. Defaults to false.
+      required:
+      - fields
+      - queryId
     TaskId:
       type: object
       properties:
@@ -9119,22 +10378,34 @@ components:
           type: string
     TimeZone:
       type: object
+      description: The timezone to apply to a date time value
       properties:
         id:
           type: string
+          description: The id of the time zone, conforming to java.time.ZoneId
+          example: GMT
         offsetHours:
           type: integer
           format: int32
+          description: The number of hours this timezone is offset from UTC
+          example: -1
         offsetMinutes:
           type: integer
           format: int32
+          description: The number of minutes this timezone is offset from UTC
+          example: -30
         use:
           type: string
+          description: How the time zone will be specified, e.g. from provided client
+            'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC
+            in hours and minutes.
           enum:
           - Local
           - UTC
           - Id
           - Offset
+      required:
+      - use
     Token:
       type: object
       properties:
@@ -9394,6 +10665,8 @@ components:
             format: int64
           jsonData:
             type: string
+      required:
+      - componentId
     VisResultRequest:
       type: object
       allOf:
@@ -9404,6 +10677,8 @@ components:
             $ref: '#/components/schemas/OffsetRange'
           visDashboardSettings:
             $ref: '#/components/schemas/VisComponentSettings'
+      required:
+      - componentId
     VisualisationDoc:
       type: object
       properties:

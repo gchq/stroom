@@ -16,37 +16,36 @@
 
 package stroom.legacy.model_6_1;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group"})
 @XmlType(name = "Field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
+@Schema(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
 @Deprecated
 public final class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement
-    @ApiModelProperty(value = "The internal id of the field for equality purposes")
+    @JsonPropertyDescription("The internal id of the field for equality purposes")
     private String id;
 
     @XmlElement
-    @ApiModelProperty(value = "The name of the field for display purposes")
+    @JsonPropertyDescription("The name of the field for display purposes")
     private String name;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The expression to use to generate the value for this field",
+    @Schema(description = "The expression to use to generate the value for this field",
             required = true,
             example = "SUM(${count})")
     private String expression;
@@ -61,8 +60,7 @@ public final class Field implements Serializable {
     private Format format;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "If this field is to be grouped then this defines the level of grouping, with 0 being the top " +
+    @JsonPropertyDescription("If this field is to be grouped then this defines the level of grouping, with 0 being the top " +
                     "level of grouping, 1 being the next level down, etc.")
     private Integer group;
 

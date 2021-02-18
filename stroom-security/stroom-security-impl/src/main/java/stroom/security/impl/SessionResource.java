@@ -4,8 +4,8 @@ import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +24,7 @@ import javax.ws.rs.core.MediaType;
  * needs to ask all relying parties to log out. This is the back-channel resource that allows this to
  * happen.
  */
-@Api(tags = "Sessions")
+@Tag(name = "Sessions")
 @Path(SessionResource.BASE_PATH)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -36,17 +36,17 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/noauth/login")
-    @ApiOperation("Checks if the current session is authenticated and redirects to an auth flow if it is not")
-    LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
-                        @QueryParam("redirect_uri") String redirectUri);
+    @Operation(summary = "Checks if the current session is authenticated and redirects to an auth flow if it is not")
+    SessionLoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
+                               @QueryParam("redirect_uri") String redirectUri);
 
     @GET
     @Path("logout/{sessionId}")
-    @ApiOperation(value = "Logs the specified session out of Stroom")
+    @Operation(summary = "Logs the specified session out of Stroom")
     Boolean logout(@PathParam("sessionId") String authSessionId);
 
     @GET
     @Path(LIST_PATH_PART)
-    @ApiOperation("Lists user sessions for a node, or all nodes in the cluster if nodeName is null")
+    @Operation(summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null")
     SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
 }

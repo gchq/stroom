@@ -115,7 +115,7 @@ ext.versions = [
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '3.6.28',
-        swagger           : '1.6.2',
+        swagger           : '2.1.6',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
@@ -254,13 +254,13 @@ ext.libs = [
         okhttp_logging_interceptor     : 'com.squareup.okhttp3:logging-interceptor:4.8.1',
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
-        restygwt                       : "org.fusesource.restygwt:restygwt:2.2.6",
+        restygwt                       : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-21",
         simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
         stax_api                       : "stax:stax-api:1.0.1",
-        swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
+        swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         validation_api                 : "javax.validation:validation-api:1.0.0.GA",
         //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM

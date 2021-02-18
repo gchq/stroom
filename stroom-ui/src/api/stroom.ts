@@ -13,6 +13,8 @@ export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
   feedName?: string;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
   itemRange?: OffsetRange;
   sourceLocation?: SourceLocation;
   streamTypeName?: string;
@@ -83,6 +85,7 @@ export interface Account {
 }
 
 export interface AccountResultPage {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Account[];
 }
@@ -212,6 +215,8 @@ export interface Automate {
 
 export interface Base64EncodedDocumentData {
   dataMap?: Record<string, string>;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -235,6 +240,7 @@ export interface CacheInfo {
 }
 
 export interface CacheInfoResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: CacheInfo[];
 }
@@ -242,6 +248,8 @@ export interface CacheInfoResponse {
 export interface ChangeDocumentPermissionsRequest {
   cascade?: "NO" | "CHANGES_ONLY" | "ALL";
   changes?: Changes;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -313,10 +321,14 @@ export interface ClusterNodeInfoItem {
 
 export interface ClusterSearchTask {
   dateTimeLocale?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key?: QueryKey;
 
   /** @format int64 */
   now?: number;
+
+  /** The query terms for the search */
   query?: Query;
   settings?: CoprocessorSettings[];
   shards?: number[];
@@ -333,22 +345,14 @@ export interface ComponentConfig {
 }
 
 export interface ComponentResultRequest {
-  componentId?: string;
+  /** The ID of the component that will receive the results corresponding to this ResultRequest */
+  componentId: string;
   fetch?: "NONE" | "CHANGES" | "ALL";
   type: string;
 }
 
 export interface ComponentSettings {
   type: string;
-}
-
-export interface ConditionalFormattingRule {
-  backgroundColor?: string;
-  enabled?: boolean;
-  expression?: ExpressionOperator;
-  hide?: boolean;
-  id?: string;
-  textColor?: string;
 }
 
 export interface ConfigProperty {
@@ -393,6 +397,7 @@ export interface CoprocessorSettings {
 }
 
 export interface CopyPermissionsFromParentRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -424,6 +429,8 @@ export interface CreateEntryRequest {
 export interface CreateProcessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int32 */
@@ -575,6 +582,7 @@ export interface DataRetentionDeleteSummaryRequest {
 }
 
 export interface DataRetentionDeleteSummaryResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   queryId?: string;
   values?: DataRetentionDeleteSummary[];
@@ -587,6 +595,8 @@ export interface DataRetentionRule {
   /** @format int64 */
   creationTime?: number;
   enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   forever?: boolean;
   name?: string;
@@ -623,13 +633,19 @@ export interface DataSource {
 
 export type DateField = AbstractField;
 
+/**
+ * The string formatting to apply to a date value
+ */
 export type DateTimeFormatSettings = FormatSettings & { pattern?: string; timeZone?: TimeZone };
 
 export type DefaultLocation = Location;
 
 export interface Dependency {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   from?: DocRef;
   ok?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   to?: DocRef;
 }
 
@@ -663,10 +679,27 @@ export interface DictionaryDoc {
   version?: string;
 }
 
+/**
+ * A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.
+ */
 export interface DocRef {
-  name?: string;
-  type?: string;
-  uuid?: string;
+  /**
+   * The name for the data source
+   * @example MyStatistic
+   */
+  name: string;
+
+  /**
+   * The type of the 'document' that this DocRef refers to
+   * @example StroomStatsStore
+   */
+  type: string;
+
+  /**
+   * The unique identifier for this 'document'
+   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
+   */
+  uuid: string;
 }
 
 export type DocRefField = AbstractField & { docRefType?: string };
@@ -675,6 +708,8 @@ export interface DocRefInfo {
   /** @format int64 */
   createTime?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
   otherInfo?: string;
 
@@ -729,6 +764,8 @@ export interface DownloadSearchResultsRequest {
 
 export interface EntityEvent {
   action?: "CREATE" | "UPDATE" | "DELETE" | "CLEAR_CACHE";
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -795,12 +832,14 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefs?: DocRef[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceCreateRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docName?: string;
   docType?: string;
@@ -812,6 +851,7 @@ export interface ExplorerServiceDeleteRequest {
 }
 
 export interface ExplorerServiceMoveRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefs?: DocRef[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
@@ -819,6 +859,8 @@ export interface ExplorerServiceMoveRequest {
 
 export interface ExplorerServiceRenameRequest {
   docName?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -831,23 +873,44 @@ export interface ExplorerTreeFilter {
 }
 
 export interface ExpressionCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
+/**
+ * Base type for an item in an expression tree
+ */
 export interface ExpressionItem {
+  /**
+   * Whether this item in the expression tree is enabled or not
+   * @example true
+   */
   enabled?: boolean;
   type: string;
 }
 
+/**
+ * A logical addOperator term in a query expression tree
+ */
 export interface ExpressionOperator {
   children?: ExpressionItem[];
+
+  /**
+   * Whether this item in the expression tree is enabled or not
+   * @example true
+   */
   enabled?: boolean;
-  op?: "AND" | "OR" | "NOT";
+
+  /** The logical addOperator type */
+  op: "AND" | "OR" | "NOT";
 }
 
+/**
+ * A predicate term in a query expression tree
+ */
 export type ExpressionTerm = ExpressionItem & {
   condition?:
     | "CONTAINS"
@@ -900,12 +963,15 @@ export interface FeedDoc {
 }
 
 export interface FetchAllDocumentPermissionsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
 export interface FetchDataRequest {
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
   markerMode?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int64 */
@@ -929,23 +995,29 @@ export interface FetchExplorerNodeResult {
 
 export interface FetchLinkedScriptRequest {
   loadedScripts?: DocRef[];
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   script?: DocRef;
 }
 
 export type FetchMarkerResult = AbstractFetchDataResult & { markers?: Marker[] };
 
 export interface FetchNodeStatusResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: NodeStatusResult[];
 }
 
 export interface FetchPipelineXmlResponse {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   xml?: string;
 }
 
 export interface FetchProcessorRequest {
   expandedRows?: ProcessorListRow[];
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
 }
 
@@ -955,30 +1027,51 @@ export interface FetchPropertyTypesResult {
 }
 
 export interface FetchSuggestionsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
   field: AbstractField;
   text?: string;
 }
 
+/**
+ * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
+ */
 export interface Field {
-  expression?: string;
+  /**
+   * The expression to use to generate the value for this field
+   * @example SUM(${count})
+   */
+  expression: string;
+
+  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
   filter?: Filter;
+
+  /** Describes the formatting that will be applied to values in a field */
   format?: Format;
 
   /** @format int32 */
   group?: number;
   id?: string;
   name?: string;
-  sort?: Sort;
-  special?: boolean;
-  visible?: boolean;
 
-  /** @format int32 */
-  width?: number;
+  /** Describes the sorting applied to a field */
+  sort?: Sort;
 }
 
+/**
+ * A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied
+ */
 export interface Filter {
+  /**
+   * Only results NOT matching this filter will be included
+   * @example ^[0-9]{3}$
+   */
   excludes?: string;
+
+  /**
+   * Only results matching this filter will be included
+   * @example ^[0-9]{3}$
+   */
   includes?: string;
 }
 
@@ -1000,6 +1093,7 @@ export interface FindDBTableCriteria {
 }
 
 export interface FindDataRetentionImpactCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sort?: string;
@@ -1044,6 +1138,7 @@ export interface FindIndexShardCriteria {
 }
 
 export interface FindMetaCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
   pageRequest?: PageRequest;
@@ -1091,13 +1186,24 @@ export interface FindUserCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+/**
+ * A result structure used primarily for visualisation data
+ */
 export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
 
 export type FloatField = AbstractField;
 
+/**
+ * Describes the formatting that will be applied to values in a field
+ */
 export interface Format {
   settings?: FormatSettings;
-  type?: "GENERAL" | "NUMBER" | "DATE_TIME" | "TEXT";
+
+  /**
+   * The formatting type to apply
+   * @example NUMBER
+   */
+  type: "GENERAL" | "NUMBER" | "DATE_TIME" | "TEXT";
   wrap?: boolean;
 }
 
@@ -1215,6 +1321,8 @@ export interface ImportConfigRequest {
 export interface ImportState {
   action?: boolean;
   destPath?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
   enable?: boolean;
 
@@ -1475,7 +1583,11 @@ export interface Limits {
   streamCount?: number;
 }
 
+/**
+ * List of config properties
+ */
 export interface ListConfigResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ConfigProperty[];
 }
@@ -1495,8 +1607,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  authenticated?: boolean;
-  redirectUri?: string;
+  loginSuccessful?: boolean;
+  message?: string;
+  requirePasswordChange?: boolean;
 }
 
 export type LongField = AbstractField;
@@ -1571,14 +1684,28 @@ export interface NodeStatusResult {
   node?: Node;
 }
 
+/**
+ * The definition of a format to apply to numeric data
+ */
 export type NumberFormatSettings = FormatSettings & { decimalPlaces?: number; useSeparator?: boolean };
 
+/**
+ * The offset and length of a range of data in a sub-set of a query result set
+ */
 export interface OffsetRange {
-  /** @format int64 */
-  length?: number;
+  /**
+   * The length in records of the sub-set of results
+   * @format int64
+   * @example 100
+   */
+  length: number;
 
-  /** @format int64 */
-  offset?: number;
+  /**
+   * The start offset for this sub-set of data, where zero is the offset of the first record in the full result set
+   * @format int64
+   * @example 0
+   */
+  offset: number;
 }
 
 export interface OverrideValueString {
@@ -1594,6 +1721,9 @@ export interface PageRequest {
   offset?: number;
 }
 
+/**
+ * Details of the page of results being returned.
+ */
 export interface PageResponse {
   exact?: boolean;
 
@@ -1607,9 +1737,15 @@ export interface PageResponse {
   total?: number;
 }
 
+/**
+ * A key value pair that describes a property of a query
+ */
 export interface Param {
-  key?: string;
-  value?: string;
+  /** The property key */
+  key: string;
+
+  /** The property value */
+  value: string;
 }
 
 export interface PasswordPolicyConfig {
@@ -1660,6 +1796,8 @@ export interface PipelineDoc {
   createUser?: string;
   description?: string;
   name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   parentPipeline?: DocRef;
   pipelineData?: PipelineData;
   type?: string;
@@ -1694,6 +1832,8 @@ export interface PipelineElements {
 
 export interface PipelineLink {
   from: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   to: string;
 }
@@ -1712,6 +1852,8 @@ export interface PipelineProperty {
   element: string;
   name: string;
   propertyType?: PipelinePropertyType;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   value?: PipelinePropertyValue;
 }
@@ -1731,6 +1873,8 @@ export interface PipelinePropertyType {
 
 export interface PipelinePropertyValue {
   boolean?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   entity?: DocRef;
 
   /** @format int32 */
@@ -1743,9 +1887,15 @@ export interface PipelinePropertyValue {
 
 export interface PipelineReference {
   element: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   feed: DocRef;
   name: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   streamType: string;
 }
@@ -1759,6 +1909,8 @@ export interface PipelineStepRequest {
   childStreamType?: string;
   code?: Record<string, string>;
   criteria?: FindMetaCriteria;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   stepFilterMap?: Record<string, SteppingFilterSettings>;
   stepLocation?: StepLocation;
@@ -1872,6 +2024,7 @@ export interface ProcessorListRow {
 }
 
 export interface ProcessorListRowResultPage {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorListRow[];
 }
@@ -1915,6 +2068,8 @@ export interface ProcessorTaskSummary {
   /** @format int64 */
   count?: number;
   feed?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int32 */
@@ -1936,9 +2091,15 @@ export interface PropertyPath {
   parts?: string[];
 }
 
+/**
+ * The query terms for the search
+ */
 export interface Query {
-  dataSource?: DocRef;
-  expression?: ExpressionOperator;
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSource: DocRef;
+
+  /** A logical addOperator term in a query expression tree */
+  expression: ExpressionOperator;
   params?: Param[];
 }
 
@@ -1953,13 +2114,23 @@ export interface QueryConfig {
 }
 
 export interface QueryData {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
 }
 
+/**
+ * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
+ */
 export interface QueryKey {
-  uuid?: string;
+  /**
+   * The UUID that makes up the query key
+   * @example 7740bcd0-a49e-4c22-8540-044f85770716
+   */
+  uuid: string;
 }
 
 export interface RangeInteger {
@@ -1994,6 +2165,8 @@ export interface ReceiveDataRule {
   /** @format int64 */
   creationTime?: number;
   enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   name?: string;
 
@@ -2053,6 +2226,7 @@ export interface RefStoreEntry {
 }
 
 export interface RefStreamDefinition {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipelineDocRef?: DocRef;
   pipelineVersion?: string;
 
@@ -2064,7 +2238,10 @@ export interface RefStreamDefinition {
 }
 
 export interface ReferenceLoader {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   loaderPipeline: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   referenceFeed: DocRef;
 }
 
@@ -2095,112 +2272,204 @@ export interface ResourceKey {
   name?: string;
 }
 
+/**
+ * Base object for describing a set of result data
+ */
 export interface Result {
-  componentId?: string;
+  /** The ID of the component that this result set was requested for. See ResultRequest in SearchRequest */
+  componentId: string;
+
+  /** If an error has occurred producing this result set then this will have details of the error */
   error?: string;
   type: string;
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageActivity {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Activity[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageCustomRollUpMask {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: CustomRollUpMask[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageCustomRollUpMaskFields {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: CustomRollUpMaskFields[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageDBTableStatus {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: DBTableStatus[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageDependency {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Dependency[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageFsVolume {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: FsVolume[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageIndexShard {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: IndexShard[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageIndexVolume {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: IndexVolume[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageIndexVolumeGroup {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: IndexVolumeGroup[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageJob {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Job[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageJobNode {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: JobNode[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageMetaRow {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: MetaRow[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageProcessorTask {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorTask[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageProcessorTaskSummary {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorTaskSummary[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageStoredQuery {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: StoredQuery[];
 }
 
+/**
+ * A page of results.
+ */
 export interface ResultPageUser {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: User[];
 }
 
+/**
+ * A definition for how to return the raw results of the query in the SearchResponse, e.g. sorted, grouped, limited, etc.
+ */
 export interface ResultRequest {
-  componentId?: string;
+  /** The ID of the component that will receive the results corresponding to this ResultRequest */
+  componentId: string;
   fetch?: "NONE" | "CHANGES" | "ALL";
-  mappings?: TableSettings[];
-  openGroups?: string[];
-  requestedRange?: OffsetRange;
-  resultStyle?: "FLAT" | "TABLE";
+  mappings: TableSettings[];
+
+  /** TODO */
+  openGroups: string[];
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  requestedRange: OffsetRange;
+
+  /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
+  resultStyle: "FLAT" | "TABLE";
 }
 
+/**
+ * A row of data in a result set
+ */
 export interface Row {
   backgroundColor?: string;
 
-  /** @format int32 */
-  depth?: number;
-  groupKey?: string;
+  /**
+   * The grouping depth, where 0 is the top level of grouping, or where there is no grouping
+   * @format int32
+   * @example 0
+   */
+  depth: number;
+
+  /** TODO */
+  groupKey: string;
   textColor?: string;
-  values?: string[];
+
+  /** The value for this row of data. The values in the list are in the same order as the fields in the ResultRequest */
+  values: string[];
 }
 
 export interface SavePipelineXmlRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   xml?: string;
 }
@@ -2235,7 +2504,11 @@ export interface ScriptDoc {
 
 export interface Search {
   componentSettingsMap?: Record<string, ComponentSettings>;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   incremental?: boolean;
   params?: Param[];
@@ -2255,21 +2528,39 @@ export interface SearchBusPollRequest {
   searchRequests?: DashboardSearchRequest[];
 }
 
+/**
+ * A request for new search or a follow up request for more data for an existing iterative search
+ */
 export interface SearchRequest {
-  dateTimeLocale?: string;
-  incremental?: boolean;
-  key?: QueryKey;
-  query?: Query;
-  resultRequests?: ResultRequest[];
+  /** The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
+  dateTimeLocale: string;
 
-  /** @format int64 */
+  /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
+  incremental: boolean;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  key: QueryKey;
+
+  /** The query terms for the search */
+  query: Query;
+  resultRequests: ResultRequest[];
+
+  /**
+   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
+   * @format int64
+   */
   timeout?: number;
 }
 
+/**
+ * The response to a search request, that may or may not contain results. The results may only be a partial set if an iterative screech was requested
+ */
 export interface SearchResponse {
   complete?: boolean;
   errors?: string[];
-  highlights?: string[];
+
+  /** A list of strings to highlight in the UI that should correlate with the search query. */
+  highlights: string[];
   results?: Result[];
 }
 
@@ -2345,8 +2636,14 @@ export interface SessionInfo {
 }
 
 export interface SessionListResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: SessionDetails[];
+}
+
+export interface SessionLoginResponse {
+  authenticated?: boolean;
+  redirectUri?: string;
 }
 
 export interface SetAssignedToRequest {
@@ -2407,6 +2704,8 @@ export interface SolrIndexDoc {
   description?: string;
   fields?: SolrIndexField[];
   name?: string;
+
+  /** A logical addOperator term in a query expression tree */
   retentionExpression?: ExpressionOperator;
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
@@ -2474,11 +2773,22 @@ export interface SolrSynchState {
   messages?: string[];
 }
 
+/**
+ * Describes the sorting applied to a field
+ */
 export interface Sort {
-  direction?: "ASCENDING" | "DESCENDING";
+  /**
+   * The direction to sort in, ASCENDING or DESCENDING
+   * @example ASCENDING
+   */
+  direction: "ASCENDING" | "DESCENDING";
 
-  /** @format int32 */
-  order?: number;
+  /**
+   * Where multiple fields are sorted this value describes the sort order, with 0 being the first field to sort on
+   * @format int32
+   * @example 0
+   */
+  order: number;
 }
 
 export interface SourceConfig {
@@ -2616,6 +2926,8 @@ export interface StoredQuery {
   /** @format int32 */
   id?: number;
   name?: string;
+
+  /** The query terms for the search */
   query?: Query;
 
   /** @format int64 */
@@ -2693,18 +3005,29 @@ export interface TabConfig {
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
 export interface TableComponentSettings {
-  conditionalFormattingRules?: ConditionalFormattingRule[];
+  /** TODO */
   extractValues?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields?: Field[];
+  fields: Field[];
+
+  /**
+   * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
+   * @example 1000,10,1
+   */
   maxResults?: number[];
-  modelVersion?: string;
-  queryId?: string;
+
+  /** TODO */
+  queryId: string;
   showDetail?: boolean;
 }
 
 export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: string[]; tableSettings?: TableSettings };
 
+/**
+ * Object for describing a set of results in a table form that supports grouped data
+ */
 export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange; rows?: Row[]; totalResults?: number };
 
 export type TableResultRequest = ComponentResultRequest & {
@@ -2713,14 +3036,26 @@ export type TableResultRequest = ComponentResultRequest & {
   tableSettings?: TableSettings;
 };
 
+/**
+ * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
+ */
 export interface TableSettings {
-  conditionalFormattingRules?: ConditionalFormattingRule[];
   extractValues?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields?: Field[];
+  fields: Field[];
+
+  /**
+   * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
+   * @example 1000,10,1
+   */
   maxResults?: number[];
-  modelVersion?: string;
-  queryId?: string;
+
+  /** TODO */
+  queryId: string;
+
+  /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
 }
 
@@ -2747,6 +3082,7 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
 }
@@ -2814,15 +3150,32 @@ export interface ThemeConfig {
   tubeVisible?: string;
 }
 
+/**
+ * The timezone to apply to a date time value
+ */
 export interface TimeZone {
+  /**
+   * The id of the time zone, conforming to java.time.ZoneId
+   * @example GMT
+   */
   id?: string;
 
-  /** @format int32 */
+  /**
+   * The number of hours this timezone is offset from UTC
+   * @format int32
+   * @example -1
+   */
   offsetHours?: number;
 
-  /** @format int32 */
+  /**
+   * The number of minutes this timezone is offset from UTC
+   * @format int32
+   * @example -30
+   */
   offsetMinutes?: number;
-  use?: "Local" | "UTC" | "Id" | "Offset";
+
+  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
+  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface Token {
@@ -2880,6 +3233,7 @@ export interface TokenResponse {
 }
 
 export interface TokenResultPage {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Token[];
 }
@@ -2997,6 +3351,8 @@ export interface VisualisationDoc {
   description?: string;
   functionName?: string;
   name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   scriptRef?: DocRef;
   settings?: string;
   type?: string;
@@ -3271,10 +3627,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name List5
+     * @tags Account
+     * @name ListAccounts
+     * @summary Get all accounts.
      * @request GET:/account/v1
      */
-    list5: (params: RequestParams = {}) =>
+    listAccounts: (params: RequestParams = {}) =>
       this.request<any, AccountResultPage>({
         path: `/account/v1`,
         method: "GET",
@@ -3284,10 +3642,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Create8
+     * @tags Account
+     * @name CreateAccount
+     * @summary Create an account.
      * @request POST:/account/v1
      */
-    create8: (data: CreateAccountRequest, params: RequestParams = {}) =>
+    createAccount: (data: CreateAccountRequest, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/account/v1`,
         method: "POST",
@@ -3299,10 +3659,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Search3
+     * @tags Account
+     * @name SearchAccounts
+     * @summary Search for an account by email.
      * @request POST:/account/v1/search
      */
-    search3: (data: SearchAccountRequest, params: RequestParams = {}) =>
+    searchAccounts: (data: SearchAccountRequest, params: RequestParams = {}) =>
       this.request<any, AccountResultPage>({
         path: `/account/v1/search`,
         method: "POST",
@@ -3314,10 +3676,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Delete8
+     * @tags Account
+     * @name DeleteAccount
+     * @summary Delete an account by ID.
      * @request DELETE:/account/v1/{id}
      */
-    delete8: (id: number, params: RequestParams = {}) =>
+    deleteAccount: (id: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/account/v1/${id}`,
         method: "DELETE",
@@ -3327,10 +3691,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Read6
+     * @tags Account
+     * @name FetchAccount
+     * @summary Get an account by ID.
      * @request GET:/account/v1/{id}
      */
-    read6: (id: number, params: RequestParams = {}) =>
+    fetchAccount: (id: number, params: RequestParams = {}) =>
       this.request<any, Account>({
         path: `/account/v1/${id}`,
         method: "GET",
@@ -3340,10 +3706,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update19
+     * @tags Account
+     * @name UpdateAccount
+     * @summary Update an account.
      * @request PUT:/account/v1/{id}
      */
-    update19: (id: number, data: UpdateAccountRequest, params: RequestParams = {}) =>
+    updateAccount: (id: number, data: UpdateAccountRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/account/v1/${id}`,
         method: "PUT",
@@ -3356,7 +3724,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name List
+     * @summary Lists activities
      * @request GET:/activity/v1
      */
     list: (query?: { filter?: string }, params: RequestParams = {}) =>
@@ -3370,7 +3740,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name Create
+     * @summary Create an Activity
      * @request POST:/activity/v1
      */
     create: (params: RequestParams = {}) =>
@@ -3383,7 +3755,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name AcknowledgeSplash
+     * @summary Acknowledge the slash screen
      * @request POST:/activity/v1/acknowledge
      */
     acknowledgeSplash: (data: AcknowledgeSplashRequest, params: RequestParams = {}) =>
@@ -3398,7 +3772,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name GetCurrentActivity
+     * @summary Gets the current activity
      * @request GET:/activity/v1/current
      */
     getCurrentActivity: (params: RequestParams = {}) =>
@@ -3411,7 +3787,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name SetCurrentActivity
+     * @summary Gets the current activity
      * @request PUT:/activity/v1/current
      */
     setCurrentActivity: (data: Activity, params: RequestParams = {}) =>
@@ -3426,7 +3804,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name ListFieldDefinitions
+     * @summary Lists activity field definitions
      * @request GET:/activity/v1/fields
      */
     listFieldDefinitions: (params: RequestParams = {}) =>
@@ -3439,7 +3819,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name Validate
+     * @summary Create an Activity
      * @request POST:/activity/v1/validate
      */
     validate: (data: Activity, params: RequestParams = {}) =>
@@ -3454,7 +3836,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name Delete
+     * @summary Delete an activity
      * @request DELETE:/activity/v1/{id}
      */
     delete: (id: number, params: RequestParams = {}) =>
@@ -3467,7 +3851,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name Read
+     * @summary Get an Activity
      * @request GET:/activity/v1/{id}
      */
     read: (id: number, params: RequestParams = {}) =>
@@ -3480,7 +3866,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Activities
      * @name Update
+     * @summary Update an Activity
      * @request PUT:/activity/v1/{id}
      */
     update: (id: number, data: Activity, params: RequestParams = {}) =>
@@ -3496,7 +3884,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name Get
+     * @summary Gets an annotation
      * @request GET:/annotation/v1
      */
     get: (query?: { annotationId?: number }, params: RequestParams = {}) =>
@@ -3510,7 +3900,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name CreateEntry
+     * @summary Gets an annotation
      * @request POST:/annotation/v1
      */
     createEntry: (data: CreateEntryRequest, params: RequestParams = {}) =>
@@ -3525,7 +3917,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name GetComment
+     * @summary Gets a list of predefined comments
      * @request GET:/annotation/v1/comment
      */
     getComment: (query?: { filter?: string }, params: RequestParams = {}) =>
@@ -3539,7 +3933,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name Link
+     * @summary Links an annotation to an event
      * @request POST:/annotation/v1/link
      */
     link: (data: EventLink, params: RequestParams = {}) =>
@@ -3554,7 +3950,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name GetLinkedEvents
+     * @summary Gets a list of events linked to this annotation
      * @request GET:/annotation/v1/linkedEvents
      */
     getLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
@@ -3568,7 +3966,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name SetAssignedTo
+     * @summary Bulk action to set the assignment for several annotations
      * @request POST:/annotation/v1/setAssignedTo
      */
     setAssignedTo: (data: SetAssignedToRequest, params: RequestParams = {}) =>
@@ -3583,7 +3983,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name SetStatus
+     * @summary Bulk action to set the status for several annotations
      * @request POST:/annotation/v1/setStatus
      */
     setStatus: (data: SetStatusRequest, params: RequestParams = {}) =>
@@ -3598,7 +4000,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name GetStatus
+     * @summary Gets a list of allowed statuses
      * @request GET:/annotation/v1/status
      */
     getStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
@@ -3612,7 +4016,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Annotations
      * @name Unlink
+     * @summary Unlinks an annotation from an event
      * @request POST:/annotation/v1/unlink
      */
     unlink: (data: EventLink, params: RequestParams = {}) =>
@@ -3628,7 +4034,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name Logout
+     * @summary Log a user out of their session
      * @request GET:/authentication/v1/logout
      */
     logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
@@ -3642,7 +4050,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name NeedsPasswordChange
+     * @summary Check if a user's password needs changing.
      * @request GET:/authentication/v1/needsPasswordChange
      */
     needsPasswordChange: (query?: { email?: string }, params: RequestParams = {}) =>
@@ -3656,7 +4066,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name ChangePassword
+     * @summary Change a user's password.
      * @request POST:/authentication/v1/noauth/changePassword
      */
     changePassword: (data: ChangePasswordRequest, params: RequestParams = {}) =>
@@ -3671,7 +4083,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name ConfirmPassword
+     * @summary Confirm an authenticated users current password.
      * @request POST:/authentication/v1/noauth/confirmPassword
      */
     confirmPassword: (data: ConfirmPasswordRequest, params: RequestParams = {}) =>
@@ -3686,7 +4100,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name FetchPasswordPolicy
+     * @summary Get the password policy
      * @request GET:/authentication/v1/noauth/fetchPasswordPolicy
      */
     fetchPasswordPolicy: (params: RequestParams = {}) =>
@@ -3699,7 +4115,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name GetAuthenticationState
+     * @summary Get the current authentication state
      * @request GET:/authentication/v1/noauth/getAuthenticationState
      */
     getAuthenticationState: (params: RequestParams = {}) =>
@@ -3712,7 +4130,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name Login
+     * @summary Handle a login request made using username and password credentials.
      * @request POST:/authentication/v1/noauth/login
      */
     login: (data: LoginRequest, params: RequestParams = {}) =>
@@ -3727,7 +4147,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name ResetEmail
+     * @summary Reset a user account using an email address.
      * @request GET:/authentication/v1/noauth/reset/{email}
      */
     resetEmail: (email: string, params: RequestParams = {}) =>
@@ -3740,7 +4162,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name ResetPassword
+     * @summary Reset an authenticated user's password.
      * @request POST:/authentication/v1/resetPassword
      */
     resetPassword: (data: ResetPasswordRequest, params: RequestParams = {}) =>
@@ -3756,7 +4180,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Caches
      * @name Clear
+     * @summary Clears a cache
      * @request DELETE:/cache/v1
      */
     clear: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
@@ -3770,7 +4196,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Caches
      * @name List1
+     * @summary Lists caches
      * @request GET:/cache/v1
      */
     list1: (params: RequestParams = {}) =>
@@ -3783,7 +4211,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Caches
      * @name Info
+     * @summary Gets cache info
      * @request GET:/cache/v1/info
      */
     info: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
@@ -3798,7 +4228,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Cluster lock
      * @name KeepLockAlive
+     * @summary Keep a lock alive
      * @request PUT:/cluster/lock/v1/keepALive/{nodeName}
      */
     keepLockAlive: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
@@ -3813,7 +4245,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Cluster lock
      * @name ReleaseLock
+     * @summary Release a lock
      * @request PUT:/cluster/lock/v1/release/{nodeName}
      */
     releaseLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
@@ -3828,7 +4262,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Cluster lock
      * @name TryLock
+     * @summary Try to lock
      * @request PUT:/cluster/lock/v1/try/{nodeName}
      */
     tryLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
@@ -3844,7 +4280,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name Create1
+     * @summary Create a configuration property
      * @request POST:/config/v1
      */
     create1: (data: ConfigProperty, params: RequestParams = {}) =>
@@ -3859,7 +4297,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name Update1
+     * @summary Update a configuration property
      * @request PUT:/config/v1/clusterProperties/{propertyName}
      */
     update1: (propertyName: string, data: ConfigProperty, params: RequestParams = {}) =>
@@ -3874,7 +4314,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name GetYamlValueByNodeAndName
+     * @summary Get the property value from the YAML configuration in the specified node.
      * @request GET:/config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}
      */
     getYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
@@ -3887,7 +4329,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name FetchUiConfig
+     * @summary Fetch the UI configuration
      * @request GET:/config/v1/noauth/fetchUiConfig
      */
     fetchUiConfig: (params: RequestParams = {}) =>
@@ -3900,7 +4344,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name ListByNode
+     * @summary List all properties matching the criteria on the requested node.
      * @request POST:/config/v1/nodeProperties/{nodeName}
      */
     listByNode: (nodeName: string, data: GlobalConfigCriteria, params: RequestParams = {}) =>
@@ -3915,7 +4361,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name List2
+     * @summary List all properties matching the criteria on the current node.
      * @request POST:/config/v1/properties
      */
     list2: (data: GlobalConfigCriteria, params: RequestParams = {}) =>
@@ -3930,7 +4378,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Global Config
      * @name GetPropertyByName
+     * @summary Fetch a property by its name, e.g. 'stroom.path.home'
      * @request GET:/config/v1/properties/{propertyName}
      */
     getPropertyByName: (propertyName: string, params: RequestParams = {}) =>
@@ -3944,7 +4394,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Content
      * @name ConfirmImport
+     * @summary Get import confirmation state
      * @request POST:/content/v1/confirmImport
      */
     confirmImport: (data: ResourceKey, params: RequestParams = {}) =>
@@ -3959,7 +4411,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Content
      * @name ExportContent
+     * @summary Export content
      * @request POST:/content/v1/export
      */
     exportContent: (data: DocRefs, params: RequestParams = {}) =>
@@ -3974,7 +4428,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Content
      * @name FetchDependencies
+     * @summary Fetch content dependencies
      * @request POST:/content/v1/fetchDependencies
      */
     fetchDependencies: (data: DependencyCriteria, params: RequestParams = {}) =>
@@ -3989,7 +4445,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Content
      * @name ImportContent
+     * @summary Import content
      * @request POST:/content/v1/import
      */
     importContent: (data: ImportConfigRequest, params: RequestParams = {}) =>
@@ -4005,7 +4463,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name DownloadQuery
+     * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
      */
     downloadQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
@@ -4020,7 +4480,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name DownloadSearchResults
+     * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults
      */
     downloadSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
@@ -4035,7 +4497,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name FetchTimeZones
+     * @summary Fetch time zone data from the server
      * @request GET:/dashboard/v1/fetchTimeZones
      */
     fetchTimeZones: (params: RequestParams = {}) =>
@@ -4048,7 +4512,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name FetchFunctions
+     * @summary Fetch all expression functions
      * @request GET:/dashboard/v1/functions
      */
     fetchFunctions: (params: RequestParams = {}) =>
@@ -4061,7 +4527,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name Poll
+     * @summary Poll for new search results
      * @request POST:/dashboard/v1/poll
      */
     poll: (data: SearchBusPollRequest, params: RequestParams = {}) =>
@@ -4076,7 +4544,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name ValidateExpression
+     * @summary Validate an expression
      * @request POST:/dashboard/v1/validateExpression
      */
     validateExpression: (data: string, params: RequestParams = {}) =>
@@ -4091,7 +4561,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name Fetch1
+     * @summary Fetch a dashboard doc by its UUID
      * @request GET:/dashboard/v1/{uuid}
      */
     fetch1: (uuid: string, params: RequestParams = {}) =>
@@ -4104,7 +4576,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dashboards
      * @name Update2
+     * @summary Update a dashboard doc
      * @request PUT:/dashboard/v1/{uuid}
      */
     update2: (uuid: string, data: DashboardDoc, params: RequestParams = {}) =>
@@ -4120,7 +4594,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data
      * @name Download
+     * @summary Download matching data
      * @request POST:/data/v1/download
      */
     download: (data: FindMetaCriteria, params: RequestParams = {}) =>
@@ -4135,7 +4611,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data
      * @name Fetch3
+     * @summary Fetch matching data
      * @request POST:/data/v1/fetch
      */
     fetch3: (data: FetchDataRequest, params: RequestParams = {}) =>
@@ -4150,7 +4628,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data
      * @name Upload
+     * @summary Upload data
      * @request POST:/data/v1/upload
      */
     upload: (data: UploadDataRequest, params: RequestParams = {}) =>
@@ -4165,7 +4645,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data
      * @name ViewInfo
+     * @summary Find full info about a data item
      * @request GET:/data/v1/{id}/info
      */
     viewInfo: (id: number, params: RequestParams = {}) =>
@@ -4178,7 +4660,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data
      * @name GetChildStreamTypes
+     * @summary List child types for a stream
      * @request GET:/data/v1/{id}/parts/{partNo}/child-types
      */
     getChildStreamTypes: (id: number, partNo: number, params: RequestParams = {}) =>
@@ -4192,7 +4676,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data Retention Rules
      * @name Fetch2
+     * @summary Get data retention rules
      * @request GET:/dataRetentionRules/v1
      */
     fetch2: (params: RequestParams = {}) =>
@@ -4205,7 +4691,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data Retention Rules
      * @name Update4
+     * @summary Update data retention rules
      * @request PUT:/dataRetentionRules/v1
      */
     update4: (data: DataRetentionRules, params: RequestParams = {}) =>
@@ -4220,7 +4708,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data Retention Rules
      * @name GetRetentionDeletionSummary
+     * @summary Get a summary of meta deletions with the passed data retention rules
      * @request POST:/dataRetentionRules/v1/impactSummary
      */
     getRetentionDeletionSummary: (data: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
@@ -4233,8 +4723,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
 
     /**
-     * No description
+     * @description Delete a running query
      *
+     * @tags Data Retention Rules
      * @name CancelQuery
      * @request DELETE:/dataRetentionRules/v1/impactSummary/{queryId}
      */
@@ -4249,7 +4740,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Data Sources
      * @name FetchFields
+     * @summary Fetch data source fields
      * @request POST:/dataSource/v1/fetchFields
      */
     fetchFields: (data: DocRef, params: RequestParams = {}) =>
@@ -4265,7 +4758,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Database Status
      * @name GetSystemTableStatus
+     * @summary Find status of the DB
      * @request GET:/dbStatus/v1
      */
     getSystemTableStatus: (params: RequestParams = {}) =>
@@ -4278,7 +4773,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Database Status
      * @name FindSystemTableStatus
+     * @summary Find status of the DB
      * @request POST:/dbStatus/v1
      */
     findSystemTableStatus: (data: FindDBTableCriteria, params: RequestParams = {}) =>
@@ -4294,7 +4791,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dictionaries (v1)
      * @name Download1
+     * @summary Download a dictionary doc
      * @request POST:/dictionary/v1/download
      */
     download1: (data: DocRef, params: RequestParams = {}) =>
@@ -4309,7 +4808,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dictionaries (v1)
      * @name Fetch4
+     * @summary Fetch a dictionary doc by its UUID
      * @request GET:/dictionary/v1/{uuid}
      */
     fetch4: (uuid: string, params: RequestParams = {}) =>
@@ -4322,7 +4823,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Dictionaries (v1)
      * @name Update6
+     * @summary Update a dictionary doc
      * @request PUT:/dictionary/v1/{uuid}
      */
     update6: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
@@ -4338,7 +4841,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Entity Events
      * @name FireEvent
+     * @summary Sends an entity event
      * @request PUT:/entityEvent/v1/{nodeName}
      */
     fireEvent: (nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
@@ -4354,7 +4859,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Copy
+     * @summary Copy explorer items
      * @request POST:/explorer/v2/copy
      */
     copy: (data: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
@@ -4369,7 +4876,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Create4
+     * @summary Create explorer item
      * @request POST:/explorer/v2/create
      */
     create4: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
@@ -4384,7 +4893,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Delete3
+     * @summary Delete explorer items
      * @request DELETE:/explorer/v2/delete
      */
     delete3: (data: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
@@ -4399,7 +4910,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name FetchDocRefs
+     * @summary Fetch document references
      * @request POST:/explorer/v2/fetchDocRefs
      */
     fetchDocRefs: (data: DocRef[], params: RequestParams = {}) =>
@@ -4414,7 +4927,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name FetchDocumentTypes
+     * @summary Fetch document types
      * @request GET:/explorer/v2/fetchDocumentTypes
      */
     fetchDocumentTypes: (params: RequestParams = {}) =>
@@ -4427,7 +4942,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Fetch5
+     * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
      */
     fetch5: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
@@ -4442,7 +4959,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name FetchExplorerPermissions
+     * @summary Fetch permissions for explorer items
      * @request POST:/explorer/v2/fetchExplorerPermissions
      */
     fetchExplorerPermissions: (data: ExplorerNode[], params: RequestParams = {}) =>
@@ -4457,7 +4976,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Info1
+     * @summary Get document info
      * @request POST:/explorer/v2/info
      */
     info1: (data: DocRef, params: RequestParams = {}) =>
@@ -4472,7 +4993,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Move
+     * @summary Move explorer items
      * @request PUT:/explorer/v2/move
      */
     move: (data: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
@@ -4487,7 +5010,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Explorer (v2)
      * @name Rename
+     * @summary Rename explorer items
      * @request PUT:/explorer/v2/rename
      */
     rename: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
@@ -4503,7 +5028,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Export
      * @name Export
+     * @summary Exports all configuration to a file.
      * @request GET:/export/v1
      */
     export: (params: RequestParams = {}) =>
@@ -4517,7 +5044,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Feeds
      * @name FetchSupportedEncodings
+     * @summary Fetch supported encodings
      * @request GET:/feed/v1/fetchSupportedEncodings
      */
     fetchSupportedEncodings: (params: RequestParams = {}) =>
@@ -4530,7 +5059,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Feeds
      * @name Fetch6
+     * @summary Fetch a feed doc by its UUID
      * @request GET:/feed/v1/{uuid}
      */
     fetch6: (uuid: string, params: RequestParams = {}) =>
@@ -4543,7 +5074,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Feeds
      * @name Update7
+     * @summary Update a feed doc
      * @request PUT:/feed/v1/{uuid}
      */
     update7: (uuid: string, data: FeedDoc, params: RequestParams = {}) =>
@@ -4559,7 +5092,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Feed Status
      * @name GetFeedStatus
+     * @summary Submit a request to get the status of a feed
      * @request POST:/feedStatus/v1/getFeedStatus
      */
     getFeedStatus: (data: GetFeedStatusRequest, params: RequestParams = {}) =>
@@ -4575,6 +5110,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Create3
      * @request POST:/fsVolume/v1
      */
@@ -4590,7 +5126,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Find1
+     * @summary Finds volumes
      * @request POST:/fsVolume/v1/find
      */
     find1: (data: FindFsVolumeCriteria, params: RequestParams = {}) =>
@@ -4605,7 +5143,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Rescan
+     * @summary Rescans volumes
      * @request GET:/fsVolume/v1/rescan
      */
     rescan: (params: RequestParams = {}) =>
@@ -4618,7 +5158,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Delete2
+     * @summary Delete a volume
      * @request DELETE:/fsVolume/v1/{id}
      */
     delete2: (id: number, params: RequestParams = {}) =>
@@ -4631,7 +5173,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Read2
+     * @summary Get a volume
      * @request GET:/fsVolume/v1/{id}
      */
     read2: (id: number, params: RequestParams = {}) =>
@@ -4644,7 +5188,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Filesystem Volumes
      * @name Update5
+     * @summary Update a volume
      * @request PUT:/fsVolume/v1/{id}
      */
     update5: (id: number, data: FsVolume, params: RequestParams = {}) =>
@@ -4660,7 +5206,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Indexes (v2)
      * @name DeleteIndexShards
+     * @summary Delete matching index shards
      * @request POST:/index/v2/shard/delete
      */
     deleteIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
@@ -4676,7 +5224,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Indexes (v2)
      * @name FindIndexShards
+     * @summary Find matching index shards
      * @request POST:/index/v2/shard/find
      */
     findIndexShards: (data: FindIndexShardCriteria, params: RequestParams = {}) =>
@@ -4691,7 +5241,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Indexes (v2)
      * @name FlushIndexShards
+     * @summary Flush matching index shards
      * @request POST:/index/v2/shard/flush
      */
     flushIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
@@ -4707,7 +5259,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Indexes (v2)
      * @name Fetch7
+     * @summary Fetch a index doc by its UUID
      * @request GET:/index/v2/{uuid}
      */
     fetch7: (uuid: string, params: RequestParams = {}) =>
@@ -4720,7 +5274,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Indexes (v2)
      * @name Update8
+     * @summary Update an index doc
      * @request PUT:/index/v2/{uuid}
      */
     update8: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
@@ -4735,7 +5291,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Create6
+     * @summary Creates an index volume
      * @request POST:/index/volume/v2
      */
     create6: (data: IndexVolume, params: RequestParams = {}) =>
@@ -4750,7 +5308,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Find3
+     * @summary Finds index volumes matching request
      * @request POST:/index/volume/v2/find
      */
     find3: (data: ExpressionCriteria, params: RequestParams = {}) =>
@@ -4765,7 +5325,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Rescan1
+     * @summary Rescans index volumes
      * @request DELETE:/index/volume/v2/rescan
      */
     rescan1: (query?: { nodeName?: string }, params: RequestParams = {}) =>
@@ -4779,7 +5341,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Delete5
+     * @summary Deletes an index volume
      * @request DELETE:/index/volume/v2/{id}
      */
     delete5: (id: number, params: RequestParams = {}) =>
@@ -4792,7 +5356,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Read4
+     * @summary Gets an index volume
      * @request GET:/index/volume/v2/{id}
      */
     read4: (id: number, params: RequestParams = {}) =>
@@ -4805,7 +5371,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volumes
      * @name Update10
+     * @summary Updates an index volume
      * @request PUT:/index/volume/v2/{id}
      */
     update10: (id: number, data: IndexVolume, params: RequestParams = {}) =>
@@ -4820,7 +5388,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volume Groups
      * @name Create5
+     * @summary Creates an index volume group
      * @request POST:/index/volumeGroup/v2
      */
     create5: (data: string, params: RequestParams = {}) =>
@@ -4835,7 +5405,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volume Groups
      * @name Find2
+     * @summary Finds index volume groups matching request
      * @request POST:/index/volumeGroup/v2/find
      */
     find2: (data: ExpressionCriteria, params: RequestParams = {}) =>
@@ -4850,7 +5422,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volume Groups
      * @name Delete4
+     * @summary Deletes an index volume group
      * @request DELETE:/index/volumeGroup/v2/{id}
      */
     delete4: (id: number, params: RequestParams = {}) =>
@@ -4863,7 +5437,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volume Groups
      * @name Read3
+     * @summary Gets an index volume group
      * @request GET:/index/volumeGroup/v2/{id}
      */
     read3: (id: number, params: RequestParams = {}) =>
@@ -4876,7 +5452,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Index Volume Groups
      * @name Update9
+     * @summary Updates an index volume group
      * @request PUT:/index/volumeGroup/v2/{id}
      */
     update9: (id: number, data: IndexVolumeGroup, params: RequestParams = {}) =>
@@ -4892,7 +5470,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs
      * @name List4
+     * @summary Lists jobs
      * @request GET:/job/v1
      */
     list4: (params: RequestParams = {}) =>
@@ -4905,7 +5485,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs
      * @name SetEnabled1
+     * @summary Sets the enabled status of the job
      * @request PUT:/job/v1/{id}/enabled
      */
     setEnabled1: (id: number, data: boolean, params: RequestParams = {}) =>
@@ -4921,7 +5503,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs (Node)
      * @name List3
+     * @summary Lists job nodes
      * @request GET:/jobNode/v1
      */
     list3: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
@@ -4935,7 +5519,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs (Node)
      * @name Info2
+     * @summary Gets current info for a job node
      * @request GET:/jobNode/v1/info
      */
     info2: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
@@ -4949,7 +5535,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs (Node)
      * @name SetEnabled
+     * @summary Sets the enabled status of the job node
      * @request PUT:/jobNode/v1/{id}/enabled
      */
     setEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
@@ -4964,7 +5552,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs (Node)
      * @name SetSchedule
+     * @summary Sets the schedule job node
      * @request PUT:/jobNode/v1/{id}/schedule
      */
     setSchedule: (id: number, data: string, params: RequestParams = {}) =>
@@ -4979,7 +5569,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Jobs (Node)
      * @name SetTaskLimit
+     * @summary Sets the task limit for the job node
      * @request PUT:/jobNode/v1/{id}/taskLimit
      */
     setTaskLimit: (id: number, data: number, params: RequestParams = {}) =>
@@ -4995,7 +5587,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Kafka Config
      * @name Download2
+     * @summary Download a kafkaConfig doc
      * @request POST:/kafkaConfig/v1/download
      */
     download2: (data: DocRef, params: RequestParams = {}) =>
@@ -5010,7 +5604,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Kafka Config
      * @name Fetch8
+     * @summary Fetch a kafkaConfig doc by its UUID
      * @request GET:/kafkaConfig/v1/{uuid}
      */
     fetch8: (uuid: string, params: RequestParams = {}) =>
@@ -5023,7 +5619,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Kafka Config
      * @name Update11
+     * @summary Update a kafkaConfig doc
      * @request PUT:/kafkaConfig/v1/{uuid}
      */
     update11: (uuid: string, data: KafkaConfigDoc, params: RequestParams = {}) =>
@@ -5039,7 +5637,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Meta
      * @name FindMetaRow
+     * @summary Find matching meta data
      * @request POST:/meta/v1/find
      */
     findMetaRow: (data: FindMetaCriteria, params: RequestParams = {}) =>
@@ -5054,7 +5654,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Meta
      * @name GetReprocessSelectionSummary
+     * @summary Get a summary of the parent items of the selected meta data
      * @request POST:/meta/v1/getReprocessSelectionSummary
      */
     getReprocessSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
@@ -5069,7 +5671,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Meta
      * @name GetSelectionSummary
+     * @summary Get a summary of the selected meta data
      * @request POST:/meta/v1/getSelectionSummary
      */
     getSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
@@ -5084,7 +5688,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Meta
      * @name GetTypes
+     * @summary Get a list of possible stream types
      * @request GET:/meta/v1/getTypes
      */
     getTypes: (params: RequestParams = {}) =>
@@ -5097,7 +5703,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Meta
      * @name UpdateStatus
+     * @summary Update status on matching meta data
      * @request PUT:/meta/v1/update/status
      */
     updateStatus: (data: UpdateStatusRequest, params: RequestParams = {}) =>
@@ -5113,7 +5721,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name Find4
+     * @summary Lists nodes
      * @request GET:/node/v1
      */
     find4: (params: RequestParams = {}) =>
@@ -5126,7 +5736,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name ListAllNodes
+     * @summary Lists all nodes
      * @request GET:/node/v1/all
      */
     listAllNodes: (params: RequestParams = {}) =>
@@ -5139,7 +5751,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name ListEnabledNodes
+     * @summary Lists enabled nodes
      * @request GET:/node/v1/enabled
      */
     listEnabledNodes: (params: RequestParams = {}) =>
@@ -5152,7 +5766,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name SetEnabled2
+     * @summary Sets whether a node is enabled
      * @request PUT:/node/v1/enabled/{nodeName}
      */
     setEnabled2: (nodeName: string, data: boolean, params: RequestParams = {}) =>
@@ -5167,7 +5783,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name Info3
+     * @summary Gets detailed information about a node
      * @request GET:/node/v1/info/{nodeName}
      */
     info3: (nodeName: string, params: RequestParams = {}) =>
@@ -5180,7 +5798,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name Ping
+     * @summary Gets a ping time for a node
      * @request GET:/node/v1/ping/{nodeName}
      */
     ping: (nodeName: string, params: RequestParams = {}) =>
@@ -5193,7 +5813,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Nodes
      * @name SetPriority
+     * @summary Sets the priority of a node
      * @request PUT:/node/v1/priority/{nodeName}
      */
     setPriority: (nodeName: string, data: number, params: RequestParams = {}) =>
@@ -5209,7 +5831,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags API Keys
      * @name OpenIdConfiguration
+     * @summary Provides discovery for openid configuration
      * @request GET:/oauth2/v1/noauth/.well-known/openid-configuration
      */
     openIdConfiguration: (params: RequestParams = {}) =>
@@ -5222,7 +5846,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name Auth
+     * @summary Submit an OpenId AuthenticationRequest.
      * @request GET:/oauth2/v1/noauth/auth
      */
     auth: (
@@ -5247,7 +5873,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags API Keys
      * @name Certs
+     * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
      * @request GET:/oauth2/v1/noauth/certs
      */
     certs: (params: RequestParams = {}) =>
@@ -5260,7 +5888,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authentication
      * @name Token
+     * @summary Get a token from an access code
      * @request POST:/oauth2/v1/noauth/token
      */
     token: (data: TokenRequest, params: RequestParams = {}) =>
@@ -5276,7 +5906,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Application Permissions
      * @name GetUserAndPermissions
+     * @summary User and app permissions for the current session
      * @request GET:/permission/app/v1
      */
     getUserAndPermissions: (params: RequestParams = {}) =>
@@ -5289,7 +5921,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Application Permissions
      * @name ChangeUser
+     * @summary User and app permissions for the current session
      * @request POST:/permission/app/v1/changeUser
      */
     changeUser: (data: ChangeUserRequest, params: RequestParams = {}) =>
@@ -5304,7 +5938,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Application Permissions
      * @name FetchAllPermissions
+     * @summary Get all possible permissions
      * @request GET:/permission/app/v1/fetchAllPermissions
      */
     fetchAllPermissions: (params: RequestParams = {}) =>
@@ -5317,7 +5953,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Application Permissions
      * @name FetchUserAppPermissions
+     * @summary User and app permissions for the specified user
      * @request POST:/permission/app/v1/fetchUserAppPermissions
      */
     fetchUserAppPermissions: (data: User, params: RequestParams = {}) =>
@@ -5332,7 +5970,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Application Permissions
      * @name FireChange
+     * @summary Fires a permission change event
      * @request POST:/permission/changeEvent/v1/fireChange/{nodeName}
      */
     fireChange: (nodeName: string, data: PermissionChangeRequest, params: RequestParams = {}) =>
@@ -5347,7 +5987,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name ChangeDocumentPermissions
+     * @summary Change document permissions
      * @request POST:/permission/doc/v1/changeDocumentPermissions
      */
     changeDocumentPermissions: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
@@ -5362,7 +6004,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name CheckDocumentPermission
+     * @summary Check document permission
      * @request POST:/permission/doc/v1/checkDocumentPermission
      */
     checkDocumentPermission: (data: CheckDocumentPermissionRequest, params: RequestParams = {}) =>
@@ -5377,7 +6021,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name CopyPermissionFromParent
+     * @summary Copy permissions from parent
      * @request POST:/permission/doc/v1/copyPermissionsFromParent
      */
     copyPermissionFromParent: (data: CopyPermissionsFromParentRequest, params: RequestParams = {}) =>
@@ -5392,7 +6038,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name FetchAllDocumentPermissions
+     * @summary Fetch document permissions
      * @request POST:/permission/doc/v1/fetchAllDocumentPermissions
      */
     fetchAllDocumentPermissions: (data: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
@@ -5407,7 +6055,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name FilterUsers
+     * @summary Get all permissions for a given document type
      * @request POST:/permission/doc/v1/filterUsers
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
@@ -5422,7 +6072,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Doc Permissions
      * @name GetPermissionForDocType
+     * @summary Get all permissions for a given document type
      * @request GET:/permission/doc/v1/getPermissionForDocType/${docType}
      */
     getPermissionForDocType: (docType: string, params: RequestParams = {}) =>
@@ -5436,7 +6088,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name FetchPipelineData
+     * @summary Fetch data for a pipeline
      * @request POST:/pipeline/v1/fetchPipelineData
      */
     fetchPipelineData: (data: DocRef, params: RequestParams = {}) =>
@@ -5451,7 +6105,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name FetchPipelineXml
+     * @summary Fetch the XML for a pipeline
      * @request POST:/pipeline/v1/fetchPipelineXml
      */
     fetchPipelineXml: (data: DocRef, params: RequestParams = {}) =>
@@ -5466,7 +6122,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name GetPropertyTypes
+     * @summary Get pipeline property types
      * @request GET:/pipeline/v1/propertyTypes
      */
     getPropertyTypes: (params: RequestParams = {}) =>
@@ -5479,7 +6137,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name SavePipelineXml
+     * @summary Update a pipeline doc with XML directly
      * @request PUT:/pipeline/v1/savePipelineXml
      */
     savePipelineXml: (data: SavePipelineXmlRequest, params: RequestParams = {}) =>
@@ -5494,7 +6154,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name Fetch9
+     * @summary Fetch a pipeline doc by its UUID
      * @request GET:/pipeline/v1/{uuid}
      */
     fetch9: (uuid: string, params: RequestParams = {}) =>
@@ -5507,7 +6169,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Pipelines
      * @name Update12
+     * @summary Update a pipeline doc
      * @request PUT:/pipeline/v1/{uuid}
      */
     update12: (uuid: string, data: PipelineDoc, params: RequestParams = {}) =>
@@ -5523,7 +6187,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processors
      * @name Delete7
+     * @summary Deletes a processor
      * @request DELETE:/processor/v1/{id}
      */
     delete7: (id: number, params: RequestParams = {}) =>
@@ -5536,7 +6202,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processors
      * @name SetEnabled4
+     * @summary Sets the enabled/disabled state for a processor
      * @request PUT:/processor/v1/{id}/enabled
      */
     setEnabled4: (id: number, data: boolean, params: RequestParams = {}) =>
@@ -5552,7 +6220,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Create7
+     * @summary Creates a filter
      * @request POST:/processorFilter/v1
      */
     create7: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
@@ -5567,7 +6237,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Find5
+     * @summary Finds processors and filters matching request
      * @request POST:/processorFilter/v1/find
      */
     find5: (data: FetchProcessorRequest, params: RequestParams = {}) =>
@@ -5582,7 +6254,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Reprocess
+     * @summary Create filters to reprocess data
      * @request POST:/processorFilter/v1/reprocess
      */
     reprocess: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
@@ -5597,7 +6271,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Delete6
+     * @summary Deletes a filter
      * @request DELETE:/processorFilter/v1/{id}
      */
     delete6: (id: number, params: RequestParams = {}) =>
@@ -5610,7 +6286,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Read5
+     * @summary Gets a filter
      * @request GET:/processorFilter/v1/{id}
      */
     read5: (id: number, params: RequestParams = {}) =>
@@ -5623,7 +6301,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name Update15
+     * @summary Updates a filter
      * @request PUT:/processorFilter/v1/{id}
      */
     update15: (id: number, data: ProcessorFilter, params: RequestParams = {}) =>
@@ -5638,7 +6318,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name SetEnabled3
+     * @summary Sets the enabled/disabled state for a filter
      * @request PUT:/processorFilter/v1/{id}/enabled
      */
     setEnabled3: (id: number, data: boolean, params: RequestParams = {}) =>
@@ -5653,7 +6335,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Filters
      * @name SetPriority1
+     * @summary Sets the priority for a filter
      * @request PUT:/processorFilter/v1/{id}/priority
      */
     setPriority1: (id: number, data: number, params: RequestParams = {}) =>
@@ -5669,7 +6353,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Tasks
      * @name AbandonTasks
+     * @summary Abandon some tasks
      * @request POST:/processorTask/v1/abandon/{nodeName}
      */
     abandonTasks: (nodeName: string, data: ProcessorTaskList, params: RequestParams = {}) =>
@@ -5684,7 +6370,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Tasks
      * @name AssignTasks
+     * @summary Assign some tasks
      * @request POST:/processorTask/v1/assign/{nodeName}
      */
     assignTasks: (nodeName: string, data: AssignTasksRequest, params: RequestParams = {}) =>
@@ -5699,7 +6387,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Tasks
      * @name Find6
+     * @summary Finds processors tasks
      * @request POST:/processorTask/v1/find
      */
     find6: (data: ExpressionCriteria, params: RequestParams = {}) =>
@@ -5714,7 +6404,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Processor Tasks
      * @name FindSummary
+     * @summary Finds processor task summaries
      * @request POST:/processorTask/v1/summary
      */
     findSummary: (data: ExpressionCriteria, params: RequestParams = {}) =>
@@ -5730,7 +6422,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Reference Data
      * @name Entries
+     * @summary List entries from the reference data store on the node called. This is primarily intended for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      * @request GET:/refData/v1/entries
      */
     entries: (query?: { limit?: number }, params: RequestParams = {}) =>
@@ -5744,7 +6438,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Reference Data
      * @name Lookup
+     * @summary Perform a reference data lookup using the supplied lookup request.
      * @request POST:/refData/v1/lookup
      */
     lookup: (data: RefDataLookupRequest, params: RequestParams = {}) =>
@@ -5759,7 +6455,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Reference Data
      * @name Purge
+     * @summary Explicitly delete all entries that are older than purgeAge.
      * @request DELETE:/refData/v1/purge/{purgeAge}
      */
     purge: (purgeAge: string, params: RequestParams = {}) =>
@@ -5773,7 +6471,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Remote Search
      * @name Destroy1
+     * @summary Destroy search results
      * @request GET:/remoteSearch/v1/destroy
      */
     destroy1: (query?: { queryKey?: string }, params: RequestParams = {}) =>
@@ -5787,7 +6487,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Remote Search
      * @name Poll1
+     * @summary Poll the server for search results for the supplied queryKey
      * @request GET:/remoteSearch/v1/poll
      */
     poll1: (query?: { queryKey?: string }, params: RequestParams = {}) =>
@@ -5801,7 +6503,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Remote Search
      * @name Start
+     * @summary Start a search
      * @request POST:/remoteSearch/v1/start
      */
     start: (data: ClusterSearchTask, params: RequestParams = {}) =>
@@ -5817,7 +6521,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Rule Set
      * @name ExportDocument
+     * @summary Submit an export request
      * @request POST:/ruleset/v2/export
      */
     exportDocument: (data: DocRef, params: RequestParams = {}) =>
@@ -5832,7 +6538,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Rule Set
      * @name ImportDocument
+     * @summary Submit an import request
      * @request POST:/ruleset/v2/import
      */
     importDocument: (data: Base64EncodedDocumentData, params: RequestParams = {}) =>
@@ -5847,7 +6555,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Rule Set
      * @name ListDocuments
+     * @summary Submit a request for a list of doc refs held by this service
      * @request GET:/ruleset/v2/list
      */
     listDocuments: (params: RequestParams = {}) =>
@@ -5860,7 +6570,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Rule Set
      * @name Fetch13
+     * @summary Fetch a rules doc by its UUID
      * @request GET:/ruleset/v2/{uuid}
      */
     fetch13: (uuid: string, params: RequestParams = {}) =>
@@ -5873,7 +6585,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Rule Set
      * @name Update16
+     * @summary Update a rules doc
      * @request PUT:/ruleset/v2/{uuid}
      */
     update16: (uuid: string, data: ReceiveDataRules, params: RequestParams = {}) =>
@@ -5889,7 +6603,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Scheduled Time
      * @name Get1
+     * @summary Gets scheduled time info
      * @request POST:/scheduledTime/v1
      */
     get1: (data: GetScheduledTimesRequest, params: RequestParams = {}) =>
@@ -5905,7 +6621,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Scripts
      * @name FetchLinkedScripts
+     * @summary Fetch related scripts
      * @request POST:/script/v1/fetchLinkedScripts
      */
     fetchLinkedScripts: (data: FetchLinkedScriptRequest, params: RequestParams = {}) =>
@@ -5920,10 +6638,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch14
+     * @tags Scripts
+     * @name FetchScript
+     * @summary Fetch a script doc by its UUID
      * @request GET:/script/v1/{uuid}
      */
-    fetch14: (uuid: string, params: RequestParams = {}) =>
+    fetchScript: (uuid: string, params: RequestParams = {}) =>
       this.request<any, ScriptDoc>({
         path: `/script/v1/${uuid}`,
         method: "GET",
@@ -5933,10 +6653,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update17
+     * @tags Scripts
+     * @name UpdateScript
+     * @summary Update a script doc
      * @request PUT:/script/v1/{uuid}
      */
-    update17: (uuid: string, data: ScriptDoc, params: RequestParams = {}) =>
+    updateScript: (uuid: string, data: ScriptDoc, params: RequestParams = {}) =>
       this.request<any, ScriptDoc>({
         path: `/script/v1/${uuid}`,
         method: "PUT",
@@ -5949,7 +6671,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Searchable
      * @name GetDataSource2
+     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/searchable/v2/dataSource
      */
     getDataSource2: (data: DocRef, params: RequestParams = {}) =>
@@ -5964,7 +6688,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Searchable
      * @name Destroy3
+     * @summary Destroy a running query
      * @request POST:/searchable/v2/destroy
      */
     destroy3: (data: QueryKey, params: RequestParams = {}) =>
@@ -5979,7 +6705,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Searchable
      * @name Search2
+     * @summary Submit a search request
      * @request POST:/searchable/v2/search
      */
     search2: (data: SearchRequest, params: RequestParams = {}) =>
@@ -5995,10 +6723,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name List7
+     * @tags Sessions
+     * @name List5
+     * @summary Lists user sessions for a node, or all nodes in the cluster if nodeName is null
      * @request GET:/session/v1/list
      */
-    list7: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    list5: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, SessionListResponse>({
         path: `/session/v1/list`,
         method: "GET",
@@ -6009,7 +6739,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Sessions
      * @name Logout1
+     * @summary Logs the specified session out of Stroom
      * @request GET:/session/v1/logout/{sessionId}
      */
     logout1: (sessionId: string, params: RequestParams = {}) =>
@@ -6022,11 +6754,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Sessions
      * @name Login1
+     * @summary Checks if the current session is authenticated and redirects to an auth flow if it is not
      * @request GET:/session/v1/noauth/login
      */
     login1: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
-      this.request<any, LoginResponse>({
+      this.request<any, SessionLoginResponse>({
         path: `/session/v1/noauth/login`,
         method: "GET",
         query: query,
@@ -6037,6 +6771,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Session Info
      * @name Get3
      * @request GET:/sessionInfo/v1
      */
@@ -6051,7 +6786,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Solr Indices
      * @name FetchSolrTypes
+     * @summary Fetch Solr types
      * @request POST:/solrIndex/v1/fetchSolrTypes
      */
     fetchSolrTypes: (data: SolrIndexDoc, params: RequestParams = {}) =>
@@ -6066,7 +6803,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Solr Indices
      * @name SolrConnectionTest
+     * @summary Test connection to Solr
      * @request POST:/solrIndex/v1/solrConnectionTest
      */
     solrConnectionTest: (data: SolrIndexDoc, params: RequestParams = {}) =>
@@ -6081,10 +6820,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch15
+     * @tags Solr Indices
+     * @name Fetch14
+     * @summary Fetch a solr index doc by its UUID
      * @request GET:/solrIndex/v1/{uuid}
      */
-    fetch15: (uuid: string, params: RequestParams = {}) =>
+    fetch14: (uuid: string, params: RequestParams = {}) =>
       this.request<any, SolrIndexDoc>({
         path: `/solrIndex/v1/${uuid}`,
         method: "GET",
@@ -6094,10 +6835,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update18
+     * @tags Solr Indices
+     * @name Update17
+     * @summary Update a solr index doc
      * @request PUT:/solrIndex/v1/{uuid}
      */
-    update18: (uuid: string, data: SolrIndexDoc, params: RequestParams = {}) =>
+    update17: (uuid: string, data: SolrIndexDoc, params: RequestParams = {}) =>
       this.request<any, SolrIndexDoc>({
         path: `/solrIndex/v1/${uuid}`,
         method: "PUT",
@@ -6110,7 +6853,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Sql Statistics Query
      * @name GetDataSource3
+     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/sqlstatistics/v2/dataSource
      */
     getDataSource3: (data: DocRef, params: RequestParams = {}) =>
@@ -6125,7 +6870,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Sql Statistics Query
      * @name Destroy4
+     * @summary Destroy a running query
      * @request POST:/sqlstatistics/v2/destroy
      */
     destroy4: (data: QueryKey, params: RequestParams = {}) =>
@@ -6140,10 +6887,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Search5
+     * @tags Sql Statistics Query
+     * @name Search3
+     * @summary Submit a search request
      * @request POST:/sqlstatistics/v2/search
      */
-    search5: (data: SearchRequest, params: RequestParams = {}) =>
+    search3: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
@@ -6156,7 +6905,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags SQL Statistics RollUps
      * @name BitMaskConversion1
+     * @summary Get rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskConversion
      */
     bitMaskConversion1: (data: number[], params: RequestParams = {}) =>
@@ -6171,7 +6922,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags SQL Statistics RollUps
      * @name BitMaskPermGeneration1
+     * @summary Create rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskPermGeneration
      */
     bitMaskPermGeneration1: (data: number, params: RequestParams = {}) =>
@@ -6186,7 +6939,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags SQL Statistics RollUps
      * @name FieldChange1
+     * @summary Change fields
      * @request POST:/statistic/rollUp/v1/dataSourceFieldChange
      */
     fieldChange1: (data: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
@@ -6201,10 +6956,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch18
+     * @tags SQL Statistics Stores
+     * @name Fetch17
+     * @summary Fetch a statistic doc by its UUID
      * @request GET:/statistic/v1/{uuid}
      */
-    fetch18: (uuid: string, params: RequestParams = {}) =>
+    fetch17: (uuid: string, params: RequestParams = {}) =>
       this.request<any, StatisticStoreDoc>({
         path: `/statistic/v1/${uuid}`,
         method: "GET",
@@ -6214,10 +6971,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update21
+     * @tags SQL Statistics Stores
+     * @name Update19
+     * @summary Update a statistic doc
      * @request PUT:/statistic/v1/{uuid}
      */
-    update21: (uuid: string, data: StatisticStoreDoc, params: RequestParams = {}) =>
+    update19: (uuid: string, data: StatisticStoreDoc, params: RequestParams = {}) =>
       this.request<any, StatisticStoreDoc>({
         path: `/statistic/v1/${uuid}`,
         method: "PUT",
@@ -6230,7 +6989,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom Stats RollUps
      * @name BitMaskConversion
+     * @summary Get rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskConversion
      */
     bitMaskConversion: (data: number[], params: RequestParams = {}) =>
@@ -6245,7 +7006,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom Stats RollUps
      * @name BitMaskPermGeneration
+     * @summary Create rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskPermGeneration
      */
     bitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
@@ -6260,7 +7023,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom Stats RollUps
      * @name FieldChange
+     * @summary Change fields
      * @request POST:/statsStore/rollUp/v1/dataSourceFieldChange
      */
     fieldChange: (data: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
@@ -6275,10 +7040,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch17
+     * @tags Stroom Stats Stores
+     * @name Fetch16
+     * @summary Fetch a store doc doc by its UUID
      * @request GET:/statsStore/v1/{uuid}
      */
-    fetch17: (uuid: string, params: RequestParams = {}) =>
+    fetch16: (uuid: string, params: RequestParams = {}) =>
       this.request<any, StroomStatsStoreDoc>({
         path: `/statsStore/v1/${uuid}`,
         method: "GET",
@@ -6288,10 +7055,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update20
+     * @tags Stroom Stats Stores
+     * @name Update18
+     * @summary Update a stats store doc
      * @request PUT:/statsStore/v1/{uuid}
      */
-    update20: (uuid: string, data: StroomStatsStoreDoc, params: RequestParams = {}) =>
+    update18: (uuid: string, data: StroomStatsStoreDoc, params: RequestParams = {}) =>
       this.request<any, StroomStatsStoreDoc>({
         path: `/statsStore/v1/${uuid}`,
         method: "PUT",
@@ -6304,7 +7073,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stepping
      * @name FindElementDoc
+     * @summary Load the document for an element
      * @request POST:/stepping/v1/findElementDoc
      */
     findElementDoc: (data: FindElementDocRequest, params: RequestParams = {}) =>
@@ -6319,7 +7090,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stepping
      * @name GetPipelineForStepping
+     * @summary Get a pipeline for stepping
      * @request POST:/stepping/v1/getPipelineForStepping
      */
     getPipelineForStepping: (data: GetPipelineForMetaRequest, params: RequestParams = {}) =>
@@ -6334,7 +7107,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stepping
      * @name Step
+     * @summary Step a pipeline
      * @request POST:/stepping/v1/step
      */
     step: (data: PipelineStepRequest, params: RequestParams = {}) =>
@@ -6350,7 +7125,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stored Queries
      * @name Create2
+     * @summary Create a stored query
      * @request POST:/storedQuery/v1/create
      */
     create2: (data: StoredQuery, params: RequestParams = {}) =>
@@ -6365,7 +7142,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stored Queries
      * @name Delete1
+     * @summary Delete a stored query
      * @request DELETE:/storedQuery/v1/delete
      */
     delete1: (data: StoredQuery, params: RequestParams = {}) =>
@@ -6380,7 +7159,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stored Queries
      * @name Find
+     * @summary Find stored queries
      * @request POST:/storedQuery/v1/find
      */
     find: (data: FindStoredQueryCriteria, params: RequestParams = {}) =>
@@ -6395,7 +7176,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stored Queries
      * @name Read1
+     * @summary Get a stored query
      * @request POST:/storedQuery/v1/read
      */
     read1: (data: StoredQuery, params: RequestParams = {}) =>
@@ -6410,7 +7193,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stored Queries
      * @name Update3
+     * @summary Update a stored query
      * @request PUT:/storedQuery/v1/update
      */
     update3: (data: StoredQuery, params: RequestParams = {}) =>
@@ -6426,7 +7211,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom-Index Queries
      * @name GetDataSource
+     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-index/v2/dataSource
      */
     getDataSource: (data: DocRef, params: RequestParams = {}) =>
@@ -6441,7 +7228,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom-Index Queries
      * @name Destroy
+     * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
      */
     destroy: (data: QueryKey, params: RequestParams = {}) =>
@@ -6456,7 +7245,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom-Index Queries
      * @name Search
+     * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
      */
     search: (data: SearchRequest, params: RequestParams = {}) =>
@@ -6472,7 +7263,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Solr Queries
      * @name GetDataSource1
+     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-solr-index/v2/dataSource
      */
     getDataSource1: (data: DocRef, params: RequestParams = {}) =>
@@ -6487,7 +7280,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Solr Queries
      * @name Destroy2
+     * @summary Destroy a running query
      * @request POST:/stroom-solr-index/v2/destroy
      */
     destroy2: (data: QueryKey, params: RequestParams = {}) =>
@@ -6502,7 +7297,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Solr Queries
      * @name Search1
+     * @summary Submit a search request
      * @request POST:/stroom-solr-index/v2/search
      */
     search1: (data: SearchRequest, params: RequestParams = {}) =>
@@ -6518,7 +7315,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom Sessions
      * @name Invalidate1
+     * @summary Invalidate the current session
      * @request GET:/stroomSession/v1/invalidate
      */
     invalidate1: (params: RequestParams = {}) =>
@@ -6531,7 +7330,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Stroom Sessions
      * @name ValidateSession
+     * @summary Validate the current session, return a redirect Uri if invalid.
      * @request GET:/stroomSession/v1/noauth/validateSession
      */
     validateSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
@@ -6546,7 +7347,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Suggestions
      * @name Fetch12
+     * @summary Fetch some suggestions
      * @request POST:/suggest/v1
      */
     fetch12: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
@@ -6562,7 +7365,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags System Info
      * @name GetAll
+     * @summary Get all system info results
      * @request GET:/systemInfo/v1
      */
     getAll: (params: RequestParams = {}) =>
@@ -6575,7 +7380,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags System Info
      * @name GetNames
+     * @summary Get all system info result names
      * @request GET:/systemInfo/v1/names
      */
     getNames: (params: RequestParams = {}) =>
@@ -6588,7 +7395,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags System Info
      * @name Get2
+     * @summary Get a system info result by name
      * @request GET:/systemInfo/v1/{name}
      */
     get2: (name: string, params: RequestParams = {}) =>
@@ -6602,7 +7411,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Tasks
      * @name Find9
+     * @summary Finds tasks for a node
      * @request POST:/task/v1/find/{nodeName}
      */
     find9: (nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
@@ -6617,10 +7428,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name List8
+     * @tags Tasks
+     * @name List6
+     * @summary Lists tasks for a node
      * @request GET:/task/v1/list/{nodeName}
      */
-    list8: (nodeName: string, params: RequestParams = {}) =>
+    list6: (nodeName: string, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/list/${nodeName}`,
         method: "GET",
@@ -6630,7 +7443,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Tasks
      * @name Terminate
+     * @summary Terminates tasks for a node
      * @request POST:/task/v1/terminate/{nodeName}
      */
     terminate: (nodeName: string, data: TerminateTaskProgressRequest, params: RequestParams = {}) =>
@@ -6645,7 +7460,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Tasks
      * @name UserTasks
+     * @summary Lists tasks for a node
      * @request GET:/task/v1/user/{nodeName}
      */
     userTasks: (nodeName: string, params: RequestParams = {}) =>
@@ -6659,7 +7476,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Text Converters
      * @name Fetch10
+     * @summary Fetch a text converter doc by its UUID
      * @request GET:/textConverter/v1/{uuid}
      */
     fetch10: (uuid: string, params: RequestParams = {}) =>
@@ -6672,7 +7491,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Text Converters
      * @name Update13
+     * @summary Update a text converter doc
      * @request PUT:/textConverter/v1/{uuid}
      */
     update13: (uuid: string, data: TextConverterDoc, params: RequestParams = {}) =>
@@ -6688,10 +7509,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name DeleteAll
+     * @tags Api Keys
+     * @name DeleteAllTokens
+     * @summary Delete all tokens.
      * @request DELETE:/token/v1
      */
-    deleteAll: (params: RequestParams = {}) =>
+    deleteAllTokens: (params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/token/v1`,
         method: "DELETE",
@@ -6701,10 +7524,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name List6
+     * @tags Api Keys
+     * @name ListTokens
+     * @summary Get all tokens.
      * @request GET:/token/v1
      */
-    list6: (params: RequestParams = {}) =>
+    listTokens: (params: RequestParams = {}) =>
       this.request<any, TokenResultPage>({
         path: `/token/v1`,
         method: "GET",
@@ -6714,10 +7539,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Create9
+     * @tags Api Keys
+     * @name CreateToken
+     * @summary Create a new token.
      * @request POST:/token/v1
      */
-    create9: (data: CreateTokenRequest, params: RequestParams = {}) =>
+    createToken: (data: CreateTokenRequest, params: RequestParams = {}) =>
       this.request<any, Token>({
         path: `/token/v1`,
         method: "POST",
@@ -6729,10 +7556,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name DeleteByToken
+     * @tags Api Keys
+     * @name DeleteTokenByContent
+     * @summary Delete a token by the token string itself.
      * @request DELETE:/token/v1/byToken/{token}
      */
-    deleteByToken: (token: string, params: RequestParams = {}) =>
+    deleteTokenByContent: (token: string, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/token/v1/byToken/${token}`,
         method: "DELETE",
@@ -6742,10 +7571,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Read8
+     * @tags Api Keys
+     * @name FetchTokenByContent
+     * @summary Read a token by the token string itself.
      * @request GET:/token/v1/byToken/{token}
      */
-    read8: (token: string, params: RequestParams = {}) =>
+    fetchTokenByContent: (token: string, params: RequestParams = {}) =>
       this.request<any, Token>({
         path: `/token/v1/byToken/${token}`,
         method: "GET",
@@ -6755,7 +7586,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Api Keys
      * @name FetchTokenConfig
+     * @summary Get the token configuration
      * @request GET:/token/v1/noauth/fetchTokenConfig
      */
     fetchTokenConfig: (params: RequestParams = {}) =>
@@ -6768,7 +7601,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Api Keys
      * @name GetPublicKey
+     * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
      * @request GET:/token/v1/publickey
      */
     getPublicKey: (params: RequestParams = {}) =>
@@ -6781,10 +7616,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Search4
+     * @tags Api Keys
+     * @name SearchTokens
+     * @summary Submit a search request for tokens
      * @request POST:/token/v1/search
      */
-    search4: (data: SearchTokenRequest, params: RequestParams = {}) =>
+    searchTokens: (data: SearchTokenRequest, params: RequestParams = {}) =>
       this.request<any, TokenResultPage>({
         path: `/token/v1/search`,
         method: "POST",
@@ -6796,10 +7633,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Delete9
+     * @tags Api Keys
+     * @name DeleteToken
+     * @summary Delete a token by ID.
      * @request DELETE:/token/v1/{id}
      */
-    delete9: (id: number, params: RequestParams = {}) =>
+    deleteToken: (id: number, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/token/v1/${id}`,
         method: "DELETE",
@@ -6809,10 +7648,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Read7
+     * @tags Api Keys
+     * @name FetchToken
+     * @summary Read a token by ID.
      * @request GET:/token/v1/{id}
      */
-    read7: (id: number, params: RequestParams = {}) =>
+    fetchToken: (id: number, params: RequestParams = {}) =>
       this.request<any, Token>({
         path: `/token/v1/${id}`,
         method: "GET",
@@ -6822,10 +7663,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name ToggleEnabled
+     * @tags Api Keys
+     * @name ToggleTokenEnabled
+     * @summary Enable or disable the state of a token.
      * @request GET:/token/v1/{id}/enabled
      */
-    toggleEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
+    toggleTokenEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/token/v1/${id}/enabled`,
         method: "GET",
@@ -6837,7 +7680,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name Find8
+     * @summary Find the users matching the supplied criteria
      * @request GET:/users/v1
      */
     find8: (query?: { name?: string; isGroup?: boolean; uuid?: string }, params: RequestParams = {}) =>
@@ -6851,7 +7696,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name GetAssociates
+     * @summary Gets a list of associated users
      * @request GET:/users/v1/associates
      */
     getAssociates: (query?: { filter?: string }, params: RequestParams = {}) =>
@@ -6865,10 +7712,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Create10
+     * @tags Authorisation
+     * @name Create8
+     * @summary Creates a user or group with the supplied name
      * @request POST:/users/v1/create/{name}/{isGroup}
      */
-    create10: (name: string, isGroup: boolean, params: RequestParams = {}) =>
+    create8: (name: string, isGroup: boolean, params: RequestParams = {}) =>
       this.request<any, User>({
         path: `/users/v1/create/${name}/${isGroup}`,
         method: "POST",
@@ -6878,7 +7727,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name Find7
+     * @summary Find the users matching the supplied criteria
      * @request POST:/users/v1/find
      */
     find7: (data: FindUserCriteria, params: RequestParams = {}) =>
@@ -6893,7 +7744,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name SetStatus1
+     * @summary Enables/disables the Stroom user with the supplied username
      * @request PUT:/users/v1/{userName}/status
      */
     setStatus1: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
@@ -6907,10 +7760,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch16
+     * @tags Authorisation
+     * @name Fetch15
+     * @summary Fetches the user with the supplied UUID
      * @request GET:/users/v1/{userUuid}
      */
-    fetch16: (userUuid: string, params: RequestParams = {}) =>
+    fetch15: (userUuid: string, params: RequestParams = {}) =>
       this.request<any, User>({
         path: `/users/v1/${userUuid}`,
         method: "GET",
@@ -6920,7 +7775,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name RemoveUserFromGroup
+     * @summary Removes user with UUID userUuid from the group with UUID groupUuid
      * @request DELETE:/users/v1/{userUuid}/{groupUuid}
      */
     removeUserFromGroup: (userUuid: string, groupUuid: string, params: RequestParams = {}) =>
@@ -6933,7 +7790,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name AddUserToGroup
+     * @summary Adds user with UUID userUuid to the group with UUID groupUuid
      * @request PUT:/users/v1/{userUuid}/{groupUuid}
      */
     addUserToGroup: (userUuid: string, groupUuid: string, params: RequestParams = {}) =>
@@ -6946,7 +7805,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Authorisation
      * @name DeleteUser
+     * @summary Deletes the user with the supplied UUID
      * @request DELETE:/users/v1/{uuid}
      */
     deleteUser: (uuid: string, params: RequestParams = {}) =>
@@ -6960,10 +7821,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch19
+     * @tags Visualisations
+     * @name Fetch18
+     * @summary Fetch a visualisation doc by its UUID
      * @request GET:/visualisation/v1/{uuid}
      */
-    fetch19: (uuid: string, params: RequestParams = {}) =>
+    fetch18: (uuid: string, params: RequestParams = {}) =>
       this.request<any, VisualisationDoc>({
         path: `/visualisation/v1/${uuid}`,
         method: "GET",
@@ -6973,10 +7836,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update22
+     * @tags Visualisations
+     * @name Update20
+     * @summary Update a visualisation doc
      * @request PUT:/visualisation/v1/{uuid}
      */
-    update22: (uuid: string, data: VisualisationDoc, params: RequestParams = {}) =>
+    update20: (uuid: string, data: VisualisationDoc, params: RequestParams = {}) =>
       this.request<any, VisualisationDoc>({
         path: `/visualisation/v1/${uuid}`,
         method: "PUT",
@@ -6989,7 +7854,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Welcome
      * @name Fetch
+     * @summary Get the configured HTML welcome message
      * @request GET:/welcome/v1
      */
     fetch: (params: RequestParams = {}) =>
@@ -7003,10 +7870,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Fetch20
+     * @tags XML Schemas
+     * @name Fetch19
+     * @summary Fetch a xml schema doc by its UUID
      * @request GET:/xmlSchema/v1/{uuid}
      */
-    fetch20: (uuid: string, params: RequestParams = {}) =>
+    fetch19: (uuid: string, params: RequestParams = {}) =>
       this.request<any, XmlSchemaDoc>({
         path: `/xmlSchema/v1/${uuid}`,
         method: "GET",
@@ -7016,10 +7885,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name Update23
+     * @tags XML Schemas
+     * @name Update21
+     * @summary Update a xml schema doc
      * @request PUT:/xmlSchema/v1/{uuid}
      */
-    update23: (uuid: string, data: XmlSchemaDoc, params: RequestParams = {}) =>
+    update21: (uuid: string, data: XmlSchemaDoc, params: RequestParams = {}) =>
       this.request<any, XmlSchemaDoc>({
         path: `/xmlSchema/v1/${uuid}`,
         method: "PUT",
@@ -7032,7 +7903,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags XSLTs
      * @name Fetch11
+     * @summary Fetch an xslt doc by its UUID
      * @request GET:/xslt/v1/{uuid}
      */
     fetch11: (uuid: string, params: RequestParams = {}) =>
@@ -7045,7 +7918,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags XSLTs
      * @name Update14
+     * @summary Update a an xslt doc
      * @request PUT:/xslt/v1/{uuid}
      */
     update14: (uuid: string, data: XsltDoc, params: RequestParams = {}) =>

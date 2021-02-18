@@ -3,19 +3,17 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel(description = "A request to determine if the user has the requested permission on a 'document'")
+@Schema(description = "A request to determine if the user has the requested permission on a 'document'")
 public class AuthorisationRequest {
 
     @JsonProperty
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private DocRef docRef;
 
     @JsonProperty
-    @ApiModelProperty(
-            value = "The permission (e.g. UPDATE) that the user is requesting to use with the document",
+    @Schema(description = "The permission (e.g. UPDATE) that the user is requesting to use with the document",
             example = "UPDATE",
             required = true)
     private String permission;

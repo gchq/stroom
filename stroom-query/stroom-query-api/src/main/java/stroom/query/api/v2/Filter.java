@@ -20,25 +20,22 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
+@Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
         "Either or both can be supplied")
 public final class Filter {
 
-    @ApiModelProperty(
-            value = "Only results matching this filter will be included",
+    @Schema(description = "Only results matching this filter will be included",
             example = "^[0-9]{3}$")
     @JsonProperty
     private final String includes;
 
-    @ApiModelProperty(
-            value = "Only results NOT matching this filter will be included",
+    @Schema(description = "Only results NOT matching this filter will be included",
             example = "^[0-9]{3}$")
     @JsonProperty
     private final String excludes;

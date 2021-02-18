@@ -20,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,20 +30,18 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(
-        description = "A result structure used primarily for visualisation data",
-        parent = Result.class)
+@Schema(description = "A result structure used primarily for visualisation data")
 public final class FlatResult extends Result {
 
     @JsonProperty
     private final List<Field> structure;
 
-    @ApiModelProperty(value = "The 2 dimensional array containing the result set. The positions in the inner array " +
+    @JsonPropertyDescription("The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
     @JsonProperty
     private final List<List<Object>> values;
 
-    @ApiModelProperty(value = "The size of the result set being returned")
+    @JsonPropertyDescription("The size of the result set being returned")
     @JsonProperty
     private final Long size;
 

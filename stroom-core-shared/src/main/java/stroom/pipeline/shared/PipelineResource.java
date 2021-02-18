@@ -22,9 +22,9 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -37,7 +37,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Pipelines")
+@Tag(name = "Pipelines")
 @Path("/pipeline" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,31 +45,32 @@ public interface PipelineResource extends RestResource, DirectRestService, Fetch
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a pipeline doc by its UUID")
+    @Operation(summary = "Fetch a pipeline doc by its UUID")
     PipelineDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a pipeline doc")
-    PipelineDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") PipelineDoc doc);
+    @Operation(summary = "Update a pipeline doc")
+    PipelineDoc update(@PathParam("uuid") String uuid,
+                       @Parameter(description = "doc", required = true) PipelineDoc doc);
 
     @PUT
     @Path("/savePipelineXml")
-    @ApiOperation("Update a pipeline doc with XML directly")
-    Boolean savePipelineXml(@ApiParam("request") SavePipelineXmlRequest request);
+    @Operation(summary = "Update a pipeline doc with XML directly")
+    Boolean savePipelineXml(@Parameter(description = "request", required = true) SavePipelineXmlRequest request);
 
     @POST
     @Path("/fetchPipelineXml")
-    @ApiOperation("Fetch the XML for a pipeline")
-    FetchPipelineXmlResponse fetchPipelineXml(@ApiParam("pipeline") DocRef pipeline);
+    @Operation(summary = "Fetch the XML for a pipeline")
+    FetchPipelineXmlResponse fetchPipelineXml(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @POST
     @Path("/fetchPipelineData")
-    @ApiOperation("Fetch data for a pipeline")
-    List<PipelineData> fetchPipelineData(@ApiParam("pipeline") DocRef pipeline);
+    @Operation(summary = "Fetch data for a pipeline")
+    List<PipelineData> fetchPipelineData(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @GET
     @Path("/propertyTypes")
-    @ApiOperation("Get pipeline property types")
+    @Operation(summary = "Get pipeline property types")
     List<FetchPropertyTypesResult> getPropertyTypes();
 }

@@ -16,49 +16,43 @@
 
 package stroom.legacy.model_6_1;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 @JsonPropertyOrder({"field", "condition", "value", "docRef"})
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
-        value = "ExpressionTerm",
-        description = "A predicate term in a query expression tree",
-        parent = ExpressionItem.class)
+@Schema(name = "ExpressionTerm",
+        description = "A predicate term in a query expression tree")
 @Deprecated
 public final class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The name of the field that is being evaluated in this predicate term",
+    @Schema(description = "The name of the field that is being evaluated in this predicate term",
             required = true)
     private String field;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The condition of the predicate term",
+    @Schema(description = "The condition of the predicate term",
             required = true)
     private Condition condition;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The value that the field value is being evaluated against. Not required if a dictionary is supplied")
+    @JsonPropertyDescription("The value that the field value is being evaluated against. Not required if a dictionary is supplied")
     private String value;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The DocRef that the field value is being evaluated against if the condition is IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
+    @JsonPropertyDescription("The DocRef that the field value is being evaluated against if the condition is IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     private DocRef docRef;
 
     private ExpressionTerm() {
@@ -102,9 +96,15 @@ public final class ExpressionTerm extends ExpressionItem {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
                 condition == that.condition &&

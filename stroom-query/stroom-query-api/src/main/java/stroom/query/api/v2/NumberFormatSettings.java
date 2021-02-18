@@ -22,28 +22,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "The definition of a format to apply to numeric data")
+@Schema(description = "The definition of a format to apply to numeric data")
 public final class NumberFormatSettings implements FormatSettings {
 
     private static final int DEFAULT_DECIMAL_PLACES = 0;
     private static final boolean DEFAULT_USE_SEPARATOR = false;
 
-    @ApiModelProperty(
-            value = "The number of decimal places",
+    @Schema(description = "The number of decimal places",
             example = "2",
             required = true)
     @JsonProperty
     private final Integer decimalPlaces;
 
-    @ApiModelProperty(
-            value = "Whether to use a thousands separator or not. Defaults to false",
+    @Schema(description = "Whether to use a thousands separator or not. Defaults to false",
             example = "true")
     @JsonProperty
     private final Boolean useSeparator;
