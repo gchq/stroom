@@ -32,7 +32,7 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(DataSourceFieldType.ID_FIELD, "Id", true, new String[]{ "long" }),
+    ID(DataSourceFieldType.ID_FIELD, "Id", true, null),
     BOOLEAN(DataSourceFieldType.BOOLEAN_FIELD, "Boolean", false, new String[]{ "boolean" }),
     INTEGER(DataSourceFieldType.INTEGER_FIELD, "Integer", true, new String[]{ "integer", "short", "byte" }),
     LONG(DataSourceFieldType.LONG_FIELD, "Long", true, new String[]{ "long", "unsigned_long" }),
@@ -41,13 +41,25 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     DATE(DataSourceFieldType.DATE_FIELD, "Date", false, new String[]{ "date" }),
     TEXT(DataSourceFieldType.TEXT_FIELD, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
 
+    private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
+
+    static {
+        final Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
+        for (ElasticIndexFieldType fieldType : values()) {
+            // Register this field type's native types for easy retrieval
+            if (fieldType.nativeTypes != null) {
+                fieldType.nativeTypes.forEach(nativeType -> nativeTypeRegistry.putIfAbsent(nativeType, fieldType));
+            }
+        }
+
+        ElasticIndexFieldType.nativeTypeRegistry = nativeTypeRegistry;
+    }
+
     private final DataSourceFieldType dataSourceFieldType;
     private final String displayValue;
     private final boolean numeric;
     private final Set<String> nativeTypes;
     private final List<Condition> supportedConditions;
-
-    private final static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
     ElasticIndexFieldType(
             final DataSourceFieldType dataSourceFieldType,
@@ -58,16 +70,9 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         this.dataSourceFieldType = dataSourceFieldType;
         this.displayValue = displayValue;
         this.numeric = numeric;
-        this.nativeTypes = new HashSet<>(Arrays.asList(nativeTypes));
+        this.nativeTypes = nativeTypes != null ? new HashSet<>(Arrays.asList(nativeTypes)) : null;
 
         this.supportedConditions = getConditions();
-        registerNativeTypes(this, nativeTypes);
-    }
-
-    private static void registerNativeTypes(ElasticIndexFieldType fieldType, final String[] nativeTypes) {
-        // Register this field type's native types for easy retrieval
-        Arrays.stream(nativeTypes)
-                .forEach(type -> nativeTypeRegistry.putIfAbsent(type, fieldType));
     }
 
     public DataSourceFieldType getDataSourceFieldType() {

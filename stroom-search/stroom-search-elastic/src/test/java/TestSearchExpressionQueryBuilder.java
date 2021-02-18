@@ -46,7 +46,7 @@ public class TestSearchExpressionQueryBuilder {
     public void testBuildQuery() {
         ElasticIndexField answerField = new ElasticIndexField();
         answerField.setFieldName("answer");
-        answerField.setFieldUse(ElasticIndexFieldType.NUMBER);
+        answerField.setFieldUse(ElasticIndexFieldType.LONG);
         indexFieldsMap.put(answerField.getFieldName(), answerField);
         final Long answerFieldValue = 42L;
 

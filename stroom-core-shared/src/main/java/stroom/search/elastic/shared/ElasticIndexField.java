@@ -126,7 +126,7 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
                 indexed == that.indexed &&
                 fieldUse == that.fieldUse &&
                 Objects.equals(fieldName, that.fieldName) &&
-                Objects.equals(fieldType, that.fieldType)
+                Objects.equals(fieldType, that.fieldType);
     }
 
     @Override
