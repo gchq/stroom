@@ -65,17 +65,4 @@ public class WelcomeResource implements RestResource {
                 null
         );
     }
-
-    public class Welcome {
-
-        private final String html;
-
-        public Welcome(final String html) {
-            this.html = html;
-        }
-
-        public String getHtml() {
-            return html;
-        }
-    }
 }
