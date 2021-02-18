@@ -121,9 +121,9 @@ public class NewUiPipelineResource implements RestResource {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
-    private DocRef getDocRef(final String pipelineId) {
+    private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
-                .uuid(pipelineId)
+                .uuid(uuid)
                 .type(PipelineDoc.DOCUMENT_TYPE)
                 .build();
     }
@@ -176,12 +176,12 @@ public class NewUiPipelineResource implements RestResource {
     }
 
     @GET
-    @Path("/{pipelineId}")
-    public Response fetch(@PathParam("pipelineId") final String pipelineId) {
+    @Path("/{uuid}")
+    public Response fetch(@PathParam("uuid") final String uuid) {
         return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have
             // 'use' permission on them.
-            return securityContext.useAsReadResult(() -> fetchInScope(pipelineId));
+            return securityContext.useAsReadResult(() -> fetchInScope(uuid));
         }));
     }
 
@@ -231,14 +231,14 @@ public class NewUiPipelineResource implements RestResource {
     }
 
     @POST
-    @Path("/{pipelineId}")
-    public Response save(@PathParam("pipelineId") final String pipelineId,
+    @Path("/{uuid}")
+    public Response save(@PathParam("uuid") final String uuid,
                          @ApiParam("pipelineDocUpdates") final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have
             // 'use' permission on them.
             securityContext.useAsRead(() -> {
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(uuid));
 
                 if (pipelineDoc != null) {
                     pipelineDoc.setDescription(pipelineDocUpdates.getDescription());

@@ -18,6 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -32,6 +33,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -39,17 +41,17 @@ import javax.ws.rs.core.MediaType;
 @Path("/pipeline" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface PipelineResource extends RestResource, DirectRestService {
+public interface PipelineResource extends RestResource, DirectRestService, FetchWithUuid<PipelineDoc> {
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a pipeline doc")
-    PipelineDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a pipeline doc by its UUID")
+    PipelineDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
+    @Path("/{uuid}")
     @ApiOperation("Update a pipeline doc")
-    PipelineDoc update(@ApiParam("PipelineDoc") PipelineDoc pipelineDoc);
+    PipelineDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") PipelineDoc doc);
 
     @PUT
     @Path("/savePipelineXml")

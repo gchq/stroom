@@ -20,10 +20,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 
 class TextConverterResourceImpl implements TextConverterResource {
+
     private final TextConverterStore textConverterStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -35,12 +37,22 @@ class TextConverterResourceImpl implements TextConverterResource {
     }
 
     @Override
-    public TextConverterDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(textConverterStore, docRef);
+    public TextConverterDoc fetch(final String uuid) {
+        return documentResourceHelper.read(textConverterStore, getDocRef(uuid));
     }
 
     @Override
-    public TextConverterDoc update(final TextConverterDoc doc) {
+    public TextConverterDoc update(final String uuid, final TextConverterDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(textConverterStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(TextConverterDoc.DOCUMENT_TYPE)
+                .build();
     }
 }

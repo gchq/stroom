@@ -131,7 +131,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     update();
                 })
                 .call(DATA_RETENTION_RULES_RESOURCE)
-                .read();
+                .fetch();
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {

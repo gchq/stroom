@@ -155,7 +155,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATS_STORE_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -168,6 +168,6 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATS_STORE_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 }

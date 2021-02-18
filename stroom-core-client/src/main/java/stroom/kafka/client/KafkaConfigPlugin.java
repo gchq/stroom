@@ -78,7 +78,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(KAFKA_CONFIG_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -91,6 +91,6 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(KAFKA_CONFIG_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 }

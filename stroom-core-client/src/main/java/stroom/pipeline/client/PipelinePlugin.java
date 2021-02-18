@@ -90,7 +90,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(PIPELINE_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -103,7 +103,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(PIPELINE_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

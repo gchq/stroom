@@ -27,6 +27,7 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 
 import java.util.List;
@@ -45,13 +46,23 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
-    public DashboardDoc read(final DocRef docRef) {
-        return dashboardServiceProvider.get().read(docRef);
+    public DashboardDoc fetch(final String uuid) {
+        return dashboardServiceProvider.get().read(getDocRef(uuid));
     }
 
     @Override
-    public DashboardDoc update(final DashboardDoc doc) {
+    public DashboardDoc update(final String uuid, final DashboardDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return dashboardServiceProvider.get().update(doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(DashboardDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

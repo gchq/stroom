@@ -17,7 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
-import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -27,7 +27,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/dictionary" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface DictionaryResource extends RestResource, DirectRestService {
+public interface DictionaryResource extends RestResource, DirectRestService, FetchWithUuid<DictionaryDoc> {
 
     // TODO @AT No idea why we have this and NewUiDictionaryResource2 if this one has react endpoints
     //   in it
@@ -50,15 +49,15 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     // GWT UI end points //
     ///////////////////////
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a dictionary doc")
-    DictionaryDoc read(DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a dictionary doc by its UUID")
+    DictionaryDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
+    @Path("/{uuid}")
     @ApiOperation("Update a dictionary doc")
-    DictionaryDoc update(DictionaryDoc xslt);
+    DictionaryDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") DictionaryDoc doc);
 
     @POST
     @Path("/download")
@@ -66,33 +65,33 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     ResourceGeneration download(DocRef dictionaryRef);
 
 
-    ////////////////////////
-    // React UI endpoints //
-    ////////////////////////
-
-    @GET
-    @Path("/list")
-    @ApiOperation("Submit a request for a list of doc refs held by this service")
-    Set<DocRef> listDocuments();
-
-    @POST
-    @Path("/import")
-    @ApiOperation("Submit an import request")
-    DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData);
-
-    @POST
-    @Path("/export")
-    @ApiOperation("Submit an export request")
-    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef);
-
-    @GET
-    @Path("/{dictionaryUuid}")
-    @ApiOperation("Fetch a dictionary by its UUID")
-    DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid);
-
-    @POST
-    @Path("/{dictionaryUuid}")
-    @ApiOperation("Save the supplied dictionary")
-    void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-              final DictionaryDTO updates);
+//    ////////////////////////
+//    // React UI endpoints //
+//    ////////////////////////
+//
+//    @GET
+//    @Path("/list")
+//    @ApiOperation("Submit a request for a list of doc refs held by this service")
+//    Set<DocRef> listDocuments();
+//
+//    @POST
+//    @Path("/import")
+//    @ApiOperation("Submit an import request")
+//    DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData);
+//
+//    @POST
+//    @Path("/export")
+//    @ApiOperation("Submit an export request")
+//    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef);
+//
+//    @GET
+//    @Path("/{uuid}")
+//    @ApiOperation("Fetch a dictionary by its UUID")
+//    DictionaryDTO fetch(@PathParam("uuid") final String uuid);
+//
+//    @POST
+//    @Path("/{uuid}")
+//    @ApiOperation("Save the supplied dictionary")
+//    void save(@PathParam("uuid") final String uuid,
+//              final DictionaryDTO updates);
 }

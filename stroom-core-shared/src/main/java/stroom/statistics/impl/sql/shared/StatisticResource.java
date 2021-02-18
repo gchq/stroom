@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.shared;
 
-import stroom.docref.DocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -26,9 +26,10 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -36,15 +37,15 @@ import javax.ws.rs.core.MediaType;
 @Path("/statistic" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface StatisticResource extends RestResource, DirectRestService {
+public interface StatisticResource extends RestResource, DirectRestService, FetchWithUuid<StatisticStoreDoc> {
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a statistic doc")
-    StatisticStoreDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a statistic doc by its UUID")
+    StatisticStoreDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
+    @Path("/{uuid}")
     @ApiOperation("Update a statistic doc")
-    StatisticStoreDoc update(@ApiParam("statisticStoreDoc") StatisticStoreDoc statisticStoreDoc);
+    StatisticStoreDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") StatisticStoreDoc doc);
 }

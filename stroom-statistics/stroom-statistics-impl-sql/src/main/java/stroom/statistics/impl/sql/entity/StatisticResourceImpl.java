@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 
@@ -36,12 +37,22 @@ class StatisticResourceImpl implements StatisticResource {
     }
 
     @Override
-    public StatisticStoreDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(statisticStoreStore, docRef);
+    public StatisticStoreDoc fetch(final String uuid) {
+        return documentResourceHelper.read(statisticStoreStore, getDocRef(uuid));
     }
 
     @Override
-    public StatisticStoreDoc update(final StatisticStoreDoc statisticStoreDoc) {
-        return documentResourceHelper.update(statisticStoreStore, statisticStoreDoc);
+    public StatisticStoreDoc update(final String uuid, final StatisticStoreDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelper.update(statisticStoreStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(StatisticStoreDoc.DOCUMENT_TYPE)
+                .build();
     }
 }

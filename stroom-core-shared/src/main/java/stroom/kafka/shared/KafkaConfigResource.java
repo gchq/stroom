@@ -17,6 +17,7 @@
 package stroom.kafka.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -27,9 +28,11 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -37,17 +40,17 @@ import javax.ws.rs.core.MediaType;
 @Path("/kafkaConfig" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface KafkaConfigResource extends RestResource, DirectRestService {
+public interface KafkaConfigResource extends RestResource, DirectRestService, FetchWithUuid<KafkaConfigDoc> {
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a kafkaConfig doc")
-    KafkaConfigDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a kafkaConfig doc by its UUID")
+    KafkaConfigDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
+    @Path("/{uuid}")
     @ApiOperation("Update a kafkaConfig doc")
-    KafkaConfigDoc update(@ApiParam("updated") KafkaConfigDoc updated);
+    KafkaConfigDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") KafkaConfigDoc doc);
 
     @POST
     @Path("/download")

@@ -55,26 +55,26 @@ public class NewUIIndexResourceImpl implements NewUIIndexResource {
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
-    private DocRef getDocRef(final String pipelineId) {
+    private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
-                .uuid(pipelineId)
+                .uuid(uuid)
                 .type(IndexDoc.DOCUMENT_TYPE)
                 .build();
     }
 
     @Override
     @Timed
-    public Response fetch(final String indexUuid) {
-        final IndexDoc doc = indexStore.readDocument(getDocRef(indexUuid));
+    public Response fetch(final String uuid) {
+        final IndexDoc doc = indexStore.readDocument(getDocRef(uuid));
 
         return Response.ok(doc).build();
     }
 
     @Override
     @Timed
-    public Response save(final String dictionaryUuid,
+    public Response save(final String uuid,
                          final IndexDoc updates) {
-        final IndexDoc doc = indexStore.readDocument(getDocRef(dictionaryUuid));
+        final IndexDoc doc = indexStore.readDocument(getDocRef(uuid));
 
         if (doc != null) {
             doc.setDescription(updates.getDescription());

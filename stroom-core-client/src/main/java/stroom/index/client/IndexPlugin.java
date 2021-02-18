@@ -51,7 +51,7 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(INDEX_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -64,7 +64,7 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(INDEX_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

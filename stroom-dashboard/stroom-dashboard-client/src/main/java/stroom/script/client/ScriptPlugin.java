@@ -68,7 +68,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

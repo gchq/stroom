@@ -19,6 +19,7 @@ package stroom.dashboard.impl.visualisation;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.shared.EntityServiceException;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
@@ -40,18 +41,21 @@ class VisualisationResourceImpl implements VisualisationResource {
 
     @Override
     public VisualisationDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(
-                visualisationStoreProvider.get(),
-                DocRef.builder()
-                        .uuid(uuid)
-                        .type(VisualisationDoc.DOCUMENT_TYPE)
-                        .build());
+        return documentResourceHelperProvider.get().read(visualisationStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public VisualisationDoc update(final VisualisationDoc doc) {
-        return documentResourceHelperProvider.get().update(
-                visualisationStoreProvider.get(),
-                doc);
+    public VisualisationDoc update(final String uuid, final VisualisationDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(visualisationStoreProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(VisualisationDoc.DOCUMENT_TYPE)
+                .build();
     }
 }

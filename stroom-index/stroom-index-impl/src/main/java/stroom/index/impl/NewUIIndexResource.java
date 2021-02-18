@@ -42,16 +42,16 @@ public interface NewUIIndexResource extends RestResource {
     Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
 
     @GET
-    @Path("/{indexUuid}")
+    @Path("/{uuid}")
     @ApiOperation(
             value = "Fetch the index document with the supplied UUID",
             response = IndexDoc.class)
-    Response fetch(@PathParam("indexUuid") String indexUuid);
+    Response fetch(@PathParam("uuid") String uuid);
 
     @POST
-    @Path("/{indexUuid}")
+    @Path("/{uuid}")
     @ApiOperation(
             value = "Update the supplied index document",
             response = IndexDoc.class)
-    Response save(@PathParam("indexUuid") String indexUuid, IndexDoc updates);
+    Response save(@PathParam("uuid") String uuid, IndexDoc updates);
 }

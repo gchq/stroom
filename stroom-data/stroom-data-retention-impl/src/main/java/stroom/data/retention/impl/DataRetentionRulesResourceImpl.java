@@ -40,7 +40,7 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     }
 
     @Override
-    public DataRetentionRules read() {
+    public DataRetentionRules fetch() {
         return dataRetentionRulesServiceProvider.get().getOrCreate();
     }
 

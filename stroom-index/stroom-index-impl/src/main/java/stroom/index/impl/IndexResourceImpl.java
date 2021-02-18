@@ -12,6 +12,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -49,13 +50,23 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
-    public IndexDoc read(final DocRef docRef) {
-        return indexStore.readDocument(docRef);
+    public IndexDoc fetch(final String uuid) {
+        return indexStore.readDocument(getDocRef(uuid));
     }
 
     @Override
-    public IndexDoc update(final IndexDoc indexDoc) {
-        return indexStore.writeDocument(indexDoc);
+    public IndexDoc update(final String uuid, final IndexDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return indexStore.writeDocument(doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(IndexDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

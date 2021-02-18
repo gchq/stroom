@@ -16,8 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.docref.DocRef;
-import stroom.util.shared.ReadWithDocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -28,9 +27,11 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -39,22 +40,21 @@ import javax.ws.rs.core.MediaType;
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource, DirectRestService, ReadWithDocRef<IndexDoc> {
+public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<IndexDoc> {
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
-    @Override
-    @POST
-    @Path("/read")
-    @ApiOperation("Get an index doc")
-    IndexDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @ApiOperation("Fetch a index doc by its UUID")
+    IndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
+    @Path("/{uuid}")
     @ApiOperation("Update an index doc")
-    IndexDoc update(IndexDoc indexDoc);
+    IndexDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") IndexDoc doc);
 
     @POST
     @Path("/shard/find")
