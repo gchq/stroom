@@ -143,6 +143,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return -1;
     }
 
+    @Override
     public <T_RESP> T_RESP remoteRestResult(final String nodeName,
                                             final String fullPath,
                                             final Supplier<T_RESP> localSupplier,
@@ -214,7 +215,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 final Response response = responseBuilderFunc.apply(builder);
 
                 LOGGER.debug("Response status {}", response.getStatus());
-                if (response.getStatus() != Status.OK.getStatusCode()) {
+                if (response.getStatus() != Status.OK.getStatusCode()
+                        && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
                     throw new WebApplicationException(response);
                 }
             } catch (final Throwable e) {

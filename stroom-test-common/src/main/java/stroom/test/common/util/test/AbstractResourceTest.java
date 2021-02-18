@@ -8,12 +8,14 @@ import io.dropwizard.jersey.validation.ValidationErrorMessage;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.Assertions;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.junit.Rule;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.function.Function;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -33,21 +35,18 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                 LOGGER.info("Calling getRestResource()");
                 return getRestResource();
             })
-//            .setClientConfigurator(clientConfig -> clientConfig.register(LoggingFeature.class))
+            .setClientConfigurator(clientConfig -> clientConfig.register(LoggingFeature.class))
             .build();
 
-    //    private static final WebTargetFactory WEB_TARGET_FACTORY = url ->
-//            ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class))
-//                    .target(url);
     private final WebTargetFactory webTargetFactory = url -> {
-        // Convert url to sub path
-        final String fullPath = url.substring(url.indexOf("/"));
+        // Convert url to sub path http://localhost:9998/base/path/sub/path => /sub/path
+        String fullPath = url.replace("http://", "");
+        fullPath = fullPath.replace("//", "/");
+        fullPath = fullPath.substring(fullPath.indexOf("/"));
         final String subPath = fullPath.replace(getResourceBasePath(), "");
-        return resources.target(fullPath);
+        System.out.println("subPath: " + subPath);
+        return resources.target(subPath);
     };
-
-//        ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class))
-//                    .target(url);
 
     public abstract R getRestResource();
 
@@ -59,6 +58,10 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
     public WebTargetFactory webTargetFactory() {
         return webTargetFactory;
+    }
+
+    public URI getServerBaseUri() {
+        return resources.getJerseyTest().target().getUri();
     }
 
 //    public  <T_RESP> T_RESP doGetTest(final String subPath,

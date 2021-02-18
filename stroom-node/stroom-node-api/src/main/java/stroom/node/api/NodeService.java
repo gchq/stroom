@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.Response;
 
 /**
@@ -72,10 +73,12 @@ public interface NodeService {
     /**
      * Call out to the specified node using the rest request defined by fullPath and
      * responseBuilderFunc, if nodeName is this node then use localRunnable.
+     *
+     * @return
      */
     void remoteRestCall(final String nodeName,
                         final String fullPath,
                         final Runnable localRunnable,
-                        final Function<Invocation.Builder, Response> responseBuilderFunc);
+                        final Function<Builder, Response> responseBuilderFunc);
 
 }
