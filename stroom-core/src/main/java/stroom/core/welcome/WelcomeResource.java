@@ -21,7 +21,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Api(tags = "Welcome")
 @Path("/welcome" + ResourcePaths.V1)
@@ -41,11 +40,8 @@ public class WelcomeResource implements RestResource {
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @GET
-    @ApiOperation(
-            value = "Get the configured HTML welcome message",
-            response = Object.class)
-    public Response fetch() {
-
+    @ApiOperation(value = "Get the configured HTML welcome message")
+    public Welcome fetch() {
         return stroomEventLoggingServiceProvider.get().loggedResult(
                 StroomEventLoggingUtil.buildTypeId(this, "fetch"),
                 "Get the configured HTML welcome message",
@@ -54,16 +50,11 @@ public class WelcomeResource implements RestResource {
                                 .build())
                         .build(),
                 eventAction -> {
-
                     final String msg = uiConfigProvider.get().getWelcomeHtml();
-                    final Response response = Response
-                            .ok(new Object() {
-                                public String html = msg;
-                            })
-                            .build();
+                    final Welcome welcome = new Welcome(msg);
 
                     return ComplexLoggedOutcome.success(
-                            response,
+                            welcome,
                             ViewEventAction.builder()
                                     .addBanner(Banner.builder()
                                             .withMessage(msg)
@@ -73,5 +64,18 @@ public class WelcomeResource implements RestResource {
                 },
                 null
         );
+    }
+
+    public class Welcome {
+
+        private final String html;
+
+        public Welcome(final String html) {
+            this.html = html;
+        }
+
+        public String getHtml() {
+            return html;
+        }
     }
 }

@@ -86,21 +86,20 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
     }
 
     @Override
-    public IndexVolume update(IndexVolume updateVolumeDTO) {
-        final var indexVolume = securityContext.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(
-                null));
+    public IndexVolume update(IndexVolume indexVolume) {
+        final IndexVolume loadedIndexVolume = securityContext.secureResult(() ->
+                indexVolumeDao.fetch(indexVolume.getId()).orElse(
+                        null));
 
-        // Map from DTO to entity
-        indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
-        indexVolume.setPath((updateVolumeDTO.getPath()));
-        indexVolume.setNodeName(updateVolumeDTO.getNodeName());
-        indexVolume.setBytesLimit(updateVolumeDTO.getBytesLimit());
-        indexVolume.setState(updateVolumeDTO.getState());
+        loadedIndexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
+        loadedIndexVolume.setPath((indexVolume.getPath()));
+        loadedIndexVolume.setNodeName(indexVolume.getNodeName());
+        loadedIndexVolume.setBytesLimit(indexVolume.getBytesLimit());
+        loadedIndexVolume.setState(indexVolume.getState());
 
-
-        AuditUtil.stamp(securityContext.getUserId(), indexVolume);
+        AuditUtil.stamp(securityContext.getUserId(), loadedIndexVolume);
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.update(indexVolume));
+                () -> indexVolumeDao.update(loadedIndexVolume));
     }
 
     @Override

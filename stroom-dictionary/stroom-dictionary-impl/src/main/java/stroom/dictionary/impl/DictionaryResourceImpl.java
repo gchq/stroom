@@ -56,10 +56,6 @@ class DictionaryResourceImpl implements DictionaryResource {
         this.securityContext = securityContext;
     }
 
-    ///////////////////////
-    // GWT UI end points //
-    ///////////////////////
-
     @Override
     public DictionaryDoc fetch(final String uuid) {
         return documentResourceHelper.read(dictionaryStore, getDocRef(uuid));
@@ -102,68 +98,4 @@ class DictionaryResourceImpl implements DictionaryResource {
             }
         });
     }
-
-//    ////////////////////////
-//    // React UI endpoints //
-//    ////////////////////////
-//
-//    public Set<DocRef> listDocuments() {
-//        return dictionaryStore.listDocuments();
-//    }
-//
-//    public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
-//        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-//        final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-//
-//        final ImportExportActionHandler.ImpexDetails result = dictionaryStore.importDocument(documentData.getDocRef(),
-//                documentData.getDataMap(),
-//                importState,
-//                ImportState.ImportMode.IGNORE_CONFIRMATION);
-//        if (result != null) {
-//            return result.getDocRef();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
-//        final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
-//        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
-//    }
-//
-//    private DictionaryDTO fetchInScope(final String dictionaryUuid) {
-//        final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
-//        final DictionaryDTO dto = new DictionaryDTO(doc);
-//        return dto;
-//    }
-//
-//    public DictionaryDTO fetch(final String uuid) {
-//        // A user should be allowed to read pipelines that they are inheriting from as
-//        // long as they have 'use' permission on them.
-//        return securityContext.useAsReadResult(() -> fetchInScope(uuid));
-//    }
-//
-//    private DocRef getDocRef(final String uuid) {
-//        return DocRef.builder()
-//                .uuid(uuid)
-//                .type(DictionaryDoc.DOCUMENT_TYPE)
-//                .build();
-//    }
-//
-//    public void save(final String uuid,
-//                     final DictionaryDTO updates) {
-//        System.out.println("DEBUG in save");
-//        // A user should be allowed to read pipelines that they are inheriting from as long as
-//        // they have 'use' permission on them.
-//        securityContext.useAsRead(() -> {
-//            final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(uuid));
-//
-//            if (doc != null) {
-//                doc.setDescription(updates.getDescription());
-//                doc.setData(updates.getData());
-//                doc.setImports(updates.getImports());
-//                dictionaryStore.writeDocument(doc);
-//            }
-//        });
-//    }
 }

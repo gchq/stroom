@@ -48,9 +48,7 @@ public class ExportConfigResource implements RestResource {
     }
 
     @GET
-    @ApiOperation(
-            value = "Exports all configuration to a file.",
-            response = Void.class)
+    @ApiOperation(value = "Exports all configuration to a file.")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response export() {
         final ResourceStore resourceStore = resourceStoreProvider.get();

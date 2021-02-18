@@ -37,8 +37,6 @@ import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
-import stroom.document.client.gin.NewUiGinjector;
-import stroom.document.client.gin.NewUiModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
@@ -106,7 +104,6 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         IndexModule.class,
         KafkaConfigModule.class,
         MonitoringModule.class,
-        NewUiModule.class,
         PipelineModule.class,
         PluginsModule.class,
         PolicyModule.class,
@@ -138,7 +135,6 @@ public interface AppGinjector extends
         IndexGinjector,
         KafkaConfigGinjector,
         MonitoringGinjector,
-        NewUiGinjector,
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,

@@ -48,11 +48,4 @@ public interface XsltResource extends RestResource, DirectRestService, FetchWith
     @Path("/{uuid}")
     @ApiOperation("Update a an xslt doc")
     XsltDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") XsltDoc doc);
-
-//    // TODO : THis is for the React UI, can probably be removed at some point.
-//    @POST
-//    @Path("/{uuid}")
-//    @ApiOperation("Update an xslt doc")
-//    void save(@PathParam("uuid") final String uuid,
-//              @ApiParam("xsltDto") final XsltDTO xsltDto);
 }

@@ -43,8 +43,7 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(SystemExplorerActionHandler.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ExplorerResourceImpl.class)
-                .bind(NewUIExplorerResource.class);
+                .bind(ExplorerResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(DocRefInfoCache.class);

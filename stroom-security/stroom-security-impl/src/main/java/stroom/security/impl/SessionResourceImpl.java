@@ -64,7 +64,7 @@ public class SessionResourceImpl implements SessionResource {
     }
 
     @Override
-    public Response logout(final String authSessionId) {
+    public Boolean logout(final String authSessionId) {
         LOGGER.info("Logging out session {}", authSessionId);
 
         // TODO : We need to lookup the auth session in our user sessions
@@ -80,7 +80,7 @@ public class SessionResourceImpl implements SessionResource {
             eventLog.logoff(ui.getId());
         });
 
-        return RestUtil.ok("Logout successful");
+        return Boolean.TRUE;
     }
 
     @Override

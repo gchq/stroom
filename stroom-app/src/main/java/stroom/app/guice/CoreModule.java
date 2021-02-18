@@ -10,7 +10,6 @@ import stroom.util.io.TempDirProviderImpl;
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
-
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
@@ -64,7 +63,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.legacy.db.LegacyDbModule());
         install(new stroom.legacy.impex_6_1.LegacyImpexModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.db.NodeDbModule());

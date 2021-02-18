@@ -57,8 +57,7 @@ public class PipelineModule extends AbstractModule {
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(PipelineResourceImpl.class)
-                .bind(NewUiPipelineResource.class);
+                .bind(PipelineResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);

@@ -41,14 +41,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService, FetchWithUuid<DictionaryDoc> {
-
-    // TODO @AT No idea why we have this and NewUiDictionaryResource2 if this one has react endpoints
-    //   in it
-
-    ///////////////////////
-    // GWT UI end points //
-    ///////////////////////
-
     @GET
     @Path("/{uuid}")
     @ApiOperation("Fetch a dictionary doc by its UUID")
@@ -63,35 +55,4 @@ public interface DictionaryResource extends RestResource, DirectRestService, Fet
     @Path("/download")
     @ApiOperation("Download a dictionary doc")
     ResourceGeneration download(DocRef dictionaryRef);
-
-
-//    ////////////////////////
-//    // React UI endpoints //
-//    ////////////////////////
-//
-//    @GET
-//    @Path("/list")
-//    @ApiOperation("Submit a request for a list of doc refs held by this service")
-//    Set<DocRef> listDocuments();
-//
-//    @POST
-//    @Path("/import")
-//    @ApiOperation("Submit an import request")
-//    DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData);
-//
-//    @POST
-//    @Path("/export")
-//    @ApiOperation("Submit an export request")
-//    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef);
-//
-//    @GET
-//    @Path("/{uuid}")
-//    @ApiOperation("Fetch a dictionary by its UUID")
-//    DictionaryDTO fetch(@PathParam("uuid") final String uuid);
-//
-//    @POST
-//    @Path("/{uuid}")
-//    @ApiOperation("Save the supplied dictionary")
-//    void save(@PathParam("uuid") final String uuid,
-//              final DictionaryDTO updates);
 }

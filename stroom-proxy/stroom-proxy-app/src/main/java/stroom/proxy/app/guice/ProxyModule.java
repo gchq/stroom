@@ -3,7 +3,6 @@ package stroom.proxy.app.guice;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
-import stroom.dictionary.impl.NewUiDictionaryResource2;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -78,7 +77,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
 
     // This name is used by dropwizard metrics
@@ -145,7 +143,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUiDictionaryResource2.class)
                 .bind(ReceiveDataRuleSetResourceImpl.class)
                 .bind(FeedStatusResource.class);
 

@@ -65,7 +65,6 @@ public class SolrSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(SolrIndexResourceImpl.class)
-                .bind(NewUiSolrIndexResource.class)
                 .bind(StroomSolrIndexQueryResource.class);
 
         ScheduledJobsBinder.create(binder())
@@ -85,7 +84,6 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class DataRetention extends RunnableWrapper {
-
         @Inject
         DataRetention(final SolrIndexRetentionExecutor dataRetentionExecutor) {
             super(dataRetentionExecutor::exec);
@@ -93,7 +91,6 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {
-
         @Inject
         EvictExpiredElements(final SolrSearchResponseCreatorManager manager) {
             super(manager::evictExpiredElements);
@@ -101,7 +98,6 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class SolrIndexOptimiseExecutorJob extends RunnableWrapper {
-
         @Inject
         SolrIndexOptimiseExecutorJob(final SolrIndexOptimiseExecutor executor) {
             super(executor::exec);

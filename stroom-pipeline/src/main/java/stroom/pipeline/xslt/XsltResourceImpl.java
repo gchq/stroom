@@ -58,26 +58,4 @@ class XsltResourceImpl implements XsltResource {
                 .type(XsltDoc.DOCUMENT_TYPE)
                 .build();
     }
-
-//    // Used by react UI?
-//    @Override
-//    public void save(final String uuid,
-//                     final XsltDTO xsltDto) {
-//        RestUtil.requireMatchingUuids(uuid, xsltDto);
-//
-//        final XsltDoc xsltDoc = fetch(uuid);
-//
-//        if (xsltDoc != null) {
-//            xsltDoc.setDescription(xsltDto.getDescription());
-//            xsltDoc.setData(xsltDto.getData());
-//            update(xsltDoc);
-//        }
-//    }
-//
-//    private DocRef getDocRef(final String uuid) {
-//        return DocRef.builder()
-//                .uuid(uuid)
-//                .type(XsltDoc.DOCUMENT_TYPE)
-//                .build();
-//    }
 }

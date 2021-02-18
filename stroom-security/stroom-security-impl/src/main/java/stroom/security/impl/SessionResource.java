@@ -18,7 +18,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 /**
  * This is used by the OpenId flow - when a user request a log out the remote authentication service
@@ -43,10 +42,8 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("logout/{sessionId}")
-    @ApiOperation(
-            value = "Logs the specified session out of Stroom",
-            response = String.class)
-    Response logout(@PathParam("sessionId") String authSessionId);
+    @ApiOperation(value = "Logs the specified session out of Stroom")
+    Boolean logout(@PathParam("sessionId") String authSessionId);
 
     @GET
     @Path(LIST_PATH_PART)
