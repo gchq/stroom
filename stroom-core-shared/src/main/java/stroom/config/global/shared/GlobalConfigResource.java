@@ -54,25 +54,25 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @POST
     @Path(PROPERTIES_SUB_PATH)
     @ApiOperation(value = "List all properties matching the criteria on the current node.")
-    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
+    ListConfigResponse list(@ApiParam("criteria") final GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "List all properties matching the criteria on the requested node.")
     ListConfigResponse listByNode(
-            final @PathParam("nodeName") String nodeName,
-            final @ApiParam("criteria") GlobalConfigCriteria criteria);
+            @PathParam("nodeName") final String nodeName,
+            @ApiParam("criteria") final GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
     @ApiOperation(value = "Fetch a property by its name, e.g. 'stroom.path.home'")
-    ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
+    ConfigProperty getPropertyByName(@PathParam("propertyName") final String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Get the property value from the YAML configuration in the specified node.")
-    OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
-                                                    final @PathParam("nodeName") String nodeName);
+    OverrideValue<String> getYamlValueByNodeAndName(@PathParam("propertyName") final String propertyName,
+                                                    @PathParam("nodeName") final String nodeName);
 
     @POST
     @ApiOperation(value = "Create a configuration property")
@@ -81,8 +81,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @PUT
     @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
     @ApiOperation(value = "Update a configuration property")
-    ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final @ApiParam("configProperty") ConfigProperty configProperty);
+    ConfigProperty update(@PathParam("propertyName") final String propertyName,
+                          @ApiParam("configProperty") final ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)

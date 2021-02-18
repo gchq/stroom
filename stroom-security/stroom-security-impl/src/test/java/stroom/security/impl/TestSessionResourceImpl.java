@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
+
     @Mock
     private AuthenticationEventLog authenticationEventLog;
 
@@ -38,8 +39,18 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails(
+                        "user1",
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1"),
+                new SessionDetails(
+                        "user1",
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1")));
 
         when(sessionListService.listSessions(Mockito.anyString()))
                 .thenReturn(expectedResponse);
@@ -60,8 +71,18 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails(
+                        "user1",
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1"),
+                new SessionDetails(
+                        "user1",
+                        123L,
+                        456L,
+                        "agent1",
+                        "node1")));
 
         when(sessionListService.listSessions())
                 .thenReturn(expectedResponse);
