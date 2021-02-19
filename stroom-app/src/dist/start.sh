@@ -24,9 +24,9 @@ invalid_arguments() {
 }
 
 kill_log_tailing() {
-  local cmd="tail -F ${path_to_start_log} ${PATH_TO_APP_LOG}"
+  local cmd="tail -F ${path_to_start_log} ${path_to_app_log}"
   local pid
-  pid="$(pgrep -fx "${cmd}")"
+  pid="$( pgrep -fx "${cmd}" )"
   # kill the log tailing
   # The bit in quotes must match the command + args used to start the
   # tailing in the first place
@@ -80,9 +80,8 @@ wait_for_200_response() {
 
 start_stroom() {
 
-  info "Starting ${GREEN}Stroom${NC}"
   ensure_file_exists "${path_to_start_log}" 
-  ensure_file_exists "${PATH_TO_APP_LOG}" 
+  ensure_file_exists "${path_to_app_log}" 
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.
@@ -91,12 +90,12 @@ start_stroom() {
   local absoulte_path_to_jar
   if command -v realpath 1>/dev/null; then
     # realpath binary is available so use that
-    absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
-    absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
+    absolute_path_to_config="$(realpath "${path_to_config}")"
+    absoulte_path_to_jar="$(realpath "${path_to_jar}")"
   elif command -v readlink 1>/dev/null; then
     # readlink binary is available
-    absolute_path_to_config="$(readlink -f "${PATH_TO_CONFIG}")"
-    absoulte_path_to_jar="$(readlink -f "${PATH_TO_JAR}")"
+    absolute_path_to_config="$(readlink -f "${path_to_config}")"
+    absoulte_path_to_jar="$(readlink -f "${path_to_jar}")"
   else
     # Binaries to determine absolute path not available so fall back on just
     # using the relative path. Use of an absolute path is not critical so using
@@ -105,9 +104,15 @@ start_stroom() {
       "binaries.${NC}"
     warn "It is recommended to install one of these to help distinguish between" \
       "stroom and stroom-proxy processes.${NC}"
-    absolute_path_to_config="${PATH_TO_CONFIG}"
-    absoulte_path_to_jar="${PATH_TO_JAR}"
+    absolute_path_to_config="${path_to_config}"
+    absoulte_path_to_jar="${path_to_jar}"
   fi
+
+  # change to the script dir so java is relative to there and not where
+  # we happen to be calling the script from. Can't drop into a sub shell
+  # as we need to capture the pid of the java process
+  pushd "${script_dir}" > /dev/null
+  info "Starting ${GREEN}Stroom${GREEN} in directory ${BLUE}${script_dir}${NC}"
 
   # We need word splitting on JAVA_OPTS so we need to disable SC2086
   # We redirect stdout to path_to_start_log so that anything that is written
@@ -121,38 +126,41 @@ start_stroom() {
     "${absolute_path_to_config}" \
     &> "${path_to_start_log}" &
 
+  popd > /dev/null
+
   local stroom_pid="$!"
   info "Started ${GREEN}Stroom${NC} with PID ${BLUE}${stroom_pid}${NC}"
   # Write the PID to a file to prevent stroom being started multiple times
-  echo "${stroom_pid}" > "${STROOM_PID_FILE}"
+  echo "${stroom_pid}" > "${stroom_pid_file}"
 
   # tail the logs in the background
   info "Tailing log files ${BLUE}${path_to_start_log}${NC} and" \
-    "${BLUE}${PATH_TO_APP_LOG}${NC}"
+    "${BLUE}${path_to_app_log}${NC}"
   info "Tailing will terminate when a 200 response is received from Stroom's" \
     "health check page, or a ${maxWaitSecs}s timeout is reached."
-  tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
+  tail -F "${path_to_start_log}" "${path_to_app_log}" 2>/dev/null &
   local tailing_pid="$!"
 
-  wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
+  wait_for_200_response \
+    "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
 
   kill_log_tailing "${tailing_pid}"
 
   # display the result of the health check
   info "Checking the health of ${GREEN}Stroom${NC}"
   echo
-  ./health.sh "${script_args[@]}"
+  "${script_dir}/health.sh" "${script_args[@]}"
 
   echo
   # Display the banner, URLs and login details
-  ./info.sh "${script_args[@]}"
+  "${script_dir}/info.sh" "${script_args[@]}"
 }
 
 check_or_create_pid_file() {
-  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
+  if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
     start_stroom
   else # If there is a pid file we need to deal with it
-    local -r PID=$(cat "$STROOM_PID_FILE");
+    local -r PID=$(cat "$stroom_pid_file");
 
     if [ "${PID}" = '' ]; then # If the pid file is empty for some reason
       start_stroom
@@ -166,13 +174,13 @@ check_or_create_pid_file() {
         warn "There was an instance of Stroom running but it looks like"\
           "it wasn't stopped gracefully. You might want to check the logs." \
           "If you are certain it is not running delete the file" \
-          "${BLUE}${STROOM_PID_FILE}${NC}"
+          "${BLUE}${stroom_pid_file}${NC}"
 
         read -n1 -r -p \
           " - Would you like to start a new instance? (y/n)" start_new_instance
         echo -e ''
         if [ "${start_new_instance}" = 'y' ]; then
-          rm "${STROOM_PID_FILE}"
+          rm "${stroom_pid_file}"
           start_stroom
         else 
           info "Ok. I won't start anything."
@@ -184,14 +192,29 @@ check_or_create_pid_file() {
 
 main() {
 
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
   local script_args=( $@ )
-  local -r path_to_start_log="./logs/start.sh.log"
-  local -r maxWaitSecs=240
 
   # shellcheck disable=SC1091
-  source bin/utils.sh
+  source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source config/scripts.env
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+
+  # UPPERCASE vars defined in scripts.env
+  # shellcheck disable=SC2153
+  local -r path_to_start_log="${script_dir}/${PATH_TO_START_LOG}"
+  # shellcheck disable=SC2153
+  local -r path_to_app_log="${script_dir}/${PATH_TO_APP_LOG}"
+  # shellcheck disable=SC2153
+  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
+  # shellcheck disable=SC2153
+  local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
+  # shellcheck disable=SC2153
+  local -r path_to_jar="${script_dir}/${PATH_TO_JAR}"
+
+  local -r maxWaitSecs=240
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034

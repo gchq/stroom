@@ -2,10 +2,6 @@
 #
 # Checks the health of each app using the supplied admin url
 
-# We shouldn't use a lib function (e.g. in shell_utils.sh) because it will
-# give the directory relative to the lib script, not this script.
-readonly DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 echo_usage() {
   echo -e "${GREEN}This script checks the health of Stroom${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
@@ -112,10 +108,14 @@ check_health() {
 }
 
 main() {
-  # shellcheck disable=SC1090
-  source "$DIR"/bin/utils.sh
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
+
   # shellcheck disable=SC1091
-  source config/scripts.env
+  source "${script_dir}/config/scripts.env"
+  # shellcheck disable=SC1091
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
