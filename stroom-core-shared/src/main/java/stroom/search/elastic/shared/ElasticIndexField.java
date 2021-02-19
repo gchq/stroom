@@ -46,6 +46,8 @@ import java.util.Objects;
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 
+    public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
+
     private ElasticIndexFieldType fieldUse = ElasticIndexFieldType.TEXT;
     private String fieldName;
     private String fieldType;

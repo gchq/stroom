@@ -19,7 +19,6 @@ package stroom.search.elastic.search;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.elastic.shared.ElasticIndex;
 
-import org.apache.solr.common.params.SolrParams;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public class ElasticSearchTask {

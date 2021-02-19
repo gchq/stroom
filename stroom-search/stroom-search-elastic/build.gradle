@@ -17,13 +17,16 @@ dependencies {
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
 
+    compile libs.elasticsearch_rest_high_level_client
+    compile libs.elasticsearch_rest_client
+    compile libs.elasticsearch
+    compile libs.elasticsearch_core
+    compile libs.httpcore
+
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
-    compile libs.http_client
-    compile libs.lucene_core
     compile libs.slf4j_api
-    compile libs.solrj
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.stroomExpression
@@ -34,10 +37,9 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.xml_apis
 
+    permitTestUnusedDeclared project(':stroom-test-common')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
-    testCompile libs.commons_io
     testCompile libs.junit
 }
