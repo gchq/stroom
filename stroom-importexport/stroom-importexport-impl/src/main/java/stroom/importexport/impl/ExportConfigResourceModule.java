@@ -21,11 +21,12 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ExportConfigResourceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         // This module is separate to ImportExportModule so that headless can import
         // ImportExportModule without dragging in the ExportConfigResource
         RestResourcesBinder.create(binder())
-                .bind(ExportConfigResource.class);
+                .bind(ExportContentResource.class);
     }
 }

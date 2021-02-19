@@ -34,18 +34,24 @@ public interface ReferenceDataResource extends RestResource {
 
     @GET
     @Path(ENTRIES_SUB_PATH)
-    @Operation(summary = "List entries from the reference data store on the node called. This is primarily intended " +
-            "for small scale debugging in non-production environments. If no limit is set a default limit is applied " +
-            "else the results will be limited to limit entries.")
+    @Operation(
+            summary = "List entries from the reference data store on the node called.",
+            description = "This is primarily intended  for small scale debugging in non-production environments. If " +
+                    "no limit is set a default limit is applied else the results will be limited to limit entries.",
+            operationId = "getReferenceStoreEntries")
     List<RefStoreEntry> entries(@QueryParam("limit") final Integer limit);
 
     @POST
     @Path(LOOKUP_SUB_PATH)
-    @Operation(summary = "Perform a reference data lookup using the supplied lookup request.")
+    @Operation(
+            summary = "Perform a reference data lookup using the supplied lookup request.",
+            operationId = "lookupReferenceData")
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
     @DELETE
     @Path(PURGE_SUB_PATH + "/{purgeAge}")
-    @Operation(summary = "Explicitly delete all entries that are older than purgeAge.")
+    @Operation(
+            summary = "Explicitly delete all entries that are older than purgeAge.",
+            operationId = "purgeReferenceData")
     void purge(@NotNull @PathParam("purgeAge") final String purgeAge);
 }

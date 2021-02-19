@@ -41,12 +41,16 @@ public interface VisualisationResource extends RestResource, DirectRestService, 
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a visualisation doc by its UUID")
+    @Operation(
+            summary = "Fetch a visualisation doc by its UUID",
+            operationId = "fetchVisualisation")
     VisualisationDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a visualisation doc")
+    @Operation(
+            summary = "Update a visualisation doc",
+            operationId = "updateVisualisation")
     VisualisationDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) VisualisationDoc doc);
 }

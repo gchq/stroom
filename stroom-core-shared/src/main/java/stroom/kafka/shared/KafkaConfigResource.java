@@ -44,17 +44,23 @@ public interface KafkaConfigResource extends RestResource, DirectRestService, Fe
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a kafkaConfig doc by its UUID")
+    @Operation(
+            summary = "Fetch a kafkaConfig doc by its UUID",
+            operationId = "fetchKafkaConfig")
     KafkaConfigDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a kafkaConfig doc")
+    @Operation(
+            summary = "Update a kafkaConfig doc",
+            operationId = "updateKafkaConfig")
     KafkaConfigDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) KafkaConfigDoc doc);
 
     @POST
     @Path("/download")
-    @Operation(summary = "Download a kafkaConfig doc")
+    @Operation(
+            summary = "Download a kafkaConfig doc",
+            operationId = "downloadKafkaConfig")
     ResourceGeneration download(@Parameter(description = "docRef", required = true) DocRef docRef);
 }

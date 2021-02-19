@@ -69,7 +69,7 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     }
 
     @Override
-    public ProcessorFilter read(final Integer id) {
+    public ProcessorFilter fetch(final Integer id) {
         return processorFilterService.fetch(id).orElse(null);
     }
 

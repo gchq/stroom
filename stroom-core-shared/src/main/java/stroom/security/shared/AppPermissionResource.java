@@ -23,22 +23,30 @@ import javax.ws.rs.core.MediaType;
 public interface AppPermissionResource extends RestResource, DirectRestService {
 
     @GET
-    @Operation(summary = "User and app permissions for the current session")
+    @Operation(
+            summary = "User and app permissions for the current session",
+            operationId = "getUserAndPermissions")
     UserAndPermissions getUserAndPermissions();
 
     @POST
     @Path("fetchUserAppPermissions")
-    @Operation(summary = "User and app permissions for the specified user")
+    @Operation(
+            summary = "User and app permissions for the specified user",
+            operationId = "fetchUserAppPermissions")
     UserAndPermissions fetchUserAppPermissions(@Parameter(description = "user", required = true) User user);
 
     @GET
     @Path("fetchAllPermissions")
-    @Operation(summary = "Get all possible permissions")
+    @Operation(
+            summary = "Get all possible permissions",
+            operationId = "fetchAllPermissions")
     List<String> fetchAllPermissions();
 
     @POST
     @Path("changeUser")
-    @Operation(summary = "User and app permissions for the current session")
+    @Operation(
+            summary = "User and app permissions for the current session",
+            operationId = "changeUserPermissions")
     Boolean changeUser(
             @Parameter(description = "changeUserRequest", required = true) ChangeUserRequest changeUserRequest);
 }

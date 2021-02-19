@@ -135,15 +135,17 @@ public interface TokenResource extends RestResource {
     Integer deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
 
 
-    @Operation(summary = "Provides access to this service's current public key. " +
-            "A client may use these keys to verify JWTs issued by this service.",
+    @Operation(
+            summary = "Provides access to this service's current public key. " +
+                    "A client may use these keys to verify JWTs issued by this service.",
             operationId = "getPublicKey")
     @GET
     @Path("/publickey")
     @Timed
     String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @Operation(summary = "Get the token configuration",
+    @Operation(
+            summary = "Get the token configuration",
             operationId = "fetchTokenConfig")
     @GET
     @Path("/noauth/fetchTokenConfig")

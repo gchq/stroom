@@ -26,11 +26,11 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -70,18 +70,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestRestResourceAutoLogger {
 
     private static final Integer BEFORE_ID = 78910;
-    private HttpServletRequest request = new MockHttpServletRequest();
+    private final HttpServletRequest request = new MockHttpServletRequest();
 
-    private MockContainerRequestContext requestContext = new MockContainerRequestContext();
+    private final MockContainerRequestContext requestContext = new MockContainerRequestContext();
 
-    private SecurityContext securityContext = new MockSecurityContext();
+    private final SecurityContext securityContext = new MockSecurityContext();
 
     @Mock
     private DocumentEventLog documentEventLog;
 
     private RequestEventLog requestEventLog;
 
-    private StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
+    private final StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
 
     @Mock
     private ResourceInfo resourceInfo;
@@ -95,9 +95,9 @@ public class TestRestResourceAutoLogger {
     @Mock
     private DelegatingExceptionMapper delegatingExceptionMapper;
 
-    private LoggingConfig config = new LoggingConfig();
+    private final LoggingConfig config = new LoggingConfig();
 
-    private TestResource testResource = new TestResource();
+    private final TestResource testResource = new TestResource();
 
     @Captor
     private ArgumentCaptor<Object> objectCaptor;
@@ -135,7 +135,7 @@ public class TestRestResourceAutoLogger {
 
     Random random = new Random();
 
-    private Injector injector;
+    private final Injector injector;
 
     private AutoCloseable closeable;
 
@@ -145,7 +145,7 @@ public class TestRestResourceAutoLogger {
 
     @Test
     public void testLogBasic() throws Exception {
-        Method method = TestResource.class.getMethod("read", Integer.class);
+        Method method = TestResource.class.getMethod("fetch", Integer.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
@@ -555,7 +555,7 @@ public class TestRestResourceAutoLogger {
     }
 
     @AutoLogged
-    public static class TestResource implements ReadWithIntegerId<TestObj> {
+    public static class TestResource implements FetchWithIntegerId<TestObj> {
 
         public String find(@PathParam("id") Integer id, TestObj query) {
             return null;
@@ -570,7 +570,7 @@ public class TestRestResourceAutoLogger {
         }
 
         @Override
-        public TestObj read(final Integer id) {
+        public TestObj fetch(final Integer id) {
             return new TestObj(BEFORE_ID);
         }
 

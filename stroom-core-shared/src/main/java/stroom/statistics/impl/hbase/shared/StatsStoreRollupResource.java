@@ -40,19 +40,25 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @Operation(summary = "Create rollup bit mask")
+    @Operation(
+            summary = "Create rollup bit mask",
+            operationId = "statsBitMaskPermGeneration")
     ResultPage<CustomRollUpMask> bitMaskPermGeneration(
             @Parameter(description = "fieldCount", required = true) Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @Operation(summary = "Get rollup bit mask")
+    @Operation(
+            summary = "Get rollup bit mask",
+            operationId = "statsBitMaskConversion")
     ResultPage<CustomRollUpMaskFields> bitMaskConversion(
             @Parameter(description = "maskValues", required = true) List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @Operation(summary = "Change fields")
+    @Operation(
+            summary = "Change fields",
+            operationId = "statsFieldChange")
     StroomStatsStoreEntityData fieldChange(
             @Parameter(description = "request", required = true) StroomStatsStoreFieldChangeRequest request);
 }

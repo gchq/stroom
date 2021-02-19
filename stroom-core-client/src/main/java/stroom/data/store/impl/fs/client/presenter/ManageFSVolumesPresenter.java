@@ -107,7 +107,7 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
             rest
                     .onSuccess(this::edit)
                     .call(FS_VOLUME_RESOURCE)
-                    .read(volume.getId());
+                    .fetch(volume.getId());
         }
     }
 

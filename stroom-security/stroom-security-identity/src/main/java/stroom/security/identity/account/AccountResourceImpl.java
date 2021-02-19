@@ -155,7 +155,7 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public Account read(final Integer userId) {
+    public Account fetch(final Integer userId) {
         if (userId == null) {
             return null;
         }

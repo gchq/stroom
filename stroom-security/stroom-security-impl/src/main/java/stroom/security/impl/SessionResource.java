@@ -36,17 +36,23 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/noauth/login")
-    @Operation(summary = "Checks if the current session is authenticated and redirects to an auth flow if it is not")
+    @Operation(
+            summary = "Checks if the current session is authenticated and redirects to an auth flow if it is not",
+            operationId = "loginSession")
     SessionLoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
                                @QueryParam("redirect_uri") String redirectUri);
 
     @GET
     @Path("logout/{sessionId}")
-    @Operation(summary = "Logs the specified session out of Stroom")
+    @Operation(
+            summary = "Logs the specified session out of Stroom",
+            operationId = "logoutSession")
     Boolean logout(@PathParam("sessionId") String authSessionId);
 
     @GET
     @Path(LIST_PATH_PART)
-    @Operation(summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null")
+    @Operation(
+            summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
+            operationId = "listSessions")
     SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
 }

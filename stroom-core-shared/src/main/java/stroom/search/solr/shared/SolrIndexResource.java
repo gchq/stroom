@@ -43,25 +43,33 @@ public interface SolrIndexResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a solr index doc by its UUID")
+    @Operation(
+            summary = "Fetch a solr index doc by its UUID",
+            operationId = "fetchSolrIndex")
     SolrIndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a solr index doc")
+    @Operation(
+            summary = "Update a solr index doc",
+            operationId = "updateSolrIndex")
     SolrIndexDoc update(
             @PathParam("uuid") String uuid,
             @Parameter(description = "doc", required = true) SolrIndexDoc doc);
 
     @POST
     @Path("/fetchSolrTypes")
-    @Operation(summary = "Fetch Solr types")
+    @Operation(
+            summary = "Fetch Solr types",
+            operationId = "fetchSolrTypes")
     List<String> fetchSolrTypes(
             @Parameter(description = "solrIndexDoc", required = true) SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/solrConnectionTest")
-    @Operation(summary = "Test connection to Solr")
+    @Operation(
+            summary = "Test connection to Solr",
+            operationId = "solrConnectionTest")
     SolrConnectionTestResponse solrConnectionTest(
             @Parameter(description = "solrIndexDoc", required = true) SolrIndexDoc solrIndexDoc);
 }

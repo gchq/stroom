@@ -26,16 +26,22 @@ public interface SystemInfoResource extends RestResource {
     String NAMES_PATH_PART = "/names";
 
     @GET
-    @Operation(summary = "Get all system info results")
+    @Operation(
+            summary = "Get all system info results",
+            operationId = "getAllSystemInfo")
     SystemInfoResultList getAll();
 
     @GET
     @Path(NAMES_PATH_PART)
-    @Operation(summary = "Get all system info result names")
+    @Operation(
+            summary = "Get all system info result names",
+            operationId = "getSystemInfoNames")
     List<String> getNames();
 
     @GET
     @Path("/{name}")
-    @Operation(summary = "Get a system info result by name")
+    @Operation(
+            summary = "Get a system info result by name",
+            operationId = "getSystemInfoByName")
     SystemInfoResult get(@PathParam("name") final String name);
 }

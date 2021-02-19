@@ -28,26 +28,36 @@ public interface IndexVolumeGroupResource extends RestResource, DirectRestServic
 
     @POST
     @Path("find")
-    @Operation(summary = "Finds index volume groups matching request")
+    @Operation(
+            summary = "Finds index volume groups matching request",
+            operationId = "findIndexVolumeGroups")
     ResultPage<IndexVolumeGroup> find(
             @Parameter(description = "request", required = true) ExpressionCriteria request);
 
     @POST
-    @Operation(summary = "Creates an index volume group")
+    @Operation(
+            summary = "Creates an index volume group",
+            operationId = "createIndexVolumeGroup")
     IndexVolumeGroup create(@Parameter(description = "name", required = true) String name);
 
     @GET
     @Path("/{id}")
-    @Operation(summary = "Gets an index volume group")
-    IndexVolumeGroup read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Gets an index volume group",
+            operationId = "fetchIndexVolumeGroup")
+    IndexVolumeGroup fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Updates an index volume group")
+    @Operation(
+            summary = "Updates an index volume group",
+            operationId = "updateIndexVolumeGroup")
     IndexVolumeGroup update(@PathParam("id") Integer id, IndexVolumeGroup indexVolumeGroup);
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Deletes an index volume group")
+    @Operation(
+            summary = "Deletes an index volume group",
+            operationId = "deleteIndexVolumeGroup")
     Boolean delete(@PathParam("id") Integer id);
 }

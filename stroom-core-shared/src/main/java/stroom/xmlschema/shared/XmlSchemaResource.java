@@ -41,13 +41,17 @@ public interface XmlSchemaResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a xml schema doc by its UUID")
+    @Operation(
+            summary = "Fetch a xml schema doc by its UUID",
+            operationId = "fetchXmlSchema")
     XmlSchemaDoc fetch(
             @PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a xml schema doc")
+    @Operation(
+            summary = "Update a xml schema doc",
+            operationId = "updateXmlSchema")
     XmlSchemaDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) XmlSchemaDoc doc);
 }

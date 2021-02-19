@@ -14,7 +14,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple4;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -27,11 +26,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Provider;
@@ -43,13 +45,17 @@ import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
 
 class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
 
-    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
+    private static final Map<String, String> OPERATION_ID_MAP = new HashMap<>();
+
+    //    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
     @TestFactory
+    @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
         try (ScanResult result = new ClassGraph()
                 .whitelistPackages("stroom")
@@ -76,8 +82,9 @@ class TestRestResources {
         }
     }
 
-    @Disabled // manually run only
+    //    @Disabled // manually run only
     @Test
+    @SuppressWarnings("unchecked")
     void listMethods() {
 
         try (ScanResult result = new ClassGraph()
@@ -191,6 +198,132 @@ class TestRestResources {
                 ? "interface"
                 : "class";
 
+        SoftAssertions.assertSoftly(softAssertions -> {
+            if (isInterface) {
+                testInterface(resourceClass, typeName, softAssertions);
+            } else {
+//                testImplementation(resourceClass, typeName, softAssertions);
+            }
+        });
+    }
+
+    private void testInterface(final Class<? extends RestResource> resourceClass,
+                               final String typeName,
+                               final SoftAssertions softAssertions) {
+        LOGGER.info("Doing @Api... asserts");
+
+        // Check that the interface has no autologged annotations.
+        checkForUnexpectedAnnotations(
+                resourceClass,
+                softAssertions,
+                annotationClass -> annotationClass.equals(AutoLogged.class),
+                AutoLogged.class.getName());
+
+        final boolean classHasTagAnnotation = resourceClass.isAnnotationPresent(Tag.class);
+        final String[] apiAnnotationTags = classHasTagAnnotation
+                ? Arrays
+                .stream(resourceClass.getAnnotationsByType(Tag.class))
+                .map(Tag::name)
+                .toArray(String[]::new)
+                : new String[0];
+
+        softAssertions.assertThat(classHasTagAnnotation)
+                .withFailMessage(() -> typeName + " must have class annotation like " +
+                        "@Tag(tags = \"Nodes\")")
+                .isTrue();
+
+        if (classHasTagAnnotation) {
+            LOGGER.info("Class has @Tag annotation");
+            softAssertions.assertThat(apiAnnotationTags.length)
+                    .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
+                    .isGreaterThanOrEqualTo(1);
+            if (apiAnnotationTags.length >= 1) {
+                softAssertions.assertThat(apiAnnotationTags[0])
+                        .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
+                        .isNotEmpty();
+            }
+        } else {
+            LOGGER.info("Class doesn't have @Tag annotation");
+        }
+
+        // We need to get a set of unique methods otherwise we end up seeing duplicates from inherited interfaces.
+        final Set<MethodSignature> uniqueMethods = Arrays
+                .stream(resourceClass.getMethods())
+                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
+                .map(method -> new MethodSignature(method.getName(), method.getParameterTypes()))
+                .collect(Collectors.toSet());
+
+        uniqueMethods
+                .forEach(methodSignature -> {
+                    try {
+                        final Method method = resourceClass.getMethod(methodSignature.getName(),
+                                methodSignature.getParameterTypes());
+                        final List<Class<? extends Annotation>> methodAnnotationTypes = Arrays
+                                .stream(method.getAnnotations())
+                                .map(Annotation::annotationType)
+                                .collect(Collectors.toList());
+
+                        LOGGER.debug("Found annotations {}", methodAnnotationTypes);
+
+                        final boolean hasOperationAnno = methodAnnotationTypes.contains(Operation.class);
+
+                        softAssertions
+                                .assertThat(hasOperationAnno)
+                                .withFailMessage(() -> "Method '" + method.getName() + "' must be annotated " +
+                                        "with @Operation(summary = \"Some description of what the method does\")")
+                                .isTrue();
+
+                        if (hasOperationAnno) {
+                            final Class<?> methodReturnClass = method.getReturnType();
+                            final Operation operation = method.getAnnotation(Operation.class);
+                            final ApiResponse[] responses = operation.responses();
+
+                            softAssertions
+                                    .assertThat(operation.operationId())
+                                    .withFailMessage(() ->
+                                            "Method '" +
+                                                    method.getName() +
+                                                    "' declares an @Operation annotation but has no `operationId`")
+                                    .isNotBlank();
+
+                            if (!operation.operationId().isBlank()) {
+                                final String existing = OPERATION_ID_MAP.put(
+                                        operation.operationId(),
+                                        resourceClass.getName() + " - " + operation.method());
+                                softAssertions
+                                        .assertThat(existing)
+                                        .withFailMessage(() ->
+                                                "Method '" +
+                                                        method.getName() +
+                                                        "' does not have a globally unique `operationId` '" +
+                                                        operation.operationId() +
+                                                        "'" +
+                                                        " exists in " +
+                                                        existing)
+                                        .isNull();
+                            }
+
+                            // Only need to set response when Response is used
+                            if (Response.class.equals(methodReturnClass)) {
+                                softAssertions
+                                        .assertThat(responses.length)
+                                        .withFailMessage(() ->
+                                                "Method '" + method.getName() + "' must have response " +
+                                                        "set in @Operation, e.g. @Operation(summary = \"xxx\" " +
+                                                        "response = Node.class)")
+                                        .isNotZero();
+                            }
+                        }
+                    } catch (final NoSuchMethodException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
+    }
+
+    private void testImplementation(final Class<? extends RestResource> resourceClass,
+                                    final String typeName,
+                                    final SoftAssertions softAssertions) {
         final boolean superImplementsRestResource = Arrays.stream(resourceClass.getInterfaces())
                 .filter(iface ->
                         !RestResource.class.equals(iface))
@@ -201,43 +334,45 @@ class TestRestResources {
         LOGGER.info("Inspecting {} {}, superImplementsRestResource; {}",
                 typeName, resourceClass.getName(), superImplementsRestResource);
 
-        SoftAssertions.assertSoftly(softAssertions -> {
+        // Check that this is an implementation of a rest resource interface.
+        softAssertions.assertThat(superImplementsRestResource)
+                .withFailMessage(
+                        "Unexpected class that is not an interface and does not implement " +
+                                RestResource.class.getName())
+                .isTrue();
 
-            if (isInterface || !superImplementsRestResource) {
-                // This is an iface or a class that implements RestResource with no iface of its own
+        // Check that we have no JAX_RS annotations.
+        checkForUnexpectedAnnotations(
+                resourceClass,
+                softAssertions,
+                annotationClass -> annotationClass.getPackageName().equals(Path.class.getPackageName()),
+                "JAX RS");
 
-                doSwaggerAnnotationAsserts(resourceClass, typeName, softAssertions);
-            } else {
-                LOGGER.info("@Api/@Operation assertions handled by interface");
-                // This is a class that implements an iface that extends RestResource so
-                // that will be dealt with when it looks at that iface directly.
-            }
+        // Check that we have no swagger annotations.
+        checkForUnexpectedAnnotations(
+                resourceClass,
+                softAssertions,
+                annotationClass -> annotationClass.getPackageName().contains("swagger"),
+                "Swagger");
 
-            final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
-            LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
+        // Check auto logging
+        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
 
-            if (!isInterface) {
-                // AutoLogged is only used on classes, not interfaces
+        // Check that all member variables are providers.
+        assertProviders(resourceClass, softAssertions);
 
-                assertProviders(resourceClass, softAssertions);
+        Arrays.stream(resourceClass.getMethods())
+                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
+                .forEach(method -> {
+                    final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
 
-                Arrays.stream(resourceClass.getMethods())
-                        .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                        .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
-                        .forEach(method -> {
-                            final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
-
-                            softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
-                                    .withFailMessage(() -> "Method " + method.getName() +
-                                            "(...) or its class must be annotated with @AutoLogged")
-                                    .isTrue();
-                        });
-            } else {
-                softAssertions.assertThat(classIsAutoLogged)
-                        .withFailMessage("@AutoLogged is not support on interfaces, only on impl.")
-                        .isFalse();
-            }
-        });
+                    softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
+                            .withFailMessage(() -> "Method " + method.getName() +
+                                    "(...) or its class must be annotated with @AutoLogged")
+                            .isTrue();
+                });
     }
 
     private void assertProviders(final Class<? extends RestResource> resourceClass,
@@ -305,79 +440,84 @@ class TestRestResources {
         }
     }
 
-    private void doSwaggerAnnotationAsserts(final Class<? extends RestResource> resourceClass,
-                                            final String typeName,
-                                            final SoftAssertions softAssertions) {
-        LOGGER.info("Doing @Api... asserts");
+    private void checkForUnexpectedAnnotations(final Class<? extends RestResource> resourceClass,
+                                               final SoftAssertions softAssertions,
+                                               final Function<Class<? extends Annotation>, Boolean> testFunction,
+                                               final String annotationType) {
+        // Check that we have no JAX_RS annotations.
+        final boolean hasClassAnnotation = Arrays.stream(resourceClass.getAnnotations())
+                .anyMatch(annotation ->
+                        testFunction.apply(annotation.annotationType()));
 
-        final boolean classHasApiAnnotation = resourceClass.isAnnotationPresent(Tag.class);
-        final String[] apiAnnotationTags = classHasApiAnnotation
-                ? Arrays
-                .stream(resourceClass.getAnnotationsByType(Tag.class))
-                .map(Tag::name).collect(Collectors.toList())
-                .toArray(new String[0])
-                : new String[0];
+        softAssertions.assertThat(hasClassAnnotation)
+                .withFailMessage(
+                        "Class " +
+                                resourceClass.getName() +
+                                " name Unexpected " +
+                                annotationType +
+                                " annotations")
+                .isFalse();
+        Arrays.stream(resourceClass.getMethods())
+                .forEach(method -> {
+                    final boolean hasMethodAnnotation = Arrays.stream(method.getAnnotations())
+                            .anyMatch(annotation ->
+                                    testFunction.apply(annotation.annotationType()));
 
-        softAssertions.assertThat(classHasApiAnnotation)
-                .withFailMessage(() -> typeName + " must have class annotation like " +
-                        "@Tag(tags = \"Nodes\")")
-                .isTrue();
+                    softAssertions.assertThat(hasMethodAnnotation)
+                            .withFailMessage(
+                                    "Class " +
+                                            resourceClass.getName() +
+                                            " name Unexpected " +
+                                            annotationType +
+                                            " annotations on " +
+                                            method.getName())
+                            .isFalse();
+                });
+    }
 
-        if (classHasApiAnnotation) {
-            LOGGER.info("Class has @Tag annotation");
-            softAssertions.assertThat(apiAnnotationTags.length)
-                    .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
-                    .isGreaterThanOrEqualTo(1);
-            if (apiAnnotationTags.length >= 1) {
-                softAssertions.assertThat(apiAnnotationTags[0])
-                        .withFailMessage(() -> "@Tag must have tags property set, e.g. @Api(tags = \"Nodes\")")
-                        .isNotEmpty();
-            }
-        } else {
-            LOGGER.info("Class doesn't have @Tag annotation");
+    private static class MethodSignature {
+
+        private final String name;
+        private final Class<?>[] parameterTypes;
+
+        public MethodSignature(final String name, final Class<?>[] parameterTypes) {
+            this.name = name;
+            this.parameterTypes = parameterTypes;
         }
 
-        Arrays.stream(resourceClass.getMethods())
-                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
-                .forEach(method -> {
+        public String getName() {
+            return name;
+        }
 
-                    final List<Class<? extends Annotation>> methodAnnotationTypes = Arrays.stream(
-                            method.getAnnotations()
-                    )
-                            .map(Annotation::annotationType)
-                            .collect(Collectors.toList());
+        public Class<?>[] getParameterTypes() {
+            return parameterTypes;
+        }
 
-                    LOGGER.debug("Found annotations {}", methodAnnotationTypes);
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final MethodSignature that = (MethodSignature) o;
+            return Objects.equals(name, that.name) && Arrays.equals(parameterTypes, that.parameterTypes);
+        }
 
-                    final boolean hasApiOpAnno = methodAnnotationTypes.contains(Operation.class);
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(name);
+            result = 31 * result + Arrays.hashCode(parameterTypes);
+            return result;
+        }
 
-                    softAssertions.assertThat(hasApiOpAnno)
-                            .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
-                                    "with @Operation(summary = \"Some description of what the method does\")")
-                            .isTrue();
-
-                    if (hasApiOpAnno) {
-                        final Class<?> methodReturnClass = method.getReturnType();
-                        final Operation apiOperation = method.getAnnotation(Operation.class);
-                        final ApiResponse[] responses = apiOperation.responses();
-
-                        // FIXME : @66 FIX THIS
-//                        // Only need to set response when Response is used
-//                        if (Response.class.equals(methodReturnClass)) {
-//                            softAssertions.assertThat(responses[0].)
-//                                    .withFailMessage(() ->
-//                                    "Method " + method.getName() + "(...) must have response " +
-//                                            "set in @Operation, e.g. @Operation(summary = \"xxx\" " +
-//                                            "response = Node.class)")
-//                                    .isPresent();
-//                        } else {
-//                            if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
-//                                softAssertions.fail("Method " + method.getName() + "(...) does not need " +
-//                                        "to have response set on @Operation, remove it.");
-//                            }
-//                        }
-                    }
-                });
+        @Override
+        public String toString() {
+            return "MethodSignature{" +
+                    "name='" + name + '\'' +
+                    ", parameterTypes=" + Arrays.toString(parameterTypes) +
+                    '}';
+        }
     }
 }

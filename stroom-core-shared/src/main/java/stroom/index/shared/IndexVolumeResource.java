@@ -32,31 +32,43 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @Operation(summary = "Finds index volumes matching request")
+    @Operation(
+            summary = "Finds index volumes matching request",
+            operationId = "findIndexVolumes")
     ResultPage<IndexVolume> find(@Parameter(description = "request", required = true) ExpressionCriteria request);
 
     @POST
-    @Operation(summary = "Creates an index volume")
+    @Operation(
+            summary = "Creates an index volume",
+            operationId = "createIndexVolume")
     IndexVolume create(@Parameter(description = "request", required = true) IndexVolume request);
 
     @GET
     @Path("/{id}")
-    @Operation(summary = "Gets an index volume")
-    IndexVolume read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch an index volume",
+            operationId = "fetchIndexVolume")
+    IndexVolume fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Updates an index volume")
+    @Operation(
+            summary = "Updates an index volume",
+            operationId = "updateIndexVolume")
     IndexVolume update(@PathParam("id") Integer id,
                        @Parameter(description = "indexVolume", required = true) IndexVolume indexVolume);
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Deletes an index volume")
+    @Operation(
+            summary = "Deletes an index volume",
+            operationId = "deleteIndexVolume")
     Boolean delete(@PathParam("id") Integer id);
 
     @DELETE
     @Path(RESCAN_SUB_PATH)
-    @Operation(summary = "Rescans index volumes")
+    @Operation(
+            summary = "Rescans index volumes",
+            operationId = "rescanIndexVolumes")
     Boolean rescan(@QueryParam("nodeName") String nodeName);
 }

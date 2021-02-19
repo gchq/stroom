@@ -45,32 +45,44 @@ public interface PipelineResource extends RestResource, DirectRestService, Fetch
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a pipeline doc by its UUID")
+    @Operation(
+            summary = "Fetch a pipeline doc by its UUID",
+            operationId = "fetchPipeline")
     PipelineDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a pipeline doc")
+    @Operation(
+            summary = "Update a pipeline doc",
+            operationId = "updatePipeline")
     PipelineDoc update(@PathParam("uuid") String uuid,
                        @Parameter(description = "doc", required = true) PipelineDoc doc);
 
     @PUT
     @Path("/savePipelineXml")
-    @Operation(summary = "Update a pipeline doc with XML directly")
+    @Operation(
+            summary = "Update a pipeline doc with XML directly",
+            operationId = "savePipelineXml")
     Boolean savePipelineXml(@Parameter(description = "request", required = true) SavePipelineXmlRequest request);
 
     @POST
     @Path("/fetchPipelineXml")
-    @Operation(summary = "Fetch the XML for a pipeline")
+    @Operation(
+            summary = "Fetch the XML for a pipeline",
+            operationId = "fetchPipelineXml")
     FetchPipelineXmlResponse fetchPipelineXml(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @POST
     @Path("/fetchPipelineData")
-    @Operation(summary = "Fetch data for a pipeline")
+    @Operation(
+            summary = "Fetch data for a pipeline",
+            operationId = "fetchPipelineData")
     List<PipelineData> fetchPipelineData(@Parameter(description = "pipeline", required = true) DocRef pipeline);
 
     @GET
     @Path("/propertyTypes")
-    @Operation(summary = "Get pipeline property types")
+    @Operation(
+            summary = "Get pipeline property types",
+            operationId = "getPipelinePropertyTypes")
     List<FetchPropertyTypesResult> getPropertyTypes();
 }

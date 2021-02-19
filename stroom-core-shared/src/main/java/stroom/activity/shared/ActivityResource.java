@@ -16,7 +16,7 @@
 
 package stroom.activity.shared;
 
-import stroom.util.shared.ReadWithIntegerId;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -43,54 +43,74 @@ import javax.ws.rs.core.MediaType;
 @Path("/activity" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ActivityResource extends RestResource, DirectRestService, ReadWithIntegerId<Activity> {
+public interface ActivityResource extends RestResource, DirectRestService, FetchWithIntegerId<Activity> {
 
     @GET
-    @Operation(summary = "Lists activities")
+    @Operation(
+            summary = "Lists activities",
+            operationId = "listActivities")
     ResultPage<Activity> list(@QueryParam("filter") String filter);
 
     @GET
     @Path("/fields")
-    @Operation(summary = "Lists activity field definitions")
+    @Operation(
+            summary = "Lists activity field definitions",
+            operationId = "listActivityFieldDefinitions")
     List<FilterFieldDefinition> listFieldDefinitions();
 
     @POST
-    @Operation(summary = "Create an Activity")
+    @Operation(
+            summary = "Create an Activity",
+            operationId = "createActivity")
     Activity create();
 
     @Override
     @GET
     @Path("/{id}")
-    @Operation(summary = "Get an Activity")
-    Activity read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch an Activity",
+            operationId = "fetchActivity")
+    Activity fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Update an Activity")
+    @Operation(
+            summary = "Update an Activity",
+            operationId = "updateActivity")
     Activity update(@PathParam("id") final Integer id, final Activity activity);
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Delete an activity")
+    @Operation(
+            summary = "Delete an activity",
+            operationId = "deleteActivity")
     Boolean delete(@PathParam("id") final Integer id);
 
     @POST
     @Path("/validate")
-    @Operation(summary = "Create an Activity")
+    @Operation(
+            summary = "Create an Activity",
+            operationId = "validateActivity")
     ActivityValidationResult validate(@Parameter(description = "activity", required = true) final Activity activity);
 
     @GET
     @Path("/current")
-    @Operation(summary = "Gets the current activity")
+    @Operation(
+            summary = "Gets the current activity",
+            operationId = "getCurrentActivity")
     Activity getCurrentActivity();
 
     @PUT
     @Path("/current")
-    @Operation(summary = "Gets the current activity")
+    @Operation(
+            summary = "Gets the current activity",
+            operationId = "setCurrentActivity")
     Activity setCurrentActivity(Activity activity);
 
     @POST
     @Path("/acknowledge")
-    @Operation(summary = "Acknowledge the slash screen")
+    @Operation(
+            summary = "Acknowledge the slash screen",
+            operationId = "acknowledgeSplash")
     Boolean acknowledgeSplash(@Parameter(description = "request", required = true) AcknowledgeSplashRequest request);
 }

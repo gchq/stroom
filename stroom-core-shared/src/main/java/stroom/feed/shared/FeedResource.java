@@ -42,17 +42,23 @@ public interface FeedResource extends RestResource, DirectRestService, FetchWith
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a feed doc by its UUID")
+    @Operation(
+            summary = "Fetch a feed doc by its UUID",
+            operationId = "fetchFeed")
     FeedDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a feed doc")
+    @Operation(
+            summary = "Update a feed doc",
+            operationId = "updateFeed")
     FeedDoc update(@PathParam("uuid") String uuid,
                    @Parameter(description = "doc", required = true) FeedDoc doc);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @Operation(summary = "Fetch supported encodings")
+    @Operation(
+            summary = "Fetch supported encodings",
+            operationId = "fetchSupportedEncodings")
     List<String> fetchSupportedEncodings();
 }

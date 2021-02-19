@@ -41,12 +41,16 @@ public interface XsltResource extends RestResource, DirectRestService, FetchWith
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch an xslt doc by its UUID")
+    @Operation(
+            summary = "Fetch an xslt doc by its UUID",
+            operationId = "fetchXslt")
     XsltDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a an xslt doc")
+    @Operation(
+            summary = "Update a an xslt doc",
+            operationId = "updateXslt")
     XsltDoc update(@PathParam("uuid") String uuid,
                    @Parameter(description = "doc", required = true) XsltDoc doc);
 }

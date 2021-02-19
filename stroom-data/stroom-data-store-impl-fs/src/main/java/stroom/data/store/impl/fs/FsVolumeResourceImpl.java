@@ -33,6 +33,7 @@ import javax.inject.Provider;
 
 // TODO : @66 add event logging
 class FsVolumeResourceImpl implements FsVolumeResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeResourceImpl.class);
 
     private final Provider<FsVolumeService> volumeServiceProvider;
@@ -99,7 +100,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
     }
 
     @Override
-    public FsVolume read(final Integer id) {
+    public FsVolume fetch(final Integer id) {
         return securityContext.secureResult(() -> {
             FsVolume result;
 

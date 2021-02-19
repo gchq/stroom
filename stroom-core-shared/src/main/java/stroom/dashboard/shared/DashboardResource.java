@@ -45,47 +45,63 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a dashboard doc by its UUID")
+    @Operation(
+            summary = "Fetch a dashboard doc by its UUID",
+            operationId = "fetchDashboard")
     DashboardDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a dashboard doc")
+    @Operation(
+            summary = "Update a dashboard doc",
+            operationId = "updateDashboard")
     DashboardDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) DashboardDoc doc);
 
     @POST
     @Path("/validateExpression")
-    @Operation(summary = "Validate an expression")
+    @Operation(
+            summary = "Validate an expression",
+            operationId = "validateDashboardExpression")
     ValidateExpressionResult validateExpression(
             @Parameter(description = "expression", required = true) String expression);
 
     @POST
     @Path("/downloadQuery")
-    @Operation(summary = "Download a query")
+    @Operation(
+            summary = "Download a query",
+            operationId = "downloadDashboardQuery")
     ResourceGeneration downloadQuery(
             @Parameter(description = "downloadQueryRequest", required = true)
                     DownloadQueryRequest downloadQueryRequest);
 
     @POST
     @Path("/downloadSearchResults")
-    @Operation(summary = "Download search results")
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadDashboardSearchResults")
     ResourceGeneration downloadSearchResults(
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
     @Path("/poll")
-    @Operation(summary = "Poll for new search results")
+    @Operation(
+            summary = "Poll for new search results",
+            operationId = "pollDashboardSearchResults")
     Set<DashboardSearchResponse> poll(
             @Parameter(description = "request", required = true) SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")
-    @Operation(summary = "Fetch time zone data from the server")
+    @Operation(
+            summary = "Fetch time zone data from the server",
+            operationId = "fetchTimeZones")
     List<String> fetchTimeZones();
 
     @GET
     @Path("/functions")
-    @Operation(summary = "Fetch all expression functions")
+    @Operation(
+            summary = "Fetch all expression functions",
+            operationId = "fetchDashboardFunctions")
     List<FunctionSignature> fetchFunctions();
 }

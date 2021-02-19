@@ -43,18 +43,24 @@ public interface CacheResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO;
 
     @GET
-    @Operation(summary = "Lists caches")
+    @Operation(
+            summary = "Lists caches",
+            operationId = "listCaches")
     List<String> list();
 
     @GET
     @Path(INFO)
-    @Operation(summary = "Gets cache info")
+    @Operation(
+            summary = "Gets cache info",
+            operationId = "getCacheInfo")
     CacheInfoResponse info(
             @QueryParam("cacheName") String cacheName,
             @QueryParam("nodeName") String nodeName);
 
     @DELETE
-    @Operation(summary = "Clears a cache")
+    @Operation(
+            summary = "Clears a cache",
+            operationId = "clearCache")
     Long clear(
             @QueryParam("cacheName") String cacheName,
             @QueryParam("nodeName") String nodeName);

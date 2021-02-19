@@ -46,25 +46,33 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @Operation(summary = "Finds processors tasks")
+    @Operation(
+            summary = "Finds processors tasks",
+            operationId = "findProcessorTasks")
     ResultPage<ProcessorTask> find(
             @Parameter(description = "expressionCriteria", required = true) ExpressionCriteria expressionCriteria);
 
     @POST
     @Path("summary")
-    @Operation(summary = "Finds processor task summaries")
+    @Operation(
+            summary = "Finds processor task summaries",
+            operationId = "findProcessorTaskSummary")
     ResultPage<ProcessorTaskSummary> findSummary(
             @Parameter(description = "expressionCriteria", required = true) ExpressionCriteria expressionCriteria);
 
     @POST
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Assign some tasks")
+    @Operation(
+            summary = "Assign some tasks",
+            operationId = "assignProcessorTasks")
     ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
                                   @Parameter(description = "request", required = true) AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Abandon some tasks")
+    @Operation(
+            summary = "Abandon some tasks",
+            operationId = "abandonProcessorTasks")
     Boolean abandonTasks(@PathParam("nodeName") String nodeName,
                          @Parameter(description = "request", required = true) ProcessorTaskList request);
 }

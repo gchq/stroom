@@ -8,6 +8,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 
 class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
+
     private final IndexVolumeGroupService indexVolumeGroupService;
 
     @Inject
@@ -26,7 +27,7 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public IndexVolumeGroup read(final Integer id) {
+    public IndexVolumeGroup fetch(final Integer id) {
         return indexVolumeGroupService.get(id);
     }
 

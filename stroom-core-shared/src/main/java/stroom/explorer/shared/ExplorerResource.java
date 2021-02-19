@@ -45,53 +45,73 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/create")
-    @Operation(summary = "Create explorer item")
+    @Operation(
+            summary = "Create explorer item",
+            operationId = "createExplorerItem")
     DocRef create(@Parameter(description = "request", required = true) ExplorerServiceCreateRequest request);
 
     @DELETE
     @Path("/delete")
-    @Operation(summary = "Delete explorer items")
+    @Operation(
+            summary = "Delete explorer items",
+            operationId = "deleteExplorerItems")
     BulkActionResult delete(@Parameter(description = "request", required = true) ExplorerServiceDeleteRequest request);
 
     @POST
     @Path("/copy")
-    @Operation(summary = "Copy explorer items")
+    @Operation(
+            summary = "Copy explorer items",
+            operationId = "copyExplorerItems")
     BulkActionResult copy(@Parameter(description = "request", required = true) ExplorerServiceCopyRequest request);
 
     @PUT
     @Path("/move")
-    @Operation(summary = "Move explorer items")
+    @Operation(
+            summary = "Move explorer items",
+            operationId = "moveExplorerItems")
     BulkActionResult move(@Parameter(description = "request", required = true) ExplorerServiceMoveRequest request);
 
     @PUT
     @Path("/rename")
-    @Operation(summary = "Rename explorer items")
+    @Operation(
+            summary = "Rename explorer items",
+            operationId = "renameExplorerItems")
     DocRef rename(@Parameter(description = "request", required = true) ExplorerServiceRenameRequest request);
 
     @POST
     @Path("/info")
-    @Operation(summary = "Get document info")
+    @Operation(
+            summary = "Get document info",
+            operationId = "fetchExplorerItemInfo")
     DocRefInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @POST
     @Path("/fetchDocRefs")
-    @Operation(summary = "Fetch document references")
+    @Operation(
+            summary = "Fetch document references",
+            operationId = "fetchExplorerDocRefs")
     Set<DocRef> fetchDocRefs(@Parameter(description = "docRefs", required = true) Set<DocRef> docRefs);
 
     @GET
     @Path("/fetchDocumentTypes")
-    @Operation(summary = "Fetch document types")
+    @Operation(
+            summary = "Fetch document types",
+            operationId = "fetchExplorerDocumentTypes")
     DocumentTypes fetchDocumentTypes();
 
     @POST
     @Path("/fetchExplorerPermissions")
-    @Operation(summary = "Fetch permissions for explorer items")
+    @Operation(
+            summary = "Fetch permissions for explorer items",
+            operationId = "fetchExplorerPermissions")
     Set<ExplorerNodePermissions> fetchExplorerPermissions(
             @Parameter(description = "explorerNodes", required = true) List<ExplorerNode> explorerNodes);
 
     @POST
     @Path("/fetchExplorerNodes")
-    @Operation(summary = "Fetch explorer nodes")
+    @Operation(
+            summary = "Fetch explorer nodes",
+            operationId = "fetchExplorerNodes")
     FetchExplorerNodeResult fetch(
             @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
 }

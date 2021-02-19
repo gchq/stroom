@@ -41,27 +41,37 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    @Operation(summary = "Find stored queries")
+    @Operation(
+            summary = "Find stored queries",
+            operationId = "findStoredQueries")
     ResultPage<StoredQuery> find(
             @Parameter(description = "criteria", required = true) FindStoredQueryCriteria criteria);
 
     @POST
     @Path("/create")
-    @Operation(summary = "Create a stored query")
+    @Operation(
+            summary = "Create a stored query",
+            operationId = "createStoredQuery")
     StoredQuery create(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @POST
     @Path("/read")
-    @Operation(summary = "Get a stored query")
-    StoredQuery read(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
+    @Operation(
+            summary = "Fetch a stored query",
+            operationId = "fetchStoredQuery")
+    StoredQuery fetch(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @PUT
     @Path("/update")
-    @Operation(summary = "Update a stored query")
+    @Operation(
+            summary = "Update a stored query",
+            operationId = "updateStoredQuery")
     StoredQuery update(StoredQuery storedQuery);
 
     @DELETE
     @Path("/delete")
-    @Operation(summary = "Delete a stored query")
+    @Operation(
+            summary = "Delete a stored query",
+            operationId = "deleteStoredQuery")
     Boolean delete(StoredQuery storedQuery);
 }

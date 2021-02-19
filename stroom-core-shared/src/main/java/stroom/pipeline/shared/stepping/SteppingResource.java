@@ -39,17 +39,23 @@ public interface SteppingResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/getPipelineForStepping")
-    @Operation(summary = "Get a pipeline for stepping")
+    @Operation(
+            summary = "Get a pipeline for stepping",
+            operationId = "getPipelineForStepping")
     DocRef getPipelineForStepping(
             @Parameter(description = "request", required = true) GetPipelineForMetaRequest request);
 
     @POST
     @Path("/findElementDoc")
-    @Operation(summary = "Load the document for an element")
+    @Operation(
+            summary = "Load the document for an element",
+            operationId = "findElementDoc")
     DocRef findElementDoc(FindElementDocRequest request);
 
     @POST
     @Path("/step")
-    @Operation(summary = "Step a pipeline")
+    @Operation(
+            summary = "Step a pipeline",
+            operationId = "step")
     SteppingResult step(@Parameter(description = "request", required = true) PipelineStepRequest request);
 }

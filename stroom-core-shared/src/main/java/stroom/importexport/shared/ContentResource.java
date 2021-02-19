@@ -44,25 +44,33 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("import")
-    @Operation(summary = "Import content")
+    @Operation(
+            summary = "Import content",
+            operationId = "importContent")
     ResourceKey importContent(
             @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
 
     @POST
     @Path("confirmImport")
-    @Operation(summary = "Get import confirmation state")
+    @Operation(
+            summary = "Get import confirmation state",
+            operationId = "confirmContentImport")
     List<ImportState> confirmImport(
             @Parameter(description = "resourceKey", required = true) ResourceKey resourceKey);
 
     @POST
     @Path("export")
-    @Operation(summary = "Export content")
+    @Operation(
+            summary = "Export content",
+            operationId = "exportContent")
     ResourceGeneration exportContent(
             @NotNull @Parameter(description = "docRefs", required = true) DocRefs docRefs);
 
     @POST
     @Path("fetchDependencies")
-    @Operation(summary = "Fetch content dependencies")
+    @Operation(
+            summary = "Fetch content dependencies",
+            operationId = "fetchContentDependencies")
     ResultPage<Dependency> fetchDependencies(
             @Parameter(description = "criteria", required = true) DependencyCriteria criteria);
 }

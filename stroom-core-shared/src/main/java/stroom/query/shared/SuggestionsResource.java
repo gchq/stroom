@@ -38,6 +38,8 @@ import javax.ws.rs.core.MediaType;
 public interface SuggestionsResource extends RestResource, DirectRestService {
 
     @POST
-    @Operation(summary = "Fetch some suggestions")
+    @Operation(
+            summary = "Fetch some suggestions",
+            operationId = "fetchSuggestions")
     List<String> fetch(@Parameter(description = "request", required = true) FetchSuggestionsRequest request);
 }

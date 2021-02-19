@@ -41,12 +41,16 @@ public interface StatisticResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a statistic doc by its UUID")
+    @Operation(
+            summary = "Fetch a statistic doc by its UUID",
+            operationId = "fetchStatisticStore")
     StatisticStoreDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a statistic doc")
+    @Operation(
+            summary = "Update a statistic doc",
+            operationId = "updateStatisticStore")
     StatisticStoreDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) StatisticStoreDoc doc);
 }

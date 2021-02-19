@@ -41,19 +41,26 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService, FetchWithUuid<DictionaryDoc> {
+
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a dictionary doc by its UUID")
+    @Operation(
+            summary = "Fetch a dictionary doc by its UUID",
+            operationId = "fetchDictionary")
     DictionaryDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a dictionary doc")
+    @Operation(
+            summary = "Update a dictionary doc",
+            operationId = "updateDictionary")
     DictionaryDoc update(@PathParam("uuid") String uuid,
                          @Parameter(description = "doc", required = true) DictionaryDoc doc);
 
     @POST
     @Path("/download")
-    @Operation(summary = "Download a dictionary doc")
+    @Operation(
+            summary = "Download a dictionary doc",
+            operationId = "downloadDictionary")
     ResourceGeneration download(DocRef dictionaryRef);
 }

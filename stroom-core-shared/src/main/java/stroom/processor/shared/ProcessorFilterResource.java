@@ -43,44 +43,60 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @POST
     @Path("find")
-    @Operation(summary = "Finds processors and filters matching request")
+    @Operation(
+            summary = "Finds processors and filters matching request",
+            operationId = "findProcessorFilters")
     ProcessorListRowResultPage find(
             @Parameter(description = "request", required = true) FetchProcessorRequest request);
 
     @POST
-    @Operation(summary = "Creates a filter")
+    @Operation(
+            summary = "Creates a filter",
+            operationId = "createProcessorFilter")
     ProcessorFilter create(
             @Parameter(description = "request", required = true) CreateProcessFilterRequest request);
 
 
     @POST
     @Path("/reprocess")
-    @Operation(summary = "Create filters to reprocess data")
+    @Operation(
+            summary = "Create filters to reprocess data",
+            operationId = "reprocessData")
     List<ReprocessDataInfo> reprocess(
             @Parameter(description = "criteria", required = true) CreateReprocessFilterRequest request);
 
     @GET
     @Path("/{id}")
-    @Operation(summary = "Gets a filter")
-    ProcessorFilter read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch a filter",
+            operationId = "fetchProcessorFilter")
+    ProcessorFilter fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Updates a filter")
+    @Operation(
+            summary = "Updates a filter",
+            operationId = "updateProcessorFilter")
     ProcessorFilter update(@PathParam("id") Integer id, ProcessorFilter processorFilter);
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Deletes a filter")
+    @Operation(
+            summary = "Deletes a filter",
+            operationId = "deleteProcessorFilter")
     void delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/priority")
-    @Operation(summary = "Sets the priority for a filter")
+    @Operation(
+            summary = "Sets the priority for a filter",
+            operationId = "setProcessorFilterPriority")
     void setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
     @Path("/{id}/enabled")
-    @Operation(summary = "Sets the enabled/disabled state for a filter")
+    @Operation(
+            summary = "Sets the enabled/disabled state for a filter",
+            operationId = "setProcessorFilterEnabled")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

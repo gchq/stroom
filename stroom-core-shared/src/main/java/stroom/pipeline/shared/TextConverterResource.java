@@ -41,12 +41,16 @@ public interface TextConverterResource extends RestResource, DirectRestService, 
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a text converter doc by its UUID")
+    @Operation(
+            summary = "Fetch a text converter doc by its UUID",
+            operationId = "fetchTextConverter")
     TextConverterDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a text converter doc")
+    @Operation(
+            summary = "Update a text converter doc",
+            operationId = "updateTextConverter")
     TextConverterDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) TextConverterDoc doc);
 }

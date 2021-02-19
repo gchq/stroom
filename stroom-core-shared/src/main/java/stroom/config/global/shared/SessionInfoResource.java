@@ -4,6 +4,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.SessionInfo;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -20,5 +21,8 @@ import javax.ws.rs.core.MediaType;
 public interface SessionInfoResource extends RestResource, DirectRestService {
 
     @GET
+    @Operation(
+            summary = "Get information for the current session",
+            operationId = "getSessionInfo")
     SessionInfo get();
 }

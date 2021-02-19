@@ -37,6 +37,8 @@ import javax.ws.rs.core.MediaType;
 public interface ScheduledTimeResource extends RestResource, DirectRestService {
 
     @POST
-    @Operation(summary = "Gets scheduled time info")
+    @Operation(
+            summary = "Gets scheduled time info",
+            operationId = "getScheduledTimes")
     ScheduledTimes get(@Parameter(description = "request", required = true) GetScheduledTimesRequest request);
 }

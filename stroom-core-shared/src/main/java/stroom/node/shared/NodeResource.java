@@ -48,37 +48,51 @@ public interface NodeResource extends RestResource, DirectRestService {
 
     @GET
     @Path(INFO_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Gets detailed information about a node")
+    @Operation(
+            summary = "Gets detailed information about a node",
+            operationId = "fetchNodeInfo")
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
 
     @GET
     @Path("/all")
-    @Operation(summary = "Lists all nodes")
+    @Operation(
+            summary = "Lists all nodes",
+            operationId = "listAllNodes")
     List<String> listAllNodes();
 
     @GET
     @Path("/enabled")
-    @Operation(summary = "Lists enabled nodes")
+    @Operation(
+            summary = "Lists enabled nodes",
+            operationId = "listEnabledNodes")
     List<String> listEnabledNodes();
 
     @GET
-    @Operation(summary = "Lists nodes")
+    @Operation(
+            summary = "Lists nodes",
+            operationId = "findNodes")
     FetchNodeStatusResponse find();
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Gets a ping time for a node")
+    @Operation(
+            summary = "Gets a ping time for a node",
+            operationId = "pingNode")
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Sets the priority of a node")
+    @Operation(
+            summary = "Sets the priority of a node",
+            operationId = "setNodePriority")
     void setPriority(@PathParam("nodeName") String nodeName,
                      @Parameter(description = "nodeName", required = true) Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Sets whether a node is enabled")
+    @Operation(
+            summary = "Sets whether a node is enabled",
+            operationId = "setNodeEnabled")
     void setEnabled(@PathParam("nodeName") String nodeName,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
 }

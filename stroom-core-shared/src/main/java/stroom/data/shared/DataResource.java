@@ -47,27 +47,37 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("download")
-    @Operation(summary = "Download matching data")
+    @Operation(
+            summary = "Download matching data",
+            operationId = "downloadData")
     ResourceGeneration download(@Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
-    @Operation(summary = "Upload data")
+    @Operation(
+            summary = "Upload data",
+            operationId = "uploadData")
     ResourceKey upload(@Parameter(description = "request", required = true) UploadDataRequest request);
 
     @GET
     @Path("{id}/info")
-    @Operation(summary = "Find full info about a data item")
+    @Operation(
+            summary = "Find full info about a data item",
+            operationId = "viewDataInfo")
     List<DataInfoSection> viewInfo(@PathParam("id") long id);
 
     @POST
     @Path("fetch")
-    @Operation(summary = "Fetch matching data")
+    @Operation(
+            summary = "Fetch matching data",
+            operationId = "fetchData")
     AbstractFetchDataResult fetch(@Parameter(description = "request", required = true) FetchDataRequest request);
 
     @GET
     @Path("{id}/parts/{partNo}/child-types")
-    @Operation(summary = "List child types for a stream")
+    @Operation(
+            summary = "List child types for a stream",
+            operationId = "getChildStreamTypes")
     Set<String> getChildStreamTypes(@PathParam("id") final long id,
                                     @PathParam("partNo") final long partNo);
 }

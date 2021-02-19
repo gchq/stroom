@@ -29,7 +29,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 @Tag(name = "Export")
 @Path("/export" + ResourcePaths.V1)
-public class ExportConfigResource implements RestResource {
+public class ExportContentResource implements RestResource {
 
     private final transient Provider<ImportExportService> importExportServiceProvider;
     private final transient Provider<ResourceStore> resourceStoreProvider;
@@ -37,10 +37,10 @@ public class ExportConfigResource implements RestResource {
     private final transient Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    public ExportConfigResource(final Provider<ImportExportService> importExportServiceProvider,
-                                final Provider<ResourceStore> resourceStoreProvider,
-                                final Provider<ExportConfig> exportConfigProvider,
-                                final Provider<SecurityContext> securityContextProvider) {
+    public ExportContentResource(final Provider<ImportExportService> importExportServiceProvider,
+                                 final Provider<ResourceStore> resourceStoreProvider,
+                                 final Provider<ExportConfig> exportConfigProvider,
+                                 final Provider<SecurityContext> securityContextProvider) {
         this.importExportServiceProvider = importExportServiceProvider;
         this.resourceStoreProvider = resourceStoreProvider;
         this.exportConfigProvider = exportConfigProvider;
@@ -48,7 +48,9 @@ public class ExportConfigResource implements RestResource {
     }
 
     @GET
-    @Operation(summary = "Exports all configuration to a file.")
+    @Operation(
+            summary = "Exports all configuration to a file.",
+            operationId = "exportAllContent")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response export() {
         final ResourceStore resourceStore = resourceStoreProvider.get();

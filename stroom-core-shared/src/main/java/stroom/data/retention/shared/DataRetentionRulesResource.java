@@ -42,25 +42,31 @@ public interface DataRetentionRulesResource extends RestResource, DirectRestServ
 
     @GET
     @Path("/")
-    @Operation(summary = "Get data retention rules")
+    @Operation(
+            summary = "Get data retention rules",
+            operationId = "fetchDataRetentionRules")
     DataRetentionRules fetch();
 
     @PUT
     @Path("/")
-    @Operation(summary = "Update data retention rules")
+    @Operation(
+            summary = "Update data retention rules",
+            operationId = "updateDataRetentionRules")
     DataRetentionRules update(
             @Parameter(description = "dataRetentionRules", required = true) DataRetentionRules dataRetentionRules);
 
     @POST
     @Path("/impactSummary")
-    @Operation(summary = "Get a summary of meta deletions with the passed data retention rules")
+    @Operation(
+            summary = "Get a summary of meta deletions with the passed data retention rules",
+            operationId = "getDataRetentionImpactSummary")
     DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
             @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request);
 
     @DELETE
     @Path("/impactSummary/{queryId}")
-    @Operation(description = "Delete a running query")
+    @Operation(
+            summary = "Stop a running query",
+            operationId = "stopDataRetentionImpactSummary")
     Boolean cancelQuery(@PathParam("queryId") final String queryId);
-
-
 }

@@ -48,31 +48,41 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @Operation(summary = "Lists job nodes")
+    @Operation(
+            summary = "Lists job nodes",
+            operationId = "listJobsNodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO_PATH_PART)
-    @Operation(summary = "Gets current info for a job node")
+    @Operation(
+            summary = "Gets current info for a job node",
+            operationId = "fetchJobNodeInfo")
     JobNodeInfo info(@QueryParam("jobName") String jobName,
                      @QueryParam("nodeName") String nodeName);
 
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
-    @Operation(summary = "Sets the task limit for the job node")
+    @Operation(
+            summary = "Sets the task limit for the job node",
+            operationId = "setJobNodeTaskLimit")
     void setTaskLimit(@PathParam("id") Integer id,
                       @Parameter(description = "taskLimit", required = true) Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
-    @Operation(summary = "Sets the schedule job node")
+    @Operation(
+            summary = "Sets the schedule job node",
+            operationId = "setJobNodeSchedule")
     void setSchedule(@PathParam("id") Integer id,
                      @Parameter(description = "schedule", required = true) String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
-    @Operation(summary = "Sets the enabled status of the job node")
+    @Operation(
+            summary = "Sets the enabled status of the job node",
+            operationId = "setJobNodeEnabled")
     void setEnabled(@PathParam("id") Integer id,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
 }

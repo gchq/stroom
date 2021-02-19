@@ -41,12 +41,16 @@ public interface StatsStoreResource extends RestResource, DirectRestService, Fet
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a store doc doc by its UUID")
+    @Operation(
+            summary = "Fetch a store doc doc by its UUID",
+            operationId = "fetchStroomStatsStore")
     StroomStatsStoreDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a stats store doc")
+    @Operation(
+            summary = "Update a stats store doc",
+            operationId = "updateStroomStatsStore")
     StroomStatsStoreDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) StroomStatsStoreDoc doc);
 }

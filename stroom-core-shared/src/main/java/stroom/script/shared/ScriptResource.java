@@ -43,18 +43,24 @@ public interface ScriptResource extends RestResource, DirectRestService, FetchWi
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a script doc by its UUID", operationId = "fetchScript")
+    @Operation(
+            summary = "Fetch a script doc by its UUID",
+            operationId = "fetchScript")
     ScriptDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a script doc", operationId = "updateScript")
+    @Operation(
+            summary = "Update a script doc",
+            operationId = "updateScript")
     ScriptDoc update(@PathParam("uuid") String uuid,
                      @Parameter(description = "doc", required = true) ScriptDoc doc);
 
     @POST
     @Path("/fetchLinkedScripts")
-    @Operation(summary = "Fetch related scripts", operationId = "fetchLinkedScripts")
+    @Operation(
+            summary = "Fetch related scripts",
+            operationId = "fetchLinkedScripts")
     List<ScriptDoc> fetchLinkedScripts(
             @Parameter(description = "request", required = true) FetchLinkedScriptRequest request);
 }

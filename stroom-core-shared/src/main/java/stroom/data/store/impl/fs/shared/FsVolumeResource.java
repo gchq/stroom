@@ -43,30 +43,43 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    @Operation(summary = "Finds volumes")
+    @Operation(
+            summary = "Finds volumes",
+            operationId = "findFsVolumes")
     ResultPage<FsVolume> find(@Parameter(description = "criteria", required = true) FindFsVolumeCriteria criteria);
 
     @POST
+    @Operation(
+            summary = "Create a volume",
+            operationId = "createFsVolume")
     FsVolume create(FsVolume volume);
 
     @GET
     @Path("/{id}")
-    @Operation(summary = "Get a volume")
-    FsVolume read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Get a volume",
+            operationId = "fetchFsVolume")
+    FsVolume fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Update a volume")
+    @Operation(
+            summary = "Update a volume",
+            operationId = "updateFsVolume")
     FsVolume update(@PathParam("id") Integer id,
                     @Parameter(description = "volume", required = true) FsVolume volume);
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Delete a volume")
+    @Operation(
+            summary = "Delete a volume",
+            operationId = "deleteFsVolume")
     Boolean delete(@PathParam("id") Integer id);
 
     @GET
     @Path("/rescan")
-    @Operation(summary = "Rescans volumes")
+    @Operation(
+            summary = "Rescans volumes",
+            operationId = "rescanFsVolumes")
     Boolean rescan();
 }

@@ -26,12 +26,16 @@ public interface StroomSessionResource extends RestResource, InvalidateSessionRe
 
     @GET
     @Path("/noauth/validateSession")
-    @Operation(summary = "Validate the current session, return a redirect Uri if invalid.")
+    @Operation(
+            summary = "Validate the current session, return a redirect Uri if invalid.",
+            operationId = "validateStroomSession")
     ValidateSessionResponse validateSession(@Context @NotNull HttpServletRequest request,
                                             @QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
     @Path("invalidate")
-    @Operation(summary = "Invalidate the current session")
+    @Operation(
+            summary = "Invalidate the current session",
+            operationId = "invalidateStroomSession")
     Boolean invalidate();
 }

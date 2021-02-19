@@ -52,7 +52,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/getAuthenticationState")
     @Timed
     @NotNull
-    @Operation(summary = "Get the current authentication state")
+    @Operation(
+            summary = "Get the current authentication state",
+            operationId = "getAuthenticationState")
     AuthenticationState getAuthenticationState(@Context @NotNull HttpServletRequest request);
 
     /**
@@ -64,7 +66,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/login")
     @Timed
     @NotNull
-    @Operation(summary = "Handle a login request made using username and password credentials.")
+    @Operation(
+            summary = "Handle a login request made using username and password credentials.",
+            operationId = "login")
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
             @Parameter(description = "Credentials", required = true)
@@ -74,7 +78,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/logout")
     @Timed
     @NotNull
-    @Operation(summary = "Log a user out of their session")
+    @Operation(
+            summary = "Log a user out of their session",
+            operationId = "logout")
     Boolean logout(
             @Context @NotNull HttpServletRequest request,
             @QueryParam(OpenId.REDIRECT_URI) @NotNull String redirectUri);
@@ -83,7 +89,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/confirmPassword")
     @Timed
     @NotNull
-    @Operation(summary = "Confirm an authenticated users current password.")
+    @Operation(
+            summary = "Confirm an authenticated users current password.",
+            operationId = "confirmPassword")
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
             @Parameter(description = "confirmPasswordRequest", required = true)
@@ -94,7 +102,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/changePassword")
     @Timed
     @NotNull
-    @Operation(summary = "Change a user's password.")
+    @Operation(
+            summary = "Change a user's password.",
+            operationId = "changePassword")
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
             @Parameter(description = "changePasswordRequest", required = true)
@@ -104,7 +114,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/reset/{email}")
     @Timed
     @NotNull
-    @Operation(summary = "Reset a user account using an email address.")
+    @Operation(
+            summary = "Reset a user account using an email address.",
+            operationId = "resetEmail")
     Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
             @PathParam("email") String emailAddress);
@@ -113,7 +125,9 @@ public interface AuthenticationResource extends RestResource {
     @Path("resetPassword")
     @Timed
     @NotNull
-    @Operation(summary = "Reset an authenticated user's password.")
+    @Operation(
+            summary = "Reset an authenticated user's password.",
+            operationId = "resetPassword")
     ChangePasswordResponse resetPassword(
             @Context @NotNull HttpServletRequest request,
             @Parameter(description = "changePasswordRequest", required = true)
@@ -123,13 +137,17 @@ public interface AuthenticationResource extends RestResource {
     @Path("needsPasswordChange")
     @Timed
     @NotNull
-    @Operation(summary = "Check if a user's password needs changing.")
+    @Operation(
+            summary = "Check if a user's password needs changing.",
+            operationId = "needsPasswordChange")
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")
     @Timed
     @NotNull
-    @Operation(summary = "Get the password policy")
+    @Operation(
+            summary = "Get the password policy",
+            operationId = "fetchPasswordPolicy")
     PasswordPolicyConfig fetchPasswordPolicy();
 }

@@ -57,7 +57,9 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @Operation(summary = "Submit a request for a data source definition, supplying the DocRef for the data source")
+    @Operation(
+            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            operationId = "getSearchableDataSource")
     public DataSource getDataSource(@Parameter(description = "DocRef", required = true) final DocRef docRef) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
@@ -69,7 +71,9 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @Operation(summary = "Submit a search request")
+    @Operation(
+            summary = "Submit a search request",
+            operationId = "startSearchableQuery")
     public SearchResponse search(
             @Parameter(description = "SearchRequest", required = true) final SearchRequest request) {
         if (LOGGER.isDebugEnabled()) {
@@ -83,7 +87,9 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/destroy")
     @Timed
-    @Operation(summary = "Destroy a running query")
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "destroySearchableQuery")
     public Boolean destroy(@Parameter(description = "QueryKey", required = true) final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);

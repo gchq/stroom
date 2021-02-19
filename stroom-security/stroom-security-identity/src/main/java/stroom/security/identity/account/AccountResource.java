@@ -18,7 +18,7 @@
 
 package stroom.security.identity.account;
 
-import stroom.util.shared.ReadWithIntegerId;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -44,7 +44,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Account")
-public interface AccountResource extends RestResource, ReadWithIntegerId<Account> {
+public interface AccountResource extends RestResource, FetchWithIntegerId<Account> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
     FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField("Email");
@@ -88,7 +88,7 @@ public interface AccountResource extends RestResource, ReadWithIntegerId<Account
     @Path("{id}")
     @Timed
     @NotNull
-    Account read(@PathParam("id") final Integer accountId);
+    Account fetch(@PathParam("id") final Integer accountId);
 
     @Operation(
             summary = "Update an account.",

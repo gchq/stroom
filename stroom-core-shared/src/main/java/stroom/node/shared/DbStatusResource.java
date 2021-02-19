@@ -41,11 +41,15 @@ public interface DbStatusResource extends RestResource, DirectRestService {
     String BASE_PATH = "/dbStatus" + ResourcePaths.V1;
 
     @GET
-    @Operation(summary = "Find status of the DB")
+    @Operation(
+            summary = "Find status of the DB",
+            operationId = "getDbSystemTableStatus")
     ResultPage<DBTableStatus> getSystemTableStatus();
 
     @POST
-    @Operation(summary = "Find status of the DB")
+    @Operation(
+            summary = "Find status of the DB",
+            operationId = "findDbSystemTableStatus")
     ResultPage<DBTableStatus> findSystemTableStatus(
             @Parameter(description = "criteria", required = true) FindDBTableCriteria criteria);
 }

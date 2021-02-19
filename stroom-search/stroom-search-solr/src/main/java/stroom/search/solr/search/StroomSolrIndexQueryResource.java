@@ -73,7 +73,9 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @Operation(summary = "Submit a request for a data source definition, supplying the DocRef for the data source")
+    @Operation(
+            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            operationId = "getSolrIndexDataSource")
     public DataSource getDataSource(@Parameter(description = "DocRef", required = true) final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
@@ -84,7 +86,9 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @Operation(summary = "Submit a search request")
+    @Operation(
+            summary = "Submit a search request",
+            operationId = "searchSolrIndex")
     public SearchResponse search(
             @Parameter(description = "SearchRequest", required = true) final SearchRequest request) {
 
@@ -148,7 +152,9 @@ public class StroomSolrIndexQueryResource implements RestResource {
     @POST
     @Path("/destroy")
     @Timed
-    @Operation(summary = "Destroy a running query")
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "")
     public Boolean destroy(@Parameter(description = "QueryKey", required = true) final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;

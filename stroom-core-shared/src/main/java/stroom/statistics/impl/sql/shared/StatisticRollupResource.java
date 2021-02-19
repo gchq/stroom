@@ -39,19 +39,25 @@ public interface StatisticRollupResource extends RestResource, DirectRestService
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @Operation(summary = "Create rollup bit mask")
+    @Operation(
+            summary = "Create rollup bit mask",
+            operationId = "statisticBitMaskPermGeneration")
     List<CustomRollUpMask> bitMaskPermGeneration(
             @Parameter(description = "fieldCount", required = true) Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @Operation(summary = "Get rollup bit mask")
+    @Operation(
+            summary = "Get rollup bit mask",
+            operationId = "statisticBitMaskConversion")
     List<CustomRollUpMaskFields> bitMaskConversion(
             @Parameter(description = "maskValues", required = true) List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @Operation(summary = "Change fields")
+    @Operation(
+            summary = "Change fields",
+            operationId = "statisticFieldChange")
     StatisticsDataSourceData fieldChange(
             @Parameter(description = "request", required = true) StatisticsDataSourceFieldChangeRequest request);
 }

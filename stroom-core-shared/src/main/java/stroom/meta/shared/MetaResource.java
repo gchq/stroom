@@ -42,29 +42,39 @@ public interface MetaResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("update/status")
-    @Operation(summary = "Update status on matching meta data")
+    @Operation(
+            summary = "Update status on matching meta data",
+            operationId = "updateMetaStatus")
     Integer updateStatus(UpdateStatusRequest request);
 
     @POST
     @Path("find")
-    @Operation(summary = "Find matching meta data")
+    @Operation(
+            summary = "Find matching meta data",
+            operationId = "findMetaRow")
     ResultPage<MetaRow> findMetaRow(
             @Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("getSelectionSummary")
-    @Operation(summary = "Get a summary of the selected meta data")
+    @Operation(
+            summary = "Get a summary of the selected meta data",
+            operationId = "getMetaSelectionSummary")
     SelectionSummary getSelectionSummary(
             @Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("getReprocessSelectionSummary")
-    @Operation(summary = "Get a summary of the parent items of the selected meta data")
+    @Operation(
+            summary = "Get a summary of the parent items of the selected meta data",
+            operationId = "getMetaReprocessSelectionSummary")
     SelectionSummary getReprocessSelectionSummary(
             @Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @GET
     @Path("getTypes")
-    @Operation(summary = "Get a list of possible stream types")
+    @Operation(
+            summary = "Get a list of possible stream types",
+            operationId = "getStreamTypes")
     List<String> getTypes();
 }

@@ -45,19 +45,25 @@ public interface ClusterLockResource extends RestResource, DirectRestService {
 
     @PUT
     @Path(TRY_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Try to lock")
+    @Operation(
+            summary = "Try to lock",
+            operationId = "tryClusterLock")
     Boolean tryLock(@PathParam("nodeName") String nodeName,
                     @Parameter(description = "key", required = true) ClusterLockKey key);
 
     @PUT
     @Path(RELEASE_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Release a lock")
+    @Operation(
+            summary = "Release a lock",
+            operationId = "releaseClusterLock")
     Boolean releaseLock(@PathParam("nodeName") String nodeName,
                         @Parameter(description = "key", required = true) ClusterLockKey key);
 
     @PUT
     @Path(KEEP_ALIVE_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Keep a lock alive")
+    @Operation(
+            summary = "Keep a lock alive",
+            operationId = "keepClusterLockAlive")
     Boolean keepLockAlive(@PathParam("nodeName") String nodeName,
                           @Parameter(description = "key", required = true) ClusterLockKey key);
 }

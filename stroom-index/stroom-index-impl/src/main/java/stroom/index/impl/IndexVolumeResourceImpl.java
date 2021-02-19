@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 class IndexVolumeResourceImpl implements IndexVolumeResource {
+
     private final IndexVolumeService indexVolumeService;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
@@ -46,7 +47,7 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public IndexVolume read(final Integer id) {
+    public IndexVolume fetch(final Integer id) {
         return indexVolumeService.read(id);
     }
 

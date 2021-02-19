@@ -21,6 +21,8 @@ public interface InvalidateSessionResource extends RestResource, DirectRestServi
 
     @GET
     @Path("invalidate")
-    @Operation(summary = "Invalidate the current session")
+    @Operation(
+            summary = "Invalidate the current session",
+            operationId = "invalidateSession")
     Boolean invalidate();
 }

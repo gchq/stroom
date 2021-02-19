@@ -41,6 +41,8 @@ public interface DataSourceResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchFields")
-    @Operation(summary = "Fetch data source fields")
+    @Operation(
+            summary = "Fetch data source fields",
+            operationId = "fetchDataSourceFields")
     List<AbstractField> fetchFields(@Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 }

@@ -48,30 +48,40 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a index doc by its UUID")
+    @Operation(
+            summary = "Fetch a index doc by its UUID",
+            operationId = "fetchIndex")
     IndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update an index doc")
+    @Operation(
+            summary = "Update an index doc",
+            operationId = "updateIndex")
     IndexDoc update(@PathParam("uuid") String uuid,
                     @Parameter(description = "doc", required = true) IndexDoc doc);
 
     @POST
     @Path("/shard/find")
-    @Operation(summary = "Find matching index shards")
+    @Operation(
+            summary = "Find matching index shards",
+            operationId = "findIndexShards")
     ResultPage<IndexShard> findIndexShards(
             @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
-    @Operation(summary = "Delete matching index shards")
+    @Operation(
+            summary = "Delete matching index shards",
+            operationId = "deleteIndexShards")
     Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
                            @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
-    @Operation(summary = "Flush matching index shards")
+    @Operation(
+            summary = "Flush matching index shards",
+            operationId = "flushIndexShards")
     Long flushIndexShards(@QueryParam("nodeName") String nodeName,
                           @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 }

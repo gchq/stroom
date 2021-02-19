@@ -40,12 +40,16 @@ import javax.ws.rs.core.MediaType;
 public interface JobResource extends RestResource, DirectRestService {
 
     @GET
-    @Operation(summary = "Lists jobs")
+    @Operation(
+            summary = "Lists jobs",
+            operationId = "listJobs")
     ResultPage<Job> list();
 
     @PUT
     @Path("/{id}/enabled")
-    @Operation(summary = "Sets the enabled status of the job")
+    @Operation(
+            summary = "Sets the enabled status of the job",
+            operationId = "setJobEnabled")
     void setEnabled(@PathParam("id") Integer id,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
 }

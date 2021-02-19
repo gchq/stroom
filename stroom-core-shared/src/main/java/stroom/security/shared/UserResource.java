@@ -28,19 +28,25 @@ import javax.ws.rs.core.MediaType;
 public interface UserResource extends RestResource, DirectRestService {
 
     @GET
-    @Operation(summary = "Find the users matching the supplied criteria")
+    @Operation(
+            summary = "Find the users matching the supplied criteria",
+            operationId = "findUsers")
     List<User> find(@QueryParam("name") String name,
                     @QueryParam("isGroup") Boolean isGroup,
                     @QueryParam("uuid") String uuid);
 
     @POST
     @Path("/find")
-    @Operation(summary = "Find the users matching the supplied criteria")
+    @Operation(
+            summary = "Find the users matching the supplied criteria",
+            operationId = "findUsersByCriteria")
     ResultPage<User> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
 
     @GET
     @Path("/{userUuid}")
-    @Operation(summary = "Fetches the user with the supplied UUID")
+    @Operation(
+            summary = "Fetches the user with the supplied UUID",
+            operationId = "fetchUser")
     User fetch(@PathParam("userUuid") String userUuid);
 
 //    @GET
@@ -57,35 +63,47 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/create/{name}/{isGroup}")
-    @Operation(summary = "Creates a user or group with the supplied name")
+    @Operation(
+            summary = "Creates a user or group with the supplied name",
+            operationId = "createUser")
     User create(@PathParam("name") String name,
                 @PathParam("isGroup") Boolean isGroup);
 
     @DELETE
     @Path("/{uuid}")
-    @Operation(summary = "Deletes the user with the supplied UUID")
+    @Operation(
+            summary = "Deletes the user with the supplied UUID",
+            operationId = "deleteUser")
     Boolean deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userName}/status")
-    @Operation(summary = "Enables/disables the Stroom user with the supplied username")
+    @Operation(
+            summary = "Enables/disables the Stroom user with the supplied username",
+            operationId = "setUserStatus")
     Boolean setStatus(@PathParam("userName") String userName,
                       @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
-    @Operation(summary = "Adds user with UUID userUuid to the group with UUID groupUuid")
+    @Operation(
+            summary = "Adds user with UUID userUuid to the group with UUID groupUuid",
+            operationId = "addUserToGroup")
     Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
                            @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
-    @Operation(summary = "Removes user with UUID userUuid from the group with UUID groupUuid")
+    @Operation(
+            summary = "Removes user with UUID userUuid from the group with UUID groupUuid",
+            operationId = "removeUserFromGroup")
     Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
                                 @PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("associates")
-    @Operation(summary = "Gets a list of associated users")
+    @Operation(
+            summary = "Gets a list of associated users",
+            operationId = "getAssociatedUsers")
     List<String> getAssociates(@QueryParam("filter") String filter);
 }

@@ -42,16 +42,22 @@ public interface StroomIndexQueryResource extends RestResource {
 
     @POST
     @Path("/dataSource")
-    @Operation(summary = "Submit a request for a data source definition, supplying the DocRef for the data source")
+    @Operation(
+            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            operationId = "getStroomIndexDataSource")
     DataSource getDataSource(@Parameter(description = "DocRef", required = true) DocRef docRef);
 
     @POST
     @Path("/search")
-    @Operation(summary = "Submit a search request")
+    @Operation(
+            summary = "Submit a search request",
+            operationId = "searchStroomIndex")
     SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
     @Path("/destroy")
-    @Operation(summary = "Destroy a running query")
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "destroyStroomIndex")
     Boolean destroy(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 }

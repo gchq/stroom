@@ -25,37 +25,49 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/changeDocumentPermissions")
-    @Operation(summary = "Change document permissions")
+    @Operation(
+            summary = "Change document permissions",
+            operationId = "changeDocumentPermissions")
     Boolean changeDocumentPermissions(
             @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
 
     @POST
     @Path("/copyPermissionsFromParent")
-    @Operation(summary = "Copy permissions from parent")
+    @Operation(
+            summary = "Copy permissions from parent",
+            operationId = "copyPermissionFromParent")
     DocumentPermissions copyPermissionFromParent(
             @Parameter(description = "request", required = true) CopyPermissionsFromParentRequest request);
 
 
     @POST
     @Path("/fetchAllDocumentPermissions")
-    @Operation(summary = "Fetch document permissions")
+    @Operation(
+            summary = "Fetch document permissions",
+            operationId = "fetchAllDocumentPermissions")
     DocumentPermissions fetchAllDocumentPermissions(
             @Parameter(description = "request", required = true) FetchAllDocumentPermissionsRequest request);
 
     @POST
     @Path("/checkDocumentPermission")
-    @Operation(summary = "Check document permission")
+    @Operation(
+            summary = "Check document permission",
+            operationId = "checkDocumentPermission")
     Boolean checkDocumentPermission(
             @Parameter(description = "request", required = true) CheckDocumentPermissionRequest request);
 
     @GET
     @Path("/getPermissionForDocType/${docType}")
-    @Operation(summary = "Get all permissions for a given document type")
+    @Operation(
+            summary = "Get all permissions for a given document type",
+            operationId = "getPermissionForDocType")
     List<String> getPermissionForDocType(@PathParam("docType") String docType);
 
     @POST
     @Path("/filterUsers")
-    @Operation(summary = "Get all permissions for a given document type")
+    @Operation(
+            summary = "Get all permissions for a given document type",
+            operationId = "filterUsers")
     List<User> filterUsers(final FilterUsersRequest filterUsersRequest);
 
 }

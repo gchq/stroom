@@ -53,42 +53,56 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @POST
     @Path(PROPERTIES_SUB_PATH)
-    @Operation(summary = "List all properties matching the criteria on the current node.")
+    @Operation(
+            summary = "List all properties matching the criteria on the current node.",
+            operationId = "listConfigProperties")
     ListConfigResponse list(
             final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "List all properties matching the criteria on the requested node.")
+    @Operation(
+            summary = "List all properties matching the criteria on the requested node.",
+            operationId = "listConfigPropertiesByNode")
     ListConfigResponse listByNode(
             final @PathParam("nodeName") String nodeName,
             final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
-    @Operation(summary = "Fetch a property by its name, e.g. 'stroom.path.home'")
+    @Operation(
+            summary = "Fetch a property by its name, e.g. 'stroom.path.home'",
+            operationId = "getConfigPropertyByName")
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
-    @Operation(summary = "Get the property value from the YAML configuration in the specified node.")
+    @Operation(
+            summary = "Get the property value from the YAML configuration in the specified node.",
+            operationId = "getConfigYamlValueByNodeAndName")
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
     @POST
-    @Operation(summary = "Create a configuration property")
+    @Operation(
+            summary = "Create a configuration property",
+            operationId = "createConfigProperty")
     ConfigProperty create(
             @Parameter(description = "configProperty", required = true) final ConfigProperty configProperty);
 
     @PUT
     @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
-    @Operation(summary = "Update a configuration property")
+    @Operation(
+            summary = "Update a configuration property",
+            operationId = "updateConfigProperty")
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
                           final @Parameter(description = "configProperty", required = true)
                                   ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)
-    @Operation(summary = "Fetch the UI configuration")
+    @Operation(
+            summary = "Fetch the UI configuration",
+            operationId = "fetchUiConfig")
     UiConfig fetchUiConfig();
 }

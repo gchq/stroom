@@ -47,28 +47,38 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     @GET
     @Path("/{uuid}")
-    @Operation(summary = "Fetch a rules doc by its UUID")
+    @Operation(
+            summary = "Fetch a rules doc by its UUID",
+            operationId = "fetchReceiveDataRules")
     ReceiveDataRules fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @Operation(summary = "Update a rules doc")
+    @Operation(
+            summary = "Update a rules doc",
+            operationId = "updateReceiveDataRules")
     ReceiveDataRules update(@PathParam("uuid") String uuid,
                             @Parameter(description = "doc", required = true) ReceiveDataRules doc);
 
     @GET
     @Path("/list")
-    @Operation(summary = "Submit a request for a list of doc refs held by this service")
+    @Operation(
+            summary = "Submit a request for a list of doc refs held by this service",
+            operationId = "listReceiveDataRules")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @Operation(summary = "Submit an import request")
+    @Operation(
+            summary = "Submit an import request",
+            operationId = "importReceiveDataRules")
     DocRef importDocument(
             @Parameter(description = "DocumentData", required = true) Base64EncodedDocumentData documentData);
 
     @POST
     @Path("/export")
-    @Operation(summary = "Submit an export request")
+    @Operation(
+            summary = "Submit an export request",
+            operationId = "exportReceiveDataRules")
     Base64EncodedDocumentData exportDocument(@Parameter(description = "DocRef", required = true) DocRef docRef);
 }
