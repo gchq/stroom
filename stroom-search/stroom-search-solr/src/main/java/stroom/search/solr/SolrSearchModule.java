@@ -22,7 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.SolrSearchResponseCreatorManager;
-import stroom.search.solr.search.StroomSolrIndexQueryResource;
+import stroom.search.solr.search.StroomSolrIndexQueryResourceImpl;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -65,7 +65,7 @@ public class SolrSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(SolrIndexResourceImpl.class)
-                .bind(StroomSolrIndexQueryResource.class);
+                .bind(StroomSolrIndexQueryResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
@@ -84,6 +84,7 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class DataRetention extends RunnableWrapper {
+
         @Inject
         DataRetention(final SolrIndexRetentionExecutor dataRetentionExecutor) {
             super(dataRetentionExecutor::exec);
@@ -91,6 +92,7 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {
+
         @Inject
         EvictExpiredElements(final SolrSearchResponseCreatorManager manager) {
             super(manager::evictExpiredElements);
@@ -98,6 +100,7 @@ public class SolrSearchModule extends AbstractModule {
     }
 
     private static class SolrIndexOptimiseExecutorJob extends RunnableWrapper {
+
         @Inject
         SolrIndexOptimiseExecutorJob(final SolrIndexOptimiseExecutor executor) {
             super(executor::exec);

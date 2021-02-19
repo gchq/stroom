@@ -202,7 +202,7 @@ class TestRestResources {
             if (isInterface) {
                 testInterface(resourceClass, typeName, softAssertions);
             } else {
-//                testImplementation(resourceClass, typeName, softAssertions);
+                testImplementation(resourceClass, typeName, softAssertions);
             }
         });
     }
@@ -355,24 +355,24 @@ class TestRestResources {
                 annotationClass -> annotationClass.getPackageName().contains("swagger"),
                 "Swagger");
 
-        // Check auto logging
-        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
-        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
-
-        // Check that all member variables are providers.
-        assertProviders(resourceClass, softAssertions);
-
-        Arrays.stream(resourceClass.getMethods())
-                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
-                .forEach(method -> {
-                    final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
-
-                    softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
-                            .withFailMessage(() -> "Method " + method.getName() +
-                                    "(...) or its class must be annotated with @AutoLogged")
-                            .isTrue();
-                });
+//        // Check auto logging
+//        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+//        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
+//
+//        // Check that all member variables are providers.
+//        assertProviders(resourceClass, softAssertions);
+//
+//        Arrays.stream(resourceClass.getMethods())
+//                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+//                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
+//                .forEach(method -> {
+//                    final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
+//
+//                    softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
+//                            .withFailMessage(() -> "Method " + method.getName() +
+//                                    "(...) or its class must be annotated with @AutoLogged")
+//                            .isTrue();
+//                });
     }
 
     private void assertProviders(final Class<? extends RestResource> resourceClass,

@@ -32,7 +32,7 @@ import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
-import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
@@ -77,6 +77,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
 
     // This name is used by dropwizard metrics
@@ -125,7 +126,7 @@ public class ProxyModule extends AbstractModule {
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(FeedStatusResource.class)
+                .bind(FeedStatusResourceImpl.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
@@ -144,7 +145,7 @@ public class ProxyModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
-                .bind(FeedStatusResource.class);
+                .bind(FeedStatusResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

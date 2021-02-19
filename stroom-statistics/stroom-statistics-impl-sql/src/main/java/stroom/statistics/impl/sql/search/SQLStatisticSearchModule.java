@@ -40,7 +40,7 @@ public class SQLStatisticSearchModule extends AbstractModule {
                 .addBinding(SqlStatisticsSearchResponseCreatorManager.class);
 
         RestResourcesBinder.create(binder())
-                .bind(SqlStatisticsQueryResource.class);
+                .bind(SqlStatisticsQueryResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
