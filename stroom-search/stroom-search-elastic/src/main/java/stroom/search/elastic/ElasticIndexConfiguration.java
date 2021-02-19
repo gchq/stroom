@@ -17,12 +17,13 @@
 
 package stroom.search.elastic;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.search.elastic.shared.ElasticIndex;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 
 import javax.inject.Inject;
 
@@ -31,12 +32,19 @@ import javax.inject.Inject;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.search.elastic"}, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@ComponentScan(
+    basePackages = {"stroom.search.elastic"},
+    excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class)
+    }
+)
 public class ElasticIndexConfiguration {
     @Inject
     public ElasticIndexConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                     final ImportExportActionHandlers importExportActionHandlers) {
-        //explorerActionHandlers.add(10, ElasticIndex.ENTITY_TYPE, "Elastic Index", null);
+                                     final ImportExportActionHandlers importExportActionHandlers,
+                                     final ElasticIndexStore elasticIndexStore
+    ) {
+        explorerActionHandlers.add(10, ElasticIndex.ENTITY_TYPE, "Elasticsearch Index", elasticIndexStore);
+        importExportActionHandlers.add(ElasticIndex.ENTITY_TYPE, elasticIndexStore);
     }
 }
