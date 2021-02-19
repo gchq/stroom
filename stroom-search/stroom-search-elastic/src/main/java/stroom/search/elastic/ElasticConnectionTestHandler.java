@@ -49,7 +49,7 @@ public class ElasticConnectionTestHandler extends AbstractTaskHandler<ElasticCon
             sb.append("\nNode name: ");
             sb.append(response.getNodeName());
             sb.append("\nVersion: ");
-            sb.append(response.getVersion().toString());
+            sb.append(response.getVersion().getNumber());
 
             return SharedString.wrap(sb.toString());
         } catch (final Exception e) {
