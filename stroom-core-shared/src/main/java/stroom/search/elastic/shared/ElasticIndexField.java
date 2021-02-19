@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,10 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -45,8 +41,6 @@ import java.util.Objects;
 })
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
-
-    public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
 
     private ElasticIndexFieldType fieldUse = ElasticIndexFieldType.TEXT;
     private String fieldName;

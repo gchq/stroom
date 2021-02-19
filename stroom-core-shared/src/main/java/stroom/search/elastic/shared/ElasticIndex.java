@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.shared;
 
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -23,9 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "retentionExpression"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "fields", "retentionExpression"})
 public class ElasticIndex extends Doc {
     public static final String ENTITY_TYPE = "ElasticIndex";
 
@@ -34,10 +37,14 @@ public class ElasticIndex extends Doc {
     private String description;
     private String indexName;
     private ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
-
+    private List<ElasticIndexField> fields;
+    private List<DataSourceField> dataSourceFields;
     private ExpressionOperator retentionExpression;
 
-    public ElasticIndex() { }
+    public ElasticIndex() {
+        this.fields = new ArrayList<>();
+        this.dataSourceFields = new ArrayList<>();
+    }
 
     public String getDescription() { return description; }
 
@@ -65,15 +72,29 @@ public class ElasticIndex extends Doc {
         this.connectionConfig = connectionConfig;
     }
 
+    @JsonProperty("fields")
+    public List<ElasticIndexField> getFields() {
+        return fields;
+    }
+
+    @JsonProperty("fields")
+    public void setFields(final List<ElasticIndexField> fields) {
+        this.fields = fields;
+    }
+
+    @JsonProperty("dataSourceFields")
+    public List<DataSourceField> getDataSourceFields() { return dataSourceFields; }
+
+    @JsonProperty("dataSourceFields")
+    public void setDataSourceFields(final List<DataSourceField> dataSourceFields) { this.dataSourceFields = dataSourceFields; }
+
     @JsonProperty("retentionExpression")
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
     }
 
     @JsonProperty("retentionExpression")
-    public void setRetentionExpression(final ExpressionOperator retentionExpression) {
-        this.retentionExpression = retentionExpression;
-    }
+    public void setRetentionExpression(final ExpressionOperator retentionExpression) { this.retentionExpression = retentionExpression; }
 
     @JsonIgnore
     @Override

@@ -40,8 +40,8 @@ public class ElasticConnectionTestHandler extends AbstractTaskHandler<ElasticCon
             MainResponse response = elasticClient.info(RequestOptions.DEFAULT);
 
             final StringBuilder sb = new StringBuilder();
-            sb.append("Cluster URL: ");
-            sb.append(connectionConfig.toUrl());
+            sb.append("Cluster URLs: ");
+            sb.append(connectionConfig.getConnectionUrls());
             sb.append("\nCluster name: ");
             sb.append(response.getClusterName());
             sb.append("\nCluster UUID: ");

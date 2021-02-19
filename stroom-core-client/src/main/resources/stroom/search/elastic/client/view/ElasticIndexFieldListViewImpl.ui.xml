@@ -9,14 +9,14 @@
         background-color: white;
         }
 
-        .synchState {
+        .statusMessage {
         padding: 5px;
         }
     </ui:style>
     <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
         <g:south size="200">
             <g:MaxScrollPanel>
-                <g:HTML ui:field="synchState" styleName="{style.synchState}"/>
+                <g:HTML ui:field="statusMessage" styleName="{style.statusMessage}"/>
             </g:MaxScrollPanel>
         </g:south>
         <g:center>

@@ -32,25 +32,13 @@
                     <g:row>
                         <g:cell>Index:</g:cell>
                         <g:customCell>
-                            <g:TextBox ui:field="collection" width="400px"/>
+                            <g:TextBox ui:field="indexName" width="400px"/>
                         </g:customCell>
                     </g:row>
                     <g:row>
-                        <g:cell>Scheme:</g:cell>
+                        <g:cell>Connection URLs:</g:cell>
                         <g:customCell>
-                            <g:TextArea ui:field="scheme" width="400px"/>
-                        </g:customCell>
-                    </g:row>
-                    <g:row>
-                        <g:cell>Hostname or FQDN:</g:cell>
-                        <g:customCell>
-                            <g:TextArea ui:field="host" width="400px"/>
-                        </g:customCell>
-                    </g:row>
-                    <g:row>
-                        <g:cell>Port:</g:cell>
-                        <g:customCell>
-                            <g:TextArea ui:field="port" width="400px"/>
+                            <g:TextArea ui:field="connectionUrls" width="400px"/>
                         </g:customCell>
                     </g:row>
                     <g:row>

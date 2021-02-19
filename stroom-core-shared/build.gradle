@@ -32,10 +32,8 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
 
+    permitTestUnusedDeclared project(':stroom-test-common')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-
-    testCompile libs.commons_io
     testCompile libs.junit
 }

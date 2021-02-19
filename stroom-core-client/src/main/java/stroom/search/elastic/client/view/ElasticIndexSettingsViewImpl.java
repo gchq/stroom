@@ -17,12 +17,9 @@
 package stroom.search.elastic.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
-import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
-import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -46,17 +43,9 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextArea description;
     @UiField
-    TextBox collection;
+    TextBox indexName;
     @UiField
-    ItemListBox<InstanceType> instanceType;
-    @UiField
-    TextArea ElasticUrls;
-    @UiField
-    TickBox useZk;
-    @UiField
-    TextArea zkHosts;
-    @UiField
-    TextArea zkPath;
+    TextArea connectionUrls;
     @UiField
     Button testConnection;
     @UiField
@@ -66,16 +55,9 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     public ElasticIndexSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        instanceType.addItem(InstanceType.SINGLE_NOOE);
-        instanceType.addItem(InstanceType.Elastic_CLOUD);
-
         description.addKeyDownHandler(e -> fireChange());
-        collection.addKeyDownHandler(e -> fireChange());
-        instanceType.addSelectionHandler(e -> fireChange());
-        ElasticUrls.addKeyDownHandler(e -> fireChange());
-        useZk.addValueChangeHandler(e -> fireChange());
-        zkHosts.addKeyDownHandler(e -> fireChange());
-        zkPath.addKeyDownHandler(e -> fireChange());
+        indexName.addKeyDownHandler(e -> fireChange());
+        connectionUrls.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -104,74 +86,26 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public String getCollection() {
-        return collection.getText().trim();
+    public String getIndexName() {
+        return indexName.getText().trim();
     }
 
     @Override
-    public void setCollection(final String collection) {
-        this.collection.setText(collection);
+    public void setIndexName(final String indexName) {
+        this.indexName.setText(indexName);
     }
 
     @Override
-    public InstanceType getInstanceType() {
-        return instanceType.getSelectedItem();
+    public List<String> getConnectionUrls() {
+        return Arrays.stream(connectionUrls.getText().split("\n")).collect(Collectors.toList());
     }
 
     @Override
-    public void setInstanceType(final InstanceType instanceType) {
-        this.instanceType.setSelectedItem(instanceType);
-    }
-
-    @Override
-    public List<String> getElasticUrls() {
-        return Arrays.stream(ElasticUrls.getText().split("\n")).collect(Collectors.toList());
-    }
-
-    @Override
-    public void setElasticUrls(final List<String> ElasticUrls) {
-        if (ElasticUrls == null) {
-            this.ElasticUrls.setText("");
+    public void setConnectionUrls(final List<String> connectionUrls) {
+        if (connectionUrls == null) {
+            this.connectionUrls.setText("");
         } else {
-            this.ElasticUrls.setText(String.join("\n", ElasticUrls));
-        }
-    }
-
-    @Override
-    public boolean isUseZk() {
-        return useZk.getBooleanValue();
-    }
-
-    @Override
-    public void setUseZk(final boolean useZk) {
-        this.useZk.setBooleanValue(useZk);
-    }
-
-    @Override
-    public List<String> getZkHosts() {
-        return Arrays.stream(zkHosts.getText().split("\n")).collect(Collectors.toList());
-    }
-
-    @Override
-    public void setZkHosts(final List<String> zkHosts) {
-        if (zkHosts == null) {
-            this.zkHosts.setText("");
-        } else {
-            this.zkHosts.setText(String.join("\n", zkHosts));
-        }
-    }
-
-    @Override
-    public String getZkPath() {
-        return zkPath.getText();
-    }
-
-    @Override
-    public void setZkPath(final String zkPath) {
-        if (zkPath == null) {
-            this.zkPath.setText("");
-        } else {
-            this.zkPath.setText(zkPath);
+            this.connectionUrls.setText(String.join("\n", connectionUrls));
         }
     }
 
@@ -183,11 +117,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
-        instanceType.setEnabled(!readOnly);
-        ElasticUrls.setEnabled(!readOnly);
-        useZk.setEnabled(!readOnly);
-        zkHosts.setEnabled(!readOnly);
-        zkPath.setEnabled(!readOnly);
+        connectionUrls.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

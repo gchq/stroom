@@ -37,19 +37,30 @@ import java.util.concurrent.TimeUnit;
 public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 100;
 
+    private final ElasticIndexService elasticIndexService;
+
     private final LoadingCache<DocRef, ElasticIndex> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     ElasticIndexCacheImpl(final CacheManager cacheManager,
-                          final ElasticIndexStore elasticIndexStore) {
+                          final ElasticIndexStore elasticIndexStore,
+                          final ElasticIndexService elasticIndexService
+    ) {
+        this.elasticIndexService = elasticIndexService;
+
         final CacheLoader<DocRef, ElasticIndex> cacheLoader = CacheLoader.from(k -> {
             if (k == null) {
                 throw new NullPointerException("Null key supplied");
             }
 
-            final ElasticIndex loaded = elasticIndexStore.read(k.getUuid());
-            if (loaded == null) {
+            final ElasticIndex index = elasticIndexStore.read(k.getUuid());
+
+            // Query field mappings and cache with the index
+            index.setFields(elasticIndexService.getFields(index));
+            index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
+
+            if (index == null) {
                 throw new NullPointerException("No Elasticsearch index can be found for: " + k);
             }
 

@@ -17,18 +17,15 @@
 package stroom.search.elastic.client.gin;
 
 import stroom.search.elastic.client.ElasticIndexPlugin;
-import stroom.search.elastic.client.presenter.ElasticIndexFieldEditPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter;
 
 import com.google.gwt.inject.client.AsyncProvider;
 
 public interface ElasticIndexGinjector {
-    AsyncProvider<ElasticIndexPlugin> getSolrIndexPlugin();
+    AsyncProvider<ElasticIndexPlugin> getElasticIndexPlugin();
 
-    AsyncProvider<ElasticIndexPresenter> getSolrIndexPresenter();
+    AsyncProvider<ElasticIndexPresenter> getElasticIndexPresenter();
 
-    AsyncProvider<ElasticIndexSettingsPresenter> getSolrIndexSettingsPresenter();
-
-    AsyncProvider<ElasticIndexFieldEditPresenter> getSolrIndexFieldEditPresenter();
+    AsyncProvider<ElasticIndexSettingsPresenter> getElasticIndexSettingsPresenter();
 }

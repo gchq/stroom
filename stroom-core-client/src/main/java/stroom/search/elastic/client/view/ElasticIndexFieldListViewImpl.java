@@ -34,7 +34,7 @@ public class ElasticIndexFieldListViewImpl extends ViewImpl implements ElasticIn
     @UiField
     ResizeSimplePanel dataGrid;
     @UiField
-    HTML synchState;
+    HTML statusMessage;
 
     @Inject
     public ElasticIndexFieldListViewImpl(final Binder binder) {
@@ -52,8 +52,8 @@ public class ElasticIndexFieldListViewImpl extends ViewImpl implements ElasticIn
     }
 
     @Override
-    public void setSynchState(final String syncState) {
-        this.synchState.setHTML(SafeHtmlUtils.fromTrustedString(syncState));
+    public void setStatusMessage(final String statusMessage) {
+        this.statusMessage.setHTML(SafeHtmlUtils.fromTrustedString(statusMessage));
     }
 
     public interface Binder extends UiBinder<Widget, ElasticIndexFieldListViewImpl> {

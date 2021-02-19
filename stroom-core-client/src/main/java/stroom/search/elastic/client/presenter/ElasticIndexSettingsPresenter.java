@@ -27,8 +27,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.search.elastic.shared.ElasticConnectionTestAction;
 import stroom.search.elastic.shared.ElasticIndex;
-import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,8 +45,10 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     public ElasticIndexSettingsPresenter(final EventBus eventBus,
                                          final ElasticIndexSettingsView view,
                                          final EditExpressionPresenter editExpressionPresenter,
-                                         final ClientDispatchAsync dispatcher) {
+                                         final ClientDispatchAsync dispatcher
+    ) {
         super(eventBus, view);
+
         this.editExpressionPresenter = editExpressionPresenter;
         this.dispatcher = dispatcher;
 
@@ -79,41 +81,34 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndex index) {
-        final ElasticConnectionConfig connectionConfig = index.getElasticConnectionConfig();
+        final ElasticConnectionConfig connectionConfig = index.getConnectionConfig();
         if (connectionConfig != null) {
-            getView().setInstanceType(connectionConfig.getInstanceType());
-            getView().setElasticUrls(connectionConfig.getElasticUrls());
-            getView().setZkHosts(connectionConfig.getZkHosts());
-            getView().setZkPath(connectionConfig.getZkPath());
-            getView().setUseZk(connectionConfig.isUseZk());
+            getView().setConnectionUrls(connectionConfig.getConnectionUrls());
         }
 
         getView().setDescription(index.getDescription());
-        getView().setCollection(index.getCollection());
+        getView().setIndexName(index.getIndexName());
 
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
         }
-        editExpressionPresenter.init(dispatcher, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
+        editExpressionPresenter.init(dispatcher, docRef, index.getDataSourceFields());
         editExpressionPresenter.read(index.getRetentionExpression());
     }
 
     @Override
     protected void onWrite(final ElasticIndex index) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
-        connectionConfig.setInstanceType(getView().getInstanceType());
-        connectionConfig.setElasticUrls(getView().getElasticUrls());
-        connectionConfig.setZkHosts(getView().getZkHosts());
-        connectionConfig.setZkPath(getView().getZkPath());
-        connectionConfig.setUseZk(getView().isUseZk());
-        index.setElasticConnectionConfig(connectionConfig);
+        connectionConfig.setConnectionUrls(getView().getConnectionUrls());
+        index.setConnectionConfig(connectionConfig);
 
         index.setDescription(getView().getDescription().trim());
-        if (getView().getCollection().trim().length() == 0) {
-            index.setCollection(null);
+        if (getView().getIndexName().trim().length() == 0) {
+            index.setIndexName(null);
         } else {
-            index.setCollection(getView().getCollection().trim());
+            index.setIndexName(getView().getIndexName().trim());
         }
+
         index.setRetentionExpression(editExpressionPresenter.write());
     }
 
@@ -122,29 +117,13 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         void setDescription(String description);
 
-        String getCollection();
+        String getIndexName();
 
-        void setCollection(String collection);
+        void setIndexName(String indexName);
 
-        InstanceType getInstanceType();
+        List<String> getConnectionUrls();
 
-        void setInstanceType(InstanceType instanceType);
-
-        List<String> getElasticUrls();
-
-        void setElasticUrls(List<String> ElasticUrls);
-
-        boolean isUseZk();
-
-        void setUseZk(boolean useZk);
-
-        List<String> getZkHosts();
-
-        void setZkHosts(List<String> zkHosts);
-
-        String getZkPath();
-
-        void setZkPath(String zkPath);
+        void setConnectionUrls(List<String> connectionUrls);
 
         void setRententionExpressionView(final View view);
     }

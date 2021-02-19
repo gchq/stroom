@@ -132,10 +132,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 try {
                     final boolean pingSucceeded = elasticClient.ping(RequestOptions.DEFAULT);
                     if (pingSucceeded) {
-                        LOGGER.debug(() -> "Ping to Elasticsearch cluster: '" + connectionConfig.toUrl() + "' succeeded");
+                        LOGGER.debug(() -> "Ping to Elasticsearch cluster: '" + connectionConfig.getConnectionUrls() + "' succeeded");
                     }
                     else {
-                        throw new IOException("Failed to ping Elasticsearch cluster: '" + connectionConfig.toUrl() + "'");
+                        throw new IOException("Failed to ping Elasticsearch cluster: '" + connectionConfig.getConnectionUrls() + "'");
                     }
                 } catch (final IOException | RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);

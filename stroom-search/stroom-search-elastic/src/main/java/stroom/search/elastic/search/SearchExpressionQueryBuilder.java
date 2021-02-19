@@ -114,8 +114,7 @@ public class SearchExpressionQueryBuilder {
         String value = expressionTerm.getValue();
         final DocRef docRef = expressionTerm.getDocRef();
 
-        // Clean strings to remove unwanted whitespace that the user may have
-        // added accidentally.
+        // Clean strings to remove unwanted whitespace that the user may have added accidentally
         if (field != null) {
             field = field.trim();
         }
@@ -202,8 +201,9 @@ public class SearchExpressionQueryBuilder {
                             .termQuery(fieldName, valueAsDate);
                 case CONTAINS:
                 case IN:
+                    final long[] dates = getDates(fieldName, value);
                     return QueryBuilders
-                            .termsQuery(fieldName, getDates(fieldName, value));
+                            .termsQuery(fieldName, dates);
                 case GREATER_THAN:
                     return QueryBuilders
                             .rangeQuery(fieldName)
@@ -221,7 +221,7 @@ public class SearchExpressionQueryBuilder {
                             .rangeQuery(fieldName)
                             .lte(valueAsDate);
                 case BETWEEN:
-                    final Long[] between = getDates(fieldName, value);
+                    final long[] between = getDates(fieldName, value);
                     if (between.length != 2) {
                         throw new IllegalArgumentException("Two dates needed for between query; " + between.length + " provided");
                     }
@@ -300,10 +300,10 @@ public class SearchExpressionQueryBuilder {
     /**
      * Tokenize an expression and convert each item to a date `long`
      */
-    private Long[] getDates(final String fieldName, final String expr) {
+    private long[] getDates(final String fieldName, final String expr) {
         return Arrays.stream(tokenizeExpression(expr))
-            .map(token -> getDate(fieldName, token))
-            .toArray(Long[]::new);
+            .mapToLong(token -> getDate(fieldName, token))
+            .toArray();
     }
 
     private long getDate(final String fieldName, final String value) {
@@ -348,7 +348,7 @@ public class SearchExpressionQueryBuilder {
                 }
             }
             else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-                final Long[] dates = getDates(fieldName, line);
+                final long[] dates = getDates(fieldName, line);
                 for (final Long date : dates) {
                     mustQuery.must(
                         QueryBuilders.termQuery(fieldName, date)

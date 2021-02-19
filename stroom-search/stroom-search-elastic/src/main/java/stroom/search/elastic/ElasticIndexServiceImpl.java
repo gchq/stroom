@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,11 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ElasticIndexField> getFields(final ElasticIndex index) {
+        return new ArrayList<>(getFieldsMap(index).values());
     }
 
     /**
