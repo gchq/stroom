@@ -2,7 +2,6 @@
 #
 # Tells the user if stroom is running or not.
 
-
 echo_usage() {
   echo -e "${GREEN}This script starts Stroom${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
@@ -20,11 +19,11 @@ show_status(){
   local -r NOT_RUNNING_MESSAGE="Stroom is not running"
   local -r RUNNING_MESSAGE="Stroom is running under pid"
 
-  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
+  if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
     info "${NOT_RUNNING_MESSAGE}"
   else # If there is a pid file we need to deal with it
     local stroom_pid
-    stroom_pid="$(cat "${STROOM_PID_FILE}")";
+    stroom_pid="$(cat "${stroom_pid_file}")";
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       info "${NOT_RUNNING_MESSAGE}"
@@ -33,7 +32,8 @@ show_status(){
       then
         info "${RUNNING_MESSAGE} ${BLUE}${stroom_pid}${NC}"
       else
-        warn "Stroom was running as ${BLUE}${stroom_pid}${NC} but it looks like it stopped. You may want to check the logs to see what happened."
+        warn "Stroom was running as ${BLUE}${stroom_pid}${NC} but it looks" \
+          "like it stopped. You may want to check the logs to see what happened."
       fi
     fi
   fi
@@ -41,10 +41,17 @@ show_status(){
 }
 
 main() {
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
+
   # shellcheck disable=SC1091
-  source bin/utils.sh
+  source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source config/scripts.env
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+
+  # shellcheck disable=SC2153
+  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
