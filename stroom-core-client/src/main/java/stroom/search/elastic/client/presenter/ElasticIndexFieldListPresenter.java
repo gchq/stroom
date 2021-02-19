@@ -39,6 +39,7 @@ import java.util.function.Function;
 
 public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListPresenter.ElasticIndexFieldListView> implements HasDocumentRead<ElasticIndex> {
     private final DataGridView<ElasticIndexField> dataGridView;
+    private ElasticIndex index;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
 
@@ -108,15 +109,20 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
 
     @Override
     public void read(final DocRef docRef, final ElasticIndex index) {
-        fields = index.getFields();
+        this.index = index;
 
-        final StringBuilder sb = new StringBuilder();
-        String now = ClientDateUtil.toISOString(System.currentTimeMillis());
-        sb
-            .append("Field list updated at: ")
-            .append(now);
+        if (index != null) {
+            fields = index.getFields();
 
-        getView().setStatusMessage(sb.toString());
+            final StringBuilder sb = new StringBuilder();
+            String now = ClientDateUtil.toISOString(System.currentTimeMillis());
+            sb
+                .append("Field list updated at: ")
+                .append(now);
+
+            getView().setStatusMessage(sb.toString());
+        }
+
         refresh();
     }
 
