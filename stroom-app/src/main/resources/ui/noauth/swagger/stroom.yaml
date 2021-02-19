@@ -130,7 +130,7 @@ paths:
       - Account
   /activity/v1:
     get:
-      operationId: list
+      operationId: listActivities
       parameters:
       - in: query
         name: filter
@@ -147,7 +147,7 @@ paths:
       tags:
       - Activities
     post:
-      operationId: create
+      operationId: createActivity
       responses:
         default:
           content:
@@ -210,7 +210,7 @@ paths:
       - Activities
   /activity/v1/fields:
     get:
-      operationId: listFieldDefinitions
+      operationId: listActivityFieldDefinitions
       responses:
         default:
           content:
@@ -225,7 +225,7 @@ paths:
       - Activities
   /activity/v1/validate:
     post:
-      operationId: validate
+      operationId: validateActivity
       requestBody:
         content:
           application/json:
@@ -245,7 +245,7 @@ paths:
       - Activities
   /activity/v1/{id}:
     delete:
-      operationId: delete
+      operationId: deleteActivity
       parameters:
       - in: path
         name: id
@@ -264,7 +264,7 @@ paths:
       tags:
       - Activities
     get:
-      operationId: read
+      operationId: fetchActivity
       parameters:
       - in: path
         name: id
@@ -279,11 +279,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activity'
           description: default response
-      summary: Get an Activity
+      summary: Fetch an Activity
       tags:
       - Activities
     put:
-      operationId: update
+      operationId: updateActivity
       parameters:
       - in: path
         name: id
@@ -308,7 +308,7 @@ paths:
       - Activities
   /annotation/v1:
     get:
-      operationId: get
+      operationId: getAnnotationDetail
       parameters:
       - in: query
         name: annotationId
@@ -326,7 +326,7 @@ paths:
       tags:
       - Annotations
     post:
-      operationId: createEntry
+      operationId: createAnnotationEntry
       requestBody:
         content:
           application/json:
@@ -346,7 +346,7 @@ paths:
       - Annotations
   /annotation/v1/comment:
     get:
-      operationId: getComment
+      operationId: getAnnotationComments
       parameters:
       - in: query
         name: filter
@@ -366,7 +366,7 @@ paths:
       - Annotations
   /annotation/v1/link:
     post:
-      operationId: link
+      operationId: linkAnnotationEvents
       requestBody:
         content:
           application/json:
@@ -388,7 +388,7 @@ paths:
       - Annotations
   /annotation/v1/linkedEvents:
     get:
-      operationId: getLinkedEvents
+      operationId: getAnnotationLinkedEvents
       parameters:
       - in: query
         name: annotationId
@@ -409,7 +409,7 @@ paths:
       - Annotations
   /annotation/v1/setAssignedTo:
     post:
-      operationId: setAssignedTo
+      operationId: setAnnotationAssignedTo
       requestBody:
         content:
           application/json:
@@ -430,7 +430,7 @@ paths:
       - Annotations
   /annotation/v1/setStatus:
     post:
-      operationId: setStatus
+      operationId: setAnnotationStatus
       requestBody:
         content:
           application/json:
@@ -451,7 +451,7 @@ paths:
       - Annotations
   /annotation/v1/status:
     get:
-      operationId: getStatus
+      operationId: getAnnotationDStatus
       parameters:
       - in: query
         name: filter
@@ -471,7 +471,7 @@ paths:
       - Annotations
   /annotation/v1/unlink:
     post:
-      operationId: unlink
+      operationId: unlinkAnnotationEvents
       requestBody:
         content:
           application/json:
@@ -655,7 +655,7 @@ paths:
       - Authentication
   /cache/v1:
     delete:
-      operationId: clear
+      operationId: clearCache
       parameters:
       - in: query
         name: cacheName
@@ -677,7 +677,7 @@ paths:
       tags:
       - Caches
     get:
-      operationId: list_1
+      operationId: listCaches
       responses:
         default:
           content:
@@ -692,7 +692,7 @@ paths:
       - Caches
   /cache/v1/info:
     get:
-      operationId: info
+      operationId: getCacheInfo
       parameters:
       - in: query
         name: cacheName
@@ -714,7 +714,7 @@ paths:
       - Caches
   /cluster/lock/v1/keepALive/{nodeName}:
     put:
-      operationId: keepLockAlive
+      operationId: keepClusterLockAlive
       parameters:
       - in: path
         name: nodeName
@@ -740,7 +740,7 @@ paths:
       - Cluster lock
   /cluster/lock/v1/release/{nodeName}:
     put:
-      operationId: releaseLock
+      operationId: releaseClusterLock
       parameters:
       - in: path
         name: nodeName
@@ -766,7 +766,7 @@ paths:
       - Cluster lock
   /cluster/lock/v1/try/{nodeName}:
     put:
-      operationId: tryLock
+      operationId: tryClusterLock
       parameters:
       - in: path
         name: nodeName
@@ -792,7 +792,7 @@ paths:
       - Cluster lock
   /config/v1:
     post:
-      operationId: create_1
+      operationId: createConfigProperty
       requestBody:
         content:
           application/json:
@@ -812,7 +812,7 @@ paths:
       - Global Config
   /config/v1/clusterProperties/{propertyName}:
     put:
-      operationId: update_1
+      operationId: updateConfigProperty
       parameters:
       - in: path
         name: propertyName
@@ -838,7 +838,7 @@ paths:
       - Global Config
   /config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}:
     get:
-      operationId: getYamlValueByNodeAndName
+      operationId: getConfigYamlValueByNodeAndName
       parameters:
       - in: path
         name: propertyName
@@ -876,7 +876,7 @@ paths:
       - Global Config
   /config/v1/nodeProperties/{nodeName}:
     post:
-      operationId: listByNode
+      operationId: listConfigPropertiesByNode
       parameters:
       - in: path
         name: nodeName
@@ -902,7 +902,7 @@ paths:
       - Global Config
   /config/v1/properties:
     post:
-      operationId: list_2
+      operationId: listConfigProperties
       requestBody:
         content:
           application/json:
@@ -922,7 +922,7 @@ paths:
       - Global Config
   /config/v1/properties/{propertyName}:
     get:
-      operationId: getPropertyByName
+      operationId: getConfigPropertyByName
       parameters:
       - in: path
         name: propertyName
@@ -941,7 +941,7 @@ paths:
       - Global Config
   /content/v1/confirmImport:
     post:
-      operationId: confirmImport
+      operationId: confirmContentImport
       requestBody:
         content:
           application/json:
@@ -983,7 +983,7 @@ paths:
       - Content
   /content/v1/fetchDependencies:
     post:
-      operationId: fetchDependencies
+      operationId: fetchContentDependencies
       requestBody:
         content:
           application/json:
@@ -1023,7 +1023,7 @@ paths:
       - Content
   /dashboard/v1/downloadQuery:
     post:
-      operationId: downloadQuery
+      operationId: downloadDashboardQuery
       requestBody:
         content:
           application/json:
@@ -1043,7 +1043,7 @@ paths:
       - Dashboards
   /dashboard/v1/downloadSearchResults:
     post:
-      operationId: downloadSearchResults
+      operationId: downloadDashboardSearchResults
       requestBody:
         content:
           application/json:
@@ -1078,7 +1078,7 @@ paths:
       - Dashboards
   /dashboard/v1/functions:
     get:
-      operationId: fetchFunctions
+      operationId: fetchDashboardFunctions
       responses:
         default:
           content:
@@ -1093,7 +1093,7 @@ paths:
       - Dashboards
   /dashboard/v1/poll:
     post:
-      operationId: poll
+      operationId: pollDashboardSearchResults
       requestBody:
         content:
           application/json:
@@ -1116,7 +1116,7 @@ paths:
       - Dashboards
   /dashboard/v1/validateExpression:
     post:
-      operationId: validateExpression
+      operationId: validateDashboardExpression
       requestBody:
         content:
           application/json:
@@ -1136,7 +1136,7 @@ paths:
       - Dashboards
   /dashboard/v1/{uuid}:
     get:
-      operationId: fetch_1
+      operationId: fetchDashboard
       parameters:
       - in: path
         name: uuid
@@ -1154,7 +1154,7 @@ paths:
       tags:
       - Dashboards
     put:
-      operationId: update_2
+      operationId: updateDashboard
       parameters:
       - in: path
         name: uuid
@@ -1180,7 +1180,7 @@ paths:
       - Dashboards
   /data/v1/download:
     post:
-      operationId: download
+      operationId: downloadData
       requestBody:
         content:
           application/json:
@@ -1200,7 +1200,7 @@ paths:
       - Data
   /data/v1/fetch:
     post:
-      operationId: fetch_3
+      operationId: fetchData
       requestBody:
         content:
           application/json:
@@ -1220,7 +1220,7 @@ paths:
       - Data
   /data/v1/upload:
     post:
-      operationId: upload
+      operationId: uploadData
       requestBody:
         content:
           application/json:
@@ -1240,7 +1240,7 @@ paths:
       - Data
   /data/v1/{id}/info:
     get:
-      operationId: viewInfo
+      operationId: viewDataInfo
       parameters:
       - in: path
         name: id
@@ -1291,7 +1291,7 @@ paths:
       - Data
   /dataRetentionRules/v1:
     get:
-      operationId: fetch_2
+      operationId: fetchDataRetentionRules
       responses:
         default:
           content:
@@ -1303,7 +1303,7 @@ paths:
       tags:
       - Data Retention Rules
     put:
-      operationId: update_4
+      operationId: updateDataRetentionRules
       requestBody:
         content:
           application/json:
@@ -1323,7 +1323,7 @@ paths:
       - Data Retention Rules
   /dataRetentionRules/v1/impactSummary:
     post:
-      operationId: getRetentionDeletionSummary
+      operationId: getDataRetentionImpactSummary
       requestBody:
         content:
           application/json:
@@ -1343,8 +1343,7 @@ paths:
       - Data Retention Rules
   /dataRetentionRules/v1/impactSummary/{queryId}:
     delete:
-      description: Delete a running query
-      operationId: cancelQuery
+      operationId: stopDataRetentionImpactSummary
       parameters:
       - in: path
         name: queryId
@@ -1358,11 +1357,12 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Stop a running query
       tags:
       - Data Retention Rules
   /dataSource/v1/fetchFields:
     post:
-      operationId: fetchFields
+      operationId: fetchDataSourceFields
       requestBody:
         content:
           application/json:
@@ -1384,7 +1384,7 @@ paths:
       - Data Sources
   /dbStatus/v1:
     get:
-      operationId: getSystemTableStatus
+      operationId: getDbSystemTableStatus
       responses:
         default:
           content:
@@ -1396,7 +1396,7 @@ paths:
       tags:
       - Database Status
     post:
-      operationId: findSystemTableStatus
+      operationId: findDbSystemTableStatus
       requestBody:
         content:
           application/json:
@@ -1416,7 +1416,7 @@ paths:
       - Database Status
   /dictionary/v1/download:
     post:
-      operationId: download_1
+      operationId: downloadDictionary
       requestBody:
         content:
           application/json:
@@ -1434,7 +1434,7 @@ paths:
       - Dictionaries (v1)
   /dictionary/v1/{uuid}:
     get:
-      operationId: fetch_4
+      operationId: fetchDictionary
       parameters:
       - in: path
         name: uuid
@@ -1452,7 +1452,7 @@ paths:
       tags:
       - Dictionaries (v1)
     put:
-      operationId: update_6
+      operationId: updateDictionary
       parameters:
       - in: path
         name: uuid
@@ -1478,7 +1478,7 @@ paths:
       - Dictionaries (v1)
   /entityEvent/v1/{nodeName}:
     put:
-      operationId: fireEvent
+      operationId: fireEntityEvent
       parameters:
       - in: path
         name: nodeName
@@ -1504,7 +1504,7 @@ paths:
       - Entity Events
   /explorer/v2/copy:
     post:
-      operationId: copy
+      operationId: copyExplorerItems
       requestBody:
         content:
           application/json:
@@ -1524,7 +1524,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/create:
     post:
-      operationId: create_4
+      operationId: createExplorerItem
       requestBody:
         content:
           application/json:
@@ -1544,7 +1544,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/delete:
     delete:
-      operationId: delete_3
+      operationId: deleteExplorerItems
       requestBody:
         content:
           application/json:
@@ -1564,7 +1564,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/fetchDocRefs:
     post:
-      operationId: fetchDocRefs
+      operationId: fetchExplorerDocRefs
       requestBody:
         content:
           application/json:
@@ -1590,7 +1590,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/fetchDocumentTypes:
     get:
-      operationId: fetchDocumentTypes
+      operationId: fetchExplorerDocumentTypes
       responses:
         default:
           content:
@@ -1603,7 +1603,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/fetchExplorerNodes:
     post:
-      operationId: fetch_5
+      operationId: fetchExplorerNodes
       requestBody:
         content:
           application/json:
@@ -1648,7 +1648,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/info:
     post:
-      operationId: info_1
+      operationId: fetchExplorerItemInfo
       requestBody:
         content:
           application/json:
@@ -1668,7 +1668,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/move:
     put:
-      operationId: move
+      operationId: moveExplorerItems
       requestBody:
         content:
           application/json:
@@ -1688,7 +1688,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/rename:
     put:
-      operationId: rename
+      operationId: renameExplorerItems
       requestBody:
         content:
           application/json:
@@ -1708,12 +1708,10 @@ paths:
       - Explorer (v2)
   /export/v1:
     get:
-      operationId: export
+      operationId: exportAllContent
       responses:
         default:
-          content:
-            application/octet-stream: {}
-          description: default response
+          description: Returns Stroom content data in a zip file
       summary: Exports all configuration to a file.
       tags:
       - Export
@@ -1734,7 +1732,7 @@ paths:
       - Feeds
   /feed/v1/{uuid}:
     get:
-      operationId: fetch_6
+      operationId: fetchFeed
       parameters:
       - in: path
         name: uuid
@@ -1752,7 +1750,7 @@ paths:
       tags:
       - Feeds
     put:
-      operationId: update_7
+      operationId: updateFeed
       parameters:
       - in: path
         name: uuid
@@ -1798,7 +1796,7 @@ paths:
       - Feed Status
   /fsVolume/v1:
     post:
-      operationId: create_3
+      operationId: createFsVolume
       requestBody:
         content:
           application/json:
@@ -1811,11 +1809,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/FsVolume'
           description: default response
+      summary: Create a volume
       tags:
       - Filesystem Volumes
   /fsVolume/v1/find:
     post:
-      operationId: find_1
+      operationId: findFsVolumes
       requestBody:
         content:
           application/json:
@@ -1835,7 +1834,7 @@ paths:
       - Filesystem Volumes
   /fsVolume/v1/rescan:
     get:
-      operationId: rescan
+      operationId: rescanFsVolumes
       responses:
         default:
           content:
@@ -1848,7 +1847,7 @@ paths:
       - Filesystem Volumes
   /fsVolume/v1/{id}:
     delete:
-      operationId: delete_2
+      operationId: deleteFsVolume
       parameters:
       - in: path
         name: id
@@ -1867,7 +1866,7 @@ paths:
       tags:
       - Filesystem Volumes
     get:
-      operationId: read_2
+      operationId: fetchFsVolume
       parameters:
       - in: path
         name: id
@@ -1886,7 +1885,7 @@ paths:
       tags:
       - Filesystem Volumes
     put:
-      operationId: update_5
+      operationId: updateFsVolume
       parameters:
       - in: path
         name: id
@@ -1985,7 +1984,7 @@ paths:
       - Indexes (v2)
   /index/v2/{uuid}:
     get:
-      operationId: fetch_7
+      operationId: fetchIndex
       parameters:
       - in: path
         name: uuid
@@ -2003,7 +2002,7 @@ paths:
       tags:
       - Indexes (v2)
     put:
-      operationId: update_8
+      operationId: updateIndex
       parameters:
       - in: path
         name: uuid
@@ -2029,7 +2028,7 @@ paths:
       - Indexes (v2)
   /index/volume/v2:
     post:
-      operationId: create_6
+      operationId: createIndexVolume
       requestBody:
         content:
           application/json:
@@ -2049,7 +2048,7 @@ paths:
       - Index Volumes
   /index/volume/v2/find:
     post:
-      operationId: find_3
+      operationId: findIndexVolumes
       requestBody:
         content:
           application/json:
@@ -2069,7 +2068,7 @@ paths:
       - Index Volumes
   /index/volume/v2/rescan:
     delete:
-      operationId: rescan_1
+      operationId: rescanIndexVolumes
       parameters:
       - in: query
         name: nodeName
@@ -2087,7 +2086,7 @@ paths:
       - Index Volumes
   /index/volume/v2/{id}:
     delete:
-      operationId: delete_5
+      operationId: deleteIndexVolume
       parameters:
       - in: path
         name: id
@@ -2106,7 +2105,7 @@ paths:
       tags:
       - Index Volumes
     get:
-      operationId: read_4
+      operationId: fetchIndexVolume
       parameters:
       - in: path
         name: id
@@ -2121,11 +2120,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndexVolume'
           description: default response
-      summary: Gets an index volume
+      summary: Fetch an index volume
       tags:
       - Index Volumes
     put:
-      operationId: update_10
+      operationId: updateIndexVolume
       parameters:
       - in: path
         name: id
@@ -2152,7 +2151,7 @@ paths:
       - Index Volumes
   /index/volumeGroup/v2:
     post:
-      operationId: create_5
+      operationId: createIndexVolumeGroup
       requestBody:
         content:
           application/json:
@@ -2172,7 +2171,7 @@ paths:
       - Index Volume Groups
   /index/volumeGroup/v2/find:
     post:
-      operationId: find_2
+      operationId: findIndexVolumeGroups
       requestBody:
         content:
           application/json:
@@ -2192,7 +2191,7 @@ paths:
       - Index Volume Groups
   /index/volumeGroup/v2/{id}:
     delete:
-      operationId: delete_4
+      operationId: deleteIndexVolumeGroup
       parameters:
       - in: path
         name: id
@@ -2211,7 +2210,7 @@ paths:
       tags:
       - Index Volume Groups
     get:
-      operationId: read_3
+      operationId: fetchIndexVolumeGroup
       parameters:
       - in: path
         name: id
@@ -2230,7 +2229,7 @@ paths:
       tags:
       - Index Volume Groups
     put:
-      operationId: update_9
+      operationId: updateIndexVolumeGroup
       parameters:
       - in: path
         name: id
@@ -2255,7 +2254,7 @@ paths:
       - Index Volume Groups
   /job/v1:
     get:
-      operationId: list_4
+      operationId: listJobs
       responses:
         default:
           content:
@@ -2268,7 +2267,7 @@ paths:
       - Jobs
   /job/v1/{id}/enabled:
     put:
-      operationId: setEnabled_1
+      operationId: setJobEnabled
       parameters:
       - in: path
         name: id
@@ -2293,7 +2292,7 @@ paths:
       - Jobs
   /jobNode/v1:
     get:
-      operationId: list_3
+      operationId: listJobsNodes
       parameters:
       - in: query
         name: jobName
@@ -2315,7 +2314,7 @@ paths:
       - Jobs (Node)
   /jobNode/v1/info:
     get:
-      operationId: info_2
+      operationId: fetchJobNodeInfo
       parameters:
       - in: query
         name: jobName
@@ -2337,7 +2336,7 @@ paths:
       - Jobs (Node)
   /jobNode/v1/{id}/enabled:
     put:
-      operationId: setEnabled
+      operationId: setJobNodeEnabled
       parameters:
       - in: path
         name: id
@@ -2362,7 +2361,7 @@ paths:
       - Jobs (Node)
   /jobNode/v1/{id}/schedule:
     put:
-      operationId: setSchedule
+      operationId: setJobNodeSchedule
       parameters:
       - in: path
         name: id
@@ -2387,7 +2386,7 @@ paths:
       - Jobs (Node)
   /jobNode/v1/{id}/taskLimit:
     put:
-      operationId: setTaskLimit
+      operationId: setJobNodeTaskLimit
       parameters:
       - in: path
         name: id
@@ -2413,7 +2412,7 @@ paths:
       - Jobs (Node)
   /kafkaConfig/v1/download:
     post:
-      operationId: download_2
+      operationId: downloadKafkaConfig
       requestBody:
         content:
           application/json:
@@ -2433,7 +2432,7 @@ paths:
       - Kafka Config
   /kafkaConfig/v1/{uuid}:
     get:
-      operationId: fetch_8
+      operationId: fetchKafkaConfig
       parameters:
       - in: path
         name: uuid
@@ -2451,7 +2450,7 @@ paths:
       tags:
       - Kafka Config
     put:
-      operationId: update_11
+      operationId: updateKafkaConfig
       parameters:
       - in: path
         name: uuid
@@ -2497,7 +2496,7 @@ paths:
       - Meta
   /meta/v1/getReprocessSelectionSummary:
     post:
-      operationId: getReprocessSelectionSummary
+      operationId: getMetaReprocessSelectionSummary
       requestBody:
         content:
           application/json:
@@ -2517,7 +2516,7 @@ paths:
       - Meta
   /meta/v1/getSelectionSummary:
     post:
-      operationId: getSelectionSummary
+      operationId: getMetaSelectionSummary
       requestBody:
         content:
           application/json:
@@ -2537,7 +2536,7 @@ paths:
       - Meta
   /meta/v1/getTypes:
     get:
-      operationId: getTypes
+      operationId: getStreamTypes
       responses:
         default:
           content:
@@ -2552,7 +2551,7 @@ paths:
       - Meta
   /meta/v1/update/status:
     put:
-      operationId: updateStatus
+      operationId: updateMetaStatus
       requestBody:
         content:
           application/json:
@@ -2571,7 +2570,7 @@ paths:
       - Meta
   /node/v1:
     get:
-      operationId: find_4
+      operationId: findNodes
       responses:
         default:
           content:
@@ -2614,7 +2613,7 @@ paths:
       - Nodes
   /node/v1/enabled/{nodeName}:
     put:
-      operationId: setEnabled_2
+      operationId: setNodeEnabled
       parameters:
       - in: path
         name: nodeName
@@ -2638,7 +2637,7 @@ paths:
       - Nodes
   /node/v1/info/{nodeName}:
     get:
-      operationId: info_3
+      operationId: fetchNodeInfo
       parameters:
       - in: path
         name: nodeName
@@ -2657,7 +2656,7 @@ paths:
       - Nodes
   /node/v1/ping/{nodeName}:
     get:
-      operationId: ping
+      operationId: pingNode
       parameters:
       - in: path
         name: nodeName
@@ -2677,7 +2676,7 @@ paths:
       - Nodes
   /node/v1/priority/{nodeName}:
     put:
-      operationId: setPriority
+      operationId: setNodePriority
       parameters:
       - in: path
         name: nodeName
@@ -2713,9 +2712,10 @@ paths:
       summary: Provides discovery for openid configuration
       tags:
       - API Keys
+      - Authentication
   /oauth2/v1/noauth/auth:
     get:
-      operationId: auth
+      operationId: openIdAuth
       parameters:
       - in: query
         name: scope
@@ -2759,7 +2759,7 @@ paths:
       - Authentication
   /oauth2/v1/noauth/certs:
     get:
-      operationId: certs
+      operationId: openIdCerts
       responses:
         default:
           content:
@@ -2777,9 +2777,10 @@ paths:
         use these keys to verify JWTs issued by this service.
       tags:
       - API Keys
+      - Authentication
   /oauth2/v1/noauth/token:
     post:
-      operationId: token
+      operationId: openIdToken
       requestBody:
         content:
           application/json:
@@ -2812,7 +2813,7 @@ paths:
       - Application Permissions
   /permission/app/v1/changeUser:
     post:
-      operationId: changeUser
+      operationId: changeUserPermissions
       requestBody:
         content:
           application/json:
@@ -2867,7 +2868,7 @@ paths:
       - Application Permissions
   /permission/changeEvent/v1/fireChange/{nodeName}:
     post:
-      operationId: fireChange
+      operationId: firePermissionChangeEvent
       parameters:
       - in: path
         name: nodeName
@@ -3056,7 +3057,7 @@ paths:
       - Pipelines
   /pipeline/v1/propertyTypes:
     get:
-      operationId: getPropertyTypes
+      operationId: getPipelinePropertyTypes
       responses:
         default:
           content:
@@ -3091,7 +3092,7 @@ paths:
       - Pipelines
   /pipeline/v1/{uuid}:
     get:
-      operationId: fetch_9
+      operationId: fetchPipeline
       parameters:
       - in: path
         name: uuid
@@ -3109,7 +3110,7 @@ paths:
       tags:
       - Pipelines
     put:
-      operationId: update_12
+      operationId: updatePipeline
       parameters:
       - in: path
         name: uuid
@@ -3135,7 +3136,7 @@ paths:
       - Pipelines
   /processor/v1/{id}:
     delete:
-      operationId: delete_7
+      operationId: deleteProcessor
       parameters:
       - in: path
         name: id
@@ -3153,7 +3154,7 @@ paths:
       - Processors
   /processor/v1/{id}/enabled:
     put:
-      operationId: setEnabled_4
+      operationId: setProcessorEnabled
       parameters:
       - in: path
         name: id
@@ -3178,7 +3179,7 @@ paths:
       - Processors
   /processorFilter/v1:
     post:
-      operationId: create_7
+      operationId: createProcessorFilter
       requestBody:
         content:
           application/json:
@@ -3198,7 +3199,7 @@ paths:
       - Processor Filters
   /processorFilter/v1/find:
     post:
-      operationId: find_5
+      operationId: findProcessorFilters
       requestBody:
         content:
           application/json:
@@ -3218,7 +3219,7 @@ paths:
       - Processor Filters
   /processorFilter/v1/reprocess:
     post:
-      operationId: reprocess
+      operationId: reprocessData
       requestBody:
         content:
           application/json:
@@ -3240,7 +3241,7 @@ paths:
       - Processor Filters
   /processorFilter/v1/{id}:
     delete:
-      operationId: delete_6
+      operationId: deleteProcessorFilter
       parameters:
       - in: path
         name: id
@@ -3257,7 +3258,7 @@ paths:
       tags:
       - Processor Filters
     get:
-      operationId: read_5
+      operationId: fetchProcessorFilter
       parameters:
       - in: path
         name: id
@@ -3272,11 +3273,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessorFilter'
           description: default response
-      summary: Gets a filter
+      summary: Fetch a filter
       tags:
       - Processor Filters
     put:
-      operationId: update_15
+      operationId: updateProcessorFilter
       parameters:
       - in: path
         name: id
@@ -3301,7 +3302,7 @@ paths:
       - Processor Filters
   /processorFilter/v1/{id}/enabled:
     put:
-      operationId: setEnabled_3
+      operationId: setProcessorFilterEnabled
       parameters:
       - in: path
         name: id
@@ -3324,7 +3325,7 @@ paths:
       - Processor Filters
   /processorFilter/v1/{id}/priority:
     put:
-      operationId: setPriority_1
+      operationId: setProcessorFilterPriority
       parameters:
       - in: path
         name: id
@@ -3348,7 +3349,7 @@ paths:
       - Processor Filters
   /processorTask/v1/abandon/{nodeName}:
     post:
-      operationId: abandonTasks
+      operationId: abandonProcessorTasks
       parameters:
       - in: path
         name: nodeName
@@ -3374,7 +3375,7 @@ paths:
       - Processor Tasks
   /processorTask/v1/assign/{nodeName}:
     post:
-      operationId: assignTasks
+      operationId: assignProcessorTasks
       parameters:
       - in: path
         name: nodeName
@@ -3400,7 +3401,7 @@ paths:
       - Processor Tasks
   /processorTask/v1/find:
     post:
-      operationId: find_6
+      operationId: findProcessorTasks
       requestBody:
         content:
           application/json:
@@ -3420,7 +3421,7 @@ paths:
       - Processor Tasks
   /processorTask/v1/summary:
     post:
-      operationId: findSummary
+      operationId: findProcessorTaskSummary
       requestBody:
         content:
           application/json:
@@ -3440,7 +3441,10 @@ paths:
       - Processor Tasks
   /refData/v1/entries:
     get:
-      operationId: entries
+      description: This is primarily intended  for small scale debugging in non-production
+        environments. If no limit is set a default limit is applied else the results
+        will be limited to limit entries.
+      operationId: getReferenceStoreEntries
       parameters:
       - in: query
         name: limit
@@ -3456,15 +3460,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/RefStoreEntry'
           description: default response
-      summary: List entries from the reference data store on the node called. This
-        is primarily intended for small scale debugging in non-production environments.
-        If no limit is set a default limit is applied else the results will be limited
-        to limit entries.
+      summary: List entries from the reference data store on the node called.
       tags:
       - Reference Data
   /refData/v1/lookup:
     post:
-      operationId: lookup
+      operationId: lookupReferenceData
       requestBody:
         content:
           application/json:
@@ -3483,7 +3484,7 @@ paths:
       - Reference Data
   /refData/v1/purge/{purgeAge}:
     delete:
-      operationId: purge
+      operationId: purgeReferenceData
       parameters:
       - in: path
         name: purgeAge
@@ -3500,7 +3501,7 @@ paths:
       - Reference Data
   /remoteSearch/v1/destroy:
     get:
-      operationId: destroy_1
+      operationId: destroyRemoteSearch
       parameters:
       - in: query
         name: queryKey
@@ -3518,7 +3519,7 @@ paths:
       - Remote Search
   /remoteSearch/v1/poll:
     get:
-      operationId: poll_1
+      operationId: pollRemoteSearch
       parameters:
       - in: query
         name: queryKey
@@ -3534,7 +3535,7 @@ paths:
       - Remote Search
   /remoteSearch/v1/start:
     post:
-      operationId: start
+      operationId: startRemoteSearch
       requestBody:
         content:
           application/json:
@@ -3552,7 +3553,7 @@ paths:
       - Remote Search
   /ruleset/v2/export:
     post:
-      operationId: exportDocument
+      operationId: exportReceiveDataRules
       requestBody:
         content:
           application/json:
@@ -3572,7 +3573,7 @@ paths:
       - Rule Set
   /ruleset/v2/import:
     post:
-      operationId: importDocument
+      operationId: importReceiveDataRules
       requestBody:
         content:
           application/json:
@@ -3592,7 +3593,7 @@ paths:
       - Rule Set
   /ruleset/v2/list:
     get:
-      operationId: listDocuments
+      operationId: listReceiveDataRules
       responses:
         default:
           content:
@@ -3608,7 +3609,7 @@ paths:
       - Rule Set
   /ruleset/v2/{uuid}:
     get:
-      operationId: fetch_13
+      operationId: fetchReceiveDataRules
       parameters:
       - in: path
         name: uuid
@@ -3626,7 +3627,7 @@ paths:
       tags:
       - Rule Set
     put:
-      operationId: update_16
+      operationId: updateReceiveDataRules
       parameters:
       - in: path
         name: uuid
@@ -3652,7 +3653,7 @@ paths:
       - Rule Set
   /scheduledTime/v1:
     post:
-      operationId: get_1
+      operationId: getScheduledTimes
       requestBody:
         content:
           application/json:
@@ -3738,7 +3739,7 @@ paths:
       - Scripts
   /searchable/v2/dataSource:
     post:
-      operationId: getDataSource_2
+      operationId: getSearchableDataSource
       requestBody:
         content:
           application/json:
@@ -3759,7 +3760,7 @@ paths:
       - Searchable
   /searchable/v2/destroy:
     post:
-      operationId: destroy_3
+      operationId: destroySearchableQuery
       requestBody:
         content:
           application/json:
@@ -3779,7 +3780,7 @@ paths:
       - Searchable
   /searchable/v2/search:
     post:
-      operationId: search_2
+      operationId: startSearchableQuery
       requestBody:
         content:
           application/json:
@@ -3799,7 +3800,7 @@ paths:
       - Searchable
   /session/v1/list:
     get:
-      operationId: list_5
+      operationId: listSessions
       parameters:
       - in: query
         name: nodeName
@@ -3818,7 +3819,7 @@ paths:
       - Sessions
   /session/v1/logout/{sessionId}:
     get:
-      operationId: logout_1
+      operationId: logoutSession
       parameters:
       - in: path
         name: sessionId
@@ -3837,7 +3838,7 @@ paths:
       - Sessions
   /session/v1/noauth/login:
     get:
-      operationId: login_1
+      operationId: loginSession
       parameters:
       - in: query
         name: redirect_uri
@@ -3856,7 +3857,7 @@ paths:
       - Sessions
   /sessionInfo/v1:
     get:
-      operationId: get_3
+      operationId: getSessionInfo
       responses:
         default:
           content:
@@ -3864,6 +3865,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionInfo'
           description: default response
+      summary: Get information for the current session
       tags:
       - Session Info
   /solrIndex/v1/fetchSolrTypes:
@@ -3910,7 +3912,7 @@ paths:
       - Solr Indices
   /solrIndex/v1/{uuid}:
     get:
-      operationId: fetch_14
+      operationId: fetchSolrIndex
       parameters:
       - in: path
         name: uuid
@@ -3928,7 +3930,7 @@ paths:
       tags:
       - Solr Indices
     put:
-      operationId: update_17
+      operationId: updateSolrIndex
       parameters:
       - in: path
         name: uuid
@@ -3954,7 +3956,7 @@ paths:
       - Solr Indices
   /sqlstatistics/v2/dataSource:
     post:
-      operationId: getDataSource_3
+      operationId: getSqlStatisticsDataSource
       requestBody:
         content:
           application/json:
@@ -3975,7 +3977,7 @@ paths:
       - Sql Statistics Query
   /sqlstatistics/v2/destroy:
     post:
-      operationId: destroy_4
+      operationId: destroySqlStatisticsSearch
       requestBody:
         content:
           application/json:
@@ -3995,7 +3997,7 @@ paths:
       - Sql Statistics Query
   /sqlstatistics/v2/search:
     post:
-      operationId: search_3
+      operationId: searchSqlStatistics
       requestBody:
         content:
           application/json:
@@ -4015,7 +4017,7 @@ paths:
       - Sql Statistics Query
   /statistic/rollUp/v1/bitMaskConversion:
     post:
-      operationId: bitMaskConversion_1
+      operationId: statisticBitMaskConversion
       requestBody:
         content:
           application/json:
@@ -4040,7 +4042,7 @@ paths:
       - SQL Statistics RollUps
   /statistic/rollUp/v1/bitMaskPermGeneration:
     post:
-      operationId: bitMaskPermGeneration_1
+      operationId: statisticBitMaskPermGeneration
       requestBody:
         content:
           application/json:
@@ -4063,7 +4065,7 @@ paths:
       - SQL Statistics RollUps
   /statistic/rollUp/v1/dataSourceFieldChange:
     post:
-      operationId: fieldChange_1
+      operationId: statisticFieldChange
       requestBody:
         content:
           application/json:
@@ -4083,7 +4085,7 @@ paths:
       - SQL Statistics RollUps
   /statistic/v1/{uuid}:
     get:
-      operationId: fetch_17
+      operationId: fetchStatisticStore
       parameters:
       - in: path
         name: uuid
@@ -4101,7 +4103,7 @@ paths:
       tags:
       - SQL Statistics Stores
     put:
-      operationId: update_19
+      operationId: updateStatisticStore
       parameters:
       - in: path
         name: uuid
@@ -4127,7 +4129,7 @@ paths:
       - SQL Statistics Stores
   /statsStore/rollUp/v1/bitMaskConversion:
     post:
-      operationId: bitMaskConversion
+      operationId: statsBitMaskConversion
       requestBody:
         content:
           application/json:
@@ -4150,7 +4152,7 @@ paths:
       - Stroom Stats RollUps
   /statsStore/rollUp/v1/bitMaskPermGeneration:
     post:
-      operationId: bitMaskPermGeneration
+      operationId: statsBitMaskPermGeneration
       requestBody:
         content:
           application/json:
@@ -4171,7 +4173,7 @@ paths:
       - Stroom Stats RollUps
   /statsStore/rollUp/v1/dataSourceFieldChange:
     post:
-      operationId: fieldChange
+      operationId: statsFieldChange
       requestBody:
         content:
           application/json:
@@ -4191,7 +4193,7 @@ paths:
       - Stroom Stats RollUps
   /statsStore/v1/{uuid}:
     get:
-      operationId: fetch_16
+      operationId: fetchStroomStatsStore
       parameters:
       - in: path
         name: uuid
@@ -4209,7 +4211,7 @@ paths:
       tags:
       - Stroom Stats Stores
     put:
-      operationId: update_18
+      operationId: updateStroomStatsStore
       parameters:
       - in: path
         name: uuid
@@ -4293,7 +4295,7 @@ paths:
       - Stepping
   /storedQuery/v1/create:
     post:
-      operationId: create_2
+      operationId: createStoredQuery
       requestBody:
         content:
           application/json:
@@ -4313,7 +4315,7 @@ paths:
       - Stored Queries
   /storedQuery/v1/delete:
     delete:
-      operationId: delete_1
+      operationId: deleteStoredQuery
       requestBody:
         content:
           application/json:
@@ -4331,7 +4333,7 @@ paths:
       - Stored Queries
   /storedQuery/v1/find:
     post:
-      operationId: find
+      operationId: findStoredQueries
       requestBody:
         content:
           application/json:
@@ -4351,7 +4353,7 @@ paths:
       - Stored Queries
   /storedQuery/v1/read:
     post:
-      operationId: read_1
+      operationId: fetchStoredQuery
       requestBody:
         content:
           application/json:
@@ -4366,12 +4368,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoredQuery'
           description: default response
-      summary: Get a stored query
+      summary: Fetch a stored query
       tags:
       - Stored Queries
   /storedQuery/v1/update:
     put:
-      operationId: update_3
+      operationId: updateStoredQuery
       requestBody:
         content:
           application/json:
@@ -4389,7 +4391,7 @@ paths:
       - Stored Queries
   /stroom-index/v2/dataSource:
     post:
-      operationId: getDataSource
+      operationId: getStroomIndexDataSource
       requestBody:
         content:
           application/json:
@@ -4410,7 +4412,7 @@ paths:
       - Stroom-Index Queries
   /stroom-index/v2/destroy:
     post:
-      operationId: destroy
+      operationId: destroyStroomIndex
       requestBody:
         content:
           application/json:
@@ -4430,7 +4432,7 @@ paths:
       - Stroom-Index Queries
   /stroom-index/v2/search:
     post:
-      operationId: search
+      operationId: searchStroomIndex
       requestBody:
         content:
           application/json:
@@ -4450,7 +4452,7 @@ paths:
       - Stroom-Index Queries
   /stroom-solr-index/v2/dataSource:
     post:
-      operationId: getDataSource_1
+      operationId: getSolrIndexDataSource
       requestBody:
         content:
           application/json:
@@ -4471,7 +4473,7 @@ paths:
       - Solr Queries
   /stroom-solr-index/v2/destroy:
     post:
-      operationId: destroy_2
+      operationId: destroySolrIndexSearch
       requestBody:
         content:
           application/json:
@@ -4491,7 +4493,7 @@ paths:
       - Solr Queries
   /stroom-solr-index/v2/search:
     post:
-      operationId: search_1
+      operationId: searchSolrIndex
       requestBody:
         content:
           application/json:
@@ -4511,7 +4513,7 @@ paths:
       - Solr Queries
   /stroomSession/v1/invalidate:
     get:
-      operationId: invalidate_1
+      operationId: invalidateStroomSession
       responses:
         default:
           content:
@@ -4524,7 +4526,7 @@ paths:
       - Stroom Sessions
   /stroomSession/v1/noauth/validateSession:
     get:
-      operationId: validateSession
+      operationId: validateStroomSession
       parameters:
       - in: query
         name: redirect_uri
@@ -4543,7 +4545,7 @@ paths:
       - Stroom Sessions
   /suggest/v1:
     post:
-      operationId: fetch_12
+      operationId: fetchSuggestions
       requestBody:
         content:
           application/json:
@@ -4565,7 +4567,7 @@ paths:
       - Suggestions
   /systemInfo/v1:
     get:
-      operationId: getAll
+      operationId: getAllSystemInfo
       responses:
         default:
           content:
@@ -4578,7 +4580,7 @@ paths:
       - System Info
   /systemInfo/v1/names:
     get:
-      operationId: getNames
+      operationId: getSystemInfoNames
       responses:
         default:
           content:
@@ -4593,7 +4595,7 @@ paths:
       - System Info
   /systemInfo/v1/{name}:
     get:
-      operationId: get_2
+      operationId: getSystemInfoByName
       parameters:
       - in: path
         name: name
@@ -4612,7 +4614,7 @@ paths:
       - System Info
   /task/v1/find/{nodeName}:
     post:
-      operationId: find_9
+      operationId: findTasks
       parameters:
       - in: path
         name: nodeName
@@ -4638,7 +4640,7 @@ paths:
       - Tasks
   /task/v1/list/{nodeName}:
     get:
-      operationId: list_6
+      operationId: listTasks
       parameters:
       - in: path
         name: nodeName
@@ -4657,7 +4659,7 @@ paths:
       - Tasks
   /task/v1/terminate/{nodeName}:
     post:
-      operationId: terminate
+      operationId: terminateTasks
       parameters:
       - in: path
         name: nodeName
@@ -4683,7 +4685,7 @@ paths:
       - Tasks
   /task/v1/user/{nodeName}:
     get:
-      operationId: userTasks
+      operationId: listUserTasks
       parameters:
       - in: path
         name: nodeName
@@ -4702,7 +4704,7 @@ paths:
       - Tasks
   /textConverter/v1/{uuid}:
     get:
-      operationId: fetch_10
+      operationId: fetchTextConverter
       parameters:
       - in: path
         name: uuid
@@ -4720,7 +4722,7 @@ paths:
       tags:
       - Text Converters
     put:
-      operationId: update_13
+      operationId: updateTextConverter
       parameters:
       - in: path
         name: uuid
@@ -4942,7 +4944,7 @@ paths:
       - Api Keys
   /users/v1:
     get:
-      operationId: find_8
+      operationId: findUsers
       parameters:
       - in: query
         name: name
@@ -4970,7 +4972,7 @@ paths:
       - Authorisation
   /users/v1/associates:
     get:
-      operationId: getAssociates
+      operationId: getAssociatedUsers
       parameters:
       - in: query
         name: filter
@@ -4990,7 +4992,7 @@ paths:
       - Authorisation
   /users/v1/create/{name}/{isGroup}:
     post:
-      operationId: create_8
+      operationId: createUser
       parameters:
       - in: path
         name: name
@@ -5014,7 +5016,7 @@ paths:
       - Authorisation
   /users/v1/find:
     post:
-      operationId: find_7
+      operationId: findUsersByCriteria
       requestBody:
         content:
           application/json:
@@ -5034,7 +5036,7 @@ paths:
       - Authorisation
   /users/v1/{userName}/status:
     put:
-      operationId: setStatus_1
+      operationId: setUserStatus
       parameters:
       - in: path
         name: userName
@@ -5057,7 +5059,7 @@ paths:
       - Authorisation
   /users/v1/{userUuid}:
     get:
-      operationId: fetch_15
+      operationId: fetchUser
       parameters:
       - in: path
         name: userUuid
@@ -5142,7 +5144,7 @@ paths:
       - Authorisation
   /visualisation/v1/{uuid}:
     get:
-      operationId: fetch_18
+      operationId: fetchVisualisation
       parameters:
       - in: path
         name: uuid
@@ -5160,7 +5162,7 @@ paths:
       tags:
       - Visualisations
     put:
-      operationId: update_20
+      operationId: updateVisualisation
       parameters:
       - in: path
         name: uuid
@@ -5186,7 +5188,7 @@ paths:
       - Visualisations
   /welcome/v1:
     get:
-      operationId: fetch
+      operationId: fetchWelcome
       responses:
         default:
           content:
@@ -5199,7 +5201,7 @@ paths:
       - Welcome
   /xmlSchema/v1/{uuid}:
     get:
-      operationId: fetch_19
+      operationId: fetchXmlSchema
       parameters:
       - in: path
         name: uuid
@@ -5217,7 +5219,7 @@ paths:
       tags:
       - XML Schemas
     put:
-      operationId: update_21
+      operationId: updateXmlSchema
       parameters:
       - in: path
         name: uuid
@@ -5243,7 +5245,7 @@ paths:
       - XML Schemas
   /xslt/v1/{uuid}:
     get:
-      operationId: fetch_11
+      operationId: fetchXslt
       parameters:
       - in: path
         name: uuid
@@ -5261,7 +5263,7 @@ paths:
       tags:
       - XSLTs
     put:
-      operationId: update_14
+      operationId: updateXslt
       parameters:
       - in: path
         name: uuid

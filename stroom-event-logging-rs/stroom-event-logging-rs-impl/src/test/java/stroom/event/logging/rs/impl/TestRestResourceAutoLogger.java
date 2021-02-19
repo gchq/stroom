@@ -165,7 +165,7 @@ public class TestRestResourceAutoLogger {
 
         assertThat(loggedObject).isNull();
         assertThat(eventTypeId)
-                .isEqualTo("TestResource.read");
+                .isEqualTo("TestResource.fetch");
         assertThat(descriptionVerb).isNull();
         assertThat(exception).isNull();
     }

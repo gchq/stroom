@@ -3583,7 +3583,7 @@ export class HttpClient<SecurityDataType = unknown> {
     return fetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
       ...requestParams,
       headers: {
-        ...(type ? { "Content-Type": type } : {}),
+        ...(type && type !== ContentType.FormData ? { "Content-Type": type } : {}),
         ...(requestParams.headers || {}),
       },
       signal: cancelToken ? this.createAbortSignal(cancelToken) : void 0,
@@ -3725,11 +3725,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name List
+     * @name ListActivities
      * @summary Lists activities
      * @request GET:/activity/v1
      */
-    list: (query?: { filter?: string }, params: RequestParams = {}) =>
+    listActivities: (query?: { filter?: string }, params: RequestParams = {}) =>
       this.request<any, ResultPageActivity>({
         path: `/activity/v1`,
         method: "GET",
@@ -3741,11 +3741,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name Create
+     * @name CreateActivity
      * @summary Create an Activity
      * @request POST:/activity/v1
      */
-    create: (params: RequestParams = {}) =>
+    createActivity: (params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1`,
         method: "POST",
@@ -3805,11 +3805,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name ListFieldDefinitions
+     * @name ListActivityFieldDefinitions
      * @summary Lists activity field definitions
      * @request GET:/activity/v1/fields
      */
-    listFieldDefinitions: (params: RequestParams = {}) =>
+    listActivityFieldDefinitions: (params: RequestParams = {}) =>
       this.request<any, FilterFieldDefinition[]>({
         path: `/activity/v1/fields`,
         method: "GET",
@@ -3820,11 +3820,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name Validate
+     * @name ValidateActivity
      * @summary Create an Activity
      * @request POST:/activity/v1/validate
      */
-    validate: (data: Activity, params: RequestParams = {}) =>
+    validateActivity: (data: Activity, params: RequestParams = {}) =>
       this.request<any, ActivityValidationResult>({
         path: `/activity/v1/validate`,
         method: "POST",
@@ -3837,11 +3837,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name Delete
+     * @name DeleteActivity
      * @summary Delete an activity
      * @request DELETE:/activity/v1/{id}
      */
-    delete: (id: number, params: RequestParams = {}) =>
+    deleteActivity: (id: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/activity/v1/${id}`,
         method: "DELETE",
@@ -3852,11 +3852,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name Read
-     * @summary Get an Activity
+     * @name FetchActivity
+     * @summary Fetch an Activity
      * @request GET:/activity/v1/{id}
      */
-    read: (id: number, params: RequestParams = {}) =>
+    fetchActivity: (id: number, params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
         method: "GET",
@@ -3867,11 +3867,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Activities
-     * @name Update
+     * @name UpdateActivity
      * @summary Update an Activity
      * @request PUT:/activity/v1/{id}
      */
-    update: (id: number, data: Activity, params: RequestParams = {}) =>
+    updateActivity: (id: number, data: Activity, params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
         method: "PUT",
@@ -3885,11 +3885,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name Get
+     * @name GetAnnotationDetail
      * @summary Gets an annotation
      * @request GET:/annotation/v1
      */
-    get: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+    getAnnotationDetail: (query?: { annotationId?: number }, params: RequestParams = {}) =>
       this.request<any, AnnotationDetail>({
         path: `/annotation/v1`,
         method: "GET",
@@ -3901,11 +3901,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name CreateEntry
+     * @name CreateAnnotationEntry
      * @summary Gets an annotation
      * @request POST:/annotation/v1
      */
-    createEntry: (data: CreateEntryRequest, params: RequestParams = {}) =>
+    createAnnotationEntry: (data: CreateEntryRequest, params: RequestParams = {}) =>
       this.request<any, AnnotationDetail>({
         path: `/annotation/v1`,
         method: "POST",
@@ -3918,11 +3918,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name GetComment
+     * @name GetAnnotationComments
      * @summary Gets a list of predefined comments
      * @request GET:/annotation/v1/comment
      */
-    getComment: (query?: { filter?: string }, params: RequestParams = {}) =>
+    getAnnotationComments: (query?: { filter?: string }, params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/annotation/v1/comment`,
         method: "GET",
@@ -3934,11 +3934,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name Link
+     * @name LinkAnnotationEvents
      * @summary Links an annotation to an event
      * @request POST:/annotation/v1/link
      */
-    link: (data: EventLink, params: RequestParams = {}) =>
+    linkAnnotationEvents: (data: EventLink, params: RequestParams = {}) =>
       this.request<any, EventId[]>({
         path: `/annotation/v1/link`,
         method: "POST",
@@ -3951,11 +3951,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name GetLinkedEvents
+     * @name GetAnnotationLinkedEvents
      * @summary Gets a list of events linked to this annotation
      * @request GET:/annotation/v1/linkedEvents
      */
-    getLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+    getAnnotationLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
       this.request<any, EventId[]>({
         path: `/annotation/v1/linkedEvents`,
         method: "GET",
@@ -3967,11 +3967,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name SetAssignedTo
+     * @name SetAnnotationAssignedTo
      * @summary Bulk action to set the assignment for several annotations
      * @request POST:/annotation/v1/setAssignedTo
      */
-    setAssignedTo: (data: SetAssignedToRequest, params: RequestParams = {}) =>
+    setAnnotationAssignedTo: (data: SetAssignedToRequest, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/annotation/v1/setAssignedTo`,
         method: "POST",
@@ -3984,11 +3984,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name SetStatus
+     * @name SetAnnotationStatus
      * @summary Bulk action to set the status for several annotations
      * @request POST:/annotation/v1/setStatus
      */
-    setStatus: (data: SetStatusRequest, params: RequestParams = {}) =>
+    setAnnotationStatus: (data: SetStatusRequest, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/annotation/v1/setStatus`,
         method: "POST",
@@ -4001,11 +4001,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name GetStatus
+     * @name GetAnnotationDStatus
      * @summary Gets a list of allowed statuses
      * @request GET:/annotation/v1/status
      */
-    getStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
+    getAnnotationDStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/annotation/v1/status`,
         method: "GET",
@@ -4017,11 +4017,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Annotations
-     * @name Unlink
+     * @name UnlinkAnnotationEvents
      * @summary Unlinks an annotation from an event
      * @request POST:/annotation/v1/unlink
      */
-    unlink: (data: EventLink, params: RequestParams = {}) =>
+    unlinkAnnotationEvents: (data: EventLink, params: RequestParams = {}) =>
       this.request<any, EventId[]>({
         path: `/annotation/v1/unlink`,
         method: "POST",
@@ -4181,11 +4181,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name Clear
+     * @name ClearCache
      * @summary Clears a cache
      * @request DELETE:/cache/v1
      */
-    clear: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    clearCache: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/cache/v1`,
         method: "DELETE",
@@ -4197,11 +4197,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name List1
+     * @name ListCaches
      * @summary Lists caches
      * @request GET:/cache/v1
      */
-    list1: (params: RequestParams = {}) =>
+    listCaches: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/cache/v1`,
         method: "GET",
@@ -4212,11 +4212,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name Info
+     * @name GetCacheInfo
      * @summary Gets cache info
      * @request GET:/cache/v1/info
      */
-    info: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
         method: "GET",
@@ -4229,11 +4229,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Cluster lock
-     * @name KeepLockAlive
+     * @name KeepClusterLockAlive
      * @summary Keep a lock alive
      * @request PUT:/cluster/lock/v1/keepALive/{nodeName}
      */
-    keepLockAlive: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+    keepClusterLockAlive: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/cluster/lock/v1/keepALive/${nodeName}`,
         method: "PUT",
@@ -4246,11 +4246,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Cluster lock
-     * @name ReleaseLock
+     * @name ReleaseClusterLock
      * @summary Release a lock
      * @request PUT:/cluster/lock/v1/release/{nodeName}
      */
-    releaseLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+    releaseClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/cluster/lock/v1/release/${nodeName}`,
         method: "PUT",
@@ -4263,11 +4263,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Cluster lock
-     * @name TryLock
+     * @name TryClusterLock
      * @summary Try to lock
      * @request PUT:/cluster/lock/v1/try/{nodeName}
      */
-    tryLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+    tryClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/cluster/lock/v1/try/${nodeName}`,
         method: "PUT",
@@ -4281,11 +4281,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name Create1
+     * @name CreateConfigProperty
      * @summary Create a configuration property
      * @request POST:/config/v1
      */
-    create1: (data: ConfigProperty, params: RequestParams = {}) =>
+    createConfigProperty: (data: ConfigProperty, params: RequestParams = {}) =>
       this.request<any, ConfigProperty>({
         path: `/config/v1`,
         method: "POST",
@@ -4298,11 +4298,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name Update1
+     * @name UpdateConfigProperty
      * @summary Update a configuration property
      * @request PUT:/config/v1/clusterProperties/{propertyName}
      */
-    update1: (propertyName: string, data: ConfigProperty, params: RequestParams = {}) =>
+    updateConfigProperty: (propertyName: string, data: ConfigProperty, params: RequestParams = {}) =>
       this.request<any, ConfigProperty>({
         path: `/config/v1/clusterProperties/${propertyName}`,
         method: "PUT",
@@ -4315,11 +4315,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name GetYamlValueByNodeAndName
+     * @name GetConfigYamlValueByNodeAndName
      * @summary Get the property value from the YAML configuration in the specified node.
      * @request GET:/config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}
      */
-    getYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
+    getConfigYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, OverrideValueString>({
         path: `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
         method: "GET",
@@ -4345,11 +4345,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name ListByNode
+     * @name ListConfigPropertiesByNode
      * @summary List all properties matching the criteria on the requested node.
      * @request POST:/config/v1/nodeProperties/{nodeName}
      */
-    listByNode: (nodeName: string, data: GlobalConfigCriteria, params: RequestParams = {}) =>
+    listConfigPropertiesByNode: (nodeName: string, data: GlobalConfigCriteria, params: RequestParams = {}) =>
       this.request<any, ListConfigResponse>({
         path: `/config/v1/nodeProperties/${nodeName}`,
         method: "POST",
@@ -4362,11 +4362,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name List2
+     * @name ListConfigProperties
      * @summary List all properties matching the criteria on the current node.
      * @request POST:/config/v1/properties
      */
-    list2: (data: GlobalConfigCriteria, params: RequestParams = {}) =>
+    listConfigProperties: (data: GlobalConfigCriteria, params: RequestParams = {}) =>
       this.request<any, ListConfigResponse>({
         path: `/config/v1/properties`,
         method: "POST",
@@ -4379,11 +4379,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
-     * @name GetPropertyByName
+     * @name GetConfigPropertyByName
      * @summary Fetch a property by its name, e.g. 'stroom.path.home'
      * @request GET:/config/v1/properties/{propertyName}
      */
-    getPropertyByName: (propertyName: string, params: RequestParams = {}) =>
+    getConfigPropertyByName: (propertyName: string, params: RequestParams = {}) =>
       this.request<any, ConfigProperty>({
         path: `/config/v1/properties/${propertyName}`,
         method: "GET",
@@ -4395,11 +4395,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Content
-     * @name ConfirmImport
+     * @name ConfirmContentImport
      * @summary Get import confirmation state
      * @request POST:/content/v1/confirmImport
      */
-    confirmImport: (data: ResourceKey, params: RequestParams = {}) =>
+    confirmContentImport: (data: ResourceKey, params: RequestParams = {}) =>
       this.request<any, ImportState[]>({
         path: `/content/v1/confirmImport`,
         method: "POST",
@@ -4429,11 +4429,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Content
-     * @name FetchDependencies
+     * @name FetchContentDependencies
      * @summary Fetch content dependencies
      * @request POST:/content/v1/fetchDependencies
      */
-    fetchDependencies: (data: DependencyCriteria, params: RequestParams = {}) =>
+    fetchContentDependencies: (data: DependencyCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageDependency>({
         path: `/content/v1/fetchDependencies`,
         method: "POST",
@@ -4464,11 +4464,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DownloadQuery
+     * @name DownloadDashboardQuery
      * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
      */
-    downloadQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
+    downloadDashboardQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadQuery`,
         method: "POST",
@@ -4481,11 +4481,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DownloadSearchResults
+     * @name DownloadDashboardSearchResults
      * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults
      */
-    downloadSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+    downloadDashboardSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadSearchResults`,
         method: "POST",
@@ -4513,11 +4513,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name FetchFunctions
+     * @name FetchDashboardFunctions
      * @summary Fetch all expression functions
      * @request GET:/dashboard/v1/functions
      */
-    fetchFunctions: (params: RequestParams = {}) =>
+    fetchDashboardFunctions: (params: RequestParams = {}) =>
       this.request<any, FunctionSignature[]>({
         path: `/dashboard/v1/functions`,
         method: "GET",
@@ -4528,11 +4528,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name Poll
+     * @name PollDashboardSearchResults
      * @summary Poll for new search results
      * @request POST:/dashboard/v1/poll
      */
-    poll: (data: SearchBusPollRequest, params: RequestParams = {}) =>
+    pollDashboardSearchResults: (data: SearchBusPollRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse[]>({
         path: `/dashboard/v1/poll`,
         method: "POST",
@@ -4545,11 +4545,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name ValidateExpression
+     * @name ValidateDashboardExpression
      * @summary Validate an expression
      * @request POST:/dashboard/v1/validateExpression
      */
-    validateExpression: (data: string, params: RequestParams = {}) =>
+    validateDashboardExpression: (data: string, params: RequestParams = {}) =>
       this.request<any, ValidateExpressionResult>({
         path: `/dashboard/v1/validateExpression`,
         method: "POST",
@@ -4562,11 +4562,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name Fetch1
+     * @name FetchDashboard
      * @summary Fetch a dashboard doc by its UUID
      * @request GET:/dashboard/v1/{uuid}
      */
-    fetch1: (uuid: string, params: RequestParams = {}) =>
+    fetchDashboard: (uuid: string, params: RequestParams = {}) =>
       this.request<any, DashboardDoc>({
         path: `/dashboard/v1/${uuid}`,
         method: "GET",
@@ -4577,11 +4577,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name Update2
+     * @name UpdateDashboard
      * @summary Update a dashboard doc
      * @request PUT:/dashboard/v1/{uuid}
      */
-    update2: (uuid: string, data: DashboardDoc, params: RequestParams = {}) =>
+    updateDashboard: (uuid: string, data: DashboardDoc, params: RequestParams = {}) =>
       this.request<any, DashboardDoc>({
         path: `/dashboard/v1/${uuid}`,
         method: "PUT",
@@ -4595,11 +4595,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
-     * @name Download
+     * @name DownloadData
      * @summary Download matching data
      * @request POST:/data/v1/download
      */
-    download: (data: FindMetaCriteria, params: RequestParams = {}) =>
+    downloadData: (data: FindMetaCriteria, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/data/v1/download`,
         method: "POST",
@@ -4612,11 +4612,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
-     * @name Fetch3
+     * @name FetchData
      * @summary Fetch matching data
      * @request POST:/data/v1/fetch
      */
-    fetch3: (data: FetchDataRequest, params: RequestParams = {}) =>
+    fetchData: (data: FetchDataRequest, params: RequestParams = {}) =>
       this.request<any, AbstractFetchDataResult>({
         path: `/data/v1/fetch`,
         method: "POST",
@@ -4629,11 +4629,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
-     * @name Upload
+     * @name UploadData
      * @summary Upload data
      * @request POST:/data/v1/upload
      */
-    upload: (data: UploadDataRequest, params: RequestParams = {}) =>
+    uploadData: (data: UploadDataRequest, params: RequestParams = {}) =>
       this.request<any, ResourceKey>({
         path: `/data/v1/upload`,
         method: "POST",
@@ -4646,11 +4646,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
-     * @name ViewInfo
+     * @name ViewDataInfo
      * @summary Find full info about a data item
      * @request GET:/data/v1/{id}/info
      */
-    viewInfo: (id: number, params: RequestParams = {}) =>
+    viewDataInfo: (id: number, params: RequestParams = {}) =>
       this.request<any, DataInfoSection[]>({
         path: `/data/v1/${id}/info`,
         method: "GET",
@@ -4677,11 +4677,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Retention Rules
-     * @name Fetch2
+     * @name FetchDataRetentionRules
      * @summary Get data retention rules
      * @request GET:/dataRetentionRules/v1
      */
-    fetch2: (params: RequestParams = {}) =>
+    fetchDataRetentionRules: (params: RequestParams = {}) =>
       this.request<any, DataRetentionRules>({
         path: `/dataRetentionRules/v1`,
         method: "GET",
@@ -4692,11 +4692,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Retention Rules
-     * @name Update4
+     * @name UpdateDataRetentionRules
      * @summary Update data retention rules
      * @request PUT:/dataRetentionRules/v1
      */
-    update4: (data: DataRetentionRules, params: RequestParams = {}) =>
+    updateDataRetentionRules: (data: DataRetentionRules, params: RequestParams = {}) =>
       this.request<any, DataRetentionRules>({
         path: `/dataRetentionRules/v1`,
         method: "PUT",
@@ -4709,11 +4709,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Retention Rules
-     * @name GetRetentionDeletionSummary
+     * @name GetDataRetentionImpactSummary
      * @summary Get a summary of meta deletions with the passed data retention rules
      * @request POST:/dataRetentionRules/v1/impactSummary
      */
-    getRetentionDeletionSummary: (data: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
+    getDataRetentionImpactSummary: (data: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
       this.request<any, DataRetentionDeleteSummaryResponse>({
         path: `/dataRetentionRules/v1/impactSummary`,
         method: "POST",
@@ -4723,13 +4723,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
 
     /**
-     * @description Delete a running query
+     * No description
      *
      * @tags Data Retention Rules
-     * @name CancelQuery
+     * @name StopDataRetentionImpactSummary
+     * @summary Stop a running query
      * @request DELETE:/dataRetentionRules/v1/impactSummary/{queryId}
      */
-    cancelQuery: (queryId: string, params: RequestParams = {}) =>
+    stopDataRetentionImpactSummary: (queryId: string, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/dataRetentionRules/v1/impactSummary/${queryId}`,
         method: "DELETE",
@@ -4741,11 +4742,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
-     * @name FetchFields
+     * @name FetchDataSourceFields
      * @summary Fetch data source fields
      * @request POST:/dataSource/v1/fetchFields
      */
-    fetchFields: (data: DocRef, params: RequestParams = {}) =>
+    fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, AbstractField[]>({
         path: `/dataSource/v1/fetchFields`,
         method: "POST",
@@ -4759,11 +4760,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Database Status
-     * @name GetSystemTableStatus
+     * @name GetDbSystemTableStatus
      * @summary Find status of the DB
      * @request GET:/dbStatus/v1
      */
-    getSystemTableStatus: (params: RequestParams = {}) =>
+    getDbSystemTableStatus: (params: RequestParams = {}) =>
       this.request<any, ResultPageDBTableStatus>({
         path: `/dbStatus/v1`,
         method: "GET",
@@ -4774,11 +4775,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Database Status
-     * @name FindSystemTableStatus
+     * @name FindDbSystemTableStatus
      * @summary Find status of the DB
      * @request POST:/dbStatus/v1
      */
-    findSystemTableStatus: (data: FindDBTableCriteria, params: RequestParams = {}) =>
+    findDbSystemTableStatus: (data: FindDBTableCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageDBTableStatus>({
         path: `/dbStatus/v1`,
         method: "POST",
@@ -4792,11 +4793,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dictionaries (v1)
-     * @name Download1
+     * @name DownloadDictionary
      * @summary Download a dictionary doc
      * @request POST:/dictionary/v1/download
      */
-    download1: (data: DocRef, params: RequestParams = {}) =>
+    downloadDictionary: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dictionary/v1/download`,
         method: "POST",
@@ -4809,11 +4810,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dictionaries (v1)
-     * @name Fetch4
+     * @name FetchDictionary
      * @summary Fetch a dictionary doc by its UUID
      * @request GET:/dictionary/v1/{uuid}
      */
-    fetch4: (uuid: string, params: RequestParams = {}) =>
+    fetchDictionary: (uuid: string, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
         method: "GET",
@@ -4824,11 +4825,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dictionaries (v1)
-     * @name Update6
+     * @name UpdateDictionary
      * @summary Update a dictionary doc
      * @request PUT:/dictionary/v1/{uuid}
      */
-    update6: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
+    updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
         method: "PUT",
@@ -4842,11 +4843,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Entity Events
-     * @name FireEvent
+     * @name FireEntityEvent
      * @summary Sends an entity event
      * @request PUT:/entityEvent/v1/{nodeName}
      */
-    fireEvent: (nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
+    fireEntityEvent: (nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
@@ -4860,11 +4861,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Copy
+     * @name CopyExplorerItems
      * @summary Copy explorer items
      * @request POST:/explorer/v2/copy
      */
-    copy: (data: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
+    copyExplorerItems: (data: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
       this.request<any, BulkActionResult>({
         path: `/explorer/v2/copy`,
         method: "POST",
@@ -4877,11 +4878,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Create4
+     * @name CreateExplorerItem
      * @summary Create explorer item
      * @request POST:/explorer/v2/create
      */
-    create4: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
+    createExplorerItem: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
       this.request<any, DocRef>({
         path: `/explorer/v2/create`,
         method: "POST",
@@ -4894,11 +4895,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Delete3
+     * @name DeleteExplorerItems
      * @summary Delete explorer items
      * @request DELETE:/explorer/v2/delete
      */
-    delete3: (data: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
+    deleteExplorerItems: (data: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
       this.request<any, BulkActionResult>({
         path: `/explorer/v2/delete`,
         method: "DELETE",
@@ -4911,11 +4912,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name FetchDocRefs
+     * @name FetchExplorerDocRefs
      * @summary Fetch document references
      * @request POST:/explorer/v2/fetchDocRefs
      */
-    fetchDocRefs: (data: DocRef[], params: RequestParams = {}) =>
+    fetchExplorerDocRefs: (data: DocRef[], params: RequestParams = {}) =>
       this.request<any, DocRef[]>({
         path: `/explorer/v2/fetchDocRefs`,
         method: "POST",
@@ -4928,11 +4929,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name FetchDocumentTypes
+     * @name FetchExplorerDocumentTypes
      * @summary Fetch document types
      * @request GET:/explorer/v2/fetchDocumentTypes
      */
-    fetchDocumentTypes: (params: RequestParams = {}) =>
+    fetchExplorerDocumentTypes: (params: RequestParams = {}) =>
       this.request<any, DocumentTypes>({
         path: `/explorer/v2/fetchDocumentTypes`,
         method: "GET",
@@ -4943,11 +4944,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Fetch5
+     * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
      */
-    fetch5: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
+    fetchExplorerNodes: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
       this.request<any, FetchExplorerNodeResult>({
         path: `/explorer/v2/fetchExplorerNodes`,
         method: "POST",
@@ -4977,11 +4978,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Info1
+     * @name FetchExplorerItemInfo
      * @summary Get document info
      * @request POST:/explorer/v2/info
      */
-    info1: (data: DocRef, params: RequestParams = {}) =>
+    fetchExplorerItemInfo: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DocRefInfo>({
         path: `/explorer/v2/info`,
         method: "POST",
@@ -4994,11 +4995,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Move
+     * @name MoveExplorerItems
      * @summary Move explorer items
      * @request PUT:/explorer/v2/move
      */
-    move: (data: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
+    moveExplorerItems: (data: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
       this.request<any, BulkActionResult>({
         path: `/explorer/v2/move`,
         method: "PUT",
@@ -5011,11 +5012,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name Rename
+     * @name RenameExplorerItems
      * @summary Rename explorer items
      * @request PUT:/explorer/v2/rename
      */
-    rename: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
+    renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
       this.request<any, DocRef>({
         path: `/explorer/v2/rename`,
         method: "PUT",
@@ -5029,11 +5030,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Export
-     * @name Export
+     * @name ExportAllContent
      * @summary Exports all configuration to a file.
      * @request GET:/export/v1
      */
-    export: (params: RequestParams = {}) =>
+    exportAllContent: (params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/export/v1`,
         method: "GET",
@@ -5060,11 +5061,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Feeds
-     * @name Fetch6
+     * @name FetchFeed
      * @summary Fetch a feed doc by its UUID
      * @request GET:/feed/v1/{uuid}
      */
-    fetch6: (uuid: string, params: RequestParams = {}) =>
+    fetchFeed: (uuid: string, params: RequestParams = {}) =>
       this.request<any, FeedDoc>({
         path: `/feed/v1/${uuid}`,
         method: "GET",
@@ -5075,11 +5076,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Feeds
-     * @name Update7
+     * @name UpdateFeed
      * @summary Update a feed doc
      * @request PUT:/feed/v1/{uuid}
      */
-    update7: (uuid: string, data: FeedDoc, params: RequestParams = {}) =>
+    updateFeed: (uuid: string, data: FeedDoc, params: RequestParams = {}) =>
       this.request<any, FeedDoc>({
         path: `/feed/v1/${uuid}`,
         method: "PUT",
@@ -5111,10 +5112,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Create3
+     * @name CreateFsVolume
+     * @summary Create a volume
      * @request POST:/fsVolume/v1
      */
-    create3: (data: FsVolume, params: RequestParams = {}) =>
+    createFsVolume: (data: FsVolume, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1`,
         method: "POST",
@@ -5127,11 +5129,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Find1
+     * @name FindFsVolumes
      * @summary Finds volumes
      * @request POST:/fsVolume/v1/find
      */
-    find1: (data: FindFsVolumeCriteria, params: RequestParams = {}) =>
+    findFsVolumes: (data: FindFsVolumeCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageFsVolume>({
         path: `/fsVolume/v1/find`,
         method: "POST",
@@ -5144,11 +5146,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Rescan
+     * @name RescanFsVolumes
      * @summary Rescans volumes
      * @request GET:/fsVolume/v1/rescan
      */
-    rescan: (params: RequestParams = {}) =>
+    rescanFsVolumes: (params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/fsVolume/v1/rescan`,
         method: "GET",
@@ -5159,11 +5161,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Delete2
+     * @name DeleteFsVolume
      * @summary Delete a volume
      * @request DELETE:/fsVolume/v1/{id}
      */
-    delete2: (id: number, params: RequestParams = {}) =>
+    deleteFsVolume: (id: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/fsVolume/v1/${id}`,
         method: "DELETE",
@@ -5174,11 +5176,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Read2
+     * @name FetchFsVolume
      * @summary Get a volume
      * @request GET:/fsVolume/v1/{id}
      */
-    read2: (id: number, params: RequestParams = {}) =>
+    fetchFsVolume: (id: number, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1/${id}`,
         method: "GET",
@@ -5189,11 +5191,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
-     * @name Update5
+     * @name UpdateFsVolume
      * @summary Update a volume
      * @request PUT:/fsVolume/v1/{id}
      */
-    update5: (id: number, data: FsVolume, params: RequestParams = {}) =>
+    updateFsVolume: (id: number, data: FsVolume, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1/${id}`,
         method: "PUT",
@@ -5260,11 +5262,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Indexes (v2)
-     * @name Fetch7
+     * @name FetchIndex
      * @summary Fetch a index doc by its UUID
      * @request GET:/index/v2/{uuid}
      */
-    fetch7: (uuid: string, params: RequestParams = {}) =>
+    fetchIndex: (uuid: string, params: RequestParams = {}) =>
       this.request<any, IndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "GET",
@@ -5275,11 +5277,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Indexes (v2)
-     * @name Update8
+     * @name UpdateIndex
      * @summary Update an index doc
      * @request PUT:/index/v2/{uuid}
      */
-    update8: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
+    updateIndex: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
       this.request<any, IndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "PUT",
@@ -5292,11 +5294,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Create6
+     * @name CreateIndexVolume
      * @summary Creates an index volume
      * @request POST:/index/volume/v2
      */
-    create6: (data: IndexVolume, params: RequestParams = {}) =>
+    createIndexVolume: (data: IndexVolume, params: RequestParams = {}) =>
       this.request<any, IndexVolume>({
         path: `/index/volume/v2`,
         method: "POST",
@@ -5309,11 +5311,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Find3
+     * @name FindIndexVolumes
      * @summary Finds index volumes matching request
      * @request POST:/index/volume/v2/find
      */
-    find3: (data: ExpressionCriteria, params: RequestParams = {}) =>
+    findIndexVolumes: (data: ExpressionCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageIndexVolume>({
         path: `/index/volume/v2/find`,
         method: "POST",
@@ -5326,11 +5328,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Rescan1
+     * @name RescanIndexVolumes
      * @summary Rescans index volumes
      * @request DELETE:/index/volume/v2/rescan
      */
-    rescan1: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    rescanIndexVolumes: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volume/v2/rescan`,
         method: "DELETE",
@@ -5342,11 +5344,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Delete5
+     * @name DeleteIndexVolume
      * @summary Deletes an index volume
      * @request DELETE:/index/volume/v2/{id}
      */
-    delete5: (id: number, params: RequestParams = {}) =>
+    deleteIndexVolume: (id: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volume/v2/${id}`,
         method: "DELETE",
@@ -5357,11 +5359,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Read4
-     * @summary Gets an index volume
+     * @name FetchIndexVolume
+     * @summary Fetch an index volume
      * @request GET:/index/volume/v2/{id}
      */
-    read4: (id: number, params: RequestParams = {}) =>
+    fetchIndexVolume: (id: number, params: RequestParams = {}) =>
       this.request<any, IndexVolume>({
         path: `/index/volume/v2/${id}`,
         method: "GET",
@@ -5372,11 +5374,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volumes
-     * @name Update10
+     * @name UpdateIndexVolume
      * @summary Updates an index volume
      * @request PUT:/index/volume/v2/{id}
      */
-    update10: (id: number, data: IndexVolume, params: RequestParams = {}) =>
+    updateIndexVolume: (id: number, data: IndexVolume, params: RequestParams = {}) =>
       this.request<any, IndexVolume>({
         path: `/index/volume/v2/${id}`,
         method: "PUT",
@@ -5389,11 +5391,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volume Groups
-     * @name Create5
+     * @name CreateIndexVolumeGroup
      * @summary Creates an index volume group
      * @request POST:/index/volumeGroup/v2
      */
-    create5: (data: string, params: RequestParams = {}) =>
+    createIndexVolumeGroup: (data: string, params: RequestParams = {}) =>
       this.request<any, IndexVolumeGroup>({
         path: `/index/volumeGroup/v2`,
         method: "POST",
@@ -5406,11 +5408,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volume Groups
-     * @name Find2
+     * @name FindIndexVolumeGroups
      * @summary Finds index volume groups matching request
      * @request POST:/index/volumeGroup/v2/find
      */
-    find2: (data: ExpressionCriteria, params: RequestParams = {}) =>
+    findIndexVolumeGroups: (data: ExpressionCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageIndexVolumeGroup>({
         path: `/index/volumeGroup/v2/find`,
         method: "POST",
@@ -5423,11 +5425,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volume Groups
-     * @name Delete4
+     * @name DeleteIndexVolumeGroup
      * @summary Deletes an index volume group
      * @request DELETE:/index/volumeGroup/v2/{id}
      */
-    delete4: (id: number, params: RequestParams = {}) =>
+    deleteIndexVolumeGroup: (id: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volumeGroup/v2/${id}`,
         method: "DELETE",
@@ -5438,11 +5440,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volume Groups
-     * @name Read3
+     * @name FetchIndexVolumeGroup
      * @summary Gets an index volume group
      * @request GET:/index/volumeGroup/v2/{id}
      */
-    read3: (id: number, params: RequestParams = {}) =>
+    fetchIndexVolumeGroup: (id: number, params: RequestParams = {}) =>
       this.request<any, IndexVolumeGroup>({
         path: `/index/volumeGroup/v2/${id}`,
         method: "GET",
@@ -5453,11 +5455,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Index Volume Groups
-     * @name Update9
+     * @name UpdateIndexVolumeGroup
      * @summary Updates an index volume group
      * @request PUT:/index/volumeGroup/v2/{id}
      */
-    update9: (id: number, data: IndexVolumeGroup, params: RequestParams = {}) =>
+    updateIndexVolumeGroup: (id: number, data: IndexVolumeGroup, params: RequestParams = {}) =>
       this.request<any, IndexVolumeGroup>({
         path: `/index/volumeGroup/v2/${id}`,
         method: "PUT",
@@ -5471,11 +5473,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs
-     * @name List4
+     * @name ListJobs
      * @summary Lists jobs
      * @request GET:/job/v1
      */
-    list4: (params: RequestParams = {}) =>
+    listJobs: (params: RequestParams = {}) =>
       this.request<any, ResultPageJob>({
         path: `/job/v1`,
         method: "GET",
@@ -5486,11 +5488,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs
-     * @name SetEnabled1
+     * @name SetJobEnabled
      * @summary Sets the enabled status of the job
      * @request PUT:/job/v1/{id}/enabled
      */
-    setEnabled1: (id: number, data: boolean, params: RequestParams = {}) =>
+    setJobEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/job/v1/${id}/enabled`,
         method: "PUT",
@@ -5504,11 +5506,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name List3
+     * @name ListJobsNodes
      * @summary Lists job nodes
      * @request GET:/jobNode/v1
      */
-    list3: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    listJobsNodes: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, ResultPageJobNode>({
         path: `/jobNode/v1`,
         method: "GET",
@@ -5520,11 +5522,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name Info2
+     * @name FetchJobNodeInfo
      * @summary Gets current info for a job node
      * @request GET:/jobNode/v1/info
      */
-    info2: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    fetchJobNodeInfo: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, JobNodeInfo>({
         path: `/jobNode/v1/info`,
         method: "GET",
@@ -5536,11 +5538,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name SetEnabled
+     * @name SetJobNodeEnabled
      * @summary Sets the enabled status of the job node
      * @request PUT:/jobNode/v1/{id}/enabled
      */
-    setEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
+    setJobNodeEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/enabled`,
         method: "PUT",
@@ -5553,11 +5555,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name SetSchedule
+     * @name SetJobNodeSchedule
      * @summary Sets the schedule job node
      * @request PUT:/jobNode/v1/{id}/schedule
      */
-    setSchedule: (id: number, data: string, params: RequestParams = {}) =>
+    setJobNodeSchedule: (id: number, data: string, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/schedule`,
         method: "PUT",
@@ -5570,11 +5572,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name SetTaskLimit
+     * @name SetJobNodeTaskLimit
      * @summary Sets the task limit for the job node
      * @request PUT:/jobNode/v1/{id}/taskLimit
      */
-    setTaskLimit: (id: number, data: number, params: RequestParams = {}) =>
+    setJobNodeTaskLimit: (id: number, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/taskLimit`,
         method: "PUT",
@@ -5588,11 +5590,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Kafka Config
-     * @name Download2
+     * @name DownloadKafkaConfig
      * @summary Download a kafkaConfig doc
      * @request POST:/kafkaConfig/v1/download
      */
-    download2: (data: DocRef, params: RequestParams = {}) =>
+    downloadKafkaConfig: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/kafkaConfig/v1/download`,
         method: "POST",
@@ -5605,11 +5607,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Kafka Config
-     * @name Fetch8
+     * @name FetchKafkaConfig
      * @summary Fetch a kafkaConfig doc by its UUID
      * @request GET:/kafkaConfig/v1/{uuid}
      */
-    fetch8: (uuid: string, params: RequestParams = {}) =>
+    fetchKafkaConfig: (uuid: string, params: RequestParams = {}) =>
       this.request<any, KafkaConfigDoc>({
         path: `/kafkaConfig/v1/${uuid}`,
         method: "GET",
@@ -5620,11 +5622,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Kafka Config
-     * @name Update11
+     * @name UpdateKafkaConfig
      * @summary Update a kafkaConfig doc
      * @request PUT:/kafkaConfig/v1/{uuid}
      */
-    update11: (uuid: string, data: KafkaConfigDoc, params: RequestParams = {}) =>
+    updateKafkaConfig: (uuid: string, data: KafkaConfigDoc, params: RequestParams = {}) =>
       this.request<any, KafkaConfigDoc>({
         path: `/kafkaConfig/v1/${uuid}`,
         method: "PUT",
@@ -5655,11 +5657,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Meta
-     * @name GetReprocessSelectionSummary
+     * @name GetMetaReprocessSelectionSummary
      * @summary Get a summary of the parent items of the selected meta data
      * @request POST:/meta/v1/getReprocessSelectionSummary
      */
-    getReprocessSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
+    getMetaReprocessSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
       this.request<any, SelectionSummary>({
         path: `/meta/v1/getReprocessSelectionSummary`,
         method: "POST",
@@ -5672,11 +5674,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Meta
-     * @name GetSelectionSummary
+     * @name GetMetaSelectionSummary
      * @summary Get a summary of the selected meta data
      * @request POST:/meta/v1/getSelectionSummary
      */
-    getSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
+    getMetaSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
       this.request<any, SelectionSummary>({
         path: `/meta/v1/getSelectionSummary`,
         method: "POST",
@@ -5689,11 +5691,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Meta
-     * @name GetTypes
+     * @name GetStreamTypes
      * @summary Get a list of possible stream types
      * @request GET:/meta/v1/getTypes
      */
-    getTypes: (params: RequestParams = {}) =>
+    getStreamTypes: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/meta/v1/getTypes`,
         method: "GET",
@@ -5704,11 +5706,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Meta
-     * @name UpdateStatus
+     * @name UpdateMetaStatus
      * @summary Update status on matching meta data
      * @request PUT:/meta/v1/update/status
      */
-    updateStatus: (data: UpdateStatusRequest, params: RequestParams = {}) =>
+    updateMetaStatus: (data: UpdateStatusRequest, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/meta/v1/update/status`,
         method: "PUT",
@@ -5722,11 +5724,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name Find4
+     * @name FindNodes
      * @summary Lists nodes
      * @request GET:/node/v1
      */
-    find4: (params: RequestParams = {}) =>
+    findNodes: (params: RequestParams = {}) =>
       this.request<any, FetchNodeStatusResponse>({
         path: `/node/v1`,
         method: "GET",
@@ -5767,11 +5769,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name SetEnabled2
+     * @name SetNodeEnabled
      * @summary Sets whether a node is enabled
      * @request PUT:/node/v1/enabled/{nodeName}
      */
-    setEnabled2: (nodeName: string, data: boolean, params: RequestParams = {}) =>
+    setNodeEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
@@ -5784,11 +5786,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name Info3
+     * @name FetchNodeInfo
      * @summary Gets detailed information about a node
      * @request GET:/node/v1/info/{nodeName}
      */
-    info3: (nodeName: string, params: RequestParams = {}) =>
+    fetchNodeInfo: (nodeName: string, params: RequestParams = {}) =>
       this.request<any, ClusterNodeInfo>({
         path: `/node/v1/info/${nodeName}`,
         method: "GET",
@@ -5799,11 +5801,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name Ping
+     * @name PingNode
      * @summary Gets a ping time for a node
      * @request GET:/node/v1/ping/{nodeName}
      */
-    ping: (nodeName: string, params: RequestParams = {}) =>
+    pingNode: (nodeName: string, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/node/v1/ping/${nodeName}`,
         method: "GET",
@@ -5814,11 +5816,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name SetPriority
+     * @name SetNodePriority
      * @summary Sets the priority of a node
      * @request PUT:/node/v1/priority/{nodeName}
      */
-    setPriority: (nodeName: string, data: number, params: RequestParams = {}) =>
+    setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/node/v1/priority/${nodeName}`,
         method: "PUT",
@@ -5831,7 +5833,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags API Keys
+     * @tags API Keys, Authentication
      * @name OpenIdConfiguration
      * @summary Provides discovery for openid configuration
      * @request GET:/oauth2/v1/noauth/.well-known/openid-configuration
@@ -5847,11 +5849,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Auth
+     * @name OpenIdAuth
      * @summary Submit an OpenId AuthenticationRequest.
      * @request GET:/oauth2/v1/noauth/auth
      */
-    auth: (
+    openIdAuth: (
       query: {
         scope: string;
         response_type: string;
@@ -5873,12 +5875,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags API Keys
-     * @name Certs
+     * @tags API Keys, Authentication
+     * @name OpenIdCerts
      * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
      * @request GET:/oauth2/v1/noauth/certs
      */
-    certs: (params: RequestParams = {}) =>
+    openIdCerts: (params: RequestParams = {}) =>
       this.request<any, Record<string, Record<string, object>[]>>({
         path: `/oauth2/v1/noauth/certs`,
         method: "GET",
@@ -5889,11 +5891,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Token
+     * @name OpenIdToken
      * @summary Get a token from an access code
      * @request POST:/oauth2/v1/noauth/token
      */
-    token: (data: TokenRequest, params: RequestParams = {}) =>
+    openIdToken: (data: TokenRequest, params: RequestParams = {}) =>
       this.request<any, TokenResponse>({
         path: `/oauth2/v1/noauth/token`,
         method: "POST",
@@ -5922,11 +5924,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application Permissions
-     * @name ChangeUser
+     * @name ChangeUserPermissions
      * @summary User and app permissions for the current session
      * @request POST:/permission/app/v1/changeUser
      */
-    changeUser: (data: ChangeUserRequest, params: RequestParams = {}) =>
+    changeUserPermissions: (data: ChangeUserRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/permission/app/v1/changeUser`,
         method: "POST",
@@ -5971,11 +5973,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application Permissions
-     * @name FireChange
+     * @name FirePermissionChangeEvent
      * @summary Fires a permission change event
      * @request POST:/permission/changeEvent/v1/fireChange/{nodeName}
      */
-    fireChange: (nodeName: string, data: PermissionChangeRequest, params: RequestParams = {}) =>
+    firePermissionChangeEvent: (nodeName: string, data: PermissionChangeRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/permission/changeEvent/v1/fireChange/${nodeName}`,
         method: "POST",
@@ -6123,11 +6125,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Pipelines
-     * @name GetPropertyTypes
+     * @name GetPipelinePropertyTypes
      * @summary Get pipeline property types
      * @request GET:/pipeline/v1/propertyTypes
      */
-    getPropertyTypes: (params: RequestParams = {}) =>
+    getPipelinePropertyTypes: (params: RequestParams = {}) =>
       this.request<any, FetchPropertyTypesResult[]>({
         path: `/pipeline/v1/propertyTypes`,
         method: "GET",
@@ -6155,11 +6157,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Pipelines
-     * @name Fetch9
+     * @name FetchPipeline
      * @summary Fetch a pipeline doc by its UUID
      * @request GET:/pipeline/v1/{uuid}
      */
-    fetch9: (uuid: string, params: RequestParams = {}) =>
+    fetchPipeline: (uuid: string, params: RequestParams = {}) =>
       this.request<any, PipelineDoc>({
         path: `/pipeline/v1/${uuid}`,
         method: "GET",
@@ -6170,11 +6172,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Pipelines
-     * @name Update12
+     * @name UpdatePipeline
      * @summary Update a pipeline doc
      * @request PUT:/pipeline/v1/{uuid}
      */
-    update12: (uuid: string, data: PipelineDoc, params: RequestParams = {}) =>
+    updatePipeline: (uuid: string, data: PipelineDoc, params: RequestParams = {}) =>
       this.request<any, PipelineDoc>({
         path: `/pipeline/v1/${uuid}`,
         method: "PUT",
@@ -6188,11 +6190,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processors
-     * @name Delete7
+     * @name DeleteProcessor
      * @summary Deletes a processor
      * @request DELETE:/processor/v1/{id}
      */
-    delete7: (id: number, params: RequestParams = {}) =>
+    deleteProcessor: (id: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
@@ -6203,11 +6205,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processors
-     * @name SetEnabled4
+     * @name SetProcessorEnabled
      * @summary Sets the enabled/disabled state for a processor
      * @request PUT:/processor/v1/{id}/enabled
      */
-    setEnabled4: (id: number, data: boolean, params: RequestParams = {}) =>
+    setProcessorEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processor/v1/${id}/enabled`,
         method: "PUT",
@@ -6221,11 +6223,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Create7
+     * @name CreateProcessorFilter
      * @summary Creates a filter
      * @request POST:/processorFilter/v1
      */
-    create7: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
+    createProcessorFilter: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
       this.request<any, ProcessorFilter>({
         path: `/processorFilter/v1`,
         method: "POST",
@@ -6238,11 +6240,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Find5
+     * @name FindProcessorFilters
      * @summary Finds processors and filters matching request
      * @request POST:/processorFilter/v1/find
      */
-    find5: (data: FetchProcessorRequest, params: RequestParams = {}) =>
+    findProcessorFilters: (data: FetchProcessorRequest, params: RequestParams = {}) =>
       this.request<any, ProcessorListRowResultPage>({
         path: `/processorFilter/v1/find`,
         method: "POST",
@@ -6255,11 +6257,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Reprocess
+     * @name ReprocessData
      * @summary Create filters to reprocess data
      * @request POST:/processorFilter/v1/reprocess
      */
-    reprocess: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+    reprocessData: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
       this.request<any, ReprocessDataInfo[]>({
         path: `/processorFilter/v1/reprocess`,
         method: "POST",
@@ -6272,11 +6274,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Delete6
+     * @name DeleteProcessorFilter
      * @summary Deletes a filter
      * @request DELETE:/processorFilter/v1/{id}
      */
-    delete6: (id: number, params: RequestParams = {}) =>
+    deleteProcessorFilter: (id: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processorFilter/v1/${id}`,
         method: "DELETE",
@@ -6287,11 +6289,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Read5
-     * @summary Gets a filter
+     * @name FetchProcessorFilter
+     * @summary Fetch a filter
      * @request GET:/processorFilter/v1/{id}
      */
-    read5: (id: number, params: RequestParams = {}) =>
+    fetchProcessorFilter: (id: number, params: RequestParams = {}) =>
       this.request<any, ProcessorFilter>({
         path: `/processorFilter/v1/${id}`,
         method: "GET",
@@ -6302,11 +6304,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name Update15
+     * @name UpdateProcessorFilter
      * @summary Updates a filter
      * @request PUT:/processorFilter/v1/{id}
      */
-    update15: (id: number, data: ProcessorFilter, params: RequestParams = {}) =>
+    updateProcessorFilter: (id: number, data: ProcessorFilter, params: RequestParams = {}) =>
       this.request<any, ProcessorFilter>({
         path: `/processorFilter/v1/${id}`,
         method: "PUT",
@@ -6319,11 +6321,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name SetEnabled3
+     * @name SetProcessorFilterEnabled
      * @summary Sets the enabled/disabled state for a filter
      * @request PUT:/processorFilter/v1/{id}/enabled
      */
-    setEnabled3: (id: number, data: boolean, params: RequestParams = {}) =>
+    setProcessorFilterEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processorFilter/v1/${id}/enabled`,
         method: "PUT",
@@ -6336,11 +6338,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
-     * @name SetPriority1
+     * @name SetProcessorFilterPriority
      * @summary Sets the priority for a filter
      * @request PUT:/processorFilter/v1/{id}/priority
      */
-    setPriority1: (id: number, data: number, params: RequestParams = {}) =>
+    setProcessorFilterPriority: (id: number, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processorFilter/v1/${id}/priority`,
         method: "PUT",
@@ -6354,11 +6356,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Tasks
-     * @name AbandonTasks
+     * @name AbandonProcessorTasks
      * @summary Abandon some tasks
      * @request POST:/processorTask/v1/abandon/{nodeName}
      */
-    abandonTasks: (nodeName: string, data: ProcessorTaskList, params: RequestParams = {}) =>
+    abandonProcessorTasks: (nodeName: string, data: ProcessorTaskList, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/processorTask/v1/abandon/${nodeName}`,
         method: "POST",
@@ -6371,11 +6373,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Tasks
-     * @name AssignTasks
+     * @name AssignProcessorTasks
      * @summary Assign some tasks
      * @request POST:/processorTask/v1/assign/{nodeName}
      */
-    assignTasks: (nodeName: string, data: AssignTasksRequest, params: RequestParams = {}) =>
+    assignProcessorTasks: (nodeName: string, data: AssignTasksRequest, params: RequestParams = {}) =>
       this.request<any, ProcessorTaskList>({
         path: `/processorTask/v1/assign/${nodeName}`,
         method: "POST",
@@ -6388,11 +6390,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Tasks
-     * @name Find6
+     * @name FindProcessorTasks
      * @summary Finds processors tasks
      * @request POST:/processorTask/v1/find
      */
-    find6: (data: ExpressionCriteria, params: RequestParams = {}) =>
+    findProcessorTasks: (data: ExpressionCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageProcessorTask>({
         path: `/processorTask/v1/find`,
         method: "POST",
@@ -6405,11 +6407,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Tasks
-     * @name FindSummary
+     * @name FindProcessorTaskSummary
      * @summary Finds processor task summaries
      * @request POST:/processorTask/v1/summary
      */
-    findSummary: (data: ExpressionCriteria, params: RequestParams = {}) =>
+    findProcessorTaskSummary: (data: ExpressionCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageProcessorTaskSummary>({
         path: `/processorTask/v1/summary`,
         method: "POST",
@@ -6420,14 +6422,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   };
   refData = {
     /**
-     * No description
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *
      * @tags Reference Data
-     * @name Entries
-     * @summary List entries from the reference data store on the node called. This is primarily intended for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
+     * @name GetReferenceStoreEntries
+     * @summary List entries from the reference data store on the node called.
      * @request GET:/refData/v1/entries
      */
-    entries: (query?: { limit?: number }, params: RequestParams = {}) =>
+    getReferenceStoreEntries: (query?: { limit?: number }, params: RequestParams = {}) =>
       this.request<any, RefStoreEntry[]>({
         path: `/refData/v1/entries`,
         method: "GET",
@@ -6439,11 +6441,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name Lookup
+     * @name LookupReferenceData
      * @summary Perform a reference data lookup using the supplied lookup request.
      * @request POST:/refData/v1/lookup
      */
-    lookup: (data: RefDataLookupRequest, params: RequestParams = {}) =>
+    lookupReferenceData: (data: RefDataLookupRequest, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/refData/v1/lookup`,
         method: "POST",
@@ -6456,11 +6458,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name Purge
+     * @name PurgeReferenceData
      * @summary Explicitly delete all entries that are older than purgeAge.
      * @request DELETE:/refData/v1/purge/{purgeAge}
      */
-    purge: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/refData/v1/purge/${purgeAge}`,
         method: "DELETE",
@@ -6472,11 +6474,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Remote Search
-     * @name Destroy1
+     * @name DestroyRemoteSearch
      * @summary Destroy search results
      * @request GET:/remoteSearch/v1/destroy
      */
-    destroy1: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+    destroyRemoteSearch: (query?: { queryKey?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/destroy`,
         method: "GET",
@@ -6488,11 +6490,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Remote Search
-     * @name Poll1
+     * @name PollRemoteSearch
      * @summary Poll the server for search results for the supplied queryKey
      * @request GET:/remoteSearch/v1/poll
      */
-    poll1: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+    pollRemoteSearch: (query?: { queryKey?: string }, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/remoteSearch/v1/poll`,
         method: "GET",
@@ -6504,11 +6506,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Remote Search
-     * @name Start
+     * @name StartRemoteSearch
      * @summary Start a search
      * @request POST:/remoteSearch/v1/start
      */
-    start: (data: ClusterSearchTask, params: RequestParams = {}) =>
+    startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
         method: "POST",
@@ -6522,11 +6524,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Rule Set
-     * @name ExportDocument
+     * @name ExportReceiveDataRules
      * @summary Submit an export request
      * @request POST:/ruleset/v2/export
      */
-    exportDocument: (data: DocRef, params: RequestParams = {}) =>
+    exportReceiveDataRules: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, Base64EncodedDocumentData>({
         path: `/ruleset/v2/export`,
         method: "POST",
@@ -6539,11 +6541,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Rule Set
-     * @name ImportDocument
+     * @name ImportReceiveDataRules
      * @summary Submit an import request
      * @request POST:/ruleset/v2/import
      */
-    importDocument: (data: Base64EncodedDocumentData, params: RequestParams = {}) =>
+    importReceiveDataRules: (data: Base64EncodedDocumentData, params: RequestParams = {}) =>
       this.request<any, DocRef>({
         path: `/ruleset/v2/import`,
         method: "POST",
@@ -6556,11 +6558,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Rule Set
-     * @name ListDocuments
+     * @name ListReceiveDataRules
      * @summary Submit a request for a list of doc refs held by this service
      * @request GET:/ruleset/v2/list
      */
-    listDocuments: (params: RequestParams = {}) =>
+    listReceiveDataRules: (params: RequestParams = {}) =>
       this.request<any, DocRef[]>({
         path: `/ruleset/v2/list`,
         method: "GET",
@@ -6571,11 +6573,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Rule Set
-     * @name Fetch13
+     * @name FetchReceiveDataRules
      * @summary Fetch a rules doc by its UUID
      * @request GET:/ruleset/v2/{uuid}
      */
-    fetch13: (uuid: string, params: RequestParams = {}) =>
+    fetchReceiveDataRules: (uuid: string, params: RequestParams = {}) =>
       this.request<any, ReceiveDataRules>({
         path: `/ruleset/v2/${uuid}`,
         method: "GET",
@@ -6586,11 +6588,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Rule Set
-     * @name Update16
+     * @name UpdateReceiveDataRules
      * @summary Update a rules doc
      * @request PUT:/ruleset/v2/{uuid}
      */
-    update16: (uuid: string, data: ReceiveDataRules, params: RequestParams = {}) =>
+    updateReceiveDataRules: (uuid: string, data: ReceiveDataRules, params: RequestParams = {}) =>
       this.request<any, ReceiveDataRules>({
         path: `/ruleset/v2/${uuid}`,
         method: "PUT",
@@ -6604,11 +6606,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Scheduled Time
-     * @name Get1
+     * @name GetScheduledTimes
      * @summary Gets scheduled time info
      * @request POST:/scheduledTime/v1
      */
-    get1: (data: GetScheduledTimesRequest, params: RequestParams = {}) =>
+    getScheduledTimes: (data: GetScheduledTimesRequest, params: RequestParams = {}) =>
       this.request<any, ScheduledTimes>({
         path: `/scheduledTime/v1`,
         method: "POST",
@@ -6672,11 +6674,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name GetDataSource2
+     * @name GetSearchableDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/searchable/v2/dataSource
      */
-    getDataSource2: (data: DocRef, params: RequestParams = {}) =>
+    getSearchableDataSource: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/searchable/v2/dataSource`,
         method: "POST",
@@ -6689,11 +6691,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name Destroy3
+     * @name DestroySearchableQuery
      * @summary Destroy a running query
      * @request POST:/searchable/v2/destroy
      */
-    destroy3: (data: QueryKey, params: RequestParams = {}) =>
+    destroySearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/searchable/v2/destroy`,
         method: "POST",
@@ -6706,11 +6708,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name Search2
+     * @name StartSearchableQuery
      * @summary Submit a search request
      * @request POST:/searchable/v2/search
      */
-    search2: (data: SearchRequest, params: RequestParams = {}) =>
+    startSearchableQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/searchable/v2/search`,
         method: "POST",
@@ -6724,11 +6726,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sessions
-     * @name List5
+     * @name ListSessions
      * @summary Lists user sessions for a node, or all nodes in the cluster if nodeName is null
      * @request GET:/session/v1/list
      */
-    list5: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    listSessions: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, SessionListResponse>({
         path: `/session/v1/list`,
         method: "GET",
@@ -6740,11 +6742,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sessions
-     * @name Logout1
+     * @name LogoutSession
      * @summary Logs the specified session out of Stroom
      * @request GET:/session/v1/logout/{sessionId}
      */
-    logout1: (sessionId: string, params: RequestParams = {}) =>
+    logoutSession: (sessionId: string, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/session/v1/logout/${sessionId}`,
         method: "GET",
@@ -6755,11 +6757,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sessions
-     * @name Login1
+     * @name LoginSession
      * @summary Checks if the current session is authenticated and redirects to an auth flow if it is not
      * @request GET:/session/v1/noauth/login
      */
-    login1: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
+    loginSession: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
       this.request<any, SessionLoginResponse>({
         path: `/session/v1/noauth/login`,
         method: "GET",
@@ -6772,10 +6774,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Session Info
-     * @name Get3
+     * @name GetSessionInfo
+     * @summary Get information for the current session
      * @request GET:/sessionInfo/v1
      */
-    get3: (params: RequestParams = {}) =>
+    getSessionInfo: (params: RequestParams = {}) =>
       this.request<any, SessionInfo>({
         path: `/sessionInfo/v1`,
         method: "GET",
@@ -6821,11 +6824,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Indices
-     * @name Fetch14
+     * @name FetchSolrIndex
      * @summary Fetch a solr index doc by its UUID
      * @request GET:/solrIndex/v1/{uuid}
      */
-    fetch14: (uuid: string, params: RequestParams = {}) =>
+    fetchSolrIndex: (uuid: string, params: RequestParams = {}) =>
       this.request<any, SolrIndexDoc>({
         path: `/solrIndex/v1/${uuid}`,
         method: "GET",
@@ -6836,11 +6839,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Indices
-     * @name Update17
+     * @name UpdateSolrIndex
      * @summary Update a solr index doc
      * @request PUT:/solrIndex/v1/{uuid}
      */
-    update17: (uuid: string, data: SolrIndexDoc, params: RequestParams = {}) =>
+    updateSolrIndex: (uuid: string, data: SolrIndexDoc, params: RequestParams = {}) =>
       this.request<any, SolrIndexDoc>({
         path: `/solrIndex/v1/${uuid}`,
         method: "PUT",
@@ -6854,11 +6857,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name GetDataSource3
+     * @name GetSqlStatisticsDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/sqlstatistics/v2/dataSource
      */
-    getDataSource3: (data: DocRef, params: RequestParams = {}) =>
+    getSqlStatisticsDataSource: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/sqlstatistics/v2/dataSource`,
         method: "POST",
@@ -6871,11 +6874,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name Destroy4
+     * @name DestroySqlStatisticsSearch
      * @summary Destroy a running query
      * @request POST:/sqlstatistics/v2/destroy
      */
-    destroy4: (data: QueryKey, params: RequestParams = {}) =>
+    destroySqlStatisticsSearch: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/sqlstatistics/v2/destroy`,
         method: "POST",
@@ -6888,11 +6891,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name Search3
+     * @name SearchSqlStatistics
      * @summary Submit a search request
      * @request POST:/sqlstatistics/v2/search
      */
-    search3: (data: SearchRequest, params: RequestParams = {}) =>
+    searchSqlStatistics: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
@@ -6906,11 +6909,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags SQL Statistics RollUps
-     * @name BitMaskConversion1
+     * @name StatisticBitMaskConversion
      * @summary Get rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskConversion
      */
-    bitMaskConversion1: (data: number[], params: RequestParams = {}) =>
+    statisticBitMaskConversion: (data: number[], params: RequestParams = {}) =>
       this.request<any, CustomRollUpMaskFields[]>({
         path: `/statistic/rollUp/v1/bitMaskConversion`,
         method: "POST",
@@ -6923,11 +6926,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags SQL Statistics RollUps
-     * @name BitMaskPermGeneration1
+     * @name StatisticBitMaskPermGeneration
      * @summary Create rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskPermGeneration
      */
-    bitMaskPermGeneration1: (data: number, params: RequestParams = {}) =>
+    statisticBitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
       this.request<any, CustomRollUpMask[]>({
         path: `/statistic/rollUp/v1/bitMaskPermGeneration`,
         method: "POST",
@@ -6940,11 +6943,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags SQL Statistics RollUps
-     * @name FieldChange1
+     * @name StatisticFieldChange
      * @summary Change fields
      * @request POST:/statistic/rollUp/v1/dataSourceFieldChange
      */
-    fieldChange1: (data: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
+    statisticFieldChange: (data: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
       this.request<any, StatisticsDataSourceData>({
         path: `/statistic/rollUp/v1/dataSourceFieldChange`,
         method: "POST",
@@ -6957,11 +6960,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags SQL Statistics Stores
-     * @name Fetch17
+     * @name FetchStatisticStore
      * @summary Fetch a statistic doc by its UUID
      * @request GET:/statistic/v1/{uuid}
      */
-    fetch17: (uuid: string, params: RequestParams = {}) =>
+    fetchStatisticStore: (uuid: string, params: RequestParams = {}) =>
       this.request<any, StatisticStoreDoc>({
         path: `/statistic/v1/${uuid}`,
         method: "GET",
@@ -6972,11 +6975,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags SQL Statistics Stores
-     * @name Update19
+     * @name UpdateStatisticStore
      * @summary Update a statistic doc
      * @request PUT:/statistic/v1/{uuid}
      */
-    update19: (uuid: string, data: StatisticStoreDoc, params: RequestParams = {}) =>
+    updateStatisticStore: (uuid: string, data: StatisticStoreDoc, params: RequestParams = {}) =>
       this.request<any, StatisticStoreDoc>({
         path: `/statistic/v1/${uuid}`,
         method: "PUT",
@@ -6990,11 +6993,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Stats RollUps
-     * @name BitMaskConversion
+     * @name StatsBitMaskConversion
      * @summary Get rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskConversion
      */
-    bitMaskConversion: (data: number[], params: RequestParams = {}) =>
+    statsBitMaskConversion: (data: number[], params: RequestParams = {}) =>
       this.request<any, ResultPageCustomRollUpMaskFields>({
         path: `/statsStore/rollUp/v1/bitMaskConversion`,
         method: "POST",
@@ -7007,11 +7010,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Stats RollUps
-     * @name BitMaskPermGeneration
+     * @name StatsBitMaskPermGeneration
      * @summary Create rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskPermGeneration
      */
-    bitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
+    statsBitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
       this.request<any, ResultPageCustomRollUpMask>({
         path: `/statsStore/rollUp/v1/bitMaskPermGeneration`,
         method: "POST",
@@ -7024,11 +7027,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Stats RollUps
-     * @name FieldChange
+     * @name StatsFieldChange
      * @summary Change fields
      * @request POST:/statsStore/rollUp/v1/dataSourceFieldChange
      */
-    fieldChange: (data: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
+    statsFieldChange: (data: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
       this.request<any, StroomStatsStoreEntityData>({
         path: `/statsStore/rollUp/v1/dataSourceFieldChange`,
         method: "POST",
@@ -7041,11 +7044,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Stats Stores
-     * @name Fetch16
+     * @name FetchStroomStatsStore
      * @summary Fetch a store doc doc by its UUID
      * @request GET:/statsStore/v1/{uuid}
      */
-    fetch16: (uuid: string, params: RequestParams = {}) =>
+    fetchStroomStatsStore: (uuid: string, params: RequestParams = {}) =>
       this.request<any, StroomStatsStoreDoc>({
         path: `/statsStore/v1/${uuid}`,
         method: "GET",
@@ -7056,11 +7059,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Stats Stores
-     * @name Update18
+     * @name UpdateStroomStatsStore
      * @summary Update a stats store doc
      * @request PUT:/statsStore/v1/{uuid}
      */
-    update18: (uuid: string, data: StroomStatsStoreDoc, params: RequestParams = {}) =>
+    updateStroomStatsStore: (uuid: string, data: StroomStatsStoreDoc, params: RequestParams = {}) =>
       this.request<any, StroomStatsStoreDoc>({
         path: `/statsStore/v1/${uuid}`,
         method: "PUT",
@@ -7126,11 +7129,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stored Queries
-     * @name Create2
+     * @name CreateStoredQuery
      * @summary Create a stored query
      * @request POST:/storedQuery/v1/create
      */
-    create2: (data: StoredQuery, params: RequestParams = {}) =>
+    createStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
       this.request<any, StoredQuery>({
         path: `/storedQuery/v1/create`,
         method: "POST",
@@ -7143,11 +7146,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stored Queries
-     * @name Delete1
+     * @name DeleteStoredQuery
      * @summary Delete a stored query
      * @request DELETE:/storedQuery/v1/delete
      */
-    delete1: (data: StoredQuery, params: RequestParams = {}) =>
+    deleteStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/storedQuery/v1/delete`,
         method: "DELETE",
@@ -7160,11 +7163,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stored Queries
-     * @name Find
+     * @name FindStoredQueries
      * @summary Find stored queries
      * @request POST:/storedQuery/v1/find
      */
-    find: (data: FindStoredQueryCriteria, params: RequestParams = {}) =>
+    findStoredQueries: (data: FindStoredQueryCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageStoredQuery>({
         path: `/storedQuery/v1/find`,
         method: "POST",
@@ -7177,11 +7180,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stored Queries
-     * @name Read1
-     * @summary Get a stored query
+     * @name FetchStoredQuery
+     * @summary Fetch a stored query
      * @request POST:/storedQuery/v1/read
      */
-    read1: (data: StoredQuery, params: RequestParams = {}) =>
+    fetchStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
       this.request<any, StoredQuery>({
         path: `/storedQuery/v1/read`,
         method: "POST",
@@ -7194,11 +7197,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stored Queries
-     * @name Update3
+     * @name UpdateStoredQuery
      * @summary Update a stored query
      * @request PUT:/storedQuery/v1/update
      */
-    update3: (data: StoredQuery, params: RequestParams = {}) =>
+    updateStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
       this.request<any, StoredQuery>({
         path: `/storedQuery/v1/update`,
         method: "PUT",
@@ -7212,11 +7215,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name GetDataSource
+     * @name GetStroomIndexDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-index/v2/dataSource
      */
-    getDataSource: (data: DocRef, params: RequestParams = {}) =>
+    getStroomIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/stroom-index/v2/dataSource`,
         method: "POST",
@@ -7229,11 +7232,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name Destroy
+     * @name DestroyStroomIndex
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
      */
-    destroy: (data: QueryKey, params: RequestParams = {}) =>
+    destroyStroomIndex: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-index/v2/destroy`,
         method: "POST",
@@ -7246,11 +7249,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name Search
+     * @name SearchStroomIndex
      * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
      */
-    search: (data: SearchRequest, params: RequestParams = {}) =>
+    searchStroomIndex: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-index/v2/search`,
         method: "POST",
@@ -7264,11 +7267,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name GetDataSource1
+     * @name GetSolrIndexDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-solr-index/v2/dataSource
      */
-    getDataSource1: (data: DocRef, params: RequestParams = {}) =>
+    getSolrIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DataSource>({
         path: `/stroom-solr-index/v2/dataSource`,
         method: "POST",
@@ -7281,11 +7284,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name Destroy2
+     * @name DestroySolrIndexSearch
      * @summary Destroy a running query
      * @request POST:/stroom-solr-index/v2/destroy
      */
-    destroy2: (data: QueryKey, params: RequestParams = {}) =>
+    destroySolrIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-solr-index/v2/destroy`,
         method: "POST",
@@ -7298,11 +7301,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name Search1
+     * @name SearchSolrIndex
      * @summary Submit a search request
      * @request POST:/stroom-solr-index/v2/search
      */
-    search1: (data: SearchRequest, params: RequestParams = {}) =>
+    searchSolrIndex: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-solr-index/v2/search`,
         method: "POST",
@@ -7316,11 +7319,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Sessions
-     * @name Invalidate1
+     * @name InvalidateStroomSession
      * @summary Invalidate the current session
      * @request GET:/stroomSession/v1/invalidate
      */
-    invalidate1: (params: RequestParams = {}) =>
+    invalidateStroomSession: (params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroomSession/v1/invalidate`,
         method: "GET",
@@ -7331,11 +7334,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Sessions
-     * @name ValidateSession
+     * @name ValidateStroomSession
      * @summary Validate the current session, return a redirect Uri if invalid.
      * @request GET:/stroomSession/v1/noauth/validateSession
      */
-    validateSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    validateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
       this.request<any, ValidateSessionResponse>({
         path: `/stroomSession/v1/noauth/validateSession`,
         method: "GET",
@@ -7348,11 +7351,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Suggestions
-     * @name Fetch12
+     * @name FetchSuggestions
      * @summary Fetch some suggestions
      * @request POST:/suggest/v1
      */
-    fetch12: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
+    fetchSuggestions: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/suggest/v1`,
         method: "POST",
@@ -7366,11 +7369,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags System Info
-     * @name GetAll
+     * @name GetAllSystemInfo
      * @summary Get all system info results
      * @request GET:/systemInfo/v1
      */
-    getAll: (params: RequestParams = {}) =>
+    getAllSystemInfo: (params: RequestParams = {}) =>
       this.request<any, SystemInfoResultList>({
         path: `/systemInfo/v1`,
         method: "GET",
@@ -7381,11 +7384,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags System Info
-     * @name GetNames
+     * @name GetSystemInfoNames
      * @summary Get all system info result names
      * @request GET:/systemInfo/v1/names
      */
-    getNames: (params: RequestParams = {}) =>
+    getSystemInfoNames: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/systemInfo/v1/names`,
         method: "GET",
@@ -7396,11 +7399,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags System Info
-     * @name Get2
+     * @name GetSystemInfoByName
      * @summary Get a system info result by name
      * @request GET:/systemInfo/v1/{name}
      */
-    get2: (name: string, params: RequestParams = {}) =>
+    getSystemInfoByName: (name: string, params: RequestParams = {}) =>
       this.request<any, SystemInfoResult>({
         path: `/systemInfo/v1/${name}`,
         method: "GET",
@@ -7412,11 +7415,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Tasks
-     * @name Find9
+     * @name FindTasks
      * @summary Finds tasks for a node
      * @request POST:/task/v1/find/{nodeName}
      */
-    find9: (nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
+    findTasks: (nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/find/${nodeName}`,
         method: "POST",
@@ -7429,11 +7432,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Tasks
-     * @name List6
+     * @name ListTasks
      * @summary Lists tasks for a node
      * @request GET:/task/v1/list/{nodeName}
      */
-    list6: (nodeName: string, params: RequestParams = {}) =>
+    listTasks: (nodeName: string, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/list/${nodeName}`,
         method: "GET",
@@ -7444,11 +7447,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Tasks
-     * @name Terminate
+     * @name TerminateTasks
      * @summary Terminates tasks for a node
      * @request POST:/task/v1/terminate/{nodeName}
      */
-    terminate: (nodeName: string, data: TerminateTaskProgressRequest, params: RequestParams = {}) =>
+    terminateTasks: (nodeName: string, data: TerminateTaskProgressRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/task/v1/terminate/${nodeName}`,
         method: "POST",
@@ -7461,11 +7464,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Tasks
-     * @name UserTasks
+     * @name ListUserTasks
      * @summary Lists tasks for a node
      * @request GET:/task/v1/user/{nodeName}
      */
-    userTasks: (nodeName: string, params: RequestParams = {}) =>
+    listUserTasks: (nodeName: string, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/user/${nodeName}`,
         method: "GET",
@@ -7477,11 +7480,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Text Converters
-     * @name Fetch10
+     * @name FetchTextConverter
      * @summary Fetch a text converter doc by its UUID
      * @request GET:/textConverter/v1/{uuid}
      */
-    fetch10: (uuid: string, params: RequestParams = {}) =>
+    fetchTextConverter: (uuid: string, params: RequestParams = {}) =>
       this.request<any, TextConverterDoc>({
         path: `/textConverter/v1/${uuid}`,
         method: "GET",
@@ -7492,11 +7495,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Text Converters
-     * @name Update13
+     * @name UpdateTextConverter
      * @summary Update a text converter doc
      * @request PUT:/textConverter/v1/{uuid}
      */
-    update13: (uuid: string, data: TextConverterDoc, params: RequestParams = {}) =>
+    updateTextConverter: (uuid: string, data: TextConverterDoc, params: RequestParams = {}) =>
       this.request<any, TextConverterDoc>({
         path: `/textConverter/v1/${uuid}`,
         method: "PUT",
@@ -7681,11 +7684,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name Find8
+     * @name FindUsers
      * @summary Find the users matching the supplied criteria
      * @request GET:/users/v1
      */
-    find8: (query?: { name?: string; isGroup?: boolean; uuid?: string }, params: RequestParams = {}) =>
+    findUsers: (query?: { name?: string; isGroup?: boolean; uuid?: string }, params: RequestParams = {}) =>
       this.request<any, User[]>({
         path: `/users/v1`,
         method: "GET",
@@ -7697,11 +7700,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name GetAssociates
+     * @name GetAssociatedUsers
      * @summary Gets a list of associated users
      * @request GET:/users/v1/associates
      */
-    getAssociates: (query?: { filter?: string }, params: RequestParams = {}) =>
+    getAssociatedUsers: (query?: { filter?: string }, params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/users/v1/associates`,
         method: "GET",
@@ -7713,11 +7716,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name Create8
+     * @name CreateUser
      * @summary Creates a user or group with the supplied name
      * @request POST:/users/v1/create/{name}/{isGroup}
      */
-    create8: (name: string, isGroup: boolean, params: RequestParams = {}) =>
+    createUser: (name: string, isGroup: boolean, params: RequestParams = {}) =>
       this.request<any, User>({
         path: `/users/v1/create/${name}/${isGroup}`,
         method: "POST",
@@ -7728,11 +7731,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name Find7
+     * @name FindUsersByCriteria
      * @summary Find the users matching the supplied criteria
      * @request POST:/users/v1/find
      */
-    find7: (data: FindUserCriteria, params: RequestParams = {}) =>
+    findUsersByCriteria: (data: FindUserCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageUser>({
         path: `/users/v1/find`,
         method: "POST",
@@ -7745,11 +7748,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name SetStatus1
+     * @name SetUserStatus
      * @summary Enables/disables the Stroom user with the supplied username
      * @request PUT:/users/v1/{userName}/status
      */
-    setStatus1: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
+    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/users/v1/${userName}/status`,
         method: "PUT",
@@ -7761,11 +7764,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name Fetch15
+     * @name FetchUser
      * @summary Fetches the user with the supplied UUID
      * @request GET:/users/v1/{userUuid}
      */
-    fetch15: (userUuid: string, params: RequestParams = {}) =>
+    fetchUser: (userUuid: string, params: RequestParams = {}) =>
       this.request<any, User>({
         path: `/users/v1/${userUuid}`,
         method: "GET",
@@ -7822,11 +7825,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Visualisations
-     * @name Fetch18
+     * @name FetchVisualisation
      * @summary Fetch a visualisation doc by its UUID
      * @request GET:/visualisation/v1/{uuid}
      */
-    fetch18: (uuid: string, params: RequestParams = {}) =>
+    fetchVisualisation: (uuid: string, params: RequestParams = {}) =>
       this.request<any, VisualisationDoc>({
         path: `/visualisation/v1/${uuid}`,
         method: "GET",
@@ -7837,11 +7840,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Visualisations
-     * @name Update20
+     * @name UpdateVisualisation
      * @summary Update a visualisation doc
      * @request PUT:/visualisation/v1/{uuid}
      */
-    update20: (uuid: string, data: VisualisationDoc, params: RequestParams = {}) =>
+    updateVisualisation: (uuid: string, data: VisualisationDoc, params: RequestParams = {}) =>
       this.request<any, VisualisationDoc>({
         path: `/visualisation/v1/${uuid}`,
         method: "PUT",
@@ -7855,11 +7858,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Welcome
-     * @name Fetch
+     * @name FetchWelcome
      * @summary Get the configured HTML welcome message
      * @request GET:/welcome/v1
      */
-    fetch: (params: RequestParams = {}) =>
+    fetchWelcome: (params: RequestParams = {}) =>
       this.request<any, Welcome>({
         path: `/welcome/v1`,
         method: "GET",
@@ -7871,11 +7874,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags XML Schemas
-     * @name Fetch19
+     * @name FetchXmlSchema
      * @summary Fetch a xml schema doc by its UUID
      * @request GET:/xmlSchema/v1/{uuid}
      */
-    fetch19: (uuid: string, params: RequestParams = {}) =>
+    fetchXmlSchema: (uuid: string, params: RequestParams = {}) =>
       this.request<any, XmlSchemaDoc>({
         path: `/xmlSchema/v1/${uuid}`,
         method: "GET",
@@ -7886,11 +7889,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags XML Schemas
-     * @name Update21
+     * @name UpdateXmlSchema
      * @summary Update a xml schema doc
      * @request PUT:/xmlSchema/v1/{uuid}
      */
-    update21: (uuid: string, data: XmlSchemaDoc, params: RequestParams = {}) =>
+    updateXmlSchema: (uuid: string, data: XmlSchemaDoc, params: RequestParams = {}) =>
       this.request<any, XmlSchemaDoc>({
         path: `/xmlSchema/v1/${uuid}`,
         method: "PUT",
@@ -7904,11 +7907,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags XSLTs
-     * @name Fetch11
+     * @name FetchXslt
      * @summary Fetch an xslt doc by its UUID
      * @request GET:/xslt/v1/{uuid}
      */
-    fetch11: (uuid: string, params: RequestParams = {}) =>
+    fetchXslt: (uuid: string, params: RequestParams = {}) =>
       this.request<any, XsltDoc>({
         path: `/xslt/v1/${uuid}`,
         method: "GET",
@@ -7919,11 +7922,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags XSLTs
-     * @name Update14
+     * @name UpdateXslt
      * @summary Update a an xslt doc
      * @request PUT:/xslt/v1/{uuid}
      */
-    update14: (uuid: string, data: XsltDoc, params: RequestParams = {}) =>
+    updateXslt: (uuid: string, data: XsltDoc, params: RequestParams = {}) =>
       this.request<any, XsltDoc>({
         path: `/xslt/v1/${uuid}`,
         method: "PUT",
