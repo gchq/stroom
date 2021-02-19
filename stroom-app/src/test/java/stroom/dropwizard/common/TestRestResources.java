@@ -4,6 +4,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.RestResource;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
@@ -212,12 +213,19 @@ class TestRestResources {
                                final SoftAssertions softAssertions) {
         LOGGER.info("Doing @Api... asserts");
 
-        // Check that the interface has no autologged annotations.
+        // Check that the interface has no @Autologged annotations.
         checkForUnexpectedAnnotations(
                 resourceClass,
                 softAssertions,
                 annotationClass -> annotationClass.equals(AutoLogged.class),
                 AutoLogged.class.getName());
+
+        // Check that the interface has no @Timed annotations.
+        checkForUnexpectedAnnotations(
+                resourceClass,
+                softAssertions,
+                annotationClass -> annotationClass.equals(Timed.class),
+                Timed.class.getName());
 
         final boolean classHasTagAnnotation = resourceClass.isAnnotationPresent(Tag.class);
         final String[] apiAnnotationTags = classHasTagAnnotation

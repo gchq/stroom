@@ -22,7 +22,6 @@ import stroom.security.identity.config.TokenConfig;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,7 +53,6 @@ public interface TokenResource extends RestResource {
 
     @GET
     @Path("/")
-    @Timed
     @NotNull
     @Operation(
             summary = "Get all tokens.",
@@ -63,7 +61,6 @@ public interface TokenResource extends RestResource {
 
     @POST
     @Path("search")
-    @Timed
     @Operation(
             summary = "Submit a search request for tokens",
             operationId = "searchTokens")
@@ -73,7 +70,6 @@ public interface TokenResource extends RestResource {
                            @Valid SearchTokenRequest request);
 
     @POST
-    @Timed
     @Operation(
             summary = "Create a new token.",
             operationId = "createToken")
@@ -86,7 +82,6 @@ public interface TokenResource extends RestResource {
             operationId = "fetchTokenByContent")
     @GET
     @Path("/byToken/{token}")
-    @Timed
     Token read(@Context @NotNull HttpServletRequest httpServletRequest,
                @PathParam("token") String token);
 
@@ -95,7 +90,6 @@ public interface TokenResource extends RestResource {
             operationId = "fetchToken")
     @GET
     @Path("/{id}")
-    @Timed
     Token read(@Context @NotNull HttpServletRequest httpServletRequest,
                @PathParam("id") int tokenId);
 
@@ -104,7 +98,6 @@ public interface TokenResource extends RestResource {
             operationId = "toggleTokenEnabled")
     @GET
     @Path("/{id}/enabled")
-    @Timed
     Integer toggleEnabled(@Context @NotNull HttpServletRequest httpServletRequest,
                           @NotNull @PathParam("id") int tokenId,
                           @NotNull @QueryParam("enabled") boolean enabled);
@@ -114,7 +107,6 @@ public interface TokenResource extends RestResource {
             operationId = "deleteToken")
     @DELETE
     @Path("/{id}")
-    @Timed
     Integer delete(@Context @NotNull HttpServletRequest httpServletRequest,
                    @PathParam("id") int tokenId);
 
@@ -123,7 +115,6 @@ public interface TokenResource extends RestResource {
             operationId = "deleteTokenByContent")
     @DELETE
     @Path("/byToken/{token}")
-    @Timed
     Integer deleteByToken(@Context @NotNull HttpServletRequest httpServletRequest,
                           @PathParam("token") String token);
 
@@ -131,7 +122,6 @@ public interface TokenResource extends RestResource {
             summary = "Delete all tokens.",
             operationId = "deleteAllTokens")
     @DELETE
-    @Timed
     Integer deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
 
 
@@ -141,7 +131,6 @@ public interface TokenResource extends RestResource {
             operationId = "getPublicKey")
     @GET
     @Path("/publickey")
-    @Timed
     String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @Operation(
@@ -149,7 +138,6 @@ public interface TokenResource extends RestResource {
             operationId = "fetchTokenConfig")
     @GET
     @Path("/noauth/fetchTokenConfig")
-    @Timed
     @NotNull
     TokenConfig fetchTokenConfig();
 }

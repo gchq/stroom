@@ -19,7 +19,6 @@ package stroom.search.impl;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -45,7 +44,6 @@ public interface RemoteSearchResource extends RestResource {
 
     @POST
     @Path(START_PATH_PART)
-    @Timed
     @Operation(
             summary = "Start a search",
             operationId = "startRemoteSearch")
@@ -61,7 +59,6 @@ public interface RemoteSearchResource extends RestResource {
 
     @GET
     @Path(DESTROY_PATH_PART)
-    @Timed
     @Operation(
             summary = "Destroy search results",
             operationId = "destroyRemoteSearch")

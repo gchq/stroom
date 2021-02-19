@@ -9,6 +9,7 @@ import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -55,6 +56,7 @@ class OpenIdResourceImpl implements OpenIdResource {
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
+    @Timed
     @Override
     public void auth(final HttpServletRequest request,
                      final String scope,
@@ -76,11 +78,13 @@ class OpenIdResourceImpl implements OpenIdResource {
         throw new RedirectionException(Status.SEE_OTHER, result);
     }
 
+    @Timed
     @Override
     public TokenResponse token(final TokenRequest tokenRequest) {
         return service.token(tokenRequest);
     }
 
+    @Timed
     @Override
     public Map<String, List<Map<String, Object>>> certs(final HttpServletRequest httpServletRequest) {
 
@@ -108,6 +112,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 });
     }
 
+    @Timed
     @Override
     public String openIdConfiguration() {
         try {
@@ -116,7 +121,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                     .idTokenSigningSlgValuesSupported(new String[]{"RS256"})
                     .issuer(tokenConfig.getJwsIssuer())
                     .jwksUri(uriFactory.publicUri("/oauth2/v1/noauth/certs").toString())
-                    .responseTypesSupported(new String[]{"code",
+                    .responseTypesSupported(new String[]{
+                            "code",
                             "token",
                             "id_token",
                             "code token",
@@ -124,7 +130,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                             "token id_token",
                             "code token id_token",
                             "none"})
-                    .scopesSupported(new String[]{"openid",
+                    .scopesSupported(new String[]{
+                            "openid",
                             "email"})
                     .subjectTypesSupported(new String[]{"public"})
                     .tokenEndpoint(uriFactory.publicUri("/oauth2/v1/noauth/token").toString())

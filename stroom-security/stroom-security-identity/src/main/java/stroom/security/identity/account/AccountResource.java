@@ -22,7 +22,6 @@ import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,7 +56,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "listAccounts")
     @GET
     @Path("/")
-    @Timed
     @NotNull
     AccountResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
 
@@ -66,7 +64,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "searchAccounts")
     @POST
     @Path("search")
-    @Timed
     @NotNull
     AccountResultPage search(@Parameter(description = "account", required = true) SearchAccountRequest request);
 
@@ -75,7 +72,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "createAccount")
     @POST
     @Path("/")
-    @Timed
     @NotNull
     Integer create(
             @Context @NotNull HttpServletRequest httpServletRequest,
@@ -86,7 +82,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "fetchAccount")
     @GET
     @Path("{id}")
-    @Timed
     @NotNull
     Account fetch(@PathParam("id") final Integer accountId);
 
@@ -95,7 +90,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "updateAccount")
     @PUT
     @Path("{id}")
-    @Timed
     @NotNull
     Boolean update(
             @Context @NotNull HttpServletRequest httpServletRequest,
@@ -107,7 +101,6 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             operationId = "deleteAccount")
     @DELETE
     @Path("{id}")
-    @Timed
     @NotNull
     Boolean delete(
             @Context @NotNull HttpServletRequest httpServletRequest,

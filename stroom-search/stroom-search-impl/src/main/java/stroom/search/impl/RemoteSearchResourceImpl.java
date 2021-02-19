@@ -16,6 +16,8 @@
 
 package stroom.search.impl;
 
+import com.codahale.metrics.annotation.Timed;
+
 import javax.inject.Inject;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -28,16 +30,19 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
         this.remoteSearchService = remoteSearchService;
     }
 
+    @Timed
     @Override
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
         return remoteSearchService.start(clusterSearchTask);
     }
 
+    @Timed
     @Override
     public StreamingOutput poll(final String queryKey) {
         return outputStream -> remoteSearchService.poll(queryKey, outputStream);
     }
 
+    @Timed
     @Override
     public Boolean destroy(final String queryKey) {
         return remoteSearchService.destroy(queryKey);

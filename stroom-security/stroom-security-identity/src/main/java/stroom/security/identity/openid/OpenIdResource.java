@@ -5,7 +5,6 @@ import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +39,6 @@ public interface OpenIdResource extends RestResource {
             operationId = "openIdAuth")
     @GET
     @Path("auth")
-    @Timed
     void auth(
             @Context HttpServletRequest request,
             @QueryParam(OpenId.SCOPE) @NotNull String scope,
@@ -56,7 +54,6 @@ public interface OpenIdResource extends RestResource {
             operationId = "openIdToken")
     @POST
     @Path("token")
-    @Timed
     TokenResponse token(@Parameter(description = "tokenRequest", required = true) TokenRequest tokenRequest);
 
     @Operation(
@@ -66,7 +63,6 @@ public interface OpenIdResource extends RestResource {
             operationId = "openIdCerts")
     @GET
     @Path("certs")
-    @Timed
     Map<String, List<Map<String, Object>>> certs(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @Operation(
@@ -75,6 +71,5 @@ public interface OpenIdResource extends RestResource {
             operationId = "openIdConfiguration")
     @GET
     @Path(".well-known/openid-configuration")
-    @Timed
     String openIdConfiguration();
 }

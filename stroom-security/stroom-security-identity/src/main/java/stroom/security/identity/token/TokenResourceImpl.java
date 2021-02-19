@@ -20,6 +20,8 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.config.TokenConfig;
 
+import com.codahale.metrics.annotation.Timed;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -38,11 +40,13 @@ public class TokenResourceImpl implements TokenResource {
         this.tokenEventLog = tokenEventLog;
     }
 
+    @Timed
     @Override
     public TokenResultPage list(final HttpServletRequest httpServletRequest) {
         return null;
     }
 
+    @Timed
     @Override
     public TokenResultPage search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
         try {
@@ -55,6 +59,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Token create(final HttpServletRequest httpServletRequest,
                               final CreateTokenRequest createTokenRequest) {
@@ -68,6 +73,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Integer deleteAll(final HttpServletRequest httpServletRequest) {
         try {
@@ -80,6 +86,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Integer delete(final HttpServletRequest httpServletRequest,
                                 final int tokenId) {
@@ -93,6 +100,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Integer deleteByToken(final HttpServletRequest httpServletRequest,
                                        final String data) {
@@ -106,6 +114,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
                             final String token) {
@@ -119,6 +128,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
                             final int tokenId) {
@@ -132,6 +142,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final Integer toggleEnabled(final HttpServletRequest httpServletRequest,
                                        final int tokenId,
@@ -146,6 +157,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public final String getPublicKey(final HttpServletRequest httpServletRequest) {
         try {
@@ -158,6 +170,7 @@ public class TokenResourceImpl implements TokenResource {
         }
     }
 
+    @Timed
     @Override
     public TokenConfig fetchTokenConfig() {
         return serviceProvider.get().fetchTokenConfig();

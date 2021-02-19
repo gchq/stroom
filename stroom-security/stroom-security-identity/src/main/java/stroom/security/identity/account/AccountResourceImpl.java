@@ -21,6 +21,7 @@ package stroom.security.identity.account;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 
+import com.codahale.metrics.annotation.Timed;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.AuthenticateAction;
@@ -60,6 +61,7 @@ class AccountResourceImpl implements AccountResource {
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
+    @Timed
     @Override
     public AccountResultPage list(final HttpServletRequest httpServletRequest) {
         return stroomEventLoggingService.loggedResult(
@@ -87,6 +89,7 @@ class AccountResourceImpl implements AccountResource {
         );
     }
 
+    @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
         return stroomEventLoggingService.loggedResult(
@@ -120,6 +123,7 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
@@ -154,6 +158,7 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
     public Account fetch(final Integer userId) {
         if (userId == null) {
@@ -184,6 +189,7 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
                           final UpdateAccountRequest request,
@@ -239,6 +245,7 @@ class AccountResourceImpl implements AccountResource {
                         .build());
     }
 
+    @Timed
     @Override
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {

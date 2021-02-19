@@ -21,6 +21,7 @@ package stroom.security.identity.authenticate;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
 
+import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +47,13 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         this.serviceProvider = serviceProvider;
     }
 
+    @Timed
     @Override
     public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
         return serviceProvider.get().getAuthenticationState(request);
     }
 
+    @Timed
     @Override
     public LoginResponse login(final HttpServletRequest request,
                                final LoginRequest loginRequest) {
@@ -58,6 +61,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         return serviceProvider.get().handleLogin(loginRequest, request);
     }
 
+    @Timed
     @Override
     public Boolean logout(
             final HttpServletRequest request,
@@ -73,18 +77,21 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
+    @Timed
     @Override
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
                                                    final ConfirmPasswordRequest confirmPasswordRequest) {
         return serviceProvider.get().confirmPassword(request, confirmPasswordRequest);
     }
 
+    @Timed
     @Override
     public final ChangePasswordResponse changePassword(final HttpServletRequest request,
                                                        final ChangePasswordRequest changePasswordRequest) {
         return serviceProvider.get().changePassword(request, changePasswordRequest);
     }
 
+    @Timed
     @Override
     public Boolean resetEmail(
             final HttpServletRequest request,
@@ -97,6 +104,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         throw new NotFoundException("User does not exist");
     }
 
+    @Timed
     @Override
     public final ChangePasswordResponse resetPassword(final HttpServletRequest request,
                                                       final ResetPasswordRequest resetPasswordRequest) {
@@ -108,11 +116,13 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         throw new NotAuthorizedException("Not authorised");
     }
 
+    @Timed
     @Override
     public final Boolean needsPasswordChange(final String email) {
         return serviceProvider.get().needsPasswordChange(email);
     }
 
+    @Timed
     @Override
     public PasswordPolicyConfig fetchPasswordPolicy() {
         return serviceProvider.get().getPasswordPolicy();

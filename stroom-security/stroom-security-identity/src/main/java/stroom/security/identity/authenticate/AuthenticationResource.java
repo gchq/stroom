@@ -23,7 +23,6 @@ import stroom.security.openid.api.OpenId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,7 +49,6 @@ public interface AuthenticationResource extends RestResource {
 
     @GET
     @Path("/noauth/getAuthenticationState")
-    @Timed
     @NotNull
     @Operation(
             summary = "Get the current authentication state",
@@ -64,7 +62,6 @@ public interface AuthenticationResource extends RestResource {
      */
     @POST
     @Path("/noauth/login")
-    @Timed
     @NotNull
     @Operation(
             summary = "Handle a login request made using username and password credentials.",
@@ -76,7 +73,6 @@ public interface AuthenticationResource extends RestResource {
 
     @GET
     @Path("/logout")
-    @Timed
     @NotNull
     @Operation(
             summary = "Log a user out of their session",
@@ -87,7 +83,6 @@ public interface AuthenticationResource extends RestResource {
 
     @POST
     @Path("/noauth/confirmPassword")
-    @Timed
     @NotNull
     @Operation(
             summary = "Confirm an authenticated users current password.",
@@ -100,7 +95,6 @@ public interface AuthenticationResource extends RestResource {
 
     @POST
     @Path("/noauth/changePassword")
-    @Timed
     @NotNull
     @Operation(
             summary = "Change a user's password.",
@@ -112,7 +106,6 @@ public interface AuthenticationResource extends RestResource {
 
     @GET
     @Path("/noauth/reset/{email}")
-    @Timed
     @NotNull
     @Operation(
             summary = "Reset a user account using an email address.",
@@ -123,7 +116,6 @@ public interface AuthenticationResource extends RestResource {
 
     @POST
     @Path("resetPassword")
-    @Timed
     @NotNull
     @Operation(
             summary = "Reset an authenticated user's password.",
@@ -135,7 +127,6 @@ public interface AuthenticationResource extends RestResource {
 
     @GET
     @Path("needsPasswordChange")
-    @Timed
     @NotNull
     @Operation(
             summary = "Check if a user's password needs changing.",
@@ -144,7 +135,6 @@ public interface AuthenticationResource extends RestResource {
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")
-    @Timed
     @NotNull
     @Operation(
             summary = "Get the password policy",
