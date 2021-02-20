@@ -23,9 +23,8 @@ dependencies {
     compile libs.stroomQueryApi
 
     compile libs.gwt_servlet
-    compile libs.hibernate_core
-    permitUnusedDeclared libs.hibernate_core
     compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.hibernate_jpa_api
     compile libs.restygwt
     compile libs.swagger_annotations

@@ -32,8 +32,10 @@ dependencies {
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.jackson_core
     compile libs.jackson_databind
+    permitUnusedDeclared libs.jackson_databind_sources
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api

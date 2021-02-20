@@ -95,6 +95,7 @@ dependencies {
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-ruleset-server')
+    compile project(':stroom-ruleset-shared')
 
     compile libs.stroomQueryApi
 
@@ -102,6 +103,7 @@ dependencies {
     compile libs.guava
     compile libs.guice3
     compile libs.jackson_annotations
+    permitUnusedDeclared "com.fasterxml.jackson.core:jackson-annotations:2.10.4:sources"
     compile libs.javax_inject
     compile libs.jcommander
     compile libs.jetty_servlet

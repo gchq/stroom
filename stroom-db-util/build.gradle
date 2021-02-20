@@ -25,6 +25,7 @@ dependencies {
     compile libs.javax_inject
 //    compile libs.jaxb_api
     compile libs.jooq
+    compile libs.mysql_connector_java
     compile libs.spring_context
     compile libs.stroomExpression
     compile libs.stroomQueryApi

@@ -9,6 +9,8 @@ dependencies {
     compile project(':stroom-explorer-server')
     compile project(':stroom-pipeline')
 
+    compile libs.hibernate_core
+    compile libs.hsqldb
     compile libs.slf4j_api
     compile libs.spring_context
     compile libs.xml_apis
