@@ -54,11 +54,13 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
 
     public ElasticIndexField(final ElasticIndexFieldType fieldUse,
                              final String fieldName,
+                             final String fieldType,
                              final boolean stored,
                              final boolean indexed
     ) {
         setFieldUse(fieldUse);
         setFieldName(fieldName);
+        setFieldType(fieldType);
         setStored(stored);
         setIndexed(indexed);
     }

@@ -82,6 +82,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndex index) {
         final ElasticConnectionConfig connectionConfig = index.getConnectionConfig();
+
         if (connectionConfig != null) {
             getView().setConnectionUrls(connectionConfig.getConnectionUrls());
         }
@@ -92,6 +93,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
         }
+
         editExpressionPresenter.init(dispatcher, docRef, index.getDataSourceFields());
         editExpressionPresenter.read(index.getRetentionExpression());
     }
@@ -99,10 +101,12 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     @Override
     protected void onWrite(final ElasticIndex index) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
+
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
         index.setConnectionConfig(connectionConfig);
 
         index.setDescription(getView().getDescription().trim());
+
         if (getView().getIndexName().trim().length() == 0) {
             index.setIndexName(null);
         } else {

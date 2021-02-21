@@ -26,8 +26,10 @@ import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
+import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.TaskManager;
 
 import org.slf4j.Logger;
@@ -47,15 +49,18 @@ public class ElasticSearchStoreFactory implements StoreFactory {
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
+    private final ElasticIndexCache elasticIndexCache;
     private final StroomPropertyService stroomPropertyService;
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
     @Inject
-    public ElasticSearchStoreFactory(final StroomPropertyService stroomPropertyService,
+    public ElasticSearchStoreFactory(final ElasticIndexCache elasticIndexCache,
+                                     final StroomPropertyService stroomPropertyService,
                                      final TaskManager taskManager,
                                      @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
                                      final SecurityContext securityContext) {
+        this.elasticIndexCache = elasticIndexCache;
         this.stroomPropertyService = stroomPropertyService;
         this.taskManager = taskManager;
         this.securityContext = securityContext;
@@ -68,6 +73,12 @@ public class ElasticSearchStoreFactory implements StoreFactory {
 
         // Get the search.
         final Query query = searchRequest.getQuery();
+
+        // Load the index.
+        final ElasticIndex index;
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            index = elasticIndexCache.get(query.getDataSource());
+        }
 
         // Create a coprocessor settings map.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);

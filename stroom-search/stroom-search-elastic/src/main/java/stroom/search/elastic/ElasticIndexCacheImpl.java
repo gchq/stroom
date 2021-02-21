@@ -37,8 +37,6 @@ import java.util.concurrent.TimeUnit;
 public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 100;
 
-    private final ElasticIndexService elasticIndexService;
-
     private final LoadingCache<DocRef, ElasticIndex> cache;
 
     @Inject
@@ -47,8 +45,6 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
                           final ElasticIndexStore elasticIndexStore,
                           final ElasticIndexService elasticIndexService
     ) {
-        this.elasticIndexService = elasticIndexService;
-
         final CacheLoader<DocRef, ElasticIndex> cacheLoader = CacheLoader.from(k -> {
             if (k == null) {
                 throw new NullPointerException("Null key supplied");
@@ -56,20 +52,21 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
 
             final ElasticIndex index = elasticIndexStore.read(k.getUuid());
 
-            // Query field mappings and cache with the index
-            index.setFields(elasticIndexService.getFields(index));
-            index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
-
             if (index == null) {
                 throw new NullPointerException("No Elasticsearch index can be found for: " + k);
             }
 
-            return new ElasticIndex();
+            // Query field mappings and cache with the index
+            index.setFields(elasticIndexService.getFields(index));
+            index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
+
+            return index;
         });
 
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES);
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterAccess(10, TimeUnit.SECONDS);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Elasticsearch Index Cache", cacheBuilder, cache);
     }

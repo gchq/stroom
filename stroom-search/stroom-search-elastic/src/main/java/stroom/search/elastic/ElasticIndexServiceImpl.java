@@ -88,6 +88,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             fieldsMap.put(mapping.fullName(), new ElasticIndexField(
                     ElasticIndexFieldType.fromNativeType(mapping.fullName(), fieldType),
                     mapping.fullName(),
+                    fieldType,
                     stored,
                     true
             ));

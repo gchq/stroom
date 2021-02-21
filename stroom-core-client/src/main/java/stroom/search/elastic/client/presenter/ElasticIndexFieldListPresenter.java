@@ -55,6 +55,11 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         addColumns();
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+    }
+
     private void addColumns() {
         addStringColumn("Name", 150, ElasticIndexField::getFieldName);
         addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
@@ -118,7 +123,8 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
             String now = ClientDateUtil.toISOString(System.currentTimeMillis());
             sb
                 .append("Field list updated at: ")
-                .append(now);
+                .append(now)
+                .append("<br />Field count: " + fields.size());
 
             getView().setStatusMessage(sb.toString());
         }

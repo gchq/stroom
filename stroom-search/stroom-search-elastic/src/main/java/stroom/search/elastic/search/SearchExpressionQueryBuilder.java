@@ -27,7 +27,6 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -190,7 +189,7 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY:
                     return buildDictionaryQuery(fieldName, docRef, indexField);
                 default:
-                    throw new ElasticsearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
@@ -235,7 +234,7 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY:
                     return buildDictionaryQuery(fieldName, docRef, indexField);
                 default:
-                    throw new ElasticsearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         } else {
@@ -265,7 +264,7 @@ public class SearchExpressionQueryBuilder {
                     return QueryBuilders
                             .termQuery(fieldName, docRef.getUuid());
                 default:
-                    throw new ElasticsearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         }

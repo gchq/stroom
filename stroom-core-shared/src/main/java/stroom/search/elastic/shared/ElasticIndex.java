@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "fields", "retentionExpression"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "fields", "dataSourceFields", "retentionExpression"})
 public class ElasticIndex extends Doc {
     public static final String ENTITY_TYPE = "ElasticIndex";
 
@@ -107,15 +107,17 @@ public class ElasticIndex extends Doc {
         if (this == o) return true;
         if (!(o instanceof ElasticIndex)) return false;
         if (!super.equals(o)) return false;
-        final ElasticIndex ElasticIndex = (ElasticIndex) o;
-        return Objects.equals(description, ElasticIndex.description) &&
-                Objects.equals(indexName, ElasticIndex.indexName) &&
-                Objects.equals(connectionConfig, ElasticIndex.connectionConfig);
+        final ElasticIndex elasticIndex = (ElasticIndex) o;
+        return Objects.equals(description, elasticIndex.description) &&
+                Objects.equals(indexName, elasticIndex.indexName) &&
+                Objects.equals(connectionConfig, elasticIndex.connectionConfig) &&
+                Objects.equals(fields, elasticIndex.fields) &&
+                Objects.equals(dataSourceFields, elasticIndex.dataSourceFields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, connectionConfig);
+        return Objects.hash(super.hashCode(), description, indexName, connectionConfig, fields, dataSourceFields);
     }
 
     @Override
@@ -124,6 +126,8 @@ public class ElasticIndex extends Doc {
                 "description='" + description + '\'' +
                 ", indexName='" + indexName + '\'' +
                 ", connectionConfig=" + connectionConfig +
+                ", fields=" + fields +
+                ", dataSourceFields=" + dataSourceFields +
                 '}';
     }
 }
