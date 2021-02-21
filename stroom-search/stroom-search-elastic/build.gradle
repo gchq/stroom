@@ -1,5 +1,18 @@
 ext.moduleName = 'stroom.search.elastic'
 
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+
+shadowJar {
+    zip64 true
+
+    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+
+    mergeServiceFiles()
+}
+
+tasks.build.dependsOn shadowJar
+
 dependencies {
     compile project(':stroom-annotation:stroom-annotation-api')
     permitUnusedDeclared project(':stroom-annotation:stroom-annotation-api')

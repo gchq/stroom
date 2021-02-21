@@ -95,7 +95,7 @@ dependencies {
     permitUnusedDeclared project(':stroom-search:stroom-search-extraction') // picked up by DI
     compile project(':stroom-search:stroom-searchable-impl')
     permitUnusedDeclared project(':stroom-search:stroom-searchable-impl') // picked up by DI
-    compile project(':stroom-search:stroom-search-elastic')
+    compile project(path: ':stroom-search:stroom-search-elastic', configuration: 'shadow')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-ruleset-server')
