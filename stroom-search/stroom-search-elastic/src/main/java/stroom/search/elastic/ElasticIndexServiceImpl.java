@@ -107,13 +107,14 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                     final String fieldName = value.fullName();
                     final String fieldType = (String) propertiesMap.get("type");
-                    final Boolean stored = (Boolean) propertiesMap.get("store");
+                    final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
+                    final boolean stored = fieldIsStored(key, value);
 
                     fieldsMap.put(fieldName, new ElasticIndexField(
                             ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
                             fieldName,
                             fieldType,
-                            stored != null && stored,
+                            sourceFieldEnabled || stored,
                             true
                     ));
                 }
@@ -134,10 +135,29 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
      */
     @Override
     public List<String> getStoredFields(final ElasticIndex index) {
-        return getFieldMappings(index).entrySet().stream()
-            .filter(mapping -> fieldIsStored(mapping.getKey(), mapping.getValue()))
-            .map(mapping -> mapping.getValue().fullName())
-            .collect(Collectors.toList());
+        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+        final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
+
+        return fieldMappings.entrySet().stream()
+                .filter(mapping -> sourceFieldEnabled || fieldIsStored(mapping.getKey(), mapping.getValue()))
+                .map(mapping -> mapping.getValue().fullName())
+                .collect(Collectors.toList());
+    }
+
+    private boolean sourceFieldIsEnabled(final Map<String, FieldMappingMetadata> fieldMappings) {
+        final FieldMappingMetadata sourceField = fieldMappings.get("_source");
+
+        // If the `_source` field is enabled, treat all fields as "stored", as the source data is stored in the index
+        try {
+            if (!((Boolean) sourceField.sourceAsMap().get("enabled"))) {
+                return false;
+            }
+        }
+        catch (Exception ignored) {
+            // Source field mapping does not exist, so _source field is enabled
+        }
+
+        return true;
     }
 
     /**
@@ -146,8 +166,8 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     private boolean fieldIsStored(final String fieldName, final FieldMappingMetadata field) {
         try {
             @SuppressWarnings("unchecked") // Need to get at the field mapping properties
-            final Map<String, Object> properties = (Map<String, Object>) field.sourceAsMap().get(fieldName);
-            final Boolean stored = (Boolean) properties.get("store");
+            final Map<String, Object> propertiesMap = (Map<String, Object>) field.sourceAsMap().get(fieldName);
+            final Boolean stored = (Boolean) propertiesMap.get("store");
 
             return stored != null && stored;
         }
