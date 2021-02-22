@@ -144,6 +144,12 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Check the index mapping for a field `_source` and if enabled, return TRUE.
+     * WARNING: This does NOT check whether fields are excluded from `_source`, which is considered an advanced
+     * use case. In this situation, the returned value will be empty.
+     * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html"
+     */
     private boolean sourceFieldIsEnabled(final Map<String, FieldMappingMetadata> fieldMappings) {
         final FieldMappingMetadata sourceField = fieldMappings.get("_source");
 
