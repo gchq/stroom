@@ -211,8 +211,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             // current event.
             fieldsIndexed = 0;
 
-            if (errorReceiverProxy.getErrorReceiver() != null
-                    && errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
+            if (errorReceiverProxy.getErrorReceiver() != null &&
+                errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics
+            ) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
         }
@@ -246,9 +247,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     if (documents.size() > 0) {
                         // Create a new bulk indexing request, containing the current batch of documents
                         BulkRequest bulkRequest = new BulkRequest();
-                        final IndexRequest indexRequest = new IndexRequest(indexName);
-                        documents.forEach(indexRequest::source);
-                        bulkRequest.add(indexRequest);
+
+                        // For each document, create an indexing request and append to the bulk request
+                        documents.forEach(document -> {
+                            final IndexRequest indexRequest = new IndexRequest(indexName);
+                            indexRequest.source(document);
+                            bulkRequest.add(indexRequest);
+                        });
 
                         if (refreshAfterEachBatch) {
                             // Refresh upon completion of the batch index request
@@ -294,11 +299,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (val != null) {
                 // Output some debug.
                 LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                        indexRef.getName() +
-                        " name=" +
-                        indexField.getFieldName() +
-                        " value=" +
-                        value);
+                    indexRef.getName() +
+                    " name=" +
+                    indexField.getFieldName() +
+                    " value=" +
+                    value);
 
                 fieldsIndexed++;
                 document.put(indexField.getFieldName(), val);
