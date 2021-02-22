@@ -1,8 +1,23 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package stroom.search.elastic;
 
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -17,6 +32,7 @@ import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMet
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,44 +42,50 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
+@Singleton
 public class ElasticIndexServiceImpl implements ElasticIndexService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexServiceImpl.class);
 
-    private final ElasticIndexStore elasticIndexStore;
     private final ElasticClientCache elasticClientCache;
 
     @Inject
-    public ElasticIndexServiceImpl(final ElasticIndexStore elasticIndexStore,
-                                   final ElasticClientCache elasticClientCache
-    ) {
-        this.elasticIndexStore = elasticIndexStore;
+    public ElasticIndexServiceImpl(final ElasticClientCache elasticClientCache) {
         this.elasticClientCache = elasticClientCache;
     }
 
     public List<DataSourceField> getDataSourceFields(ElasticIndex index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
-        return fieldMappings.values().stream()
-            .map(field -> {
-                final Map<String, Object> properties = field.sourceAsMap();
-                final String nativeType = (String)properties.get("type");
+        return fieldMappings.entrySet().stream()
+                .map(field -> {
+                    final Object properties = field.getValue().sourceAsMap().get(field.getKey());
 
-                try {
-                    ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.fullName(), nativeType);
-                    return new DataSourceField.Builder()
-                        .type(elasticFieldType.getDataSourceFieldType())
-                        .name(field.fullName())
-                        .queryable(true)
-                        .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
-                        .build();
-                }
-                catch (IllegalArgumentException e) {
-                    LOGGER.warn(e::getMessage);
-                    return null;
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                    if (properties instanceof Map) {
+                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                        final String nativeType = (String) propertiesMap.get("type");
+
+                        try {
+                            final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
+                            return new DataSourceField.Builder()
+                                    .type(elasticFieldType.getDataSourceFieldType())
+                                    .name(field.getValue().fullName())
+                                    .queryable(true)
+                                    .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
+                                    .build();
+                        }
+                        catch (IllegalArgumentException e) {
+                            LOGGER.warn(e::getMessage);
+                            return null;
+                        }
+                    }
+                    else {
+                        LOGGER.warn(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -71,39 +93,36 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         return new ArrayList<>(getFieldsMap(index).values());
     }
 
-    /**
-     * Query field mappings for this index
-     */
-    public Map<String, ElasticIndexField> getFieldsMap(final DocRef docRef) {
-        final ElasticIndex index = elasticIndexStore.read(docRef.getUuid());
-        if (index == null) {
-            throw new RuntimeException("Elasticsearch index not found for: '" + docRef.getUuid() + "'");
-        }
-
-        return getFieldsMap(index);
-    }
-
     @Override
     public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndex index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
-        fieldMappings.values().forEach(mapping -> {
-            final Map<String, Object> properties = mapping.sourceAsMap();
-            final String fieldType = (String) properties.get("type");
-            final boolean stored = Boolean.parseBoolean((String) properties.get("stored"));
+        fieldMappings.forEach((key, value) -> {
+            final Object properties = value.sourceAsMap().get(key);
 
-            try {
-                fieldsMap.put(mapping.fullName(), new ElasticIndexField(
-                    ElasticIndexFieldType.fromNativeType(mapping.fullName(), fieldType),
-                    mapping.fullName(),
-                    fieldType,
-                    stored,
-                    true
-                ));
+            if (properties instanceof Map) {
+                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                final String fieldName = value.fullName();
+                final String fieldType = (String) propertiesMap.get("type");
+                final boolean stored = Boolean.parseBoolean((String) propertiesMap.get("stored"));
+
+                try {
+                    fieldsMap.put(fieldName, new ElasticIndexField(
+                            ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
+                            fieldName,
+                            fieldType,
+                            stored,
+                            true
+                    ));
+                }
+                catch (IllegalArgumentException e) {
+                    LOGGER.warn(e::getMessage, e);
+                }
             }
-            catch (IllegalArgumentException e) {
-                LOGGER.warn(e::getMessage, e);
+            else {
+                LOGGER.warn(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
             }
         });
 
@@ -122,13 +141,12 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     }
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
-        // TODO: Support nested fields through recursion
         try {
             return elasticClientCache.contextResult(elasticIndex.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
                 final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
                 request.indices(indexName);
-                request.fields();
+                request.fields("*");
 
                 try {
                     final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(request, RequestOptions.DEFAULT);

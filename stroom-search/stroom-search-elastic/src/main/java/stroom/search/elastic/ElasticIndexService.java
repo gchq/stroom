@@ -13,7 +13,6 @@ public interface ElasticIndexService {
 
     List<ElasticIndexField> getFields(ElasticIndex index);
 
-    Map<String, ElasticIndexField> getFieldsMap(DocRef docRef);
     Map<String, ElasticIndexField> getFieldsMap(ElasticIndex index);
 
     List<String> getStoredFields(ElasticIndex index);

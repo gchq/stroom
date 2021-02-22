@@ -116,7 +116,7 @@ public class ElasticIndexRetentionExecutor {
                 if (elasticIndex != null) {
                     final int termCount = ExpressionUtil.terms(elasticIndex.getRetentionExpression(), null).size();
                     if (termCount > 0) {
-                        final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(docRef);
+                        final Map<String, ElasticIndexField> indexFieldsMap = getFieldsMap(docRef);
                         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                                 dictionaryStore,
                                 indexFieldsMap,
@@ -142,6 +142,18 @@ public class ElasticIndexRetentionExecutor {
                 LOGGER.error(e::getMessage, e);
             }
         }
+    }
+
+    /**
+     * Query field mappings for this index
+     */
+    private Map<String, ElasticIndexField> getFieldsMap(final DocRef docRef) {
+        final ElasticIndex index = elasticIndexStore.read(docRef.getUuid());
+        if (index == null) {
+            throw new RuntimeException("Elasticsearch index not found for: '" + docRef.getUuid() + "'");
+        }
+
+        return elasticIndexService.getFieldsMap(index);
     }
 
     private void info(final String message) {
