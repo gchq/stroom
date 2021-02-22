@@ -29,7 +29,7 @@ WHERE NOT EXISTS (
     WHERE UUID = USR_UUID)
 ORDER BY ID;
 
-\! echo 'Find orphaned DOC_PERM records, that will not be migrated';
+\! echo 'Find orphaned APP_PERM records, that will not be migrated';
 
 SELECT *
 FROM APP_PERM ap
