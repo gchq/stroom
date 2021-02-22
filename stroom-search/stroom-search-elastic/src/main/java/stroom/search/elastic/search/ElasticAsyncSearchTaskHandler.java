@@ -85,28 +85,33 @@ public class ElasticAsyncSearchTaskHandler extends AbstractTaskHandler<ElasticAs
                     // batch search only needs stream and event id stored fields.
                     final List<String> storedFields = elasticIndexService.getStoredFields(index);
 
-                    final ElasticClusterSearchTask clusterSearchTask = new ElasticClusterSearchTask(index, query, task.getResultSendFrequency(), storedFields.toArray(new String[0]),
-                            task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow()
+                    final ElasticClusterSearchTask clusterSearchTask = new ElasticClusterSearchTask(
+                        index,
+                        query,
+                        task.getResultSendFrequency(),
+                        storedFields.toArray(new String[0]),
+                        task.getCoprocessorMap(),
+                        task.getDateTimeLocale(),
+                        task.getNow()
                     );
 
                     clusterSearchTaskHandler.exec(clusterSearchTask, resultCollector);
 
                     taskMonitor.info(task.getSearchName() + " - searching...");
 
-                    while (!task.isTerminated() &&
-                            !resultCollector.isComplete()) {
+                    while (!task.isTerminated() && !resultCollector.isComplete()) {
                         boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                                () -> {
-                                    try {
-                                        // block and wait for up to 10s for our search to be completed/terminated
-                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
-                                    } catch (InterruptedException e) {
-                                        //Don't reset the interrupt status as we are at the top level of
-                                        //the task execution
-                                        throw new RuntimeException("Thread interrupted");
-                                    }
-                                },
-                                "waiting for completion condition");
+                            () -> {
+                                try {
+                                    // block and wait for up to 10s for our search to be completed/terminated
+                                    return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
+                                } catch (InterruptedException e) {
+                                    //Don't reset the interrupt status as we are at the top level of
+                                    //the task execution
+                                    throw new RuntimeException("Thread interrupted");
+                                }
+                            },
+                            "waiting for completion condition");
 
                         LOGGER.trace("await finished with result {}", awaitResult);
                     }
