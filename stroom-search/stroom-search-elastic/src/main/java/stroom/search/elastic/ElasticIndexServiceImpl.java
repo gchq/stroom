@@ -102,23 +102,23 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             final Object properties = value.sourceAsMap().get(key);
 
             if (properties instanceof Map) {
-                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                final String fieldName = value.fullName();
-                final String fieldType = (String) propertiesMap.get("type");
-                final boolean stored = Boolean.parseBoolean((String) propertiesMap.get("store"));
-
                 try {
+                    @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                    final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                    final String fieldName = value.fullName();
+                    final String fieldType = (String) propertiesMap.get("type");
+                    final Boolean stored = (Boolean) propertiesMap.get("store");
+
                     fieldsMap.put(fieldName, new ElasticIndexField(
                             ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
                             fieldName,
                             fieldType,
-                            stored,
+                            stored != null && stored,
                             true
                     ));
                 }
-                catch (IllegalArgumentException e) {
-                    LOGGER.warn(e::getMessage, e);
+                catch (Exception e) {
+                    LOGGER.error(e::getMessage, e);
                 }
             }
             else {
@@ -134,13 +134,26 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
      */
     @Override
     public List<String> getStoredFields(final ElasticIndex index) {
-        return getFieldMappings(index).values().stream()
-            .filter(field -> {
-                final String stored = (String)field.sourceAsMap().get("store");
-                return stored != null && stored.equals("true");
-            })
-            .map(FieldMappingMetadata::fullName)
+        return getFieldMappings(index).entrySet().stream()
+            .filter(mapping -> fieldIsStored(mapping.getKey(), mapping.getValue()))
+            .map(mapping -> mapping.getValue().fullName())
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Tests whether a field is a "stored", as per its mapping metadata
+     */
+    private boolean fieldIsStored(final String fieldName, final FieldMappingMetadata field) {
+        try {
+            @SuppressWarnings("unchecked") // Need to get at the field mapping properties
+            final Map<String, Object> properties = (Map<String, Object>) field.sourceAsMap().get(fieldName);
+            final Boolean stored = (Boolean) properties.get("store");
+
+            return stored != null && stored;
+        }
+        catch (Exception e) {
+            return false;
+        }
     }
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
