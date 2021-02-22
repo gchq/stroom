@@ -82,6 +82,7 @@ import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.elastic.ElasticIndexConfiguration;
+import stroom.search.elastic.search.ElasticIndexQueryResource;
 import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.spring.SearchConfiguration;
@@ -357,6 +358,7 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SearchableResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ElasticIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
@@ -413,6 +415,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, ElasticIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, UserResource.class);
 
