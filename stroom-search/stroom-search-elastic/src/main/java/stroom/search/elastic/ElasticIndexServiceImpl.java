@@ -135,9 +135,12 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     @Override
     public List<String> getStoredFields(final ElasticIndex index) {
         return getFieldMappings(index).values().stream()
-                .filter(field -> field.sourceAsMap().get("stored").equals("true"))
-                .map(FieldMappingMetadata::fullName)
-                .collect(Collectors.toList());
+            .filter(field -> {
+                final String stored = (String)field.sourceAsMap().get("stored");
+                return stored != null && stored.equals("true");
+            })
+            .map(FieldMappingMetadata::fullName)
+            .collect(Collectors.toList());
     }
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
