@@ -106,7 +106,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                 final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                 final String fieldName = value.fullName();
                 final String fieldType = (String) propertiesMap.get("type");
-                final boolean stored = Boolean.parseBoolean((String) propertiesMap.get("stored"));
+                final boolean stored = Boolean.parseBoolean((String) propertiesMap.get("store"));
 
                 try {
                     fieldsMap.put(fieldName, new ElasticIndexField(
@@ -136,7 +136,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     public List<String> getStoredFields(final ElasticIndex index) {
         return getFieldMappings(index).values().stream()
             .filter(field -> {
-                final String stored = (String)field.sourceAsMap().get("stored");
+                final String stored = (String)field.sourceAsMap().get("store");
                 return stored != null && stored.equals("true");
             })
             .map(FieldMappingMetadata::fullName)
