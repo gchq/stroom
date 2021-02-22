@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,19 +44,26 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
         return fieldMappings.values().stream()
-                .map(field -> {
-                    final Map<String, Object> properties = field.sourceAsMap();
-                    final String nativeType = (String)properties.get("type");
+            .map(field -> {
+                final Map<String, Object> properties = field.sourceAsMap();
+                final String nativeType = (String)properties.get("type");
 
+                try {
                     ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.fullName(), nativeType);
                     return new DataSourceField.Builder()
-                            .type(elasticFieldType.getDataSourceFieldType())
-                            .name(field.fullName())
-                            .queryable(true)
-                            .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
-                            .build();
-                })
-                .collect(Collectors.toList());
+                        .type(elasticFieldType.getDataSourceFieldType())
+                        .name(field.fullName())
+                        .queryable(true)
+                        .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
+                        .build();
+                }
+                catch (IllegalArgumentException e) {
+                    LOGGER.warn(e::getMessage);
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -85,13 +93,18 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             final String fieldType = (String) properties.get("type");
             final boolean stored = Boolean.parseBoolean((String) properties.get("stored"));
 
-            fieldsMap.put(mapping.fullName(), new ElasticIndexField(
+            try {
+                fieldsMap.put(mapping.fullName(), new ElasticIndexField(
                     ElasticIndexFieldType.fromNativeType(mapping.fullName(), fieldType),
                     mapping.fullName(),
                     fieldType,
                     stored,
                     true
-            ));
+                ));
+            }
+            catch (IllegalArgumentException e) {
+                LOGGER.warn(e::getMessage, e);
+            }
         });
 
         return fieldsMap;

@@ -45,7 +45,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -145,16 +144,22 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
                     final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                     final String nativeType = (String) propertiesMap.get("type");
 
-                    ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
-                    return new DataSourceField.Builder()
+                    try {
+                        final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
+                        return new DataSourceField.Builder()
                             .type(elasticFieldType.getDataSourceFieldType())
                             .name(field.getValue().fullName())
                             .queryable(true)
                             .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
                             .build();
+                    }
+                    catch (IllegalArgumentException e) {
+                        LOGGER.warn(e::getMessage);
+                        return null;
+                    }
                 }
                 else {
-                    // throw new RuntimeException("Field mapping properties is not a map");
+                    LOGGER.warn(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
                     return null;
                 }
             })
@@ -179,16 +184,21 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
                 final String fieldType = (String) propertiesMap.get("type");
                 final boolean stored = Boolean.parseBoolean((String) propertiesMap.get("stored"));
 
-                fieldsMap.put(fieldName, new ElasticIndexField(
+                try {
+                    fieldsMap.put(fieldName, new ElasticIndexField(
                         ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
                         fieldName,
                         fieldType,
                         stored,
                         true
-                ));
+                    ));
+                }
+                catch (IllegalArgumentException e) {
+                    LOGGER.warn(e::getMessage, e);
+                }
             }
             else {
-                // throw new RuntimeException("Field mapping properties is not a map");
+                LOGGER.warn(() -> "Mapping properties for field '" + mapping.getKey() + "' were in an unrecognised format. Field ignored.");
             }
         });
 
@@ -196,7 +206,6 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     }
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
-        // TODO: Support nested fields through recursion
         try {
             return elasticClientCache.contextResult(elasticIndex.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();

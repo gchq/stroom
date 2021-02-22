@@ -13,7 +13,7 @@ public class TestElasticIndexFieldType {
         // ID fields
         Assert.assertSame(ElasticIndexFieldType.ID, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.EVENT_ID, "long"));
         Assert.assertNotSame("Non-ID field is not detected as an ID field",
-                ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.FEED_ID, "int")
+            ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.FEED_ID, "int")
         );
 
         Assert.assertSame(ElasticIndexFieldType.BOOLEAN, ElasticIndexFieldType.fromNativeType("name", "boolean"));
