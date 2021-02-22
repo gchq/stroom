@@ -95,22 +95,22 @@ public class ElasticSearchTaskHandler {
 
     public VoidResult exec(final ElasticSearchTask task) {
         LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    try {
-                        taskContext.setName("Search Elasticsearch Index");
-                        if (!taskContext.isTerminated()) {
-                            taskContext.info("Searching Elasticsearch index");
+            () -> {
+                try {
+                    taskContext.setName("Search Elasticsearch Index");
+                    if (!taskContext.isTerminated()) {
+                        taskContext.info("Searching Elasticsearch index");
 
-                            // Start searching.
-                            searchIndex(task);
-                        }
-
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        error(task, e.getMessage(), e);
+                        // Start searching.
+                        searchIndex(task);
                     }
-                },
-                () -> LambdaLogger.buildMessage("exec()"));
+
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    error(task, e.getMessage(), e);
+                }
+            },
+            () -> LambdaLogger.buildMessage("exec()"));
 
         return VoidResult.INSTANCE;
     }
@@ -124,16 +124,16 @@ public class ElasticSearchTaskHandler {
             final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
                 taskContext.setName("Index Searcher");
                 LOGGER.logDurationIfDebugEnabled(
-                        () -> {
-                            try {
-                                streamingSearch(task, elasticIndex, connectionConfig);
-                            } catch (final RuntimeException e) {
-                                error(task, e.getMessage(), e);
-                            } finally {
-                                task.getTracker().complete();
-                            }
-                        },
-                        () -> "searcher.search()");
+                    () -> {
+                        try {
+                            streamingSearch(task, elasticIndex, connectionConfig);
+                        } catch (final RuntimeException e) {
+                            error(task, e.getMessage(), e);
+                        } finally {
+                            task.getTracker().complete();
+                        }
+                    },
+                    () -> "searcher.search()");
             });
             CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
@@ -160,7 +160,7 @@ public class ElasticSearchTaskHandler {
                 processBatch(task, searchHits);
 
                 // Continue requesting results until we have all results
-                while (searchHits.length > 0) {
+                while (searchHits != null && searchHits.length > 0) {
                     SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
                     scrollRequest.scroll(scroll);
                     searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
@@ -193,7 +193,8 @@ public class ElasticSearchTaskHandler {
                 Val[] values = null;
                 for (int i = 0; i < fieldNames.length; i++) {
                     final String fieldName = fieldNames[i];
-                    final Object value = searchHit.field(fieldName).getValue();
+                    final Object value = searchHit.getSourceAsMap().get(fieldName);
+
                     if (value != null) {
                         if (values == null) {
                             values = new Val[fieldNames.length];
