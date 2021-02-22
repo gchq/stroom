@@ -82,6 +82,7 @@ start_stroom() {
 
   ensure_file_exists "${path_to_start_log}" 
   ensure_file_exists "${path_to_app_log}" 
+  ensure_dir_exists "${heap_dump_dir}" 
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.
@@ -108,27 +109,40 @@ start_stroom() {
     absoulte_path_to_jar="${path_to_jar}"
   fi
 
+  # Set up the JVM heap dump options if not already set
+  # shellcheck disable=SC2153
+  local java_opts="${JAVA_OPTS}"
+  echo "${java_opts}"
+  if [[ ! "${java_opts}" =~ -XX:\+HeapDumpOnOutOfMemoryError ]]; then
+    java_opts="${java_opts} -XX:+HeapDumpOnOutOfMemoryError"
+  fi
+  if [[ ! "${java_opts}" =~ -XX:HeapDumpPath ]]; then
+    java_opts="${java_opts} -XX:HeapDumpPath=${heap_dump_dir}"
+  fi
+
   # change to the script dir so java is relative to there and not where
   # we happen to be calling the script from. Can't drop into a sub shell
   # as we need to capture the pid of the java process
   pushd "${script_dir}" > /dev/null
-  info "Starting ${GREEN}Stroom${GREEN} in directory ${BLUE}${script_dir}${NC}"
+  info "Starting ${GREEN}Stroom${NC} in directory ${BLUE}${script_dir}${NC}"
+  info "Using JVM arguments ${BLUE}${java_opts}${NC}"
 
-  # We need word splitting on JAVA_OPTS so we need to disable SC2086
+  # We need word splitting on java_opts so we need to disable SC2086
   # We redirect stdout to path_to_start_log so that anything that is written
   # to stdout before logback is initialised can be seen, e.g. if the log
   # file path is bad.
   # shellcheck disable=SC2086
   nohup \
-    java ${JAVA_OPTS} \
+    java ${java_opts} \
     -jar "${absoulte_path_to_jar}" \
     server \
     "${absolute_path_to_config}" \
     &> "${path_to_start_log}" &
 
+  local stroom_pid="$!"
+
   popd > /dev/null
 
-  local stroom_pid="$!"
   info "Started ${GREEN}Stroom${NC} with PID ${BLUE}${stroom_pid}${NC}"
   # Write the PID to a file to prevent stroom being started multiple times
   echo "${stroom_pid}" > "${stroom_pid_file}"
@@ -202,7 +216,9 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
 
-  # UPPERCASE vars defined in scripts.env
+  # UPPERCASE vars defined in scripts.env as relative paths so
+  # assign them to local variables as children of script_dir
+
   # shellcheck disable=SC2153
   local -r path_to_start_log="${script_dir}/${PATH_TO_START_LOG}"
   # shellcheck disable=SC2153
@@ -212,7 +228,11 @@ main() {
   # shellcheck disable=SC2153
   local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
   # shellcheck disable=SC2153
+  local -r path_to_conf_file="${script_dir}/${PATH_TO_CONF_FILE}"
+  # shellcheck disable=SC2153
   local -r path_to_jar="${script_dir}/${PATH_TO_JAR}"
+  # shellcheck disable=SC2153
+  local -r heap_dump_dir="${script_dir}/${HEAP_DUMP_DIR}"
 
   local -r maxWaitSecs=240
 
@@ -235,7 +255,7 @@ main() {
 
   setup_colours
 
-  check_is_configured
+  check_is_configured "${path_to_conf_file}"
 
   check_or_create_pid_file
 }

@@ -45,15 +45,23 @@ ask_about_logs() {
 }
 
 ensure_file_exists() {
-  local log_file="$1"
-  if [ ! -f "${log_file}" ]; then
-    info "Creating empty file ${BLUE}${log_file}${NC}"
+  local file_path="$1"
+  if [ ! -f "${file_path}" ]; then
+    info "Creating empty file ${BLUE}${file_path}${NC}"
     # File doesn't exists so ensure the dir and file both exist
     local dir
     # get dir part by removing everything before last slash
-    dir="${log_file%/*}"
+    dir="${file_path%/*}"
     mkdir -p "${dir}"
-    touch "${log_file}" 
+    touch "${file_path}" 
+  fi
+}
+
+ensure_dir_exists() {
+  local dir_path="$1"
+  if [ ! -d "${dir_path}" ]; then
+    info "Creating directory ${BLUE}${dir_path}${NC}"
+    mkdir -p "${dir_path}"
   fi
 }
 
@@ -108,29 +116,14 @@ info() {
 #}
 
 check_is_configured() {
+  local path_to_conf_file="${1}"
   local IP_ADDRESS_TAG="IP_ADDRESS"
-  if grep -q "${IP_ADDRESS_TAG}" "${PATH_TO_CONF_FILE}"; then
+  if grep -q "${IP_ADDRESS_TAG}" "${path_to_conf_file}"; then
     echo 
     error "It looks like you haven't configured IP addresses in" \
-      "${BLUE}${PATH_TO_CONF_FILE}${NC}. You need to replace all instances of" \
+      "${BLUE}${path_to_conf_file}${NC}. You need to replace all instances of" \
       "${BLUE}IP_ADDRESS${NC} before Stroom can start."
     exit 1
-  fi
-}
-
-check_start_is_not_erroring() {
-  # Check for a configuration parsing error
-  local LOG_ERROR_PATTERN="io.dropwizard.configuration.ConfigurationParsingException"
-  local SCRIPT_LOG_LOCATION="logs/start.sh.log"
-
-  if [ -f "${SCRIPT_LOG_LOCATION}" ]; then
-    if grep -q "${LOG_ERROR_PATTERN}" "${SCRIPT_LOG_LOCATION}"; then
-      echo -e
-      error "It looks like you have a problem with something in" \
-        "${BLUE}${PATH_TO_CONFIG}${NC}. Look in ${BLUE}${PATH_TO_START_LOG}${NC}" \
-        "for the details.${NC}"
-      exit 1
-    fi
   fi
 }
 

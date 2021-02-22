@@ -103,8 +103,9 @@ stop_stroom() {
         rm "${stroom_pid_file}"
         # ask_about_logs
       else 
-        warn "There was an instance of Stroom running but it looks like it" \
-          "wasn't stopped gracefully. You might want to check the logs. If" \
+        warn "There was an instance of Stroom running with process ID" \
+          "${BLUE}${stroom_pid}${NC} but it looks like it" \
+          "wasn't stopped gracefully.\nYou might want to check the logs.\nIf" \
           "you are certain it is not running delete the file" \
           "${BLUE}${stroom_pid_file}${NC}"
       fi

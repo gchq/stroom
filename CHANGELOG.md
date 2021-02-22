@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add JVM OOM args to zip distribution scripts.
+
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
 

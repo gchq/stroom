@@ -17,7 +17,7 @@ invalid_arguments() {
 
 show_status(){
   local -r NOT_RUNNING_MESSAGE="Stroom is not running"
-  local -r RUNNING_MESSAGE="Stroom is running under pid"
+  local -r RUNNING_MESSAGE="Stroom is running under PID"
 
   if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
     info "${NOT_RUNNING_MESSAGE}"
@@ -32,7 +32,7 @@ show_status(){
       then
         info "${RUNNING_MESSAGE} ${BLUE}${stroom_pid}${NC}"
       else
-        warn "Stroom was running as ${BLUE}${stroom_pid}${NC} but it looks" \
+        warn "Stroom was running as PID ${BLUE}${stroom_pid}${NC} but it looks" \
           "like it stopped. You may want to check the logs to see what happened."
       fi
     fi
