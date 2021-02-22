@@ -23,9 +23,12 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedString;
 import stroom.util.spring.StroomScope;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.MainResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.springframework.context.annotation.Scope;
 
 @TaskHandlerBean(task = ElasticConnectionTestAction.class)
@@ -50,6 +53,14 @@ public class ElasticConnectionTestHandler extends AbstractTaskHandler<ElasticCon
             sb.append(response.getNodeName());
             sb.append("\nVersion: ");
             sb.append(response.getVersion().getNumber());
+
+            // Check whether the specified index exists
+            final String indexName = action.getElasticIndex().getIndexName();
+            final GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
+            GetIndexResponse getIndexResponse = elasticClient.indices().get(getIndexRequest, RequestOptions.DEFAULT);
+            if (getIndexResponse.getIndices().length < 1) {
+                throw new ResourceNotFoundException("Index '" + indexName + "' was not found");
+            }
 
             return SharedString.wrap(sb.toString());
         } catch (final Exception e) {
