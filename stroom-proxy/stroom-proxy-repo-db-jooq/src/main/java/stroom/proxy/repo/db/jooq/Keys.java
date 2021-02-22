@@ -7,21 +7,24 @@ package stroom.proxy.repo.db.jooq;
 import javax.annotation.processing.Generated;
 
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 
 import stroom.proxy.repo.db.jooq.tables.ZipData;
+import stroom.proxy.repo.db.jooq.tables.ZipDest;
+import stroom.proxy.repo.db.jooq.tables.ZipDestData;
 import stroom.proxy.repo.db.jooq.tables.ZipEntry;
 import stroom.proxy.repo.db.jooq.tables.ZipSource;
 import stroom.proxy.repo.db.jooq.tables.records.ZipDataRecord;
+import stroom.proxy.repo.db.jooq.tables.records.ZipDestDataRecord;
+import stroom.proxy.repo.db.jooq.tables.records.ZipDestRecord;
 import stroom.proxy.repo.db.jooq.tables.records.ZipEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.ZipSourceRecord;
 
 
 /**
  * A class modelling foreign key relationships and constraints of tables of 
- * the <code>PUBLIC</code> schema.
+ * the <code></code> schema.
  */
 @Generated(
     value = {
@@ -37,51 +40,46 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
-    public static final Identity<ZipDataRecord, Long> IDENTITY_ZIP_DATA = Identities0.IDENTITY_ZIP_DATA;
-    public static final Identity<ZipEntryRecord, Long> IDENTITY_ZIP_ENTRY = Identities0.IDENTITY_ZIP_ENTRY;
-    public static final Identity<ZipSourceRecord, Long> IDENTITY_ZIP_SOURCE = Identities0.IDENTITY_ZIP_SOURCE;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<ZipDataRecord> CONSTRAINT_2 = UniqueKeys0.CONSTRAINT_2;
-    public static final UniqueKey<ZipDataRecord> ZIP_DATA_NAME = UniqueKeys0.ZIP_DATA_NAME;
-    public static final UniqueKey<ZipEntryRecord> CONSTRAINT_E = UniqueKeys0.CONSTRAINT_E;
-    public static final UniqueKey<ZipEntryRecord> ZIP_ENTRY_EXTENSION = UniqueKeys0.ZIP_ENTRY_EXTENSION;
-    public static final UniqueKey<ZipSourceRecord> CONSTRAINT_D = UniqueKeys0.CONSTRAINT_D;
-    public static final UniqueKey<ZipSourceRecord> ZIP_SOURCE_PATH = UniqueKeys0.ZIP_SOURCE_PATH;
+    public static final UniqueKey<ZipDataRecord> PK_ZIP_DATA = UniqueKeys0.PK_ZIP_DATA;
+    public static final UniqueKey<ZipDataRecord> SQLITE_AUTOINDEX_ZIP_DATA_1 = UniqueKeys0.SQLITE_AUTOINDEX_ZIP_DATA_1;
+    public static final UniqueKey<ZipDestRecord> PK_ZIP_DEST = UniqueKeys0.PK_ZIP_DEST;
+    public static final UniqueKey<ZipDestDataRecord> PK_ZIP_DEST_DATA = UniqueKeys0.PK_ZIP_DEST_DATA;
+    public static final UniqueKey<ZipEntryRecord> PK_ZIP_ENTRY = UniqueKeys0.PK_ZIP_ENTRY;
+    public static final UniqueKey<ZipSourceRecord> PK_ZIP_SOURCE = UniqueKeys0.PK_ZIP_SOURCE;
+    public static final UniqueKey<ZipSourceRecord> SQLITE_AUTOINDEX_ZIP_SOURCE_1 = UniqueKeys0.SQLITE_AUTOINDEX_ZIP_SOURCE_1;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<ZipDataRecord, ZipSourceRecord> ZIP_DATA_FK_ZIP_SOURCE_ID = ForeignKeys0.ZIP_DATA_FK_ZIP_SOURCE_ID;
-    public static final ForeignKey<ZipEntryRecord, ZipSourceRecord> ZIP_ENTRY_FK_ZIP_SOURCE_ID = ForeignKeys0.ZIP_ENTRY_FK_ZIP_SOURCE_ID;
-    public static final ForeignKey<ZipEntryRecord, ZipDataRecord> ZIP_ENTRY_FK_ZIP_DATA_ID = ForeignKeys0.ZIP_ENTRY_FK_ZIP_DATA_ID;
+    public static final ForeignKey<ZipDataRecord, ZipSourceRecord> FK_ZIP_DATA_ZIP_SOURCE_1 = ForeignKeys0.FK_ZIP_DATA_ZIP_SOURCE_1;
+    public static final ForeignKey<ZipDestDataRecord, ZipDestRecord> FK_ZIP_DEST_DATA_ZIP_DEST_1 = ForeignKeys0.FK_ZIP_DEST_DATA_ZIP_DEST_1;
+    public static final ForeignKey<ZipDestDataRecord, ZipDataRecord> FK_ZIP_DEST_DATA_ZIP_DATA_1 = ForeignKeys0.FK_ZIP_DEST_DATA_ZIP_DATA_1;
+    public static final ForeignKey<ZipEntryRecord, ZipDataRecord> FK_ZIP_ENTRY_ZIP_DATA_1 = ForeignKeys0.FK_ZIP_ENTRY_ZIP_DATA_1;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
-    private static class Identities0 {
-        public static Identity<ZipDataRecord, Long> IDENTITY_ZIP_DATA = Internal.createIdentity(ZipData.ZIP_DATA, ZipData.ZIP_DATA.ID);
-        public static Identity<ZipEntryRecord, Long> IDENTITY_ZIP_ENTRY = Internal.createIdentity(ZipEntry.ZIP_ENTRY, ZipEntry.ZIP_ENTRY.ID);
-        public static Identity<ZipSourceRecord, Long> IDENTITY_ZIP_SOURCE = Internal.createIdentity(ZipSource.ZIP_SOURCE, ZipSource.ZIP_SOURCE.ID);
-    }
-
     private static class UniqueKeys0 {
-        public static final UniqueKey<ZipDataRecord> CONSTRAINT_2 = Internal.createUniqueKey(ZipData.ZIP_DATA, "CONSTRAINT_2", ZipData.ZIP_DATA.ID);
-        public static final UniqueKey<ZipDataRecord> ZIP_DATA_NAME = Internal.createUniqueKey(ZipData.ZIP_DATA, "ZIP_DATA_NAME", ZipData.ZIP_DATA.NAME, ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID);
-        public static final UniqueKey<ZipEntryRecord> CONSTRAINT_E = Internal.createUniqueKey(ZipEntry.ZIP_ENTRY, "CONSTRAINT_E", ZipEntry.ZIP_ENTRY.ID);
-        public static final UniqueKey<ZipEntryRecord> ZIP_ENTRY_EXTENSION = Internal.createUniqueKey(ZipEntry.ZIP_ENTRY, "ZIP_ENTRY_EXTENSION", ZipEntry.ZIP_ENTRY.FK_ZIP_SOURCE_ID, ZipEntry.ZIP_ENTRY.FK_ZIP_DATA_ID, ZipEntry.ZIP_ENTRY.EXTENSION);
-        public static final UniqueKey<ZipSourceRecord> CONSTRAINT_D = Internal.createUniqueKey(ZipSource.ZIP_SOURCE, "CONSTRAINT_D", ZipSource.ZIP_SOURCE.ID);
-        public static final UniqueKey<ZipSourceRecord> ZIP_SOURCE_PATH = Internal.createUniqueKey(ZipSource.ZIP_SOURCE, "ZIP_SOURCE_PATH", ZipSource.ZIP_SOURCE.PATH);
+        public static final UniqueKey<ZipDataRecord> PK_ZIP_DATA = Internal.createUniqueKey(ZipData.ZIP_DATA, "pk_zip_data", ZipData.ZIP_DATA.ID);
+        public static final UniqueKey<ZipDataRecord> SQLITE_AUTOINDEX_ZIP_DATA_1 = Internal.createUniqueKey(ZipData.ZIP_DATA, "sqlite_autoindex_zip_data_1", ZipData.ZIP_DATA.NAME, ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID);
+        public static final UniqueKey<ZipDestRecord> PK_ZIP_DEST = Internal.createUniqueKey(ZipDest.ZIP_DEST, "pk_zip_dest", ZipDest.ZIP_DEST.ID);
+        public static final UniqueKey<ZipDestDataRecord> PK_ZIP_DEST_DATA = Internal.createUniqueKey(ZipDestData.ZIP_DEST_DATA, "pk_zip_dest_data", ZipDestData.ZIP_DEST_DATA.ID);
+        public static final UniqueKey<ZipEntryRecord> PK_ZIP_ENTRY = Internal.createUniqueKey(ZipEntry.ZIP_ENTRY, "pk_zip_entry", ZipEntry.ZIP_ENTRY.ID);
+        public static final UniqueKey<ZipSourceRecord> PK_ZIP_SOURCE = Internal.createUniqueKey(ZipSource.ZIP_SOURCE, "pk_zip_source", ZipSource.ZIP_SOURCE.ID);
+        public static final UniqueKey<ZipSourceRecord> SQLITE_AUTOINDEX_ZIP_SOURCE_1 = Internal.createUniqueKey(ZipSource.ZIP_SOURCE, "sqlite_autoindex_zip_source_1", ZipSource.ZIP_SOURCE.PATH);
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<ZipDataRecord, ZipSourceRecord> ZIP_DATA_FK_ZIP_SOURCE_ID = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.CONSTRAINT_D, ZipData.ZIP_DATA, "ZIP_DATA_FK_ZIP_SOURCE_ID", ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID);
-        public static final ForeignKey<ZipEntryRecord, ZipSourceRecord> ZIP_ENTRY_FK_ZIP_SOURCE_ID = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.CONSTRAINT_D, ZipEntry.ZIP_ENTRY, "ZIP_ENTRY_FK_ZIP_SOURCE_ID", ZipEntry.ZIP_ENTRY.FK_ZIP_SOURCE_ID);
-        public static final ForeignKey<ZipEntryRecord, ZipDataRecord> ZIP_ENTRY_FK_ZIP_DATA_ID = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.CONSTRAINT_2, ZipEntry.ZIP_ENTRY, "ZIP_ENTRY_FK_ZIP_DATA_ID", ZipEntry.ZIP_ENTRY.FK_ZIP_DATA_ID);
+        public static final ForeignKey<ZipDataRecord, ZipSourceRecord> FK_ZIP_DATA_ZIP_SOURCE_1 = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.PK_ZIP_SOURCE, ZipData.ZIP_DATA, "fk_zip_data_zip_source_1", ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID);
+        public static final ForeignKey<ZipDestDataRecord, ZipDestRecord> FK_ZIP_DEST_DATA_ZIP_DEST_1 = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.PK_ZIP_DEST, ZipDestData.ZIP_DEST_DATA, "fk_zip_dest_data_zip_dest_1", ZipDestData.ZIP_DEST_DATA.FK_ZIP_DEST_ID);
+        public static final ForeignKey<ZipDestDataRecord, ZipDataRecord> FK_ZIP_DEST_DATA_ZIP_DATA_1 = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.PK_ZIP_DATA, ZipDestData.ZIP_DEST_DATA, "fk_zip_dest_data_zip_data_1", ZipDestData.ZIP_DEST_DATA.FK_ZIP_DATA_ID);
+        public static final ForeignKey<ZipEntryRecord, ZipDataRecord> FK_ZIP_ENTRY_ZIP_DATA_1 = Internal.createForeignKey(stroom.proxy.repo.db.jooq.Keys.PK_ZIP_DATA, ZipEntry.ZIP_ENTRY, "fk_zip_entry_zip_data_1", ZipEntry.ZIP_ENTRY.FK_ZIP_DATA_ID);
     }
 }

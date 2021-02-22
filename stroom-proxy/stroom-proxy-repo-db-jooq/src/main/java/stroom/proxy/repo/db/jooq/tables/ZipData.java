@@ -11,11 +11,10 @@ import javax.annotation.processing.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row4;
+import org.jooq.Row5;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -23,9 +22,9 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
+import stroom.proxy.repo.db.jooq.DefaultSchema;
 import stroom.proxy.repo.db.jooq.Indexes;
 import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.Public;
 import stroom.proxy.repo.db.jooq.tables.records.ZipDataRecord;
 
 
@@ -42,10 +41,10 @@ import stroom.proxy.repo.db.jooq.tables.records.ZipDataRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ZipData extends TableImpl<ZipDataRecord> {
 
-    private static final long serialVersionUID = 570973584;
+    private static final long serialVersionUID = -1054799064;
 
     /**
-     * The reference instance of <code>PUBLIC.ZIP_DATA</code>
+     * The reference instance of <code>zip_data</code>
      */
     public static final ZipData ZIP_DATA = new ZipData();
 
@@ -58,41 +57,46 @@ public class ZipData extends TableImpl<ZipDataRecord> {
     }
 
     /**
-     * The column <code>PUBLIC.ZIP_DATA.ID</code>.
+     * The column <code>zip_data.id</code>.
      */
-    public final TableField<ZipDataRecord, Long> ID = createField(DSL.name("ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ZipDataRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_DATA.NAME</code>.
+     * The column <code>zip_data.name</code>.
      */
-    public final TableField<ZipDataRecord, String> NAME = createField(DSL.name("NAME"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ZipDataRecord, String> NAME = createField(DSL.name("name"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_DATA.FEEDNAME</code>.
+     * The column <code>zip_data.feedName</code>.
      */
-    public final TableField<ZipDataRecord, String> FEEDNAME = createField(DSL.name("FEEDNAME"), org.jooq.impl.SQLDataType.VARCHAR(255).defaultValue(org.jooq.impl.DSL.field("NULL", org.jooq.impl.SQLDataType.VARCHAR)), this, "");
+    public final TableField<ZipDataRecord, String> FEEDNAME = createField(DSL.name("feedName"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_DATA.FK_ZIP_SOURCE_ID</code>.
+     * The column <code>zip_data.fk_zip_source_id</code>.
      */
-    public final TableField<ZipDataRecord, Long> FK_ZIP_SOURCE_ID = createField(DSL.name("FK_ZIP_SOURCE_ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<ZipDataRecord, Integer> FK_ZIP_SOURCE_ID = createField(DSL.name("fk_zip_source_id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * Create a <code>PUBLIC.ZIP_DATA</code> table reference
+     * The column <code>zip_data.has_dest</code>.
+     */
+    public final TableField<ZipDataRecord, Boolean> HAS_DEST = createField(DSL.name("has_dest"), org.jooq.impl.SQLDataType.BOOLEAN, this, "");
+
+    /**
+     * Create a <code>zip_data</code> table reference
      */
     public ZipData() {
-        this(DSL.name("ZIP_DATA"), null);
+        this(DSL.name("zip_data"), null);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_DATA</code> table reference
+     * Create an aliased <code>zip_data</code> table reference
      */
     public ZipData(String alias) {
         this(DSL.name(alias), ZIP_DATA);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_DATA</code> table reference
+     * Create an aliased <code>zip_data</code> table reference
      */
     public ZipData(Name alias) {
         this(alias, ZIP_DATA);
@@ -112,36 +116,31 @@ public class ZipData extends TableImpl<ZipDataRecord> {
 
     @Override
     public Schema getSchema() {
-        return Public.PUBLIC;
+        return DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PRIMARY_KEY_2, Indexes.ZIP_DATA_FK_ZIP_SOURCE_ID_INDEX_2, Indexes.ZIP_DATA_NAME_INDEX_2);
-    }
-
-    @Override
-    public Identity<ZipDataRecord, Long> getIdentity() {
-        return Keys.IDENTITY_ZIP_DATA;
+        return Arrays.<Index>asList(Indexes.SQLITE_AUTOINDEX_ZIP_DATA_1);
     }
 
     @Override
     public UniqueKey<ZipDataRecord> getPrimaryKey() {
-        return Keys.CONSTRAINT_2;
+        return Keys.PK_ZIP_DATA;
     }
 
     @Override
     public List<UniqueKey<ZipDataRecord>> getKeys() {
-        return Arrays.<UniqueKey<ZipDataRecord>>asList(Keys.CONSTRAINT_2, Keys.ZIP_DATA_NAME);
+        return Arrays.<UniqueKey<ZipDataRecord>>asList(Keys.PK_ZIP_DATA, Keys.SQLITE_AUTOINDEX_ZIP_DATA_1);
     }
 
     @Override
     public List<ForeignKey<ZipDataRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ZipDataRecord, ?>>asList(Keys.ZIP_DATA_FK_ZIP_SOURCE_ID);
+        return Arrays.<ForeignKey<ZipDataRecord, ?>>asList(Keys.FK_ZIP_DATA_ZIP_SOURCE_1);
     }
 
     public ZipSource zipSource() {
-        return new ZipSource(this, Keys.ZIP_DATA_FK_ZIP_SOURCE_ID);
+        return new ZipSource(this, Keys.FK_ZIP_DATA_ZIP_SOURCE_1);
     }
 
     @Override
@@ -171,11 +170,11 @@ public class ZipData extends TableImpl<ZipDataRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row4 type methods
+    // Row5 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row4<Long, String, String, Long> fieldsRow() {
-        return (Row4) super.fieldsRow();
+    public Row5<Integer, String, String, Integer, Boolean> fieldsRow() {
+        return (Row5) super.fieldsRow();
     }
 }

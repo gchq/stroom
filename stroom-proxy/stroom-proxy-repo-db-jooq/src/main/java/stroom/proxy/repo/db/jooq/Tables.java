@@ -7,12 +7,14 @@ package stroom.proxy.repo.db.jooq;
 import javax.annotation.processing.Generated;
 
 import stroom.proxy.repo.db.jooq.tables.ZipData;
+import stroom.proxy.repo.db.jooq.tables.ZipDest;
+import stroom.proxy.repo.db.jooq.tables.ZipDestData;
 import stroom.proxy.repo.db.jooq.tables.ZipEntry;
 import stroom.proxy.repo.db.jooq.tables.ZipSource;
 
 
 /**
- * Convenience access to all tables in PUBLIC
+ * Convenience access to all tables in 
  */
 @Generated(
     value = {
@@ -25,17 +27,27 @@ import stroom.proxy.repo.db.jooq.tables.ZipSource;
 public class Tables {
 
     /**
-     * The table <code>PUBLIC.ZIP_DATA</code>.
+     * The table <code>zip_data</code>.
      */
     public static final ZipData ZIP_DATA = ZipData.ZIP_DATA;
 
     /**
-     * The table <code>PUBLIC.ZIP_ENTRY</code>.
+     * The table <code>zip_dest</code>.
+     */
+    public static final ZipDest ZIP_DEST = ZipDest.ZIP_DEST;
+
+    /**
+     * The table <code>zip_dest_data</code>.
+     */
+    public static final ZipDestData ZIP_DEST_DATA = ZipDestData.ZIP_DEST_DATA;
+
+    /**
+     * The table <code>zip_entry</code>.
      */
     public static final ZipEntry ZIP_ENTRY = ZipEntry.ZIP_ENTRY;
 
     /**
-     * The table <code>PUBLIC.ZIP_SOURCE</code>.
+     * The table <code>zip_source</code>.
      */
     public static final ZipSource ZIP_SOURCE = ZipSource.ZIP_SOURCE;
 }

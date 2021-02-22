@@ -24,13 +24,13 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
     compile libs.guice4
-    compile libs.h2
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.slf4j_api
+    compile libs.sqlite
     
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core

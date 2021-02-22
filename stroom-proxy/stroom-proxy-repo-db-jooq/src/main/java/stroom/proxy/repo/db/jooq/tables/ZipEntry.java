@@ -11,11 +11,9 @@ import javax.annotation.processing.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row5;
+import org.jooq.Row4;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -23,9 +21,8 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
-import stroom.proxy.repo.db.jooq.Indexes;
+import stroom.proxy.repo.db.jooq.DefaultSchema;
 import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.Public;
 import stroom.proxy.repo.db.jooq.tables.records.ZipEntryRecord;
 
 
@@ -42,10 +39,10 @@ import stroom.proxy.repo.db.jooq.tables.records.ZipEntryRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ZipEntry extends TableImpl<ZipEntryRecord> {
 
-    private static final long serialVersionUID = 1341323401;
+    private static final long serialVersionUID = -1244655737;
 
     /**
-     * The reference instance of <code>PUBLIC.ZIP_ENTRY</code>
+     * The reference instance of <code>zip_entry</code>
      */
     public static final ZipEntry ZIP_ENTRY = new ZipEntry();
 
@@ -58,46 +55,41 @@ public class ZipEntry extends TableImpl<ZipEntryRecord> {
     }
 
     /**
-     * The column <code>PUBLIC.ZIP_ENTRY.ID</code>.
+     * The column <code>zip_entry.id</code>.
      */
-    public final TableField<ZipEntryRecord, Long> ID = createField(DSL.name("ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ZipEntryRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_ENTRY.EXTENSION</code>.
+     * The column <code>zip_entry.extension</code>.
      */
-    public final TableField<ZipEntryRecord, String> EXTENSION = createField(DSL.name("EXTENSION"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ZipEntryRecord, String> EXTENSION = createField(DSL.name("extension"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_ENTRY.BYTE_SIZE</code>.
+     * The column <code>zip_entry.byte_size</code>.
      */
-    public final TableField<ZipEntryRecord, Long> BYTE_SIZE = createField(DSL.name("BYTE_SIZE"), org.jooq.impl.SQLDataType.BIGINT.defaultValue(org.jooq.impl.DSL.field("NULL", org.jooq.impl.SQLDataType.BIGINT)), this, "");
+    public final TableField<ZipEntryRecord, Long> BYTE_SIZE = createField(DSL.name("byte_size"), org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_ENTRY.FK_ZIP_SOURCE_ID</code>.
+     * The column <code>zip_entry.fk_zip_data_id</code>.
      */
-    public final TableField<ZipEntryRecord, Long> FK_ZIP_SOURCE_ID = createField(DSL.name("FK_ZIP_SOURCE_ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<ZipEntryRecord, Integer> FK_ZIP_DATA_ID = createField(DSL.name("fk_zip_data_id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_ENTRY.FK_ZIP_DATA_ID</code>.
-     */
-    public final TableField<ZipEntryRecord, Long> FK_ZIP_DATA_ID = createField(DSL.name("FK_ZIP_DATA_ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
-
-    /**
-     * Create a <code>PUBLIC.ZIP_ENTRY</code> table reference
+     * Create a <code>zip_entry</code> table reference
      */
     public ZipEntry() {
-        this(DSL.name("ZIP_ENTRY"), null);
+        this(DSL.name("zip_entry"), null);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_ENTRY</code> table reference
+     * Create an aliased <code>zip_entry</code> table reference
      */
     public ZipEntry(String alias) {
         this(DSL.name(alias), ZIP_ENTRY);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_ENTRY</code> table reference
+     * Create an aliased <code>zip_entry</code> table reference
      */
     public ZipEntry(Name alias) {
         this(alias, ZIP_ENTRY);
@@ -117,40 +109,26 @@ public class ZipEntry extends TableImpl<ZipEntryRecord> {
 
     @Override
     public Schema getSchema() {
-        return Public.PUBLIC;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PRIMARY_KEY_E, Indexes.ZIP_ENTRY_EXTENSION_INDEX_E, Indexes.ZIP_ENTRY_FK_ZIP_DATA_ID_INDEX_E, Indexes.ZIP_ENTRY_FK_ZIP_SOURCE_ID_INDEX_E);
-    }
-
-    @Override
-    public Identity<ZipEntryRecord, Long> getIdentity() {
-        return Keys.IDENTITY_ZIP_ENTRY;
+        return DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public UniqueKey<ZipEntryRecord> getPrimaryKey() {
-        return Keys.CONSTRAINT_E;
+        return Keys.PK_ZIP_ENTRY;
     }
 
     @Override
     public List<UniqueKey<ZipEntryRecord>> getKeys() {
-        return Arrays.<UniqueKey<ZipEntryRecord>>asList(Keys.CONSTRAINT_E, Keys.ZIP_ENTRY_EXTENSION);
+        return Arrays.<UniqueKey<ZipEntryRecord>>asList(Keys.PK_ZIP_ENTRY);
     }
 
     @Override
     public List<ForeignKey<ZipEntryRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ZipEntryRecord, ?>>asList(Keys.ZIP_ENTRY_FK_ZIP_SOURCE_ID, Keys.ZIP_ENTRY_FK_ZIP_DATA_ID);
-    }
-
-    public ZipSource zipSource() {
-        return new ZipSource(this, Keys.ZIP_ENTRY_FK_ZIP_SOURCE_ID);
+        return Arrays.<ForeignKey<ZipEntryRecord, ?>>asList(Keys.FK_ZIP_ENTRY_ZIP_DATA_1);
     }
 
     public ZipData zipData() {
-        return new ZipData(this, Keys.ZIP_ENTRY_FK_ZIP_DATA_ID);
+        return new ZipData(this, Keys.FK_ZIP_ENTRY_ZIP_DATA_1);
     }
 
     @Override
@@ -180,11 +158,11 @@ public class ZipEntry extends TableImpl<ZipEntryRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row4 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Long, String, Long, Long, Long> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row4<Integer, String, Long, Integer> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 }

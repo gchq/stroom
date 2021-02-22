@@ -1,15 +1,22 @@
 package stroom.proxy.repo.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.db.jooq.tables.records.ZipDataRecord;
+import stroom.proxy.repo.db.jooq.tables.records.ZipEntryRecord;
 
 import org.jooq.DSLContext;
+import org.jooq.Record2;
+import org.jooq.Result;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static stroom.proxy.repo.db.jooq.tables.ZipData.ZIP_DATA;
 import static stroom.proxy.repo.db.jooq.tables.ZipEntry.ZIP_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.ZipSource.ZIP_SOURCE;
+//import static stroom.proxy.repo.db.jooq.tables.ZipDest.ZIP_DEST;
+//import static stroom.proxy.repo.db.jooq.tables.ZipDestData.ZIP_DEST_DATA;
 
 public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
 
@@ -89,5 +96,59 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
                 .fetchOptional()
                 .map(r -> r.get(ZIP_ENTRY.ID))
                 .orElse(null);
+    }
+
+    public void makeAllDestinations() {
+//        JooqUtil.context(connProvider, context -> {
+//            context
+//                    .select(ZIP_DATA.ID, ZIP_DATA.FEEDNAME)
+//                    .from(ZIP_DATA)
+//                    .where(ZIP_DATA.HAS_DEST.isFalse())
+//                    .and(ZIP_DATA.FEEDNAME.isNotNull())
+//
+//
+//
+//
+//        });
+    }
+
+    public void makeDestinations(final long sourceId) {
+        JooqUtil.context(connProvider, context -> {
+            // Get zip data items for the source zip.
+            try (final Stream<Record2<Long, String>> stream = context
+                    .select(ZIP_DATA.ID, ZIP_DATA.FEEDNAME)
+                    .from(ZIP_DATA)
+                    .where(ZIP_DATA.FK_ZIP_SOURCE_ID.eq(sourceId))
+//                    .and(ZIP_DATA.HAS_DEST.isFalse())
+                    .and(ZIP_DATA.FEEDNAME.isNotNull())
+                    .stream()) {
+
+                stream.forEach(record -> {
+                    // Get zip entries for the data item.
+                    final Result<ZipEntryRecord> result = JooqUtil.contextResult(connProvider, context2 -> context2
+                            .selectFrom(ZIP_ENTRY)
+                            .where(ZIP_ENTRY.FK_ZIP_DATA_ID.eq(record.get(ZIP_DATA.ID)))
+                            .fetch());
+
+
+
+
+//
+//                    JooqUtil.context(connProvider, context2 -> {
+//                        context2
+//                                .insertInto(ZIP_DEST)
+//
+//
+//                    });
+
+
+
+                });
+            }
+
+
+
+
+        });
     }
 }

@@ -52,17 +52,17 @@ class ZipInfoStoreImpl implements ZipInfoStore {
     }
 
     @Override
-    public void store(final Path path, final Path relativePath, final ErrorReceiver errorReceiver) {
+    public Long store(final Path path, final Path relativePath, final ErrorReceiver errorReceiver) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Storing zip info for  '" + FileUtil.getCanonicalPath(path) + "'");
         }
 
         // Start a transaction for all of the database changes.
-        JooqUtil.transaction(connProvider, context -> {
+        return JooqUtil.transactionResult(connProvider, context -> {
             // See if this file has already had info extracted.
             Long sourceId = zipInfoStoreDao.getSource(context, relativePath.toString());
 
-            // If we don't already have a source id then read the zip and add all entries to the Db.
+            // If we don't already have a source id then read the zip and add all entries to the DB.
             if (sourceId == null) {
                 sourceId = zipInfoStoreDao.addSource(context, relativePath.toString());
 
@@ -110,6 +110,8 @@ class ZipInfoStoreImpl implements ZipInfoStore {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
+
+            return sourceId;
         });
     }
 }

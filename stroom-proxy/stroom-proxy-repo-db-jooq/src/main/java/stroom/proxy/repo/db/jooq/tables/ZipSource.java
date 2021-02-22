@@ -11,7 +11,6 @@ import javax.annotation.processing.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -23,9 +22,9 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
+import stroom.proxy.repo.db.jooq.DefaultSchema;
 import stroom.proxy.repo.db.jooq.Indexes;
 import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.Public;
 import stroom.proxy.repo.db.jooq.tables.records.ZipSourceRecord;
 
 
@@ -42,10 +41,10 @@ import stroom.proxy.repo.db.jooq.tables.records.ZipSourceRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ZipSource extends TableImpl<ZipSourceRecord> {
 
-    private static final long serialVersionUID = 977039427;
+    private static final long serialVersionUID = 176215122;
 
     /**
-     * The reference instance of <code>PUBLIC.ZIP_SOURCE</code>
+     * The reference instance of <code>zip_source</code>
      */
     public static final ZipSource ZIP_SOURCE = new ZipSource();
 
@@ -58,31 +57,31 @@ public class ZipSource extends TableImpl<ZipSourceRecord> {
     }
 
     /**
-     * The column <code>PUBLIC.ZIP_SOURCE.ID</code>.
+     * The column <code>zip_source.id</code>.
      */
-    public final TableField<ZipSourceRecord, Long> ID = createField(DSL.name("ID"), org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ZipSourceRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>PUBLIC.ZIP_SOURCE.PATH</code>.
+     * The column <code>zip_source.path</code>.
      */
-    public final TableField<ZipSourceRecord, String> PATH = createField(DSL.name("PATH"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ZipSourceRecord, String> PATH = createField(DSL.name("path"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * Create a <code>PUBLIC.ZIP_SOURCE</code> table reference
+     * Create a <code>zip_source</code> table reference
      */
     public ZipSource() {
-        this(DSL.name("ZIP_SOURCE"), null);
+        this(DSL.name("zip_source"), null);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_SOURCE</code> table reference
+     * Create an aliased <code>zip_source</code> table reference
      */
     public ZipSource(String alias) {
         this(DSL.name(alias), ZIP_SOURCE);
     }
 
     /**
-     * Create an aliased <code>PUBLIC.ZIP_SOURCE</code> table reference
+     * Create an aliased <code>zip_source</code> table reference
      */
     public ZipSource(Name alias) {
         this(alias, ZIP_SOURCE);
@@ -102,27 +101,22 @@ public class ZipSource extends TableImpl<ZipSourceRecord> {
 
     @Override
     public Schema getSchema() {
-        return Public.PUBLIC;
+        return DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PRIMARY_KEY_D, Indexes.ZIP_SOURCE_PATH_INDEX_D);
-    }
-
-    @Override
-    public Identity<ZipSourceRecord, Long> getIdentity() {
-        return Keys.IDENTITY_ZIP_SOURCE;
+        return Arrays.<Index>asList(Indexes.SQLITE_AUTOINDEX_ZIP_SOURCE_1);
     }
 
     @Override
     public UniqueKey<ZipSourceRecord> getPrimaryKey() {
-        return Keys.CONSTRAINT_D;
+        return Keys.PK_ZIP_SOURCE;
     }
 
     @Override
     public List<UniqueKey<ZipSourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<ZipSourceRecord>>asList(Keys.CONSTRAINT_D, Keys.ZIP_SOURCE_PATH);
+        return Arrays.<UniqueKey<ZipSourceRecord>>asList(Keys.PK_ZIP_SOURCE, Keys.SQLITE_AUTOINDEX_ZIP_SOURCE_1);
     }
 
     @Override
@@ -156,7 +150,7 @@ public class ZipSource extends TableImpl<ZipSourceRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row2<Long, String> fieldsRow() {
+    public Row2<Integer, String> fieldsRow() {
         return (Row2) super.fieldsRow();
     }
 }

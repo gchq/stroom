@@ -97,15 +97,15 @@ public class ProxyRepositoryConfig implements HasDbConfig {
 
             path = path.resolve("db");
             FileUtil.mkdirs(path);
-            path = path.resolve("proxy-repo");
+            path = path.resolve("proxy-repo.db");
 
             final String fullPath = FileUtil.getCanonicalPath(path);
 
             final ConnectionConfig connectionConfig = new ConnectionConfig();
-            connectionConfig.setClassName("org.h2.Driver");
-            connectionConfig.setUrl("jdbc:h2:file:" + fullPath);
-            connectionConfig.setUser("sa");
-            connectionConfig.setPassword("sa");
+            connectionConfig.setClassName("org.sqlite.JDBC");
+            connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
+//            connectionConfig.setUser("sa");
+//            connectionConfig.setPassword("sa");
 
             dbConfig = new DbConfig();
             dbConfig.setConnectionConfig(connectionConfig);

@@ -11,12 +11,11 @@ import org.jooq.OrderField;
 import org.jooq.impl.Internal;
 
 import stroom.proxy.repo.db.jooq.tables.ZipData;
-import stroom.proxy.repo.db.jooq.tables.ZipEntry;
 import stroom.proxy.repo.db.jooq.tables.ZipSource;
 
 
 /**
- * A class modelling indexes of tables of the <code>PUBLIC</code> schema.
+ * A class modelling indexes of tables of the <code></code> schema.
  */
 @Generated(
     value = {
@@ -32,29 +31,15 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index PRIMARY_KEY_2 = Indexes0.PRIMARY_KEY_2;
-    public static final Index ZIP_DATA_FK_ZIP_SOURCE_ID_INDEX_2 = Indexes0.ZIP_DATA_FK_ZIP_SOURCE_ID_INDEX_2;
-    public static final Index ZIP_DATA_NAME_INDEX_2 = Indexes0.ZIP_DATA_NAME_INDEX_2;
-    public static final Index PRIMARY_KEY_E = Indexes0.PRIMARY_KEY_E;
-    public static final Index ZIP_ENTRY_EXTENSION_INDEX_E = Indexes0.ZIP_ENTRY_EXTENSION_INDEX_E;
-    public static final Index ZIP_ENTRY_FK_ZIP_DATA_ID_INDEX_E = Indexes0.ZIP_ENTRY_FK_ZIP_DATA_ID_INDEX_E;
-    public static final Index ZIP_ENTRY_FK_ZIP_SOURCE_ID_INDEX_E = Indexes0.ZIP_ENTRY_FK_ZIP_SOURCE_ID_INDEX_E;
-    public static final Index PRIMARY_KEY_D = Indexes0.PRIMARY_KEY_D;
-    public static final Index ZIP_SOURCE_PATH_INDEX_D = Indexes0.ZIP_SOURCE_PATH_INDEX_D;
+    public static final Index SQLITE_AUTOINDEX_ZIP_DATA_1 = Indexes0.SQLITE_AUTOINDEX_ZIP_DATA_1;
+    public static final Index SQLITE_AUTOINDEX_ZIP_SOURCE_1 = Indexes0.SQLITE_AUTOINDEX_ZIP_SOURCE_1;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index PRIMARY_KEY_2 = Internal.createIndex("PRIMARY_KEY_2", ZipData.ZIP_DATA, new OrderField[] { ZipData.ZIP_DATA.ID }, true);
-        public static Index ZIP_DATA_FK_ZIP_SOURCE_ID_INDEX_2 = Internal.createIndex("ZIP_DATA_FK_ZIP_SOURCE_ID_INDEX_2", ZipData.ZIP_DATA, new OrderField[] { ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID }, false);
-        public static Index ZIP_DATA_NAME_INDEX_2 = Internal.createIndex("ZIP_DATA_NAME_INDEX_2", ZipData.ZIP_DATA, new OrderField[] { ZipData.ZIP_DATA.NAME, ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID }, true);
-        public static Index PRIMARY_KEY_E = Internal.createIndex("PRIMARY_KEY_E", ZipEntry.ZIP_ENTRY, new OrderField[] { ZipEntry.ZIP_ENTRY.ID }, true);
-        public static Index ZIP_ENTRY_EXTENSION_INDEX_E = Internal.createIndex("ZIP_ENTRY_EXTENSION_INDEX_E", ZipEntry.ZIP_ENTRY, new OrderField[] { ZipEntry.ZIP_ENTRY.FK_ZIP_SOURCE_ID, ZipEntry.ZIP_ENTRY.FK_ZIP_DATA_ID, ZipEntry.ZIP_ENTRY.EXTENSION }, true);
-        public static Index ZIP_ENTRY_FK_ZIP_DATA_ID_INDEX_E = Internal.createIndex("ZIP_ENTRY_FK_ZIP_DATA_ID_INDEX_E", ZipEntry.ZIP_ENTRY, new OrderField[] { ZipEntry.ZIP_ENTRY.FK_ZIP_DATA_ID }, false);
-        public static Index ZIP_ENTRY_FK_ZIP_SOURCE_ID_INDEX_E = Internal.createIndex("ZIP_ENTRY_FK_ZIP_SOURCE_ID_INDEX_E", ZipEntry.ZIP_ENTRY, new OrderField[] { ZipEntry.ZIP_ENTRY.FK_ZIP_SOURCE_ID }, false);
-        public static Index PRIMARY_KEY_D = Internal.createIndex("PRIMARY_KEY_D", ZipSource.ZIP_SOURCE, new OrderField[] { ZipSource.ZIP_SOURCE.ID }, true);
-        public static Index ZIP_SOURCE_PATH_INDEX_D = Internal.createIndex("ZIP_SOURCE_PATH_INDEX_D", ZipSource.ZIP_SOURCE, new OrderField[] { ZipSource.ZIP_SOURCE.PATH }, true);
+        public static Index SQLITE_AUTOINDEX_ZIP_DATA_1 = Internal.createIndex("sqlite_autoindex_zip_data_1", ZipData.ZIP_DATA, new OrderField[] { ZipData.ZIP_DATA.NAME, ZipData.ZIP_DATA.FK_ZIP_SOURCE_ID }, true);
+        public static Index SQLITE_AUTOINDEX_ZIP_SOURCE_1 = Internal.createIndex("sqlite_autoindex_zip_source_1", ZipSource.ZIP_SOURCE, new OrderField[] { ZipSource.ZIP_SOURCE.PATH }, true);
     }
 }

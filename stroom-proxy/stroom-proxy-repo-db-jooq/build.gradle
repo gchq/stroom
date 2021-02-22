@@ -7,7 +7,7 @@ dependencies {
     permitUnusedDeclared libs.javax_annotation
     compile libs.jooq
 
-    jooqRuntime libs.h2
+    jooqRuntime libs.sqlite
 
     // The following are required to put JAXB on the JOOQ classpath for the purpose of JOOQ code generation in J9+.
     // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -29,19 +29,19 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
             edition = 'OSS'
             sample(sourceSets.main) {
                 jdbc {
-                    driver = 'org.h2.Driver'
-                    url = 'jdbc:h2:file:/home/stroomdev66/work/stroom/stroom-app/db/proxy-repo'
-                    user = 'sa'
-                    password = 'sa'
+                    driver = 'org.sqlite.JDBC'
+                    url = 'jdbc:sqlite:/home/stroomdev66/work/stroom/stroom-app/db/proxy-repo.db'
+//                    user = 'sa'
+//                    password = 'sa'
                 }
                 generator {
                     name = 'org.jooq.codegen.JavaGenerator'
                     database {
-//                        name = 'org.jooq.meta.mysql.MySQLDatabase'
-                        inputSchema = 'PUBLIC'
+                        name = 'org.jooq.meta.sqlite.SQLiteDatabase'
+//                        inputSchema = 'PUBLIC'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'zip_source|zip_data|zip_entry|zip_dest|zip_dest_entry'
+                        includes = '.*'//'zip_source|zip_data|zip_entry|zip_dest|zip_dest_data'
                         // We don't want to include flyway versioning
                         excludes = 'proxy_repo_schema_history'
 //                        // Specify 'version' for use in optimistic concurrency control
