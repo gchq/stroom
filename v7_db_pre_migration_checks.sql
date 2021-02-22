@@ -60,7 +60,7 @@ SELECT
 FROM
   QUERY
 WHERE NAME IS NULL
-OR DASH_UUID IS NULL
+OR DASH_ID IS NULL
 OR QUERY_ID IS NULL;
 
 \! echo 'Find IDX_SHRD records incorrectly linked to PUBLIC volumes. Should be zero.';
