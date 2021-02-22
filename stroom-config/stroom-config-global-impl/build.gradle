@@ -20,6 +20,7 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile project(':stroom-test-common')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile libs.assertj_core
     testCompile libs.dropwizard_configuration
     testCompile libs.dropwizard_core

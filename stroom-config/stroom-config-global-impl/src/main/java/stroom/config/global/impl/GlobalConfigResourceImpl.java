@@ -90,7 +90,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
                 PropertyPath.fromPathString(propertyPath));
-        return optConfigProperty.orElseThrow(NotFoundException::new);
+        return RestUtil.ensureNotEmptyResult(
+                optConfigProperty, "No property found for path {}", propertyPath);
     }
 
     @Timed
@@ -100,7 +101,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 PropertyPath.fromPathString(propertyPath));
         return optConfigProperty
                 .map(ConfigProperty::getYamlOverrideValue)
-                .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
+                .orElseThrow(() ->
+                        new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
     }
 
     @Timed
