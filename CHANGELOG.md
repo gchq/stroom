@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
+* Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
+
 
 ## [v7.0-beta.82] - 2021-02-18
 

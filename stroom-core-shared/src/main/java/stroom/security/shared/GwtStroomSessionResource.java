@@ -14,15 +14,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Stroom Sessions")
-@Path("/stroomSession" + ResourcePaths.V1)
+@Path("/gwtStroomSession" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface InvalidateSessionResource extends RestResource, DirectRestService {
+public interface GwtStroomSessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("invalidate")
     @Operation(
             summary = "Invalidate the current session",
-            operationId = "invalidateSession")
-    Boolean invalidate();
+            operationId = "gwtInvalidateStroomSession")
+    Boolean gwtInvalidateStroomSession();
 }

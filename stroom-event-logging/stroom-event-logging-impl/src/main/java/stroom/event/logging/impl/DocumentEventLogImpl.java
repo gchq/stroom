@@ -663,10 +663,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private Iterable<BaseObject> createBaseObject(final java.lang.Object object) {
-        if (object == null) {
-            return List.of();
-        }
-
         return List.of(eventLoggingService.convert(object));
     }
 
