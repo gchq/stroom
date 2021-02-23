@@ -496,6 +496,7 @@ task copyCommonSupportingFiles(type: Copy) {
 task copySupportingFiles(type: Copy) {
     dependsOn copyCommonSupportingFiles
 
+    from 'src/main/resources/banner.txt'
     from 'src/dist'
     into releaseBuildDir
 

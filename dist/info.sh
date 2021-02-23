@@ -2,12 +2,8 @@
 #
 # Displays info about the stack
 
-# We shouldn't use a lib function (e.g. in shell_utils.sh) because it will
-# give the directory relative to the lib script, not this script.
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 echo_usage() {
-  echo -e "${GREEN}This script starts Stroom${NC}"
+  echo -e "${GREEN}This script starts ${APP_NAME}${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
   echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
   echo -e " -m:   ${GREEN}Monochrome. Don't use colours in terminal output.${NC}"
@@ -40,15 +36,19 @@ show_banner() {
   fi
 
   echo -en "${banner_colour}"
-  cat "${DIR}"/bin/banner.txt
+  cat "${script_dir}"/bin/banner.txt
   echo -en "${NC}"
 }
 
 main() {
-  # shellcheck disable=SC1090
-  source "$DIR"/bin/utils.sh
-  # shellcheck disable=SC1090
-  source "${DIR}"/config/scripts.env
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
+
+  # shellcheck disable=SC1091
+  source "${script_dir}/config/scripts.env"
+  # shellcheck disable=SC1091
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
@@ -76,15 +76,18 @@ main() {
   echo
   info "The local stroom is running at the following location:" 
   info "${BLUE}http://localhost:<app port>/stroom/ui${NC}"
-  info "The port is available in ${BLUE}config/config.yml${NC} under the ${BLUE}server.applicationConnectors.port${NC} property."
-  info "If you have a gateway configured you might not be able to access it at this address."
+  info "The port is available in ${BLUE}config/config.yml${NC} under the" \
+    "${BLUE}server.applicationConnectors.port${NC} property."
+  info "If you have a gateway configured you might not be able to access it" \
+    "at this address."
 
   echo
   info "You can access the admin page at the following location:"
   info "${BLUE}http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin${NC}"
 
   echo
-  info "Data can be POSTed to Stroom using the following URL (see README for details)"
+  info "Data can be POSTed to ${APP_NAME} using the following URL (see README" \
+    "for details)"
   info "${BLUE}https://localhost:<app port>/stroom/datafeed${NC}"
 }
 

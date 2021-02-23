@@ -133,41 +133,6 @@ test {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin
 // We have our own buildDistribution task so disable the standard ones to avoid confusion
@@ -184,12 +149,15 @@ task copyJar(type: Copy) {
 
 task copyCommonSupportingFiles(type: Copy) {
     from '../../dist'
+    // migrate is a stroom only thing
+    exclude '**/migrate.sh'
     into releaseBuildDir
 }
 
 task copySupportingFiles(type: Copy) {
     dependsOn copyCommonSupportingFiles
 
+    from 'src/main/resources/banner.txt'
     from 'src/dist'
     into releaseBuildDir
 
