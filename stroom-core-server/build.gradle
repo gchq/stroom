@@ -39,6 +39,7 @@ dependencies {
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
+    compile libs.javax_xml_bind
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
