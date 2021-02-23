@@ -3519,7 +3519,8 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   private contentFormatters: Record<ContentType, (input: any) => any> = {
-    [ContentType.Json]: (input: any) => (input !== null && typeof input === "object" ? JSON.stringify(input) : input),
+    [ContentType.Json]: (input: any) =>
+      input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
     [ContentType.FormData]: (input: any) =>
       Object.keys(input || {}).reduce((data, key) => {
         data.append(key, input[key]);
@@ -5201,6 +5202,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "PUT",
         body: data,
         type: ContentType.Json,
+        ...params,
+      }),
+  };
+  gwtStroomSession = {
+    /**
+     * No description
+     *
+     * @tags Stroom Sessions
+     * @name GwtInvalidateStroomSession
+     * @summary Invalidate the current session
+     * @request GET:/gwtStroomSession/v1/invalidate
+     */
+    gwtInvalidateStroomSession: (params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/gwtStroomSession/v1/invalidate`,
+        method: "GET",
         ...params,
       }),
   };
@@ -7321,11 +7338,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Stroom Sessions
      * @name InvalidateStroomSession
      * @summary Invalidate the current session
-     * @request GET:/stroomSession/v1/invalidate
+     * @request GET:/stroomSession/v1/invalidateStroomSession
      */
     invalidateStroomSession: (params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/stroomSession/v1/invalidate`,
+        path: `/stroomSession/v1/invalidateStroomSession`,
         method: "GET",
         ...params,
       }),

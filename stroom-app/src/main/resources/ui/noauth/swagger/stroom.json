@@ -2793,6 +2793,25 @@
         "tags" : [ "Filesystem Volumes" ]
       }
     },
+    "/gwtStroomSession/v1/invalidate" : {
+      "get" : {
+        "operationId" : "gwtInvalidateStroomSession",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Invalidate the current session",
+        "tags" : [ "Stroom Sessions" ]
+      }
+    },
     "/index/v2/shard/delete" : {
       "post" : {
         "operationId" : "deleteIndexShards",
@@ -6581,7 +6600,7 @@
         "tags" : [ "Solr Queries" ]
       }
     },
-    "/stroomSession/v1/invalidate" : {
+    "/stroomSession/v1/invalidateStroomSession" : {
       "get" : {
         "operationId" : "invalidateStroomSession",
         "responses" : {

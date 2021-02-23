@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.shared.InvalidateSessionResource;
 import stroom.security.shared.ValidateSessionResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -22,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/stroomSession" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface StroomSessionResource extends RestResource, InvalidateSessionResource {
+public interface StroomSessionResource extends RestResource {
 
     @GET
     @Path("/noauth/validateSession")
@@ -33,9 +32,9 @@ public interface StroomSessionResource extends RestResource, InvalidateSessionRe
                                             @QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
-    @Path("invalidate")
+    @Path("invalidateStroomSession")
     @Operation(
             summary = "Invalidate the current session",
             operationId = "invalidateStroomSession")
-    Boolean invalidate();
+    Boolean invalidateStroomSession();
 }
