@@ -1,4 +1,4 @@
-package stroom.proxy.app.handler;
+package stroom.proxy.repo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

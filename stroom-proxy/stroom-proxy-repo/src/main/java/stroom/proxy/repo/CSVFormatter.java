@@ -1,4 +1,4 @@
-package stroom.proxy.app.handler;
+package stroom.proxy.repo;
 
 import java.util.ArrayList;
 import java.util.Collections;

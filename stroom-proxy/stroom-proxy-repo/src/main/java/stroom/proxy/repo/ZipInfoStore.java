@@ -20,5 +20,5 @@ import java.nio.file.Path;
 
 public interface ZipInfoStore {
 
-    Long store(Path path, Path relativePath, ErrorReceiver errorReceiver);
+    int store(Path path, Path relativePath, ErrorReceiver errorReceiver);
 }

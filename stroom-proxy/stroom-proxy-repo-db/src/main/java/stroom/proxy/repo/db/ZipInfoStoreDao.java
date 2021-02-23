@@ -2,13 +2,16 @@ package stroom.proxy.repo.db;
 
 import org.jooq.DSLContext;
 
+import java.util.Optional;
+
 public interface ZipInfoStoreDao {
-    Long getSource(DSLContext context, String path);
 
-    Long addSource(DSLContext context, String path);
+    Optional<Integer> getSource(DSLContext context, String path);
 
-    Long addData(DSLContext context, long sourceId, String name, String feedName);
+    int addSource(DSLContext context, String path);
 
-    Long addEntry(DSLContext context, long sourceId, long dataId, String extension, Long size);
+    int addData(DSLContext context, int sourceId, String name, String feedName, String typeName);
+
+    int addEntry(DSLContext context, int dataId, String extension, int extensionType, long size);
 
 }

@@ -16,6 +16,7 @@
 
 package stroom.proxy.repo.db;
 
+import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.AttributeMap;
@@ -35,6 +36,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.Locale;
+import java.util.Optional;
 import javax.inject.Inject;
 
 class ZipInfoStoreImpl implements ZipInfoStore {
@@ -52,7 +55,7 @@ class ZipInfoStoreImpl implements ZipInfoStore {
     }
 
     @Override
-    public Long store(final Path path, final Path relativePath, final ErrorReceiver errorReceiver) {
+    public int store(final Path path, final Path relativePath, final ErrorReceiver errorReceiver) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Storing zip info for  '" + FileUtil.getCanonicalPath(path) + "'");
         }
@@ -60,11 +63,11 @@ class ZipInfoStoreImpl implements ZipInfoStore {
         // Start a transaction for all of the database changes.
         return JooqUtil.transactionResult(connProvider, context -> {
             // See if this file has already had info extracted.
-            Long sourceId = zipInfoStoreDao.getSource(context, relativePath.toString());
+            Optional<Integer> optionalSourceId = zipInfoStoreDao.getSource(context, relativePath.toString());
 
             // If we don't already have a source id then read the zip and add all entries to the DB.
-            if (sourceId == null) {
-                sourceId = zipInfoStoreDao.addSource(context, relativePath.toString());
+            return optionalSourceId.orElseGet(() -> {
+                final int sourceId = zipInfoStoreDao.addSource(context, relativePath.toString());
 
                 try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(path))) {
 
@@ -80,11 +83,17 @@ class ZipInfoStoreImpl implements ZipInfoStore {
                             int index = fileName.indexOf(".");
                             if (index != -1) {
                                 final String dataName = fileName.substring(0, index);
-                                final String extension = fileName.substring(index + 1);
+                                final String extension = fileName.substring(index).toLowerCase();
 
                                 // If this is a meta entry then get the feed name.
                                 String feedName = null;
-                                if ("meta".equalsIgnoreCase(extension)) {
+                                String typeName = null;
+
+                                int extensionType = -1;
+                                if (StroomZipFileType.Meta.getExtension().equals(extension)) {
+                                    // We need to be able to sort by extension so we can get meta data first.
+                                    extensionType = 1;
+
                                     try (final InputStream metaStream = zipFile.getInputStream(entry)) {
                                         if (metaStream == null) {
                                             errorReceiver.onError(path, "Unable to find meta?");
@@ -92,15 +101,32 @@ class ZipInfoStoreImpl implements ZipInfoStore {
                                             final AttributeMap attributeMap = new AttributeMap();
                                             AttributeMapUtil.read(metaStream, attributeMap);
                                             feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                                            typeName = attributeMap.get(StandardHeaderArguments.TYPE);
                                         }
                                     } catch (final RuntimeException e) {
                                         errorReceiver.onError(path, e.getMessage());
                                         LOGGER.error(e.getMessage(), e);
                                     }
+                                } else if (StroomZipFileType.Context.getExtension().equals(extension)) {
+                                    extensionType = 2;
+                                } else if (StroomZipFileType.Data.getExtension().equals(extension)) {
+                                    extensionType = 3;
                                 }
 
-                                final long dataId = zipInfoStoreDao.addData(context, sourceId, dataName, feedName);
-                                zipInfoStoreDao.addEntry(context, sourceId, dataId, extension, entry.getSize());
+                                // Don't add unknown types.
+                                if (extensionType != -1) {
+                                    final int dataId = zipInfoStoreDao.addData(
+                                            context,
+                                            sourceId,
+                                            dataName,
+                                            feedName,
+                                            typeName);
+                                    zipInfoStoreDao.addEntry(context,
+                                            dataId,
+                                            extension,
+                                            extensionType,
+                                            entry.getSize());
+                                }
                             }
                         }
                     }
@@ -109,9 +135,9 @@ class ZipInfoStoreImpl implements ZipInfoStore {
                     errorReceiver.onError(path, e.getMessage());
                     LOGGER.error(e.getMessage(), e);
                 }
-            }
 
-            return sourceId;
+                return sourceId;
+            });
         });
     }
 }

@@ -4,6 +4,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.repo.CSVFormatter;
+import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.RequestHandler;

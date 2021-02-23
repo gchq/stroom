@@ -1,10 +1,9 @@
-package stroom.proxy.app.handler;
+package stroom.proxy.repo;
 
 import stroom.data.zip.StroomZipEntry;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
 
@@ -23,7 +22,7 @@ import javax.net.ssl.SSLSocketFactory;
 /**
  * Handler class that forwards the request to a URL.
  */
-class ForwardStreamHandler implements StreamHandler {
+public class ForwardStreamHandler implements StreamHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
@@ -44,7 +43,7 @@ class ForwardStreamHandler implements StreamHandler {
 
     private AttributeMap attributeMap;
 
-    ForwardStreamHandler(final LogStream logStream,
+    public ForwardStreamHandler(final LogStream logStream,
                          final ForwardDestinationConfig forwardDestinationConfig,
                          final SSLSocketFactory sslSocketFactory,
                          final String userAgent) {
@@ -178,7 +177,7 @@ class ForwardStreamHandler implements StreamHandler {
         }
     }
 
-    String getForwardUrl() {
+    public String getForwardUrl() {
         return forwardUrl;
     }
 }

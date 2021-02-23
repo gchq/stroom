@@ -51,8 +51,9 @@ apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-if (!JavaVersion.current().isJava12()) {
-    throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
+def javaVersion = JavaVersion.VERSION_12;
+if (JavaVersion.current() != javaVersion) {
+    throw new GradleException("This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -330,8 +331,8 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = JavaVersion.VERSION_12
-    targetCompatibility = JavaVersion.VERSION_12
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {

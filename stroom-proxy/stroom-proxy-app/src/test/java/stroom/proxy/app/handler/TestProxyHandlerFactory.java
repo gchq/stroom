@@ -1,5 +1,10 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.repo.ForwardDestinationConfig;
+import stroom.proxy.repo.ForwardStreamConfig;
+import stroom.proxy.repo.ForwardStreamHandler;
+import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;

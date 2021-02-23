@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,21 +9,28 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class ProxyRepositoryReaderConfig {
 
+    @Deprecated
     private String readCron;
     private int forwardThreadCount = 3;
+    @Deprecated
     private int maxFileScan = 100000;
+    @Deprecated
     private int maxConcurrentMappedFiles = 100000;
-    private int maxAggregation = 1000;
-    private long maxStreamSize = ModelStringUtil.parseIECByteSizeString("1G");
+    private int maxItemsPerAggregate = 1000;
+    private StroomDuration maxAggregateAge;
+    private StroomDuration aggregationFrequency;
+    private long maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString("1G");
 
     @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read " +
             "any ready repositories (if not defined we read all the time)")
     @JsonProperty
+    @Deprecated
     public String getReadCron() {
         return readCron;
     }
 
     @JsonProperty
+    @Deprecated
     public void setReadCron(final String readCron) {
         this.readCron = readCron;
     }
@@ -42,11 +50,13 @@ public class ProxyRepositoryReaderConfig {
     @JsonPropertyDescription("Max number of files to scan over during forwarding. Once this limit is reached it " +
             "will wait until next read interval")
     @JsonProperty
+    @Deprecated
     public int getMaxFileScan() {
         return maxFileScan;
     }
 
     @JsonProperty
+    @Deprecated
     public void setMaxFileScan(final int maxFileScan) {
         this.maxFileScan = maxFileScan;
     }
@@ -54,45 +64,67 @@ public class ProxyRepositoryReaderConfig {
     @JsonPropertyDescription("The maximum number of concurrent mapped files we can hold before we send the " +
             "largest set for aggregation")
     @JsonProperty
+    @Deprecated
     public int getMaxConcurrentMappedFiles() {
         return maxConcurrentMappedFiles;
     }
 
     @JsonProperty
+    @Deprecated
     public void setMaxConcurrentMappedFiles(final int maxConcurrentMappedFiles) {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
     }
 
-    @JsonPropertyDescription("Aggregate size to break at when building an aggregate. 1G stream maybe a file " +
-            "around 100MB in size (with 90% compression)")
+    @JsonPropertyDescription("Maximum number of data items to add to an aggregate before a new one is created")
     @JsonProperty
-    public int getMaxAggregation() {
-        return maxAggregation;
+    public int getMaxItemsPerAggregate() {
+        return maxItemsPerAggregate;
     }
 
     @JsonProperty
-    public void setMaxAggregation(final int maxAggregation) {
-        this.maxAggregation = maxAggregation;
+    public void setMaxItemsPerAggregate(final int maxItemsPerAggregate) {
+        this.maxItemsPerAggregate = maxItemsPerAggregate;
     }
 
-    @JsonPropertyDescription("Stream size to break at when building an aggregate")
-    @JsonProperty("maxStreamSize")
-    public String getMaxStreamSizeString() {
-        return ModelStringUtil.formatIECByteSizeString(maxStreamSize);
+    @JsonPropertyDescription("Maximum total uncompressed size of all data within unless a single item is present in " +
+            "which case it's total size might exceed this in order for us to be able to add it to an aggregate")
+    @JsonProperty("maxUncompressedByteSize")
+    public String getMaxUncompressedByteSizeString() {
+        return ModelStringUtil.formatIECByteSizeString(maxUncompressedByteSize);
     }
 
-    @JsonProperty("maxStreamSize")
-    public void setMaxStreamSizeString(final String maxStreamSize) {
-        this.maxStreamSize = ModelStringUtil.parseIECByteSizeString(maxStreamSize);
+    @JsonProperty("maxUncompressedByteSize")
+    public void setMaxUncompressedByteSizeString(final String maxStreamSize) {
+        this.maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString(maxStreamSize);
     }
 
     @JsonIgnore
-    public long getMaxStreamSize() {
-        return maxStreamSize;
+    public long getMaxUncompressedByteSize() {
+        return maxUncompressedByteSize;
     }
 
     @JsonIgnore
-    public void setMaxStreamSize(final long maxStreamSize) {
-        this.maxStreamSize = maxStreamSize;
+    public void setMaxUncompressedByteSize(final long maxUncompressedByteSize) {
+        this.maxUncompressedByteSize = maxUncompressedByteSize;
+    }
+
+    @JsonPropertyDescription("What is the maximum age of an aggregate before it no longer accepts new items")
+    @JsonProperty("maxAggregateAge")
+    public StroomDuration getMaxAggregateAge() {
+        return maxAggregateAge;
+    }
+
+    public void setMaxAggregateAge(final StroomDuration maxAggregateAge) {
+        this.maxAggregateAge = maxAggregateAge;
+    }
+
+    @JsonPropertyDescription("How frequently do we want to produce aggregates")
+    @JsonProperty("aggregationFrequency")
+    public StroomDuration getAggregationFrequency() {
+        return aggregationFrequency;
+    }
+
+    public void setAggregationFrequency(final StroomDuration aggregationFrequency) {
+        this.aggregationFrequency = aggregationFrequency;
     }
 }

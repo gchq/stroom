@@ -217,8 +217,8 @@ public final class ProxyRepositoryReader {
                         proxyRepositoryReaderConfig.getForwardThreadCount(),
                         proxyRepositoryReaderConfig.getMaxFileScan(),
                         proxyRepositoryReaderConfig.getMaxConcurrentMappedFiles(),
-                        proxyRepositoryReaderConfig.getMaxAggregation(),
-                        proxyRepositoryReaderConfig.getMaxStreamSize());
+                        proxyRepositoryReaderConfig.getMaxItemsPerAggregate(),
+                        proxyRepositoryReaderConfig.getMaxUncompressedByteSize());
 
                 repositoryProcessor.process();
             }

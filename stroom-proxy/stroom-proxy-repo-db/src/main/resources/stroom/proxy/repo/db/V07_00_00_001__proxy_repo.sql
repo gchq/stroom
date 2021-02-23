@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS zip_source (
 CREATE TABLE IF NOT EXISTS zip_data (
   id                        INTEGER PRIMARY KEY,
   name                      VARCHAR(255) NOT NULL,
-  feedName                  VARCHAR(255),
+  feed_name                 VARCHAR(255),
+  type_name                 VARCHAR(255) DEFAULT NULL,
   fk_zip_source_id          INTEGER NOT NULL,
   has_dest                  BOOLEAN,
   UNIQUE                    (name, fk_zip_source_id),
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS zip_data (
 CREATE TABLE IF NOT EXISTS zip_entry (
   id                        INTEGER PRIMARY KEY,
   extension                 VARCHAR(255) NOT NULL,
+  extension_type            INTEGER NOT NULL,
   byte_size                 BIGINT,
   fk_zip_data_id            INTEGER NOT NULL,
   FOREIGN KEY               (fk_zip_data_id) REFERENCES zip_data (id)
@@ -40,9 +42,10 @@ CREATE TABLE IF NOT EXISTS zip_entry (
 CREATE TABLE IF NOT EXISTS zip_dest (
   id                        INTEGER PRIMARY KEY,
   create_time_ms            BIGINT NOT NULL,
-  feedName                  VARCHAR(255) DEFAULT NULL,
-  byte_size                 BIGINT,
-  in_use                    BOOLEAN,
+  feed_name                 VARCHAR(255) DEFAULT NULL,
+  type_name                 VARCHAR(255) DEFAULT NULL,
+  byte_size                 BIGINT NOT NULL,
+  items                     INTEGER NOT NULL,
   complete                  BOOLEAN
 );
 
@@ -52,6 +55,21 @@ CREATE TABLE IF NOT EXISTS zip_dest_data (
   fk_zip_data_id            INTEGER,
   FOREIGN KEY               (fk_zip_dest_id) REFERENCES zip_dest (id),
   FOREIGN KEY               (fk_zip_data_id) REFERENCES zip_data (id)
+);
+
+CREATE TABLE IF NOT EXISTS forward_url (
+  id                        INTEGER PRIMARY KEY,
+  url                       VARCHAR(255) NOT NULL,
+  UNIQUE                    (url)
+);
+
+CREATE TABLE IF NOT EXISTS forward_zip_dest (
+  id                        INTEGER PRIMARY KEY,
+  fk_forward_url_id         INTEGER,
+  fk_zip_dest_id            INTEGER,
+  success                   BOOLEAN,
+  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
+  FOREIGN KEY               (fk_zip_dest_id) REFERENCES zip_dest (id)
 );
 
 -- vim: set shiftwidth=4 tabstop=4 expandtab:

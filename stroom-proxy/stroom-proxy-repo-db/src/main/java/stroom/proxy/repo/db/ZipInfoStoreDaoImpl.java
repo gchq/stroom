@@ -15,8 +15,6 @@ import javax.inject.Inject;
 import static stroom.proxy.repo.db.jooq.tables.ZipData.ZIP_DATA;
 import static stroom.proxy.repo.db.jooq.tables.ZipEntry.ZIP_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.ZipSource.ZIP_SOURCE;
-//import static stroom.proxy.repo.db.jooq.tables.ZipDest.ZIP_DEST;
-//import static stroom.proxy.repo.db.jooq.tables.ZipDestData.ZIP_DEST_DATA;
 
 public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
 
@@ -28,32 +26,31 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
     }
 
     @Override
-    public Long getSource(final DSLContext context, final String path) {
+    public Optional<Integer> getSource(final DSLContext context, final String path) {
         return context
                 .select(ZIP_SOURCE.ID)
                 .from(ZIP_SOURCE)
                 .where(ZIP_SOURCE.PATH.eq(path))
                 .fetchOptional()
-                .map(r -> r.get(ZIP_SOURCE.ID))
-                .orElse(null);
+                .map(r -> r.get(ZIP_SOURCE.ID));
     }
 
     @Override
-    public Long addSource(final DSLContext context, final String path) {
+    public int addSource(final DSLContext context, final String path) {
         return context
                 .insertInto(ZIP_SOURCE, ZIP_SOURCE.PATH)
                 .values(path)
                 .returning(ZIP_SOURCE.ID)
-                .fetchOptional()
-                .map(r -> r.get(ZIP_SOURCE.ID))
-                .orElse(null);
+                .fetchOne()
+                .getId();
     }
 
     @Override
-    public Long addData(final DSLContext context,
-                        final long sourceId,
-                        final String name,
-                        final String feedName) {
+    public int addData(final DSLContext context,
+                       final int sourceId,
+                       final String name,
+                       final String feedName,
+                       final String typeName) {
         final Optional<ZipDataRecord> optional = context
                 .selectFrom(ZIP_DATA)
                 .where(ZIP_DATA.FK_ZIP_SOURCE_ID.eq(sourceId))
@@ -62,11 +59,13 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
 
         if (optional.isPresent()) {
             final ZipDataRecord record = optional.get();
-            if (feedName != null && record.getFeedname() == null) {
-                // Update the record with the feed name.
+            if ((feedName != null && record.getFeedName() == null) ||
+                    (typeName != null && record.getTypeName() == null)) {
+                // Update the record with the feed and type name.
                 context
                         .update(ZIP_DATA)
-                        .set(ZIP_DATA.FEEDNAME, feedName)
+                        .set(ZIP_DATA.FEED_NAME, feedName)
+                        .set(ZIP_DATA.TYPE_NAME, typeName)
                         .where(ZIP_DATA.ID.eq(record.getId()))
                         .execute();
             }
@@ -75,27 +74,29 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
         }
 
         return context
-                .insertInto(ZIP_DATA, ZIP_DATA.FK_ZIP_SOURCE_ID, ZIP_DATA.NAME, ZIP_DATA.FEEDNAME)
-                .values(sourceId, name, feedName)
+                .insertInto(ZIP_DATA, ZIP_DATA.FK_ZIP_SOURCE_ID, ZIP_DATA.NAME, ZIP_DATA.FEED_NAME, ZIP_DATA.TYPE_NAME)
+                .values(sourceId, name, feedName, typeName)
                 .returning(ZIP_DATA.ID)
-                .fetchOptional()
-                .map(r -> r.get(ZIP_DATA.ID))
-                .orElse(null);
+                .fetchOne()
+                .getId();
     }
 
     @Override
-    public Long addEntry(final DSLContext context,
-                         final long sourceId,
-                         final long dataId,
-                         final String extension,
-                         final Long size) {
+    public int addEntry(final DSLContext context,
+                        final int dataId,
+                        final String extension,
+                        final int extensionType,
+                        final long size) {
         return context
-                .insertInto(ZIP_ENTRY, ZIP_ENTRY.FK_ZIP_SOURCE_ID, ZIP_ENTRY.FK_ZIP_DATA_ID, ZIP_ENTRY.EXTENSION)
-                .values(sourceId, dataId, extension)
+                .insertInto(ZIP_ENTRY,
+                        ZIP_ENTRY.FK_ZIP_DATA_ID,
+                        ZIP_ENTRY.EXTENSION,
+                        ZIP_ENTRY.EXTENSION_TYPE,
+                        ZIP_ENTRY.BYTE_SIZE)
+                .values(dataId, extension, extensionType, size)
                 .returning(ZIP_ENTRY.ID)
-                .fetchOptional()
-                .map(r -> r.get(ZIP_ENTRY.ID))
-                .orElse(null);
+                .fetchOne()
+                .getId();
     }
 
     public void makeAllDestinations() {
@@ -112,15 +113,15 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
 //        });
     }
 
-    public void makeDestinations(final long sourceId) {
+    public void makeDestinations(final int sourceId) {
         JooqUtil.context(connProvider, context -> {
             // Get zip data items for the source zip.
-            try (final Stream<Record2<Long, String>> stream = context
-                    .select(ZIP_DATA.ID, ZIP_DATA.FEEDNAME)
+            try (final Stream<Record2<Integer, String>> stream = context
+                    .select(ZIP_DATA.ID, ZIP_DATA.FEED_NAME)
                     .from(ZIP_DATA)
                     .where(ZIP_DATA.FK_ZIP_SOURCE_ID.eq(sourceId))
-//                    .and(ZIP_DATA.HAS_DEST.isFalse())
-                    .and(ZIP_DATA.FEEDNAME.isNotNull())
+                    .and(ZIP_DATA.HAS_DEST.isFalse())
+                    .and(ZIP_DATA.FEED_NAME.isNotNull())
                     .stream()) {
 
                 stream.forEach(record -> {
@@ -129,8 +130,6 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
                             .selectFrom(ZIP_ENTRY)
                             .where(ZIP_ENTRY.FK_ZIP_DATA_ID.eq(record.get(ZIP_DATA.ID)))
                             .fetch());
-
-
 
 
 //
@@ -142,11 +141,8 @@ public class ZipInfoStoreDaoImpl implements ZipInfoStoreDao {
 //                    });
 
 
-
                 });
             }
-
-
 
 
         });
