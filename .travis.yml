@@ -84,6 +84,8 @@ deploy:
       - "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip.sha256"
       - "stroom-app/src/main/resources/ui/noauth/swagger/swagger.json"
       - "stroom-app/src/main/resources/ui/noauth/swagger/swagger.yaml"
+      - "stroom-app/build/release/config/config-defaults.yml"
+      - "stroom-app/build/release/config/config-schema.yml"
       # Stroom-Proxy
       - "stroom-proxy-app-config-${TRAVIS_TAG}.yml"
       - "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip"
