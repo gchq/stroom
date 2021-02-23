@@ -209,6 +209,7 @@ ext.libs = [
         restygwt: "org.fusesource.restygwt:restygwt:2.2.6",
         saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-21",
         slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
+        log4j_to_slf4j: "org.apache.logging.log4j:log4j-to-slf4j:2.14.0", // Required by Elasticsearch client
         solrj: "org.apache.solr:solr-solrj:8.2.0",
         spring_aop: "org.springframework:spring-aop:$versions.spring",
         spring_aspects: "org.springframework:spring-aspects:$versions.spring",
