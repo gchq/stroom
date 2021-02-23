@@ -321,7 +321,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return convert(object, useInfoProviders);
         } else {
             return OtherObject.builder()
-                    .withDescription(NULL_OBJECT_DESCRIPTION).build();
+                    .withDescription(NULL_OBJECT_DESCRIPTION)
+                    .build();
         }
     }
 
@@ -329,7 +330,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     public BaseObject convert(final Object object, final boolean useInfoProviders) {
         if (object == null) {
             return OtherObject.builder()
-                    .withDescription(NULL_OBJECT_DESCRIPTION).build();
+                    .withDescription(NULL_OBJECT_DESCRIPTION)
+                    .build();
         }
 
         final BaseObject baseObj;
