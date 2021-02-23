@@ -85,6 +85,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
+    private static final String NULL_OBJECT_DESCRIPTION = "Unknown";
+
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
     private static final String GENERATOR = "StroomEventLoggingService";
@@ -318,14 +320,16 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             final Object object = securityContext.asProcessingUserResult(objectSupplier);
             return convert(object, useInfoProviders);
         } else {
-            return null;
+            return OtherObject.builder()
+                    .withDescription(NULL_OBJECT_DESCRIPTION).build();
         }
     }
 
     @Override
     public BaseObject convert(final Object object, final boolean useInfoProviders) {
         if (object == null) {
-            return null;
+            return OtherObject.builder()
+                    .withDescription(NULL_OBJECT_DESCRIPTION).build();
         }
 
         final BaseObject baseObj;
@@ -416,7 +420,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     @Override
     public String describe(final Object object) {
         if (object == null) {
-            return null;
+            return NULL_OBJECT_DESCRIPTION;
         }
         final StringBuilder desc = new StringBuilder();
         final String objectType = getObjectType(object);
