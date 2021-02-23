@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.util.shared.HasType;
+import stroom.docref.HasType;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

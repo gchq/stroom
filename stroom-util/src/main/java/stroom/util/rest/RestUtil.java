@@ -2,7 +2,7 @@ package stroom.util.rest;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasUuid;
+import stroom.docref.HasUuid;
 
 import java.util.Optional;
 import java.util.function.Supplier;

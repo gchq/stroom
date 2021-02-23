@@ -19,7 +19,7 @@ package stroom.processor.shared;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
+import stroom.docref.HasUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

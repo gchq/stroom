@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.docref;
 
-public interface HasName {
+public interface HasUuid {
 
-    String getName();
-
-    void setName(final String name);
+    String getUuid();
 }

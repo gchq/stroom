@@ -24,7 +24,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.HasType;
+import stroom.docref.HasType;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

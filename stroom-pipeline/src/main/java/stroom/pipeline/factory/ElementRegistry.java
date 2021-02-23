@@ -20,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.shared.HasType;
+import stroom.docref.HasType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

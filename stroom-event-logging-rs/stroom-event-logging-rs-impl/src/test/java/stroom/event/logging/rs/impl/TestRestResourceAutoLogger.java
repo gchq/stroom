@@ -29,7 +29,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasUuid;
+import stroom.docref.HasUuid;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 

@@ -8,7 +8,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.HasName;
+import stroom.docref.HasName;
 
 import event.logging.AuthenticateEventAction;
 import event.logging.BaseObject;
