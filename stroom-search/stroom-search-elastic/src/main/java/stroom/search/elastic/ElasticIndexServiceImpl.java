@@ -80,7 +80,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         }
                     }
                     else {
-                        LOGGER.warn(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
+                        LOGGER.debug(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
                         return null;
                     }
                 })
@@ -123,7 +123,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                 }
             }
             else {
-                LOGGER.warn(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
+                LOGGER.debug(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
             }
         });
 

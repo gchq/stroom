@@ -186,10 +186,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         // Index the current content if we are to store or index
                         // this field.
                         if (indexField.isIndexed() || indexField.isStored()) {
-                            processIndexContent(indexField, value);
+                            addFieldToDocument(indexField, value);
                         }
                     } else {
-                        log(Severity.WARNING, "Attempt to index unknown field: " + name, null);
+                        final String msg = "No explicit field mapping exists for field: '" + name + "'";
+                        LOGGER.debug(() -> msg);
                     }
                 }
             }
@@ -278,7 +279,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    private void processIndexContent(final ElasticIndexField indexField, final String value) {
+    /**
+     * Adds a field and value to the current document
+     * @param indexField Represents the field mapping
+     * @param value String-based value
+     */
+    private void addFieldToDocument(final ElasticIndexField indexField, final String value) {
         try {
             Object val = null;
 
