@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#2028** : Don't autolog standard object fields by default
 
 
+## [v7.0-beta.84] - 2021-02-24
+
+* No changes, adding more release artefacts in Travis build.
+
+
 ## [v7.0-beta.83] - 2021-02-23
 
 * Add -q flag to start/stop/migrate.sh to stop log tailing.
@@ -3084,7 +3089,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.83...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.84...HEAD
+[v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
 [v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
 [v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
 [v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
