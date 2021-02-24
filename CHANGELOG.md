@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.85] - 2021-02-24
 
+* Change dockerfile to use Open JDK 15
+
+* Change build to use Open JDK 15
+
 * Fix travis build failure.
 
 * Issue **#2028** : Don't autolog standard object fields by default
