@@ -21,6 +21,7 @@ LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current release of stroom
 CURRENT_STROOM_RELEASE_BRANCH="6.0"
 doDockerBuild=false
+RELEASE_ARTEFACTS_DIR="${TRAVIS_BUILD_DIR}/release_artefacts"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -53,16 +54,55 @@ create_file_hash() {
     echo -e "-------------------------------------------------------"
 }
 
-generate_file_hashes() {
-   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions"/*.zip; do
-       create_file_hash "${file}"
-   done
-   for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions"/*.zip; do
-       create_file_hash "${file}"
-   done
-   for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/distributions"/*.zip; do
-       create_file_hash "${file}"
-   done
+# Put all release artefacts in a dir to make it easier to upload them to
+# Github releases. Some of them are needed by the stack builds in
+# stroom-resources
+gather_release_artefacts() {
+  mkdir -p "${RELEASE_ARTEFACTS_DIR}"
+
+  local -r release_config_dir="stroom-app/build/release/config"
+  local -r proxy_release_config_dir="stroom-proxy/stroom-proxy-app/build/release/config"
+
+  # Stroom
+  cp "${release_config_dir}/config-schema.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
+
+  cp "${release_config_dir}/config-defaults.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-defaults-${TRAVIS_TAG}.yml"
+
+  cp "${release_config_dir}/config-schema.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-schema-${TRAVIS_TAG}.yml"
+
+  cp "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  cp "stroom-app/src/main/resources/ui/noauth/swagger/swagger.json" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  cp "stroom-app/src/main/resources/ui/noauth/swagger/swagger.yaml" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  # Stroom-Proxy
+  cp "${proxy_release_config_dir}/config.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
+
+  cp "${proxy_release_config_dir}/config-defaults.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-defaults-${TRAVIS_TAG}.yml"
+
+  cp "${proxy_release_config_dir}/config-schema.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-schema-${TRAVIS_TAG}.yml"
+
+  cp "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  # Stroom (Headless)
+  cp "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  # Now generate hashes for all the zips
+  for file in "${RELEASE_ARTEFACTS_DIR}"/*.zip; do
+    create_file_hash "${file}"
+  done
 }
 
 createGitTag() {
@@ -322,7 +362,7 @@ else
 #       --info \
 #      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
 
-    generate_file_hashes
+
 
     # Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
@@ -376,17 +416,10 @@ else
           "${ghPagesDir}/index.html"
     fi
 
-    # If it is a tagged build copy the docker config files with new names so we
-    # can add them as release artefacts.
-    # This is so the stack build can download them
+    # If it is a tagged build copy all the files needed for the github release
+    # artefacts
     if [ -n "$TRAVIS_TAG" ]; then
-      cp \
-        "${TRAVIS_BUILD_DIR}/stroom-app/docker/build/config.yml" \
-        "${TRAVIS_BUILD_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
-
-      cp \
-        "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build/config.yml" \
-        "${TRAVIS_BUILD_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
+      gather_release_artefacts
     fi
 fi
 

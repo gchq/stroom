@@ -2,6 +2,8 @@ ext.moduleName = 'stroom.proxy.app'
 
 def fatJarName = 'stroom-proxy-app-all.jar'
 def releaseBuildDir = 'build/release'
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -63,6 +65,7 @@ dependencies {
     testCompile libs.classgraph
     testCompile libs.guice_grapher
     testCompile libs.jinjava
+    testCompile libs.mbknor_jackson_jsonSchema
     testCompile libs.mockito_junit_jupiter
 
     testCompile libs.junit_jupiter_api
@@ -170,6 +173,16 @@ task copySupportingFiles(type: Copy) {
     }
 }
 
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
+    //dependsOn ':stroom-config:stroom-config-app:compileJava'
+    //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = project(':stroom-proxy:stroom-proxy-app').sourceSets.test.runtimeClasspath
+    main = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
+    args = [configDefaultsFile, configSchemaFile]
+}
+
 // Build the release distribution zip for stroom proxy
 task buildDistribution(type: Zip) {
 
@@ -177,6 +190,7 @@ task buildDistribution(type: Zip) {
     dependsOn copyJar
     dependsOn copySupportingFiles
     dependsOn generateConfigFiles
+    dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir
 }
