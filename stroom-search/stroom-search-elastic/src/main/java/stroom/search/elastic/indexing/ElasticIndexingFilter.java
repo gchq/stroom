@@ -273,9 +273,14 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (response.hasFailures()) {
                             throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
                         }
+                        else {
+                            LOGGER.info(() -> "Indexed " + documents.size() + " items to '" + indexName + "' in " +
+                                response.getTook().getSecondsFrac() + " seconds");
+                        }
                     }
                 } catch (final RuntimeException | IOException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
+
                     // Terminate processing as this is a fatal error.
                     throw new LoggedException(e.getMessage(), e);
                 }
