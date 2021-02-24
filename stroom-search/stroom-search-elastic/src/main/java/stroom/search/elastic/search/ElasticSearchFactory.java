@@ -37,21 +37,15 @@ public class ElasticSearchFactory {
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private final DictionaryStore dictionaryStore;
-    private final int maxBooleanClauseCount;
-    private final int maxStoredDataQueueSize;
     private final ElasticIndexService elasticIndexService;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
 
     @Inject
     public ElasticSearchFactory(final DictionaryStore dictionaryStore,
-                                @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                                @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
                                 final ElasticIndexService elasticIndexService,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler
     ) {
         this.dictionaryStore = dictionaryStore;
-        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
-        this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
         this.elasticIndexService = elasticIndexService;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
     }
