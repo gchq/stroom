@@ -87,7 +87,7 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     }
 
     @Override
-    public Boolean invalidate() {
+    public Boolean invalidateStroomSession() {
         return securityContext.insecureResult(() -> {
             final HttpSession session = httpServletRequestProvider.get().getSession(false);
             final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);

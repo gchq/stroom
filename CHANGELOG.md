@@ -9,7 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2028** : Don't autolog standard object fields by default
 
+
+## [v7.0-beta.83] - 2021-02-23
+
+* Add -q flag to start/stop/migrate.sh to stop log tailing.
+
+* Change migrate.sh to run the migration in the background.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
 * Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
+
 
 ## [v7.0-beta.82] - 2021-02-18
 
@@ -3072,7 +3084,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.82...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.83...HEAD
+[v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
 [v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
 [v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
 [v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
