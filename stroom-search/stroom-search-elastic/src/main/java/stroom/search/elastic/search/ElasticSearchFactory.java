@@ -28,14 +28,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ElasticSearchFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
 
-    /**
-     * We don't want to collect more than 1 million doc's data into the queue by
-     * default. When the queue is full the index shard data tasks will pause
-     * until the docs are drained from the queue.
-     */
-    private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
-
     private final DictionaryStore dictionaryStore;
     private final ElasticIndexService elasticIndexService;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
