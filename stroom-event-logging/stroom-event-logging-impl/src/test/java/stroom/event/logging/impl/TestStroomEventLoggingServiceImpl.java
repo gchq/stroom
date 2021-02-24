@@ -229,8 +229,8 @@ class TestStroomEventLoggingServiceImpl {
         List<Data> allData = stroomEventLoggingService.getDataItems(
                 new TestSecretObj("test", "xyzzy", "open-sesame"));
 
-        assertThat(allData.size()).isEqualTo(4);
-        assertThat(allData).anyMatch(data -> data.getName().equals("name"));
+        assertThat(allData.size()).isEqualTo(3); //name property should be excluded, as this is logged elsewhere
+        assertThat(allData).noneMatch(data -> data.getName().equals("name"));
         assertThat(allData).anyMatch(data -> data.getName().equals("password"));
         assertThat(allData).anyMatch(data -> data.getName().equals("myNewSecret"));
         assertThat(allData).anyMatch(data -> data.getName().equals("secret"));
@@ -238,7 +238,7 @@ class TestStroomEventLoggingServiceImpl {
         assertThat(allData).noneMatch(data -> data.getValue().equals("xyzzy"));
         assertThat(allData).noneMatch(data -> data.getValue().equals("open-sesame"));
         assertThat(allData.stream().filter(data -> data.getValue().equals("test"))
-                .collect(Collectors.toList()).size()).isEqualTo(1);
+                .collect(Collectors.toList()).size()).isEqualTo(0);
         assertThat(allData.stream().filter(data -> data.getValue().equals("false"))
                 .collect(Collectors.toList()).size()).isEqualTo(1);
     }
