@@ -75,8 +75,8 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
 
         final Tracker tracker = new Tracker(hitCount);
-        final ElasticSearchTask solrSearchTask = new ElasticSearchTask(index, queryBuilder, task.getStoredFields(), receiver, tracker);
-        elasticSearchTaskHandler.exec(solrSearchTask);
+        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(index, queryBuilder, task.getStoredFields(), receiver, tracker);
+        elasticSearchTaskHandler.exec(elasticSearchTask);
 
         // Wait until we finish.
         while (!hasTerminate.isTerminated() && !tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
