@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2028** : Don't autolog standard object fields by default
+
 
 ## [v7.0-beta.84] - 2021-02-24
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.docref;
 
-public interface HasUuid {
+public interface HasType {
 
-    String getUuid();
+    String getType();
 }

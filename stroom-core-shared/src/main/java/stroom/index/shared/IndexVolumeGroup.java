@@ -1,5 +1,6 @@
 package stroom.index.shared;
 
+import stroom.docref.HasName;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
+public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasName {
 
     @JsonProperty
     private Integer id;
@@ -101,6 +102,7 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
         this.updateUser = updateUser;
     }
 
+    @Override
     public String getName() {
         return name;
     }

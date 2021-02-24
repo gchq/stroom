@@ -16,6 +16,7 @@
 
 package stroom.event.logging.rs.impl;
 
+import stroom.docref.HasUuid;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.EventActionDecorator;
@@ -29,7 +30,6 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 

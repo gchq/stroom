@@ -16,6 +16,9 @@
 
 package stroom.event.logging.rs.impl;
 
+import stroom.docref.HasName;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.FetchWithIntegerId;
@@ -23,9 +26,6 @@ import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasName;
-import stroom.util.shared.HasType;
-import stroom.util.shared.HasUuid;
 
 import java.util.Map.Entry;
 import java.util.Set;

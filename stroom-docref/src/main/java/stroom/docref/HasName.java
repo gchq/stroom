@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.docref;
 
-public interface HasType {
+public interface HasName {
 
-    String getType();
+    String getName();
+
+    void setName(final String name);
 }
