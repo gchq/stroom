@@ -17,10 +17,10 @@
 package stroom.pipeline.factory;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.HasType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

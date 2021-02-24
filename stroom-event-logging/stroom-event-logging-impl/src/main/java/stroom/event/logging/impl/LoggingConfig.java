@@ -41,6 +41,7 @@ public class LoggingConfig extends AbstractConfig {
     public boolean isOmitRecordDetailsLoggingEnabled() {
         return omitRecordDetailsLoggingEnabled;
     }
+
     public void setOmitRecordDetailsLoggingEnabled(final boolean omitRecordHistoryEnabled) {
         this.omitRecordDetailsLoggingEnabled = omitRecordHistoryEnabled;
     }

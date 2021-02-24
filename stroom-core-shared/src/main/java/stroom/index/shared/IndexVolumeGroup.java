@@ -1,8 +1,8 @@
 package stroom.index.shared;
 
+import stroom.docref.HasName;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
-import stroom.docref.HasName;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

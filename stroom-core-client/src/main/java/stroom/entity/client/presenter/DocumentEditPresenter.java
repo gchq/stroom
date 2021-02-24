@@ -19,12 +19,12 @@ package stroom.entity.client.presenter;
 
 import stroom.core.client.HasSave;
 import stroom.docref.DocRef;
+import stroom.docref.HasType;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.docref.HasType;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

@@ -17,9 +17,9 @@
 
 package stroom.docstore.shared;
 
-import stroom.util.shared.HasAuditInfo;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
+import stroom.util.shared.HasAuditInfo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

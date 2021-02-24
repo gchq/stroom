@@ -18,6 +18,9 @@ package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
 import stroom.docref.DocRef;
+import stroom.docref.HasName;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
@@ -30,9 +33,6 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.docref.HasName;
-import stroom.docref.HasType;
-import stroom.docref.HasUuid;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -576,7 +576,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }).collect(Collectors.toList());
     }
 
-    private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj){
+    private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {
         final Set<String> ignore = new HashSet<>();
         ignorePropertiesFromSuperType(obj, HasIntegerId.class, ignore);
         ignorePropertiesFromSuperType(obj, HasAuditInfo.class, ignore);
@@ -593,15 +593,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private static void ignorePropertiesFromSuperType(final Object obj, final Class potentialSuperType,
-                                                             final Set<String> ignoreProps){
-        if (potentialSuperType.isAssignableFrom(obj.getClass())){
+                                                             final Set<String> ignoreProps) {
+        if (potentialSuperType.isAssignableFrom(obj.getClass())) {
             ignoreProps.addAll(Arrays.stream(potentialSuperType.getMethods())
                 .flatMap(method -> {
                     final String methodName = method.getName();
                     if (methodName.startsWith("get")) {
-                        return Stream.of(methodName.substring(3,4).toLowerCase() + methodName.substring(4));
+                        return Stream.of(methodName.substring(3, 4).toLowerCase() + methodName.substring(4));
                     } else if (methodName.startsWith("is")) {
-                        return Stream.of(methodName.substring(2,3).toLowerCase() + methodName.substring(3));
+                        return Stream.of(methodName.substring(2, 3).toLowerCase() + methodName.substring(3));
                     } else {
                         return Stream.empty();
                     }

@@ -1,6 +1,7 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.docref.HasName;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -8,7 +9,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
-import stroom.docref.HasName;
 
 import event.logging.AuthenticateEventAction;
 import event.logging.BaseObject;
