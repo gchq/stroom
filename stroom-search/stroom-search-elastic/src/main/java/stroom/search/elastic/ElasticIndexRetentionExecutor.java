@@ -62,7 +62,6 @@ public class ElasticIndexRetentionExecutor {
     private final DictionaryStore dictionaryStore;
     private final ClusterLockService clusterLockService;
     private final TaskContext taskContext;
-    private final int maxBooleanClauseCount;
 
     @Inject
     public ElasticIndexRetentionExecutor(final ElasticIndexStore elasticIndexStore,
@@ -80,7 +79,6 @@ public class ElasticIndexRetentionExecutor {
         this.dictionaryStore = dictionaryStore;
         this.clusterLockService = clusterLockService;
         this.taskContext = taskContext;
-        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
     @StroomSimpleCronSchedule(cron = "0 2 *")
