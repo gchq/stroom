@@ -2,10 +2,6 @@
 #
 # Checks the health of each app using the supplied admin url
 
-# We shouldn't use a lib function (e.g. in shell_utils.sh) because it will
-# give the directory relative to the lib script, not this script.
-readonly DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 echo_usage() {
   echo -e "${GREEN}This script checks the health of Stroom${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
@@ -111,11 +107,34 @@ check_health() {
   fi
 }
 
+check_start_is_not_erroring() {
+  # Check for a configuration parsing error
+  local LOG_ERROR_PATTERN="io.dropwizard.configuration.ConfigurationParsingException"
+
+  if [ -f "${path_to_start_log}" ]; then
+    if grep -q "${LOG_ERROR_PATTERN}" "${path_to_start_log}"; then
+      echo -e
+      error "It looks like you have a problem with something in" \
+        "${BLUE}${path_to_config}${NC}." \
+        "Look in ${BLUE}${path_to_start_log}${NC} for the details.${NC}"
+      exit 1
+    fi
+  fi
+}
+
 main() {
-  # shellcheck disable=SC1090
-  source "$DIR"/bin/utils.sh
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
+
   # shellcheck disable=SC1091
-  source config/scripts.env
+  source "${script_dir}/config/scripts.env"
+  # shellcheck disable=SC1091
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+  # shellcheck disable=SC2153
+  local -r path_to_start_log="${script_dir}/${PATH_TO_START_LOG}"
+  # shellcheck disable=SC2153
+  local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
@@ -136,7 +155,6 @@ main() {
 
   setup_colours
 
-  #check_is_configured
   check_start_is_not_erroring
 
   local total_unhealthy_count=0

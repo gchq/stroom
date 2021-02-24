@@ -37,7 +37,7 @@ wait_for_pid_to_die() {
 }
 
 kill_log_tailing() {
-  local cmd="tail -F ${PATH_TO_APP_LOG}"
+  local cmd="tail -F ${path_to_app_log}"
   local pid
   pid="$(pgrep -fx "${cmd}")"
   # kill the log tailing
@@ -60,59 +60,74 @@ kill_log_tailing() {
 
 stop_stroom() {
   if [ "$1" = "force" ]; then
-    FORCE_STOP=true
+    local force_stop=true
   fi
 
-  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
+  if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
     warn "${NOT_RUNNING_MESSAGE}"
   else # If there is a pid file we need to deal with it
-    PID=$(cat "${STROOM_PID_FILE}");
+    local stroom_pid
+    stroom_pid=$(cat "${stroom_pid_file}");
 
-    if [ "${PID}" = '' ]; then # If the pid file is empty for some reason
+    if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       warn "${NOT_RUNNING_MESSAGE}"
     else 
-      if ps -p "${PID}" > /dev/null
+      if ps -p "${stroom_pid}" > /dev/null
       then
-        PID=$(cat "${STROOM_PID_FILE}");
-        if [ "${FORCE_STOP}" = true ]; then
+        stroom_pid=$(cat "${stroom_pid_file}");
+        if [ "${force_stop}" = true ]; then
           info "Killing ${GREEN}Stroom${NC}"
-          kill -9 "${PID}";
+          kill -9 "${stroom_pid}";
 
-          wait_for_pid_to_die "${PID}"
+          wait_for_pid_to_die "${stroom_pid}"
 
           info "Killed ${GREEN}Stroom${NC}"
         else
           info "Stopping ${GREEN}Stroom${NC} gracefully."
 
           # tail the log in the background
-          info "Tailing log file ${BLUE}${PATH_TO_APP_LOG}${NC}"
-          ensure_file_exists "${PATH_TO_APP_LOG}" 
-          tail -F "${PATH_TO_APP_LOG}" 2>/dev/null &
+          info "Tailing log file ${BLUE}${path_to_app_log}${NC}"
+          ensure_file_exists "${path_to_app_log}" 
+          tail -F "${path_to_app_log}" 2>/dev/null &
 
           # issue the kill
-          kill "${PID}";
+          kill "${stroom_pid}";
 
-          wait_for_pid_to_die "${PID}"
+          wait_for_pid_to_die "${stroom_pid}"
 
           kill_log_tailing
 
           info "Stopped ${GREEN}Stroom${NC} gracefully."
         fi
 
-        rm "${STROOM_PID_FILE}"
+        rm "${stroom_pid_file}"
         # ask_about_logs
       else 
-        warn "There was an instance of Stroom running but it looks like it wasn't stopped gracefully. You might want to check the logs. If you are certain it is not running delete the file ${BLUE}${STROOM_PID_FILE}${NC}"
+        warn "There was an instance of Stroom running with process ID" \
+          "${BLUE}${stroom_pid}${NC} but it looks like it" \
+          "wasn't stopped gracefully.\nYou might want to check the logs.\nIf" \
+          "you are certain it is not running delete the file" \
+          "${BLUE}${stroom_pid_file}${NC}"
       fi
     fi
   fi
 }
 
 main() {
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
+
   # shellcheck disable=SC1091
-  source bin/utils.sh
+  source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source config/scripts.env
+  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+
+  # UPPERCASE vars defined in scripts.env
+  # shellcheck disable=SC2153
+  local -r path_to_app_log="${script_dir}/${PATH_TO_APP_LOG}"
+  # shellcheck disable=SC2153
+  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
 
   local stop_stroom_args=()
 
