@@ -84,7 +84,7 @@ public class ElasticIndexRetentionExecutor {
     }
 
     @StroomSimpleCronSchedule(cron = "0 2 *")
-    @JobTrackedSchedule(jobName = "Solr Index Retention", description = "Logically delete indexed documents in Solr indexes based on the specified deletion query")
+    @JobTrackedSchedule(jobName = "Elastic Index Retention", description = "Logically delete indexed documents in Elasticsearch indices based on the specified deletion query")
     public void exec() {
         taskContext.setName(TASK_NAME);
 
