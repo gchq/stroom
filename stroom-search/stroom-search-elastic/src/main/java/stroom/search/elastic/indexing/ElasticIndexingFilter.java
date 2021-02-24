@@ -86,7 +86,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
     private Map<String, Object> document = new HashMap<>();
 
-    private int batchSize = 1000;
+    private int batchSize = 10000;
     private boolean refreshAfterEachBatch = true;
     private int fieldsIndexed;
     private long docsIndexed;
@@ -350,7 +350,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         this.indexRef = indexRef;
     }
 
-    @PipelineProperty(description = "How many documents to send to the index in a single post", defaultValue = "1000")
+    @PipelineProperty(description = "How many documents to send to the index in a single post", defaultValue = "10000")
     public void setBatchSize(final int batchSize) {
         this.batchSize = batchSize;
     }
