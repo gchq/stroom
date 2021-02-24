@@ -195,7 +195,7 @@ ext.libs = [
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
-        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
+        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind:2.11.1", // same as version used by swagger
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
         java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
