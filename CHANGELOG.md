@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix travis build failure.
+
 * Issue **#2028** : Don't autolog standard object fields by default
 
 
