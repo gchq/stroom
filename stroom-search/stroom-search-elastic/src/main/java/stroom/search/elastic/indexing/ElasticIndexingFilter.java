@@ -191,6 +191,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     } else {
                         final String msg = "No explicit field mapping exists for field: '" + name + "'";
                         LOGGER.debug(() -> msg);
+
+                        // Add the field to the document by name, so it's available for dynamic property mappings
+                        // and included in the document `_source` field
+                        addFieldToDocument(name, value);
                     }
                 }
             }
@@ -303,7 +307,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             // Add the current field to the document if it is not null.
             if (val != null) {
-                // Output some debug.
                 LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
                     indexRef.getName() +
                     " name=" +
@@ -316,6 +319,28 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             }
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Adds a field and value to the document, where an existing mapping is not defined.
+     * If Elasticsearch index dynamic properties are defined, a field mapping will be created if the field name matches
+     * the defined pattern. Regardless, the field will be added to the document's `_source`.
+     */
+    private void addFieldToDocument(final String fieldName, final String value) {
+        if (!document.containsKey(fieldName)) {
+            LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
+                    indexRef.getName() +
+                    " name=" +
+                    fieldName +
+                    " value=" +
+                    value);
+
+            document.put(fieldName, value);
+            fieldsIndexed++;
+        }
+        else {
+            LOGGER.warn(() -> "Field '" + fieldName + "' already exists in document");
         }
     }
 
