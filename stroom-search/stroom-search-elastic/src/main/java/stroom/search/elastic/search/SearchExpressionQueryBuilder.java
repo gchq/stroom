@@ -245,6 +245,9 @@ public class SearchExpressionQueryBuilder {
                             .field(fieldName)
                             .analyzeWildcard(true);
                 case CONTAINS:
+                    // Note: This is redundant as `Term::setCondition` in `stroom-core-client` prevents this condition
+                    // from being selected.
+
                     // All terms must match
                     BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
                     String[] terms = tokenizeExpression(value);
