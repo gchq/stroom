@@ -15,6 +15,16 @@ plugins {
     id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.6"
 }
 
+configurations {
+    swagger {
+        extendsFrom runtimeClasspath
+        resolutionStrategy {
+            force 'com.fasterxml.jackson.core:jackson-databind:2.11.1'
+            force 'com.fasterxml.jackson.core:jackson-annotations:2.11.1'
+        }
+    }
+}
+
 ext.moduleName = 'stroom.app'
 
 def uiDir = project.file('src/main/resources/ui')
@@ -406,7 +416,7 @@ resolve {
     prettyPrint = 'TRUE'
     sortOutput = 'TRUE'
     openApiFile = file('openapi.yaml')
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = configurations.swagger
     resourcePackages = ['stroom']
     outputDir = file('src/main/resources/ui/noauth/swagger')
 }

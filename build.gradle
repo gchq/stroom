@@ -51,8 +51,9 @@ apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-if (!JavaVersion.VERSION_15.equals(JavaVersion.current())) {
-    throw new GradleException("This build must be run with Java 15 (current = " + JavaVersion.current() + ")")
+def javaVersion = JavaVersion.VERSION_15;
+if (JavaVersion.current() != javaVersion) {
+    throw new GradleException("This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -195,7 +196,7 @@ ext.libs = [
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
-        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind:2.11.1", // Swagger plugin needs 2.11.1 which is > than the one in the DW BOM
+        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
         java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
@@ -329,8 +330,8 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = JavaVersion.VERSION_15
-    targetCompatibility = JavaVersion.VERSION_15
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
