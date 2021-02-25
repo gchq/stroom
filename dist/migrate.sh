@@ -18,7 +18,7 @@ function ctrl_c() {
 echo_usage() {
   echo -e "${GREEN}This script runs the database migrations without starting stroom.${NC}"
   echo -e "${GREEN}The migrations run in the background but the logs will be tailed${NC}"
-  echo -e "${GREEN}until it completes.${NC}"
+  echo -e "${GREEN}until it completes. CTRL-C will only terminate the log tailing.${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m] [-q]${NC}" >&2
   echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
   echo -e " -m:   ${GREEN}Monochrome. Don't use colours in terminal output.${NC}"
