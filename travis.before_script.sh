@@ -28,6 +28,14 @@ else
     export JAVA_OPTS=-Xmx1024m
     echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
+    # Do docker login here so all pulls are authenticated and thus are
+    # not hit by the un-authenticated rate-limit
+    echo -e "Logging in to Docker"
+
+    # The username and password are configured in the travis gui
+    echo "$DOCKER_PASSWORD" \
+      | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+
     # The version of compose that is ready installed with travis does not support v2.4 yml syntax
     # so we have to update to something more recent.
     echo -e "${GREEN}Removing docker-compose${NC}"

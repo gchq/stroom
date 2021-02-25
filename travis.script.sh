@@ -207,11 +207,7 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  echo -e "Logging in to Docker"
-
-  # The username and password are configured in the travis gui
-  echo "$DOCKER_PASSWORD" \
-    | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+  # Docker login happens in before_script.sh
 
   echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
     "tags: ${GREEN}${allTagArgs[*]}${NC}"
