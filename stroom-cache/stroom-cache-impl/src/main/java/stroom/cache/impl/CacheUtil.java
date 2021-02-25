@@ -16,6 +16,8 @@
 
 package stroom.cache.impl;
 
+import stroom.util.logging.TempTagCloudDebug;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,8 @@ class CacheUtil {
     }
 
     static void clear(final Cache cache) {
+        TempTagCloudDebug.write("Clear " + cache);
+
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Removing all items from cache " + cache);
         }

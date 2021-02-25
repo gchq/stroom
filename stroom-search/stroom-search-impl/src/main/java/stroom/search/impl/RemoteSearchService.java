@@ -9,6 +9,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.TempTagCloudDebug;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -119,6 +120,8 @@ public class RemoteSearchService {
     }
 
     public Boolean destroy(final String queryKey) {
+        TempTagCloudDebug.write("Destroy querykey=" + queryKey);
+
         LOGGER.debug(() -> "destroy " + queryKey);
         remoteSearchResults.invalidate(queryKey);
         return true;

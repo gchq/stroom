@@ -23,6 +23,7 @@ import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.TempTagCloudDebug;
 
 import com.esotericsoftware.kryo.io.Input;
 import org.slf4j.Logger;
@@ -137,20 +138,38 @@ public class ClusterSearchResultCollector implements Store {
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
+        final byte[] bytes = byteArrayOutputStream.toByteArray();
 
-        try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+        TempTagCloudDebug.write("BYTES SIZE " + bytes.length);
+
+        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
+
+            if (input.end()) {
+                TempTagCloudDebug.write("END");
+            }
+
             final Set<String> errors = new HashSet<>();
             success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
             if (errors.size() > 0) {
                 getErrorSet(nodeName).addAll(errors);
             }
         } catch (final RuntimeException e) {
+            TempTagCloudDebug.write("FAILURE " + e.getMessage());
+
             onFailure(nodeName, e);
+        }
+
+        final boolean com = complete.get();
+        if (com) {
+            TempTagCloudDebug.write("COM");
+        }
+        if (!success) {
+            TempTagCloudDebug.write("UNSUCCESSFUL");
         }
 
         // If the result collector returns false it is because we have already collected enough data and can
         // therefore consider search complete.
-        return complete.get() || !success;
+        return com || !success;
     }
 
 //    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {

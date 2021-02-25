@@ -38,7 +38,7 @@ public class LmdbEnvironment {
     private final TempDirProvider tempDirProvider;
     private final LmdbConfig lmdbConfig;
     private final PathCreator pathCreator;
-    private final Path dbDir;
+    final Path dbDir;
     private final ByteSize maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;

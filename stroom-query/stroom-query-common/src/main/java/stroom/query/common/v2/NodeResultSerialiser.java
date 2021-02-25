@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.util.logging.TempTagCloudDebug;
+
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -11,6 +13,7 @@ public class NodeResultSerialiser {
                                final Coprocessors coprocessors,
                                final Consumer<String> errorConsumer,
                                final Consumer<Boolean> completionConsumer) {
+        TempTagCloudDebug.write("NodeResultSerialiser READ");
         boolean success;
 
         // Read completion status.

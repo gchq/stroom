@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.util.logging.TempTagCloudDebug;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.TaskId;
@@ -104,6 +105,8 @@ public class TaskContextImpl implements TaskContext {
     }
 
     synchronized void interrupt() {
+        TempTagCloudDebug.write( "interrupt!!!!");
+
         final Thread thread = this.thread;
         if (thread != null) {
             thread.interrupt();

@@ -36,6 +36,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.ParamUtil;
+import stroom.util.logging.TempTagCloudDebug;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,6 +72,8 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
     @Test
     void test() {
+        TempTagCloudDebug.write("TestTagCloudSearch");
+
         final String componentId = "table-1";
 
         final DocRef indexRef = indexStore.list().get(0);
@@ -126,6 +129,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         // Output the values.
         LOGGER.info("Values found:\n" + values);
+        TempTagCloudDebug.write("Values found:\n" + values);
 
         // Make sure we got what we expected.
         assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(8);

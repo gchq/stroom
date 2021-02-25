@@ -18,6 +18,7 @@ package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.util.logging.TempTagCloudDebug;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,6 +43,7 @@ class RemoteSearchResults {
     }
 
     public void invalidate(final String key) {
+        TempTagCloudDebug.write("Invalidate querykey=" + key);
         cache.invalidate(key);
     }
 }

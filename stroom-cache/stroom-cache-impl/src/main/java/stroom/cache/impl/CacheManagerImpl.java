@@ -26,6 +26,7 @@ import stroom.cache.api.ICache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.TempTagCloudDebug;
 
 import javax.inject.Singleton;
 import java.util.Collection;
@@ -75,6 +76,7 @@ public class CacheManagerImpl implements CacheManager {
         }
         if (removalNotificationConsumer != null) {
             final RemovalListener<K, V> removalListener = (key, value, cause) -> {
+                TempTagCloudDebug.write("Removal notification for key " + key + ", value " + value + ", cause " + cause);
                 LOGGER.debug(() -> "Removal notification for key " + key + ", value " + value + ", cause " + cause);
                 removalNotificationConsumer.accept(key, value);
             };
@@ -119,6 +121,8 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void remove(final K key) {
+                    TempTagCloudDebug.write("Remove " + key);
+
                     cache.invalidate(key);
                     cache.cleanUp();
                 }
@@ -177,6 +181,8 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void remove(final K key) {
+                    TempTagCloudDebug.write("Remove " + key);
+
                     cache.invalidate(key);
                     cache.cleanUp();
                 }
@@ -215,6 +221,7 @@ public class CacheManagerImpl implements CacheManager {
 
         final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
         if (existing != null) {
+            TempTagCloudDebug.write("Clear " + alias);
             CacheUtil.clear(existing.getCache());
         }
     }

@@ -7,6 +7,7 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
+import stroom.util.logging.TempTagCloudDebug;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -75,7 +76,11 @@ public class CoprocessorsFactory {
 
         final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
+
+
         if (coprocessorSettingsList != null) {
+            TempTagCloudDebug.write("COPROCESSOR SETTINGS LIST SIZE=" + coprocessorSettingsList.size());
+
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(queryKey, coprocessorSettings, fieldIndex, paramMap, errorConsumer);
 
@@ -89,8 +94,12 @@ public class CoprocessorsFactory {
                             componentIdCoprocessorMap.put(componentId, tableCoprocessor);
                         }
                     }
+                } else {
+                    TempTagCloudDebug.write("NULL COPROCESSOR");
                 }
             }
+        } else {
+            TempTagCloudDebug.write("NULL COPROCESSOR SETTINGS LIST");
         }
 
         // Group coprocessors by extraction pipeline.

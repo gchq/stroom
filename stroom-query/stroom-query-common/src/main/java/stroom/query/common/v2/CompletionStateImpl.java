@@ -16,6 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.util.logging.TempTagCloudDebug;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,8 +30,11 @@ public class CompletionStateImpl implements CompletionState {
 
     @Override
     public void complete() {
+        TempTagCloudDebug.write( "CompletionStateImpl - complete");
+
         complete.set(true);
         countDownLatch.countDown();
+
     }
 
     @Override

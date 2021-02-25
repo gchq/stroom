@@ -7,6 +7,7 @@ import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.TempTagCloudDebug;
 
 import com.esotericsoftware.kryo.io.Output;
 
@@ -73,6 +74,8 @@ class RemoteSearchResultFactory {
     }
 
     public synchronized void destroy() {
+        TempTagCloudDebug.write("destroy");
+
         securityContext.asProcessingUser(() -> {
             if (coprocessors != null) {
                 coprocessors.clear();

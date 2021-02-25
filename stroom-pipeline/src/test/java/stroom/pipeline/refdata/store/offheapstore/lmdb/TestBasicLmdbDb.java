@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.TempBasicLmdbDebug;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -35,7 +36,9 @@ import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.KeyRange;
 
@@ -45,6 +48,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -415,6 +419,140 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(value3).isEqualTo("value3");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
         });
+    }
+
+    private static final AtomicInteger run = new AtomicInteger();
+//    @RepeatedTest(10000)
+    void testKeyReuseAfterCursor() {
+//        for (int i = 0; i < 100000; i++) {
+            TempBasicLmdbDebug.write("\n---- RUN " + run.incrementAndGet() + " --- ");
+
+            // key 1 => key2 => value2 & value 3
+            basicLmdbDb.put("key1", "value1", false);
+            basicLmdbDb.put("key2", "value2", false);
+            basicLmdbDb.put("key3", "value3", false);
+
+            // different DB with same key in it so we can test two lookups using same key
+            basicLmdbDb2.put("key2", "value4", false);
+            basicLmdbDb2.put("key3", "value5", false);
+
+            LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+
+                ByteBuffer cursorKeyBuffer = null;
+                ByteBuffer cursorValueBuffer = null;
+                // Scan backwards
+                try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+                    for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+//                    TempBasicLmdbDebug.write("");
+//                    String info = ByteBufferUtils.byteBufferInfo(txn.key());
+//                    LOGGER.info("txn key : {}", info);
+//                    TempBasicLmdbDebug.write("");
+
+                        // FIXME: Happens here
+//                    info = ByteBufferUtils.byteBufferInfo(txn.val());
+//                    LOGGER.info("txn value : {}", info);
+//                    TempBasicLmdbDebug.write("");
+//                        String info = ByteBufferUtils.byteBufferInfo(keyVal.key());
+//                        LOGGER.info("keyVal.key : {}", info);
+//                        TempBasicLmdbDebug.write("");
+//                        info = ByteBufferUtils.byteBufferInfo(keyVal.val());
+//                        LOGGER.info("keyVal.value : {}", info);
+                        // Found a key/val so get the key and leave the cursor
+                        cursorKeyBuffer = ByteBufferUtils.copyToDirectBuffer(keyVal.key());
+                        cursorValueBuffer = ByteBufferUtils.copyToDirectBuffer(keyVal.val());
+                        break;
+                    }
+                }
+
+//                TempBasicLmdbDebug.write("");
+//                String info = ByteBufferUtils.byteBufferInfo(txn.key());
+//                LOGGER.info("txn key : {}", info);
+//                TempBasicLmdbDebug.write("");
+//                info = ByteBufferUtils.byteBufferInfo(txn.val());
+//                LOGGER.info("txn value : {}", info);
+
+                final ByteBuffer cursorKeyBufferCopy = ByteBufferUtils.copyToDirectBuffer(cursorKeyBuffer);
+                final ByteBuffer cursorValueBufferCopy = ByteBufferUtils.copyToDirectBuffer(cursorValueBuffer);
+
+                Assertions.assertThat(cursorKeyBuffer).isEqualByComparingTo(cursorKeyBufferCopy);
+                Assertions.assertThat(cursorValueBuffer).isEqualByComparingTo(cursorValueBufferCopy);
+
+                Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key3");
+                Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value3");
+
+                // now use the key from the last get() as the key for a new get()
+                final ByteBuffer valueBuffer2 = basicLmdbDb2.getAsBytes(txn, cursorKeyBuffer).get();
+
+//
+//            final String value2 = basicLmdbDb2.deserializeValue(valueBuffer2);
+//
+//            assertThat(value2).isEqualTo("value5");
+//
+//            // The cursor buffers are unchanged as we have not used a different cursor on db1
+//            // The get on db2 doesn't affect it
+//            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key3");
+//            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value3");
+
+//            // Now do a get on db1, which should move the cursor buffers
+//            String value3 = basicLmdbDb.get(txn, "key2").get();
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("txn key : {}", ByteBufferUtils.byteBufferInfo(txn.key()));
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("txn value : {}", ByteBufferUtils.byteBufferInfo(txn.val()));
+//
+//            Assertions.assertThat(value3)
+//                    .isEqualTo("value2");
+
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("cursorKeyBuffer : {}", ByteBufferUtils.byteBufferInfo(cursorKeyBuffer));
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("cursorKeyBufferCopy : {}", ByteBufferUtils.byteBufferInfo(cursorKeyBufferCopy));
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("cursorValueBuffer : {}", ByteBufferUtils.byteBufferInfo(cursorValueBuffer));
+//            TempBasicLmdbDebug.write("");
+//            LOGGER.info("cursorValueBufferCopy : {}", ByteBufferUtils.byteBufferInfo(cursorValueBufferCopy));
+//
+//            // Cursor buffers are unchanged by the get, maybe the get doesn't use a cursor and thus
+//            // doesn't move these.
+//            Assertions.assertThat(cursorKeyBuffer).isEqualByComparingTo(cursorKeyBufferCopy);
+//            Assertions.assertThat(cursorValueBuffer).isEqualByComparingTo(cursorValueBufferCopy);
+//
+//            ByteBuffer cursorKeyBuffer2 = null;
+//            ByteBuffer cursorValueBuffer2 = null;
+//            // Now scan forwards with a new cursor
+//            try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.getLmdbDbi().iterate(txn, KeyRange.all())) {
+//                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+//                    TempBasicLmdbDebug.write("");
+////                    String info = ByteBufferUtils.byteBufferInfo(txn.key());
+////                    LOGGER.info("txn key : {}", info);
+////                    TempBasicLmdbDebug.write("");
+////                    info = ByteBufferUtils.byteBufferInfo(txn.val());
+////                    LOGGER.info("txn value : {}", info);
+//                    TempBasicLmdbDebug.write("");
+//                    String info = ByteBufferUtils.byteBufferInfo(keyVal.key());
+//                    LOGGER.info("keyVal.key : {}", info);
+//                    TempBasicLmdbDebug.write("");
+//                    info = ByteBufferUtils.byteBufferInfo(keyVal.val());
+//                    LOGGER.info("keyVal.value : {}", info);
+//
+//                    // Found a key/val so get the key and leave the cursor
+//                    cursorKeyBuffer2 = ByteBufferUtils.copyToDirectBuffer(keyVal.key());
+//                    cursorValueBuffer2 = ByteBufferUtils.copyToDirectBuffer(keyVal.val());
+//                    break;
+//                }
+//            }
+//
+//            // The buffers from our original cursor have now moved to point to the entry of the
+//            // second cursor
+//            // When this test runs on its own these asserts are fine but when run with all the other refdata
+//            // tests it fails.
+////            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key1");
+////            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value1");
+//
+//            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer2)).isEqualTo("key1");
+//            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer2)).isEqualTo("value1");
+            });
+//        }
     }
 
     @Test

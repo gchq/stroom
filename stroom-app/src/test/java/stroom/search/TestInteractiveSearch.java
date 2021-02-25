@@ -35,6 +35,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.api.v2.ParamUtil;
+import stroom.util.logging.TempTagCloudDebug;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
@@ -95,6 +96,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseInsensitiveTest() {
+        TempTagCloudDebug.write("positiveCaseInsensitiveTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
@@ -102,6 +105,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
     @Test
     void positiveCaseInsensitiveTestMultiComponent() {
+        TempTagCloudDebug.write("positiveCaseInsensitiveTestMultiComponent");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         final List<String> componentIds = Arrays.asList("table-1", "table-2");
@@ -113,6 +118,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseInsensitiveTestWithoutExtraction() {
+        TempTagCloudDebug.write("positiveCaseInsensitiveTestWithoutExtraction");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         final List<String> componentIds = Collections.singletonList("table-1");
@@ -124,6 +131,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseInsensitiveTest2() {
+        TempTagCloudDebug.write("positiveCaseInsensitiveTest2");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 25);
@@ -134,6 +143,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void negativeCaseSensitiveTest() {
+        TempTagCloudDebug.write("negativeCaseSensitiveTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "e0567");
         test(expression, 0);
@@ -144,6 +155,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void negativeCaseSensitiveTest2() {
+        TempTagCloudDebug.write("negativeCaseSensitiveTest2");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "e0567");
         test(expression, 0);
@@ -154,6 +167,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseSensitiveTest() {
+        TempTagCloudDebug.write("positiveCaseSensitiveTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 25);
@@ -164,6 +179,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseSensitiveTest2() {
+        TempTagCloudDebug.write("positiveCaseSensitiveTest2");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 5);
@@ -174,6 +191,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveCaseSensitiveTest3() {
+        TempTagCloudDebug.write("positiveCaseSensitiveTest3");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 5);
@@ -184,6 +203,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveAnalysedFieldTest() {
+        TempTagCloudDebug.write("positiveAnalysedFieldTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg");
         test(expression, 4);
@@ -194,6 +215,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveAnalysedFieldTestWithLeadingWildcard() {
+        TempTagCloudDebug.write("positiveAnalysedFieldTestWithLeadingWildcard");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "*msg");
         test(expression, 4);
@@ -204,6 +227,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void negativeAnalysedFieldTest() {
+        TempTagCloudDebug.write("negativeAnalysedFieldTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg foobar");
         test(expression, 0);
@@ -214,6 +239,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveAnalysedFieldTestWithIn() {
+        TempTagCloudDebug.write("positiveAnalysedFieldTestWithIn");
+
         final ExpressionOperator.Builder expression = buildInExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg foo bar");
         test(expression, 4);
@@ -224,6 +251,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void negativeKeywordFieldTest() {
+        TempTagCloudDebug.write("negativeKeywordFieldTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "foo");
         test(expression, 0);
@@ -234,6 +263,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveKeywordFieldTest() {
+        TempTagCloudDebug.write("positiveKeywordFieldTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "msg=foo bar");
         test(expression, 4);
@@ -244,6 +275,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void positiveKeywordFieldTestWithLeadingWildcard() {
+        TempTagCloudDebug.write("positiveKeywordFieldTestWithLeadingWildcard");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "*foo bar");
         test(expression, 4);
@@ -254,6 +287,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void notEqualsTest() {
+        TempTagCloudDebug.write("notEqualsTest");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         expression.addOperator(ExpressionOperator.builder().op(Op.NOT)
@@ -267,6 +302,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void notEqualsTest2() {
+        TempTagCloudDebug.write("notEqualsTest2");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
@@ -283,6 +320,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void notEqualsTest3() {
+        TempTagCloudDebug.write("notEqualsTest3");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
@@ -299,6 +338,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void notEqualsTest4() {
+        TempTagCloudDebug.write("notEqualsTest4");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
@@ -318,6 +359,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest1() {
+        TempTagCloudDebug.write("dictionaryTest1");
+
         final DocRef docRef = dictionaryStore.createDocument("users");
         final DictionaryDoc dic = dictionaryStore.readDocument(docRef);
         dic.setData("user1\nuser2\nuser5");
@@ -336,6 +379,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest2() {
+        TempTagCloudDebug.write("dictionaryTest2");
+
         final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
@@ -361,6 +406,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest3() {
+        TempTagCloudDebug.write("dictionaryTest3");
+
         final DocRef docRef1 = dictionaryStore.createDocument("users");
         DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
         dic1.setData("user1\nuser2\nuser5");
@@ -386,6 +433,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     void testBug173() {
+        TempTagCloudDebug.write("testBug173");
+
         final ExpressionOperator.Builder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "!");
         test(expression, 5);

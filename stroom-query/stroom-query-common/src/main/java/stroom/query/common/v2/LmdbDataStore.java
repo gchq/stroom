@@ -36,9 +36,11 @@ import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.concurrent.StripedLock;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.TempTagCloudDebug;
 
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
@@ -67,6 +69,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -79,6 +82,7 @@ public class LmdbDataStore implements DataStore {
     private final LmdbConfig lmdbConfig;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
+    private final String instanceId;
 
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
     private final CompiledField[] compiledFields;
@@ -102,6 +106,12 @@ public class LmdbDataStore implements DataStore {
 
     private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
 
+    private final AtomicInteger addCount = new AtomicInteger();
+    private final AtomicInteger transferCount = new AtomicInteger();
+    private final AtomicInteger writePayloadCount = new AtomicInteger();
+    private final AtomicInteger readPayloadCount = new AtomicInteger();
+    private final AtomicInteger getCount = new AtomicInteger();
+
     private final CountDownLatch addedData;
 
     LmdbDataStore(final LmdbEnvironment lmdbEnvironment,
@@ -118,6 +128,9 @@ public class LmdbDataStore implements DataStore {
         this.lmdbConfig = lmdbConfig;
         this.stripedLock = new StripedLock();
         this.maxResults = maxResults;
+        this.instanceId = UUID.randomUUID().toString();
+
+        TempTagCloudDebug.write("Init (" + instanceId + ") " + FileUtil.getCanonicalPath(lmdbEnvironment.dbDir));
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -163,6 +176,8 @@ public class LmdbDataStore implements DataStore {
             @Override
             public void complete() {
                 try {
+                    TempTagCloudDebug.write("LmdbDataStore - complete (" + instanceId + ")");
+
                     queue.put(Optional.empty());
                 } catch (final InterruptedException e) {
                     LOGGER.debug(e.getMessage(), e);
@@ -186,12 +201,41 @@ public class LmdbDataStore implements DataStore {
 
             @Override
             public void awaitCompletion() throws InterruptedException {
+                TempTagCloudDebug.write("LmdbDataStore - awaitCompletion before (" + instanceId + ")");
+
                 addedData.await();
+
+                TempTagCloudDebug.write("LmdbDataStore - awaitCompletion after (" + instanceId + ")" + state());
             }
 
             @Override
             public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-                return addedData.await(timeout, unit);
+                TempTagCloudDebug.write("LmdbDataStore - awaitCompletion with timeout before (" +
+                        instanceId +
+                        ")");
+
+                final boolean result = addedData.await(timeout, unit);
+
+                TempTagCloudDebug.write("LmdbDataStore - awaitCompletion with timeout after result=" +
+                        result +
+                        " (" +
+                        instanceId +
+                        ")" + state());
+
+                return result;
+            }
+
+            private String state() {
+                return " addCount=" +
+                        addCount.get() +
+                        ", transferCount=" +
+                        transferCount.get() +
+                        ", writePayloadCount=" +
+                        writePayloadCount.get() +
+                        ", readPayloadCount=" +
+                        readPayloadCount.get() +
+                        ", getCount=" +
+                        getCount.get();
             }
 
             @Override
@@ -203,6 +247,8 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public void add(final Val[] values) {
+        TempTagCloudDebug.write("Add to store (" + instanceId + ")");
+
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -310,6 +356,7 @@ public class LmdbDataStore implements DataStore {
 
         try {
             queue.put(Optional.of(new QueueItem(key, value)));
+            addCount.incrementAndGet();
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             // Keep interrupting this thread.
@@ -318,6 +365,8 @@ public class LmdbDataStore implements DataStore {
     }
 
     private void transfer() {
+        TempTagCloudDebug.write("Start transfer (" + instanceId + ")");
+
         Metrics.measure("Transfer", () -> {
             try {
                 Txn<ByteBuffer> writeTxn = null;
@@ -327,6 +376,7 @@ public class LmdbDataStore implements DataStore {
 
                 while (run) {
                     final Optional<QueueItem> optional = queue.poll(1, TimeUnit.SECONDS);
+                    transferCount.incrementAndGet();
                     if (optional != null) {
                         if (optional.isPresent()) {
                             if (writeTxn == null) {
@@ -381,10 +431,14 @@ public class LmdbDataStore implements DataStore {
 
                 // Drop the DB if we have been instructed to do so.
                 if (drop.get()) {
+                    TempTagCloudDebug.write("Drop before (" + instanceId + ")");
                     drop();
+                    TempTagCloudDebug.write("Drop after (" + instanceId + ")");
                 }
             }
         });
+
+        TempTagCloudDebug.write("End transfer (" + instanceId + ")");
     }
 
     private void insert(final Txn<ByteBuffer> txn, final Key key, final Generator[] value) {
@@ -517,6 +571,7 @@ public class LmdbDataStore implements DataStore {
 
                                 itemSerialiser.writeKey(key, output);
                                 itemSerialiser.writeGenerators(value, output);
+                                writePayloadCount.incrementAndGet();
 
                                 lmdbDbi.delete(writeTxn, keyBuffer.flip());
                             }
@@ -533,6 +588,7 @@ public class LmdbDataStore implements DataStore {
 
                             itemSerialiser.writeKey(key, output);
                             itemSerialiser.writeGenerators(value, output);
+                            writePayloadCount.incrementAndGet();
                         });
 
                         lmdbDbi.drop(writeTxn);
@@ -550,6 +606,8 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public void writePayload(final Output output) {
+        TempTagCloudDebug.write("writePayload (" + instanceId + ")");
+
         Metrics.measure("writePayload", () -> {
             try {
                 final boolean complete = addedData.await(0, TimeUnit.MILLISECONDS);
@@ -583,6 +641,8 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public boolean readPayload(final Input input) {
+        TempTagCloudDebug.write("readPayload (" + instanceId + ")");
+
         return Metrics.measure("readPayload", () -> {
             final int count = input.readInt(); // There may be more than one payload if it was the final transfer.
             for (int i = 0; i < count; i++) {
@@ -600,6 +660,7 @@ public class LmdbDataStore implements DataStore {
                                 ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
                             }
 
+                            readPayloadCount.incrementAndGet();
                             put(key, value);
                         }
                     }
@@ -627,6 +688,7 @@ public class LmdbDataStore implements DataStore {
             final int trimmedSize = maxResults.size(depth);
 
             final ItemArrayList list = getChildren(parentKey, depth, trimmedSize, true, false);
+            getCount.addAndGet(list.size());
 
             return new Items() {
                 @Override

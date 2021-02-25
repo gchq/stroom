@@ -39,6 +39,7 @@ import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.TempTagCloudDebug;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -455,7 +456,14 @@ class TestSearchResultCreation {
         }
 
         final byte[] bytes = outputStream.toByteArray();
+
+        TempTagCloudDebug.write("BYTES SIZE " + bytes.length);
+
         try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
+            if (input.end()) {
+                TempTagCloudDebug.write("END");
+            }
+
             target.readPayloads(input);
         }
     }

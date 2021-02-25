@@ -26,6 +26,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.util.logging.TempTagCloudDebug;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,6 +140,8 @@ public class FlatResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore data, final ResultRequest resultRequest) {
+        TempTagCloudDebug.write( "FlatResultCreator - create");
+
         if (error == null) {
             try {
                 // Map data.

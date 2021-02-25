@@ -6,6 +6,7 @@ import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.TempTagCloudDebug;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -44,23 +45,31 @@ public class Coprocessors implements Iterable<Coprocessor> {
     }
 
     public boolean readPayloads(final Input input) {
-        boolean partialSuccess = false;
+        boolean allAccepted = true;
 
         final int length = input.readInt();
+
+        TempTagCloudDebug.write("readPayloads len=" + length);
+
         for (int i = 0; i < length; i++) {
+            allAccepted = false;
             final int coprocessorId = input.readInt();
             final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
-            final boolean success = coprocessor.readPayload(input);
-            if (success) {
-                partialSuccess = true;
+            final boolean accepted = coprocessor.readPayload(input);
+            if (accepted) {
+                allAccepted = true;
             }
         }
 
-        return partialSuccess;
+        return allAccepted;
     }
 
     public void writePayloads(final Output output) {
-        output.writeInt(coprocessorMap.size());
+        final int len = coprocessorMap.size();
+
+        TempTagCloudDebug.write("writePayloads len=" + len);
+
+        output.writeInt(len);
         for (final Entry<Integer, Coprocessor> entry : coprocessorMap.entrySet()) {
             final int coprocessorId = entry.getKey();
             final Coprocessor coprocessor = entry.getValue();
@@ -96,6 +105,8 @@ public class Coprocessors implements Iterable<Coprocessor> {
         return new CompletionState() {
             @Override
             public void complete() {
+                TempTagCloudDebug.write( "Coprocessors - complete");
+
                 for (final Coprocessor coprocessor : coprocessorMap.values()) {
                     coprocessor.getCompletionState().complete();
                 }

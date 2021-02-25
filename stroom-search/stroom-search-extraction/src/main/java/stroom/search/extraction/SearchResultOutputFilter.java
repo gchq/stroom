@@ -23,9 +23,12 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.common.v2.SearchDebugUtil;
+import stroom.util.logging.TempTagCloudDebug;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+
+import java.util.Arrays;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
@@ -64,6 +67,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
             SearchDebugUtil.writeExtractionData(values);
+            TempTagCloudDebug.write( "Extraction: " + Arrays.toString(values));
 
             consumer.accept(values);
             count++;

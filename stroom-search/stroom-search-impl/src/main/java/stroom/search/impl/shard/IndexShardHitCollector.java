@@ -17,6 +17,7 @@
 package stroom.search.impl.shard;
 
 import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.util.logging.TempTagCloudDebug;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,6 +64,8 @@ class IndexShardHitCollector extends SimpleCollector {
         try {
             docIdStore.put(OptionalInt.of(docId));
             info(() -> "Found " + hitCount + " hits");
+            TempTagCloudDebug.write( "Found " + hitCount + " hits");
+
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             info(() -> "Quitting...");

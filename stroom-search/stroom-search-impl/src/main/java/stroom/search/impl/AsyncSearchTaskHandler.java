@@ -42,6 +42,7 @@ import stroom.task.shared.TaskId;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.TempTagCloudDebug;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -211,6 +212,8 @@ class AsyncSearchTaskHandler {
         final String queryKey = task.getKey().getUuid();
         final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
+        TempTagCloudDebug.write("Search node " + targetNode + " querykey=" + queryKey);
+
         // Start remote cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 taskContext.getTaskId(),
@@ -246,6 +249,8 @@ class AsyncSearchTaskHandler {
             LOGGER.debug(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
             taskContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
 
+            TempTagCloudDebug.write("Start poll node " + targetNode + " querykey=" + queryKey);
+
             // Poll for results until completion.
             boolean complete = false;
             while (!Thread.currentThread().isInterrupted() && !complete) {
@@ -260,27 +265,43 @@ class AsyncSearchTaskHandler {
                         try (final InputStream inputStream = new ByteArrayInputStream(bytes)) {
                             LOGGER.debug(() -> "Receive result for node: " + targetNode);
                             complete = resultCollector.onSuccess(targetNode, inputStream);
+
+                            if (complete) {
+                                TempTagCloudDebug.write("COMPLETE1 " + targetNode + " complete=" + complete + ", querykey=" + queryKey);
+                            }
                         }
 
                     } else {
                         complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
+                        if (complete) {
+                            TempTagCloudDebug.write("COMPLETE2 " + targetNode + " complete=" + complete + ", querykey=" + queryKey );
+                        }
                     }
                 } catch (final RuntimeException | IOException e) {
+                    TempTagCloudDebug.write("Exception polling " + targetNode + " complete=" + complete + ", querykey=" + queryKey + " " + e.getMessage());
+
                     complete = true;
                     resultCollector.onFailure(targetNode, e);
                 }
             }
 
+            TempTagCloudDebug.write("Done poll node " + targetNode + " complete=" + complete + ", interrupted=" + Thread.currentThread().isInterrupted() + ", querykey=" + queryKey);
+
         } catch (final RuntimeException e) {
             resultCollector.onFailure(sourceNode, e);
 
         } finally {
+            TempTagCloudDebug.write("Finished searching node " + targetNode + " interrupted=" + Thread.currentThread().isInterrupted() + ", querykey=" + queryKey);
+
+
             LOGGER.debug(() -> task.getSearchName() + " - finished searching node: " + targetNode);
             taskContext.info(() -> task.getSearchName() + " - finished searching node: " + targetNode);
 
             // Destroy search results.
             try {
                 if (NodeCallUtil.shouldExecuteLocally(nodeInfo, targetNode)) {
+                    TempTagCloudDebug.write("Destroy querykey=" + queryKey);
+
                     remoteSearchService.destroy(queryKey);
 
                 } else {

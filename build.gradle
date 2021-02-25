@@ -52,9 +52,9 @@ apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-if (!JavaVersion.current().isJava12()) {
-    throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
-}
+//if (!JavaVersion.current().isJava12()) {
+//    throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
+//}
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -405,8 +405,8 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-//        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
+//        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
