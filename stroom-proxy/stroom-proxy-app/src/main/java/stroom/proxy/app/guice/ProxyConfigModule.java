@@ -3,11 +3,11 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.repo.ForwardStreamConfig;
+import stroom.proxy.app.forwarder.ForwardStreamConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
-import stroom.proxy.repo.ProxyRepositoryConfig;
-import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -30,8 +30,8 @@ public class ProxyConfigModule extends AbstractModule {
         bind(ProxyRequestConfig.class).toInstance(proxyConfig.getProxyRequestConfig());
         bind(LogStreamConfig.class).toInstance(proxyConfig.getLogStreamConfig());
         bind(ForwardStreamConfig.class).toInstance(proxyConfig.getForwardStreamConfig());
-        bind(ProxyRepositoryConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
-        bind(ProxyRepositoryReaderConfig.class).toInstance(proxyConfig.getProxyRepositoryReaderConfig());
+        bind(ProxyRepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
+        bind(ProxyRepoFileScannerConfig.class).toInstance(proxyConfig.getProxyRepositoryReaderConfig());
         bind(ContentSyncConfig.class).toInstance(proxyConfig.getContentSyncConfig());
         bind(FeedStatusConfig.class).toInstance(proxyConfig.getFeedStatusConfig());
         bind(JerseyClientConfiguration.class).toInstance(proxyConfig.getJerseyClientConfiguration());

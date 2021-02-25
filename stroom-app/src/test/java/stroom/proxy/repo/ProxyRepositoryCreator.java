@@ -54,9 +54,9 @@ public class ProxyRepositoryCreator {
     private static final String ZIP_EXTENSION = ".zip";
 
     private final FeedProperties feedProperties;
-    private final StroomZipRepository repository;
+    private final ProxyRepo repository;
 
-    public ProxyRepositoryCreator(final FeedProperties feedProperties, final StroomZipRepository repository) {
+    public ProxyRepositoryCreator(final FeedProperties feedProperties, final ProxyRepo repository) {
         this.feedProperties = feedProperties;
         this.repository = repository;
     }

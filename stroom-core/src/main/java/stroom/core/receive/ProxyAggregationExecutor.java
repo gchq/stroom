@@ -17,8 +17,6 @@
 
 package stroom.core.receive;
 
-import stroom.proxy.repo.FileSetProcessor;
-import stroom.proxy.repo.RepositoryProcessor;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 

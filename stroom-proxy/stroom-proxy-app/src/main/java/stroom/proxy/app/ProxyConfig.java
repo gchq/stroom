@@ -1,11 +1,11 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.repo.ForwardStreamConfig;
+import stroom.proxy.app.forwarder.ForwardStreamConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
-import stroom.proxy.repo.ProxyRepositoryConfig;
-import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -18,8 +18,8 @@ public class ProxyConfig {
 
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
     private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
-    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
+    private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
@@ -60,23 +60,23 @@ public class ProxyConfig {
     }
 
     @JsonProperty
-    public ProxyRepositoryConfig getProxyRepositoryConfig() {
-        return proxyRepositoryConfig;
+    public ProxyRepoConfig getProxyRepositoryConfig() {
+        return proxyRepoConfig;
     }
 
     @JsonProperty
-    public void setProxyRepositoryConfig(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
+    public void setProxyRepositoryConfig(final ProxyRepoConfig proxyRepoConfig) {
+        this.proxyRepoConfig = proxyRepoConfig;
     }
 
     @JsonProperty
-    public ProxyRepositoryReaderConfig getProxyRepositoryReaderConfig() {
-        return proxyRepositoryReaderConfig;
+    public ProxyRepoFileScannerConfig getProxyRepositoryReaderConfig() {
+        return proxyRepoFileScannerConfig;
     }
 
     @JsonProperty
-    public void setProxyRepositoryReaderConfig(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig) {
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
+    public void setProxyRepositoryReaderConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
+        this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
     }
 
     @JsonProperty

@@ -30,9 +30,9 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '4.1' apply false
+    id 'nu.studer.jooq' version '5.2' apply false
 
-    id 'org.flywaydb.flyway' version '5.2.4' apply false
+    id 'org.flywaydb.flyway' version '7.5.4' apply false
 
     id "ca.cutterslade.analyze" version "1.4.3"
 
@@ -111,7 +111,7 @@ ext.versions = [
         guice4            : '4.2.2',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
-        jooq              : '3.12.3',
+        jooq              : '3.14.7',
         junit_jupiter     : '5.6.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',

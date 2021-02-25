@@ -1,10 +1,10 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.ForwardDestinationConfig;
-import stroom.proxy.repo.ForwardStreamConfig;
-import stroom.proxy.repo.ForwardStreamHandler;
+import stroom.proxy.app.forwarder.ForwardDestinationConfig;
+import stroom.proxy.app.forwarder.ForwardStreamConfig;
+import stroom.proxy.app.forwarder.ForwardStreamHandler;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.ProxyRepositoryConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.util.HasHealthCheck;
@@ -41,7 +41,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     private final LogStream logStream;
     private final ForwardStreamConfig forwardStreamConfig;
-    private final ProxyRepositoryConfig proxyRepositoryConfig;
+    private final ProxyRepoConfig proxyRepoConfig;
     private final Provider<BuildInfo> buildInfoProvider;
     private final List<ForwardDestination> destinations;
     private final String userAgentString;
@@ -49,11 +49,11 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
                                 final ForwardStreamConfig forwardStreamConfig,
-                                final ProxyRepositoryConfig proxyRepositoryConfig,
+                                final ProxyRepoConfig proxyRepoConfig,
                                 final Provider<BuildInfo> buildInfoProvider) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
+        this.proxyRepoConfig = proxyRepoConfig;
         this.buildInfoProvider = buildInfoProvider;
 
         // Set the user agent string to something like
@@ -83,14 +83,14 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             this.destinations = Collections.emptyList();
         }
 
-        if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
+        if (proxyRepoConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepoConfig.getRepoDir())) {
             throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
     }
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (!proxyRepositoryConfig.isStoringEnabled()) {
+        if (!proxyRepoConfig.isStoringEnabled()) {
             add(handlers);
         }
         return handlers;
@@ -105,8 +105,8 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     }
 
     private boolean isConfiguredToStore() {
-        return proxyRepositoryConfig.isStoringEnabled()
-                && !Strings.isNullOrEmpty(proxyRepositoryConfig.getDir());
+        return proxyRepoConfig.isStoringEnabled()
+                && !Strings.isNullOrEmpty(proxyRepoConfig.getRepoDir());
     }
 
     private void add(final List<StreamHandler> handlers) {

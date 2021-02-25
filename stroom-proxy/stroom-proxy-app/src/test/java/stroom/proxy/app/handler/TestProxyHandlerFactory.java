@@ -1,12 +1,11 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.ForwardDestinationConfig;
-import stroom.proxy.repo.ForwardStreamConfig;
-import stroom.proxy.repo.ForwardStreamHandler;
+import stroom.proxy.app.forwarder.ForwardDestinationConfig;
+import stroom.proxy.app.forwarder.ForwardStreamConfig;
+import stroom.proxy.app.forwarder.ForwardStreamHandler;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.proxy.repo.ProxyRepositoryConfig;
-import stroom.proxy.repo.ProxyRepositoryManager;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
@@ -80,11 +79,11 @@ class TestProxyHandlerFactory extends StroomUnitTest {
                                                               final boolean isStoringEnabled,
                                                               final boolean isForwardingenabled) {
         final LogStreamConfig logRequestConfig = null;
-        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
+        final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig();
 
-        proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepositoryConfig.setStoringEnabled(isStoringEnabled);
+        proxyRepoConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        proxyRepoConfig.setStoringEnabled(isStoringEnabled);
 
         forwardRequestConfig.setForwardingEnabled(isForwardingenabled);
         ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig();
@@ -96,17 +95,17 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
 
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(() -> tempDir,
-                proxyRepositoryConfig);
+                proxyRepoConfig);
         final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () ->
                 new ProxyRepositoryStreamHandler(proxyRepositoryManager);
 
         final LogStream logStream = new LogStream(logRequestConfig);
         final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory =
-                new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
+                new ProxyRepositoryStreamHandlerFactory(proxyRepoConfig, proxyRepositoryRequestHandlerProvider);
 
         final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
-                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo);
+                logStream, forwardRequestConfig, proxyRepoConfig, () -> buildInfo);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

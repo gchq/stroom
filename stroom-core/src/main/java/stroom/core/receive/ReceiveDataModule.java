@@ -16,7 +16,6 @@
 
 package stroom.core.receive;
 
-import stroom.proxy.repo.FileSetProcessor;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RequestHandler;
 import stroom.util.io.BufferFactory;

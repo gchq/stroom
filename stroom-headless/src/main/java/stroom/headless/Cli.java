@@ -21,7 +21,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
-import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.ProxyRepo;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
@@ -246,7 +246,7 @@ public class Cli extends AbstractCommandLineTool {
                             @Override
                             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                                 try {
-                                    if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                    if (file.toString().endsWith(ProxyRepo.ZIP_EXTENSION)) {
                                         process(errorWriter, file);
                                     }
                                 } catch (final RuntimeException e) {

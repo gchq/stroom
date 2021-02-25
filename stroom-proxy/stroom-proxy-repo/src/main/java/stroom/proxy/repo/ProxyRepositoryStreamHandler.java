@@ -18,7 +18,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
 
-    private final ProxyRepositoryManager proxyRepositoryManager;
+    private final ProxyRepo proxyRepo;
 
     private AttributeMap attributeMap;
     private StroomZipOutputStream stroomZipOutputStream;
@@ -26,8 +26,8 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     private boolean doneOne = false;
 
     @Inject
-    public ProxyRepositoryStreamHandler(final ProxyRepositoryManager proxyRepositoryManager) {
-        this.proxyRepositoryManager = proxyRepositoryManager;
+    public ProxyRepositoryStreamHandler(final ProxyRepo proxyRepo) {
+        this.proxyRepo = proxyRepo;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     @Override
     public void handleHeader() throws IOException {
-        stroomZipOutputStream = proxyRepositoryManager.getStroomZipOutputStream(attributeMap);
+        stroomZipOutputStream = proxyRepo.getStroomZipOutputStream(attributeMap);
     }
 
     @Override

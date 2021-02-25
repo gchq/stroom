@@ -30,7 +30,7 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final MetaDataHolder metaDataHolder;
-    private final ProxyRepositoryManager proxyRepositoryManager;
+    private final ProxyRepo proxyRepo;
 
     private StroomZipOutputStream stroomZipOutputStream;
     private OutputStream outputStream;
@@ -40,10 +40,10 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
     @Inject
     ProxyRepositoryStreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                                   final MetaDataHolder metaDataHolder,
-                                  final ProxyRepositoryManager proxyRepositoryManager) {
+                                  final ProxyRepo proxyRepo) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.metaDataHolder = metaDataHolder;
-        this.proxyRepositoryManager = proxyRepositoryManager;
+        this.proxyRepo = proxyRepo;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
     public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
         if (outputStream == null) {
             final AttributeMap attributeMap = metaDataHolder.getMetaData();
-            stroomZipOutputStream = proxyRepositoryManager.getStroomZipOutputStream(attributeMap);
+            stroomZipOutputStream = proxyRepo.getStroomZipOutputStream(attributeMap);
             nextEntry();
         }
 

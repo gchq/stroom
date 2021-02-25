@@ -10,22 +10,18 @@ public class ProxyLifecycle implements Managed {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyLifecycle.class);
 
-    private final ProxyRepositoryManager proxyRepositoryManager;
-    private final ProxyRepositoryReader proxyRepositoryReader;
+    private final ProxyRepoFileScanner proxyRepoFileScanner;
 
     @Inject
-    public ProxyLifecycle(final ProxyRepositoryManager proxyRepositoryManager,
-                          final ProxyRepositoryReader proxyRepositoryReader) {
-        this.proxyRepositoryManager = proxyRepositoryManager;
-        this.proxyRepositoryReader = proxyRepositoryReader;
+    public ProxyLifecycle(final ProxyRepoFileScanner proxyRepoFileScanner) {
+        this.proxyRepoFileScanner = proxyRepoFileScanner;
     }
 
     @Override
     public void start() {
         LOGGER.info("Starting Stroom Proxy");
 
-        proxyRepositoryManager.start();
-        proxyRepositoryReader.start();
+        proxyRepoFileScanner.start();
 
         LOGGER.info("Started Stroom Proxy");
     }
@@ -35,8 +31,7 @@ public class ProxyLifecycle implements Managed {
         LOGGER.info("Stopping Stroom Proxy");
 
         try {
-            proxyRepositoryReader.stop();
-            proxyRepositoryManager.stop();
+            proxyRepoFileScanner.stop();
         } catch (Exception e) {
             LOGGER.error("error", e);
         }
