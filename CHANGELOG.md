@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.0-beta.86] - 2021-02-25
+
+* Fix travis release artefacts.
+
+
 ## [v7.0-beta.85] - 2021-02-24
 
 * Change dockerfile to use Open JDK 15
@@ -3098,7 +3103,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.85...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.86...HEAD
+[v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
 [v7.0-beta.85]: https://github.com/gchq/stroom/compare/v7.0-beta.84...v7.0-beta.85
 [v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
 [v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83

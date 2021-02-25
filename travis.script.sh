@@ -60,13 +60,17 @@ create_file_hash() {
 gather_release_artefacts() {
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
-  local -r release_config_dir="stroom-app/build/release/config"
-  local -r proxy_release_config_dir="stroom-proxy/stroom-proxy-app/build/release/config"
+  local -r release_config_dir="${TRAVIS_BUILD_DIR}/stroom-app/build/release/config"
+  local -r docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-app/build/release/config"
+  local -r proxy_release_config_dir="${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
 
   echo "Copying release artefacts to ${RELEASE_ARTEFACTS_DIR}"
 
+  # The zip dist config is inside the zip dist. We need the docker dist
+  # config so stroom-resources can use it.
+
   # Stroom
-  cp "${release_config_dir}/config-schema.yml" \
+  cp "${docker_build_dir}/config.yml" \
     "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
 
   cp "${release_config_dir}/config-defaults.yml" \
@@ -85,7 +89,7 @@ gather_release_artefacts() {
     "${RELEASE_ARTEFACTS_DIR}"
 
   # Stroom-Proxy
-  cp "${proxy_release_config_dir}/config.yml" \
+  cp "${docker_build_dir}/config.yml" \
     "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
 
   cp "${proxy_release_config_dir}/config-defaults.yml" \
