@@ -199,7 +199,6 @@ releaseToDockerHub() {
   echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
-
   # If we have a TRAVIS_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
@@ -207,14 +206,11 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  # Docker login happens in before_script.sh
-
   echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
     "tags: ${GREEN}${allTagArgs[*]}${NC}"
   docker push "${dockerRepo}" >/dev/null 2>&1
 
-  echo -e "Logging out of Docker"
-  docker logout >/dev/null 2>&1
+  echo -e "Completed Docker release"
 }
 
 # establish what version of stroom we are building
@@ -365,7 +361,6 @@ else
 #      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
 
 
-
   # Don't do a docker build for pull requests
   if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     # TODO - the major and minor floating tags assume that the release
@@ -380,6 +375,11 @@ else
       "${MINOR_VER_FLOATING_TAG}" \
     )
 
+    echo -e "Logging in to Docker"
+    # The username and password are configured in the travis gui
+    echo "$DOCKER_PASSWORD" \
+      | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+
     # build and release stroom image to dockerhub
     releaseToDockerHub \
       "${STROOM_DOCKER_REPO}" \
@@ -391,6 +391,9 @@ else
       "${STROOM_PROXY_DOCKER_REPO}" \
       "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
       "${allDockerTags[@]}"
+
+    echo -e "Logging out of Docker"
+    docker logout >/dev/null 2>&1
   fi
 
   # Deploy the generated swagger specs and swagger UI (obtained from github)
