@@ -53,14 +53,17 @@ apply plugin: 'de.undercouch.download'
 
 def javaVersion = JavaVersion.VERSION_15;
 if (JavaVersion.current() != javaVersion) {
-    throw new GradleException("This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
+    throw new GradleException(
+        "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue ->
     def val;
-    if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified" && project.getProperty(propName) != "") {
+    if (project.hasProperty(propName)
+            && project.getProperty(propName) != "unspecified"
+            && project.getProperty(propName) != "") {
         val = project.getProperty(propName)
         println "Using property [$propName] with value [$val]"
     } else {
@@ -111,12 +114,13 @@ ext.versions = [
         guice4            : '4.2.2',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
+        jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.12.3',
         junit_jupiter     : '5.6.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '3.6.28',
-        swagger           : '2.1.6',
+        swagger           : '2.1.7',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
