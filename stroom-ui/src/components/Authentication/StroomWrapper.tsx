@@ -19,10 +19,11 @@ import { FunctionComponent, useEffect, useState } from "react";
 import ChangePasswordManager from "./ChangePasswordManager";
 import AccountManager from "../Account/AccountManager/AccountManager";
 import BackgroundLogo from "../Layout/BackgroundLogo";
-import { useStroomSessionResource } from "./api";
 import CustomLoader from "../CustomLoader";
 import Background from "../Layout/Background";
 import TokenManager from "../Account/TokenManager/TokenManager";
+import { useStroomApi } from "lib/useStroomApi";
+import { ValidateSessionResponse } from "api/stroom";
 
 enum DialogType {
   CHANGE_PASSWORD,
@@ -35,33 +36,39 @@ const stroomUrl = process.env.REACT_APP_STROOM_URL;
 const StroomWrapper: FunctionComponent = () => {
   // Client state
   const [userId, setUserId] = useState<string>();
-  const { validateSession } = useStroomSessionResource();
+  const { exec } = useStroomApi();
   useEffect(() => {
     if (!userId) {
-      validateSession(window.location.href).then((response) => {
-        if (response) {
-          if (response.valid) {
-            setUserId(response.userId);
-          } else {
-            // If we fail to get the current user and permissions then we might
-            // not have an authenticated session. Under normal circumstances the
-            // server would have already sent a redirect response to initiate an
-            // auth flow but in development when we are serving the UI outside of
-            // Dropwizard we will not receive a redirect as the UI server has no
-            // idea that we aren't authenticated. For this reason we must perform
-            // manual redirection in development.
-            window.location.href = response.redirectUri;
+      exec(
+        (api) =>
+          api.stroomSession.validateStroomSession({
+            redirect_uri: window.location.href,
+          }),
+        (response: ValidateSessionResponse) => {
+          if (response) {
+            if (response.valid) {
+              setUserId(response.userId);
+            } else {
+              // If we fail to get the current user and permissions then we might
+              // not have an authenticated session. Under normal circumstances the
+              // server would have already sent a redirect response to initiate an
+              // auth flow but in development when we are serving the UI outside of
+              // Dropwizard we will not receive a redirect as the UI server has no
+              // idea that we aren't authenticated. For this reason we must perform
+              // manual redirection in development.
+              window.location.href = response.redirectUri;
 
-            // const redirectUri = window.location.href;
-            // let url = redirectUri.split("/")[0];
-            // url += "/s/signIn?redirect_uri=";
-            // url += encodeURI(redirectUri);
-            // window.location.href = url;
+              // const redirectUri = window.location.href;
+              // let url = redirectUri.split("/")[0];
+              // url += "/s/signIn?redirect_uri=";
+              // url += encodeURI(redirectUri);
+              // window.location.href = url;
+            }
           }
-        }
-      });
+        },
+      );
     }
-  }, [validateSession, userId, setUserId]);
+  }, [exec, userId, setUserId]);
 
   const [dialogType, setDialogType] = useState<DialogType>(undefined);
   useEffect(() => {

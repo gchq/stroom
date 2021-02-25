@@ -1,19 +1,20 @@
 package stroom.search.solr.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
@@ -21,6 +22,7 @@ import java.util.Objects;
 @XmlRootElement(name = "connection")
 @XmlType(name = "SolrConnectionConfig", propOrder = {"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 public class SolrConnectionConfig implements Serializable {
+
     @JsonProperty
     private InstanceType instanceType;
     @JsonProperty
@@ -88,10 +90,15 @@ public class SolrConnectionConfig implements Serializable {
         this.zkPath = zkPath;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SolrConnectionConfig)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SolrConnectionConfig)) {
+            return false;
+        }
         final SolrConnectionConfig that = (SolrConnectionConfig) o;
         return useZk == that.useZk &&
                 instanceType == that.instanceType &&

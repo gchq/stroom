@@ -15,6 +15,7 @@ import stroom.index.client.view.IndexSettingsViewImpl;
 import stroom.index.client.view.IndexVolumeEditViewImpl;
 
 public class IndexModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(IndexPlugin.class);
@@ -23,7 +24,9 @@ public class IndexModule extends PluginModule {
         bind(IndexVolumeGroupPresenter.class);
         bind(IndexVolumeGroupEditPresenter.class);
 
-        bindPresenterWidget(IndexVolumeEditPresenter.class, IndexVolumeEditPresenter.IndexVolumeEditView.class, IndexVolumeEditViewImpl.class);
+        bindPresenterWidget(IndexVolumeEditPresenter.class,
+                IndexVolumeEditPresenter.IndexVolumeEditView.class,
+                IndexVolumeEditViewImpl.class);
         bindPresenterWidget(IndexSettingsPresenter.class, IndexSettingsView.class, IndexSettingsViewImpl.class);
         bindPresenterWidget(IndexFieldEditPresenter.class, IndexFieldEditView.class, IndexFieldEditViewImpl.class);
     }

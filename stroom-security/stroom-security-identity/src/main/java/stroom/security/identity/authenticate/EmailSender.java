@@ -18,10 +18,10 @@
 
 package stroom.security.identity.authenticate;
 
-import stroom.security.identity.config.IdentityConfig;
-import stroom.security.identity.config.EmailConfig;
-import stroom.security.identity.config.SmtpConfig;
 import stroom.config.common.UriFactory;
+import stroom.security.identity.config.EmailConfig;
+import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.SmtpConfig;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -36,6 +36,7 @@ import javax.inject.Inject;
 import javax.mail.Message;
 
 class EmailSender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
 
     private final ServerConfig serverConfig;
@@ -71,7 +72,9 @@ class EmailSender {
         Preconditions.checkNotNull(authenticationConfig.getEmailConfig(), "Missing 'email' section in config");
 
         final EmailConfig emailConfig = authenticationConfig.getEmailConfig();
-        final String resetName = firstName == null ? "[Name not available]" : firstName + "" + lastName;
+        final String resetName = firstName == null
+                ? "[Name not available]"
+                : firstName + "" + lastName;
         String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
         resetUrl = uriFactory.publicUri(resetUrl).toString();
         final String passwordResetEmailText = String.format(emailConfig.getPasswordResetText(), resetUrl);

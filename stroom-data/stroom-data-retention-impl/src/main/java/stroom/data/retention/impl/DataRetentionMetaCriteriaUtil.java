@@ -8,12 +8,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.date.DateUtil;
 import stroom.util.Period;
+import stroom.util.date.DateUtil;
 
 import java.util.List;
 
 public final class DataRetentionMetaCriteriaUtil {
+
     private DataRetentionMetaCriteriaUtil() {
     }
 
@@ -36,14 +37,14 @@ public final class DataRetentionMetaCriteriaUtil {
                 for (final DataRetentionRule rule : rules) {
                     // Ignore empty AND{} or OR{} as they just equal true
 //                    if (!canIgnoreOperator(rule.getExpression())) {
-                        // expression has children or is a NOT
-                        inner.addOperator(rule.getExpression());
+                    // expression has children or is a NOT
+                    inner.addOperator(rule.getExpression());
 //                    }
                 }
 
                 final ExpressionOperator innerOperator = inner.build();
 //                if (!canIgnoreOperator(innerOperator)) {
-                    outer.addOperator(negateOperator(innerOperator));
+                outer.addOperator(negateOperator(innerOperator));
 //                }
             }
         }
@@ -51,11 +52,15 @@ public final class DataRetentionMetaCriteriaUtil {
         outer.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
 
         if (period.getFromMs() != null) {
-            outer.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()));
+            outer.addTerm(MetaFields.CREATE_TIME,
+                    Condition.GREATER_THAN_OR_EQUAL_TO,
+                    DateUtil.createNormalDateTimeString(period.getFromMs()));
         }
 
         if (period.getToMs() != null) {
-            outer.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+            outer.addTerm(MetaFields.CREATE_TIME,
+                    Condition.LESS_THAN,
+                    DateUtil.createNormalDateTimeString(period.getToMs()));
         }
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
@@ -77,11 +82,7 @@ public final class DataRetentionMetaCriteriaUtil {
      * @return True if the operator is an empty AND or OR
      */
     private static boolean canIgnoreOperator(final ExpressionOperator expressionOperator) {
-        if ((expressionOperator.getChildren() != null && !expressionOperator.getChildren().isEmpty())
-                || (Op.NOT.equals(expressionOperator.op()))) {
-            return false;
-        } else {
-            return true;
-        }
+        return (expressionOperator.getChildren() == null || expressionOperator.getChildren().isEmpty())
+                && (!Op.NOT.equals(expressionOperator.op()));
     }
 }

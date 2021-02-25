@@ -19,6 +19,7 @@ package stroom.meta.api;
 import java.util.Set;
 
 public interface StandardHeaderArguments {
+
     String GUID = "GUID";
     String COMPRESSION = "Compression";
     String COMPRESSION_ZIP = "ZIP";

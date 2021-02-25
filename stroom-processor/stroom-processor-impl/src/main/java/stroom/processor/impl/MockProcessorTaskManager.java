@@ -28,16 +28,17 @@ import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorTaskManager implements ProcessorTaskManager {
+
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 

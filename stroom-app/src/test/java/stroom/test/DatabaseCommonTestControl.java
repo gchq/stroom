@@ -29,13 +29,13 @@ import stroom.util.shared.Clearable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * <p>
@@ -43,6 +43,7 @@ import java.util.Set;
  * </p>
  */
 public class DatabaseCommonTestControl implements CommonTestControl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private final ContentImportService contentImportService;
@@ -84,14 +85,15 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void setup(final Path tempDir) {
         LOGGER.debug("temp dir: {}", tempDir);
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
         Path fsVolDir;
         Path indexVolDir;
         if (tempDir == null) {
             final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
             fsVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(fsVolPathStr.get(0))));
             final List<String> volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths();
-            indexVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(volGroupPathStr.get(0))));
+            indexVolDir = Paths.get(
+                    pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(volGroupPathStr.get(0))));
         } else {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;
@@ -125,7 +127,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
      */
     @Override
     public void clear() {
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
 

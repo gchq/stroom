@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ExplorerTreeDeleteEvent extends GwtEvent<ExplorerTreeDeleteEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private ExplorerTreeDeleteEvent() {
@@ -48,6 +49,7 @@ public class ExplorerTreeDeleteEvent extends GwtEvent<ExplorerTreeDeleteEvent.Ha
     }
 
     public interface Handler extends EventHandler {
+
         void onDelete(ExplorerTreeDeleteEvent event);
     }
 }

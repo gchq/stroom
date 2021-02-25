@@ -16,13 +16,15 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.editor.client.view.HtmlViewImpl;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.editor.client.view.HtmlViewImpl;
 
 public class HtmlPresenter extends MyPresenterWidget<HtmlPresenter.HtmlView> {
+
     @Inject
     public HtmlPresenter(final EventBus eventBus) {
         super(eventBus, new HtmlViewImpl());
@@ -33,6 +35,7 @@ public class HtmlPresenter extends MyPresenterWidget<HtmlPresenter.HtmlView> {
     }
 
     public interface HtmlView extends View {
+
         void setHtml(String html);
     }
 }

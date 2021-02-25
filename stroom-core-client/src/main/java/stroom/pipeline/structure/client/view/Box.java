@@ -19,6 +19,7 @@ package stroom.pipeline.structure.client.view;
 import com.google.gwt.user.client.ui.Composite;
 
 public abstract class Box<E> extends Composite {
+
     public abstract void setSelected(boolean selected);
 
     public abstract void showHotspot(boolean show);

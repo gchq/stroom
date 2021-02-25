@@ -16,38 +16,41 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.DocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "textConverter - /v1")
+@Tag(name = "Text Converters")
 @Path("/textConverter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface TextConverterResource extends RestResource, DirectRestService {
-    @POST
-    @Path("/read")
-    @ApiOperation(
-            value = "Get a text converter doc",
-            response = TextConverterDoc.class)
-    TextConverterDoc read(@ApiParam("docRef") DocRef docRef);
+public interface TextConverterResource extends RestResource, DirectRestService, FetchWithUuid<TextConverterDoc> {
+
+    @GET
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch a text converter doc by its UUID",
+            operationId = "fetchTextConverter")
+    TextConverterDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
-    @ApiOperation(
-            value = "Update a text converter doc",
-            response = TextConverterDoc.class)
-    TextConverterDoc update(@ApiParam("xslt") TextConverterDoc xslt);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a text converter doc",
+            operationId = "updateTextConverter")
+    TextConverterDoc update(
+            @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) TextConverterDoc doc);
 }

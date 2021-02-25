@@ -44,9 +44,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Provider;
 
 public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
         implements HasDirtyHandlers, CloseHandler {
@@ -59,7 +59,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     private final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider;
 
     private EditorPresenter codePresenter;
-    private boolean readOnly = true;
+    private final boolean readOnly = true;
     private PresenterWidget<?> currentContent;
     private DataRetentionImpactPresenter dataRetentionImpactPresenter;
     private TabData selectedTab;
@@ -225,7 +225,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
         }
     }
 
-    public static interface DataRetentionView extends LinkTabsLayoutView {
+    public interface DataRetentionView extends LinkTabsLayoutView {
 
     }
 }

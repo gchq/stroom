@@ -16,6 +16,11 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.item.client.ItemListBox;
+import stroom.pipeline.shared.XPathFilter.MatchType;
+import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Grid;
@@ -23,12 +28,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.item.client.ItemListBox;
-import stroom.pipeline.shared.XPathFilter.MatchType;
-import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
+
     private final Widget widget;
     @UiField
     Grid grid;
@@ -40,6 +42,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     TextBox value;
     @UiField
     TickBox ignoreCase;
+
     @Inject
     public XPathFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -102,5 +105,6 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     }
 
     public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {
+
     }
 }

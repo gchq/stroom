@@ -23,6 +23,7 @@ import stroom.widget.util.client.FutureImpl;
 import java.util.List;
 
 public class IconParentMenuItem extends IconMenuItem implements HasChildren {
+
     private final List<Item> children;
 
     public IconParentMenuItem(final int priority,

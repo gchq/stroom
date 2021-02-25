@@ -16,15 +16,17 @@
 
 package stroom.alert.client.event;
 
+import stroom.util.shared.EntityServiceException;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import stroom.util.shared.EntityServiceException;
 
 import java.io.PrintStream;
 
 public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
+
     public static GwtEvent.Type<Handler> TYPE;
     private final AlertCallback callback;
 
@@ -119,6 +121,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onAlert(AlertEvent event);
     }
 }

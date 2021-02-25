@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class TestFileUtil {
+
     private static final Path TEST_DATA_DIR;
 
     static {

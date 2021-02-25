@@ -4,23 +4,24 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class NextNameGenerator {
+
     /**
      * Returns a new name for a list of names that look like this: "New group (1)", "New group (2)".
-     *
+     * <p>
      * When creating something new a user might create multiple new items before renaming them.
      * If the name is supposed to be unique, or is part of a key then we can't just use the same
      * name over and over. Nor would we want to because it means the new things might be somewhat
      * indistinguishable to the user.
-     *
+     * <p>
      * So this method generates a new name from a list of names and a regex. The names must take
      * the form of, for example, "New cat meme (n)", where "n" is the number of new cat memes we're up to.
      * I.e. "New cat meme (1)", "New cat meme (2)". The regex needs to identify
      * the number in these parenthesis so it can increment it, so the regex needs a capture
      * group around this. For example: "New group [(]([0-9]+)[)]"
      *
-     * @param names A list of all (or all new) item names, so we can create something new
+     * @param names         A list of all (or all new) item names, so we can create something new
      * @param newNamePrefix The prefix for the new name, e.g. "New cat meme"
-     * @param regex A regex that captures the incremented number.
+     * @param regex         A regex that captures the incremented number.
      * @return A new, incremented name.
      */
     public static String getNextName(final List<String> names, final String newNamePrefix, final String regex) {

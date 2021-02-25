@@ -28,6 +28,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.data.shared.DataResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -38,7 +39,6 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
@@ -67,7 +67,8 @@ import java.util.List;
 import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
-    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
 
@@ -319,8 +320,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
                         message = "No stream id found in selection";
 
-                    } else if (getTextSettings().getRecordNoField() == null &&
-                            !(getTextSettings().getLineFromField() != null && getTextSettings().getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                    } else if (getTextSettings().getRecordNoField() == null
+                            && !(
+                            getTextSettings().getLineFromField() != null
+                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
+                        //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
                     } else if (getTextSettings().getRecordNoField() != null && currentRecordNo == null) {
@@ -343,15 +347,19 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         }
 
                         final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-                                .withPartNo(currentPartNo != null ? currentPartNo - 1: 0) // make zero based
-                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1: 0) // make zero based
+                                .withPartNo(currentPartNo != null
+                                        ? currentPartNo - 1
+                                        : 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null
+                                        ? currentRecordNo - 1
+                                        : 0) // make zero based
                                 .withDataRange(dataRange)
                                 .withHighlight(highlight)
                                 .build();
 
                         currentHighlightStrings = tablePresenter.getHighlights();
 
-//                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
+//                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
 
 //                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
 //                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
@@ -366,11 +374,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
 //                            // -1 to offset to make zero based
 //                            // +1 to length to make inclusive
-//                            currentPageRange = new OffsetRange<>(
+//                            currentPageRange = new OffsetRange(
 //                                    highlight.getFrom().getLineNo() - 1L,
 //                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
 //                        } else {
-//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+//                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L);
 //                        }
 
                         // TODO @AT Fix/implement
@@ -381,8 +389,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 ////                                    .toLocation(highlight.getTo());
 //                        } else {
 ////                            // TODO assume this is segmented data
-//////                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
-//////                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
+//////                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 0L, 1L);
+//////                            request.setPageRange(new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L));
 ////
 ////                            // Convert it to zero based
 ////                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);
@@ -548,7 +556,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                     showData(data, classification, currentHighlightStrings, isHtml);
                                 }
                             })
-                            .call(VIEW_DATA_RESOURCE)
+                            .call(DATA_RESOURCE)
                             .fetch(request);
                 }
             };
@@ -626,8 +634,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (currentStreamId != null) {
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
-                    currentPartNo != null ? currentPartNo : 1,
-                    currentRecordNo != null ? currentRecordNo : -1);
+                    currentPartNo != null
+                            ? currentPartNo
+                            : 1,
+                    currentRecordNo != null
+                            ? currentRecordNo
+                            : -1);
 
             BeginPipelineSteppingEvent.fire(
                     this,
@@ -642,6 +654,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+
         void setContent(View view);
 
         void setClassification(String classification);

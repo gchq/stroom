@@ -2,8 +2,8 @@ package stroom.data.retention.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,7 +20,7 @@ public class FindDataRetentionImpactCriteria extends ExpressionCriteria {
 
     @JsonCreator
     public FindDataRetentionImpactCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                           @JsonProperty("sortList") final List<Sort> sortList,
+                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                            @JsonProperty("expression") final ExpressionOperator expression) {
         super(pageRequest, sortList, expression);
     }

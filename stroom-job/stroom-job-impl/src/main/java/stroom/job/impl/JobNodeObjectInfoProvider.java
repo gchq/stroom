@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class JobNodeObjectInfoProvider implements ObjectInfoProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeObjectInfoProvider.class);
 
     @Override
@@ -35,8 +36,8 @@ class JobNodeObjectInfoProvider implements ObjectInfoProvider {
         final JobNode jobNode = (JobNode) obj;
 
         final Builder<Void> builder = OtherObject.builder()
-        .withType("JobNode")
-        .withId(String.valueOf(jobNode.getId()));
+                .withType("JobNode")
+                .withId(String.valueOf(jobNode.getId()));
 
         if (jobNode.getJob() != null) {
             builder.withName(jobNode.getJob().getName());

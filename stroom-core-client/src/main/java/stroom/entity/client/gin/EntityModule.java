@@ -17,7 +17,6 @@
 
 package stroom.entity.client.gin;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
@@ -39,14 +38,26 @@ import stroom.entity.client.view.InfoDocumentViewImpl;
 import stroom.entity.client.view.MoveDocumentViewImpl;
 import stroom.entity.client.view.NameDocumentViewImpl;
 
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public class EntityModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bindPresenter(CreateDocumentPresenter.class, CreateDocumentView.class, CreateDocumentViewImpl.class,
                 CreateDocumentProxy.class);
-        bindPresenter(CopyDocumentPresenter.class, CopyDocumentView.class, CopyDocumentViewImpl.class, CopyDocumentProxy.class);
-        bindPresenter(MoveDocumentPresenter.class, MoveDocumentView.class, MoveDocumentViewImpl.class, MoveDocumentProxy.class);
-        bindPresenter(InfoDocumentPresenter.class, InfoDocumentView.class, InfoDocumentViewImpl.class, InfoDocumentProxy.class);
+        bindPresenter(CopyDocumentPresenter.class,
+                CopyDocumentView.class,
+                CopyDocumentViewImpl.class,
+                CopyDocumentProxy.class);
+        bindPresenter(MoveDocumentPresenter.class,
+                MoveDocumentView.class,
+                MoveDocumentViewImpl.class,
+                MoveDocumentProxy.class);
+        bindPresenter(InfoDocumentPresenter.class,
+                InfoDocumentView.class,
+                InfoDocumentViewImpl.class,
+                InfoDocumentProxy.class);
         bindSharedView(NameDocumentView.class, NameDocumentViewImpl.class);
         bindPresenter(NameDocumentPresenter.class, NameDocumentProxy.class);
     }

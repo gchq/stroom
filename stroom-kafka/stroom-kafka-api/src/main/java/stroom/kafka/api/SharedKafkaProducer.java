@@ -10,7 +10,7 @@ import java.util.Optional;
  * the {@link KafkaProducer} can be closed when no longer needed by all parties.
  * An instance may not contain a {@link KafkaProducer}, e.g. when no {@link stroom.kafka.shared.KafkaConfigDoc}
  * can be found for a UUID.
- *
+ * <p>
  * Users of this class should NOT call close() on the KafkaProducer themselves as it is potentially shared.
  * They are permitted to flush it though.
  */

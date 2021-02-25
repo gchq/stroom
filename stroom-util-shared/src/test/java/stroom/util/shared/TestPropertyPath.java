@@ -29,10 +29,10 @@ class TestPropertyPath {
     @Test
     void builder() {
         PropertyPath propertyPath = PropertyPath.builder()
-            .add("stroom")
-            .add("node")
-            .add("name")
-            .build();
+                .add("stroom")
+                .add("node")
+                .add("name")
+                .build();
 
         Assertions.assertThat(propertyPath.toString()).isEqualTo("stroom.node.name");
     }
@@ -62,7 +62,9 @@ class TestPropertyPath {
         doEqualsIgnoreCaseTest("stroom.node.name", "stroom.node", false);
     }
 
-    private void doEqualsIgnoreCaseTest(final String pathString1, final String pathString2, final boolean expectedResult) {
+    private void doEqualsIgnoreCaseTest(final String pathString1,
+                                        final String pathString2,
+                                        final boolean expectedResult) {
         PropertyPath path1 = PropertyPath.fromPathString(pathString1);
         PropertyPath path2 = PropertyPath.fromPathString(pathString2);
 
@@ -93,7 +95,7 @@ class TestPropertyPath {
         String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
-        final T entity2 = (T) mapper.readValue(json, clazz);
+        final T entity2 = mapper.readValue(json, clazz);
 
         assertThat(entity2).isEqualTo(entity);
     }

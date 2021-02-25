@@ -23,39 +23,35 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@ApiModel(description = "The timezone to apply to a date time value")
+@Schema(description = "The timezone to apply to a date time value")
 @JsonInclude(Include.NON_NULL)
 public final class TimeZone {
-    @ApiModelProperty(
-            value = "How the time zone will be specified, e.g. " +
-                    "from provided client 'Local' time, " +
-                    "'UTC', " +
-                    "a recognised timezone 'Id' " +
-                    "or an 'Offset' from UTC in hours and minutes.",
+
+    @Schema(description = "How the time zone will be specified, e.g. " +
+            "from provided client 'Local' time, " +
+            "'UTC', " +
+            "a recognised timezone 'Id' " +
+            "or an 'Offset' from UTC in hours and minutes.",
             required = true)
     @JsonProperty
     private final Use use;
 
-    @ApiModelProperty(
-            value = "The id of the time zone, conforming to java.time.ZoneId",
+    @Schema(description = "The id of the time zone, conforming to java.time.ZoneId",
             example = "GMT")
     @JsonProperty
     private final String id;
 
-    @ApiModelProperty(
-            value = "The number of hours this timezone is offset from UTC",
+    @Schema(description = "The number of hours this timezone is offset from UTC",
             example = "-1")
     @JsonProperty
     private final Integer offsetHours;
 
-    @ApiModelProperty(
-            value = "The number of minutes this timezone is offset from UTC",
+    @Schema(description = "The number of minutes this timezone is offset from UTC",
             example = "-30")
     @JsonProperty
     private final Integer offsetMinutes;
@@ -103,10 +99,15 @@ public final class TimeZone {
         return offsetMinutes;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TimeZone timeZone = (TimeZone) o;
         return use == timeZone.use &&
                 Objects.equals(id, timeZone.id) &&
@@ -164,6 +165,7 @@ public final class TimeZone {
      * Builder for constructing a {@link TimeZone timeZone}
      */
     public static final class Builder {
+
         private Use use;
         private String id;
         private Integer offsetHours;

@@ -25,6 +25,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DocumentTypes {
+
     public static final String[] FOLDER_TYPES = new String[]{ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER};
 
     @JsonProperty

@@ -16,19 +16,21 @@
 
 package stroom.node.api;
 
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.StringCriteria;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.FindNamedEntityCriteria;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindNodeCriteria extends FindNamedEntityCriteria {
+
     public static final String FIELD_ID = "Id";
 
     @JsonProperty("enabled")
@@ -45,7 +47,7 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
 
     @JsonCreator
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("name") final StringCriteria name,
                             @JsonProperty("isEnabled") final Boolean isEnabled) {
         super(pageRequest, sortList, name);

@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -31,20 +30,19 @@ import java.util.Objects;
  * Class for describing the format to use for formatting a date time value
  */
 @JsonPropertyOrder({"pattern", "timeZone"})
-@ApiModel(description = "The string formatting to apply to a date value")
+@Schema(description = "The string formatting to apply to a date value")
 @JsonInclude(Include.NON_NULL)
 public final class DateTimeFormatSettings implements FormatSettings {
+
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
-    @ApiModelProperty(
-            value = "A date time formatting pattern string conforming to the specification of " +
-                    "java.time.format.DateTimeFormatter",
+    @Schema(description = "A date time formatting pattern string conforming to the specification of " +
+            "java.time.format.DateTimeFormatter",
             required = true)
     @JsonProperty
     private final String pattern;
 
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     @JsonProperty
     private final TimeZone timeZone;
 
@@ -80,10 +78,15 @@ public final class DateTimeFormatSettings implements FormatSettings {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DateTimeFormatSettings that = (DateTimeFormatSettings) o;
         return Objects.equals(pattern, that.pattern) &&
                 Objects.equals(timeZone, that.timeZone);
@@ -114,6 +117,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
      * Builder for constructing a {@link DateTimeFormatSettings dateTimeFormat}
      */
     public static final class Builder {
+
         private String pattern;
         private TimeZone timeZone;
 

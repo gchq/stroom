@@ -24,13 +24,14 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 // TODO : @66 Add event logging
 class MetaResourceImpl implements MetaResource {
+
     private final Provider<MetaService> metaServiceProvider;
 
     @Inject

@@ -21,10 +21,11 @@ import stroom.docref.HasDisplayValue;
 import java.util.Comparator;
 
 public final class ModelStringUtil {
+
     private static final int METRIC_DIV = 1000;
     private static final int IEC_BYTE_DIV = 1024;
 
-    private static Divider[] SIZE_DIVIDER = new Divider[]{
+    private static final Divider[] SIZE_DIVIDER = new Divider[]{
             new Divider(1, ""),
             new Divider(METRIC_DIV, "K"),
             new Divider(METRIC_DIV, "M"),
@@ -33,7 +34,7 @@ public final class ModelStringUtil {
             new Divider(METRIC_DIV, "P")
     };
 
-    private static Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[]{
+    private static final Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[]{
             new Divider(1, "B", "b", "bytes", ""),
             new Divider(METRIC_DIV, "K", "KB"),
             new Divider(METRIC_DIV, "M", "MB"),
@@ -42,7 +43,7 @@ public final class ModelStringUtil {
             new Divider(METRIC_DIV, "P", "PB")
     };
 
-    private static Divider[] IEC_BYTE_SIZE_DIVIDER = new Divider[]{
+    private static final Divider[] IEC_BYTE_SIZE_DIVIDER = new Divider[]{
             new Divider(1, "B", "b", "bytes", ""),
             new Divider(IEC_BYTE_DIV, "K", "KB", "KiB"),
             new Divider(IEC_BYTE_DIV, "M", "MB", "MiB"),
@@ -54,7 +55,7 @@ public final class ModelStringUtil {
     /**
      * Format always append ms but parse consider ms and '' as the same thing
      */
-    private static Divider[] TIME_SIZE_DIVIDER = new Divider[]{
+    private static final Divider[] TIME_SIZE_DIVIDER = new Divider[]{
             new Divider(1, "ms", ""),
             new Divider(1000, "s"),
             new Divider(60, "m"),
@@ -152,7 +153,9 @@ public final class ModelStringUtil {
 
     }
 
-    private static String formatNumberString(final double number, final Divider[] dividers, final boolean stripTrailingZeros) {
+    private static String formatNumberString(final double number,
+                                             final Divider[] dividers,
+                                             final boolean stripTrailingZeros) {
         double nextNumber = number;
         Divider lastDivider = dividers[0];
 
@@ -242,10 +245,10 @@ public final class ModelStringUtil {
         // Cat fix this findbug as code used in UI
         str = str.trim().toUpperCase();
         // Kill Quotes
-        if (str.startsWith("\'") || str.startsWith("\"")) {
+        if (str.startsWith("'") || str.startsWith("\"")) {
             str = str.substring(1);
         }
-        if (str.endsWith("\'") || str.endsWith("\"")) {
+        if (str.endsWith("'") || str.endsWith("\"")) {
             str = str.substring(0, str.length() - 1);
         }
 
@@ -373,6 +376,7 @@ public final class ModelStringUtil {
     }
 
     private static class Divider {
+
         final int div;
         final String[] unit;
 

@@ -21,31 +21,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "Param", propOrder = {"key", "value"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A key value pair that describes a property of a query")
+@Schema(description = "A key value pair that describes a property of a query")
 public final class Param {
+
     @XmlElement
-    @ApiModelProperty(
-            value = "The property key",
+    @Schema(description = "The property key",
             required = true)
     @JsonProperty
     private final String key;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The property value",
+    @Schema(description = "The property value",
             required = true)
     @JsonProperty
     private final String value;
@@ -65,10 +63,15 @@ public final class Param {
         return value;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Param param = (Param) o;
         return Objects.equals(key, param.key) &&
                 Objects.equals(value, param.value);
@@ -99,6 +102,7 @@ public final class Param {
      * Builder for constructing a {@link Param}
      */
     public static final class Builder {
+
         private String key;
         private String value;
 

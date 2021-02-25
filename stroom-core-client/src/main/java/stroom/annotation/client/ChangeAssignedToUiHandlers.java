@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ChangeAssignedToUiHandlers extends UiHandlers {
+
     void showAssignedToChooser(Element element);
 
     void assignYourself();

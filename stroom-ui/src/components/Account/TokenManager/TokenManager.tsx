@@ -18,12 +18,14 @@ import * as React from "react";
 import { FunctionComponent, useCallback, useState } from "react";
 import { TokenListDialog } from "./TokenListDialog";
 import { useTokenManager } from "./useTokenManager";
+import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditToken } from "../EditToken/EditToken";
-import { Token } from "../types";
+import { Token } from "api/stroom";
 import { QuickFilterProps } from "../AccountManager/QuickFilter";
 import { CreateToken } from "../EditToken/CreateToken";
 import { TableProps } from "../../Table/Table";
+import { Confirm, PromptType } from "../../Prompt/Prompt";
 
 const initialToken: Token = {
   userId: "",
@@ -37,14 +39,9 @@ const initialToken: Token = {
 const TokenManager: FunctionComponent<{
   onClose: () => void;
 }> = ({ onClose }) => {
-  const {
-    columns,
-    resultPage,
-    remove,
-    request,
-    setRequest,
-  } = useTokenManager();
+  const { resultPage, remove, request, setRequest } = useTokenManager();
   const [editingToken, setEditingToken] = useState<Token>();
+  const [deletingToken, setDeletingToken] = useState<Token>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
       setRequest({
@@ -67,7 +64,7 @@ const TokenManager: FunctionComponent<{
     },
   };
   const tableProps: TableProps<Token> = {
-    columns: columns,
+    columns: useColumns(),
     data: resultPage.values,
     initialSortBy: request.sortList,
     onChangeSort: useCallback(
@@ -96,7 +93,7 @@ const TokenManager: FunctionComponent<{
           actions: {
             onCreate: () => setEditingToken(initialToken),
             onEdit: (token) => setEditingToken(token),
-            onRemove: (token) => remove(token.id),
+            onRemove: (token) => setDeletingToken(token),
           },
           quickFilterProps,
           pagerProps,
@@ -118,6 +115,24 @@ const TokenManager: FunctionComponent<{
           onClose={() => {
             setEditingToken(undefined);
             refresh();
+          }}
+        />
+      )}
+      {deletingToken !== undefined && (
+        <Confirm
+          promptProps={{
+            title: "Confirm Delete",
+            message: "Are you sure you want to delete token?",
+            type: PromptType.QUESTION,
+          }}
+          okCancelProps={{
+            onOk: () => {
+              remove(deletingToken.id);
+              setDeletingToken(undefined);
+            },
+            onCancel: () => {
+              setDeletingToken(undefined);
+            },
           }}
         />
       )}

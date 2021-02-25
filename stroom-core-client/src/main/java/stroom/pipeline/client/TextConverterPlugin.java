@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
+
     private static final TextConverterResource TEXT_CONVERTER_RESOURCE = GWT.create(TextConverterResource.class);
 
     private final Provider<TextConverterPresenter> editorProvider;
@@ -59,23 +60,28 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<TextConverterDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<TextConverterDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<TextConverterDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
-    public void save(final DocRef docRef, final TextConverterDoc document, final Consumer<TextConverterDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final TextConverterDoc document,
+                     final Consumer<TextConverterDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<TextConverterDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

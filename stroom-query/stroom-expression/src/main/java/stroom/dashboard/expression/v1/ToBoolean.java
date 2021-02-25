@@ -18,7 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ToBoolean.NAME,
+        commonCategory = FunctionCategory.CAST,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "The value as the boolean type.",
+        signatures = @FunctionSignature(
+                description = "Converts the supplied value to a boolean (if it can be). For example if the value is " +
+                        "numeric then any non-zero value is considered true. For a text value, any value (ignoring " +
+                        "case) equal to \"true\" is considered true.",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToBoolean extends AbstractCast implements Serializable {
+
     static final String NAME = "toBoolean";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a boolean");
     private static final long serialVersionUID = -305845496003936297L;
@@ -34,6 +49,7 @@ class ToBoolean extends AbstractCast implements Serializable {
     }
 
     private static class Cast extends AbstractCaster {
+
         @Override
         Val cast(final Val val) {
             if (!val.type().isValue()) {

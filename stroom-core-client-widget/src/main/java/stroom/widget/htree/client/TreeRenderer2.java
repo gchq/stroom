@@ -23,6 +23,7 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import java.util.List;
 
 public class TreeRenderer2<T> {
+
     public static final String SHADOW_LAYER = "shadow";
     public static final String ITEM_LAYER = "item";
     public static final String ARROW_LAYER = "arrow";

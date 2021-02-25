@@ -1,6 +1,5 @@
 package stroom.app.guice;
 
-import stroom.event.logging.rs.impl.RestResourceAutoSLoggerModule;
 import stroom.security.identity.AuthModule;
 import stroom.security.identity.db.AuthDbModule;
 import stroom.util.io.HomeDirProvider;
@@ -64,7 +63,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.legacy.db.LegacyDbModule());
         install(new stroom.legacy.impex_6_1.LegacyImpexModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.db.NodeDbModule());
@@ -81,7 +79,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.db.ProcessorDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
-        install(new RestResourceAutoSLoggerModule());
+        install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());

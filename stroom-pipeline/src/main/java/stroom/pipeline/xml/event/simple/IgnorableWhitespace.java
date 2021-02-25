@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xml.event.simple;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.event.BaseEvent;
 import stroom.pipeline.xml.event.Event;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 /**
  * A class used to store an ignorableWhitespace SAX event.
  */
 public final class IgnorableWhitespace extends BaseEvent {
+
     private static final String IGNORABLE_WHITESPACE = "ignorableWhitespace:";
 
     private final String chars;

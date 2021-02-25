@@ -16,12 +16,14 @@
 
 package stroom.meta.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.meta.api.MetaService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import com.google.inject.AbstractModule;
+
 public class MockMetaModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(MetaService.class).to(MockMetaService.class);

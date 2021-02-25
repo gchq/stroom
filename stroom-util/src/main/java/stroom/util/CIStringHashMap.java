@@ -13,6 +13,7 @@ import java.util.function.Function;
  * String hash map that does not care about key case.
  */
 public class CIStringHashMap implements Serializable, Map<String, String> {
+
     private static final long serialVersionUID = 4877407570072403322L;
     protected HashMap<CIString, String> realMap = new HashMap<>();
 
@@ -39,7 +40,9 @@ public class CIStringHashMap implements Serializable, Map<String, String> {
     @Override
     public String getOrDefault(Object key, String defaultVal) {
         String val = realMap.get(new CIString((String) key));
-        return val == null ? defaultVal : val;
+        return val == null
+                ? defaultVal
+                : val;
     }
 
     @Override
@@ -112,10 +115,11 @@ public class CIStringHashMap implements Serializable, Map<String, String> {
     }
 
     protected static class CIString implements Comparable<CIString>, Serializable {
+
         private static final long serialVersionUID = 550532045010691235L;
 
-        private String key;
-        private String lowerKey;
+        private final String key;
+        private final String lowerKey;
 
         CIString(final String key) {
             this.key = key.trim();
@@ -158,7 +162,8 @@ public class CIStringHashMap implements Serializable, Map<String, String> {
     }
 
     private static class CIEntryAdaptor implements Entry<String, String> {
-        private Entry<CIString, String> realEntry;
+
+        private final Entry<CIString, String> realEntry;
 
         private CIEntryAdaptor(final Entry<CIString, String> realEntry) {
             this.realEntry = realEntry;

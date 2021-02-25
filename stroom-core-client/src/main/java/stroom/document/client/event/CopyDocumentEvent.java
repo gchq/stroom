@@ -17,16 +17,18 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
+import stroom.explorer.shared.PermissionInheritance;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.docref.DocRef;
-import stroom.explorer.shared.PermissionInheritance;
 
 import java.util.List;
 
 public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
+
     private static Type<CopyDocumentEvent.Handler> TYPE;
     private final PresenterWidget<?> presenter;
     private final List<DocRef> docRefs;
@@ -85,6 +87,7 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onCopy(final CopyDocumentEvent event);
     }
 }

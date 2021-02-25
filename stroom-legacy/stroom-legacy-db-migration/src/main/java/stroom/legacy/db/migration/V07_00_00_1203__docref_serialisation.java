@@ -1,13 +1,13 @@
 package stroom.legacy.db.migration;
 
+import stroom.config.impl.db.jooq.tables.Config;
+import stroom.db.util.JooqUtil;
+
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.config.impl.db.jooq.tables.Config;
-import stroom.db.util.JooqUtil;
 
 import java.util.Map;
 
@@ -72,8 +72,10 @@ public class V07_00_00_1203__docref_serialisation extends BaseJavaMigration {
         LOGGER.warn("Loading test data - Not for use in prod");
 
         final Map<String, String> testDataMap = Map.of(
-                "stroom.statistics.internal.cpu", "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)",
-                "stroom.statistics.internal.memory", "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)"
+                "stroom.statistics.internal.cpu",
+                "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)",
+                "stroom.statistics.internal.memory",
+                "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)"
         );
 
         testDataMap.forEach((key, value) ->

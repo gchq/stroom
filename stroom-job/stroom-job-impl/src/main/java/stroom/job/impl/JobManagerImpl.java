@@ -32,6 +32,7 @@ import javax.inject.Inject;
  * instances across a cluster using values from the database.
  */
 public class JobManagerImpl implements JobManager {
+
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
     private final SecurityContext securityContext;

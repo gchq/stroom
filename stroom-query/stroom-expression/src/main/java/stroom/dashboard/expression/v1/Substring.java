@@ -22,7 +22,30 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Substring.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The requested sub-string.",
+        signatures = @FunctionSignature(
+                description = "Extract a sub-string based on the start/end index values.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input string to extract a sub-string from.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "startIndex",
+                                description = "The index of the start of the sub-string range (zero based, inclusive).",
+                                argType = ValInteger.class),
+                        @FunctionArg(
+                                name = "endIndex",
+                                description = "The index of the end of the sub-string range (zero based, exclusive).",
+                                argType = ValInteger.class),
+                }))
 class Substring extends AbstractFunction implements Serializable {
+
     static final String NAME = "substring";
     private static final long serialVersionUID = -305845496003936297L;
     private Function startFunction;
@@ -109,6 +132,7 @@ class Substring extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator startPosGenerator;

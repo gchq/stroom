@@ -16,18 +16,20 @@
 
 package stroom.storedquery.impl.db;
 
+import stroom.dashboard.shared.StoredQuery;
+import stroom.query.api.v2.Query;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.StoredQuery;
-import stroom.query.api.v2.Query;
 
 import java.io.IOException;
 
 public class StoredQuerySerialiser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQuerySerialiser.class);
 
     public static StoredQuery serialise(final StoredQuery storedQuery) {

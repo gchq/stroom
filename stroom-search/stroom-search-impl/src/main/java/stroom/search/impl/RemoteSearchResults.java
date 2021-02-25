@@ -20,12 +20,13 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.logging.TempTagCloudDebug;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 class RemoteSearchResults {
+
     private final ICache<String, RemoteSearchResultFactory> cache;
 
     @Inject

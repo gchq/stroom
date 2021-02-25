@@ -17,11 +17,12 @@
 package stroom.service.resource;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,9 @@ import java.nio.charset.Charset;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUtil extends StroomUnitTest {
-    private static final String REF_STRING = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\r\n<test>this is a bom test</test>";
+
+    private static final String REF_STRING = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\r\n" +
+            "<test>this is a bom test</test>";
 
     @Test
     void printCharsets() {

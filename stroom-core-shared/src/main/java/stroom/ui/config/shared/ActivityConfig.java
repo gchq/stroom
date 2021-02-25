@@ -1,22 +1,25 @@
 package stroom.ui.config.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.AbstractConfig;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig {
+
     @JsonProperty
-    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
+    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +
+            "are performing set this property to true.")
     private boolean enabled;
     @JsonProperty
     @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
@@ -61,7 +64,13 @@ public class ActivityConfig extends AbstractConfig {
             editorBody = "Activity Code:</br>" +
                     "<input type=\"text\" name=\"code\"></input></br></br>" +
                     "Activity Description:</br>" +
-                    "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\" validation=\".{80,}\" validationMessage=\"The activity description must be at least 80 characters long.\" ></textarea>" +
+                    "<textarea " +
+                    "rows=\"4\" " +
+                    "style=\"width:100%;height:80px\" " +
+                    "name=\"description\" " +
+                    "validation=\".{80,}\" " +
+                    "validationMessage=\"The activity description must be at least 80 characters long.\" >" +
+                    "</textarea>" +
                     "Explain what the activity is";
         }
     }
@@ -109,24 +118,29 @@ public class ActivityConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "ActivityConfig{" +
-            "enabled=" + enabled +
-            ", chooseOnStartup=" + chooseOnStartup +
-            ", managerTitle='" + managerTitle + '\'' +
-            ", editorTitle='" + editorTitle + '\'' +
-            ", editorBody='" + editorBody + '\'' +
-            '}';
+                "enabled=" + enabled +
+                ", chooseOnStartup=" + chooseOnStartup +
+                ", managerTitle='" + managerTitle + '\'' +
+                ", editorTitle='" + editorTitle + '\'' +
+                ", editorBody='" + editorBody + '\'' +
+                '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ActivityConfig that = (ActivityConfig) o;
         return enabled == that.enabled &&
-            chooseOnStartup == that.chooseOnStartup &&
-            Objects.equals(managerTitle, that.managerTitle) &&
-            Objects.equals(editorTitle, that.editorTitle) &&
-            Objects.equals(editorBody, that.editorBody);
+                chooseOnStartup == that.chooseOnStartup &&
+                Objects.equals(managerTitle, that.managerTitle) &&
+                Objects.equals(editorTitle, that.editorTitle) &&
+                Objects.equals(editorBody, that.editorBody);
     }
 
     @Override

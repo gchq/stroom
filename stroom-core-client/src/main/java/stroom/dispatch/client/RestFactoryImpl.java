@@ -9,7 +9,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
@@ -19,9 +19,12 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
 
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
+
     private final EventBus eventBus;
 
     @Inject
@@ -52,6 +55,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     }
 
     private static class RestImpl<R> implements Rest<R> {
+
         private final HasHandlers hasHandlers;
         private final REST<R> rest;
         private Consumer<R> resultConsumer;
@@ -69,11 +73,29 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         String msg;
                         Exception wrappedExcepton = null;
                         try {
-                            // Assuming we get a response like { "code": "", "message": "" }
+                            // Assuming we get a response like { "code": "", "message": "" } or
+                            // { "code": "", "details": "" }
                             final String responseText = method.getResponse().getText();
                             if (responseText != null && !responseText.isEmpty()) {
                                 final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
-                                msg = ((JSONString) responseJson.get("message")).stringValue();
+                                final String responseKeyValues = responseJson.keySet()
+                                        .stream()
+                                        .map(key -> {
+                                            final String val = getJsonKey(responseJson, key);
+                                            return val != null
+                                                    ? key + ": " + val
+                                                    : null;
+                                        })
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.joining(", "));
+
+                                msg = "Error calling " +
+                                        method.builder.getHTTPMethod() +
+                                        " " +
+                                        method.builder.getUrl() +
+                                        " - " +
+                                        responseKeyValues;
+
                                 wrappedExcepton = new RuntimeException(msg, exception);
                             } else {
                                 msg = exception.getMessage();
@@ -84,7 +106,9 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         }
 
                         if (errorConsumer != null) {
-                            errorConsumer.accept(wrappedExcepton != null ? wrappedExcepton : exception);
+                            errorConsumer.accept(wrappedExcepton != null
+                                    ? wrappedExcepton
+                                    : exception);
                         } else {
                             GWT.log(msg, exception);
                             AlertEvent.fireError(hasHandlers, msg, null);
@@ -142,6 +166,27 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private void decrementTaskCount() {
             // Remove the task from the task count.
             TaskEndEvent.fire(hasHandlers);
+        }
+
+        private String getJsonKey(final JSONObject jsonObject, final String key) {
+
+            final String value;
+            if (jsonObject.containsKey(key)) {
+                final JSONValue jsonValue = jsonObject.get(key);
+                if (jsonValue.isString() != null) {
+                    value = jsonValue.isString().stringValue();
+                } else if (jsonValue.isNumber() != null) {
+                    value = Double.toString(jsonValue.isNumber().doubleValue());
+                } else if (jsonValue.isBoolean() != null) {
+                    value = Boolean.toString(jsonValue.isBoolean().booleanValue());
+                } else {
+                    // Just give back the json
+                    value = jsonValue.toString();
+                }
+            } else {
+                value = null;
+            }
+            return value;
         }
     }
 }

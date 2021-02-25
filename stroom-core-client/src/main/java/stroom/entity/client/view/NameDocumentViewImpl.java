@@ -17,6 +17,9 @@
 
 package stroom.entity.client.view;
 
+import stroom.entity.client.presenter.NameDocumentView;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,10 +29,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.entity.client.presenter.NameDocumentView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class NameDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements NameDocumentView {
+
     private final Widget widget;
     @UiField
     TextBox name;
@@ -68,5 +70,6 @@ public class NameDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> im
     }
 
     public interface Binder extends UiBinder<Widget, NameDocumentViewImpl> {
+
     }
 }

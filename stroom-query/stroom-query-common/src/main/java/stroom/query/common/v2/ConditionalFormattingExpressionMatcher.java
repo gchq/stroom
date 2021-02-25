@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class ConditionalFormattingExpressionMatcher {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConditionalFormattingExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
@@ -330,7 +331,8 @@ public class ConditionalFormattingExpressionMatcher {
                 return new BigDecimal(value.toString());
             } catch (final NumberFormatException e) {
                 throw new MatchException(
-                        "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+                        "Expected a numeric value for field \"" + fieldName +
+                                "\" but was given string \"" + value + "\"");
             }
         }
     }
@@ -405,6 +407,7 @@ public class ConditionalFormattingExpressionMatcher {
     }
 
     private static class MatchException extends RuntimeException {
+
         MatchException(final String message) {
             super(message);
         }

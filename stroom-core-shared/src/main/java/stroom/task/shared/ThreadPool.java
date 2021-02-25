@@ -17,6 +17,7 @@
 package stroom.task.shared;
 
 public interface ThreadPool {
+
     String getName();
 
     int getPriority();

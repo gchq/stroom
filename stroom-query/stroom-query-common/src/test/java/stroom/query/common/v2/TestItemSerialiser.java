@@ -17,6 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestItemSerialiser {
+
     @Test
     void test() {
         final FieldIndex fieldIndex = new FieldIndex();

@@ -3,6 +3,7 @@ package stroom.util;
 import stroom.util.shared.HasAuditInfo;
 
 public final class AuditUtil {
+
     private AuditUtil() {
         // Utility class.
     }

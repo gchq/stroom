@@ -17,12 +17,6 @@
 
 package stroom.script.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -31,8 +25,16 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class ScriptSettingsPresenter
         extends DocumentSettingsPresenter<ScriptSettingsView, ScriptDoc> {
+
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
     @Inject
@@ -86,6 +88,7 @@ public class ScriptSettingsPresenter
     }
 
     public interface ScriptSettingsView extends View, ReadOnlyChangeHandler {
+
         TextArea getDescription();
 
         void setDependencyList(View view);

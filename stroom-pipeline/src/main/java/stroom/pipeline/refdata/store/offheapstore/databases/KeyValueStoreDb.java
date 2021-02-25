@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -39,10 +39,10 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
 
 public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
 
@@ -72,7 +72,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-             PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             // TODO there appears to be a bug in lmdbjava that prevents closedOpen key ranges working
             //   see https://github.com/lmdbjava/lmdbjava/issues/169
@@ -148,6 +148,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
     }
 
     public interface Factory {
+
         KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

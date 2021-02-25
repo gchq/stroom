@@ -16,6 +16,10 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,12 +28,13 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.SvgButton;
 
-public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedToUiHandlers> implements ChangeAssignedToView {
-    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg", "Change Assigned To", true);
+public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
+        implements ChangeAssignedToView {
+
+    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg",
+            "Change Assigned To",
+            true);
 
     private final Widget widget;
 
@@ -93,5 +98,6 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     }
 
     public interface Binder extends UiBinder<Widget, ChangeAssignedToViewImpl> {
+
     }
 }

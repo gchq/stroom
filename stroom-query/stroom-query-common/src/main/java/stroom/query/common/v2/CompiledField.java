@@ -20,6 +20,7 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.query.api.v2.Field;
 
 public class CompiledField {
+
     private final Field field;
     private final int groupDepth;
     private final Expression expression;

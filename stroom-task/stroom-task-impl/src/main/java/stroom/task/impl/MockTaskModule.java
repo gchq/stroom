@@ -16,14 +16,16 @@
 
 package stroom.task.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 
+import com.google.inject.AbstractModule;
+
 import java.util.concurrent.Executor;
 
 public class MockTaskModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);

@@ -1,18 +1,20 @@
 package stroom.processor.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import javax.inject.Singleton;
 
 @SuppressWarnings("unused")
 @Singleton
 public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
+
     private DbConfig dbConfig = new DbConfig();
     private boolean assignTasks = true;
     private boolean createTasks = true;
@@ -65,8 +67,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.createTasks = createTasks;
     }
 
-    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them (if they are complete). " +
-        "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them " +
+            "(if they are complete). In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }
@@ -93,7 +95,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.queueSize = queueSize;
     }
 
-    @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)")
+    @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
+            "e.g. INSERT INTO X VALUES (...), (...), (...)")
     public int getDatabaseMultiInsertMaxBatchSize() {
         return databaseMultiInsertMaxBatchSize;
     }

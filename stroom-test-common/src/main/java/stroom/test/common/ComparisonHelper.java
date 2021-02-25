@@ -50,6 +50,7 @@ import static org.assertj.core.api.Assertions.fail;
  */
 
 public final class ComparisonHelper {
+
     public static final String OUTPUT_EXTENSION = ".out";
     private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
 
@@ -104,11 +105,24 @@ public final class ComparisonHelper {
 
         return -1;
     }
+
+    /**
+     * Generate a unified diff of the two files using the default number of lines of context.
+     * The diff output is sent to system out in coloured form.
+     *
+     * @return True if the files are the same
+     */
     public static boolean unifiedDiff(final Path expectedFile, final Path actualFile) {
         return unifiedDiff(expectedFile, actualFile, 3);
     }
 
-    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile, final int context) {
+    /**
+     * Generate a unified diff of the two files using the specified number of lines of context.
+     * The diff output is sent to system out in coloured form.
+     *
+     * @return True if the files are the same
+     */
+    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile, final int contextLines) {
 
         boolean areFilesTheSame = true;
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
@@ -124,7 +138,7 @@ public final class ComparisonHelper {
                     actualFile.toString(),
                     expectedLines,
                     patch,
-                    context);
+                    contextLines);
 
             if (!unifiedDiff.isEmpty()) {
                 areFilesTheSame = false;
@@ -133,7 +147,7 @@ public final class ComparisonHelper {
                         FileUtil.getCanonicalPath(expectedFile),
                         FileUtil.getCanonicalPath(actualFile));
 
-                System.out.println("");
+                System.out.println();
                 unifiedDiff.forEach(diffLine -> {
 
                     final ConsoleColour lineColour;
@@ -150,9 +164,10 @@ public final class ComparisonHelper {
                 System.out.println(LogUtil.message("\nvimdiff {} {}",
                         FileUtil.getCanonicalPath(expectedFile), FileUtil.getCanonicalPath(actualFile)));
 
-
-                System.out.println(LogUtil.message("If you are satisfied the differences are valid then you can do\ncp {} {}",
-                        FileUtil.getCanonicalPath(actualFile), FileUtil.getCanonicalPath(expectedFile)));
+                System.out.println(LogUtil.message(
+                        "\nIf you are fully satisfied the differences are valid then you can do\ncp {} {}",
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)));
             }
 
         } catch (Exception e) {
@@ -180,8 +195,9 @@ public final class ComparisonHelper {
         final List<Path> inFiles = list(in);
         final List<Path> outFiles = list(out);
 
-        assertThat(outFiles.size()).as("Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
-                + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
+        assertThat(outFiles.size()).as(
+                "Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
+                        + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
 
         for (final Path inFile : inFiles) {
             Path outFile = null;
@@ -195,14 +211,19 @@ public final class ComparisonHelper {
             }
 
             // Make sure we found the file.
-            assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
-                + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
+            assertThat(outFile)
+                    .as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
+                            + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"")
+                    .isNotNull();
 
-            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
+            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" +
+                    FileUtil.getCanonicalPath(outFile) + "\"");
 
             if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
-                assertThat(Files.isDirectory(outFile)).as("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile)).isTrue();
+                assertThat(Files.isDirectory(outFile))
+                        .as("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile))
+                        .isTrue();
 
                 // Recurse.
                 compareDirs(inFile, outFile);
@@ -258,8 +279,10 @@ public final class ComparisonHelper {
         Reader reader1 = null;
         Reader reader2 = null;
         try {
-            reader1 = new BufferedReader(new InputStreamReader(Files.newInputStream(expectedFile), StreamUtil.DEFAULT_CHARSET));
-            reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile), StreamUtil.DEFAULT_CHARSET));
+            reader1 = new BufferedReader(new InputStreamReader(Files.newInputStream(expectedFile),
+                    StreamUtil.DEFAULT_CHARSET));
+            reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile),
+                    StreamUtil.DEFAULT_CHARSET));
 
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
                 throw new RuntimeException(LogUtil.message(
@@ -284,12 +307,14 @@ public final class ComparisonHelper {
                 try {
                     reader1.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
             if (reader2 != null) {
                 try {
                     reader2.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
         }
@@ -324,12 +349,14 @@ public final class ComparisonHelper {
                 try {
                     reader1.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
             if (reader2 != null) {
                 try {
                     reader2.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
         }

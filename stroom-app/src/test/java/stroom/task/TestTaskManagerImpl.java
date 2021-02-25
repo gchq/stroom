@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -25,10 +24,12 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
     @Inject
@@ -229,7 +230,8 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         assertThat(completedExceptionally.get()).isTrue();
     }
 
-    private void testCompletedExceptionallyNested(final ExecutorProvider executorProviderOuter, final ExecutorProvider executorProviderInner) {
+    private void testCompletedExceptionallyNested(final ExecutorProvider executorProviderOuter,
+                                                  final ExecutorProvider executorProviderInner) {
         final AtomicBoolean completedNormally = new AtomicBoolean();
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 

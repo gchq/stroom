@@ -16,17 +16,19 @@
 
 package stroom.job.impl;
 
+import stroom.job.api.DistributedTask;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.api.DistributedTask;
 
 import java.util.List;
 
 class TaskStatusTraceLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
     void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask> tasks, final String nodeName,
-                                 final String jobName) {
+                          final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master sending ");
@@ -43,7 +45,7 @@ class TaskStatusTraceLog {
     }
 
     void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask> tasks, final String nodeName,
-                                         final String jobName) {
+                                  final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master failed to send ");

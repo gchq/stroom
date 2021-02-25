@@ -49,6 +49,7 @@ import stroom.dashboard.client.table.cf.RulesViewImpl;
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 public class TableModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bind(TimeZones.class).asEagerSingleton();
@@ -57,14 +58,18 @@ public class TableModule extends AbstractPresenterModule {
 
 
         bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
-        bindPresenterWidget(BasicTableSettingsPresenter.class, BasicTableSettingsView.class, BasicTableSettingsViewImpl.class);
+        bindPresenterWidget(BasicTableSettingsPresenter.class,
+                BasicTableSettingsView.class,
+                BasicTableSettingsViewImpl.class);
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
         bindPresenterWidget(FormatPresenter.class, FormatView.class, FormatViewImpl.class);
         bindPresenterWidget(FilterPresenter.class, FilterView.class, FilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameFieldPresenter.class, RenameFieldView.class, RenameFieldViewImpl.class);
 
-        bindPresenterWidget(EditExpressionPresenter.class, EditExpressionPresenter.EditExpressionView.class, EditExpressionViewImpl.class);
+        bindPresenterWidget(EditExpressionPresenter.class,
+                EditExpressionPresenter.EditExpressionView.class,
+                EditExpressionViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
     }

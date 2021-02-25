@@ -22,6 +22,7 @@ import java.util.Deque;
 import java.util.List;
 
 public class Selection<T> {
+
     private final Deque<T> selectedItems;
 
     public Selection() {
@@ -66,7 +67,8 @@ public class Selection<T> {
     }
 
     /**
-     * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
+     * Sets the specified item as the only selected item,
+     * i.e. clears the current selection and sets a single item selected.
      */
     public void setSelected(final T item) {
         selectedItems.clear();

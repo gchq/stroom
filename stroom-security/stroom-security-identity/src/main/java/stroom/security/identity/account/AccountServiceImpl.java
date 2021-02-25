@@ -1,18 +1,18 @@
 package stroom.security.identity.account;
 
+import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 public class AccountServiceImpl implements AccountService {
+
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
     private final IdentityConfig config;
@@ -27,13 +27,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public ResultPage<Account> list() {
+    public AccountResultPage list() {
         checkPermission();
         return accountDao.list();
     }
 
     @Override
-    public ResultPage<Account> search(final SearchAccountRequest request) {
+    public AccountResultPage search(final SearchAccountRequest request) {
         checkPermission();
         return accountDao.search(request);
     }
@@ -111,7 +111,8 @@ public class AccountServiceImpl implements AccountService {
         accountDao.update(account);
 
         // Change the account password if the update request includes a new password.
-        if (!Strings.isNullOrEmpty(request.getPassword()) && request.getPassword().equals(request.getConfirmPassword())) {
+        if (!Strings.isNullOrEmpty(request.getPassword())
+                && request.getPassword().equals(request.getConfirmPassword())) {
             accountDao.changePassword(account.getUserId(), request.getPassword());
         }
     }
@@ -131,8 +132,10 @@ public class AccountServiceImpl implements AccountService {
             }
 
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateLength(request.getPassword(),
+                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(),
+                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
         }
@@ -147,8 +150,10 @@ public class AccountServiceImpl implements AccountService {
             }
 
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateLength(request.getPassword(),
+                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(),
+                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
         }

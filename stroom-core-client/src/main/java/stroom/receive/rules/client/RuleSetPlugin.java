@@ -17,10 +17,6 @@
 
 package stroom.receive.rules.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -29,12 +25,18 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
+import stroom.receive.rules.shared.ReceiveDataRules;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
 public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
+
     private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
 
     private final Provider<RuleSetPresenter> editorProvider;
@@ -57,23 +59,28 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<ReceiveDataRules> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<ReceiveDataRules> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<ReceiveDataRules> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
-    public void save(final DocRef docRef, final ReceiveDataRules document, final Consumer<ReceiveDataRules> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final ReceiveDataRules document,
+                     final Consumer<ReceiveDataRules> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<ReceiveDataRules> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

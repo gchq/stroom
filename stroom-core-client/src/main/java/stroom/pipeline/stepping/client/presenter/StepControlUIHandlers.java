@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface StepControlUIHandlers extends UiHandlers {
+
     void stepFirst();
 
     void stepBackward();

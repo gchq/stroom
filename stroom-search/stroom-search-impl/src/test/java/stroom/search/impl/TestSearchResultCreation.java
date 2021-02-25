@@ -68,6 +68,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
+
     // Make sure the search request is the same as the one we expected to make.
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
@@ -151,14 +152,16 @@ class TestSearchResultCreation {
 //        // Create coprocessors.
 //        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
 //        final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-//        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+//        final Coprocessors coprocessors = coprocessorsFactory.create(
+//        coprocessorSettings, searchRequest.getQuery().getParams());
 //
 //        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 //
 //        // Reorder values if field mappings have changed.
 //        final int[] mappings = createMappings(consumer);
 //
-//        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+//        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+//        coprocessorSettings, searchRequest.getQuery().getParams());
 //
 //        // Add data to the consumer.
 //        final String[] lines = getLines();
@@ -431,7 +434,8 @@ class TestSearchResultCreation {
         final Items dataItems = data.get();
         final Item dataItem = dataItems.iterator().next();
         final Val val = dataItem.getValue(2);
-        assertThat(val.toLong()).isEqualTo(count);
+        assertThat(val.toLong())
+                .isEqualTo(count);
 
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
@@ -491,7 +495,8 @@ class TestSearchResultCreation {
 //
 //
 //
-//        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+//        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+//        coprocessorSettings, searchRequest.getQuery().getParams());
 //
 //        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 //        try (final Output output = new Output(outputStream)) {
@@ -552,16 +557,23 @@ class TestSearchResultCreation {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Consumer<Val[]> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-                final Consumer<Throwable> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
-                final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));
+                final Consumer<Val[]> valuesConsumer = values ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getValuesConsumer().accept(values));
+                final Consumer<Throwable> errorConsumer = error ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getErrorConsumer().accept(error));
+                final Consumer<Long> completionConsumer = delta ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getCompletionConsumer().accept(delta));
                 receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 
             receivers.put(docRef, receiver);
         });
 
-        assertThat(receivers.size()).isEqualTo(1);
+        assertThat(receivers.size())
+                .isEqualTo(1);
 
         return receivers.values().iterator().next();
     }
@@ -577,10 +589,17 @@ class TestSearchResultCreation {
     }
 
     private SearchRequest createSingleSearchRequest() {
-        final QueryKey key = new QueryKey("e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
-        final DocRef dataSource = new DocRef("Index", "57a35b9a-083c-4a93-a813-fc3ddfe1ff44", "Example index");
+        final QueryKey key = new QueryKey(
+                "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
+        final DocRef dataSource = new DocRef(
+                "Index",
+                "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+                "Example index");
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm("EventTime", Condition.BETWEEN, "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
+                .addTerm(
+                        "EventTime",
+                        Condition.BETWEEN,
+                        "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
                 .build();
         final Query query = Query.builder()
                 .dataSource(dataSource)
@@ -599,10 +618,17 @@ class TestSearchResultCreation {
     }
 
     private SearchRequest createSearchRequest() {
-        final QueryKey key = new QueryKey("e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
-        final DocRef dataSource = new DocRef("Index", "57a35b9a-083c-4a93-a813-fc3ddfe1ff44", "Example index");
+        final QueryKey key = new QueryKey(
+                "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
+        final DocRef dataSource = new DocRef(
+                "Index",
+                "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+                "Example index");
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm("EventTime", Condition.BETWEEN, "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
+                .addTerm(
+                        "EventTime",
+                        Condition.BETWEEN,
+                        "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
                 .build();
         final Query query = Query.builder()
                 .dataSource(dataSource)
@@ -666,7 +692,9 @@ class TestSearchResultCreation {
                         .build()
                 )
                 .extractValues(true)
-                .extractionPipeline(new DocRef("Pipeline", "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7", "Example extraction"))
+                .extractionPipeline(new DocRef("Pipeline",
+                        "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+                        "Example extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
@@ -757,7 +785,9 @@ class TestSearchResultCreation {
                         .build()
                 )
                 .extractValues(true)
-                .extractionPipeline(new DocRef("Pipeline", "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7", "Example extraction"))
+                .extractionPipeline(new DocRef("Pipeline",
+                        "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+                        "Example extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
@@ -826,7 +856,9 @@ class TestSearchResultCreation {
                 )
                 .addFields(Field.builder()
                         .expression("${UserId}")
-                        .sort(new Sort(1, SortDirection.ASCENDING)) // TODO : The original was not sorted but this makes the test results consistent
+                        .sort(new Sort(1,
+                                SortDirection.ASCENDING)) // TODO : The original was not sorted but this makes
+                        //                                          the test results consistent
                         .format(Format.GENERAL)
                         .group(1)
                         .build()

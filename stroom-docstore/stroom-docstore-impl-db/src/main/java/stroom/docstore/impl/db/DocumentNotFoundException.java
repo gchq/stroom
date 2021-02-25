@@ -22,9 +22,9 @@ import stroom.docref.DocRef;
 
 public class DocumentNotFoundException extends RuntimeException {
 
-    private DocRef docRef;
+    private final DocRef docRef;
 
-    public DocumentNotFoundException(DocRef docRef){
+    public DocumentNotFoundException(DocRef docRef) {
         super("Document not found: " + docRef);
         this.docRef = docRef;
     }

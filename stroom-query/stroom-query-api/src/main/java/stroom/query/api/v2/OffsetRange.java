@@ -21,25 +21,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"offset", "length"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "The offset and length of a range of data in a sub-set of a query result set")
+@Schema(description = "The offset and length of a range of data in a sub-set of a query result set")
 public final class OffsetRange {
-    @ApiModelProperty(
-            value = "The start offset for this sub-set of data, where zero is the offset of the first record " +
+
+    @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
                     "in the full result set",
             example = "0",
             required = true)
     @JsonProperty
     private final Long offset;
 
-    @ApiModelProperty(
-            value = "The length in records of the sub-set of results",
+    @Schema(description = "The length in records of the sub-set of results",
             example = "100",
             required = true)
     @JsonProperty
@@ -66,10 +64,15 @@ public final class OffsetRange {
         return length;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         OffsetRange that = (OffsetRange) o;
         return Objects.equals(offset, that.offset) &&
                 Objects.equals(length, that.length);
@@ -100,6 +103,7 @@ public final class OffsetRange {
      * Builder for constructing a {@link OffsetRange}
      */
     public static final class Builder {
+
         private Long offset;
         private Long length;
 

@@ -20,5 +20,6 @@ package stroom.storedquery.api;
 import stroom.dashboard.shared.StoredQuery;
 
 public interface StoredQueryService {
+
     StoredQuery create(StoredQuery storedQuery);
 }

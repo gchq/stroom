@@ -10,6 +10,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DataInfoSection {
+
     @JsonProperty
     private final String title;
     @JsonProperty
@@ -32,6 +33,7 @@ public class DataInfoSection {
 
     @JsonInclude(Include.NON_NULL)
     public static class Entry {
+
         @JsonProperty
         private final String key;
         @JsonProperty

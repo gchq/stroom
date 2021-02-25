@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
+
     private final SecurityContext securityContext;
     private final StoredQueryDao dao;
 

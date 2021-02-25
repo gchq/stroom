@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class IndexVolumeFields {
+
     public static final String INDEX_VOLUME_TYPE = "IndexVolume";
     public static final String FIELD_ID = "Id";
     public static final String FIELD_GROUP_ID = "Group Id";

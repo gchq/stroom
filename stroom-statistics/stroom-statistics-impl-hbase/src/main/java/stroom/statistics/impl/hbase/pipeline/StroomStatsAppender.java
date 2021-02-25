@@ -30,6 +30,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STROOM_STATS)
 class StroomStatsAppender extends AbstractKafkaAppender {
+
     private final StroomStatsStoreStore stroomStatsStoreStore;
     private final HBaseStatisticsConfig hBaseStatisticsConfig;
     private String topic;
@@ -72,12 +73,16 @@ class StroomStatsAppender extends AbstractKafkaAppender {
         final StroomStatsStoreDoc stroomStatsStoreEntity = stroomStatsStoreStore.readDocument(stroomStatStoreRef);
 
         if (stroomStatsStoreEntity == null) {
-            super.log(Severity.FATAL_ERROR, "Unable to find Stroom-Stats data source " + stroomStatStoreRef, null);
+            super.log(
+                    Severity.FATAL_ERROR,
+                    "Unable to find Stroom-Stats data source " + stroomStatStoreRef,
+                    null);
             throw new LoggedException("Unable to find Stroom-Stats data source " + stroomStatStoreRef);
         }
 
         if (!stroomStatsStoreEntity.isEnabled()) {
-            final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() + "] is disabled";
+            final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() +
+                    "] is disabled";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
         }

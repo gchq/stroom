@@ -18,14 +18,15 @@ package stroom.test;
 
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * Version of the test control used with the mocks.
  */
 public class MockCommonTestControl implements CommonTestControl {
+
     private final Set<Clearable> clearables;
 
     @Inject

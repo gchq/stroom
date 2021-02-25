@@ -16,14 +16,16 @@
 
 package stroom.pipeline.errorhandler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @PipelineScoped
 public class ErrorReceiverProxy implements ErrorReceiver {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorReceiverProxy.class);
 
     private ErrorReceiver errorReceiver;
@@ -36,7 +38,11 @@ public class ErrorReceiverProxy implements ErrorReceiver {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message, final Throwable e) {
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
+                    final Throwable e) {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(message, e);
         }

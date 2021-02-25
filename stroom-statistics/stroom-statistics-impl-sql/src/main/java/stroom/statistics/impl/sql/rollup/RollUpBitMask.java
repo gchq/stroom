@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql.rollup;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * This class generates a 2 byte bit mask of length MASK_LENGTH that is used in
@@ -47,6 +47,7 @@ import java.util.TreeSet;
  * all zero mask (0000).
  */
 public class RollUpBitMask {
+
     // can't be any bigger than 15 as the max value for a short is (2^15 -1)
     public static final short MASK_LENGTH = 15;
     /**
@@ -121,7 +122,7 @@ public class RollUpBitMask {
         }
 
         final List<String> allTagsList = Arrays.asList(allTags.split(","));
-        final List<String> rolledUpTagsList = Arrays.asList(rolledUpTags.split(","));
+        final String[] rolledUpTagsList = rolledUpTags.split(",");
         final List<Integer> rolledUpTagPositions = new ArrayList<>();
 
         Collections.sort(allTagsList);
@@ -201,15 +202,18 @@ public class RollUpBitMask {
 
             final int maxValInList = getMaxValueInList(tagPositions);
 
-            cacheRollUpPerms(tagPositions.size() == 0 ? 0 : (maxValInList + 1));
+            cacheRollUpPerms(tagPositions.size() == 0
+                    ? 0
+                    : (maxValInList + 1));
 
             // try again from the map now it should be in there
             rollUpBitMask = positionListToObjectMap.get(tagPositions);
 
             if (rollUpBitMask == null) {
-                throw new RuntimeException(String.format(
-                        "Position lists have not been loaded into the cache for a position list [%s] of size %s.  This should never happen",
-                        tagPositions.toString(), tagPositions.size()));
+                throw new RuntimeException(String.format("Position lists have not been loaded into the cache for " +
+                                "a position list [%s] of size %s. This should never happen",
+                        tagPositions.toString(),
+                        tagPositions.size()));
             }
         }
         return rollUpBitMask;
@@ -546,7 +550,8 @@ public class RollUpBitMask {
      */
     @Override
     public String toString() {
-        return String.format("%" + MASK_LENGTH + "s", Integer.toBinaryString(this.mask)).replace(' ', '0');
+        return String.format("%" + MASK_LENGTH + "s", Integer.toBinaryString(this.mask))
+                .replace(' ', '0');
     }
 
     @Override
@@ -558,17 +563,22 @@ public class RollUpBitMask {
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final RollUpBitMask other = (RollUpBitMask) obj;
-        if (mask != other.mask)
+        if (mask != other.mask) {
             return false;
+        }
         return Arrays.equals(maskAsBytes, other.maskAsBytes);
     }
 }

@@ -16,6 +16,15 @@
 
 package stroom.feed.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
+import stroom.feed.client.presenter.SupportedRetentionAge;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
@@ -23,16 +32,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
-import stroom.feed.client.presenter.SupportedRetentionAge;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -115,5 +117,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
+
     }
 }

@@ -35,7 +35,6 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -54,6 +53,7 @@ import java.util.function.Consumer;
 
 public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummary>>
         implements HasDocumentRead<Object> {
+
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
     private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
@@ -67,11 +67,14 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus,
+                criteria.obtainPageRequest()) {
             @Override
-            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(criteria);
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(
+                        criteria);
             }
 
             @Override
@@ -93,7 +96,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
+                        .addTwoColTable(tableBuilder -> {
                             tableBuilder.addHeaderRow("Key Data");
                             final DocRef pipeline = row.getPipeline();
                             if (pipeline != null) {
@@ -109,7 +112,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
+                ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this,
+                        tooltipPresenter,
+                        PopupType.POPUP,
+                        popupPosition,
                         null);
             }
         };
@@ -131,7 +137,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
+                        ProcessorTaskFields.FIELD_PRIORITY,
+                        false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return String.valueOf(row.getPriority());
@@ -139,7 +147,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Priority", 60);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
+                        ProcessorTaskFields.FIELD_STATUS,
+                        false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getStatus().getDisplayValue();
@@ -147,7 +157,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Status", ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_COUNT, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
+                        ProcessorTaskFields.FIELD_COUNT,
+                        false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return ModelStringUtil.formatCsv(row.getCount());
@@ -159,11 +171,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();
             }
         });

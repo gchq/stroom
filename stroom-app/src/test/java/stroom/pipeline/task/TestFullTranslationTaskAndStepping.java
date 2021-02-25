@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 
 class TestFullTranslationTaskAndStepping extends TranslationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     private static boolean doneSetup;
@@ -101,7 +102,8 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     private void testStepping(final String feedName) throws IOException {
-        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestFullTranslationTaskAndStepping");
+        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(
+                "TestFullTranslationTaskAndStepping");
 
         final long time = System.currentTimeMillis();
         testSteppingTask(feedName, outDir);

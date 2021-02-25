@@ -1,11 +1,12 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StringValue;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.StringValue;
 
 import java.util.function.Supplier;
 

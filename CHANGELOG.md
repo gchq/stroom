@@ -7,6 +7,105 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.86] - 2021-02-25
+
+* Fix travis release artefacts.
+
+
+## [v7.0-beta.85] - 2021-02-24
+
+* Change dockerfile to use Open JDK 15
+
+* Change build to use Open JDK 15
+
+* Fix travis build failure.
+
+* Issue **#2028** : Don't autolog standard object fields by default
+
+
+## [v7.0-beta.84] - 2021-02-24
+
+* No changes, adding more release artefacts in Travis build.
+
+
+## [v7.0-beta.83] - 2021-02-23
+
+* Add -q flag to start/stop/migrate.sh to stop log tailing.
+
+* Change migrate.sh to run the migration in the background.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
+* Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
+
+
+## [v7.0-beta.82] - 2021-02-18
+
+* Issue **#2049** : Updated Swagger and moved to the OpenAPI 3.0 Specification.
+
+* Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading. 
+
+
+## [v7.0-beta.81] - 2021-02-16
+
+* Issue **#2042** : Fixed an issue sorting search results that was making sorting very slow causing searches with large numbers of results to hang. 
+
+* Issue **#2043** : Removed an artificial limit on the number of data points that will be returned to a dashboard visualisation. The UI code had been written to only request a maximum of 1000 data points which meant that some visualisations were missing expected data. It may be necessary to add some limitation to avoid the UI being overloaded but the limitation has been removed for now as it was not configurable and did not warn the user when the limit had been reached.
+
+* Migrated new UI to use Swagger generated endpoints and types.
+
+* Issue **#1414** : A User Id can no longer be changed once a user is created.
+
+* Issue **#1862** : Email and name fields are no longer required when creating users.
+
+* Issue **#1765** : Added confirmation dialog when deleting users and API keys.
+
+* Issue **#2036** : Autologger now delegates exception handling.
+
+* Issue **#2039** : Limit the amount of text data output by autologger.
+
+* Issue **#2037** : Add config prop to ensure every REST call is logged
+
+* Issue **#2038** : Allow autologger action to be modified (search and process)
+
+* Issue **#2027** : Fix autologger update operation
+
+* Issue **#1764** : The create API key page now loads users to select on open.
+
+* Issue **#1766** : Removed comment from token.
+
+* Issue **#1763** : Improved column sizes on API keys dialog.
+
+* Issue **#1767** : Improved column sizes on account management dialog.
+
+* Improve exception alerts in the UI.
+
+* Issue **#2023** : Enable autologger to output multiple path or query parameters
+
+* Issue **#2022** : Simplify consistent event logging with POJOs
+
+* Issue **#2021** : Fix typo when autologger encounters class names ending in 'y'
+
+* Issue **#2020** : Prevent autologger redacting boolean properties
+
+
+## [v7.0-beta.80] - 2021-01-28
+
+* Issue **#2018** : Fixed intermittent search issue that was sometimes causing search to complete too early without results.
+
+* Fix dashboards not handling NUMERIC index fields.
+
+* Fix bug in Negate expression function.
+
+* Issue **#1995** : Add help info to the expression functions drop down menu.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
+
+* Issue **#2004** : Fix import of legacy v6 index so default volume group is assigned.
+
 * Issue **#2017** : Fixed dashboard table filtering.
 
 * Issue **#1946** : Removed unnecessary index shard state change error.
@@ -3004,7 +3103,14 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.79...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.86...HEAD
+[v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
+[v7.0-beta.85]: https://github.com/gchq/stroom/compare/v7.0-beta.84...v7.0-beta.85
+[v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
+[v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
+[v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
+[v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
+[v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
 [v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
 [v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
 [v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77

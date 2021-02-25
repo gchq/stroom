@@ -19,5 +19,6 @@ package stroom.editor.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface EditorUiHandlers extends UiHandlers {
+
     void changeFilterSettings();
 }

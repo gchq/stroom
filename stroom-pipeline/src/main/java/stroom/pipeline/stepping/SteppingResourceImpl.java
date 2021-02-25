@@ -47,10 +47,11 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 class SteppingResourceImpl implements SteppingResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingResourceImpl.class);
 
     private final MetaService metaService;
@@ -105,8 +106,13 @@ class SteppingResourceImpl implements SteppingResource {
 
             // Set the properties on this instance.
             for (final PipelineProperty property : properties) {
-                PipelineFactory.setProperty(pipelineElementRegistry, pipelineElement.getId(), elementType, elementInstance, property.getName(),
-                        property.getValue(), null);
+                PipelineFactory.setProperty(pipelineElementRegistry,
+                        pipelineElement.getId(),
+                        elementType,
+                        elementInstance,
+                        property.getName(),
+                        property.getValue(),
+                        null);
             }
 
             if (elementInstance instanceof SupportsCodeInjection) {
@@ -198,7 +204,8 @@ class SteppingResourceImpl implements SteppingResource {
         }
 
         return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id,
+                    Status.UNLOCKED));
             return metaService.find(criteria).getFirst();
         });
     }
@@ -212,7 +219,8 @@ class SteppingResourceImpl implements SteppingResource {
         if (pipelineUuid != null) {
             try {
                 // Ensure the current user is allowed to load this pipeline.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                        pipelineUuid));
                 docRef = DocRefUtil.create(pipelineDoc);
             } catch (final RuntimeException e) {
                 // Ignore.

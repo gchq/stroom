@@ -39,8 +39,8 @@ public interface ToggleButtonView {
     boolean isOff();
 
     /**
-     * @param onClickedHandler The handler that will be invoked when the button is clicked while
-     *                         the ON face is showing.
+     * @param onClickedHandler  The handler that will be invoked when the button is clicked while
+     *                          the ON face is showing.
      * @param offClickedHandler The handler that will be invoked when the button is clicked while
      *                          the OFF face is showing.
      */
@@ -48,8 +48,8 @@ public interface ToggleButtonView {
                                         final ClickHandler offClickedHandler);
 
     /**
-     * @param onMouseDownedHandler The handler that will be invoked when the button is mouse-downed while
-     *                             the ON face is showing.
+     * @param onMouseDownedHandler  The handler that will be invoked when the button is mouse-downed while
+     *                              the ON face is showing.
      * @param offMouseDownedHandler The handler that will be invoked when the button is mouse-downed while
      *                              the OFF face is showing.
      */

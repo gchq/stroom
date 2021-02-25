@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,10 +27,10 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class OkCancelContent extends Composite implements HasEnabled {
-    private static Binder binder = GWT.create(Binder.class);
+
+    private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
     @UiField
     Button ok;
@@ -36,6 +38,7 @@ public class OkCancelContent extends Composite implements HasEnabled {
     Button cancel;
     @UiField
     SimplePanel content;
+
     public OkCancelContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.popupUiHandlers = popupUiHandlers;
@@ -64,5 +67,6 @@ public class OkCancelContent extends Composite implements HasEnabled {
     }
 
     public interface Binder extends UiBinder<Widget, OkCancelContent> {
+
     }
 }

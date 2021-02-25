@@ -22,6 +22,7 @@ import stroom.search.solr.CachedSolrIndex;
 import org.apache.solr.common.params.SolrParams;
 
 class SolrSearchTask {
+
     private final CachedSolrIndex solrIndex;
     private final SolrParams solrParams;
     private final String[] fieldNames;

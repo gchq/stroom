@@ -17,33 +17,30 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonPropertyOrder({"key", "value"})
 @XmlType(name = "Param", propOrder = {"key", "value"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A key value pair that describes a property of a query")
+@Schema(description = "A key value pair that describes a property of a query")
 @Deprecated
 public final class Param implements Serializable {
 
     private static final long serialVersionUID = 9055582579670841979L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The property key",
+    @Schema(description = "The property key",
             required = true)
     private String key;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The property value",
+    @Schema(description = "The property value",
             required = true)
     private String value;
 

@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public final class UserAgentSessionUtil {
+
     private static final String USER_AGENT = "user-agent";
 
     private UserAgentSessionUtil() {

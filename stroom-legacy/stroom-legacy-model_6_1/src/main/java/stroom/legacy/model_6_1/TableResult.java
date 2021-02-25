@@ -16,9 +16,9 @@
 
 package stroom.legacy.model_6_1;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,26 +26,21 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error"})
-@ApiModel(
-        description = "Object for describing a set of results in a table form that supports grouped data",
-        parent = Result.class)
+@Schema(description = "Object for describing a set of results in a table form that supports grouped data")
 @Deprecated
 public final class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     private List<Field> fields;
 
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     private List<Row> rows;
 
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     private OffsetRange resultRange;
 
-    @ApiModelProperty(value = "The total number of results in this result set")
+    @JsonPropertyDescription("The total number of results in this result set")
     private Integer totalResults;
 
     TableResult() {
@@ -94,9 +89,15 @@ public final class TableResult extends Result {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final TableResult that = (TableResult) o;
         return Objects.equals(fields, that.fields) &&
                 Objects.equals(rows, that.rows) &&

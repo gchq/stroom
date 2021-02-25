@@ -25,11 +25,13 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCertificateUtil {
+
     @Test
     void testSpaceInCN() {
         final String dn = "CN=John Smith (johnsmith), OU=ouCode1, OU=ouCode2, O=oValue, C=GB";
 
-        Assertions.assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo("CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
+        Assertions.assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo(
+                "CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
         assertThat(CertificateUtil.extractCNFromDN(dn)).isEqualTo("John Smith (johnsmith)");
         assertThat(CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn))).isEqualTo("johnsmith");
 

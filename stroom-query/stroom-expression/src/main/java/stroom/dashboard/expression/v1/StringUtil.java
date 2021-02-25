@@ -17,6 +17,7 @@
 package stroom.dashboard.expression.v1;
 
 final class StringUtil {
+
     private StringUtil() {
         // Utility class
     }

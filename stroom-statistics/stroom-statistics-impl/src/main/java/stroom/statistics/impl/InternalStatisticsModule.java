@@ -35,6 +35,7 @@ public class InternalStatisticsModule extends AbstractModule {
     }
 
     private static class InternalStatisticsReceiverInit extends RunnableWrapper {
+
         @Inject
         InternalStatisticsReceiverInit(final InternalStatisticsReceiverImpl internalStatisticsReceiver) {
             super(internalStatisticsReceiver::initStatisticEventStore);

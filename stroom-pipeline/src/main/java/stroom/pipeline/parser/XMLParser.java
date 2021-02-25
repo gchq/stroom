@@ -16,9 +16,6 @@
 
 package stroom.pipeline.parser;
 
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -27,6 +24,10 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.xml.SAXParserFactoryFactory;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,6 +38,7 @@ import javax.xml.parsers.SAXParserFactory;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.XML)
 public class XMLParser extends AbstractParser {
+
     private static final SAXParserFactory PARSER_FACTORY;
 
     static {

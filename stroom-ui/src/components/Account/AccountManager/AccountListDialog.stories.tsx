@@ -3,11 +3,11 @@ import * as React from "react";
 import { AccountListDialog } from "./AccountListDialog";
 
 import fullTestData from "testing/data";
-import useAccountManager from "./useAccountManager";
+import useColumns from "./useColumns";
 
 const stories = storiesOf("Account", module);
 stories.add("List", () => {
-  const { columns } = useAccountManager();
+  const columns = useColumns();
 
   return (
     <AccountListDialog

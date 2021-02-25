@@ -10,6 +10,7 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 public class ServiceDiscoveryModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ServiceDiscoverer.class).to(ServiceDiscovererImpl.class);
@@ -24,6 +25,7 @@ public class ServiceDiscoveryModule extends AbstractModule {
     }
 
     private static class ServiceDiscovererShutdown extends RunnableWrapper {
+
         @Inject
         ServiceDiscovererShutdown(final ServiceDiscovererImpl serviceDiscoverer) {
             super(serviceDiscoverer::shutdown);
@@ -31,6 +33,7 @@ public class ServiceDiscoveryModule extends AbstractModule {
     }
 
     private static class ServiceDiscoveryManagerShutdown extends RunnableWrapper {
+
         @Inject
         ServiceDiscoveryManagerShutdown(final ServiceDiscoveryManager serviceDiscoveryManager) {
             super(serviceDiscoveryManager::shutdown);

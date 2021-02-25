@@ -16,12 +16,6 @@
 
 package stroom.query.client;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionModel;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -29,10 +23,18 @@ import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionModel;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeExtentProvider<Item> {
+
     private final FlowPanel panel;
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;

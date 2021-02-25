@@ -23,13 +23,14 @@ import stroom.util.AuditUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Optional;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class AuthenticationService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
     private static final String ADMINISTRATORS = "Administrators";
@@ -132,7 +133,11 @@ class AuthenticationService {
     private User createOrRefreshUserOrGroup(final String name, final boolean isGroup) {
         return userDao.getByName(name)
                 .orElseGet(() -> {
-                    LOGGER.info("Creating {} {}", (isGroup ? "group" : "user"), name);
+                    LOGGER.info("Creating {} {}",
+                            (isGroup
+                                    ? "group"
+                                    : "user"),
+                            name);
 
                     final User userRef = create(name, false);
 

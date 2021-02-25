@@ -26,8 +26,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,9 +36,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticAggregationTransactionHelper {
+
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
     // The number of records to add to the aggregate from the aggregate source
     // table on each pass
@@ -69,8 +70,9 @@ public class SQLStatisticAggregationTransactionHelper {
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+            SQLStatisticAggregationTransactionHelper.class);
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
 
     private static final String AGGREGATE_COUNT = "" +
@@ -270,7 +272,8 @@ public class SQLStatisticAggregationTransactionHelper {
         if (maxProcessingAge != null) {
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
-            final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNow.minus(maxProcessingAge.getDuration()));
+            final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(
+                    timeNow.minus(maxProcessingAge.getDuration()));
             try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
                 final long rowsAffected = doAggregateSQL_Update(
                         connection,
@@ -604,6 +607,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public static class AggregateConfig {
+
         // How
         private final long ageMs;
         private final byte precision;

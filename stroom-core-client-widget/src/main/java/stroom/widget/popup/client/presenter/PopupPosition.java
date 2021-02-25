@@ -17,15 +17,18 @@
 package stroom.widget.popup.client.presenter;
 
 public class PopupPosition {
+
     private final int left;
     private final int right;
     private final int top;
     private final int bottom;
     private final HorizontalLocation horizontalLocation;
     private final VerticalLocation verticalLocation;
+
     public PopupPosition(final int x, final int y) {
         this(x, x, y, y, null, null);
     }
+
     public PopupPosition(final int left, final int right, final int top, final int bottom) {
         this(left, right, top, bottom, null, null);
     }
@@ -65,10 +68,12 @@ public class PopupPosition {
     }
 
     public enum HorizontalLocation {
-        LEFT, RIGHT
+        LEFT,
+        RIGHT
     }
 
     public enum VerticalLocation {
-        ABOVE, BELOW
+        ABOVE,
+        BELOW
     }
 }

@@ -84,12 +84,12 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         if (progress.getUpperBound().isPresent()) {
             computedUpperBound = progress.getUpperBound().get();
         } else {
-                computedUpperBound = Math.max(
-                        computedUpperBound,
-                        (progress.getRangeToInc() - progress.getLowerBound()) * uncertaintyFactor);
-                uncertaintyFactor = Math.max(
-                        UNCERTAINTY_FACTOR_MIN,
-                        uncertaintyFactor - UNCERTAINTY_FACTOR_DELTA);
+            computedUpperBound = Math.max(
+                    computedUpperBound,
+                    (progress.getRangeToInc() - progress.getLowerBound()) * uncertaintyFactor);
+            uncertaintyFactor = Math.max(
+                    UNCERTAINTY_FACTOR_MIN,
+                    uncertaintyFactor - UNCERTAINTY_FACTOR_DELTA);
         }
         return computedUpperBound;
     }
@@ -137,11 +137,11 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
             barColour = BAR_COLOUR_COMPLETE;
             title = "All data visible in the editor";
         } else if (progress.hasKnownUpperBound()) {
-                barColour = BAR_COLOUR_KNOWN_BOUNDED;
-                title = TITLE_PREFIX
-                        + " ("
-                        + formatPercentage(getWindowAsPercentage())
-                        + "%)";
+            barColour = BAR_COLOUR_KNOWN_BOUNDED;
+            title = TITLE_PREFIX
+                    + " ("
+                    + formatPercentage(getWindowAsPercentage())
+                    + "%)";
         } else {
             barColour = BAR_COLOUR_UNKNOWN_BOUND;
             title = TITLE_PREFIX + " (total size unknown)";

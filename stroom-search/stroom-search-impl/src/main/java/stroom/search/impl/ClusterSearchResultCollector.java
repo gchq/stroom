@@ -29,7 +29,6 @@ import com.esotericsoftware.kryo.io.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -44,8 +43,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Provider;
 
 public class ClusterSearchResultCollector implements Store {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 

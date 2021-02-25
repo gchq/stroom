@@ -16,14 +16,15 @@
 
 package stroom.pipeline.factory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +32,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class SimpleProcessorFactory implements ProcessorFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleProcessorFactory.class);
     private final ErrorReceiver errorReceiver;
 
@@ -56,6 +58,7 @@ public class SimpleProcessorFactory implements ProcessorFactory {
     }
 
     private static class MultiWayProcessor implements Processor {
+
         private final List<Processor> processors;
         private final ErrorReceiver errorReceiver;
 

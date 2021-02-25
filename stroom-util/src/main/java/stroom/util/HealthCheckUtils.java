@@ -1,11 +1,12 @@
 package stroom.util;
 
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.json.JsonUtil;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HealthCheckUtils {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HealthCheckUtils.class);
 
     public static String validateHttpConnection(final String httpMethod, final String urlStr) {
@@ -120,7 +122,7 @@ public class HealthCheckUtils {
             } else if (entry.getValue() instanceof Map) {
                 maskPasswords((Map<String, Object>) entry.getValue());
             } else if (entry.getValue() instanceof List) {
-                for (Object item : (List<Object>)entry.getValue()) {
+                for (Object item : (List<Object>) entry.getValue()) {
                     if (item instanceof Map) {
                         maskPasswords((Map<String, Object>) item);
                     }

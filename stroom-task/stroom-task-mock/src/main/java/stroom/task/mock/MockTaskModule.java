@@ -49,7 +49,9 @@ public class MockTaskModule extends AbstractModule {
             }
 
             @Override
-            public Runnable context(final TaskContext parentContext, final String taskName, final Consumer<TaskContext> consumer) {
+            public Runnable context(final TaskContext parentContext,
+                                    final String taskName,
+                                    final Consumer<TaskContext> consumer) {
                 return () -> consumer.accept(createTaskContext());
             }
 
@@ -59,7 +61,9 @@ public class MockTaskModule extends AbstractModule {
             }
 
             @Override
-            public <R> Supplier<R> contextResult(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+            public <R> Supplier<R> contextResult(final TaskContext parentContext,
+                                                 final String taskName,
+                                                 final Function<TaskContext, R> function) {
                 return () -> function.apply(createTaskContext());
             }
 

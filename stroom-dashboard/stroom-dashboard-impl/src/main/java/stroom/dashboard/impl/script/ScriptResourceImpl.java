@@ -22,39 +22,54 @@ import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 class ScriptResourceImpl implements ScriptResource {
+
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
     private final DocumentResourceHelper documentResourceHelper;
 
     @Inject
-    ScriptResourceImpl(final ScriptStore scriptStore, final SecurityContext securityContext, final DocumentResourceHelper documentResourceHelper) {
+    ScriptResourceImpl(final ScriptStore scriptStore,
+                       final SecurityContext securityContext,
+                       final DocumentResourceHelper documentResourceHelper) {
         this.scriptStore = scriptStore;
         this.securityContext = securityContext;
         this.documentResourceHelper = documentResourceHelper;
     }
 
     @Override
-    public ScriptDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(scriptStore, docRef);
+    public ScriptDoc fetch(final String uuid) {
+        return documentResourceHelper.read(scriptStore, getDocRef(uuid));
     }
 
     @Override
-    public ScriptDoc update(final ScriptDoc doc) {
+    public ScriptDoc update(final String uuid, final ScriptDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(scriptStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(ScriptDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override
     public List<ScriptDoc> fetchLinkedScripts(final FetchLinkedScriptRequest request) {
         return securityContext.secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+            // Elevate the users permissions for the duration of this task so they can read the script if
+            // they have 'use' permission.
             return securityContext.useAsReadResult(() -> {
                 final List<ScriptDoc> scripts = new ArrayList<>();
 
@@ -71,7 +86,9 @@ class ScriptResourceImpl implements ScriptResource {
         });
     }
 
-    private void loadScripts(final DocRef docRef, final Set<DocRef> uiLoadedScripts, final Set<DocRef> loadedScripts,
+    private void loadScripts(final DocRef docRef,
+                             final Set<DocRef> uiLoadedScripts,
+                             final Set<DocRef> loadedScripts,
                              final List<ScriptDoc> scripts) {
         // Prevent circular reference loading with this set.
         if (!loadedScripts.contains(docRef)) {

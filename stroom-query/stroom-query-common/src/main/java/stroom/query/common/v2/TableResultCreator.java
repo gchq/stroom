@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
@@ -76,7 +77,8 @@ public class TableResultCreator implements ResultCreator {
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings.getFields();
-            // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
+            // Create a set of sizes that are the minimum values for the combination of user provided sizes for
+            // the table and the default maximum sizes.
             final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
             // Create the row creator.
@@ -180,12 +182,14 @@ public class TableResultCreator implements ResultCreator {
     }
 
     private interface RowCreator {
+
         Row create(Field[] fields, Item item, int depth);
 
         boolean hidesRows();
     }
 
     private static class SimpleRowCreator implements RowCreator {
+
         private final FieldFormatter fieldFormatter;
 
         private SimpleRowCreator(final FieldFormatter fieldFormatter) {
@@ -220,6 +224,7 @@ public class TableResultCreator implements ResultCreator {
     }
 
     private static class ConditionalFormattingRowCreator implements RowCreator {
+
         private final FieldFormatter fieldFormatter;
         private final List<ConditionalFormattingRule> rules;
         private final ConditionalFormattingExpressionMatcher expressionMatcher;

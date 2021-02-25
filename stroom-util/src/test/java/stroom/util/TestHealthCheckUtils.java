@@ -9,12 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 class TestHealthCheckUtils {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHealthCheckUtils.class);
 
     @Test
     void maskPasswords() {
-        Map<String, Object> root = new HashMap<>();
-        Map<String, Object> subMap = new HashMap<>();
+        final Map<String, Object> root = new HashMap<>();
+        final Map<String, Object> subMap = new HashMap<>();
 
         root.put("xxx", 1);
         root.put("yyy", "abc");
@@ -40,8 +41,8 @@ class TestHealthCheckUtils {
         Assertions.assertThat(root.get("aApiKey")).isEqualTo("****");
         Assertions.assertThat(root.get("aLongerApiKey")).isEqualTo("1234****7890");
 
-        Assertions.assertThat(((Map)root.get("submap")).get("abcPassword")).isEqualTo("****");
-        Assertions.assertThat(((Map)root.get("submap")).get("passwordDEF")).isEqualTo("****");
+        Assertions.assertThat(((Map) root.get("submap")).get("abcPassword")).isEqualTo("****");
+        Assertions.assertThat(((Map) root.get("submap")).get("passwordDEF")).isEqualTo("****");
 
         LOGGER.info("root map: {}", root);
         System.out.println(root.toString());

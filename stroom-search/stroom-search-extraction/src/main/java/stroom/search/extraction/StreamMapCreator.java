@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 class StreamMapCreator {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
     private final MetaService metaService;
@@ -91,7 +92,8 @@ class StreamMapCreator {
 
             final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
-                    // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
+                    // See if we can load the stream. We might get a StreamPermissionException if we aren't
+                    // allowed to read from this stream.
                     return Optional.ofNullable(metaService.getMeta(k));
 //                } catch (final StreamPermissionException e) {
 //                    LOGGER.debug(e::getMessage, e);

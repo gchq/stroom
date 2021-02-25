@@ -1,13 +1,13 @@
 import * as React from "react";
 
-import { UiConfig } from "./types";
+import { UiConfig } from "api/stroom";
 
 export const defaultValue: UiConfig = {
   theme: {
     backgroundColor: "red",
   },
   uiPreferences: {
-    dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ",
+    dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS",
   },
 };
 

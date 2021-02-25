@@ -35,7 +35,7 @@ public class TimePeriod {
 
     /**
      * @param from Is inclusive. Will be truncated to millisecond precision.
-     * @param to Is exclusive. Will be truncated to millisecond precision.
+     * @param to   Is exclusive. Will be truncated to millisecond precision.
      */
     public static TimePeriod between(final Instant from, final Instant to) {
         return new TimePeriod(
@@ -144,10 +144,15 @@ public class TimePeriod {
                 ", duration=" + getDuration();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TimePeriod that = (TimePeriod) o;
         return from.equals(that.from) &&
                 to.equals(that.to);

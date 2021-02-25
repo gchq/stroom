@@ -16,12 +16,6 @@
 
 package stroom.security.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.alert.client.event.AlertEvent;
@@ -37,11 +31,19 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAndPermissions;
 
-import javax.inject.Singleton;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.Set;
+import javax.inject.Singleton;
 
 @Singleton
 public class CurrentUser implements ClientSecurityContext, HasHandlers {
+
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private final EventBus eventBus;

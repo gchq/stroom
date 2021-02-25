@@ -16,11 +16,6 @@
 
 package stroom.util;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.XMLFilterImpl;
 import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.simple.Characters;
 import stroom.pipeline.xml.event.simple.EndDocument;
@@ -34,6 +29,12 @@ import stroom.pipeline.xml.event.simple.StartDocument;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.XMLFilterImpl;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,7 @@ import java.util.List;
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public abstract class BufferFilter extends XMLFilterImpl {
+
     private List<Event> events;
     private boolean buffer;
 

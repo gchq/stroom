@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
 public final class SourceUtil {
+
     private static final int BUFFER_SIZE = 8192;
     private static final String DEFAULT_CHARSET_NAME = "UTF-8";
     private static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);

@@ -31,7 +31,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 public class Spinner extends Composite implements SpinnerDisplay {
-    private static Binder binder = GWT.create(Binder.class);
+
+    private static final Binder binder = GWT.create(Binder.class);
     private SpinnerWhite spinner;
     private boolean spinning;
 
@@ -89,5 +90,6 @@ public class Spinner extends Composite implements SpinnerDisplay {
     }
 
     interface Binder extends UiBinder<Widget, Spinner> {
+
     }
 }

@@ -19,5 +19,6 @@ package stroom.util.io;
 import java.io.Closeable;
 
 public interface StreamCloser extends Closeable {
+
     StreamCloser add(final Closeable closeable);
 }

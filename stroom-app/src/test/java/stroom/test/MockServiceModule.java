@@ -22,9 +22,7 @@ import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
 
@@ -44,6 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MockServiceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new MockActivityModule());

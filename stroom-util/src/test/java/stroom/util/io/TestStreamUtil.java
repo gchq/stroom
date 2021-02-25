@@ -26,6 +26,7 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUtil {
+
     private static final int SIZE = 25;
 
     @Test
@@ -51,6 +52,7 @@ class TestStreamUtil {
     }
 
     private static class TestInputStream extends InputStream {
+
         int read = 0;
 
         @Override

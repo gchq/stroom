@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.internal.util;
 
 /**
@@ -35,6 +36,7 @@ package stroom.widget.htree.client.treelayout.internal.util;
  * @author Udo Borkowski (ub@abego.org)
  */
 public class Contract {
+
     public static void checkArg(boolean isOK, String s) {
         if (!isOK) {
             throw new IllegalArgumentException(s);

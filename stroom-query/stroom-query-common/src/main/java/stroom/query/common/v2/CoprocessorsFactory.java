@@ -9,7 +9,6 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.logging.TempTagCloudDebug;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,8 +18,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class CoprocessorsFactory {
+
     private final SizesProvider sizesProvider;
     private final DataStoreFactory dataStoreFactory;
 
@@ -82,14 +83,19 @@ public class CoprocessorsFactory {
             TempTagCloudDebug.write("COPROCESSOR SETTINGS LIST SIZE=" + coprocessorSettingsList.size());
 
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
-                final Coprocessor coprocessor = create(queryKey, coprocessorSettings, fieldIndex, paramMap, errorConsumer);
+                final Coprocessor coprocessor = create(queryKey,
+                        coprocessorSettings,
+                        fieldIndex,
+                        paramMap,
+                        errorConsumer);
 
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
 
                     if (coprocessor instanceof TableCoprocessor) {
                         final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
-                        final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettings;
+                        final TableCoprocessorSettings tableCoprocessorSettings =
+                                (TableCoprocessorSettings) coprocessorSettings;
                         for (final String componentId : tableCoprocessorSettings.getComponentIds()) {
                             componentIdCoprocessorMap.put(componentId, tableCoprocessor);
                         }

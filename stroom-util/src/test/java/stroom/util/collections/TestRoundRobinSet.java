@@ -19,7 +19,6 @@ package stroom.util.collections;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.junit.jupiter.api.Test;
 
-
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 class TestRoundRobinSet {
+
     private static final int N3 = 3;
     private static final int N4 = 4;
 
@@ -104,6 +104,7 @@ class TestRoundRobinSet {
     }
 
     static class RoundRobinSetTestObject {
+
         private static final long serialVersionUID = -7648759863152854689L;
         int i;
 

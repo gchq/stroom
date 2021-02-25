@@ -3,10 +3,11 @@ package stroom.security.impl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 
 public final class JwtUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwtUtil.class);
 
     private static final String BEARER = "Bearer ";

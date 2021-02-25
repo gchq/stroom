@@ -3,8 +3,10 @@ package stroom.content;
 import java.util.List;
 
 public class ContentPacks {
+
     private static final String CONTENT_RELEASES_URL = "https://github.com/gchq/stroom-content/releases/download/";
-    private static final String VISUALISATION_RELEASES_URL = "https://github.com/gchq/stroom-visualisations-dev/releases/download/";
+    private static final String VISUALISATION_RELEASES_URL =
+            "https://github.com/gchq/stroom-visualisations-dev/releases/download/";
 
     public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
             "core-xml-schemas",
@@ -66,12 +68,16 @@ public class ContentPacks {
                     TEMPLATE_PIPELINES_PACK,
                     VISUALISATIONS));
 
-    private static ContentPack createStandardContentPack(final String baseUrl, final String name, final String version) {
+    private static ContentPack createStandardContentPack(final String baseUrl,
+                                                         final String name,
+                                                         final String version) {
         final String url = baseUrl + name + "-v" + version + "/" + name + "-v" + version + ".zip";
         return new ContentPack(url, name, version);
     }
 
-    private static ContentPack createSVisualisationContentPack(final String baseUrl, final String name, final String version) {
+    private static ContentPack createSVisualisationContentPack(final String baseUrl,
+                                                               final String name,
+                                                               final String version) {
         final String url = baseUrl + "v" + version + "/" + name + "-v" + version + ".zip";
         return new ContentPack(url, name, version);
     }

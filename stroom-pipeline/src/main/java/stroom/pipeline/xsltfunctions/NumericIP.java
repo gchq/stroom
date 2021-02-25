@@ -16,14 +16,16 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
-import stroom.util.shared.Severity;
 
 class NumericIP extends StroomExtensionFunctionCall {
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;

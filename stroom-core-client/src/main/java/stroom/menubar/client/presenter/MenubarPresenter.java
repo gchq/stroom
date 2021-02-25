@@ -16,20 +16,6 @@
 
 package stroom.menubar.client.presenter;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import stroom.core.client.MenuKeys;
 import stroom.item.client.presenter.ListPresenter.ListView;
 import stroom.main.client.presenter.MainPresenter;
@@ -52,11 +38,27 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, MenubarPresenter.MenubarProxy>
         implements CurrentUserChangedHandler {
+
     private final Provider<MenuListPresenter> menuListPresenterProvider;
     private final Provider<MenubarItem> menubarItemProvider;
     private final MenuItems menuItems;
@@ -89,8 +91,12 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
         }
     }
 
-    protected MenuItemPresenter addItem(final ImageResource enabledImage, final ImageResource disabledImage,
-                                        final String text, final String shortcut, final boolean enabled, final Command command) {
+    protected MenuItemPresenter addItem(final ImageResource enabledImage,
+                                        final ImageResource disabledImage,
+                                        final String text,
+                                        final String shortcut,
+                                        final boolean enabled,
+                                        final Command command) {
         final MenuItemView display = menubarItemProvider.get();
         final MenuItemPresenter presenter = new MenuItemPresenter(getEventBus(), display, enabledImage, disabledImage,
                 text, shortcut, enabled);
@@ -229,9 +235,11 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
     }
 
     public interface MenubarView extends ListView {
+
     }
 
     @ProxyCodeSplit
     public interface MenubarProxy extends Proxy<MenubarPresenter> {
+
     }
 }

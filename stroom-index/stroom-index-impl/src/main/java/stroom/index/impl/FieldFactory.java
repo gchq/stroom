@@ -16,14 +16,16 @@
 
 package stroom.index.impl;
 
+import stroom.index.shared.IndexField;
+
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FloatField;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
-import stroom.index.shared.IndexField;
 
 public class FieldFactory {
+
     public static LongField create(final IndexField indexField, final long initialValue) {
         return new LongField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
     }

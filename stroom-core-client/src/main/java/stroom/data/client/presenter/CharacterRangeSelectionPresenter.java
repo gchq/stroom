@@ -2,8 +2,8 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.util.shared.DataRange;
 import stroom.util.shared.Count;
+import stroom.util.shared.DataRange;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;

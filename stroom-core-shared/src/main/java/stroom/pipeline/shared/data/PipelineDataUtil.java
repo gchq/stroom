@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import java.util.Collections;
 
 public class PipelineDataUtil {
+
     public static PipelineElement createElement(final String id, final String type) {
         final PipelineElement element = new PipelineElement();
         element.setId(id);

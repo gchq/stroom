@@ -17,14 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.CreateDocumentEvent;
@@ -42,11 +34,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.function.Consumer;
 
 public class CreateDocumentPresenter
         extends MyPresenter<CreateDocumentView, CreateDocumentProxy>
         implements ShowCreateDocumentDialogEvent.Handler, PopupUiHandlers {
+
     private final EntityTreePresenter entityTreePresenter;
     private String docType;
     private String caption;
@@ -54,7 +56,9 @@ public class CreateDocumentPresenter
     private Consumer<DocRef> newDocConsumer;
 
     @Inject
-    public CreateDocumentPresenter(final EventBus eventBus, final CreateDocumentView view, final CreateDocumentProxy proxy,
+    public CreateDocumentPresenter(final EventBus eventBus,
+                                   final CreateDocumentView view,
+                                   final CreateDocumentProxy proxy,
                                    final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
         this.entityTreePresenter = entityTreePresenter;
@@ -129,7 +133,13 @@ public class CreateDocumentPresenter
                     AlertEvent.fireWarn(CreateDocumentPresenter.this,
                             "You must provide a name for the new " + docType.toLowerCase(), null);
                 } else {
-                    CreateDocumentEvent.fire(this, this, docType, docName, destinationFolderRef, getView().getPermissionInheritance(), newDocConsumer);
+                    CreateDocumentEvent.fire(this,
+                            this,
+                            docType,
+                            docName,
+                            destinationFolderRef,
+                            getView().getPermissionInheritance(),
+                            newDocConsumer);
                 }
             }
         } else {
@@ -152,6 +162,7 @@ public class CreateDocumentPresenter
     }
 
     public interface CreateDocumentView extends View, HasUiHandlers<PopupUiHandlers> {
+
         String getName();
 
         void setName(String name);
@@ -169,5 +180,6 @@ public class CreateDocumentPresenter
 
     @ProxyCodeSplit
     public interface CreateDocumentProxy extends Proxy<CreateDocumentPresenter> {
+
     }
 }

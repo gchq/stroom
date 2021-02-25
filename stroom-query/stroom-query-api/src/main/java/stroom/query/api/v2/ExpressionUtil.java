@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ExpressionUtil {
+
     private ExpressionUtil() {
         // Utility class.
     }
@@ -109,10 +110,12 @@ public class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getField).collect(
+                Collectors.toList());
     }
 
-    public static List<String> fields(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+    public static List<String> fields(final ExpressionOperator expressionOperator,
+                                      final Collection<AbstractField> fields) {
         return terms(expressionOperator, fields).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
     }
 
@@ -121,20 +124,25 @@ public class ExpressionUtil {
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
+        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getValue).collect(
+                Collectors.toList());
     }
 
-    public static List<String> values(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+    public static List<String> values(final ExpressionOperator expressionOperator,
+                                      final Collection<AbstractField> fields) {
         return terms(expressionOperator, fields).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
     }
 
-    public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
+    public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator,
+                                             final Collection<AbstractField> fields) {
         final List<ExpressionTerm> terms = new ArrayList<>();
         addTerms(expressionOperator, fields, terms);
         return terms;
     }
 
-    private static void addTerms(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields, final List<ExpressionTerm> terms) {
+    private static void addTerms(final ExpressionOperator expressionOperator,
+                                 final Collection<AbstractField> fields,
+                                 final List<ExpressionTerm> terms) {
         if (expressionOperator != null &&
                 expressionOperator.enabled() &&
                 expressionOperator.getChildren() != null &&

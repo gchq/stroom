@@ -3,6 +3,7 @@ package stroom.job.api;
 import java.util.Objects;
 
 public class ScheduledJob {
+
     private final String description;
     private final boolean enabled;
     private final boolean advanced;
@@ -59,6 +60,7 @@ public class ScheduledJob {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static final class Builder {
+
         private String description;
         private boolean enabled = true;
         private boolean advanced = true;

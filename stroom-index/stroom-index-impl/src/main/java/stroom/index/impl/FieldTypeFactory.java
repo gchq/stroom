@@ -16,13 +16,15 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.FieldType.NumericType;
-import org.apache.lucene.index.IndexOptions;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.FieldType.NumericType;
+import org.apache.lucene.index.IndexOptions;
+
 public final class FieldTypeFactory {
+
     private static final int DEFAULT_PRECISION_STEP = 4;
 
     private FieldTypeFactory() {

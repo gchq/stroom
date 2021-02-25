@@ -16,16 +16,18 @@
 
 package stroom.widget.xsdbrowser.client.presenter;
 
+import stroom.widget.xsdbrowser.client.view.XSDModel;
+import stroom.widget.xsdbrowser.client.view.XSDNode;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.XSDBrowserView>
         implements XSDBrowserUiHandlers {
+
     private XSDModel model;
 
     @Inject
@@ -37,7 +39,8 @@ public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.X
     public void setModel(final XSDModel model) {
         this.model = model;
 
-        registerHandler(model.addDataSelectionHandler(event -> getView().setSelectedNode(event.getSelectedItem(), event.isDoubleSelect())));
+        registerHandler(model.addDataSelectionHandler(event ->
+                getView().setSelectedNode(event.getSelectedItem(), event.isDoubleSelect())));
 
         getView().setModel(model);
     }
@@ -58,6 +61,7 @@ public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.X
     }
 
     public interface XSDBrowserView extends View, HasUiHandlers<XSDBrowserUiHandlers> {
+
         void setModel(XSDModel model);
 
         void setSelectedNode(XSDNode node, boolean change);

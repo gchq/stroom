@@ -17,6 +17,8 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
+
     private final Widget widget;
 
     @UiField
@@ -97,5 +99,6 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
+
     }
 }

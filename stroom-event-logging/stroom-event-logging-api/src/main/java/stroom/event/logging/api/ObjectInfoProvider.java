@@ -19,6 +19,7 @@ package stroom.event.logging.api;
 import event.logging.BaseObject;
 
 public interface ObjectInfoProvider {
+
     BaseObject createBaseObject(Object object);
 
     String getObjectType(Object object);

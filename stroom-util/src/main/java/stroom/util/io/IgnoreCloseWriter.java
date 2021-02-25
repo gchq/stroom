@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 public class IgnoreCloseWriter extends WrappedWriter {
+
     public IgnoreCloseWriter(final Writer writer) {
         super(writer);
     }

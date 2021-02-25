@@ -46,6 +46,7 @@ import stroom.task.client.view.TaskManagerViewImpl;
 import stroom.ui.config.client.UiConfigCache;
 
 public class MonitoringModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(UiConfigCache.class).asEagerSingleton();

@@ -16,13 +16,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -31,7 +24,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.NewElementView> {
+
     private PipelineElementType elementType;
     private PopupUiHandlers popupUiHandlers;
 
@@ -77,6 +79,7 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
     }
 
     public interface NewElementView extends View {
+
         HasText getId();
 
         HasKeyDownHandlers getIdBox();

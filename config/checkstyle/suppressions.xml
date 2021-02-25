@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Code copied from elsewhere --> 
+    <suppress files="[\\/]edu[\\/]ycp[\\/]cs[\\/]dh[\\/]acegwt" checks=".*"/>
+    <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XML11Char.java" checks=".*"/>
+    <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XMLChar.java" checks=".*"/>
+
+    <!-- Massive file so breaks file length check -->
+    <!-- Not ideal as it means we can't test any of this class -->
+    <suppress files="[\\/]stroom[\\/].*[\\/]TestExpressionParser.java" checks=".*"/>
+
+    <!-- Generated code --> 
+    <suppress files="[\\/]db[\\/]jooq[\\/]" checks=".*"/>
+
+    <!-- Legacy code so best left alone --> 
+    <suppress files="[\\/]stroom[\\/]legacy[\\/]" checks=".*"/>
+</suppressions>

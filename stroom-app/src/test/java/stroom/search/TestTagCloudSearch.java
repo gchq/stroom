@@ -26,6 +26,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -43,16 +44,17 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTagCloudSearch extends AbstractSearchTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
 
     @Inject
@@ -103,16 +105,27 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .extractionPipeline(resultPipeline)
                 .build();
 
-        final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
+        final ExpressionOperator.Builder expression = buildExpression("user5",
+                "2000-01-01T00:00:00.000Z",
+                "2016-01-02T00:00:00.000Z");
         final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                Collections.singletonList(tableSettings),
+                null,
+                null,
+                ResultRequest.ResultStyle.TABLE,
+                Fetch.CHANGES);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = search(searchRequest);
 
         final List<Row> values = new ArrayList<>();

@@ -18,7 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = IsInteger.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if value is an integer.",
+        signatures = @FunctionSignature(
+                description = "Checks if the passed value has an integer data type.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
+                }))
 class IsInteger extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isInteger";
     private static final long serialVersionUID = -305145496413936297L;
     private static final IntegerTest TEST = new IntegerTest();
@@ -33,6 +48,7 @@ class IsInteger extends AbstractIsFunction implements Serializable {
     }
 
     private static class IntegerTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValInteger);

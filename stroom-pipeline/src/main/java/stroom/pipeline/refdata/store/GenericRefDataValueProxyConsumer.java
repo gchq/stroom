@@ -17,13 +17,14 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
+
 import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 
 import javax.inject.Inject;
 
@@ -36,10 +37,9 @@ public class GenericRefDataValueProxyConsumer implements RefDataValueProxyConsum
     private final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory;
 
     @Inject
-    public GenericRefDataValueProxyConsumer (
-            @Assisted final Receiver receiver,
-            @Assisted final PipelineConfiguration pipelineConfiguration,
-            final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
+    public GenericRefDataValueProxyConsumer(@Assisted final Receiver receiver,
+                                            @Assisted final PipelineConfiguration pipelineConfiguration,
+                                            final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
         this.receiver = receiver;
         this.pipelineConfiguration = pipelineConfiguration;
         this.refDataValueProxyConsumerFactory = refDataValueProxyConsumerFactory;

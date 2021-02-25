@@ -20,6 +20,7 @@ package stroom.data.zip;
  * Buffer held in thread scope for performance reasons.
  */
 public class BufferSizeUtil {
+
     private BufferSizeUtil() {
     }
 

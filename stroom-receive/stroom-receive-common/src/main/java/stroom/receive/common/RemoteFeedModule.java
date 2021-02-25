@@ -22,10 +22,11 @@ import stroom.util.guice.ServletBinder;
 import com.google.inject.AbstractModule;
 
 public class RemoteFeedModule extends AbstractModule {
+
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bind(FeedStatusResource.class);
+                .bind(FeedStatusResourceImpl.class);
 
         ServletBinder.create(binder())
                 .bind(RemoteFeedServiceRPC.class);

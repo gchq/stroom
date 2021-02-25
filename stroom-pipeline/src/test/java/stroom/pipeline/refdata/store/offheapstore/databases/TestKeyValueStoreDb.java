@@ -18,10 +18,10 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestKeyValueStoreDb extends AbstractLmdbDbTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreDb.class);
 
     private KeyValueStoreDb keyValueStoreDb = null;

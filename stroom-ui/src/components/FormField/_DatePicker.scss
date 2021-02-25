@@ -1,6 +1,4 @@
-@import "../../styles/colours";
-
-$primary: $blue-500;
+@import "../../styles/themes";
 
 .react-datepicker {
   background-color: #fff;
@@ -30,21 +28,21 @@ $primary: $blue-500;
 }
 
 .react-datepicker__day--selected {
-  background-color: $primary;
-  color: $white;
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .react-datepicker__day--selected:hover {
-  background-color: lighten($primary, 10%);
-  color: $white;
+  background-color: rgb(26, 149, 255); // primary lighten 10%
+  color: var(--white);
 }
 
 .react-datepicker__day--keyboard-selected {
-  background-color: rgba($primary, .2);
-  color: $black;
+  background-color: rgba(var(--primary-rgb), .2);
+  color: var(--black);
 }
 
 .react-datepicker__day--keyboard-selected:hover {
-  background-color: rgba($primary, .3);
-  color: $black;
+  background-color: rgba(var(--primary-rgb), .3);
+  color: var(--black);
 }

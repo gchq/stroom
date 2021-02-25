@@ -71,7 +71,7 @@ public class ValueStore {
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
                                       final ValueStoreKey valueStoreKey) {
-        try(PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
+        try (PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
             ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
             return get(txn, keyBuffer);
@@ -108,7 +108,7 @@ public class ValueStore {
 
     public OptionalInt getReferenceCount(final Txn<ByteBuffer> txn,
                                          final ValueStoreKey valueStoreKey) {
-        try(PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
+        try (PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
             ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
             return valueStoreMetaDb.getReferenceCount(txn, keyBuffer);

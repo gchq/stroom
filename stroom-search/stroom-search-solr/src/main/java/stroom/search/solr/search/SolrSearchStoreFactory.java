@@ -40,8 +40,6 @@ import stroom.ui.config.shared.UiConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -50,10 +48,13 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 // used by DI
 @SuppressWarnings("unused")
 class SolrSearchStoreFactory implements StoreFactory {
+
     public static final String ENTITY_TYPE = SolrIndexDoc.DOCUMENT_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
@@ -176,7 +177,10 @@ class SolrSearchStoreFactory implements StoreFactory {
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final CachedSolrIndex index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
+    private Set<String> getHighlights(final CachedSolrIndex index,
+                                      final ExpressionOperator expression,
+                                      final String timeZoneId,
+                                      final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -187,7 +191,11 @@ class SolrSearchStoreFactory implements StoreFactory {
                     .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, searchConfig.getMaxBooleanClauseCount(), timeZoneId, nowEpochMilli);
+                    wordListProvider,
+                    indexFieldsMap,
+                    searchConfig.getMaxBooleanClauseCount(),
+                    timeZoneId,
+                    nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(expression);
 

@@ -27,7 +27,7 @@ package edu.ycp.cs.dh.acegwt.client.ace;
  */
 public class AceCompletionSnippetSegmentLiteral implements AceCompletionSnippetSegment {
 
-    private String literalText;
+    private final String literalText;
 
     /**
      * The literal text that makes up part of the snippet segment

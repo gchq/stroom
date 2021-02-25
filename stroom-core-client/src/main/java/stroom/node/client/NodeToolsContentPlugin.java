@@ -1,16 +1,17 @@
 package stroom.node.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.core.client.ContentManager;
 import stroom.data.table.client.Refreshable;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
-    extends NodeToolsPlugin {
+        extends NodeToolsPlugin {
 
     private final ContentManager contentManager;
     private final Provider<P> presenterProvider;

@@ -2,15 +2,16 @@ package stroom.proxy.app;
 
 import stroom.util.io.StreamUtil;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 
 public class SendSampleProxyData {
+
     private SendSampleProxyData() {
     }
 

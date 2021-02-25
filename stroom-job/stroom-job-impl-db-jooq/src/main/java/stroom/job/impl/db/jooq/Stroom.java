@@ -4,18 +4,17 @@
 package stroom.job.impl.db.jooq;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.processing.Generated;
+import stroom.job.impl.db.jooq.tables.Job;
+import stroom.job.impl.db.jooq.tables.JobNode;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.job.impl.db.jooq.tables.Job;
-import stroom.job.impl.db.jooq.tables.JobNode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.processing.Generated;
 
 
 /**

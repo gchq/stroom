@@ -23,6 +23,7 @@ import stroom.widget.util.client.FutureImpl;
 import java.util.List;
 
 public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
+
     private final MenuItems menuItems;
     private final MenuKey childMenu;
 
@@ -31,8 +32,13 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
         this(priority, null, null, text, null, true, menuItems, childMenu);
     }
 
-    public KeyedParentMenuItem(final int priority, final Icon enabledIcon, final Icon disabledIcon,
-                               final String text, final String shortcut, final boolean enabled, final MenuItems menuItems,
+    public KeyedParentMenuItem(final int priority,
+                               final Icon enabledIcon,
+                               final Icon disabledIcon,
+                               final String text,
+                               final String shortcut,
+                               final boolean enabled,
+                               final MenuItems menuItems,
                                final MenuKey childMenu) {
         super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null);
         this.menuItems = menuItems;

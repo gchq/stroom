@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class HttpServletRequestHolder implements Provider<HttpServletRequest> {
+
     private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 
     @Override

@@ -20,8 +20,6 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,11 +30,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 import static stroom.legacy.model_6_1.ExpressionTerm.Condition.IN_CONDITION_DELIMITER;
 
 @Deprecated
 public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_9__ProcessingFilter.class);
 
     private JAXBContext findStreamCriteriaJaxb;
@@ -88,7 +89,9 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
         }
 
         // Get all the folder ID's to DocRefs
-        final Map<Long, DocRef> folderDocRefsById = getDocRefsById(connection, ExplorerConstants.FOLDER, SQLNameConstants.FOLDER);
+        final Map<Long, DocRef> folderDocRefsById = getDocRefsById(connection,
+                ExplorerConstants.FOLDER,
+                SQLNameConstants.FOLDER);
 
         // Get all the feed ID's to Names
         final Map<Long, String> feedNamesById = getStringFieldById(connection, "FD", "NAME");
@@ -129,7 +132,8 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                 final Blob blob = connection.createBlob();
                 blob.setBytes(1, queryDataBytes);
 
-                try (final PreparedStatement stmt = connection.prepareStatement("UPDATE STRM_PROC_FILT SET DAT=? WHERE id=?")) {
+                try (final PreparedStatement stmt = connection.prepareStatement(
+                        "UPDATE STRM_PROC_FILT SET DAT=? WHERE id=?")) {
                     stmt.setBlob(1, blob);
                     stmt.setLong(2, entry.getKey());
                     int rowsAffected = stmt.executeUpdate();
@@ -228,13 +232,22 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                 rootAnd.addTerm(c.getStreamAttributeKey().getName(), c.getCondition(), c.getFieldValue()));
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd,
+                criteria.obtainCreatePeriod(),
+                StreamDataSource.CREATE_TIME,
+                DateUtil::createNormalDateTimeString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd,
+                criteria.obtainEffectivePeriod(),
+                StreamDataSource.EFFECTIVE_TIME,
+                DateUtil::createNormalDateTimeString);
 
         // Status Time Period
-        applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, DateUtil::createNormalDateTimeString);
+        applyBoundedTerm(rootAnd,
+                criteria.obtainStatusPeriod(),
+                StreamDataSource.STATUS_TIME,
+                DateUtil::createNormalDateTimeString);
 
         // Build and return
         return new QueryData.Builder()
@@ -248,12 +261,18 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
                                                      final String fieldName,
                                                      final Function<T, String> toString) {
         if (range.isBounded()) {
-            final String boundTerm = String.format("%s,%s", toString.apply(range.getFrom()), toString.apply(range.getTo()));
+            final String boundTerm = String.format("%s,%s",
+                    toString.apply(range.getFrom()),
+                    toString.apply(range.getTo()));
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.BETWEEN, boundTerm);
         } else if (null != range.getFrom()) {
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, toString.apply(range.getFrom()));
+            parentTerm.addTerm(fieldName,
+                    ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
+                    toString.apply(range.getFrom()));
         } else if (null != range.getTo()) {
-            parentTerm.addTerm(fieldName, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, toString.apply(range.getTo()));
+            parentTerm.addTerm(fieldName,
+                    ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
+                    toString.apply(range.getTo()));
         }
     }
 

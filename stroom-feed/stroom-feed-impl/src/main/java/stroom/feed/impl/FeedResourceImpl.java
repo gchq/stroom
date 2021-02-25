@@ -21,13 +21,15 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
+import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class FeedResourceImpl implements FeedResource {
+
     private static final List<String> SUPPORTED_ENCODINGS;
 
     static {
@@ -56,13 +58,23 @@ class FeedResourceImpl implements FeedResource {
     }
 
     @Override
-    public FeedDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(feedStore, docRef);
+    public FeedDoc fetch(final String uuid) {
+        return documentResourceHelper.read(feedStore, getDocRef(uuid));
     }
 
     @Override
-    public FeedDoc update(final FeedDoc doc) {
+    public FeedDoc update(final String uuid, final FeedDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(feedStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(FeedDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

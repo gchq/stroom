@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class TestSimpleConcurrentMap {
+
     @Test
     void testSimple() {
         ExampleSimpleConcurrentMap test = new ExampleSimpleConcurrentMap();
@@ -37,6 +38,7 @@ class TestSimpleConcurrentMap {
     }
 
     private static class ExampleSimpleConcurrentMap extends SimpleConcurrentMap<String, AtomicInteger> {
+
         @Override
         protected AtomicInteger initialValue(final String key) {
             return new AtomicInteger(0);

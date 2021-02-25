@@ -18,29 +18,44 @@ package stroom.pipeline.xmlschema;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.shared.EntityServiceException;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class XmlSchemaResourceImpl implements XmlSchemaResource {
-    private final XmlSchemaStore xmlSchemaStore;
-    private final DocumentResourceHelper documentResourceHelper;
+
+    private final Provider<XmlSchemaStore> xmlSchemaStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    XmlSchemaResourceImpl(final XmlSchemaStore xmlSchemaStore,
-                          final DocumentResourceHelper documentResourceHelper) {
-        this.xmlSchemaStore = xmlSchemaStore;
-        this.documentResourceHelper = documentResourceHelper;
+    XmlSchemaResourceImpl(final Provider<XmlSchemaStore> xmlSchemaStoreProvider,
+                          final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.xmlSchemaStoreProvider = xmlSchemaStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
-    public XmlSchemaDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(xmlSchemaStore, docRef);
+    public XmlSchemaDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(xmlSchemaStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public XmlSchemaDoc update(final XmlSchemaDoc doc) {
-        return documentResourceHelper.update(xmlSchemaStore, doc);
+    public XmlSchemaDoc update(final String uuid, final XmlSchemaDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(xmlSchemaStoreProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(XmlSchemaDoc.DOCUMENT_TYPE)
+                .build();
     }
 }

@@ -16,7 +16,27 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = LessThanOrEqualTo.NAME,
+        aliases = LessThanOrEqualTo.ALIAS,
+        commonCategory = FunctionCategory.LOGIC,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if arg1 is less than or equal arg2.",
+        signatures = @FunctionSignature(
+                description = "Tests if arg1 is less than or equal to arg2. It will attempt to convert the " +
+                        "type of the second parameter to that of the first. Can be expressed as '${field1}>${field2}.",
+                args = {
+                        @FunctionArg(
+                                name = "arg1",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "arg2",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)}))
 class LessThanOrEqualTo extends AbstractEqualityFunction {
+
     static final String NAME = "<=";
     static final String ALIAS = "lessThanOrEqualTo";
     private static final LessThanOrEqualToEvaluator EVALUATOR = new LessThanOrEqualToEvaluator();
@@ -31,6 +51,7 @@ class LessThanOrEqualTo extends AbstractEqualityFunction {
     }
 
     private static class LessThanOrEqualToEvaluator extends Evaluator {
+
         @Override
         protected Val evaluate(final Val a, final Val b) {
             if (a.getClass().equals(b.getClass())) {

@@ -22,6 +22,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public final class OpenIdModule extends AbstractModule {
+
     @Override
     protected void configure() {
 

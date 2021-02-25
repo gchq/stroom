@@ -16,7 +16,56 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Link.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "A Stroom syntax hyperlink string.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Creates a stroom syntax hyperlink string using the supplied URL.",
+                        args = {
+                                @FunctionArg(
+                                        name = "url",
+                                        description = "The URL to link to. The URL will be URL encoded.",
+                                        argType = ValString.class)
+                        }),
+                @FunctionSignature(
+                        description = "Creates a stroom syntax hyperlink string using the supplied link text and URL.",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The text to display on the link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "url",
+                                        description = "The URL to link to. The URL will be URL encoded.",
+                                        argType = ValString.class)
+                        }),
+                @FunctionSignature(
+                        description = "Creates a stroom syntax hyperlink string using the supplied link text, " +
+                                "URL and type.",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The text to display on the link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "url",
+                                        description = "The URL to link to. The URL will be URL encoded.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "type",
+                                        description = "The type of the url. To override the title of the tab/dialog " +
+                                                "being opened, append the title to the type, e.g. 'dialog|My Title'.",
+                                        argType = ValString.class,
+                                        // taken from HyperLinkType
+                                        allowedValues = {
+                                                "tab", "dialog", "dashboard", "stepping", "data",
+                                                "annotation", "browser"})})})
 class Link extends AbstractLink {
+
     static final String NAME = "link";
 
     public Link(final String name) {
@@ -29,6 +78,7 @@ class Link extends AbstractLink {
     }
 
     private static final class LinkGen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         LinkGen(final Generator[] childGenerators) {

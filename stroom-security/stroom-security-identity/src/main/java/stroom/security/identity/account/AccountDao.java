@@ -1,15 +1,15 @@
 package stroom.security.identity.account;
 
 import stroom.security.identity.authenticate.CredentialValidationResult;
-import stroom.util.shared.ResultPage;
 
 import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
-    ResultPage<Account> list();
 
-    ResultPage<Account> search(SearchAccountRequest request);
+    AccountResultPage list();
+
+    AccountResultPage search(SearchAccountRequest request);
 
     Account create(Account account, String password);
 
@@ -31,7 +31,9 @@ public interface AccountDao {
 
     void changePassword(String userId, String newPassword);
 
-    Boolean needsPasswordChange(String userId, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
+    Boolean needsPasswordChange(String userId,
+                                Duration mandatoryPasswordChangeDuration,
+                                boolean forcePasswordChangeOnFirstLogin);
 
     int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold);
 

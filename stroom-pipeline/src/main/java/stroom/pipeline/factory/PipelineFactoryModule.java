@@ -16,11 +16,13 @@
 
 package stroom.pipeline.factory;
 
-import com.google.inject.AbstractModule;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import com.google.inject.AbstractModule;
+
 public class PipelineFactoryModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ElementRegistryFactory.class).to(ElementRegistryFactoryImpl.class);

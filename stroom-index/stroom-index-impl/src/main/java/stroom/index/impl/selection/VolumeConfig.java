@@ -5,13 +5,13 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import java.util.List;
-
-;
+import javax.inject.Singleton;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
+
+    public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
@@ -66,7 +66,7 @@ public class VolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("The name of the default index volume group that is created if none exist on " +
             "application start. Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths " +
             "and defaultIndexVolumeGroupNodes to specify details.")
-    public String getDefaultIndexVolumeGroupName(){
+    public String getDefaultIndexVolumeGroupName() {
         return defaultIndexVolumeGroupName;
     }
 
@@ -80,7 +80,7 @@ public class VolumeConfig extends AbstractConfig {
             "nodes but there must always be the same number of elements in this list as in property " +
             "defaultIndexVolumeGroupNodes. If a path is a relative path then it will be treated as being " +
             "relative to stroom.path.home.")
-    public List<String> getDefaultIndexVolumeGroupPaths(){
+    public List<String> getDefaultIndexVolumeGroupPaths() {
         return defaultIndexVolumeGroupPaths;
     }
 
@@ -91,7 +91,8 @@ public class VolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("The nodes associated with the paths that are created if " +
             "the default index is created on application start." +
             "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
+            "there must always be the same number of elements in this list as in property " +
+            "defaultIndexVolumeGroupNodes.")
     public List<String> getDefaultIndexVolumeGroupNodes() {
         return defaultIndexVolumeGroupNodes;
     }
@@ -117,9 +118,9 @@ public class VolumeConfig extends AbstractConfig {
                 ", preferLocalVolumes=" + preferLocalVolumes +
                 ", volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
-                ", defaultIndexVolumeGroupName=" + "\"" +defaultIndexVolumeGroupName + "\"" +
+                ", defaultIndexVolumeGroupName=" + "\"" + defaultIndexVolumeGroupName + "\"" +
                 ", defaultIndexVolumeFilesystemUtilisation=" + defaultIndexVolumeFilesystemUtilisation +
-                ", defaultIndexVolumeGroupNodes=" + "\"" +defaultIndexVolumeGroupNodes + "\"" +
+                ", defaultIndexVolumeGroupNodes=" + "\"" + defaultIndexVolumeGroupNodes + "\"" +
                 ", defaultIndexVolumeGroupPaths=" + "\"" + defaultIndexVolumeGroupPaths + "\"" +
                 '}';
     }

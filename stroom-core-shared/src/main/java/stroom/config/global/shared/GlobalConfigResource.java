@@ -1,16 +1,17 @@
 package stroom.config.global.shared;
 
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.Arrays;
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -19,14 +20,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
 
-@Api(value = "config - /v1")
+@Tag(name = "Global Config")
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
     String NODE_PROPERTIES_SUB_PATH = "/nodeProperties";
@@ -51,59 +51,58 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             FIELD_DEF_SOURCE,
             FIELD_DEF_DESCRIPTION);
 
-
-    // TODO do we need this if the method returns a type?
-    @ApiOperation(
-        value = "TODO",
-        response = ListConfigResponse.class)
     @POST
     @Path(PROPERTIES_SUB_PATH)
-    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
+    @Operation(
+            summary = "List all properties matching the criteria on the current node.",
+            operationId = "listConfigProperties")
+    ListConfigResponse list(
+            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "List all properties matching the criteria on the requested node.",
+            operationId = "listConfigPropertiesByNode")
     ListConfigResponse listByNode(
             final @PathParam("nodeName") String nodeName,
-            final @ApiParam("criteria") GlobalConfigCriteria criteria);
+            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Fetch a property by its name, e.g. 'stroom.path.home'",
+            operationId = "getConfigPropertyByName")
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
-
-//    @GET
-//    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-//    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Get the property value from the YAML configuration in the specified node.",
+            operationId = "getConfigYamlValueByNodeAndName")
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
-//    @POST
-//    @Path("/find")
-//    @ApiOperation(
-//            value = "Get global config properties",
-//            response = ResultPage.class)
-//    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
-
     @POST
-    @ApiOperation(
-            value = "Update a ConfigProperty",
-            response = ConfigProperty.class)
-    ConfigProperty create(@ApiParam("configProperty") final ConfigProperty configProperty);
+    @Operation(
+            summary = "Create a configuration property",
+            operationId = "createConfigProperty")
+    ConfigProperty create(
+            @Parameter(description = "configProperty", required = true) final ConfigProperty configProperty);
 
     @PUT
-    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + DB_OVERRIDE_VALUE_SUB_PATH)
-    @ApiOperation(
-            value = "Update a ConfigProperty",
-            response = ConfigProperty.class)
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
+    @Operation(
+            summary = "Update a configuration property",
+            operationId = "updateConfigProperty")
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final @ApiParam("configProperty") ConfigProperty configProperty);
+                          final @Parameter(description = "configProperty", required = true)
+                                  ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)
-    @ApiOperation(
-            value = "Get config property",
-            response = UiConfig.class)
+    @Operation(
+            summary = "Fetch the UI configuration",
+            operationId = "fetchUiConfig")
     UiConfig fetchUiConfig();
 }

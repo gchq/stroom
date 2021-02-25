@@ -16,15 +16,15 @@
 
 package stroom.processor.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.util.xml.XMLMarshallerUtil;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshaller<T_Entity, T_Object> {
+import javax.xml.bind.JAXBContext;
+
+abstract class AbstractEntityMarshaller<T_ENTITY, T_OBJECT> implements Marshaller<T_ENTITY, T_OBJECT> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
     private final JAXBContext jaxbContext;
@@ -34,7 +34,7 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
     }
 
     @Override
-    public T_Entity marshal(final T_Entity entity) {
+    public T_ENTITY marshal(final T_ENTITY entity) {
         try {
             Object object = getObject(entity);
 
@@ -49,16 +49,17 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
             setData(entity, data);
         } catch (final RuntimeException e) {
             LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity}, e);
-            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", entity.getClass(), entity, String.valueOf(e));
+            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)",
+                    entity.getClass(), entity, String.valueOf(e));
         }
         return entity;
     }
 
     @Override
-    public T_Entity unmarshal(final T_Entity entity) {
+    public T_ENTITY unmarshal(final T_ENTITY entity) {
         try {
             final String data = getData(entity);
-            final T_Object object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
+            final T_OBJECT object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to unmarshal entity!", e);
@@ -67,11 +68,11 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
         return entity;
     }
 
-    protected abstract String getData(T_Entity entity);
+    protected abstract String getData(T_ENTITY entity);
 
-    protected abstract void setData(T_Entity entity, String data);
+    protected abstract void setData(T_ENTITY entity, String data);
 
-    protected abstract Class<T_Object> getObjectType();
+    protected abstract Class<T_OBJECT> getObjectType();
 
     protected abstract String getEntityType();
 }

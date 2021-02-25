@@ -25,14 +25,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class ChangePasswordRequest {
+
     @JsonProperty
-    private String userId;
+    private final String userId;
     @JsonProperty
-    private String currentPassword;
+    private final String currentPassword;
     @JsonProperty
-    private String newPassword;
+    private final String newPassword;
     @JsonProperty
-    private String confirmNewPassword;
+    private final String confirmNewPassword;
 
     @JsonCreator
     public ChangePasswordRequest(@JsonProperty("userId") final String userId,

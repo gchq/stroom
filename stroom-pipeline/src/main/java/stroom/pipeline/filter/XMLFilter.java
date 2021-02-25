@@ -16,11 +16,13 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.ContentHandler;
 import stroom.pipeline.factory.Target;
+
+import org.xml.sax.ContentHandler;
 
 /**
  * Extension of content handler to provide interface for all XML filters.
  */
 public interface XMLFilter extends Target, ContentHandler {
+
 }

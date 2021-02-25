@@ -43,7 +43,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.api.ResourceStore;
@@ -55,15 +54,16 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportDashboards extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -146,7 +146,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE, "Test Dictionary", folder1, null);
+        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
+                "Test Dictionary",
+                folder1,
+                null);
         final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
@@ -266,12 +269,16 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        assertThat(loadedQueryData.getDataSource()).isEqualTo(loadedIndex);
-        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
-        assertThat(loadedTableSettings.getExtractionPipeline()).isEqualTo(loadedPipeline);
+        assertThat(loadedQueryData.getDataSource())
+                .isEqualTo(loadedIndex);
+        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef())
+                .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
+        assertThat(loadedTableSettings.getExtractionPipeline())
+                .isEqualTo(loadedPipeline);
 
         if (!skipVisExport || skipVisCreation) {
-            assertThat(loadedVisSettings.getVisualisation()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
+            assertThat(loadedVisSettings.getVisualisation())
+                    .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
         } else {
             assertThat(loadedVisSettings.getVisualisation()).isNotNull();
             assertThat(loadedVisSettings.getVisualisation().getType()).isNotNull();

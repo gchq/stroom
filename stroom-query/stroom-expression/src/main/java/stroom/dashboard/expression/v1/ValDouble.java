@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ValDouble implements ValNumber {
+
     public static final Type TYPE = Type.DOUBLE;
     private final double value;
     private transient Optional<String> optionalString;
@@ -77,10 +78,15 @@ public final class ValDouble implements ValNumber {
         return TYPE;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValDouble valDouble = (ValDouble) o;
         return Double.compare(valDouble.value, value) == 0;
     }

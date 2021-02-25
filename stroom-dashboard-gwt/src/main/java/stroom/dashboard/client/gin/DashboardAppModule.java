@@ -85,6 +85,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 
 public class DashboardAppModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         // Default implementation of standard resources

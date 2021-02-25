@@ -32,8 +32,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -45,6 +43,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,7 +55,7 @@ public class ManualProxyAggregationTest {
     // and manually kill it part way through and then run it again to ensure
     // it recovers correctly.
 
-    private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
+    private static final long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestProxyAggregationTask.class);
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProxyAggregationTask.class);
@@ -136,7 +136,10 @@ public class ManualProxyAggregationTest {
         return proxyDir;
     }
 
-    private void generateTestFiles(final Path proxyDir, final int entriesPerZip, final int zipFileCount, final List<String> eventFeeds) {
+    private void generateTestFiles(final Path proxyDir,
+                                   final int entriesPerZip,
+                                   final int zipFileCount,
+                                   final List<String> eventFeeds) {
         IntStream.rangeClosed(1, zipFileCount)
                 .parallel()
                 .forEach(i -> {
@@ -197,7 +200,9 @@ public class ManualProxyAggregationTest {
         int feedIdx = 0;
 
         for (int i = 1; i <= count; i++) {
-            feedIdx = ++feedIdx >= eventFeeds.size() ? 0 : feedIdx;
+            feedIdx = ++feedIdx >= eventFeeds.size()
+                    ? 0
+                    : feedIdx;
             final String eventFeed = eventFeeds.get(feedIdx);
 
             LAMBDA_LOGGER.debug(() ->
@@ -289,7 +294,8 @@ public class ManualProxyAggregationTest {
         aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
     }
 
-    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType) throws IOException {
+    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType)
+            throws IOException {
         try (final InputStreamProvider inputStreamProvider = is.get(0)) {
             if (hasContent) {
                 try (final SegmentInputStream inputStream = inputStreamProvider.get(dataType)) {

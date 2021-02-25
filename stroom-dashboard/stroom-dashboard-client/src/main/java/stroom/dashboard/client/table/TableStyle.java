@@ -19,5 +19,6 @@ package stroom.dashboard.client.table;
 import com.google.gwt.resources.client.CssResource;
 
 public interface TableStyle extends CssResource {
+
     String smallSpinner();
 }

@@ -22,15 +22,16 @@ import stroom.util.guice.ServletBinder;
 import com.google.inject.AbstractModule;
 
 public class DataStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        bind(DataService.class).to(DataServiceImpl.class);
+        bind(DataService.class)
+                .to(DataServiceImpl.class);
 
         ServletBinder.create(binder())
                 .bind(ImportFileServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bind(DataResourceImpl.class)
-                .bind(ViewDataResourceImpl.class);
+                .bind(DataResourceImpl.class);
     }
 }

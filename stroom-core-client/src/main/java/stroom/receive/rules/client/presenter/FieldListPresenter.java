@@ -17,13 +17,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -42,13 +35,23 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractField>>
-        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
+        ReadOnlyChangeHandler {
+
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;

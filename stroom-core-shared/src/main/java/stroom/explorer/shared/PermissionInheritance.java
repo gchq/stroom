@@ -19,7 +19,10 @@ package stroom.explorer.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum PermissionInheritance implements HasDisplayValue {
-    NONE("None"), SOURCE("Source"), DESTINATION("Destination"), COMBINED("Combined");
+    NONE("None"),
+    SOURCE("Source"),
+    DESTINATION("Destination"),
+    COMBINED("Combined");
 
     private final String displayValue;
 

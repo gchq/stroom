@@ -24,5 +24,6 @@ import stroom.script.shared.ScriptDoc;
 import java.util.List;
 
 public interface ScriptStore extends DocumentStore<ScriptDoc> {
+
     List<DocRef> list();
 }

@@ -16,18 +16,29 @@
 
 package stroom.kafka.shared;
 
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.HasData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
-import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "data"})
 @JsonInclude(Include.NON_EMPTY)
 public class KafkaConfigDoc extends Doc implements HasData {
 
@@ -50,15 +61,15 @@ public class KafkaConfigDoc extends Doc implements HasData {
 
     @JsonCreator
     public KafkaConfigDoc(@JsonProperty("type") final String type,
-                         @JsonProperty("uuid") final String uuid,
-                         @JsonProperty("name") final String name,
-                         @JsonProperty("version") final String version,
-                         @JsonProperty("createTime") final Long createTime,
-                         @JsonProperty("updateTime") final Long updateTime,
-                         @JsonProperty("createUser") final String createUser,
-                         @JsonProperty("updateUser") final String updateUser,
-                         @JsonProperty("description") final String description,
-                         @JsonProperty("data") final String data) {
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTime") final Long createTime,
+                          @JsonProperty("updateTime") final Long updateTime,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser,
+                          @JsonProperty("description") final String description,
+                          @JsonProperty("data") final String data) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.data = data;
@@ -83,11 +94,18 @@ public class KafkaConfigDoc extends Doc implements HasData {
         this.data = data;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final KafkaConfigDoc other = (KafkaConfigDoc) o;
         return Objects.equals(description, other.description) &&
                 Objects.equals(data, other.data);

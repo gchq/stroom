@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class AccountMaintenanceTask {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountMaintenanceTask.class);
 
     private final PasswordPolicyConfig passwordPolicyConfig;

@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemPrefixUtil {
+
     @Test
     void testPadId() {
         assertThat(FsPrefixUtil.padId(null)).isEqualTo("000");
@@ -43,15 +44,34 @@ class TestFileSystemPrefixUtil {
     @Test
     void testAppendBuildIdPath() {
         final Path root = Paths.get("");
-        assertThat(FsPrefixUtil.appendIdPath(root, "000000")).isEqualTo(root.resolve("000"));
-        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1L))).isEqualTo(root);
-        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1000L))).isEqualTo(root.resolve("001"));
-        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(9999L))).isEqualTo(root.resolve("009"));
-        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1000000L))).isEqualTo(root.resolve("001").resolve("000"));
-        assertThat(FsPrefixUtil.appendIdPath(root, 0)).isEqualTo(root);
-        assertThat(FsPrefixUtil.appendIdPath(root, 1L)).isEqualTo(root);
-        assertThat(FsPrefixUtil.appendIdPath(root, 1000L)).isEqualTo(root.resolve("001"));
-        assertThat(FsPrefixUtil.appendIdPath(root, 9999L)).isEqualTo(root.resolve("009"));
-        assertThat(FsPrefixUtil.appendIdPath(root, 1000000L)).isEqualTo(root.resolve("001").resolve("000"));
+        assertThat(FsPrefixUtil.appendIdPath(root, "000000"))
+                .isEqualTo(root.resolve("000"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1L)))
+                .isEqualTo(root);
+
+        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1000L)))
+                .isEqualTo(root.resolve("001"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(9999L)))
+                .isEqualTo(root.resolve("009"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, FsPrefixUtil.padId(1000000L)))
+                .isEqualTo(root.resolve("001").resolve("000"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, 0))
+                .isEqualTo(root);
+
+        assertThat(FsPrefixUtil.appendIdPath(root, 1L))
+                .isEqualTo(root);
+
+        assertThat(FsPrefixUtil.appendIdPath(root, 1000L))
+                .isEqualTo(root.resolve("001"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, 9999L))
+                .isEqualTo(root.resolve("009"));
+
+        assertThat(FsPrefixUtil.appendIdPath(root, 1000000L))
+                .isEqualTo(root.resolve("001").resolve("000"));
     }
 }

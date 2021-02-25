@@ -16,12 +16,14 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceValidatorImpl.class);
 
     @Override
@@ -40,8 +42,10 @@ class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
             return false;
         } else if (!statisticsDataSource.isEnabled()) {
             LOGGER.warn(
-                    "The StatisticDataSource with name {}, and type {} is not enabled, so no statistics will be recorded for it.",
-                    statisticName, statisticsDataSource.getStatisticType().toString());
+                    "The StatisticDataSource with name {}, and type {} is not enabled, so no statistics will be " +
+                            "recorded for it.",
+                    statisticName,
+                    statisticsDataSource.getStatisticType().toString());
             return false;
         }
 

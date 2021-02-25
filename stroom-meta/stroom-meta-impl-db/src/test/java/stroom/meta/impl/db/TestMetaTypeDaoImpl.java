@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaTypeDaoImpl {
+
     @Inject
     private Cleanup cleanup;
     @Inject

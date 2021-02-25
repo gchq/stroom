@@ -20,10 +20,11 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.util.shared.TextRange;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.TextRange;
 
 public class ElementMonitor {
+
     private final String elementId;
     private final PipelineElementType elementType;
     private final Element element;

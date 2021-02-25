@@ -17,6 +17,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.hadoopcommonshaded.org.apache.commons.collections.map.HashedMap;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -27,7 +28,6 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -43,7 +43,6 @@ import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -54,6 +53,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -172,7 +172,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private int valueCount = 0;
 
     private enum ValueElementType {
-        XML, STRING
+        XML,
+        STRING
     }
 
     @Inject
@@ -463,7 +464,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         contentBuffer.clear();
 
         // Manually call endPrefixMapping for those prefixes we added
-        final List<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(level, Collections.emptyList());
+        final List<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(level,
+                Collections.emptyList());
         for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
             fastInfosetEndPrefixMapping(manuallyAddedPrefix);
         }
@@ -518,7 +520,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
             }
         } catch (final BufferOverflowException boe) {
-            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer", key, mapName, boe);
+            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
+                    key,
+                    mapName,
+                    boe);
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {

@@ -11,6 +11,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class PasswordValidationResponse {
+
     @JsonProperty
     private final PasswordValidationFailureType[] failedOn;
 
@@ -24,6 +25,7 @@ public class PasswordValidationResponse {
     }
 
     public static final class PasswordValidationResponseBuilder {
+
         private final List<PasswordValidationFailureType> failedOn = new ArrayList<>();
 
         public PasswordValidationResponseBuilder withFailedOn(PasswordValidationFailureType... failedOn) {

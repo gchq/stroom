@@ -17,6 +17,7 @@
 package stroom.importexport.migration;
 
 public abstract class NamedEntity extends AuditedEntity {
+
     private String name;
 
     public String getName() {

@@ -17,6 +17,7 @@
 package stroom.query.client;
 
 public abstract class Item {
+
     private boolean enabled = true;
 
     public boolean isEnabled() {

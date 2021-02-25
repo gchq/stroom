@@ -58,6 +58,7 @@ import static org.assertj.core.api.Assertions.within;
  * Unit test class for <code>XMLTransformer</code>.
  */
 class TestStatisticsFilter implements Statistics {
+
     private static final String INPUT_DIR = "TestStatisticsFilter/";
     private static final String STAT_NAME = "myStatName";
     private static final double JUNIT_DOUBLE_TOLERANCE = 0.001;
@@ -114,50 +115,79 @@ class TestStatisticsFilter implements Statistics {
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        assertThat(testEvents.size()).as("Expecting 2 events").isEqualTo(2);
+        assertThat(testEvents.size())
+                .as("Expecting 2 events")
+                .isEqualTo(2);
 
-        assertThat(testEvents.get(0).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
-        assertThat(testEvents.get(0).getName()).isEqualTo(STAT_NAME);
-        assertThat(testEvents.get(0).getTagList().size()).isEqualTo(2);
-        assertThat(testEvents.get(0).getTagList().get(0).getTag()).isEqualTo("tag1name");
-        assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
-        assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
-        assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
-        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getTimeMs())
+                .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
+        assertThat(testEvents.get(0).getName())
+                .isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(0).getTagList().size())
+                .isEqualTo(2);
+        assertThat(testEvents.get(0).getTagList().get(0).getTag())
+                .isEqualTo("tag1name");
+        assertThat(testEvents.get(0).getTagList().get(0).getValue())
+                .isEqualTo("1tag1value");
+        assertThat(testEvents.get(0).getTagList().get(1).getTag())
+                .isEqualTo("tag2name");
+        assertThat(testEvents.get(0).getTagList().get(1).getValue())
+                .isEqualTo("1tag2value");
+        assertThat(testEvents.get(0).getCount())
+                .isEqualTo(1L);
         assertThatThrownBy(() -> testEvents.get(0)
                 .getValue()).isInstanceOf(RuntimeException.class);
 
-        assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
-        assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
-        assertThat(testEvents.get(1).getTagList().size()).isEqualTo(2);
-        assertThat(testEvents.get(1).getTagList().get(0).getTag()).isEqualTo("tag1name");
-        assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
-        assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
-        assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
-        assertThat(testEvents.get(1).getCount()).isEqualTo(1L);
+        assertThat(testEvents.get(1).getTimeMs())
+                .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
+        assertThat(testEvents.get(1).getName())
+                .isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(1).getTagList().size())
+                .isEqualTo(2);
+        assertThat(testEvents.get(1).getTagList().get(0).getTag())
+                .isEqualTo("tag1name");
+        assertThat(testEvents.get(1).getTagList().get(0).getValue())
+                .isEqualTo("2tag1value");
+        assertThat(testEvents.get(1).getTagList().get(1).getTag())
+                .isEqualTo("tag2name");
+        assertThat(testEvents.get(1).getTagList().get(1).getValue())
+                .isEqualTo("2tag2value");
+        assertThat(testEvents.get(1).getCount())
+                .isEqualTo(1L);
         assertThatThrownBy(() -> testEvents.get(1)
                 .getValue()).isInstanceOf(RuntimeException.class);
         // assertThat(testEvents.get(1).getCount()).isNull();
-        // assertThat(testEvents.get(1).getValue().longValue()).isEqualTo(1L);
+        // assertThat(testEvents.get(1).getValue().longValue())
+        // .isEqualTo(1L);
 
         // <statistic time="2000-01-03T00:00:00.000Z" name="3oldstyle"
         // increment="1" precision="3600"/>
         // assertThat(// testEvents.get(2)
-        // .getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-03T00:00:00.000Z"));
-        // assertThat(testEvents.get(2).getName()).isEqualTo("3oldstyle");
-        // assertThat(testEvents.get(2).getPrecisionMs()).isEqualTo(3600L);
-        // assertThat(testEvents.get(2).getTagList().size()).isEqualTo(0);
-        // assertThat(testEvents.get(2).getCount().longValue()).isEqualTo(2L);
+        // .getTimeMs())
+        // .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-03T00:00:00.000Z"));
+        // assertThat(testEvents.get(2).getName())
+        // .isEqualTo("3oldstyle");
+        // assertThat(testEvents.get(2).getPrecisionMs())
+        // .isEqualTo(3600L);
+        // assertThat(testEvents.get(2).getTagList().size())
+        // .isEqualTo(0);
+        // assertThat(testEvents.get(2).getCount().longValue())
+        // .isEqualTo(2L);
         // assertThat(testEvents.get(2).getValue()).isNull();
 
         // <statistic time="2000-01-04T00:00:00.000Z" name="3oldstyle"
         // precision="14400000"/>
         // assertThat(// testEvents.get(3)
-        // .getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-04T00:00:00.000Z"));
-        // assertThat(testEvents.get(3).getName()).isEqualTo("4oldstyle");
-        // assertThat(testEvents.get(3).getPrecisionMs()).isEqualTo(14400000L);
-        // assertThat(testEvents.get(3).getTagList().size()).isEqualTo(0);
-        // assertThat(testEvents.get(3).getCount().longValue()).isEqualTo(1L);
+        // .getTimeMs())
+        // .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-04T00:00:00.000Z"));
+        // assertThat(testEvents.get(3).getName())
+        // .isEqualTo("4oldstyle");
+        // assertThat(testEvents.get(3).getPrecisionMs())
+        // .isEqualTo(14400000L);
+        // assertThat(testEvents.get(3).getTagList().size())
+        // .isEqualTo(0);
+        // assertThat(testEvents.get(3).getCount().longValue())
+        // .isEqualTo(1L);
         // assertThat(testEvents.get(3).getValue()).isNull();
 
     }
@@ -190,26 +220,42 @@ class TestStatisticsFilter implements Statistics {
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        assertThat(testEvents.size()).as("Expecting 2 events").isEqualTo(2);
+        assertThat(testEvents.size())
+                .as("Expecting 2 events")
+                .isEqualTo(2);
 
-        assertThat(testEvents.get(0).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
-        assertThat(testEvents.get(0).getName()).isEqualTo(STAT_NAME);
-        assertThat(testEvents.get(0).getTagList().size()).isEqualTo(2);
-        assertThat(testEvents.get(0).getTagList().get(0).getTag()).isEqualTo("tag1name");
-        assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
-        assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
-        assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
+        assertThat(testEvents.get(0).getTimeMs())
+                .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
+        assertThat(testEvents.get(0).getName())
+                .isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(0).getTagList().size())
+                .isEqualTo(2);
+        assertThat(testEvents.get(0).getTagList().get(0).getTag())
+                .isEqualTo("tag1name");
+        assertThat(testEvents.get(0).getTagList().get(0).getValue())
+                .isEqualTo("1tag1value");
+        assertThat(testEvents.get(0).getTagList().get(1).getTag())
+                .isEqualTo("tag2name");
+        assertThat(testEvents.get(0).getTagList().get(1).getValue())
+                .isEqualTo("1tag2value");
         assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
 
-        assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
-        assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
-        assertThat(testEvents.get(1).getTagList().size()).isEqualTo(2);
-        assertThat(testEvents.get(1).getTagList().get(0).getTag()).isEqualTo("tag1name");
-        assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
-        assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
-        assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
+        assertThat(testEvents.get(1).getTimeMs())
+                .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
+        assertThat(testEvents.get(1).getName())
+                .isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(1).getTagList().size())
+                .isEqualTo(2);
+        assertThat(testEvents.get(1).getTagList().get(0).getTag())
+                .isEqualTo("tag1name");
+        assertThat(testEvents.get(1).getTagList().get(0).getValue())
+                .isEqualTo("2tag1value");
+        assertThat(testEvents.get(1).getTagList().get(1).getTag())
+                .isEqualTo("tag2name");
+        assertThat(testEvents.get(1).getTagList().get(1).getValue())
+                .isEqualTo("2tag2value");
         assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
@@ -273,9 +319,12 @@ class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
+        assertThat(testEvents.size())
+                .as("Expecting 1 event")
+                .isEqualTo(1);
 
-        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getCount())
+                .isEqualTo(1L);
     }
 
     @Test
@@ -396,9 +445,12 @@ class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
+        assertThat(testEvents.size())
+                .as("Expecting 1 event")
+                .isEqualTo(1);
 
-        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getCount())
+                .isEqualTo(1L);
     }
 
     @Test
@@ -428,7 +480,9 @@ class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        assertThat(testEvents.size()).as("Expecting 0 event").isEqualTo(0);
+        assertThat(testEvents.size())
+                .as("Expecting 0 event")
+                .isEqualTo(0);
     }
 
     private String getString(final String resourceName) {

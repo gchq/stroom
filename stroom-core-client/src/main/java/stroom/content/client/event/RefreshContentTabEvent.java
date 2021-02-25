@@ -16,12 +16,14 @@
 
 package stroom.content.client.event;
 
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class RefreshContentTabEvent extends GwtEvent<RefreshContentTabEvent.RefreshContentTabHandler> {
+
     private static Type<RefreshContentTabHandler> TYPE;
     private final TabData tabData;
 
@@ -55,6 +57,7 @@ public class RefreshContentTabEvent extends GwtEvent<RefreshContentTabEvent.Refr
     }
 
     public interface RefreshContentTabHandler extends EventHandler {
+
         void onRefresh(RefreshContentTabEvent event);
     }
 }

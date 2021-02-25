@@ -19,6 +19,7 @@ package stroom.security.api;
 import java.util.function.Supplier;
 
 public interface SecurityContext {
+
     /**
      * Get the id of the user associated with this security context.
      *

@@ -17,12 +17,6 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
@@ -31,8 +25,16 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConve
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class TextConverterSettingsPresenter
         extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverterDoc> {
+
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
         super(eventBus, view);
@@ -74,6 +76,7 @@ public class TextConverterSettingsPresenter
     }
 
     public interface TextConverterSettingsView extends View {
+
         TextArea getDescription();
 
         ItemListBox<TextConverterDoc.TextConverterType> getConverterType();

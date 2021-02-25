@@ -1,6 +1,7 @@
 package stroom.util.shared;
 
 public interface HasAuditInfo {
+
     Long getCreateTimeMs();
 
     void setCreateTimeMs(Long createTimeMs);

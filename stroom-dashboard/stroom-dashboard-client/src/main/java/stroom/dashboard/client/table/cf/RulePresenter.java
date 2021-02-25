@@ -20,7 +20,6 @@ package stroom.dashboard.client.table.cf;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.util.shared.RandomId;
 
 import com.google.inject.Inject;
@@ -31,6 +30,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
+
     private final EditExpressionPresenter editExpressionPresenter;
     private ConditionalFormattingRule originalRule;
 
@@ -79,6 +79,7 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
     }
 
     public interface RuleView extends View {
+
         void setExpressionView(View view);
 
         boolean isHide();

@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteDataSourceProvider.class);
 
     private static final String DATA_SOURCE_ENDPOINT = "/dataSource";
@@ -95,7 +96,10 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
             ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
-            final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+
+            final Response response = LOGGER.logDurationIfTraceEnabled(() ->
+                            invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON)),
+                    "Received response");
 
             switch (response.getStatus()) {
                 case (HttpServletResponse.SC_OK):

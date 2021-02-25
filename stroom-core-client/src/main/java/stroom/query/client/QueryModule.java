@@ -16,10 +16,12 @@
 
 package stroom.query.client;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public class QueryModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bindPresenterWidget(ExpressionTreePresenter.class, ExpressionTreeView.class, ExpressionTreeViewImpl.class);

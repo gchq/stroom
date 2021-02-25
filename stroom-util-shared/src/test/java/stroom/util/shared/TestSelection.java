@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSelection {
+
     @Test
     void testSimple() {
         final Selection<Integer> selection = Selection.selectAll();

@@ -1,5 +1,8 @@
 package stroom.servicediscovery.impl;
 
+import stroom.servicediscovery.api.ExternalService;
+import stroom.servicediscovery.api.ServiceDiscoverer;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import io.vavr.Tuple2;
@@ -8,11 +11,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.servicediscovery.api.ExternalService;
-import stroom.servicediscovery.api.ServiceDiscoverer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,10 +21,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
-    private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
 
@@ -104,7 +106,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public Result getHealth() {
-        if(serviceDiscoveryConfig.isEnabled()) {
+        if (serviceDiscoveryConfig.isEnabled()) {
             if (serviceProviders.isEmpty()) {
                 return HealthCheck.Result.unhealthy("No service providers found");
             } else {
@@ -118,7 +120,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                                             entry.getKey().getVersionedServiceName()), e);
                                 }
                             })
-                            .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                            .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(),
+                                    serviceInstance.buildUriSpec()))
                             .collect(Collectors.groupingBy(
                                     Tuple2::_1,
                                     TreeMap::new,
@@ -148,8 +151,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                             e.getCause().getMessage());
                 }
             }
-        }
-        else {
+        } else {
+
             return HealthCheck.Result.healthy("Service discovery is disabled");
         }
     }

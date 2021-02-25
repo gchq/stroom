@@ -26,6 +26,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
         implements Copyable<FindDocumentEntityCriteria> {
+
     @JsonProperty
     private String requiredPermission;
 
@@ -38,7 +39,7 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
 
     @JsonCreator
     public FindDocumentEntityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                      @JsonProperty("sortList") final List<Sort> sortList,
+                                      @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                       @JsonProperty("name") final StringCriteria name,
                                       @JsonProperty("requiredPermission") final String requiredPermission) {
         super(pageRequest, sortList, name);
@@ -60,6 +61,7 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
         return builder.toHashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

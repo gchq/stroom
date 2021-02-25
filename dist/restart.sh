@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Restarts Stroom
+# Restarts Stroom (Proxy)
 
 echo_usage() {
-  echo -e "${GREEN}This script restarts Stroom${NC}"
+  echo -e "${GREEN}This script restarts ${APP_NAME}${NC}"
   echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
   echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
   echo -e " -f:   ${GREEN}Forces an immediate shutdown by issuing a SIGKILL${NC}"
@@ -17,9 +17,9 @@ invalid_arguments() {
 }
 
 main() {
-
-  source stop.sh "${stop_args[@]}"
-  source start.sh "${start_args[@]}"
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null && pwd )"
 
   local start_args=()
   local stop_args=()
@@ -47,6 +47,9 @@ main() {
   shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
   setup_colours
+
+  source "${script_dir}/stop.sh" "${stop_args[@]}"
+  source "${script_dir}/start.sh" "${start_args[@]}"
 }
 
 main "$@"

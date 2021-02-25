@@ -24,8 +24,6 @@ import stroom.util.io.StreamUtil;
 
 import com.google.common.collect.ImmutableMap;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
@@ -36,13 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Utility class to split out the query of the node status in a separate read
  * only transaction so it queries the slave node.
  */
 @Singleton
- class NodeStatusServiceUtil {
+class NodeStatusServiceUtil {
 
     private final NodeInfo nodeInfo;
     private final RecordCountService recordCountService;
@@ -52,8 +52,8 @@ import java.util.regex.Pattern;
     private CPUStats previousCPUStats;
 
     @Inject
-     NodeStatusServiceUtil(final NodeInfo nodeInfo,
-                                 final RecordCountService recordCountService) {
+    NodeStatusServiceUtil(final NodeInfo nodeInfo,
+                          final RecordCountService recordCountService) {
         this.nodeInfo = nodeInfo;
         this.recordCountService = recordCountService;
     }
@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
     /**
      * Read the stats from a line.
      */
-     CPUStats createLinuxStats(String lines) {
+    CPUStats createLinuxStats(String lines) {
         if (lines == null) {
             return null;
         }
@@ -135,19 +135,35 @@ import java.util.regex.Pattern;
             statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Used", heapUsed));
         }
         if (heapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Committed", heapComitted));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
+                    now,
+                    tags,
+                    "Heap Committed",
+                    heapComitted));
         }
         if (heapMax > 0) {
             statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Max", heapMax));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Used", nonHeapUsed));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
+                    now,
+                    tags,
+                    "Non Heap Used",
+                    nonHeapUsed));
         }
         if (nonHeapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Committed", nonHeapComitted));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
+                    now,
+                    tags,
+                    "Non Heap Committed",
+                    nonHeapComitted));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Max", nonHeapMax));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
+                    now,
+                    tags,
+                    "Non Heap Max",
+                    nonHeapMax));
         }
 
         // Get the current CPU stats.
@@ -164,14 +180,46 @@ import java.util.regex.Pattern;
                 final CPUStats diff = cpuStats.subtract(previousCPUStats);
                 final double inc = 1000D / diff.getTotal();
 
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Idle (%)", ((diff.idle * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "IO Wait (%)", ((diff.ioWait * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "User (%)", ((diff.user * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Irq (%)", ((diff.irq * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Soft Irq (%)", ((diff.softirq * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "System (%)", ((diff.system * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Nice (%)", ((diff.nice * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Total (%)", ((diff.getTotal() * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "Idle (%)",
+                        ((diff.idle * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "IO Wait (%)",
+                        ((diff.ioWait * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "User (%)",
+                        ((diff.user * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "Irq (%)",
+                        ((diff.irq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "Soft Irq (%)",
+                        ((diff.softirq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "System (%)",
+                        ((diff.system * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "Nice (%)",
+                        ((diff.nice * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU,
+                        now,
+                        tags,
+                        "Total (%)",
+                        ((diff.getTotal() * inc)) / 10F));
             }
 
             // Calculate the eps values.
@@ -181,8 +229,16 @@ import java.util.regex.Pattern;
                 final long readEps = (long) (read / duration);
                 final long writeEps = (long) (written / duration);
 
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND, now, tags, "Read", readEps));
-                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND, now, tags, "Write", writeEps));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND,
+                        now,
+                        tags,
+                        "Read",
+                        readEps));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND,
+                        now,
+                        tags,
+                        "Write",
+                        writeEps));
             }
         }
 
@@ -192,6 +248,7 @@ import java.util.regex.Pattern;
     }
 
     static class CPUStats {
+
         public Long user;
         public Long nice;
         public Long system;

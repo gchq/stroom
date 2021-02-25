@@ -16,10 +16,13 @@
 
 package stroom.util.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -29,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -37,11 +41,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 public final class FileUtil {
+
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileUtil.class);
 
     private FileUtil() {
         // Utility.
@@ -220,5 +226,57 @@ public final class FileUtil {
             resolved = System.getProperty("user.home") + resolved.substring(1);
         }
         return resolved;
+    }
+
+    /**
+     * Obtains a write lock on lockFilePath then runs the work. Creates lockFilePath
+     * if it doesn't exist. Will block if another thread/jvm holds a lock on the same
+     * file.
+     */
+    public static void doUnderFileLock(final Path lockFilePath, final Runnable work) {
+        final Instant start = Instant.now();
+        LOGGER.debug("Using lock file {}", lockFilePath.toAbsolutePath());
+
+        try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFilePath.toFile());
+                final FileChannel channel = fileOutputStream.getChannel()) {
+            channel.lock();
+
+            LOGGER.debug(() -> LogUtil.message("Waited {} for lock",
+                    Duration.between(start, Instant.now())));
+
+            // Do the work while under the lock
+            work.run();
+
+            LOGGER.debug("Work complete, releasing lock");
+        } catch (IOException e) {
+            throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
+        }
+    }
+
+    /**
+     * Obtains a write lock on lockFilePath then runs the work. Creates lockFilePath
+     * if it doesn't exist. Will block if another thread/jvm holds a lock on the same
+     * file.
+     */
+    public static <T> T getUnderFileLock(final Path lockFilePath, final Supplier<T> work) {
+
+        final Instant start = Instant.now();
+        LOGGER.debug("Using lock file {}", lockFilePath.toAbsolutePath());
+
+        try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFilePath.toFile());
+                final FileChannel channel = fileOutputStream.getChannel()) {
+            channel.lock();
+
+            LOGGER.debug(() -> LogUtil.message("Waited {} for lock",
+                    Duration.between(start, Instant.now())));
+
+            // Do the work while under the lock
+            T result = work.get();
+
+            LOGGER.debug("Work complete, releasing lock");
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
+        }
     }
 }

@@ -33,6 +33,7 @@ import java.util.Arrays;
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
+
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";

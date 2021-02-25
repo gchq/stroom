@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class AsyncSearchTask {
+
     private final QueryKey key;
     private final String searchName;
     private final Query query;
@@ -33,7 +34,7 @@ public class AsyncSearchTask {
     private final String dateTimeLocale;
     private final long now;
 
-    private volatile transient ClusterSearchResultCollector resultCollector;
+    private transient volatile ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final QueryKey key,
                            final String searchName,

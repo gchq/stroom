@@ -63,7 +63,8 @@ import java.util.UUID;
 public class DataRetentionImpactPresenter
         extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>> {
 
-    private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
+    private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE =
+            GWT.create(DataRetentionRulesResource.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
 
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
@@ -225,20 +226,19 @@ public class DataRetentionImpactPresenter
         // or it is toggled from nest/flat
         final List<DataRetentionImpactRow> rows = Optional.ofNullable(this.sourceData)
                 .map(summaries -> {
-                            if (isTableNested) {
-                                return DataRetentionImpactRow.buildNestedTable(
-                                        dataRetentionRules.getActiveRules(),
-                                        summaries,
-                                        treeAction,
-                                        criteria);
-                            } else {
-                                return DataRetentionImpactRow.buildFlatTable(
-                                        dataRetentionRules.getActiveRules(),
-                                        summaries,
-                                        criteria);
-                            }
-                        }
-                )
+                    if (isTableNested) {
+                        return DataRetentionImpactRow.buildNestedTable(
+                                dataRetentionRules.getActiveRules(),
+                                summaries,
+                                treeAction,
+                                criteria);
+                    } else {
+                        return DataRetentionImpactRow.buildFlatTable(
+                                dataRetentionRules.getActiveRules(),
+                                summaries,
+                                criteria);
+                    }
+                })
                 .orElse(Collections.emptyList());
         dataProvider.setCompleteList(rows);
 //        rows.forEach(row -> GWT.log(row.toString()));
@@ -347,6 +347,8 @@ public class DataRetentionImpactPresenter
                     case 1:
                         countCellText.appendHtmlConstant(singleIndent);
                         break;
+                    default:
+                        throw new RuntimeException("Not expecting depth > 1, depth: " + row.getExpander().getDepth());
                 }
             }
             return countCellText.toSafeHtml();
@@ -365,7 +367,7 @@ public class DataRetentionImpactPresenter
                 36); // Need space for three expander levels
 
         getView().addResizableColumn(
-                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),
@@ -387,7 +389,7 @@ public class DataRetentionImpactPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_META_TYPE,

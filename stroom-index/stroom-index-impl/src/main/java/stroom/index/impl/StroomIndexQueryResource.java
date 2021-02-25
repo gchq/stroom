@@ -16,9 +16,6 @@
 
 package stroom.index.impl;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -27,13 +24,17 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroom-index query - /v2")
+@Tag(name = "Stroom-Index Queries")
 @Path("/stroom-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,22 +42,22 @@ public interface StroomIndexQueryResource extends RestResource {
 
     @POST
     @Path("/dataSource")
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
-    DataSource getDataSource(@ApiParam("DocRef") DocRef docRef);
+    @Operation(
+            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            operationId = "getStroomIndexDataSource")
+    DataSource getDataSource(@Parameter(description = "DocRef", required = true) DocRef docRef);
 
     @POST
     @Path("/search")
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
-    SearchResponse search(@ApiParam("SearchRequest") SearchRequest request);
+    @Operation(
+            summary = "Submit a search request",
+            operationId = "searchStroomIndex")
+    SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
     @Path("/destroy")
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
-    Boolean destroy(@ApiParam("QueryKey") QueryKey queryKey);
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "destroyStroomIndex")
+    Boolean destroy(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 }

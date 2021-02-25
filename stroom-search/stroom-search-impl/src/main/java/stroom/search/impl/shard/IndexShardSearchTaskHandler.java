@@ -39,14 +39,15 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.inject.Inject;
 
 public class IndexShardSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
     private final IndexShardWriterCache indexShardWriterCache;
@@ -76,8 +77,9 @@ public class IndexShardSearchTaskHandler {
 
                     try {
                         if (!Thread.currentThread().isInterrupted()) {
-                            taskContext.info(() -> "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
-                                    + task.getIndexShardId() + ")");
+                            taskContext.info(() ->
+                                    "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() +
+                                            " (id=" + task.getIndexShardId() + ")");
 
 
                             final IndexWriter indexWriter = getWriter(indexShardId);
@@ -118,7 +120,9 @@ public class IndexShardSearchTaskHandler {
         return indexWriter;
     }
 
-    private void searchShard(final TaskContext parentTaskContext, final IndexShardSearchTask task, final IndexShardSearcher indexShardSearcher) {
+    private void searchShard(final TaskContext parentTaskContext,
+                             final IndexShardSearchTask task,
+                             final IndexShardSearcher indexShardSearcher) {
         // Get the index shard that this searcher uses.
         final IndexShard indexShard = indexShardSearcher.getIndexShard();
         // Get the Lucene version being used.
@@ -133,31 +137,35 @@ public class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext, docIdStore, task.getHitCount());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext,
+                    docIdStore,
+                    task.getHitCount());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.context(parentTaskContext, "Index Searcher", taskContext ->
-                            LOGGER.logDurationIfDebugEnabled(
-                                    () -> {
-                                        try {
-                                            searcher.search(query, collector);
-                                        } catch (final IOException e) {
-                                            error(task, e.getMessage(), e);
-                                        }
+                    final Runnable runnable = taskContextFactory.context(parentTaskContext,
+                            "Index Searcher",
+                            taskContext ->
+                                    LOGGER.logDurationIfDebugEnabled(
+                                            () -> {
+                                                try {
+                                                    searcher.search(query, collector);
+                                                } catch (final IOException e) {
+                                                    error(task, e.getMessage(), e);
+                                                }
 
-                                        try {
-                                            docIdStore.put(OptionalInt.empty());
-                                        } catch (final InterruptedException e) {
-                                            error(task, e.getMessage(), e);
+                                                try {
+                                                    docIdStore.put(OptionalInt.empty());
+                                                } catch (final InterruptedException e) {
+                                                    error(task, e.getMessage(), e);
 
-                                            // Continue to interrupt this thread.
-                                            Thread.currentThread().interrupt();
-                                        }
-                                    },
-                                    () -> "searcher.search()"));
+                                                    // Continue to interrupt this thread.
+                                                    Thread.currentThread().interrupt();
+                                                }
+                                            },
+                                            () -> "searcher.search()"));
                     CompletableFuture.runAsync(runnable, executor);
 
                     // Start converting found docIds into stored data values

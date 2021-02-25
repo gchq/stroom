@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ExcelTarget implements SearchResultWriter.Target {
+
     // Excel cannot store more than 32767 characters in a cell so we must truncate some values.
     private static final int EXCEL_MAX_CELL_CHARACTERS = 32767;
     private static final int TRUNCATED_LENGTH = EXCEL_MAX_CELL_CHARACTERS - 3;
@@ -54,7 +55,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private int rowNum = 0;
 
     private CellStyle headingStyle;
-    private Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
+    private final Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
 
     public ExcelTarget(final OutputStream outputStream) {
         this.outputStream = outputStream;
@@ -220,7 +221,8 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         } else {
                             sb.append("#");
                         }
-                        if (numberFormatSettings.getDecimalPlaces() != null && numberFormatSettings.getDecimalPlaces() > 0) {
+                        if (numberFormatSettings.getDecimalPlaces() != null
+                                && numberFormatSettings.getDecimalPlaces() > 0) {
                             sb.append(".");
                             for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
                                 sb.append("0");

@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.presenter;
 
 public class PopupSize {
+
     private static final int DEFAULT_MIN_WIDTH = 235;
     private static final int DEFAULT_MIN_HEIGHT = 160;
 

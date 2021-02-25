@@ -16,9 +16,11 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
 import stroom.pipeline.shared.stepping.StepLocation;
 
+import com.gwtplatform.mvp.client.UiHandlers;
+
 public interface StepLocationUIHandlers extends UiHandlers {
+
     void changeLocation(StepLocation stepLocation);
 }

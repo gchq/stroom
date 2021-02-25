@@ -16,19 +16,31 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.HasData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
-import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "data"})
 @JsonInclude(Include.NON_NULL)
 public class XsltDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "XSLT";
 
     @JsonProperty
@@ -73,11 +85,18 @@ public class XsltDoc extends Doc implements HasData {
         this.data = data;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final XsltDoc xsltDoc = (XsltDoc) o;
         return Objects.equals(description, xsltDoc.description) &&
                 Objects.equals(data, xsltDoc.data);

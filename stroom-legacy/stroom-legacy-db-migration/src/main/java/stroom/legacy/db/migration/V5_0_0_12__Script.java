@@ -34,6 +34,7 @@ import java.util.Map;
 
 @Deprecated
 public class V5_0_0_12__Script extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_12__Script.class);
 
     @Override
@@ -49,7 +50,8 @@ public class V5_0_0_12__Script extends BaseJavaMigration {
         try (final Statement statement = connection.createStatement()) {
             // Create a map of document references.
             final Map<Long, DocRefs> map = new HashMap<>();
-            try (final ResultSet resultSet = statement.executeQuery("SELECT s.ID, d.UUID, d.NAME FROM SCRIPT s JOIN SCRIPT_DEP sd ON (s.ID = sd.FK_SCRIPT_ID) JOIN SCRIPT d ON (d.ID = sd.DEP_FK_SCRIPT_ID);")) {
+            try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT s.ID, d.UUID, d.NAME FROM SCRIPT s JOIN SCRIPT_DEP sd ON (s.ID = sd.FK_SCRIPT_ID) JOIN SCRIPT d ON (d.ID = sd.DEP_FK_SCRIPT_ID);")) {
                 while (resultSet.next()) {
                     final long id = resultSet.getLong(1);
                     final String uuid = resultSet.getString(2);
@@ -68,7 +70,8 @@ public class V5_0_0_12__Script extends BaseJavaMigration {
             final ObjectMarshaller<DocRefs> objectMarshaller = new ObjectMarshaller<>(DocRefs.class);
             for (final Map.Entry<Long, DocRefs> entry : map.entrySet()) {
                 final String xml = objectMarshaller.marshal(entry.getValue());
-                try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE SCRIPT SET DEP = ? WHERE ID = ?")) {
+                try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                        "UPDATE SCRIPT SET DEP = ? WHERE ID = ?")) {
                     preparedStatement.setString(1, xml);
                     preparedStatement.setLong(2, entry.getKey());
                     preparedStatement.executeUpdate();

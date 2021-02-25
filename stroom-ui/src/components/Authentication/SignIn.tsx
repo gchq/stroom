@@ -19,13 +19,14 @@ import { NavLink } from "react-router-dom";
 import { Formik, FormikProps } from "formik";
 import { TextBoxFormField, PasswordFormField } from "components/FormField";
 import { Person, Lock } from "react-bootstrap-icons";
-import { useAuthenticationResource } from "./api";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
 import { Col, Form } from "react-bootstrap";
 import Button from "components/Button";
 import FormContainer from "../Layout/FormContainer";
+import { useStroomApi } from "lib/useStroomApi";
+import { LoginResponse } from "api/stroom";
 
 export interface FormValues {
   userId: string;
@@ -79,7 +80,7 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   authState,
   setAuthState,
 }) => {
-  const { login } = useAuthenticationResource();
+  const { execPromise } = useStroomApi();
   const { showError } = usePrompt();
   return (
     <Formik
@@ -91,24 +92,26 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
         password: Yup.string().required("Password is required"),
       })}
       onSubmit={(values, actions) => {
-        login(values).then((response) => {
-          if (!response) {
-            actions.setSubmitting(false);
-          } else if (response.loginSuccessful) {
-            setAuthState({
-              ...authState,
-              userId: values.userId,
-              currentPassword: values.password,
-              showInitialChangePassword: response.requirePasswordChange,
-            });
-          } else {
-            actions.setSubmitting(false);
-            showError({
-              message: response.message,
-            });
-            // setLoginResultMessage(response.message);
-          }
-        });
+        execPromise((api) => api.authentication.login(values)).then(
+          (response: LoginResponse) => {
+            if (!response) {
+              actions.setSubmitting(false);
+            } else if (response.loginSuccessful) {
+              setAuthState({
+                ...authState,
+                userId: values.userId,
+                currentPassword: values.password,
+                showInitialChangePassword: response.requirePasswordChange,
+              });
+            } else {
+              actions.setSubmitting(false);
+              showError({
+                message: response.message,
+              });
+              // setLoginResultMessage(response.message);
+            }
+          },
+        );
         // login(values);
 
         // setTimeout(() => {

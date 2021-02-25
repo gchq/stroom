@@ -17,16 +17,18 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
+import stroom.explorer.shared.PermissionInheritance;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
-import stroom.docref.DocRef;
-import stroom.explorer.shared.PermissionInheritance;
 
 import java.util.function.Consumer;
 
 public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private final MyPresenter<?, ?> presenter;
@@ -57,7 +59,12 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
                             final DocRef destinationFolderRef,
                             final PermissionInheritance permissionInheritance,
                             final Consumer<DocRef> newDocConsumer) {
-        handlers.fireEvent(new CreateDocumentEvent(presenter, docType, docName, destinationFolderRef, permissionInheritance, newDocConsumer));
+        handlers.fireEvent(new CreateDocumentEvent(presenter,
+                docType,
+                docName,
+                destinationFolderRef,
+                permissionInheritance,
+                newDocConsumer));
     }
 
     public static Type<Handler> getType() {
@@ -102,6 +109,7 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onCreate(final CreateDocumentEvent event);
     }
 }

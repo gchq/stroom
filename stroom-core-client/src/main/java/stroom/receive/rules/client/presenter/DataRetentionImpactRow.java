@@ -28,12 +28,19 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_META_TYPE = "Stream Type";
     public static final String FIELD_NAME_DELETE_COUNT = "Stream Delete Count";
 
-    public static final Comparator<DataRetentionImpactRow> FEED_NAME_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getFeedName);
-    public static final Comparator<DataRetentionImpactRow> META_TYPE_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getMetaType);
-    public static final Comparator<DataRetentionImpactRow> COUNT_COMPARATOR = Comparator.comparingInt(DataRetentionImpactRow::getCount);
-    public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = Comparator.comparingInt(DataRetentionImpactRow::getRuleNumber);
-    public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getRuleName);
-    public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR = Comparator.comparingLong(row -> timeUnitToMillis(row.ruleAge, row.timeUnit));
+    public static final Comparator<DataRetentionImpactRow> FEED_NAME_COMPARATOR = Comparator.comparing(
+            DataRetentionImpactRow::getFeedName);
+    public static final Comparator<DataRetentionImpactRow> META_TYPE_COMPARATOR = Comparator.comparing(
+            DataRetentionImpactRow::getMetaType);
+    public static final Comparator<DataRetentionImpactRow> COUNT_COMPARATOR = Comparator.comparingInt(
+            DataRetentionImpactRow::getCount);
+    public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = Comparator.comparingInt(
+            DataRetentionImpactRow::getRuleNumber);
+    public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = Comparator.comparing(
+            DataRetentionImpactRow::getRuleName);
+    public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR =
+            Comparator.comparingLong(row ->
+                    timeUnitToMillis(row.ruleAge, row.timeUnit));
 
     public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
 
@@ -242,10 +249,11 @@ public class DataRetentionImpactRow {
                         // probably relatively small (in the 1000s), and the DB query is potentially VERY slow
 
                         // Sub-group the data by meta type
-                        final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType = summariesForRule.stream()
-                                .collect(Collectors.groupingBy(
-                                        DataRetentionDeleteSummary::getMetaType,
-                                        Collectors.toSet()));
+                        final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType =
+                                summariesForRule.stream()
+                                        .collect(Collectors.groupingBy(
+                                                DataRetentionDeleteSummary::getMetaType,
+                                                Collectors.toSet()));
 
                         summariesByRuleAndType.keySet().stream()
                                 .map(metaType ->
@@ -262,9 +270,11 @@ public class DataRetentionImpactRow {
                                 .forEach(metaTypeRow -> {
                                     rows.add(metaTypeRow);
 
-                                    final Set<DataRetentionDeleteSummary> summariesForRuleAndType = summariesByRuleAndType.get(metaTypeRow.getMetaType());
+                                    final Set<DataRetentionDeleteSummary> summariesForRuleAndType =
+                                            summariesByRuleAndType.get(metaTypeRow.getMetaType());
 
-                                    if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
+                                    if (isExpanded(treeAction, metaTypeRow, 1)
+                                            && summariesForRuleAndType != null) {
 
                                         Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
                                                 criteria,
@@ -338,8 +348,12 @@ public class DataRetentionImpactRow {
                 rule.getRuleNumber(),
                 rule.getName(),
                 rule.getAgeString(),
-                rule.isForever() ? 1000 : rule.getAge(),
-                rule.isForever() ? TimeUnit.YEARS : rule.getTimeUnit(),
+                rule.isForever()
+                        ? 1000
+                        : rule.getAge(),
+                rule.isForever()
+                        ? TimeUnit.YEARS
+                        : rule.getTimeUnit(),
                 null,
                 null,
                 totalCount);
@@ -440,10 +454,15 @@ public class DataRetentionImpactRow {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionImpactRow that = (DataRetentionImpactRow) o;
         return count == that.count &&
                 Objects.equals(rowKey, that.rowKey) &&

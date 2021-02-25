@@ -23,6 +23,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class RollUpBitMaskUtil {
+
     /**
      * Builds a {@link RollUpBitMask} object from a list of StatisticTags where
      * the tag's value is either a value or '*' (to mark a roll up). The passed

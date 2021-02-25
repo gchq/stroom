@@ -16,11 +16,13 @@
 
 package stroom.folder.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderRootPlugin;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface FolderGinjector {
+
     AsyncProvider<FolderRootPlugin> getFolderRootPlugin();
 
     AsyncProvider<FolderPlugin> getFolderPlugin();

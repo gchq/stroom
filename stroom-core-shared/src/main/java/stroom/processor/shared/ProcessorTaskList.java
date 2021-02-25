@@ -9,6 +9,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ProcessorTaskList {
+
     @JsonProperty
     private final String nodeName;
     @JsonProperty

@@ -26,6 +26,7 @@ import event.logging.OtherObject;
 import event.logging.util.EventLoggingUtil;
 
 class AnnotationEventInfoProvider implements ObjectInfoProvider {
+
     @Override
     public BaseObject createBaseObject(final Object obj) {
         if (obj instanceof AnnotationDetail) {

@@ -22,10 +22,10 @@ import {
   ChangePasswordFormValues,
 } from "./ChangePassword";
 import { FormikHelpers } from "formik/dist/types";
-import { ChangePasswordRequest } from "./api/types";
-import { useAuthenticationResource } from "./api";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import { usePasswordPolicy } from "./usePasswordPolicy";
+import { useStroomApi } from "lib/useStroomApi";
+import { ChangePasswordRequest, ChangePasswordResponse } from "api/stroom";
 
 export interface FormValues {
   userId: string;
@@ -42,8 +42,8 @@ const ChangePasswordManager: FunctionComponent<{
   });
 
   const passwordPolicyConfig = usePasswordPolicy();
-  const { changePassword } = useAuthenticationResource();
   const { showError } = usePrompt();
+  const { exec } = useStroomApi();
 
   if (!state || !state.currentPassword) {
     const onClose = (userId: string, password: string) => {
@@ -66,23 +66,26 @@ const ChangePasswordManager: FunctionComponent<{
         confirmNewPassword: values.confirmPassword,
       };
 
-      changePassword(request).then((response) => {
-        if (!response) {
-          actions.setSubmitting(false);
-        } else if (response.changeSucceeded) {
-          props.onClose();
-        } else {
-          actions.setSubmitting(false);
-          showError({
-            message: response.message,
-          });
-
-          // If the user is asked to sign in again then unset the auth state.
-          if (response.forceSignIn) {
+      exec(
+        (api) => api.authentication.changePassword(request),
+        (response: ChangePasswordResponse) => {
+          if (!response) {
+            actions.setSubmitting(false);
+          } else if (response.changeSucceeded) {
             props.onClose();
+          } else {
+            actions.setSubmitting(false);
+            showError({
+              message: response.message,
+            });
+
+            // If the user is asked to sign in again then unset the auth state.
+            if (response.forceSignIn) {
+              props.onClose();
+            }
           }
-        }
-      });
+        },
+      );
     };
 
     const onClose = () => {

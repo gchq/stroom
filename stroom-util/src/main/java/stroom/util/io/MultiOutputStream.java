@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class MultiOutputStream extends OutputStream {
+
     private final OutputStream[] outputStreams;
 
     public MultiOutputStream(final OutputStream[] outputStreams) {

@@ -10,6 +10,7 @@ import stroom.util.guice.GuiceUtil;
 import javax.sql.DataSource;
 
 public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig, AnnotationDbConnProvider> {
+
     private static final String MODULE = "stroom-annotation";
     private static final String FLYWAY_LOCATIONS = "stroom/annotation/impl/db/migration";
     private static final String FLYWAY_TABLE = "annotation_schema_history";
@@ -51,6 +52,7 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig,
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements AnnotationDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -29,13 +30,14 @@ import org.apache.solr.client.solrj.request.schema.SchemaRequest.FieldTypes;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.schema.SchemaResponse.FieldTypesResponse;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class SolrIndexResourceImpl implements SolrIndexResource {
+
     private final SolrIndexStore solrIndexStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -47,13 +49,23 @@ class SolrIndexResourceImpl implements SolrIndexResource {
     }
 
     @Override
-    public SolrIndexDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(solrIndexStore, docRef);
+    public SolrIndexDoc fetch(final String uuid) {
+        return documentResourceHelper.read(solrIndexStore, getDocRef(uuid));
     }
 
     @Override
-    public SolrIndexDoc update(final SolrIndexDoc doc) {
+    public SolrIndexDoc update(final String uuid, final SolrIndexDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(solrIndexStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(SolrIndexDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override
@@ -82,7 +94,8 @@ class SolrIndexResourceImpl implements SolrIndexResource {
         try {
             final SolrClient solrClient = new SolrClientFactory().create(
                     solrIndexDoc.getSolrConnectionConfig());
-//            final SolrPingResponse response = new SolrPing().process(solrClient, action.getSolrIndex().getCollection());
+//            final SolrPingResponse response = new SolrPing()
+//            .process(solrClient, action.getSolrIndex().getCollection());
             final SolrPingResponse response = solrClient.ping();
 
             final StringBuilder sb = new StringBuilder();

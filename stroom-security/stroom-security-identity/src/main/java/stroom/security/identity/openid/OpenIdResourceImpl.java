@@ -9,6 +9,7 @@ import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -19,19 +20,20 @@ import event.logging.ViewEventAction;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.RedirectionException;
-import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.RedirectionException;
+import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 Add audit logging
 class OpenIdResourceImpl implements OpenIdResource {
+
     private final OpenIdService service;
     private final JwkCache jwkCache;
     private final JwkEventLog jwkEventLog;
@@ -54,6 +56,7 @@ class OpenIdResourceImpl implements OpenIdResource {
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
+    @Timed
     @Override
     public void auth(final HttpServletRequest request,
                      final String scope,
@@ -75,11 +78,13 @@ class OpenIdResourceImpl implements OpenIdResource {
         throw new RedirectionException(Status.SEE_OTHER, result);
     }
 
+    @Timed
     @Override
     public TokenResponse token(final TokenRequest tokenRequest) {
         return service.token(tokenRequest);
     }
 
+    @Timed
     @Override
     public Map<String, List<Map<String, Object>>> certs(final HttpServletRequest httpServletRequest) {
 
@@ -107,6 +112,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 });
     }
 
+    @Timed
     @Override
     public String openIdConfiguration() {
         try {
@@ -115,7 +121,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                     .idTokenSigningSlgValuesSupported(new String[]{"RS256"})
                     .issuer(tokenConfig.getJwsIssuer())
                     .jwksUri(uriFactory.publicUri("/oauth2/v1/noauth/certs").toString())
-                    .responseTypesSupported(new String[]{"code",
+                    .responseTypesSupported(new String[]{
+                            "code",
                             "token",
                             "id_token",
                             "code token",
@@ -123,7 +130,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                             "token id_token",
                             "code token id_token",
                             "none"})
-                    .scopesSupported(new String[]{"openid",
+                    .scopesSupported(new String[]{
+                            "openid",
                             "email"})
                     .subjectTypesSupported(new String[]{"public"})
                     .tokenEndpoint(uriFactory.publicUri("/oauth2/v1/noauth/token").toString())

@@ -3,6 +3,7 @@ package stroom.docstore.api;
 import java.util.Set;
 
 public final class UniqueNameUtil {
+
     public static String getCopyName(final String name,
                                      final Set<String> existingNames) {
         return getCopyName(name, existingNames, "- Copy", " ");

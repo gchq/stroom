@@ -13,14 +13,12 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -28,11 +26,13 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 class IndexVolumeDaoImpl implements IndexVolumeDao {
+
     static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setId(record.get(INDEX_VOLUME.ID));
@@ -56,27 +56,28 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return indexVolume;
     };
 
-    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
-        record.from(indexVolume);
-        record.set(INDEX_VOLUME.ID, indexVolume.getId());
-        record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());
-        record.set(INDEX_VOLUME.CREATE_TIME_MS, indexVolume.getCreateTimeMs());
-        record.set(INDEX_VOLUME.CREATE_USER, indexVolume.getCreateUser());
-        record.set(INDEX_VOLUME.UPDATE_TIME_MS, indexVolume.getUpdateTimeMs());
-        record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
-        record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
-        record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
-        record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
-        if (indexVolume.getState() != null) {
-            record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
-        }
-        record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
-        record.set(INDEX_VOLUME.BYTES_USED, indexVolume.getBytesUsed());
-        record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());
-        record.set(INDEX_VOLUME.BYTES_TOTAL, indexVolume.getBytesTotal());
-        record.set(INDEX_VOLUME.STATUS_MS, indexVolume.getStatusMs());
-        return record;
-    };
+    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER =
+            (indexVolume, record) -> {
+                record.from(indexVolume);
+                record.set(INDEX_VOLUME.ID, indexVolume.getId());
+                record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());
+                record.set(INDEX_VOLUME.CREATE_TIME_MS, indexVolume.getCreateTimeMs());
+                record.set(INDEX_VOLUME.CREATE_USER, indexVolume.getCreateUser());
+                record.set(INDEX_VOLUME.UPDATE_TIME_MS, indexVolume.getUpdateTimeMs());
+                record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
+                record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
+                record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
+                record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
+                if (indexVolume.getState() != null) {
+                    record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
+                }
+                record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
+                record.set(INDEX_VOLUME.BYTES_USED, indexVolume.getBytesUsed());
+                record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());
+                record.set(INDEX_VOLUME.BYTES_TOTAL, indexVolume.getBytesTotal());
+                record.set(INDEX_VOLUME.STATUS_MS, indexVolume.getStatusMs());
+                return record;
+            };
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeRecord, IndexVolume, Integer> genericDao;

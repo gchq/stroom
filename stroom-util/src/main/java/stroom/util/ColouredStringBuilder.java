@@ -57,12 +57,12 @@ public class ColouredStringBuilder {
         Objects.requireNonNull(colour);
         if (colour.getColourCode() == null) {
             stringBuilder
-                .append(text);
+                    .append(text);
         } else {
             stringBuilder
-                .append(colour.getColourCode())
-                .append(text)
-                .append(ConsoleColour.RESET.getColourCode());
+                    .append(colour.getColourCode())
+                    .append(text)
+                    .append(ConsoleColour.RESET.getColourCode());
         }
         return this;
     }

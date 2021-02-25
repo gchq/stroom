@@ -29,6 +29,7 @@ import java.util.Objects;
 
 @NotInjectableConfig
 public class ConnectionConfig extends AbstractConfig {
+
     public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
     public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";
     public static final String PROP_NAME_JDBC_DRIVER_USERNAME = "jdbcDriverUsername";
@@ -109,10 +110,15 @@ public class ConnectionConfig extends AbstractConfig {
         this.password = password;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConnectionConfig that = (ConnectionConfig) o;
         return Objects.equals(className, that.className) &&
                 Objects.equals(url, that.url) &&
@@ -144,6 +150,7 @@ public class ConnectionConfig extends AbstractConfig {
     }
 
     public static final class Builder {
+
         private String className = "com.mysql.cj.jdbc.Driver";
         private String url;
         private String user;

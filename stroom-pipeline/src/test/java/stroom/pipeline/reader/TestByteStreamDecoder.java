@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class TestByteStreamDecoder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteStreamDecoder.class);
 
     @Test
@@ -55,7 +56,7 @@ class TestByteStreamDecoder {
 
     @Test
     void testFlagEmoji() throws IOException {
-        final String gbFlag = fromUnicode( 0x1F1EC, 0x1F1E7);
+        final String gbFlag = fromUnicode(0x1F1EC, 0x1F1E7);
         doTest(gbFlag);
     }
 

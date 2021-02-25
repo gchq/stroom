@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import com.google.inject.AbstractModule;
 
 public class ExtractionModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new ExtractionElementModule());

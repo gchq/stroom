@@ -61,6 +61,7 @@ import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         implements HasDataSelectionHandlers<Selection<Long>>, HasDocumentRead<Object>, BeginSteppingHandler {
+
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
@@ -620,5 +621,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     public interface StreamView extends View {
+
     }
 }

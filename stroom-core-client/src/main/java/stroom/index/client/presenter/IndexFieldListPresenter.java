@@ -17,13 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
@@ -42,6 +35,14 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
         implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;

@@ -19,6 +19,7 @@ package stroom.activity.api;
 import stroom.activity.shared.Activity;
 
 public interface CurrentActivity {
+
     Activity getActivity();
 
     void setActivity(final Activity activity);

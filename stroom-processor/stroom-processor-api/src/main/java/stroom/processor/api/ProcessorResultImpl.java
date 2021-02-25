@@ -5,6 +5,7 @@ import stroom.util.shared.Severity;
 import java.util.Map;
 
 public class ProcessorResultImpl implements ProcessorResult {
+
     private final long read;
     private final long written;
     private final Map<Severity, Long> markerCounts;

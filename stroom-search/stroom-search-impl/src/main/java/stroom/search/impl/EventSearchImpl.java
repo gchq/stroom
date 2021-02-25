@@ -7,15 +7,16 @@ import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 class EventSearchImpl implements EventSearch {
+
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<EventSearchTaskHandler> eventSearchTaskHandlerProvider;
@@ -30,7 +31,14 @@ class EventSearchImpl implements EventSearch {
     }
 
     @Override
-    public void search(final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams, final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency, final Consumer<EventRefs> consumer) {
+    public void search(final Query query,
+                       final EventRef minEvent,
+                       final EventRef maxEvent,
+                       final long maxStreams,
+                       final long maxEvents,
+                       final long maxEventsPerStream,
+                       final int resultSendFrequency,
+                       final Consumer<EventRefs> consumer) {
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final EventSearchTask eventSearchTask = new EventSearchTask(
                 key,

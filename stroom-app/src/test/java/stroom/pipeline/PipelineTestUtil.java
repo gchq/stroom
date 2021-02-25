@@ -22,6 +22,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 
 public final class PipelineTestUtil {
+
     private static final PipelineSerialiser SERIALISER = new PipelineSerialiser(new Serialiser2FactoryImpl());
 
     private PipelineTestUtil() {

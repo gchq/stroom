@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MetaFields {
+
     public static final String STREAM_STORE_TYPE = "StreamStore";
     public static final DocRef STREAM_STORE_DOC_REF = DocRef.builder()
             .type(STREAM_STORE_TYPE)

@@ -17,6 +17,7 @@
 package stroom.core.tools;
 
 public class AuditSqlTool {
+
     static void outTable(String table) {
         System.out.println("alter table " + table + " add `CRT_MS` bigint(20) NOT NULL;");
         System.out.println("alter table " + table + " add `CRT_USER` varchar(255) default NULL;");

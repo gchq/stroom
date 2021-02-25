@@ -25,6 +25,7 @@ import java.util.List;
  * This class maintains several caches used throughout the application.
  */
 public interface CacheManagerService {
+
     List<String> getCacheNames();
 
     List<CacheInfo> find(FindCacheInfoCriteria criteria);

@@ -27,19 +27,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout;
 
 /**
  * Provides the extent (width and height) of a tree node.
  *
- * @param <TreeNode>
+ * @param <T_TREE_NODE>
  */
-public interface NodeExtentProvider<TreeNode> {
+public interface NodeExtentProvider<T_TREE_NODE> {
+
     /**
      * Returns the extends for the given treeNode.
      *
      * @param treeNode
      * @return [result >= 0]
      */
-    Dimension getExtents(TreeNode treeNode);
+    Dimension getExtents(T_TREE_NODE treeNode);
 }

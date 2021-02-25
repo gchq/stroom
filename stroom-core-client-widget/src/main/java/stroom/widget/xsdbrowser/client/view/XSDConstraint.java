@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XSDConstraint {
+
     private XSDNode restrictionNode;
     private List<String> patternList;
     private List<String> enumerationList;

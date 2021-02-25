@@ -29,10 +29,11 @@ import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
 
-import javax.inject.Inject;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 class StoredQueryResourceImpl implements StoredQueryResource {
+
     private final StoredQueryServiceImpl storedQueryService;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
@@ -115,7 +116,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
     }
 
     @Override
-    public StoredQuery read(final StoredQuery storedQuery) {
+    public StoredQuery fetch(final StoredQuery storedQuery) {
         StoredQuery result;
         try {
             result = storedQueryService.fetch(storedQuery.getId());

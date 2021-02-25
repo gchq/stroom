@@ -1,5 +1,9 @@
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -17,17 +21,15 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import javax.inject.Inject;
 
 class HttpCall extends StroomExtensionFunctionCall {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpCall.class);
 
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
@@ -43,7 +45,8 @@ class HttpCall extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) throws XPathException {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
+            throws XPathException {
         Sequence sequence = EmptyAtomicSequence.getInstance();
 
         final String url = getOptionalString(arguments, 0).orElse("");
@@ -74,7 +77,11 @@ class HttpCall extends StroomExtensionFunctionCall {
         return sequence;
     }
 
-    Response execute(final String url, final String headers, final String mediaType, final String data, final String clientConfig) throws IOException {
+    Response execute(final String url,
+                     final String headers,
+                     final String mediaType,
+                     final String data,
+                     final String clientConfig) throws IOException {
         LOGGER.debug(() -> "Creating client");
         final OkHttpClient client = httpClientCache.get(clientConfig);
 
@@ -175,7 +182,8 @@ class HttpCall extends StroomExtensionFunctionCall {
         return sequence;
     }
 
-    private void data(final ReceivingContentHandler contentHandler, final String name, final String value) throws SAXException {
+    private void data(final ReceivingContentHandler contentHandler, final String name, final String value)
+            throws SAXException {
         if (value != null) {
             startElement(contentHandler, name);
             characters(contentHandler, value);

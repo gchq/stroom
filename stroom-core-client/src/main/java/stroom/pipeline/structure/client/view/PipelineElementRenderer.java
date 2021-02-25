@@ -16,11 +16,6 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.view.client.SelectionModel;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
@@ -28,11 +23,18 @@ import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.view.client.SelectionModel;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public final class PipelineElementRenderer
         implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
+
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
     private final List<PipelineElementBox> boxes = new ArrayList<>();

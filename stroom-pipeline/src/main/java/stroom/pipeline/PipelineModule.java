@@ -40,6 +40,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class PipelineModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new TextConverterModule());
@@ -56,8 +57,7 @@ public class PipelineModule extends AbstractModule {
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(PipelineResourceImpl.class)
-                .bind(NewUiPipelineResource.class);
+                .bind(PipelineResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
@@ -76,9 +76,10 @@ public class PipelineModule extends AbstractModule {
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(RollingDestinationsForceRoll.class);
-   }
+    }
 
     private static class PipelineDestinationRoll extends RunnableWrapper {
+
         @Inject
         PipelineDestinationRoll(final RollingDestinations rollingDestinations) {
             super(rollingDestinations::roll);
@@ -86,6 +87,7 @@ public class PipelineModule extends AbstractModule {
     }
 
     private static class RollingDestinationsForceRoll extends RunnableWrapper {
+
         @Inject
         RollingDestinationsForceRoll(final RollingDestinations rollingDestinations) {
             super(rollingDestinations::forceRoll);

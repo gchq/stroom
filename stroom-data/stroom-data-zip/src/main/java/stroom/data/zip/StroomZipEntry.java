@@ -1,6 +1,7 @@
 package stroom.data.zip;
 
 public class StroomZipEntry {
+
     private final String baseName;
     private final String fullName;
     private final StroomZipFileType stroomZipFileType;

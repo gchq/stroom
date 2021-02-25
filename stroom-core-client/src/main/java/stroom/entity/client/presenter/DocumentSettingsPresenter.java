@@ -17,20 +17,22 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.docref.DocRef;
+import stroom.docref.HasType;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
+
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.util.shared.HasType;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class DocumentSettingsPresenter<V extends View, D> extends MyPresenterWidget<V>
         implements HasDocumentRead<D>, HasWrite<D>, HasDirtyHandlers, HasType, ReadOnlyChangeHandler {
+
     private D entity;
     private boolean dirty;
     private boolean reading;

@@ -1,18 +1,15 @@
-import { Token } from "../types";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ResultPage, SearchTokenRequest } from "../api/types";
-import useDateUtil from "../../../lib/useDateUtil";
-import { useTokenResource } from "../api";
+import { useCallback, useEffect, useState } from "react";
+import { SearchTokenRequest, TokenResultPage } from "api/stroom";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 interface UseTokenManager {
-  columns: any[];
-  resultPage: ResultPage<Token>;
+  resultPage: TokenResultPage;
   remove: (userId: number) => void;
   request: SearchTokenRequest;
   setRequest: (request: SearchTokenRequest) => void;
 }
 
-const defaultResultPage: ResultPage<Token> = {
+const defaultResultPage: TokenResultPage = {
   values: [],
   pageResponse: {
     offset: 0,
@@ -30,64 +27,39 @@ const defaultRequest: SearchTokenRequest = {
 };
 
 export const useTokenManager = (): UseTokenManager => {
-  const [resultPage, setResultPage] = useState<ResultPage<Token>>(
+  const [resultPage, setResultPage] = useState<TokenResultPage>(
     defaultResultPage,
   );
   const [request, setRequest] = useState(defaultRequest);
-  const { search: searchApi, remove: removeUserUsingApi } = useTokenResource();
 
-  useEffect(() => {
-    searchApi(request).then((response) => {
-      if (response) {
-        setResultPage(response);
-      }
-    });
-  }, [searchApi, setResultPage, request]);
+  const { exec } = useStroomApi();
+
+  const search = useCallback(() => {
+    exec(
+      (api) => api.token.searchTokens(request),
+      (response) => {
+        if (response) {
+          setResultPage(response);
+        }
+      },
+    );
+  }, [exec, request, setResultPage]);
 
   const remove = useCallback(
     (userId: number) => {
-      removeUserUsingApi(userId).then(() =>
-        searchApi(request).then((resultPage) => setResultPage(resultPage)),
+      exec(
+        (api) => api.token.deleteToken(userId),
+        () => search(),
       );
     },
-    [removeUserUsingApi, searchApi, request, setResultPage],
+    [exec, search],
   );
 
-  const { toDateString } = useDateUtil();
-
-  const columns = useMemo(
-    () => [
-      {
-        Header: "",
-        accessor: "id",
-      },
-      {
-        Header: "User Id",
-        accessor: "userId",
-        maxWidth: 150,
-      },
-      {
-        Header: "Status",
-        accessor: ({ enabled }) => (enabled ? "Enabled" : "Disabled"),
-        maxWidth: 100,
-      },
-      {
-        Header: "Expires on",
-        accessor: ({ expiresOnMs }) => expiresOnMs && toDateString(expiresOnMs),
-        maxWidth: 205,
-      },
-      {
-        Header: "Issued on",
-        accessor: ({ createTimeMs }) =>
-          createTimeMs && toDateString(createTimeMs),
-        maxWidth: 205,
-      },
-    ],
-    [toDateString],
-  );
+  useEffect(() => {
+    search();
+  }, [search, setResultPage, request]);
 
   return {
-    columns,
     resultPage,
     // selectedUser,
     remove,

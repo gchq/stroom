@@ -17,11 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -37,10 +32,18 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
 
 public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final IndexVolumeGroupListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeGroupEditPresenter> editProvider;
@@ -52,12 +55,14 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
     private final ButtonView deleteButton;
 
     @Inject
-    public IndexVolumeGroupPresenter(final EventBus eventBus,
-                                     final WrapperView view,
-                                     final IndexVolumeGroupListPresenter volumeStatusListPresenter,
-                                     final Provider<IndexVolumeGroupEditPresenter> editProvider,
-                                     final RestFactory restFactory,
-                                     final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider) {
+    public IndexVolumeGroupPresenter(
+            final EventBus eventBus,
+            final WrapperView view,
+            final IndexVolumeGroupListPresenter volumeStatusListPresenter,
+            final Provider<IndexVolumeGroupEditPresenter> editProvider,
+            final RestFactory restFactory,
+            final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider) {
+
         super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
@@ -92,8 +97,15 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
             }
         };
         final PopupSize popupSize = new PopupSize(1000, 600, true);
-        ShowPopupEvent.fire(this, this,
-                PopupType.CLOSE_DIALOG, null, popupSize, "Index Volumes", popupUiHandlers, null);
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.CLOSE_DIALOG,
+                null,
+                popupSize,
+                "Index Volumes",
+                popupUiHandlers,
+                null);
     }
 
     public void hide() {
@@ -125,7 +137,7 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
             rest
                     .onSuccess(this::edit)
                     .call(INDEX_VOLUME_GROUP_RESOURCE)
-                    .read(volume.getId());
+                    .fetch(volume.getId());
         }
     }
 
@@ -152,7 +164,8 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolumeGroup volume : list) {
                                 final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> refresh()).call(INDEX_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                rest.onSuccess(response ->
+                                        refresh()).call(INDEX_VOLUME_GROUP_RESOURCE).delete(volume.getId());
                             }
                         }
                     });

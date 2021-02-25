@@ -16,26 +16,29 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class DistributedTaskFactoryRegistry {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryRegistry.class);
     private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
 
     @Inject
     DistributedTaskFactoryRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
+            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
+                    DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
 
             final Object previousFactory = factoryMap.put(jobName, distributedTaskFactory);
@@ -47,8 +50,8 @@ class DistributedTaskFactoryRegistry {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("postProcessAfterInitialization() - registering task factory " + distributedTaskFactory + " for job "
-                        + jobName);
+                LOGGER.debug("postProcessAfterInitialization() - registering task factory " +
+                        distributedTaskFactory + " for job " + jobName);
             }
         }
     }

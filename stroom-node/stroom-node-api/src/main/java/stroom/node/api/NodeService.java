@@ -18,13 +18,18 @@
 package stroom.node.api;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.Response;
 
 /**
  * <p>
  * Class to manage nodes.
  * </p>
  */
-public interface NodeService  {
+public interface NodeService {
+
     String getBaseEndpointUrl(String nodeName);
 
     boolean isEnabled(String nodeName);
@@ -32,4 +37,45 @@ public interface NodeService  {
     int getPriority(String nodeName);
 
     List<String> findNodeNames(FindNodeCriteria criteria);
+
+    /**
+     * Call out to the specified node using the rest request defined by fullPath and
+     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     */
+    default <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                             final Class<T_RESP> responseType,
+                                             final String fullPath,
+                                             final Supplier<T_RESP> localSupplier,
+                                             final Function<Invocation.Builder, Response> responseBuilderFunc) {
+
+        return remoteRestResult(
+                nodeName,
+                fullPath,
+                localSupplier,
+                responseBuilderFunc,
+                response ->
+                        response.readEntity(responseType));
+
+    }
+
+
+    /**
+     * Call out to the specified node using the rest request defined by fullPath and
+     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     */
+    <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                     final String fullPath,
+                                     final Supplier<T_RESP> localSupplier,
+                                     final Function<Invocation.Builder, Response> responseBuilderFunc,
+                                     final Function<Response, T_RESP> responseMapper);
+
+    /**
+     * Call out to the specified node using the rest request defined by fullPath and
+     * responseBuilderFunc, if nodeName is this node then use localRunnable.
+     */
+    void remoteRestCall(final String nodeName,
+                        final String fullPath,
+                        final Runnable localRunnable,
+                        final Function<Invocation.Builder, Response> responseBuilderFunc);
+
 }

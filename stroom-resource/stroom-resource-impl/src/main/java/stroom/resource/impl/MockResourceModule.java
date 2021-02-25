@@ -16,10 +16,12 @@
 
 package stroom.resource.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.resource.api.ResourceStore;
 
+import com.google.inject.AbstractModule;
+
 public class MockResourceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ResourceStore.class).to(MockResourceStore.class);

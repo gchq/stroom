@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class DropDownPresenter extends MyPresenterWidget<DropDownPresenter.DropDrownView>
         implements DropDownUiHandlers {
+
     @Inject
     public DropDownPresenter(final EventBus eventBus, final DropDrownView display) {
         super(eventBus, display);
@@ -31,6 +32,7 @@ public abstract class DropDownPresenter extends MyPresenterWidget<DropDownPresen
     }
 
     public interface DropDrownView extends View, HasUiHandlers<DropDownUiHandlers> {
+
         void setText(String text);
     }
 }

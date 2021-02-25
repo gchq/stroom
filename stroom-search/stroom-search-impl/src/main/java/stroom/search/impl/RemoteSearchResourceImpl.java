@@ -16,22 +16,13 @@
 
 package stroom.search.impl;
 
-import stroom.util.shared.ResourcePaths;
-
-import io.swagger.annotations.Api;
+import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(value = "remoteSearch - /v1")
-@Path("/remoteSearch" + ResourcePaths.V1)
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
+
     private final RemoteSearchService remoteSearchService;
 
     @Inject
@@ -39,16 +30,19 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
         this.remoteSearchService = remoteSearchService;
     }
 
+    @Timed
     @Override
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
         return remoteSearchService.start(clusterSearchTask);
     }
 
+    @Timed
     @Override
     public StreamingOutput poll(final String queryKey) {
         return outputStream -> remoteSearchService.poll(queryKey, outputStream);
     }
 
+    @Timed
     @Override
     public Boolean destroy(final String queryKey) {
         return remoteSearchService.destroy(queryKey);

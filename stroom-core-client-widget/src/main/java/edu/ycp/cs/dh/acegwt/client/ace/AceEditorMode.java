@@ -502,11 +502,11 @@ public enum AceEditorMode {
 
     // Added by at055612
     static {
-       NAME_TO_MODES_MAP = Stream.of(AceEditorMode.values())
-               .collect(Collectors.toMap(Enum::name, Function.identity()));
+        NAME_TO_MODES_MAP = Stream.of(AceEditorMode.values())
+                .collect(Collectors.toMap(Enum::name, Function.identity()));
     }
 
-    private AceEditorMode(String name) {
+    AceEditorMode(String name) {
         this.name = name;
     }
 

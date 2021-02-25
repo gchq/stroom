@@ -17,5 +17,6 @@
 package stroom.util.shared;
 
 public interface TreeRow {
+
     Expander getExpander();
 }

@@ -16,6 +16,8 @@
 
 package stroom.job.client.view;
 
+import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.Button;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
 
 public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
+
     private final Label lblScheduleType = new Label("", false);
     private final TextBox txtScheduleString = new TextBox();
     private final Label lblLastExecutedTime = new Label("", false);

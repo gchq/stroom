@@ -49,6 +49,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void replaceSelectedText(final String text);
 
+    void insertSnippet(final String snippet);
+
     void setFirstLineNumber(int firstLineNumber);
 
     void setIndicators(final IndicatorLines indicators);
@@ -59,6 +61,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
      * If the text is being formatted by this view then you can provide a function to generate
      * highlights on the formatted text as the line/col positions in the formatted text may
      * differ to those in the original input. Should be called before setText is called.
+     *
      * @param highlightsFunction A function to return a list of highlight ranges from the formatted text.
      */
     void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction);

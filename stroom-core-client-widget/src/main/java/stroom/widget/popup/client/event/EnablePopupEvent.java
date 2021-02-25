@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
 
@@ -55,6 +56,7 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onEnable(EnablePopupEvent event);
     }
 }

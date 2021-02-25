@@ -34,10 +34,6 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,6 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the
@@ -61,6 +61,7 @@ import java.util.stream.Stream;
  */
 @Deprecated
 public class LegacyDbModule extends AbstractModule {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LegacyDbModule.class);
 
     private static final String MODULE = "stroom-legacy-db-migration";
@@ -332,6 +333,7 @@ public class LegacyDbModule extends AbstractModule {
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements LegacyDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

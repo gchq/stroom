@@ -7,8 +7,8 @@ public class LifecycleBinder {
 
     private static final int DEFAULT_PRIORITY = 0;
 
-    private MapBinder<StartupTask, Runnable> startupTaskMapBinder;
-    private MapBinder<ShutdownTask, Runnable> shutdownTaskMapBinder;
+    private final MapBinder<StartupTask, Runnable> startupTaskMapBinder;
+    private final MapBinder<ShutdownTask, Runnable> shutdownTaskMapBinder;
 
     private LifecycleBinder(final Binder binder) {
         startupTaskMapBinder = MapBinder.newMapBinder(binder, StartupTask.class, Runnable.class);
@@ -28,6 +28,7 @@ public class LifecycleBinder {
 
     /**
      * Bind the startup task with the supplied priority
+     *
      * @param priority Higher value will start earlier
      */
     public <T extends Runnable> LifecycleBinder bindStartupTaskTo(final Class<T> runnableClass,
@@ -46,6 +47,7 @@ public class LifecycleBinder {
 
     /**
      * Bind the shutdown task with the supplied priority
+     *
      * @param priority Higher value will shutdown later
      */
     public <T extends Runnable> LifecycleBinder bindShutdownTaskTo(final Class<T> runnableClass,

@@ -16,6 +16,9 @@
 
 package stroom.data.client.view;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.ui.config.client.UiConfigCache;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -23,14 +26,13 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import stroom.alert.client.event.AlertEvent;
-import stroom.ui.config.client.UiConfigCache;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ClassificationLabel extends Composite {
-    private static Binder binder = GWT.create(Binder.class);
+
+    private static final Binder binder = GWT.create(Binder.class);
     private final List<LabelColour> labelColours = new ArrayList<>();
     @UiField
     Label classification;
@@ -79,9 +81,11 @@ public class ClassificationLabel extends Composite {
     }
 
     public interface Binder extends UiBinder<Widget, ClassificationLabel> {
+
     }
 
     private static class LabelColour {
+
         private final String name;
         private final String colour;
 

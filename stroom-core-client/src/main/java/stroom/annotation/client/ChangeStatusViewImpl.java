@@ -16,6 +16,10 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,11 +28,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.SvgButton;
 
 public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandlers> implements ChangeStatusView {
+
     private static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
 
     private final Widget widget;
@@ -84,5 +86,6 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     }
 
     public interface Binder extends UiBinder<Widget, ChangeStatusViewImpl> {
+
     }
 }

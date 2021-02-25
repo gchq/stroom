@@ -1,9 +1,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.UnsignedBytes;
 import stroom.pipeline.refdata.store.offheapstore.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.UnsignedLong;
-import stroom.lmdb.Serde;
 
 import java.nio.ByteBuffer;
 

@@ -32,6 +32,7 @@ import java.nio.file.StandardOpenOption;
  * @see BlockGZIPConstants
  */
 class BlockGZIPInputFile extends BlockGZIPInput {
+
     // File being read
     private final FileChannel raFile;
 
@@ -135,7 +136,9 @@ class BlockGZIPInputFile extends BlockGZIPInput {
         // Moving block?
         if ((currentBlockNumber != newBlockNumber)) {
             // Read our index
-            raFile.position(idxStart + BlockGZIPConstants.LONG_BYTES + (newBlockNumber * BlockGZIPConstants.LONG_BYTES));
+            raFile.position(idxStart
+                    + BlockGZIPConstants.LONG_BYTES
+                    + (newBlockNumber * BlockGZIPConstants.LONG_BYTES));
             currentRawStreamBuffer = createBufferedInputStream(true);
             final long seekPos = readLong();
             raFile.position(seekPos);

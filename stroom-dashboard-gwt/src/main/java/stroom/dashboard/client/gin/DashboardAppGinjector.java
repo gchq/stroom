@@ -16,11 +16,6 @@
 
 package stroom.dashboard.client.gin;
 
-import com.google.gwt.inject.client.GinModules;
-import com.google.gwt.inject.client.Ginjector;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
@@ -37,6 +32,12 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.widget.popup.client.gin.PopupGinjector;
 import stroom.widget.popup.client.gin.PopupModule;
+
+import com.google.gwt.inject.client.GinModules;
+import com.google.gwt.inject.client.Ginjector;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
 
 @GinModules({
         RestModule.class,
@@ -58,6 +59,7 @@ public interface DashboardAppGinjector extends
         EntityGinjector,
         DashboardGinjector,
         VisGinjector {
+
     // Default implementation of standard resources
     EventBus getEventBus();
 

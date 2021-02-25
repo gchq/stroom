@@ -26,9 +26,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
-import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
@@ -50,7 +50,8 @@ public class UiConfig extends AbstractConfig {
     private String maintenanceMessage;
 
     @JsonProperty
-    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values.")
+    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the " +
+            "user requests lower values.")
     private String defaultMaxResults;
 
     @JsonProperty
@@ -77,8 +78,9 @@ public class UiConfig extends AbstractConfig {
 
     @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
-    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is for developer " +
-            "use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard " +
+    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is " +
+            "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' " +
+            "to see the standard " +
             "browser menu.")
     private String oncontextmenu;
 
@@ -335,10 +337,15 @@ public class UiConfig extends AbstractConfig {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final UiConfig uiConfig = (UiConfig) o;
         return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) &&
                 Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
@@ -359,6 +366,20 @@ public class UiConfig extends AbstractConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(welcomeHtml, aboutHtml, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url, uiPreferences);
+        return Objects.hash(welcomeHtml,
+                aboutHtml,
+                maintenanceMessage,
+                defaultMaxResults,
+                process,
+                helpUrl,
+                theme,
+                query,
+                namePattern,
+                htmlTitle,
+                oncontextmenu,
+                splash,
+                activity,
+                url,
+                uiPreferences);
     }
 }

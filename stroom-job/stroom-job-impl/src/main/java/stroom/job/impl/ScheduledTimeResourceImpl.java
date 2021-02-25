@@ -24,12 +24,13 @@ import stroom.security.api.SecurityContext;
 import javax.inject.Inject;
 
 public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
+
     private final ScheduleService scheduleService;
     private final SecurityContext securityContext;
 
     @Inject
-    private ScheduledTimeResourceImpl(final ScheduleService scheduleService,
-                                      final SecurityContext securityContext) {
+    ScheduledTimeResourceImpl(final ScheduleService scheduleService,
+                              final SecurityContext securityContext) {
         this.scheduleService = scheduleService;
         this.securityContext = securityContext;
     }

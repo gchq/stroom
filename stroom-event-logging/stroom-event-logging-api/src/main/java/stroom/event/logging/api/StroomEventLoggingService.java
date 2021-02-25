@@ -16,7 +16,17 @@
 
 package stroom.event.logging.api;
 
+import stroom.entity.shared.ExpressionCriteria;
+
+import event.logging.BaseObject;
+import event.logging.Criteria;
+import event.logging.Data;
 import event.logging.EventLoggingService;
+import event.logging.MultiObject;
+import event.logging.UpdateEventAction;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -106,7 +116,8 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //     * @param loggedWork A function to perform the work that is being logged and to return the {@link EventAction}
 //     *                   and the result of the work. This allows a new {@link EventAction} to be returned
 //     *                   based on the result of the work. The skeleton {@link EventAction} is passed in
-//     *                   to allow it to be copied. The result of the work must be returned within a {@link LoggedResult}
+//     *                   to allow it to be copied. The result of the work must be returned within a
+//     {@link LoggedResult}
 //     *                   along with the desired {@link EventAction}.
 //     * @param exceptionHandler A function to allow you to provide a different {@link EventAction} based on
 //     *                         the exception. The skeleton {@link EventAction} is passed in to allow it to be
@@ -124,5 +135,84 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //            final T_EVENT_ACTION eventAction,
 //            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
 //            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler);
+
+    /**
+     * Convert the supplied POJO into a {@link BaseObject} for logging
+     * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
+     * actual conversion.
+     * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     *
+     * @param object POJO
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
+     * @return BaseObject
+     */
+    BaseObject convert(final Object object, final boolean useInfoProviders);
+
+    default BaseObject convert(final Object object) {
+        return convert(object, true);
+    }
+
+    /**
+     * Convert the supplied POJO into a {@link BaseObject} for logging
+     * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
+     * actual conversion.
+     * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     * @param objectSupplier Supplier of the POJO. get() will be called as the processing user
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
+     * @return BaseObject
+     */
+    BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders);
+
+    default BaseObject convert(final Supplier<?> objectSupplier) {
+        return convert(objectSupplier, true);
+    }
+
+    default MultiObject convertToMulti(final Supplier<?> objectSupplier) {
+        return MultiObject.builder()
+                .withObjects(convert(objectSupplier))
+                .build();
+    }
+
+    default MultiObject convertToMulti(final Object object) {
+        return MultiObject.builder()
+                .withObjects(convert(object))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final Supplier<T> beforeSupplier,
+                                                         final Supplier<T> afterSupplier) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(beforeSupplier))
+                .withAfter(convertToMulti(afterSupplier))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final Object before,
+                                                         final Object after) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(before))
+                .withAfter(convertToMulti(after))
+                .build();
+    }
+
+    Criteria convertExpressionCriteria(final String type,
+                                       final ExpressionCriteria expressionCriteria);
+
+    /**
+     * Provide a textual summary of the supplied POJO as a string.
+     *
+     * @param object POJO to describe
+     * @return description
+     */
+    String describe(final Object object);
+
+
+    /**
+     * Create {@link Data} items from properties of the supplied POJO
+     *
+     * @param obj POJO from which to extract properties
+     * @return List of {@link Data} items representing properties of the supplied POJO
+     */
+    List<Data> getDataItems(java.lang.Object obj);
 
 }

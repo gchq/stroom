@@ -16,16 +16,18 @@
 
 package stroom.datasource.api.v2;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LongField extends AbstractNumericField {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     public LongField(final String name) {

@@ -18,9 +18,9 @@ package stroom.data.store.impl.fs;
 
 import stroom.meta.shared.Meta;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
-import stroom.util.shared.Sort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +31,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindDataVolumeCriteria extends BaseCriteria {
+
     @JsonProperty
     private Selection<Integer> volumeIdSet;
     @JsonProperty
@@ -54,7 +55,7 @@ public class FindDataVolumeCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindDataVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                  @JsonProperty("sortList") final List<Sort> sortList,
+                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                   @JsonProperty("volumeIdSet") final Selection<Integer> volumeIdSet,
                                   @JsonProperty("metaIdSet") final Selection<Long> metaIdSet) {
         super(pageRequest, sortList);

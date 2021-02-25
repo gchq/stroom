@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class SolrIndexDataSourceFieldUtil {
+
     public static List<AbstractField> getDataSourceFields(final SolrIndexDoc index) {
         if (index == null || index.getFields() == null) {
             return null;

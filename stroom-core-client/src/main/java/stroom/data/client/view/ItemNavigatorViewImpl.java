@@ -70,7 +70,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
     private ClickHandler labelClickHandler;
 
-    private Widget widget;
+    private final Widget widget;
 
     @Inject
     public ItemNavigatorViewImpl(final EventBus eventBus,
@@ -87,11 +87,11 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
     private void initButtons() {
 
-        firstPageBtn = SvgButton.create( SvgPresets.FAST_BACKWARD_BLUE);
-        previousPageBtn = SvgButton.create( SvgPresets.STEP_BACKWARD_BLUE);
-        nextPageBtn = SvgButton.create( SvgPresets.STEP_FORWARD_BLUE);
-        lastPageBtn = SvgButton.create( SvgPresets.FAST_FORWARD_BLUE);
-        refreshBtn = SvgButton.create( SvgPresets.REFRESH_BLUE);
+        firstPageBtn = SvgButton.create(SvgPresets.FAST_BACKWARD_BLUE);
+        previousPageBtn = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
+        nextPageBtn = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
+        lastPageBtn = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
+        refreshBtn = SvgButton.create(SvgPresets.REFRESH_BLUE);
 
         setupButton(firstPageBtn, true, false);
         setupButton(previousPageBtn, true, false);
@@ -138,7 +138,9 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             final String lbl = display.getName() + " "
                     + offsetFromIncStr
-                    + (display.hasMultipleItemsPerPage() ? " to " + offsetToIncStr : "")
+                    + (display.hasMultipleItemsPerPage()
+                    ? " to " + offsetToIncStr
+                    : "")
                     + " of "
                     + getLongValueForLabel(display.getTotalItemsCount().asOptional());
 
@@ -265,5 +267,6 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     }
 
     public interface Binder extends UiBinder<Widget, ItemNavigatorViewImpl> {
+
     }
 }

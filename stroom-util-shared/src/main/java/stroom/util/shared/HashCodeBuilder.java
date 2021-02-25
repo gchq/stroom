@@ -20,6 +20,7 @@ package stroom.util.shared;
  * A GWT friendly version of commons HashCodeBuilder.
  */
 public class HashCodeBuilder {
+
     private int hashCode = 31;
 
     public void appendSuper(final int value) {
@@ -63,7 +64,9 @@ public class HashCodeBuilder {
     }
 
     public void append(final boolean value) {
-        hashCode = hashCode * 31 + (value ? 0 : 1);
+        hashCode = hashCode * 31 + (value
+                ? 0
+                : 1);
     }
 
     public int toHashCode() {

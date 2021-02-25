@@ -17,6 +17,7 @@
 package stroom.importexport.api;
 
 public class ExtensionProvider {
+
     private final String extension;
 
     public ExtensionProvider(final String extension) {

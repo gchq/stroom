@@ -38,7 +38,7 @@ public interface Serializer<T> {
      *                           the return value to get the serialised form.
      *                           May throw a {@link RuntimeException} if the supplied buffer
      *                           is not big enough to hold the serialised form.
-     * @param object The object to be serialised.
+     * @param object             The object to be serialised.
      * @return The serialised form of the object, flipped and ready for reading.
      */
     default ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
@@ -64,8 +64,9 @@ public interface Serializer<T> {
 
     /**
      * Method for serialising the value when the length of the serialized form is unknown.
+     *
      * @param pooledByteBufferOutputStream The {@link PooledByteBufferOutputStream} to serialize the object to.
-     * @param object The object to be serialised.
+     * @param object                       The object to be serialised.
      * @return The serialised form of the object, flipped and ready for reading. This buffer should
      * be used instead of calling {@link PooledByteBufferOutputStream#getPooledByteBuffer()} in case
      * the implementation chooses not to used the passed {@link PooledByteBufferOutputStream}.

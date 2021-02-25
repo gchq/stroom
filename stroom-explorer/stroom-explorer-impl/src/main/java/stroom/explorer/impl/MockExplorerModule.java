@@ -16,11 +16,13 @@
 
 package stroom.explorer.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 
+import com.google.inject.AbstractModule;
+
 public class MockExplorerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(MockExplorerNodeService.class);

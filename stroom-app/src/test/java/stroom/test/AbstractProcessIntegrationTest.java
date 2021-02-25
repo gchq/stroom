@@ -26,6 +26,7 @@ import javax.inject.Inject;
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(MockServiceModule.class)
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
+
     @Inject
     private ContentImportService contentImportService;
 

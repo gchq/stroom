@@ -28,6 +28,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ExplorerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
@@ -42,8 +43,7 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(SystemExplorerActionHandler.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ExplorerResourceImpl.class)
-                .bind(NewUIExplorerResource.class);
+                .bind(ExplorerResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(DocRefInfoCache.class);

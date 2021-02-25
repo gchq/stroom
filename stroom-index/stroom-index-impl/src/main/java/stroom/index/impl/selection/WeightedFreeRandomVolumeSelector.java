@@ -22,6 +22,7 @@ import stroom.index.shared.IndexVolume;
 import java.util.List;
 
 public class WeightedFreeRandomVolumeSelector implements VolumeSelector {
+
     public static final String NAME = "WeightedFreeRandom";
 
     private final RandomVolumeSelector randomVolumeSelector = new RandomVolumeSelector();

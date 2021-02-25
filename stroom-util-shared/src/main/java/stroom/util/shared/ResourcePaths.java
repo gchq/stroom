@@ -51,17 +51,17 @@ public interface ResourcePaths {
 
     static String buildUnauthenticatedServletPath(final String... parts) {
         return new Builder()
-            .addPathPart(ROOT_PATH)
-            .addPathPart(NO_AUTH)
-            .addPathParts(parts)
-            .build();
+                .addPathPart(ROOT_PATH)
+                .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
     }
 
     static String buildAuthenticatedServletPath(final String... parts) {
         return new Builder()
-            .addPathPart(ROOT_PATH)
-            .addPathParts(parts)
-            .build();
+                .addPathPart(ROOT_PATH)
+                .addPathParts(parts)
+                .build();
     }
 
     /**
@@ -70,9 +70,9 @@ public interface ResourcePaths {
      */
     static String buildAuthenticatedApiPath(final String... parts) {
         return new Builder()
-            .addPathPart(API_ROOT_PATH)
-            .addPathParts(parts)
-            .build();
+                .addPathPart(API_ROOT_PATH)
+                .addPathParts(parts)
+                .build();
     }
 
     /**
@@ -81,10 +81,10 @@ public interface ResourcePaths {
      */
     static String buildUnauthenticatedApiPath(final String... parts) {
         return new Builder()
-            .addPathPart(API_ROOT_PATH)
-            .addPathPart(NO_AUTH)
-            .addPathParts(parts)
-            .build();
+                .addPathPart(API_ROOT_PATH)
+                .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
     }
 
     static String buildPath(final String... parts) {
@@ -94,13 +94,14 @@ public interface ResourcePaths {
                 .replace("//", "/");
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    static final class Builder {
-        private List<String> pathParts = new ArrayList<>();
-        private List<String> queryParams = new ArrayList<>();
+    final class Builder {
+
+        private final List<String> pathParts = new ArrayList<>();
+        private final List<String> queryParams = new ArrayList<>();
 
         private Builder() {
         }
@@ -132,7 +133,7 @@ public interface ResourcePaths {
         }
 
         public String build() {
-            final String pathStr = String.join("", pathParts).replace("//","/");
+            final String pathStr = String.join("", pathParts).replace("//", "/");
             if (!queryParams.isEmpty()) {
                 final String queryParamsStr = String.join("&", queryParams);
                 return pathStr + "?" + queryParamsStr;

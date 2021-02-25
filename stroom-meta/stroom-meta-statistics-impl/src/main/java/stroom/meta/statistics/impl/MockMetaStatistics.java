@@ -21,6 +21,7 @@ import stroom.meta.statistics.api.MetaStatistics;
 import java.util.Map;
 
 class MockMetaStatistics implements MetaStatistics {
+
     @Override
     public void recordStatistics(Map<String, String> metaData) {
     }

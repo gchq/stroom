@@ -17,9 +17,6 @@
 
 package stroom.feed.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
@@ -33,7 +30,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
     // private static final Tab MONITORING = new Tab("Monitoring");

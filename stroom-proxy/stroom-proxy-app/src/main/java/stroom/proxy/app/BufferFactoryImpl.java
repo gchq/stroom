@@ -24,6 +24,7 @@ import javax.inject.Inject;
  * Buffer held in thread scope for performance reasons.
  */
 public class BufferFactoryImpl implements BufferFactory {
+
     private final ReceiveDataConfig dataFeedConfig;
 
     @Inject

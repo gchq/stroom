@@ -19,6 +19,7 @@ package stroom.task.api;
 import stroom.task.shared.ThreadPool;
 
 public class SimpleThreadPool implements ThreadPool {
+
     private static final int CORE_POOL_SIZE = 10;
     private static final int MAX_POOL_SIZE = Integer.MAX_VALUE;
     private static final int MAX_QUEUE_SIZE = Integer.MAX_VALUE;
@@ -65,6 +66,7 @@ public class SimpleThreadPool implements ThreadPool {
         return name.hashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (obj == this) {

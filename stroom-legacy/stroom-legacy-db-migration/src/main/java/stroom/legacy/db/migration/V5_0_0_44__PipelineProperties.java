@@ -25,15 +25,16 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
+import javax.xml.bind.JAXBContext;
 
 @Deprecated
 public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_44__PipelineProperties.class);
 
     @Override
@@ -61,12 +62,14 @@ public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
                         if (object != null) {
                             modifyProperties(object.getAddedProperties());
                             modifyProperties(object.getRemovedProperties());
-                            final String newData = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(object));
+                            final String newData = XMLMarshallerUtil.marshal(jaxbContext,
+                                    XMLMarshallerUtil.removeEmptyCollections(object));
 
                             if (!newData.equals(data)) {
                                 LOGGER.info("Modifying pipeline");
 
-                                try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
+                                try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                                        "UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
                                     preparedStatement.setString(1, newData);
                                     preparedStatement.setLong(2, id);
                                     preparedStatement.executeUpdate();

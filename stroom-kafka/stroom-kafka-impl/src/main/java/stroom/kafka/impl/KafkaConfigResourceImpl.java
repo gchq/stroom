@@ -12,14 +12,15 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import javax.inject.Inject;
 
 public class KafkaConfigResourceImpl implements KafkaConfigResource {
+
     private final KafkaConfigStore kafkaConfigStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -28,10 +29,10 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource {
 
     @Inject
     KafkaConfigResourceImpl(final KafkaConfigStore kafkaConfigStore,
-                           final DocumentResourceHelper documentResourceHelper,
-                           final ResourceStore resourceStore,
-                           final DocumentEventLog documentEventLog,
-                           final SecurityContext securityContext) {
+                            final DocumentResourceHelper documentResourceHelper,
+                            final ResourceStore resourceStore,
+                            final DocumentEventLog documentEventLog,
+                            final SecurityContext securityContext) {
         this.kafkaConfigStore = kafkaConfigStore;
         this.documentResourceHelper = documentResourceHelper;
         this.resourceStore = resourceStore;
@@ -40,13 +41,23 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource {
     }
 
     @Override
-    public KafkaConfigDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(kafkaConfigStore, docRef);
+    public KafkaConfigDoc fetch(final String uuid) {
+        return documentResourceHelper.read(kafkaConfigStore, getDocRef(uuid));
     }
 
     @Override
-    public KafkaConfigDoc update(final KafkaConfigDoc doc) {
+    public KafkaConfigDoc update(final String uuid, final KafkaConfigDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(kafkaConfigStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(KafkaConfigDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

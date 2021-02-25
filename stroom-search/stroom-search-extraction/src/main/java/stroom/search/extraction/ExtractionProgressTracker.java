@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ExtractionProgressTracker {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExtractionProgressTracker.class);
 
     private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();

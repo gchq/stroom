@@ -23,6 +23,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import java.util.function.Consumer;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
+
     FieldIndex fieldIndexes;
     Consumer<Val[]> consumer;
     int count;

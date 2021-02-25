@@ -21,9 +21,12 @@ package stroom.security.identity.authenticate;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
 
+import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -31,11 +34,10 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.Response.Status;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 // TODO : @66 Add audit logging
 class AuthenticationResourceImpl implements AuthenticationResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResourceImpl.class);
 
     private final Provider<AuthenticationServiceImpl> serviceProvider;
@@ -45,11 +47,13 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         this.serviceProvider = serviceProvider;
     }
 
+    @Timed
     @Override
     public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
         return serviceProvider.get().getAuthenticationState(request);
     }
 
+    @Timed
     @Override
     public LoginResponse login(final HttpServletRequest request,
                                final LoginRequest loginRequest) {
@@ -57,6 +61,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         return serviceProvider.get().handleLogin(loginRequest, request);
     }
 
+    @Timed
     @Override
     public Boolean logout(
             final HttpServletRequest request,
@@ -72,18 +77,21 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
+    @Timed
     @Override
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
                                                    final ConfirmPasswordRequest confirmPasswordRequest) {
         return serviceProvider.get().confirmPassword(request, confirmPasswordRequest);
     }
 
+    @Timed
     @Override
     public final ChangePasswordResponse changePassword(final HttpServletRequest request,
                                                        final ChangePasswordRequest changePasswordRequest) {
         return serviceProvider.get().changePassword(request, changePasswordRequest);
     }
 
+    @Timed
     @Override
     public Boolean resetEmail(
             final HttpServletRequest request,
@@ -96,21 +104,25 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         throw new NotFoundException("User does not exist");
     }
 
+    @Timed
     @Override
     public final ChangePasswordResponse resetPassword(final HttpServletRequest request,
                                                       final ResetPasswordRequest resetPasswordRequest) {
-        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request, resetPasswordRequest);
+        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request,
+                resetPasswordRequest);
         if (changePasswordResponse != null) {
             return changePasswordResponse;
         }
         throw new NotAuthorizedException("Not authorised");
     }
 
+    @Timed
     @Override
     public final Boolean needsPasswordChange(final String email) {
         return serviceProvider.get().needsPasswordChange(email);
     }
 
+    @Timed
     @Override
     public PasswordPolicyConfig fetchPasswordPolicy() {
         return serviceProvider.get().getPasswordPolicy();

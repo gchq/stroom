@@ -18,11 +18,25 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = UpperCase.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The string in upper case.",
+        signatures = @FunctionSignature(
+                description = "Convert the supplied string to upper case.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "The string to convert to upper case.",
+                                argType = ValString.class)}))
 class UpperCase extends AbstractStringFunction implements Serializable {
+
     static final String NAME = "upperCase";
     private static final long serialVersionUID = -305845496003936297L;
 
-    private static final Operation OPERATION = (Operation) String::toUpperCase;
+    private static final Operation OPERATION = String::toUpperCase;
 
     public UpperCase(final String name) {
         super(name);

@@ -18,7 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = IsError.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if value is an error.",
+        signatures = @FunctionSignature(
+                description = "Checks if the passed value has a error data type.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
+                }))
 class IsError extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isError";
     private static final long serialVersionUID = -305245496413936297L;
     private static final ErrorTest TEST = new ErrorTest();
@@ -33,6 +48,7 @@ class IsError extends AbstractIsFunction implements Serializable {
     }
 
     private static class ErrorTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val.type().isError());

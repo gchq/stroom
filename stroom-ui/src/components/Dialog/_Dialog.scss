@@ -2,12 +2,9 @@
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  gap: 1rem;
 }
 
 .Dialog__button {
   min-width: 7rem;
-}
-
-.Dialog__button--margin {
-  margin-right: .5rem;
 }

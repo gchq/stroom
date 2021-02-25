@@ -1,15 +1,17 @@
 package stroom.search.solr;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.inject.Singleton;
 
 @Singleton
 public class SolrConfig extends AbstractConfig {
+
     private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
     private CacheConfig indexClientCache = CacheConfig.builder()
             .maximumSize(100L)

@@ -9,6 +9,7 @@ import java.util.List;
 
 @Disabled("Used to check comparison works as expected but long running hence ignored by default")
 class TestComparator {
+
     @Test
     void test() {
         long totalDuration = 0;
@@ -39,7 +40,8 @@ class TestComparator {
                         val = ValBoolean.create(Math.random() > 0.5);
                         break;
                     case 6:
-                        val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE) - (Double.MAX_VALUE / 2)));
+                        val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE)
+                                - (Double.MAX_VALUE / 2)));
                         break;
                 }
 
@@ -80,7 +82,8 @@ class TestComparator {
                             val = ValErr.create("Error");
                             break;
                         case 2:
-                            val = ValInteger.create(((int) (Math.random() * Integer.MAX_VALUE)) - (Integer.MAX_VALUE / 2));
+                            val = ValInteger.create(((int) (Math.random() * Integer.MAX_VALUE))
+                                    - (Integer.MAX_VALUE / 2));
                             break;
                         case 3:
                             val = ValDouble.create(Math.random());
@@ -92,7 +95,8 @@ class TestComparator {
                             val = ValBoolean.create(Math.random() > 0.5);
                             break;
                         case 6:
-                            val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE) - (Double.MAX_VALUE / 2)));
+                            val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE)
+                                    - (Double.MAX_VALUE / 2)));
                             break;
                     }
 
@@ -195,7 +199,8 @@ class TestComparator {
                             val = ValErr.create("Error");
                             break;
                         case 2:
-                            val = ValInteger.create(((int) (Math.random() * Integer.MAX_VALUE)) - (Integer.MAX_VALUE / 2));
+                            val = ValInteger.create(((int) (Math.random() * Integer.MAX_VALUE))
+                                    - (Integer.MAX_VALUE / 2));
                             break;
                         case 3:
                             val = ValDouble.create(Math.random());
@@ -207,7 +212,8 @@ class TestComparator {
                             val = ValBoolean.create(Math.random() > 0.5);
                             break;
                         case 6:
-                            val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE) - (Double.MAX_VALUE / 2)));
+                            val = ValString.create(String.valueOf((Math.random() * Double.MAX_VALUE)
+                                    - (Double.MAX_VALUE / 2)));
                             break;
                     }
 
@@ -259,6 +265,4 @@ class TestComparator {
             }
         }
     }
-
-
 }

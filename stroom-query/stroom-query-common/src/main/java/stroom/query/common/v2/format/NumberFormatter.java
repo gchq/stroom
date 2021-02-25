@@ -20,6 +20,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.NumberFormatSettings;
 
 public class NumberFormatter implements Formatter {
+
     private final NumberFormatSettings numberFormat;
 
     private NumberFormatter(final NumberFormatSettings numberFormat) {

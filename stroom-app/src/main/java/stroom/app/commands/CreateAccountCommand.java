@@ -19,8 +19,8 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
+import javax.inject.Inject;
 
 /**
  * Creates an account in the internal identity provider
@@ -29,7 +29,8 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateAccountCommand.class);
     private static final String COMMAND_NAME = "create_account";
-    private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity provider";
+    private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity " +
+            "provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -118,14 +119,16 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                 accountService.read(username)
                         .ifPresentOrElse(
                                 account -> {
-                                    final String msg = LogUtil.message("An account for user '{}' already exists", username);
+                                    final String msg = LogUtil.message("An account for user '{}' already exists",
+                                            username);
                                     LOGGER.error(msg);
                                     logEvent(username, false, msg);
                                     System.exit(1);
                                 },
                                 () -> {
                                     createAccount(namespace, username);
-                                    final String msg = LogUtil.message("Account creation complete for user '{}'", username);
+                                    final String msg = LogUtil.message("Account creation complete for user '{}'",
+                                            username);
                                     LOGGER.info(msg);
                                     logEvent(username, true, msg);
                                     System.exit(0);

@@ -30,6 +30,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
+
     @Inject
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,

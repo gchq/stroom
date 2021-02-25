@@ -22,6 +22,7 @@ package stroom.docref;
  * </p>
  */
 public interface HasDisplayValue {
+
     /**
      * @return The string label/description of this object.
      */

@@ -16,10 +16,10 @@
 
 package stroom.pipeline.state;
 
-import stroom.util.shared.DataRange;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
@@ -28,13 +28,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class LocationHolder implements Holder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LocationHolder.class);
     private final MetaHolder metaHolder;
     private List<SourceLocation> locations;
@@ -199,6 +200,11 @@ public class LocationHolder implements Holder {
     }
 
     public enum FunctionType {
-        LOCATION, RECORD_NO, LINE_FROM, COL_FROM, LINE_TO, COL_TO
+        LOCATION,
+        RECORD_NO,
+        LINE_FROM,
+        COL_FROM,
+        LINE_TO,
+        COL_TO
     }
 }

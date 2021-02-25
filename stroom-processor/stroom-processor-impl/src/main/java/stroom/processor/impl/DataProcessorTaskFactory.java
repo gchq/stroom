@@ -34,16 +34,17 @@ import stroom.task.shared.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @DistributedTaskFactoryDescription(
         jobName = JobNames.DATA_PROCESSOR,
         description = "Job to process data matching processor filters with their associated pipelines")
 public class DataProcessorTaskFactory implements DistributedTaskFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Data Processor#", 1);
 
@@ -76,10 +77,14 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                         .stream()
                         .map(processorTask -> {
                             final Runnable runnable = () -> {
-                                final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+                                final DataProcessorTaskHandler dataProcessorTaskHandler =
+                                        dataProcessorTaskHandlerProvider.get();
                                 dataProcessorTaskHandler.exec(processorTask);
                             };
-                            return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR, runnable, THREAD_POOL, processorTask);
+                            return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
+                                    runnable,
+                                    THREAD_POOL,
+                                    processorTask);
                         })
                         .collect(Collectors.toList());
             }
@@ -102,7 +107,8 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                         .map(DistributedDataProcessorTask::getProcessorTask)
                         .collect(Collectors.toList());
 
-                final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(), processorTasks);
+                final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
+                        processorTasks);
 
                 return processorTaskResource
                         .abandonTasks(masterNode, processorTaskList);
@@ -115,6 +121,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     }
 
     private static class DistributedDataProcessorTask extends DistributedTask {
+
         private final ProcessorTask processorTask;
 
         public DistributedDataProcessorTask(final String jobName,

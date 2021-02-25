@@ -19,6 +19,7 @@ package stroom.dashboard.impl.vis;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class VisSettings {
+
     private Data data;
     private Tab[] tabs;
 
@@ -37,6 +38,7 @@ public class VisSettings {
     }
 
     public static class Limit {
+
         private String enabled;
         private String size;
 
@@ -56,6 +58,7 @@ public class VisSettings {
     }
 
     public static class Sort {
+
         private String enabled;
         private String priority;
         private String direction;
@@ -81,6 +84,7 @@ public class VisSettings {
     }
 
     public static class Field {
+
         private String id;
         private Sort sort;
 
@@ -109,6 +113,7 @@ public class VisSettings {
     }
 
     public static class Values {
+
         private Field[] fields;
         private Limit limit;
 
@@ -133,6 +138,7 @@ public class VisSettings {
     }
 
     public static class Nest {
+
         private Field key;
         private Limit limit;
         private Nest nest;
@@ -175,6 +181,7 @@ public class VisSettings {
     }
 
     public static class Structure {
+
         private Nest nest;
         private Values values;
 
@@ -199,6 +206,7 @@ public class VisSettings {
     }
 
     public static class Data {
+
         private Structure structure;
 
         public Data() {
@@ -216,6 +224,7 @@ public class VisSettings {
     }
 
     public static class Control {
+
         private String id;
         private String type;
         private String label;
@@ -253,6 +262,7 @@ public class VisSettings {
     }
 
     public static class Tab {
+
         private String name;
         private Control[] controls;
 

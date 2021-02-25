@@ -37,8 +37,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
  * The {@link Spinner} provide two arrows for in- and decreasing values.
  */
 public class Spinner implements HasHandlers {
+
     private static final int INITIAL_SPEED = 7;
-    private static SpinnerResources images = GWT.create(SpinnerResources.class);
+    private static final SpinnerResources images = GWT.create(SpinnerResources.class);
     private final Image decrementArrow = new Image();
     private final Image incrementArrow = new Image();
     private final EventBus eventBus = new SimpleEventBus();
@@ -313,6 +314,7 @@ public class Spinner implements HasHandlers {
      * Default resources for spinning arrows.
      */
     public interface SpinnerResources extends ClientBundle {
+
         ImageResource arrowDown();
 
         ImageResource arrowDownDisabled();

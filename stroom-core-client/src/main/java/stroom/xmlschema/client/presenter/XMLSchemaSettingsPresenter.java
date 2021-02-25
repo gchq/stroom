@@ -17,13 +17,6 @@
 
 package stroom.xmlschema.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
@@ -31,8 +24,17 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class XMLSchemaSettingsPresenter
         extends DocumentSettingsPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
+
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
         super(eventBus, view);
@@ -76,6 +78,7 @@ public class XMLSchemaSettingsPresenter
     }
 
     public interface XMLSchemaSettingsView extends View {
+
         TextArea getDescription();
 
         TextBox getNamespaceURI();

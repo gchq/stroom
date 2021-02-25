@@ -17,6 +17,7 @@
 package stroom.cell.valuespinner.shared;
 
 public interface Editable {
+
     boolean isEditable();
 
     void setEditable(boolean editable);

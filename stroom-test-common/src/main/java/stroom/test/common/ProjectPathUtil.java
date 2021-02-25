@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class ProjectPathUtil {
+
     public static Path resolveDir(final String projectDir) {
         Path root = Paths.get(".").toAbsolutePath().normalize();
         Path dir = root.resolve(projectDir);

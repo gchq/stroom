@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class SolrConnectionTestResponse {
+
     @JsonProperty
     private final boolean ok;
     @JsonProperty

@@ -9,6 +9,7 @@ import java.util.List;
  * Represents GWT wrapper around an Ace Selection object
  */
 public class AceSelection {
+
     private final JavaScriptObject selection;
     private final AceSelectionListener rootListener;
     private final List<AceSelectionListener> subListeners = new ArrayList<>();
@@ -21,8 +22,9 @@ public class AceSelection {
     public AceSelection(JavaScriptObject selection) {
         this.selection = selection;
         this.rootListener = ignore -> {
-            for (AceSelectionListener lst : subListeners)
+            for (AceSelectionListener lst : subListeners) {
                 lst.onChangeSelection(AceSelection.this);
+            }
         };
         registerRootListener(selection, rootListener);
     }

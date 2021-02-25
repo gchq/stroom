@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class StreamEventMap {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamEventMap.class);
 
     private final ConcurrentHashMap<Long, List<Event>> storedDataMap;

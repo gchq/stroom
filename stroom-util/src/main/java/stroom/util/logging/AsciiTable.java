@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  *  Mrs   | Joanna     | Bloggs  |  1972-04-01   |    170
  *
  * </pre>
- *
+ * <p>
  * Supports left/right/center alignment.
  */
 public class AsciiTable {
@@ -50,6 +50,7 @@ public class AsciiTable {
      * of the collection items. The column names are derived from the method name,
      * e.g. getFirstNameLength() becomes "First Name Length".
      * Columns are in declared order. Sub-classes of {@link Number} are right aligned.
+     *
      * @return A {@link String} containing the markdown style table.
      */
     public static <T> String from(final Collection<T> data) {
@@ -89,10 +90,9 @@ public class AsciiTable {
     }
 
     private static String convertToColumnName(final String methodName) {
-        return CaseFormat.LOWER_CAMEL.to(
-                            CaseFormat.UPPER_CAMEL,
-                            methodName.replaceAll("^(get|is)", "")).
-                            replaceAll("(?<!^)([A-Z])", " $1");
+        String result = methodName.replaceAll("^(get|is)", "");
+        result = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, result);
+        return result.replaceAll("(?<!^)([A-Z])", " $1");
     }
 
 
@@ -235,43 +235,38 @@ public class AsciiTable {
                 final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
 
             return rawRows.stream()
-                            .limit(rowLimit)
-                            .map(rowMap -> columns.stream()
-                                    .map(column ->
-                                            formatCell(
-                                                    column,
-                                                    rowMap.get(column),
-                                                    maxColumnWidths.get(column)))
-                                    .collect(Collectors.joining(
-                                            String.valueOf(TABLE_COLUMN_DELIMITER))))
-                            .collect(Collectors.toList());
+                    .limit(rowLimit)
+                    .map(rowMap -> columns.stream()
+                            .map(column ->
+                                    formatCell(
+                                            column,
+                                            rowMap.get(column),
+                                            maxColumnWidths.get(column)))
+                            .collect(Collectors.joining(
+                                    String.valueOf(TABLE_COLUMN_DELIMITER))))
+                    .collect(Collectors.toList());
         }
 
         private String createHeaderLineString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             // TODO could add markdown alignment indicators e.g. |------:|
             return columns.stream()
-                            .map(column ->
-                                    Strings.repeat(
-                                            String.valueOf(TABLE_HEADER_DELIMITER),
-                                            maxColumnWidths.get(column) + (COLUMN_PADDING * 2)))
-                            .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .map(column ->
+                            Strings.repeat(
+                                    String.valueOf(TABLE_HEADER_DELIMITER),
+                                    maxColumnWidths.get(column) + (COLUMN_PADDING * 2)))
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
 
         private String createHeaderRowString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             return columns.stream()
-                            .map(column ->
-                                    formatCell(column, column.getName(), maxColumnWidths.get(column)))
-                            .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .map(column ->
+                            formatCell(column, column.getName(), maxColumnWidths.get(column)))
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
     }
 
 
-
-
     // -----------------------------------------------------------------------------------
-
-
-
 
 
     public static class Column<T_ROW, T_COL> {
@@ -330,10 +325,15 @@ public class AsciiTable {
             }
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Column<?, ?> column = (Column<?, ?>) o;
             return name.equals(column.name) &&
                     columnExtractor.equals(column.columnExtractor) &&
@@ -354,22 +354,18 @@ public class AsciiTable {
                     '}';
         }
 
-        public static enum Alignment {
+        public enum Alignment {
             LEFT,
             RIGHT,
             CENTER
         }
 
 
-
-
         // -----------------------------------------------------------------------------------
 
 
-
-
-
         public static class ColumnBuilder<T_ROW, T_COL> {
+
             private final String name;
             private final Function<T_ROW, T_COL> columnExtractor;
             private Function<T_COL, String> columnFormatter = null;
@@ -416,8 +412,12 @@ public class AsciiTable {
                 final Column<T_ROW, T_COL> column = new Column<>(
                         name,
                         columnExtractor,
-                        columnFormatter == null ? Objects::toString : columnFormatter,
-                        nullValueSupplier == null ? () -> "" : nullValueSupplier,
+                        columnFormatter == null
+                                ? Objects::toString
+                                : columnFormatter,
+                        nullValueSupplier == null
+                                ? () -> ""
+                                : nullValueSupplier,
                         alignment);
                 return column;
             }

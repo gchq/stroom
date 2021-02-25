@@ -15,6 +15,7 @@
  */
 
 package stroom.security.impl.session;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -68,6 +69,7 @@ public class SessionDetails {
         return lastAccessedAgent;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

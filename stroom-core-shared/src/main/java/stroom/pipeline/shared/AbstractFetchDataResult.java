@@ -17,8 +17,8 @@
 package stroom.pipeline.shared;
 
 
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Count;
+import stroom.util.shared.OffsetRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,7 +49,7 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final SourceLocation sourceLocation;
     @JsonProperty
-    private final OffsetRange<Long> itemRange; // part/segment/marker
+    private final OffsetRange itemRange; // part/segment/marker
     @JsonProperty
     private final Count<Long> totalItemCount; // part/segment/marker
     @JsonProperty
@@ -58,14 +58,16 @@ public abstract class AbstractFetchDataResult {
     private final Set<String> availableChildStreamTypes;
 
     @JsonCreator
-    public AbstractFetchDataResult(@JsonProperty("feedName") final String feedName,
-                                   @JsonProperty("streamTypeName") final String streamTypeName,
-                                   @JsonProperty("classification") final String classification,
-                                   @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                                   @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
-                                   @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
-                                   @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
-                                   @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+    public AbstractFetchDataResult(
+            @JsonProperty("feedName") final String feedName,
+            @JsonProperty("streamTypeName") final String streamTypeName,
+            @JsonProperty("classification") final String classification,
+            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+            @JsonProperty("itemRange") final OffsetRange itemRange,
+            @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+            @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
+            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.classification = classification;
@@ -92,7 +94,7 @@ public abstract class AbstractFetchDataResult {
         return sourceLocation;
     }
 
-    public OffsetRange<Long> getItemRange() {
+    public OffsetRange getItemRange() {
         return itemRange;
     }
 

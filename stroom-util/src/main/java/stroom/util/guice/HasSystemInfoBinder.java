@@ -6,6 +6,7 @@ import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;
 
 public class HasSystemInfoBinder {
+
     private final Multibinder<HasSystemInfo> multibinder;
 
     private HasSystemInfoBinder(final Binder binder) {

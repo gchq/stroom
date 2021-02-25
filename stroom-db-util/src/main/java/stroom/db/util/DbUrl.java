@@ -1,10 +1,9 @@
 package stroom.db.util;
 
-import stroom.security.shared.User;
-
 import java.util.Objects;
 
 public final class DbUrl {
+
     private final String scheme;
     private final String host;
     private final int port;
@@ -47,10 +46,15 @@ public final class DbUrl {
         return query;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DbUrl dbUrl = (DbUrl) o;
         return Objects.equals(scheme, dbUrl.scheme) &&
                 Objects.equals(host, dbUrl.host) &&
@@ -98,6 +102,7 @@ public final class DbUrl {
     }
 
     public static final class Builder {
+
         private String scheme = "jdbc:mysql";
         private String host = "localhost";
         private int port = 3306;

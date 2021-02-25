@@ -18,9 +18,6 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -54,7 +51,10 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,10 +64,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportSerializer extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestImportExportSerializer.class);
 
     @Inject
@@ -97,14 +99,16 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() throws IOException {
-        final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         FeedDoc eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("Original Description");
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
 
-        List<DocRef> allSchemas = xmlSchemaStore.list();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -128,6 +132,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedStore.writeDocument(eventFeed);
+
+        List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
             final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             xmlSchema.setData("XML");
@@ -170,44 +176,49 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipelineWithProcessorFilter() {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
 
         final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
 
 
-
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME,ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
-                .addTerm(MetaFields.FIELD_TYPE,ExpressionTerm.Condition.EQUALS, "Raw Events")
+                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
+                .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, "Raw Events")
                 .build();
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
         Processor processor = processorService.create(pipelineRef, true);
 
-        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, false, true);
+        ProcessorFilter filter = processorFilterService.create(processor, filterConstraints, 10, false, true);
 
         HashSet<DocRef> forExport = new HashSet<DocRef>();
 
 //        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
-        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
+        forExport.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
 
-        System.err.println ("Exporting to " + testDataDir);
+        System.err.println("Exporting to " + testDataDir);
         importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
 
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        System.out.println ("Exported to " + testDataDir);
+        System.out.println("Exported to " + testDataDir);
     }
 
     @Test
     void testPipeline() throws IOException {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
         final DocRef childPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Child", folder, null);
         final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineRef);
@@ -228,18 +239,21 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
         final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
-        assertThat(childJson.contains("\"name\" : \"Parent\"")).as("Parent reference not serialised\n" + childJson).isTrue();
+        assertThat(childJson.contains("\"name\" : \"Parent\""))
+                .as("Parent reference not serialised\n" + childJson)
+                .isTrue();
 
         // Remove all entities from the database.
         commonTestControl.clear();
 
-        assertThat(pipelineStore.list().size()).isEqualTo(0);
+        assertThat(pipelineStore.list().size())
+                .isEqualTo(0);
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        assertThat(pipelineStore.list().size()).isEqualTo(2);
+        assertThat(pipelineStore.list().size())
+                .isEqualTo(2);
     }
-
 
 
     @Test

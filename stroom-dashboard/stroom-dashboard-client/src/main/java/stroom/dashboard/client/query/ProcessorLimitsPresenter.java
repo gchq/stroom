@@ -22,6 +22,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class ProcessorLimitsPresenter extends MyPresenterWidget<ProcessorLimitsPresenter.ProcessorLimitsView> {
+
     @Inject
     public ProcessorLimitsPresenter(final EventBus eventBus, final ProcessorLimitsView view) {
         super(eventBus, view);
@@ -44,6 +45,7 @@ public class ProcessorLimitsPresenter extends MyPresenterWidget<ProcessorLimitsP
     }
 
     public interface ProcessorLimitsView extends View {
+
         Long getTimeLimitMins();
 
         void setTimeLimitMins(Long value);

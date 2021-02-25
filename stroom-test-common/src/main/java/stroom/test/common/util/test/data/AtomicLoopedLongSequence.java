@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicLong;
 
 class AtomicLoopedLongSequence {
+
     private final long startInc;
     private final long endExc;
     private final AtomicLong lastVal = new AtomicLong();

@@ -49,9 +49,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
+import javax.inject.Inject;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -60,6 +60,7 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
 public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilter {
+
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SecurityContext securityContext;
@@ -133,8 +134,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                     secondLevelElementToCreateDocs = localName;
                     xPathExecutables = null;
                 }
-                if (xPathExecutables == null)
+                if (xPathExecutables == null) {
                     createXPathExecutables();
+                }
 
                 //Start new document
                 builder = new TinyBuilder(pipeConfig);
@@ -167,10 +169,11 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
         fieldIndexes.forEach((fieldName, index) -> {
             String xpathPart = fieldName;
 
-            if (EVENT_ID.equals(xpathPart))
+            if (EVENT_ID.equals(xpathPart)) {
                 xpathPart = "@" + EVENT_ID;
-            else if (STREAM_ID.equals(xpathPart))
+            } else if (STREAM_ID.equals(xpathPart)) {
                 xpathPart = "@" + STREAM_ID;
+            }
 
             String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
 
@@ -184,8 +187,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
     private int stringifyItem(XdmItem item, StringBuilder thisVal, int numberOfVals) {
         if (item instanceof XdmAtomicValue) {
-            if (numberOfVals > 0)
+            if (numberOfVals > 0) {
                 thisVal.append(multipleValueDelimiter);
+            }
             String value = item.getStringValue();
             thisVal.append(value);
             numberOfVals++;
@@ -243,8 +247,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                     while (iterator.hasNext()) {
                         XdmItem child = iterator.next();
                         if (item instanceof XdmAtomicValue) {
-                            if (numberOfVals > 0)
+                            if (numberOfVals > 0) {
                                 thisVal.append(multipleValueDelimiter);
+                            }
                             String value = item.getStringValue();
                             thisVal.append(value);
                             numberOfVals++;
@@ -253,8 +258,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                             XdmNodeKind childType = childNode.getNodeKind();
 
                             if (childType == XdmNodeKind.TEXT) {
-                                if (numberOfVals > 0)
+                                if (numberOfVals > 0) {
                                     thisVal.append(multipleValueDelimiter);
+                                }
                                 String value = item.getStringValue();
                                 thisVal.append(value);
                                 numberOfVals++;
@@ -263,8 +269,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                     }
                 }
             } else {
-                if (numberOfVals > 0)
+                if (numberOfVals > 0) {
                     thisVal.append(multipleValueDelimiter);
+                }
                 numberOfVals++;
                 thisVal.append(item.getStringValue());
             }
@@ -324,7 +331,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             } else {
                 contentHandler = null;
                 secondLevelElementToCreateDocs = "";
-                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs), null);
+                log(Severity.ERROR,
+                        LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs),
+                        null);
             }
 
         } else if (depth == 0) {
@@ -332,7 +341,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 topLevelElementToSkip = "";
             } else {
                 topLevelElementToSkip = "";
-                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", topLevelElementToSkip), null);
+                log(Severity.ERROR,
+                        LogUtil.message("Unable to finding closing tag for {}", topLevelElementToSkip),
+                        null);
             }
 
         } else {
@@ -345,11 +356,12 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        if (contentHandler != null)
+        if (contentHandler != null) {
             contentHandler.characters(ch, start, length);
-        else
+        } else {
             log(Severity.ERROR, LogUtil.message("Unexpected text node {} at position {}",
                     new String(ch, start, length), start), null);
+        }
 
         super.characters(ch, start, length);
     }
@@ -378,8 +390,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
-        if (contentHandler != null)
+        if (contentHandler != null) {
             contentHandler.startPrefixMapping(prefix, uri);
+        }
 
         prefixMappings.put(prefix, uri);
         compiler.declareNamespace(prefix, uri);
@@ -397,14 +410,17 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
         prefixMappings.remove(prefix);
-        if (contentHandler != null)
+        if (contentHandler != null) {
             contentHandler.endPrefixMapping(prefix);
+        }
 
         super.endPrefixMapping(prefix);
     }
 
 
-    @PipelineProperty(description = "The string to delimit multiple simple values.", defaultValue = DEFAULT_MULTIPLE_STRING_DELIMITER,
+    @PipelineProperty(
+            description = "The string to delimit multiple simple values.",
+            defaultValue = DEFAULT_MULTIPLE_STRING_DELIMITER,
             displayPriority = 1)
     public void setMultipleValueDelimiter(final String delimiter) {
         this.multipleValueDelimiter = delimiter;

@@ -16,15 +16,15 @@
 
 package stroom.processor.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -34,9 +34,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
-@Api(value = "processorFilter - /v1")
+@Tag(name = "Processor Filters")
 @Path("/processorFilter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,51 +43,60 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Finds processors and filters matching request",
-            response = ResultPage.class)
-    ProcessorListRowResultPage find(@ApiParam("request") FetchProcessorRequest request);
+    @Operation(
+            summary = "Finds processors and filters matching request",
+            operationId = "findProcessorFilters")
+    ProcessorListRowResultPage find(
+            @Parameter(description = "request", required = true) FetchProcessorRequest request);
 
     @POST
-    @ApiOperation(
-            value = "Creates a filter",
-            response = ProcessorFilter.class)
-    ProcessorFilter create(@ApiParam("request") CreateProcessFilterRequest request);
+    @Operation(
+            summary = "Creates a filter",
+            operationId = "createProcessorFilter")
+    ProcessorFilter create(
+            @Parameter(description = "request", required = true) CreateProcessFilterRequest request);
 
 
     @POST
     @Path("/reprocess")
-    @ApiOperation(value = "Create filters to reprocess data")
-    List<ReprocessDataInfo> reprocess(@ApiParam("criteria") CreateReprocessFilterRequest request);
+    @Operation(
+            summary = "Create filters to reprocess data",
+            operationId = "reprocessData")
+    List<ReprocessDataInfo> reprocess(
+            @Parameter(description = "criteria", required = true) CreateReprocessFilterRequest request);
 
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Gets a filter",
-            response = ProcessorFilter.class)
-    ProcessorFilter read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch a filter",
+            operationId = "fetchProcessorFilter")
+    ProcessorFilter fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Updates a filter",
-            response = ProcessorFilter.class)
+    @Operation(
+            summary = "Updates a filter",
+            operationId = "updateProcessorFilter")
     ProcessorFilter update(@PathParam("id") Integer id, ProcessorFilter processorFilter);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Deletes a filter",
-            response = ProcessorFilter.class)
+    @Operation(
+            summary = "Deletes a filter",
+            operationId = "deleteProcessorFilter")
     void delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/priority")
-    @ApiOperation(value = "Sets the priority for a filter")
+    @Operation(
+            summary = "Sets the priority for a filter",
+            operationId = "setProcessorFilterPriority")
     void setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
     @Path("/{id}/enabled")
-    @ApiOperation(value = "Sets the enabled/disabled state for a filter")
+    @Operation(
+            summary = "Sets the enabled/disabled state for a filter",
+            operationId = "setProcessorFilterEnabled")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

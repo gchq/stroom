@@ -185,8 +185,12 @@ public class AnnotationEditPresenter
     private boolean hasChanged(final String oldValue, final String newValue) {
         // Treat empty strings as null so null and "" are treated as equal
         return !Objects.equals(
-                (oldValue != null && oldValue.isEmpty() ? null : oldValue),
-                (newValue != null && newValue.isEmpty() ? null : newValue));
+                (oldValue != null && oldValue.isEmpty()
+                        ? null
+                        : oldValue),
+                (newValue != null && newValue.isEmpty()
+                        ? null
+                        : newValue));
     }
 
     private void changeStatus(final String selected, final boolean addEntry) {
@@ -247,7 +251,7 @@ public class AnnotationEditPresenter
             ok = false;
             AlertEvent.fireError(
                     this,
-                    "No stream id has been provided for the annotation",
+                    "No event/stream id has been provided for the annotation",
                     null);
         }
 
@@ -256,12 +260,17 @@ public class AnnotationEditPresenter
             this.initialComment = annotation.getComment();
             readAnnotation(annotation);
 
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<AnnotationDetail> rest = restFactory.create();
-            rest
-                    .onSuccess(this::edit)
-                    .call(annotationResource)
-                    .get(annotation.getId());
+            if (annotation.getId() == null) {
+                // e.g. From a link in the dash table to create a new anno with pre-populated content
+                edit(null);
+            } else {
+                final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+                final Rest<AnnotationDetail> rest = restFactory.create();
+                rest
+                        .onSuccess(this::edit)
+                        .call(annotationResource)
+                        .get(annotation.getId());
+            }
         }
     }
 
@@ -861,6 +870,7 @@ public class AnnotationEditPresenter
     }
 
     public interface AnnotationEditView extends View, HasUiHandlers<AnnotationEditUiHandlers> {
+
         String getTitle();
 
         void setTitle(String title);

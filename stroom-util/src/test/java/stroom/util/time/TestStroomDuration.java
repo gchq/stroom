@@ -61,26 +61,27 @@ class TestStroomDuration {
         final StroomDuration stroomDuration = StroomDuration.parse(input);
 
         assertThat(stroomDuration.getDuration())
-            .isEqualTo(Duration.ofDays(30));
+                .isEqualTo(Duration.ofDays(30));
     }
 
     @Test
     void testSerde() throws IOException {
-            final StroomDuration stroomDuration = StroomDuration.parse("30d");
+        final StroomDuration stroomDuration = StroomDuration.parse("30d");
 
-            final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = new ObjectMapper();
 
-            final StringWriter stringWriter = new StringWriter();
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-            objectMapper.writeValue(stringWriter, stroomDuration);
+        final StringWriter stringWriter = new StringWriter();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.writeValue(stringWriter, stroomDuration);
 
-            final String json = stringWriter.toString();
+        final String json = stringWriter.toString();
 
-            System.out.println(json);
+        System.out.println(json);
 
-            final StroomDuration stroomDuration2 = objectMapper.readValue(json, StroomDuration.class);
+        final StroomDuration stroomDuration2 = objectMapper.readValue(json, StroomDuration.class);
 
-            assertThat(stroomDuration).isEqualTo(stroomDuration2);
+        assertThat(stroomDuration)
+                .isEqualTo(stroomDuration2);
     }
 
     @Test

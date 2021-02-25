@@ -101,6 +101,10 @@ public class EditorPresenter
         getView().replaceSelectedText(text);
     }
 
+    public void insertSnippet(final String snippet) {
+        getView().insertSnippet(snippet);
+    }
+
     public void setText(final String text, final boolean format) {
         if (text == null) {
             getView().setText("");
@@ -259,7 +263,8 @@ public class EditorPresenter
     /**
      * Registers completion providers specific to this editor instance and mode
      */
-    public void registerCompletionProviders(final AceEditorMode aceEditorMode, final AceCompletionProvider... completionProviders) {
+    public void registerCompletionProviders(final AceEditorMode aceEditorMode,
+                                            final AceCompletionProvider... completionProviders) {
         delegatingAceCompleter.registerCompletionProviders(
                 getEditorId(), aceEditorMode, completionProviders);
     }

@@ -28,6 +28,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"offset", "length"})
 @JsonInclude(Include.NON_NULL)
 public class PageRequest implements Serializable, Copyable<PageRequest> {
+
     public static final int DEFAULT_PAGE_SIZE = 100;
     private static final long serialVersionUID = 6838082084157676358L;
     /**
@@ -68,10 +69,15 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
         this.length = maxLength;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PageRequest that = (PageRequest) o;
         return Objects.equals(offset, that.offset) &&
                 Objects.equals(length, that.length);

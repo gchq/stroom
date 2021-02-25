@@ -3,12 +3,13 @@ package stroom.test;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import javax.inject.Inject;
 
 /**
  * This class should be used when integration tests require stroom content that is available as
@@ -18,7 +19,8 @@ import java.util.List;
  * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
-    private ImportExportService importExportService;
+
+    private final ImportExportService importExportService;
 
     @Inject
     ContentImportService(final ImportExportService importExportService) {

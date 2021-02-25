@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * as.next(3); as.next(3);
  */
 public class AtomicSequence {
+
     private final AtomicLong sequence = new AtomicLong();
     private final int limit;
 

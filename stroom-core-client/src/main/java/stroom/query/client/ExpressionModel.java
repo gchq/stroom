@@ -24,6 +24,7 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import java.util.List;
 
 public class ExpressionModel {
+
     public DefaultTreeForTreeLayout<Item> getTreeFromExpression(final ExpressionOperator expression) {
         Item root = null;
 
@@ -40,7 +41,9 @@ public class ExpressionModel {
         final Item item = tree.getRoot();
         if (item instanceof Operator) {
             final Operator source = (Operator) item;
-            final ExpressionOperator.Builder dest = ExpressionOperator.builder().enabled(source.isEnabled()).op(source.getOp());
+            final ExpressionOperator.Builder dest = ExpressionOperator.builder()
+                    .enabled(source.isEnabled())
+                    .op(source.getOp());
             addChildrenFromTree(source, dest, tree);
             return dest.build();
         }

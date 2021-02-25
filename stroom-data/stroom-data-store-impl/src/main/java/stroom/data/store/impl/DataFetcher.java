@@ -74,8 +74,6 @@ import stroom.util.shared.TextRange;
 import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Provider;
-import javax.xml.transform.TransformerException;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -88,8 +86,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Provider;
+import javax.xml.transform.TransformerException;
 
 public class DataFetcher {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFetcher.class);
 
     // TODO @AT Need to implement showing the data has been truncated, either
@@ -117,7 +118,6 @@ public class DataFetcher {
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
-    private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SourceConfig sourceConfig;
@@ -143,7 +143,6 @@ public class DataFetcher {
                 final Provider<PipelineFactory> pipelineFactoryProvider,
                 final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                 final PipelineDataCache pipelineDataCache,
-                final StreamEventLog streamEventLog,
                 final SecurityContext securityContext,
                 final PipelineScopeRunnable pipelineScopeRunnable,
                 final SourceConfig sourceConfig) {
@@ -157,20 +156,10 @@ public class DataFetcher {
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
-        this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.sourceConfig = sourceConfig;
     }
-
-    //    public void reset() {
-//        index = 0L;
-//        count = 0L;
-//        pageOffset = 0L;
-//        pageLength = 0L;
-//        pageTotal = 0L;
-//        pageTotalIsExact = false;
-//    }
 
     public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
 
@@ -187,19 +176,8 @@ public class DataFetcher {
                 throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
             }
         });
-    };
+    }
 
-    //
-//    }
-//
-//    public AbstractFetchDataResult getData(final long streamId,
-//                                           final String childStreamTypeName,
-//                                           final OffsetRange<Long> streamsRange,
-//                                           final OffsetRange<Long> pageRange,
-//                                           final boolean markerMode,
-//                                           final DocRef pipeline,
-//                                           final boolean showAsHtml,
-//                                           final Severity... expandedSeverities) {
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
@@ -220,16 +198,8 @@ public class DataFetcher {
                 if (source == null) {
                     final String msg = "## Stream has been deleted ## ";
                     final Count<Long> totalItemCount = new Count<>(0L, true);
-                    final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
+                    final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
                     final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
-
-                    writeEventLog(
-                            eventId,
-                            feedName,
-                            streamTypeName,
-                            fetchDataRequest.getSourceLocation().getOptChildType().orElse(null),
-                            fetchDataRequest.getPipeline(),
-                            new IOException(msg));
 
                     return new FetchDataResult(
                             feedName,
@@ -266,27 +236,18 @@ public class DataFetcher {
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
                     String requestedChildStreamType = sourceLocation.getOptChildType().orElse(null);
-                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(requestedChildStreamType)) {
+                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
+                            requestedChildStreamType)) {
+
                         // Get the event id.
                         eventId = String.valueOf(meta.getId());
                         if (partCount > 1) {
                             eventId += ":" + partNo;
                         }
-//                        final OffsetRange<Long> pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
+//                        final OffsetRange pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
                         if (sourceLocation.getOptSegmentNo().isPresent()) {
                             eventId = ":" + sourceLocation.getOptSegmentNo().getAsLong();
                         }
-
-//                        if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
-//                            eventId += ":" + (pageRange.getOffset() + 1);
-//                        }
-
-                        writeEventLog(eventId,
-                                feedName,
-                                streamTypeName,
-                                requestedChildStreamType,
-                                fetchDataRequest.getPipeline(),
-                                null);
 
                         // If this is an error stream and the UI is requesting markers then
                         // create a list of markers.
@@ -315,26 +276,19 @@ public class DataFetcher {
                 }
 
             } catch (final IOException | RuntimeException e) {
-                writeEventLog(
-                        eventId,
-                        feedName,
-                        streamTypeName,
-                        fetchDataRequest.getSourceLocation().getChildType(),
-                        fetchDataRequest.getPipeline(),
-                        e);
 
                 if (meta != null) {
                     if (Status.LOCKED.equals(meta.getStatus())) {
-                        return createErrorResult(sourceLocation, "You cannot view locked streams.");
+                        throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
                     }
                     if (Status.DELETED.equals(meta.getStatus())) {
-                        return createErrorResult(sourceLocation, "This data may no longer exist.");
+                        throw new ViewDataException(sourceLocation, "This data may no longer exist.");
                     }
                 }
 
                 LOGGER.error("Error fetching data", e);
 
-                return createErrorResult(sourceLocation, e.getMessage());
+                throw new ViewDataException(sourceLocation, e.getMessage());
             }
         });
     }
@@ -373,10 +327,10 @@ public class DataFetcher {
         }
 
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> itemRange = new OffsetRange<>(
+        final OffsetRange itemRange = new OffsetRange(
                 sourceLocation.getSegmentNo(),
                 (long) resultList.size());
-        final Count<Long> totalItemCount = new Count<>((long) totalResults, true);
+        final Count<Long> totalItemCount = new Count<>(totalResults, true);
         final Count<Long> totalCharCount = new Count<>(0L, true);
 
         return new FetchMarkerResult(
@@ -503,7 +457,7 @@ public class DataFetcher {
                 StreamTypeNames.RAW_EVENTS,
                 null,
                 sourceLocation,
-                OffsetRange.of(0L, 0L),
+                new OffsetRange(0L, 0L),
                 Count.of(0L, true),
                 Count.of(0L, true),
                 0L,
@@ -516,19 +470,6 @@ public class DataFetcher {
     private Count<Long> estimateCharCount(final long totalBytes, final Charset charset) {
         return Count.approximately((long) Math.floor(
                 charset.newDecoder().averageCharsPerByte() * totalBytes));
-    }
-
-    private void writeEventLog(final String eventId,
-                               final String feedName,
-                               final String streamTypeName,
-                               final String childStreamType,
-                               final DocRef pipelineRef,
-                               final Exception e) {
-        try {
-            streamEventLog.viewStream(eventId, feedName, streamTypeName, childStreamType, pipelineRef, e);
-        } catch (final Exception ex) {
-            LOGGER.debug(ex.getMessage(), ex);
-        }
     }
 
     private RawResult getSegmentedData(final SourceLocation sourceLocation,
@@ -572,7 +513,7 @@ public class DataFetcher {
                 segmentInputStream.size());
 
         // Override the page items range/total as we are dealing in segments/records
-        rawResult.setItemRange(OffsetRange.of(segmentNumber, 1L));
+        rawResult.setItemRange(new OffsetRange(segmentNumber, 1L));
         rawResult.setTotalItemCount(Count.of(segmentInputStream.count() - 2, true));
         return rawResult;
     }
@@ -589,15 +530,15 @@ public class DataFetcher {
 
 
         // Non-segmented data exists within parts so set the item info
-        rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
+        rawResult.setItemRange(new OffsetRange(sourceLocation.getPartNo(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
         return rawResult;
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
-                                                 final InputStream inputStream,
-                                                 final String encoding,
-                                                 final long streamSizeBytes) throws IOException {
+                                       final InputStream inputStream,
+                                       final String encoding,
+                                       final long streamSizeBytes) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -798,7 +739,9 @@ public class DataFetcher {
         // At this point currByteOffset is the offset of the first byte of the char outside our range
         // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
         // in our range
-        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset -1 : currByteOffset;
+        final long byteOffsetToInc = currByteOffset > 0
+                ? currByteOffset - 1
+                : currByteOffset;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
@@ -949,7 +892,6 @@ public class DataFetcher {
                                final InputStreamProvider inputStreamProvider) {
         return pipelineScopeRunnable.scopeResult(() -> {
             try {
-                String data;
 
                 final FeedHolder feedHolder = feedHolderProvider.get();
                 final MetaDataHolder metaDataHolder = metaDataHolderProvider.get();
@@ -1037,7 +979,7 @@ public class DataFetcher {
                     }
                 }
 
-                data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+                final String data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
 
                 if (!errorReceiver.isAllOk()) {
                     throw new TransformerException(errorReceiver.toString());
@@ -1066,11 +1008,12 @@ public class DataFetcher {
     }
 
     private static class RawResult {
+
         private final SourceLocation sourceLocation;
         private final String rawData;
         private final int byteOrderMarkLength;
 
-        private OffsetRange<Long> itemRange; // part/segment/marker
+        private OffsetRange itemRange; // part/segment/marker
         private Count<Long> totalItemCount; // part/segment/marker
         private Count<Long> totalCharacterCount; // Total chars in part/segment
         private long totalBytes;
@@ -1098,11 +1041,11 @@ public class DataFetcher {
             return byteOrderMarkLength;
         }
 
-        public OffsetRange<Long> getItemRange() {
+        public OffsetRange getItemRange() {
             return itemRange;
         }
 
-        public void setItemRange(final OffsetRange<Long> itemRange) {
+        public void setItemRange(final OffsetRange itemRange) {
             this.itemRange = itemRange;
         }
 

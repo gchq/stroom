@@ -3,6 +3,7 @@ package stroom.elastic.impl;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+
 import stroom.docref.DocRef;
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.api.ElasticIndexWriterFactory;
@@ -35,6 +36,7 @@ import java.util.Map;
         },
         icon = ElementIcons.ELASTIC_SEARCH)
 public class ElasticIndexingFilter extends AbstractXMLFilter {
+
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";

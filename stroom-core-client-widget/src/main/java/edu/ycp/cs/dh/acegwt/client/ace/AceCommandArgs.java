@@ -8,6 +8,7 @@ import java.util.Map;
  * Ace command's argument could be either string or string-to-string map.
  */
 public class AceCommandArgs {
+
     private final Object value;
 
     /**
@@ -15,9 +16,11 @@ public class AceCommandArgs {
      */
     public AceCommandArgs(Map<String, String> data) {
         value = JavaScriptObject.createObject();
-        if (data != null)
-            for (Map.Entry<String, String> entry : data.entrySet())
+        if (data != null) {
+            for (Map.Entry<String, String> entry : data.entrySet()) {
                 with(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /**

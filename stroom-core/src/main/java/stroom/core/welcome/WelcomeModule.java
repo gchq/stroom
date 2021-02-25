@@ -21,9 +21,10 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class WelcomeModule extends AbstractModule {
+
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bind(WelcomeResource.class);
+                .bind(WelcomeResourceImpl.class);
     }
 }

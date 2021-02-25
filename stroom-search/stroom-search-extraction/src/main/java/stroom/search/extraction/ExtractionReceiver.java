@@ -7,6 +7,7 @@ import stroom.query.common.v2.ReceiverImpl;
 import java.util.function.Consumer;
 
 public class ExtractionReceiver extends ReceiverImpl {
+
     private final FieldIndex fieldIndex;
 
     public ExtractionReceiver(final Consumer<Val[]> valuesConsumer,

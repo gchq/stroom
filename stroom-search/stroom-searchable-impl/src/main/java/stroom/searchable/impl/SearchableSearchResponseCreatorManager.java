@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 @SuppressWarnings("unused") //Used by DI
 @Singleton
 class SearchableSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableSearchResponseCreatorManager.class);
 
     private static final String CACHE_NAME = "DB Search Result Creators";

@@ -16,13 +16,14 @@
 
 package stroom.datasource.api.v2;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
 @JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
 @JsonInclude(Include.NON_NULL)
 public class DocRefField extends AbstractField {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     private static List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();

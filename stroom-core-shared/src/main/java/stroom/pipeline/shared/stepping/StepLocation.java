@@ -81,10 +81,15 @@ public class StepLocation {
         return recordNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final StepLocation that = (StepLocation) o;
         return id == that.id &&
                 partNo == that.partNo &&

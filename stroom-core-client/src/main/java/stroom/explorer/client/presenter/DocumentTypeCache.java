@@ -16,16 +16,18 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.core.client.GWT;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 
-import javax.inject.Inject;
+import com.google.gwt.core.client.GWT;
+
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class DocumentTypeCache {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private final RestFactory restFactory;
 

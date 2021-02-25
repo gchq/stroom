@@ -1,8 +1,8 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.util.shared.DataRange;
 import stroom.util.shared.Count;
+import stroom.util.shared.DataRange;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -127,7 +127,8 @@ public class CharacterRangeSelectionViewImpl
                 "disabled", !radioOffsetWithCount.getValue());
         charCountSpinner2.setEnabled(radioOffsetWithCount.getValue());
         lblCharCountSpinner2.setStyleDependentName(
-                "disabled", !radioOffsetWithCount.getValue()); }
+                "disabled", !radioOffsetWithCount.getValue());
+    }
 
     private void setInitialMinMax() {
         charCountSpinner1.setMin(1);
@@ -255,5 +256,6 @@ public class CharacterRangeSelectionViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, CharacterRangeSelectionViewImpl> {
+
     }
 }

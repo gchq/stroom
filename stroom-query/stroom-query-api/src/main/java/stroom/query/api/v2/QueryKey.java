@@ -21,28 +21,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"uuid"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "QueryKey", propOrder = {"uuid"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A unique key to identify the instance of the search by. This key is used to " +
+@Schema(description = "A unique key to identify the instance of the search by. This key is used to " +
         "identify multiple requests for the same search when running in incremental mode.")
 public final class QueryKey implements Serializable {
+
     private static final long serialVersionUID = -3222989872764402068L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The UUID that makes up the query key",
+    @Schema(description = "The UUID that makes up the query key",
             example = "7740bcd0-a49e-4c22-8540-044f85770716",
             required = true)
     @JsonProperty
@@ -64,10 +63,15 @@ public final class QueryKey implements Serializable {
         this.uuid = uuid;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         QueryKey queryKey = (QueryKey) o;
         return Objects.equals(uuid, queryKey.uuid);
     }

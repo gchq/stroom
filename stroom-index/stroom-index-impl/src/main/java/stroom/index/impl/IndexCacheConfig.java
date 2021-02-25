@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 
 @Singleton
 public class IndexCacheConfig extends AbstractConfig {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexCacheConfig.class);
 
     private StroomDuration timeToLive = StroomDuration.ZERO;

@@ -16,19 +16,21 @@
 
 package stroom.cluster.lock.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 
 class ClusterLockHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 
     private final ClusterLockResource clusterLockResource;

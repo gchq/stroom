@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
@@ -46,10 +47,11 @@ import java.util.List;
  * <p>
  * See also {@link DefaultTreeForTreeLayout}.
  */
-abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTreeLayout<TreeNode> {
-    private final TreeNode root;
+public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForTreeLayout<T_TREE_NODE> {
 
-    public AbstractTreeForTreeLayout(TreeNode root) {
+    private final T_TREE_NODE root;
+
+    public AbstractTreeForTreeLayout(T_TREE_NODE root) {
         this.root = root;
     }
 
@@ -58,11 +60,10 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * <p>
      * Time Complexity: O(1)
      *
-     * @param node
      * @return [nullable] the parent of the node, or null when the node is a
      * root.
      */
-    abstract public TreeNode getParent(TreeNode node);
+    public abstract T_TREE_NODE getParent(T_TREE_NODE node);
 
     /**
      * Return the children of a node as a {@link List}.
@@ -73,44 +74,43 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * <p>
      * A client must not modify the returned list.
      *
-     * @param node
      * @return the children of the given node. When node is a leaf the list is
      * empty.
      */
-    abstract public List<TreeNode> getChildrenList(TreeNode node);
+    public abstract List<T_TREE_NODE> getChildrenList(T_TREE_NODE node);
 
     @Override
-    public TreeNode getRoot() {
+    public T_TREE_NODE getRoot() {
         return root;
     }
 
     @Override
-    public boolean isLeaf(TreeNode node) {
+    public boolean isLeaf(T_TREE_NODE node) {
         return getChildrenList(node).isEmpty();
     }
 
     @Override
-    public boolean isChildOfParent(TreeNode node, TreeNode parentNode) {
+    public boolean isChildOfParent(T_TREE_NODE node, T_TREE_NODE parentNode) {
         return getParent(node) == parentNode;
     }
 
     @Override
-    public List<TreeNode> getChildren(TreeNode node) {
+    public List<T_TREE_NODE> getChildren(T_TREE_NODE node) {
         return getChildrenList(node);
     }
 
     @Override
-    public Iterable<TreeNode> getChildrenReverse(TreeNode node) {
+    public Iterable<T_TREE_NODE> getChildrenReverse(T_TREE_NODE node) {
         return IterableUtil.createReverseIterable(getChildrenList(node));
     }
 
     @Override
-    public TreeNode getFirstChild(TreeNode parentNode) {
+    public T_TREE_NODE getFirstChild(T_TREE_NODE parentNode) {
         return getChildrenList(parentNode).get(0);
     }
 
     @Override
-    public TreeNode getLastChild(TreeNode parentNode) {
+    public T_TREE_NODE getLastChild(T_TREE_NODE parentNode) {
         return ListUtil.getLast(getChildrenList(parentNode));
     }
 }

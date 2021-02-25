@@ -25,11 +25,13 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class NodeFactory {
+
     private final String id;
     private final String xPath;
     private final List<NodeFactory> childNodes;
     private String xml;
     private String debugId;
+
     public NodeFactory(final NodeFactory parent, final String id) {
         this.id = id;
 

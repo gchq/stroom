@@ -45,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView> {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
@@ -376,6 +377,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     }
 
     public interface NewPropertyView extends View {
+
         void setElement(String element);
 
         void setName(String name);

@@ -16,15 +16,17 @@
 
 package stroom.job.client;
 
+import stroom.job.shared.JobNode.JobType;
+
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.job.shared.JobNode.JobType;
 
 public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
+
     private String button = null;
 
     /**

@@ -4,6 +4,7 @@ import com.google.inject.Binder;
 import com.google.inject.multibindings.MapBinder;
 
 public class ObjectInfoProviderBinder {
+
     private final MapBinder<ObjectType, ObjectInfoProvider> mapBinder;
 
     private ObjectInfoProviderBinder(final Binder binder) {

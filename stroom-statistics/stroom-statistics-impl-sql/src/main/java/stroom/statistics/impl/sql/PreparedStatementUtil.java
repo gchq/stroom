@@ -24,6 +24,7 @@ import java.sql.SQLSyntaxErrorException;
  * Utility Class
  */
 public class PreparedStatementUtil {
+
     public static void setArguments(final PreparedStatement ps, final Iterable<Object> args) throws SQLException {
         if (args != null) {
             int index = 1;
@@ -47,7 +48,8 @@ public class PreparedStatementUtil {
                         ps.setObject(index, o);
                     }
                 } catch (final SQLSyntaxErrorException syntaxError) {
-                    throw new SQLSyntaxErrorException("Unable to set arg " + index + " (" + o + ") in arg list " + args);
+                    throw new SQLSyntaxErrorException(
+                            "Unable to set arg " + index + " (" + o + ") in arg list " + args);
                 }
                 index++;
             }

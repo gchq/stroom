@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ApplicationInstanceIdProvider {
+
     private final String applicationInstanceId;
 
     @Inject

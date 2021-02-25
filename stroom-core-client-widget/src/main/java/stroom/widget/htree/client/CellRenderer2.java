@@ -20,5 +20,6 @@ import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
 public interface CellRenderer2<T> {
+
     void render(TreeLayout<T> treeLayout, Bounds bounds, T item);
 }

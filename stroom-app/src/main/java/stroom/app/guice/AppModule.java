@@ -4,8 +4,8 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.config.app.ConfigHolder;
 import stroom.config.app.Config;
+import stroom.config.app.ConfigHolder;
 import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.index.impl.IndexShardWriterExecutorProvider;
@@ -23,6 +23,7 @@ import io.dropwizard.setup.Environment;
 import java.nio.file.Path;
 
 public class AppModule extends AbstractModule {
+
     private final Config configuration;
     private final Environment environment;
     private final ConfigHolder configHolder;

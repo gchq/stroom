@@ -21,11 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-import javax.xml.parsers.SAXParserFactory;
 import java.io.Reader;
+import javax.xml.parsers.SAXParserFactory;
 
 @Disabled
 class TestSAXParserFactoryFactory {
+
     @Test
     void testExceedingTotalEntities() throws Exception {
         // Set this to true to test limits.
@@ -37,11 +38,12 @@ class TestSAXParserFactoryFactory {
     }
 
     private static class XmlGenerator extends Reader {
+
         private static final int MAX_COUNT = 1000000;
         private static final int MAX_DEPTH = 1000;
         private static final boolean UNIQUE_NAMES = false;
 
-        private RingBuffer buf = new RingBuffer(1000);
+        private final RingBuffer buf = new RingBuffer(1000);
         private int count;
         private int depth;
         private boolean incrementing = true;

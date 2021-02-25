@@ -17,6 +17,7 @@
 package stroom.widget.htree.client.treelayout;
 
 public class Point {
+
     private final double x;
     private final double y;
 

@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
-import javax.ws.rs.container.ResourceInfo;
 import java.lang.reflect.Method;
+import javax.ws.rs.container.ResourceInfo;
 
 public class MockResourceInfo implements ResourceInfo {
+
     private Class<?> resourceClass;
     private Method method;
 

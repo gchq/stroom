@@ -30,6 +30,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class DateFormatter implements Formatter {
+
     private final DateTimeFormatter format;
 
     private DateFormatter(final DateTimeFormatter format) {
@@ -45,7 +46,8 @@ public class DateFormatter implements Formatter {
 
         if (settings instanceof DateTimeFormatSettings) {
             final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
-            if (dateTimeFormatSettings.getPattern() != null && dateTimeFormatSettings.getPattern().trim().length() > 0) {
+            if (dateTimeFormatSettings.getPattern() != null
+                    && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                 pattern = dateTimeFormatSettings.getPattern();
 
                 final TimeZone timeZone = dateTimeFormatSettings.getTimeZone();

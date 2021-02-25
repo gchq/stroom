@@ -29,13 +29,15 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, Function<Stream<E>, Stream<E>> {
+
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
     private CompiledSorter() {
     }
 
     @SuppressWarnings("unchecked")
-    public static <E extends HasGenerators> CompiledSorter<E>[] create(final int maxDepth, final CompiledField[] compiledFields) {
+    public static <E extends HasGenerators> CompiledSorter<E>[] create(final int maxDepth,
+                                                                       final CompiledField[] compiledFields) {
         final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
 
         if (compiledFields != null) {

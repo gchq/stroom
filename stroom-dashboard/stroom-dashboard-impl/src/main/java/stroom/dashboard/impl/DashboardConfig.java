@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DashboardConfig extends AbstractConfig {
+
     private CacheConfig activeQueriesCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))

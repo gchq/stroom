@@ -25,14 +25,16 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
+
     private final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
@@ -44,13 +46,23 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
-    public ReceiveDataRules read(final DocRef docRef) {
-        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), docRef);
+    public ReceiveDataRules fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public ReceiveDataRules update(final ReceiveDataRules doc) {
+    public ReceiveDataRules update(final String uuid, final ReceiveDataRules doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelperProvider.get().update(ruleSetServiceProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(ReceiveDataRules.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override
@@ -61,18 +73,18 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     @Override
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState
-                (documentData.getDocRef(),
-                        documentData.getDocRef().getName());
+        final ImportState importState = new ImportState(documentData.getDocRef(),
+                documentData.getDocRef().getName());
         final ImportExportActionHandler.ImpexDetails result = ruleSetServiceProvider.get().importDocument(
                 documentData.getDocRef(),
                 documentData.getDataMap(),
                 importState,
                 ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @Override

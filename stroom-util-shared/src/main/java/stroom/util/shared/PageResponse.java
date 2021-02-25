@@ -20,21 +20,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
+@Schema(description = "Details of the page of results being returned.")
 public class PageResponse implements Serializable {
+
     private static final long serialVersionUID = -8613411971150227752L;
 
     @JsonProperty
+    @JsonPropertyDescription("The offset of the first item in the page relative to the full result set, zero based.")
     private final long offset;
+
     @JsonProperty
+    @JsonPropertyDescription("The number of items in this page of results.")
     private final int length;
+
     @JsonProperty
+    @JsonPropertyDescription("The total number of items in the full result set.")
     private final Long total;
+
     @JsonProperty
+    @JsonPropertyDescription("True if the total is exact, false if not known or an estimate.")
     private final boolean exact;
 
     @JsonCreator
@@ -64,10 +75,15 @@ public class PageResponse implements Serializable {
         return exact;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PageResponse that = (PageResponse) o;
         return offset == that.offset &&
                 length == that.length &&
@@ -82,6 +98,10 @@ public class PageResponse implements Serializable {
 
     @Override
     public String toString() {
-        return offset + ".." + length + " of " + (total == null ? "?" : total) + " " + (exact ? "exact" : "");
+        return offset + ".." + length + " of " + (total == null
+                ? "?"
+                : total) + " " + (exact
+                ? "exact"
+                : "");
     }
 }

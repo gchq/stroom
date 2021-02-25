@@ -9,6 +9,7 @@ import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -21,11 +22,8 @@ import com.wix.mysql.distribution.Version;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import javax.sql.DataSource;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,8 +41,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.sql.DataSource;
 
 public class DbTestUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbTestUtil.class);
 
     private static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
@@ -57,12 +57,9 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-
-    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
-
-    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
-
     private static final ThreadLocal<DataSource> THREAD_LOCAL = new ThreadLocal<>();
+    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
+    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
     private DbTestUtil() {
     }
@@ -70,9 +67,9 @@ public class DbTestUtil {
     /**
      * Gets an embedded DB datasource for use in tests that don't use guice injection
      */
-    public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
-            final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
-            final T_Config config) {
+    public static <T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
+            final AbstractFlyWayDbModule<T_CONFIG, T_CONN_PROV> dbModule,
+            final T_CONFIG config) {
 
         // We are only running one module so just pass in any empty ForceCoreMigration
         return dbModule.getConnectionProvider(
@@ -137,12 +134,17 @@ public class DbTestUtil {
             connectionProps.put("password", rootConnectionConfig.getPassword());
 
             final String dbName = DbTestUtil.createTestDbName();
-            try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(), connectionProps)) {
+            try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                    connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
                     int result = 0;
-                    result = statement.executeUpdate("CREATE DATABASE `" + dbName + "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" + connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" + connectionConfig.getJdbcDriverUsername() + "';");
-                    result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" + connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
+                    result = statement.executeUpdate("CREATE DATABASE `" + dbName +
+                            "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+//                        connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
+//                        connectionConfig.getJdbcDriverUsername() + "';");
+                    result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+                            connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
                 }
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -177,7 +179,7 @@ public class DbTestUtil {
         // This is useful when debugging a test that needs to access the DB as the embedded DB has to
         // migrate the DB from scratch on each run which is very time consuming
         boolean useEmbeddedDb = (useTestContainersEnvVarVal == null
-                || !useTestContainersEnvVarVal.toLowerCase().equals("false"));
+                || !useTestContainersEnvVarVal.equalsIgnoreCase("false"));
 
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {
@@ -233,9 +235,13 @@ public class DbTestUtil {
 //        try (final Connection connection = DriverManager.getConnection(url, connectionProps)) {
 //            try (final Statement statement = connection.createStatement()) {
 //                int result = 0;
-//                result = statement.executeUpdate("CREATE DATABASE `" + dbName + "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-////                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" + connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" + connectionConfig.getJdbcDriverUsername() + "';");
-//                result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" + EMBEDDED_MYSQL_DB_USERNAME + "'@'%' WITH GRANT OPTION;");
+//                result = statement.executeUpdate("CREATE DATABASE `" + dbName +
+//                "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+////                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+// connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
+// connectionConfig.getJdbcDriverUsername() + "';");
+//                result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+//                EMBEDDED_MYSQL_DB_USERNAME + "'@'%' WITH GRANT OPTION;");
 //            }
 //        } catch (final SQLException e) {
 //            throw new RuntimeException(e.getMessage(), e);
@@ -274,24 +280,19 @@ public class DbTestUtil {
         final Path cacheDir = parentDir.resolve("embedmysql");
 
         EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
-        while (embeddedMysql == null) {
-            // Add file locking to synchronise across JVM processes.
-            try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFile.toFile())) {
-                FileChannel channel = fileOutputStream.getChannel();
-                channel.lock();
-                embeddedMysql = doCreateEmbeddedMysql(cacheDir);
-            } catch (final IOException e) {
-                LOGGER.trace(e.getMessage(), e);
-            }
 
-            try {
-                Thread.sleep(500);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+        if (embeddedMysql == null) {
+            embeddedMysql = FileUtil.getUnderFileLock(lockFile, () -> {
+                try {
+                    return doCreateEmbeddedMysql(cacheDir);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error creating embedded mysql", e);
+                }
+            });
         }
+
         EMBEDDED_MYSQL = embeddedMysql;
+
         return embeddedMysql;
     }
 
@@ -348,7 +349,8 @@ public class DbTestUtil {
             String packageRoot;
             try {
                 final String thisClass = c.getResource(c.getSimpleName() + ".class").toString();
-                final String classPath = Pattern.quote(c.getName().replaceAll("\\.", "/") + ".class");
+                final String classPath = Pattern.quote(c.getName()
+                        .replaceAll("\\.", "/") + ".class");
                 packageRoot = thisClass.replaceAll(classPath, "");
                 packageRoot = packageRoot.replaceAll("!/$", "");
                 packageRoot = packageRoot.replaceAll("[^/\\\\]*$", "");
@@ -359,7 +361,8 @@ public class DbTestUtil {
             }
             return packageRoot;
         } catch (final Exception e) {
-            throw new RuntimeException("While interrogating " + c.getName() + ", an unexpected exception was thrown.", e);
+            throw new RuntimeException("While interrogating " + c.getName() + ", an unexpected exception was thrown.",
+                    e);
         }
     }
 
@@ -400,7 +403,8 @@ public class DbTestUtil {
         executeStatementsWithNoConstraints(connection, deleteStatements);
     }
 
-    private static void executeStatementsWithNoConstraints(final Connection connection, final List<String> statements) {
+    private static void executeStatementsWithNoConstraints(final Connection connection,
+                                                           final List<String> statements) {
         final List<String> allStatements = new ArrayList<>();
         allStatements.add("SET FOREIGN_KEY_CHECKS=0");
         allStatements.addAll(statements);

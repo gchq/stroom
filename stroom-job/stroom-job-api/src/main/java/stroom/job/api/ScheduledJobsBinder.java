@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 public class ScheduledJobsBinder {
 
-    private MapBinder<ScheduledJob, Runnable> mapBinder;
+    private final MapBinder<ScheduledJob, Runnable> mapBinder;
 
     private ScheduledJobsBinder(final Binder binder) {
         mapBinder = MapBinder.newMapBinder(binder, ScheduledJob.class, Runnable.class);

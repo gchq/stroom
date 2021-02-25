@@ -17,5 +17,6 @@
 package com.google.gwt.user.cellview.client;
 
 public interface HasSelection<O> {
+
     boolean hasSelectionChanged(O object);
 }

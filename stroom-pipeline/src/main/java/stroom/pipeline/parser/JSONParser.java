@@ -16,7 +16,6 @@
 
 package stroom.pipeline.parser;
 
-import org.xml.sax.XMLReader;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -27,12 +26,16 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 
+import org.xml.sax.XMLReader;
+
 import javax.inject.Inject;
 
-@ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {
+        PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.JSON)
 public class JSONParser extends AbstractParser {
+
     private JSONFactoryConfig config = new JSONFactoryConfig();
     private boolean addRootObject = true;
 
@@ -57,17 +60,19 @@ public class JSONParser extends AbstractParser {
         this.addRootObject = addRootObject;
     }
 
-    @PipelineProperty(description = "Feature that determines whether parser will allow use  of Java/C++ style comments" +
-            " (both '/'+'*' and '//' varieties) within parsed content or not.",
+    @PipelineProperty(
+            description = "Feature that determines whether parser will allow use  of Java/C++ style " +
+                    "comments (both '/'+'*' and '//' varieties) within parsed content or not.",
             defaultValue = "false",
             displayPriority = 2)
     public void setAllowComments(final boolean allowComments) {
         this.config.setAllowComments(allowComments);
     }
 
-    @PipelineProperty(description = "Feature that determines whether parser will allow use of YAML comments, ones " +
-            "starting with '#' and continuing until the end of the line. This commenting style is common with scripting " +
-            "languages as well.",
+    @PipelineProperty(
+            description = "Feature that determines whether parser will allow use of YAML comments, ones " +
+                    "starting with '#' and continuing until the end of the line. This commenting style is " +
+                    "common with scripting languages as well.",
             defaultValue = "false",
             displayPriority = 3)
     public void setAllowYamlComments(final boolean allowYamlComments) {
@@ -82,18 +87,21 @@ public class JSONParser extends AbstractParser {
         this.config.setAllowUnquotedFieldNames(allowUnquotedFieldNames);
     }
 
-    @PipelineProperty(description = "Feature that determines whether parser will allow use of single quotes (apostrophe," +
-            " character '\\'') for quoting Strings (names and String values). If so, this is in addition to other" +
-            " acceptable markers but not by JSON specification).",
+    @PipelineProperty(
+            description = "Feature that determines whether parser will allow use of single quotes (apostrophe," +
+                    " character '\\'') for quoting Strings (names and String values). If so, this is in addition " +
+                    "to other acceptable markers but not by JSON specification).",
             defaultValue = "false",
             displayPriority = 5)
     public void setAllowSingleQuotes(final boolean allowSingleQuotes) {
         this.config.setAllowSingleQuotes(allowSingleQuotes);
     }
 
-    @PipelineProperty(description = "Feature that determines whether parser will allow JSON Strings to contain unquoted" +
-            " control characters (ASCII characters with value less than 32, including tab and line feed characters) or" +
-            " not. If feature is set false, an exception is thrown if such a character is encountered.",
+    @PipelineProperty(
+            description = "Feature that determines whether parser will allow JSON Strings to contain unquoted" +
+                    " control characters (ASCII characters with value less than 32, including tab and line " +
+                    "feed characters) or not. If feature is set false, an exception is thrown if such a " +
+                    "character is encountered.",
             defaultValue = "false",
             displayPriority = 6)
     public void setAllowUnquotedControlChars(final boolean allowUnquotedControlChars) {

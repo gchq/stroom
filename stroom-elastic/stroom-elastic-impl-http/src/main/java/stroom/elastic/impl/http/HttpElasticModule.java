@@ -17,9 +17,11 @@
 package stroom.elastic.impl.http;
 
 import com.google.inject.AbstractModule;
+
 import stroom.elastic.api.ElasticIndexWriterFactory;
 
 public class HttpElasticModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ElasticIndexWriterFactory.class).to(HttpElasticIndexWriterFactory.class);

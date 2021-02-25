@@ -18,7 +18,23 @@ package stroom.dashboard.expression.v1;
 
 import java.time.LocalDateTime;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = CeilingDay.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        signatures = @FunctionSignature(
+                description = "Rounds the supplied time up to the start of the next day.",
+                args = {
+                        @FunctionArg(
+                                name = "time",
+                                description = "The time to round in milliseconds since the epoch or as a string " +
+                                        "formatted using the default date format.",
+                                argType = Val.class)}))
 class CeilingDay extends RoundDate {
+
     static final String NAME = "ceilingDay";
     private static final Calc CALC = new Calc();
 
@@ -32,6 +48,7 @@ class CeilingDay extends RoundDate {
     }
 
     static class Calc extends RoundDateCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override

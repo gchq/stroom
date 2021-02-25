@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class GwtStringBuilderOutputStream extends OutputStream {
+
     private final StringBuilder builder;
 
     public GwtStringBuilderOutputStream(final StringBuilder builder) {

@@ -2,11 +2,12 @@ package stroom.proxy.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
 import java.util.Map;
+import javax.inject.Singleton;
 
 @Singleton
 public class ContentSyncConfig {
+
     private boolean isContentSyncEnabled = false;
     private Map<String, String> upstreamUrl;
     private long syncFrequency;

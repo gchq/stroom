@@ -17,15 +17,17 @@
 package stroom.explorer;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.util.UUID;
+import javax.inject.Inject;
 
 class TestExplorerTree extends AbstractCoreIntegrationTest {
+
     @Inject
     private ExplorerTreeDao explorerTreeDao;
 

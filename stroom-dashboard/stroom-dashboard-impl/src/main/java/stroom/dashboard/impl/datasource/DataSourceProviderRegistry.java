@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import java.util.Optional;
 
 public interface DataSourceProviderRegistry {
+
     /**
      * Gets a valid instance of a {@link RemoteDataSourceProvider} by querying service discovery
      *

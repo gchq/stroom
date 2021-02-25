@@ -20,9 +20,9 @@ package stroom.pipeline.refdata.store;
 public enum ProcessingState {
 
     // byte values must be unique obviously
-    LOAD_IN_PROGRESS((byte)0, "Load In Progress"),
-    PURGE_IN_PROGRESS((byte)1, "Purge In Progress"),
-    COMPLETE((byte)2, "Complete");
+    LOAD_IN_PROGRESS((byte) 0, "Load In Progress"),
+    PURGE_IN_PROGRESS((byte) 1, "Purge In Progress"),
+    COMPLETE((byte) 2, "Complete");
 
     private final byte id;
     private final String displayName;

@@ -16,9 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.TargetUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,15 +34,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 class TestStreamTargetUtil {
+
     @Test
     void testSimpleWriteThenRead() {
-        final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record>text1</record><record>text2</record><record>text3</record></records>";
+        final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<records>" +
+                "<record>text1</record>" +
+                "<record>text2</record>" +
+                "<record>text3</record>" +
+                "</records>";
         final InputStream bais = new ByteArrayInputStream(text.getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
 
         TargetUtil.write(bais, new RASegmentOutputStream(dataBuffer, ByteArrayOutputStream::new), true);
 
-        assertThat(new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET)).isEqualTo(text);
+        assertThat(new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET))
+                .isEqualTo(text);
     }
 }

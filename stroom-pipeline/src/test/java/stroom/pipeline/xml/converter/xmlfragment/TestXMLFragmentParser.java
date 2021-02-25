@@ -17,40 +17,48 @@
 package stroom.pipeline.xml.converter.xmlfragment;
 
 
-import org.junit.jupiter.api.Test;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.XMLUtil;
 
+import org.junit.jupiter.api.Test;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestXMLFragmentParser extends StroomUnitTest {
+
     @Test
     void test() throws SAXException, IOException, TransformerConfigurationException {
-        final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
+        final String outerXML = "<?xml version=\"1.1\"?>" +
+                "<!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
         final String innerXML = "<record><data name=\"Test\" value=\"Test\"/></record>";
-        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><records><record><data name=\"Test\" value=\"Test\"/></record></records>";
+        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>" +
+                "<records><record><data name=\"Test\" value=\"Test\"/></record></records>";
 
         doParse(outerXML, innerXML, expected);
     }
 
     @Test
     void testLotsOfText() throws SAXException, IOException, TransformerConfigurationException {
-        final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><Records>&fragment;</Records>";
-        final String value = "This is a load of text ldkjsf slkdfjlkjsdflkjsdf sdlkfjsdf lkjsdflkjsdflkjsdf sdflkjsdflkhj sdflkjsdf lkjsdf lkjsdfl sdflkjsfdlkjsdf lkjsdf lkjsdf lkjsdfl kjsdflkjsdf lkjsdflkhjsdflkj sdfljhsdgflkhweripuweroijsdjfvnsv,jnsdfl hsdlfkj sdflkjhsdflkjwerlkhwef dwsflkjsdf lkjwefrlkjhsdf sdflkjwef weflkjwef weflkjwef weflkjwe flkjwf";
+        final String outerXML = "<?xml version=\"1.1\"?>" +
+                "<!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><Records>&fragment;</Records>";
+        final String value = "This is a load of text ldkjsf slkdfjlkjsdflkjsdf sdlkfjsdf lkjsdflkjsdflkjsdf " +
+                "sdflkjsdflkhj sdflkjsdf lkjsdf lkjsdfl sdflkjsfdlkjsdf lkjsdf lkjsdf lkjsdfl kjsdflkjsdf " +
+                "lkjsdflkhjsdflkj sdfljhsdgflkhweripuweroijsdjfvnsv,jnsdfl hsdlfkj sdflkjhsdflkjwerlkhwef " +
+                "dwsflkjsdf lkjwefrlkjhsdf sdflkjwef weflkjwef weflkjwef weflkjwe flkjwf";
         final String innerXML = "<Record><Data Name=\"Test\" Value=\"" + value + "\"/></Record>";
-        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><Records><Record><Data Name=\"Test\" Value=\""
-                + value + "\"/></Record></Records>";
+        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>" +
+                "<Records><Record><Data Name=\"Test\" Value=\"" + value + "\"/></Record></Records>";
 
         doParse(outerXML, innerXML, expected);
     }
@@ -58,7 +66,8 @@ class TestXMLFragmentParser extends StroomUnitTest {
     @Test
     void testBadChar() {
         assertThatThrownBy(() -> {
-            final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
+            final String outerXML = "<?xml version=\"1.1\"?>" +
+                    "<!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
             final String innerXML = "<record><data name=\"Test\" value=\"Test\u0092x\"/></record>";
 
             doParse(outerXML, innerXML, null);
@@ -77,7 +86,8 @@ class TestXMLFragmentParser extends StroomUnitTest {
 
         parser.parse(new InputSource(StreamUtil.stringToStream(innerXML)));
 
-        assertThat(outputStream.toString()).isEqualTo(expectedXML);
+        assertThat(outputStream.toString())
+                .isEqualTo(expectedXML);
     }
 
 }

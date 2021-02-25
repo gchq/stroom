@@ -8,15 +8,16 @@ import stroom.util.logging.LogUtil;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.lang.JoseException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.ws.rs.core.Response;
 
 @Singleton
 public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdPublicKeysSupplier.class);
 
     private final ResolvedOpenIdConfig openIdConfig;

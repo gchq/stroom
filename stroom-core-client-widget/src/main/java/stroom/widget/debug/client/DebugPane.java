@@ -21,6 +21,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.RootPanel;
 
 public class DebugPane {
+
     private static volatile Element debug = null;
 
     public static void debug(final String html) {

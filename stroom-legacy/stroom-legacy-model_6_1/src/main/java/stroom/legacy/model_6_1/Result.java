@@ -16,17 +16,17 @@
 
 package stroom.legacy.model_6_1;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -40,7 +40,7 @@ import java.io.Serializable;
 @XmlType(name = "Result", propOrder = "componentId")
 @XmlSeeAlso({TableResult.class, FlatResult.class})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
+@Schema(
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class})
 @Deprecated
@@ -49,13 +49,12 @@ public abstract class Result implements Serializable {
 
     @XmlElement
     //TODO add an example value
-    @ApiModelProperty(
-            value = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
+    @Schema(description = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
             required = true)
     private String componentId;
 
     @XmlElement
-    @ApiModelProperty(value = "If an error has occurred producing this result set then this will have details " +
+    @JsonPropertyDescription("If an error has occurred producing this result set then this will have details " +
             "of the error")
     private String error;
 
@@ -107,7 +106,7 @@ public abstract class Result implements Serializable {
      * @param <T> The result class type, either Flat or Table
      * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
-    public static abstract class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
 
         private String componentId;
         private String error;

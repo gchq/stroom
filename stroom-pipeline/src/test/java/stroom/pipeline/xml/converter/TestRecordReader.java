@@ -17,8 +17,9 @@
 package stroom.pipeline.xml.converter;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 class TestRecordReader extends StroomUnitTest {
+
     private RecordReader createTest(final String buffer, final String delimiter) {
         final StringReader stringReader = new StringReader(buffer);
         return new RecordReader(stringReader, delimiter);

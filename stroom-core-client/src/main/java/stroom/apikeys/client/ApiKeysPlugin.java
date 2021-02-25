@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ApiKeysPlugin extends NodeToolsPlugin {
+
     private final UiConfigCache clientPropertyCache;
 
     @Inject
@@ -46,7 +47,13 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                HyperlinkEvent.fire(this, hyperlink);
                             });
                         } else {
-                            apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);
+                            apiKeysMenuItem = new IconMenuItem(5,
+                                    icon,
+                                    icon,
+                                    "API Keys is not configured!",
+                                    null,
+                                    false,
+                                    null);
                         }
                         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
                     })

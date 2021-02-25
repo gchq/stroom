@@ -16,11 +16,13 @@
 
 package stroom.lifecycle.impl;
 
-import com.google.inject.AbstractModule;
-import io.dropwizard.lifecycle.Managed;
 import stroom.util.guice.GuiceUtil;
 
+import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
+
 public class LifecycleServiceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

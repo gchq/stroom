@@ -17,20 +17,28 @@
 package stroom.pipeline.shared.data;
 
 
+import stroom.docref.HasType;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import stroom.index.shared.IndexField;
-import stroom.util.shared.HasType;
-
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elementType", "name", "type", "description", "defaultValue", "pipelineReference", "docRefTypes", "displayPriority"})
+@JsonPropertyOrder({
+        "elementType",
+        "name",
+        "type",
+        "description",
+        "defaultValue",
+        "pipelineReference",
+        "docRefTypes",
+        "displayPriority"})
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType {
+
     @JsonProperty
     private final PipelineElementType elementType;
     @JsonProperty
@@ -100,10 +108,15 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         return displayPriority;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PipelinePropertyType that = (PipelinePropertyType) o;
         return elementType.equals(that.elementType) &&
                 name.equals(that.name) &&
@@ -134,6 +147,7 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     }
 
     public static final class Builder {
+
         private PipelineElementType elementType;
         private String name;
         private String type;

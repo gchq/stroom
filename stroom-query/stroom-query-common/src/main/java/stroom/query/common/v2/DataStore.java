@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 public interface DataStore {
+
     Items get();
 
     Items get(final RawKey key);

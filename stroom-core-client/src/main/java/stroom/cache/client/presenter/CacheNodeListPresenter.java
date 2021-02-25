@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
+
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
     private static final int SMALL_COL = 90;
@@ -155,7 +156,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     private SafeHtml getInfoHtml(final CacheInfo cacheInfo) {
 
         return TooltipUtil.builder()
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                     tableBuilder.addHeaderRow(cacheInfo.getNodeName());
                     final Map<String, String> map = cacheInfo.getMap();
                     map.keySet().stream()
@@ -177,7 +178,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             if (dataProvider == null) {
                 dataProvider = new RestDataProvider<CacheInfo, CacheInfoResponse>(getEventBus()) {
                     @Override
-                    protected void exec(final Consumer<CacheInfoResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    protected void exec(final Consumer<CacheInfoResponse> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
                         nodeCache.listAllNodes(nodeNames -> {
                             fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames);
                         }, throwableConsumer);

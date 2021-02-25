@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class DoubleSelectEvent extends GwtEvent<DoubleSelectEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private DoubleSelectEvent() {
@@ -48,6 +49,7 @@ public class DoubleSelectEvent extends GwtEvent<DoubleSelectEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onSelect(DoubleSelectEvent event);
     }
 }

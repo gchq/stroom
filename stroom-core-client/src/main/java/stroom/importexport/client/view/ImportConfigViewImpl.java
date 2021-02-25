@@ -16,6 +16,8 @@
 
 package stroom.importexport.client.view;
 
+import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -23,14 +25,15 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
 
 public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
+
     private final Widget widget;
     @UiField
     FormPanel form;
     @UiField
     FileUpload fileUpload;
+
     @Inject
     public ImportConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -47,5 +50,6 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
     }
 
     public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {
+
     }
 }

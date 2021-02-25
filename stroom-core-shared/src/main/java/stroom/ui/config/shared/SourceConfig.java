@@ -8,9 +8,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
-import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"maxCharactersInPreviewFetch"})
@@ -31,8 +31,8 @@ public class SourceConfig extends AbstractConfig {
     @Min(0)
     @JsonProperty
     @JsonPropertyDescription("When displaying multi-line data in the Data Preview or Source views, the viewer will " +
-            "attempt to always show complete lines. It will go past the requested range by up to this many characters " +
-            "in order to complete the line.")
+            "attempt to always show complete lines. It will go past the requested range by up to this many " +
+            "characters in order to complete the line.")
     private long maxCharactersToCompleteLine;
 
     public SourceConfig() {
@@ -88,10 +88,15 @@ public class SourceConfig extends AbstractConfig {
         this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SourceConfig that = (SourceConfig) o;
         return maxCharactersInPreviewFetch == that.maxCharactersInPreviewFetch &&
                 maxCharactersPerFetch == that.maxCharactersPerFetch;

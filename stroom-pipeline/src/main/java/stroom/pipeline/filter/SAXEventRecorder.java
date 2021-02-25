@@ -20,7 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.shared.Record;
+import stroom.pipeline.shared.Rec;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
@@ -37,16 +37,17 @@ import net.sf.saxon.xpath.XPathEvaluator;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, SteppingFilter {
+
     private final NamespaceContextImpl namespaceContext = new NamespaceContextImpl();
 
     private final MetaHolder metaHolder;
@@ -216,7 +217,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                             case EQUALS:
                                 for (int i = 0; i < nodes.size(); i++) {
                                     final NodeInfo node = nodes.get(i);
-                                    if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                                    if (equals(node.getStringValue(),
+                                            xPathFilter.getValue(),
+                                            xPathFilter.isIgnoreCase())) {
                                         return true;
                                     }
                                 }
@@ -234,7 +237,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
 
                                     // See if we previously found a matching record
                                     // for this filter.
-                                    Record record = xPathFilter.getUniqueRecord(value);
+                                    Rec record = xPathFilter.getUniqueRecord(value);
                                     if (record != null) {
                                         // We did so see if this is the same record.
                                         // If it is then we can return this record
@@ -244,7 +247,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                         }
 
                                     } else {
-                                        record = new Record(streamId, recordNo);
+                                        record = new Rec(streamId, recordNo);
                                         xPathFilter.addUniqueValue(value, record);
                                         return true;
                                     }
@@ -335,6 +338,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     public static class CompiledXPathFilter {
+
         private final XPathFilter xPathFilter;
         private final XPathExpression xPathExpression;
 

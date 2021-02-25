@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,23 +33,21 @@ import java.util.Objects;
         "backgroundColor",
         "textColor"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "A row of data in a result set")
+@Schema(description = "A row of data in a result set")
 public final class Row {
-    @ApiModelProperty(
-            value = "TODO",
+
+    @Schema(description = "TODO",
             required = true)
     @JsonProperty
     private final String groupKey;
 
-    @ApiModelProperty(
-            value = "The value for this row of data. The values in the list are in the same order as the fields in " +
-                    "the ResultRequest",
+    @Schema(description = "The value for this row of data. The values in the list are in the same order as the " +
+            "fields in the ResultRequest",
             required = true)
     @JsonProperty
     private final List<String> values;
 
-    @ApiModelProperty(
-            value = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
+    @Schema(description = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
             example = "0",
             required = true)
     @JsonProperty
@@ -95,10 +92,15 @@ public final class Row {
         return textColor;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Row row = (Row) o;
         return Objects.equals(groupKey, row.groupKey) &&
                 Objects.equals(values, row.values) &&
@@ -135,6 +137,7 @@ public final class Row {
      * Builder for constructing a {@link Row}
      */
     public static final class Builder {
+
         private String groupKey;
         private List<String> values;
         private Integer depth;

@@ -3,6 +3,7 @@ package stroom.elastic.impl.http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.impl.ElasticIndexConfigDoc;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 class HttpElasticIndexWriter implements ElasticIndexWriter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpElasticIndexWriter.class);
 
     private String elasticHttpUrl;

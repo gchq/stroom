@@ -4,6 +4,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 public class Marker {
+
     private final AceRange range;
     private final String clazz;
     private final AceMarkerType type;

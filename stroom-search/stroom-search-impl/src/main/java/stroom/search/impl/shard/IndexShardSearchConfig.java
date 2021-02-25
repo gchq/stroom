@@ -1,14 +1,16 @@
 package stroom.search.impl.shard;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardSearchConfig extends AbstractConfig {
+
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
@@ -24,7 +26,8 @@ public class IndexShardSearchConfig extends AbstractConfig {
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
-    @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard")
+    @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be " +
+            "retrieved from the index shard")
     public int getMaxDocIdQueueSize() {
         return maxDocIdQueueSize;
     }
@@ -33,7 +36,8 @@ public class IndexShardSearchConfig extends AbstractConfig {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
     }
 
-    @JsonPropertyDescription("The absolute maximum number of threads per node, used to search Lucene index shards across all searches")
+    @JsonPropertyDescription("The absolute maximum number of threads per node, used to search Lucene index " +
+            "shards across all searches")
     public int getMaxThreads() {
         return maxThreads;
     }

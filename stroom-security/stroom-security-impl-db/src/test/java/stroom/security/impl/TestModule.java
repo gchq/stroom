@@ -15,6 +15,7 @@ import com.google.inject.AbstractModule;
 import static org.mockito.Mockito.mock;
 
 public class TestModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new DbTestModule());
@@ -30,6 +31,7 @@ public class TestModule extends AbstractModule {
         bind(PermissionChangeEventBus.class).toInstance(mock(PermissionChangeEventBus.class));
 
         // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {});
+        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
+        });
     }
 }

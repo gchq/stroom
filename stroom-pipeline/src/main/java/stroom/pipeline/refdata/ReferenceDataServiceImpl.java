@@ -46,10 +46,6 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -62,6 +58,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
@@ -133,15 +133,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 //            Map.entry(LAST_ACCESSED_TIME_FIELD.getName(), refStoreEntry ->
 //                    ValLong.create(refStoreEntry.getRefDataProcessingInfo().getLastAccessedTimeEpochMs())),
 //            Map.entry(PIPELINE_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineDocRef().toInfoString())),
+//                    ValString.create(refStoreEntry.getMapDefinition()
+//                    .getRefStreamDefinition()
+//                    .getPipelineDocRef().toInfoString())),
 //            Map.entry(PROCESSING_STATE_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getRefDataProcessingInfo().getProcessingState().getDisplayName())),
+//                    ValString.create(refStoreEntry.getRefDataProcessingInfo()
+//                    .getProcessingState().getDisplayName())),
 //            Map.entry(STREAM_ID_FIELD.getName(), refStoreEntry ->
 //                    ValLong.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamId())),
 //            Map.entry(STREAM_NO_FIELD.getName(), refStoreEntry ->
 //                    ValLong.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamNo())),
 //            Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion())));
+//                    ValString.create(refStoreEntry.getMapDefinition()
+//                    .getRefStreamDefinition().getPipelineVersion())));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
             Map.entry(KEY_FIELD.getName(),
@@ -204,7 +208,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             try {
                 entries = refDataStore.list(limit);
             } catch (Exception e) {
-                LOGGER.error("Error listing reference data",e);
+                LOGGER.error("Error listing reference data", e);
                 throw e;
             }
             return entries;
@@ -290,9 +294,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         refDataLookupRequest.getMapName(),
                         refDataLookupRequest.getKey(),
                         refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
-                        .map(Instant::ofEpochMilli)
-                        .map(Objects::toString)
-                        .orElse("null")));
+                                .map(Instant::ofEpochMilli)
+                                .map(Objects::toString)
+                                .orElse("null")));
             }
 
             return stringWriter.toString();
@@ -335,7 +339,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         .orElseThrow(() ->
                                 new BadRequestException("Unknown feed " + referenceLoader.getReferenceFeed()));
             } else {
-                throw new BadRequestException("Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
+                throw new BadRequestException(
+                        "Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
             }
         }
     }
@@ -347,7 +352,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             return supplier.get();
         } else {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to view reference data");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to view reference data");
         }
     }
 
@@ -357,7 +363,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             runnable.run();
         } else {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to view reference data");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to view reference data");
         }
     }
 
@@ -415,7 +422,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                             if (field != null) {
                                 final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
                                         .apply(refStoreEntry);
-                                valArr[i] = convertToVal(value, fields[i]);;
+                                valArr[i] = convertToVal(value, fields[i]);
+                                ;
                             }
                         }
                         consumer.accept(valArr);
@@ -592,21 +600,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         AbstractField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
         if (abstractField.getType().equals(FieldTypes.TEXT)) {
-            return buildTextFieldPredicate(
-                    expressionTerm,
-                    refStoreEntry -> (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+            return buildTextFieldPredicate(expressionTerm, refStoreEntry ->
+                    (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
         } else if (abstractField.getType().equals(FieldTypes.LONG)) {
-            return buildLongFieldPredicate(
-                    expressionTerm,
-                    refStoreEntry -> (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+            return buildLongFieldPredicate(expressionTerm, refStoreEntry ->
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
         } else if (abstractField.getType().equals(FieldTypes.DATE)) {
-            return buildDateFieldPredicate(
-                    expressionTerm,
-                    refStoreEntry -> (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+            return buildDateFieldPredicate(expressionTerm, refStoreEntry ->
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
         } else if (abstractField.getType().equals(FieldTypes.DOC_REF)) {
-            return buildDocRefFieldPredicate(
-                    expressionTerm,
-                    refStoreEntry -> (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+            return buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
+                    (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
         } else {
             throw new RuntimeException("Unsupported term " + expressionTerm);
         }
@@ -644,15 +648,20 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         final Long termValue = Long.valueOf(expressionTerm.getValue());
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec -> Objects.equals(valueExtractor.apply(rec), termValue);
+            return rec ->
+                    Objects.equals(valueExtractor.apply(rec), termValue);
         } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN)) {
-            return rec -> valueExtractor.apply(rec) > termValue;
+            return rec ->
+                    valueExtractor.apply(rec) > termValue;
         } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN_OR_EQUAL_TO)) {
-            return rec -> valueExtractor.apply(rec) >= termValue;
+            return rec ->
+                    valueExtractor.apply(rec) >= termValue;
         } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN)) {
-            return rec -> valueExtractor.apply(rec) < termValue;
+            return rec ->
+                    valueExtractor.apply(rec) < termValue;
         } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN_OR_EQUAL_TO)) {
-            return rec -> valueExtractor.apply(rec) <= termValue;
+            return rec ->
+                    valueExtractor.apply(rec) <= termValue;
         } else {
             throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
         }
@@ -662,7 +671,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         // TODO @AT Handle stuff like 'today() -1d'
         // TODO @AT Need to get now() once for the query
-        final Long termValue = getDate(expressionTerm.getField(), expressionTerm.getValue(), Instant.now().toEpochMilli());
+        final Long termValue = getDate(expressionTerm.getField(),
+                expressionTerm.getValue(),
+                Instant.now().toEpochMilli());
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
             return rec -> Objects.equals(valueExtractor.apply(rec), termValue);
         } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN)) {
@@ -695,9 +706,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private boolean docRefsEqualOnUuid(final DocRef docRef1, final DocRef docRef2) {
         if (docRef1 == null && docRef2 == null) {
             return false;
-        } if (docRef1 == null) {
+        }
+        if (docRef1 == null) {
             return false;
-        } if (docRef2 == null) {
+        }
+        if (docRef2 == null) {
             return false;
         } else {
             return Objects.equals(docRef1.getUuid(), docRef2.getUuid());
@@ -707,9 +720,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private boolean docRefsEqualOnName(final DocRef docRef1, final DocRef docRef2) {
         if (docRef1 == null && docRef2 == null) {
             return false;
-        } if (docRef1 == null) {
+        }
+        if (docRef1 == null) {
             return false;
-        } if (docRef2 == null) {
+        }
+        if (docRef2 == null) {
             return false;
         } else {
             return Objects.equals(docRef1.getName(), docRef2.getName());

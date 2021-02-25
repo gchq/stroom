@@ -16,11 +16,12 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import com.google.gwt.xml.client.Node;
-import com.google.gwt.xml.client.NodeList;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,9 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 public class XSDNode implements Comparable<XSDNode> {
+
     private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
-    private static Map<String, XSDType> xsdElementMap = new HashMap<>();
-    private static Map<String, XSDAttribute> xsdAttributeMap = new HashMap<>();
+    private static final Map<String, XSDType> xsdElementMap = new HashMap<>();
+    private static final Map<String, XSDAttribute> xsdAttributeMap = new HashMap<>();
 
     static {
         for (final XSDType xsdElement : XSDType.values()) {
@@ -54,6 +56,7 @@ public class XSDNode implements Comparable<XSDNode> {
     private String documentation;
     private boolean firstChild;
     private boolean lastChild;
+
     public XSDNode(final XSDModel model, final Node node) {
         this.model = model;
         this.node = node;
@@ -300,6 +303,7 @@ public class XSDNode implements Comparable<XSDNode> {
         return builder.toHashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -334,11 +338,28 @@ public class XSDNode implements Comparable<XSDNode> {
     }
 
     public enum XSDType {
-        SCHEMA("schema"), ATTRIBUTE("attribute"), COMPLEX_TYPE("complexType"), SIMPLE_TYPE("simpleType"), ELEMENT(
-                "element"), ELEMENT_REF("ref"), GROUP("group"), SEQUENCE("sequence"), CHOICE("choice"), ALL("all"), ANY(
-                "any"), ANNOTATION("annotation"), DOCUMENTATION("documentation"), RESTRICTION(
-                "restriction"), PATTERN("pattern"), ENUMERATION("enumeration"), COMPLEX_CONTENT(
-                "complexContent"), EXTENSION("extension");
+        SCHEMA("schema"),
+        ATTRIBUTE("attribute"),
+        COMPLEX_TYPE("complexType"),
+        SIMPLE_TYPE("simpleType"),
+        ELEMENT(
+                "element"),
+        ELEMENT_REF("ref"),
+        GROUP("group"),
+        SEQUENCE("sequence"),
+        CHOICE("choice"),
+        ALL("all"),
+        ANY(
+                "any"),
+        ANNOTATION("annotation"),
+        DOCUMENTATION("documentation"),
+        RESTRICTION(
+                "restriction"),
+        PATTERN("pattern"),
+        ENUMERATION("enumeration"),
+        COMPLEX_CONTENT(
+                "complexContent"),
+        EXTENSION("extension");
 
         private final String string;
 
@@ -361,10 +382,17 @@ public class XSDNode implements Comparable<XSDNode> {
     }
 
     public enum XSDAttribute {
-        MIN_OCCURS("minOccurs"), MAX_OCCURS("maxOccurs"), TYPE("type"), REF("ref"), NAME("name"), TARGET_NAMESPACE(
-                "targetNamespace"), VALUE("value"), BASE("base");
+        MIN_OCCURS("minOccurs"),
+        MAX_OCCURS("maxOccurs"),
+        TYPE("type"),
+        REF("ref"),
+        NAME("name"),
+        TARGET_NAMESPACE(
+                "targetNamespace"),
+        VALUE("value"),
+        BASE("base");
 
-        private String string;
+        private final String string;
 
         XSDAttribute(final String string) {
             this.string = string;

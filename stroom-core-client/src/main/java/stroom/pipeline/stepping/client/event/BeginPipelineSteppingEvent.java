@@ -16,13 +16,15 @@
 
 package stroom.pipeline.stepping.client.event;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.stepping.StepLocation;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final long streamId;
     private final Long childStreamId;
@@ -48,7 +50,11 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
                             final String childStreamType,
                             final StepLocation stepLocation,
                             final DocRef pipelineRef) {
-        source.fireEvent(new BeginPipelineSteppingEvent(streamId, childStreamId, childStreamType, stepLocation, pipelineRef));
+        source.fireEvent(new BeginPipelineSteppingEvent(streamId,
+                childStreamId,
+                childStreamType,
+                stepLocation,
+                pipelineRef));
     }
 
     public static Type<Handler> getType() {
@@ -89,6 +95,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     }
 
     public interface Handler extends EventHandler {
+
         void onBegin(BeginPipelineSteppingEvent event);
     }
 }

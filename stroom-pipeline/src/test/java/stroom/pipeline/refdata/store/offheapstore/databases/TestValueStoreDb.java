@@ -1,14 +1,14 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.lmdb.EntryConsumer;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.lmdb.EntryConsumer;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestValueStoreDb extends AbstractLmdbDbTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
 
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
@@ -406,7 +407,9 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
                         .collect(Collectors.toList()));
     }
 
-    private void doAreValuesEqualAssert(final StringValue value1, final StringValue value2, final boolean expectedResult) {
+    private void doAreValuesEqualAssert(final StringValue value1,
+                                        final StringValue value2,
+                                        final boolean expectedResult) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
 

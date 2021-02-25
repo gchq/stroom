@@ -16,13 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
@@ -30,7 +23,16 @@ import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewImpl;
+
 public class DownloadViewImpl extends ViewImpl implements DownloadView {
+
     private final Widget widget;
     @UiField
     ItemListBox<DownloadSearchResultFileType> fileType;
@@ -81,5 +83,6 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     }
 
     public interface Binder extends UiBinder<Widget, DownloadViewImpl> {
+
     }
 }

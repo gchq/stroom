@@ -16,6 +16,14 @@
 
 package stroom.core.client.presenter;
 
+import stroom.core.client.presenter.CorePresenter.CoreProxy;
+import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskEndEvent.TaskEndHandler;
+import stroom.task.client.TaskStartEvent;
+import stroom.task.client.TaskStartEvent.TaskStartHandler;
+
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,16 +35,10 @@ import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
-import stroom.core.client.presenter.CorePresenter.CoreProxy;
-import stroom.core.client.presenter.CorePresenter.CoreView;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskEndEvent.TaskEndHandler;
-import stroom.task.client.TaskStartEvent;
-import stroom.task.client.TaskStartEvent.TaskStartHandler;
 
 public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
         implements TaskStartHandler, TaskEndHandler {
+
     @ContentSlot
     public static final Type<RevealContentHandler<?>> CORE = new Type<>();
 
@@ -72,9 +74,11 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
 
     @ProxyStandard
     public interface CoreProxy extends Proxy<CorePresenter> {
+
     }
 
     public interface CoreView extends View {
+
         void showWorking(final String message);
 
         void hideWorking();

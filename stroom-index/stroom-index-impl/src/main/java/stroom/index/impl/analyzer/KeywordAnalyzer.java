@@ -19,6 +19,7 @@ package stroom.index.impl.analyzer;
 import org.apache.lucene.analysis.Analyzer;
 
 class KeywordAnalyzer extends Analyzer {
+
     private final boolean caseSensitive;
 
     KeywordAnalyzer(final boolean caseSensitive) {

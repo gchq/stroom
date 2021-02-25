@@ -20,9 +20,10 @@ import stroom.docref.HasDisplayValue;
 
 
 public enum OutputState implements HasDisplayValue {
-    NOT_EMPTY("not empty"), EMPTY("empty");
+    NOT_EMPTY("not empty"),
+    EMPTY("empty");
 
-    private String displayValue;
+    private final String displayValue;
 
     OutputState(final String displayValue) {
         this.displayValue = displayValue;

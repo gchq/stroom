@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
  * each group level 2
  */
 public class Sizes {
+
     static final int FALLBACK = Integer.MAX_VALUE;
 
     private final int[] sizes;
@@ -49,7 +50,8 @@ public class Sizes {
     }
 
     /**
-     * Create a set of sizes based on a list of integers. The default size will be derived from the last item in the list or will default to 1.
+     * Create a set of sizes based on a list of integers. The default size will be derived from the last item in
+     * the list or will default to 1.
      *
      * @param list The list of sizes to use.
      * @return A new set of sizes.
@@ -63,7 +65,8 @@ public class Sizes {
     }
 
     /**
-     * Create a set of sizes based on a list of integers. Where a size is not provided for a requested depth the supplied default size will be used.
+     * Create a set of sizes based on a list of integers. Where a size is not provided for a requested depth the
+     * supplied default size will be used.
      *
      * @param list        The list of sizes to use.
      * @param defaultSize The default size to return if needed.
@@ -100,7 +103,11 @@ public class Sizes {
         return combine(s1, s2, Math::min);
     }
 
-    private static Sizes combine(final Sizes s1, final Sizes s2, final BiFunction<Integer, Integer, Integer> function) {
+    private static Sizes combine(
+            final Sizes s1,
+            final Sizes s2,
+            final BiFunction<Integer, Integer, Integer> function) {
+
         if (s1 == null) {
             return s2;
         } else if (s2 == null) {

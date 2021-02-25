@@ -16,13 +16,15 @@
 
 package stroom.pipeline.xml.event.simple;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.event.EventList;
 import stroom.pipeline.xml.event.EventListBuilder;
 
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 public class SimpleEventListBuilder implements EventListBuilder {
+
     private SimpleEventList eventList = new SimpleEventList();
 
     @Override

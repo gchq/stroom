@@ -17,8 +17,9 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -26,6 +27,7 @@ import java.io.StringReader;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCharBuffer extends StroomUnitTest {
+
     private static final String BIG_BUFFER = "this is some additional text to put in the buffer";
     private String addBuffer = null;
 
@@ -99,24 +101,33 @@ class TestCharBuffer extends StroomUnitTest {
 
     private void textInner() {
         // Trim end
-        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimEnd().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimEnd().toString()).isEqualTo("   123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimEnd().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimEnd().toString()).isEqualTo(
+                "   123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getBuffer("").trimEnd().toString()).isEqualTo("");
-        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimEnd().toString()).isEqualTo("  \n 123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimEnd().toString()).isEqualTo(
+                "  \n 123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getBuffer("  \n    \n  ").trimEnd().toString()).isEqualTo("");
 
         // Trim start
-        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz   ");
+        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz   ");
         assertThat(getBuffer("").trimStart().toString()).isEqualTo("");
-        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz \n  ");
+        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz \n  ");
         assertThat(getBuffer("  \n    \n  ").trimStart().toString()).isEqualTo("");
 
         // Trim both
-        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("123456789abcdefghijklmnopqrstuvwxyz").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getBuffer("").trim().toString()).isEqualTo("");
-        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getBuffer("  \n    \n  ").trim().toString()).isEqualTo("");
 
         // Test empty
@@ -148,24 +159,33 @@ class TestCharBuffer extends StroomUnitTest {
 
     private void textInnerReverse() {
         // Trim end
-        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimEnd().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimEnd().toString()).isEqualTo("   123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimEnd().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimEnd().toString()).isEqualTo(
+                "   123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getReverseBuffer("").trimEnd().toString()).isEqualTo("");
-        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimEnd().toString()).isEqualTo("  \n 123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimEnd().toString()).isEqualTo(
+                "  \n 123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getReverseBuffer("  \n    \n  ").trimEnd().toString()).isEqualTo("");
 
         // Trim start
-        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz   ");
+        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz   ");
         assertThat(getReverseBuffer("").trimStart().toString()).isEqualTo("");
-        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimStart().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz \n  ");
+        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trimStart().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz \n  ");
         assertThat(getReverseBuffer("  \n    \n  ").trimStart().toString()).isEqualTo("");
 
         // Trim both
-        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
-        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("123456789abcdefghijklmnopqrstuvwxyz").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("   123456789abcdefghijklmnopqrstuvwxyz   ").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getReverseBuffer("").trim().toString()).isEqualTo("");
-        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trim().toString()).isEqualTo("123456789abcdefghijklmnopqrstuvwxyz");
+        assertThat(getReverseBuffer("  \n 123456789abcdefghijklmnopqrstuvwxyz \n  ").trim().toString()).isEqualTo(
+                "123456789abcdefghijklmnopqrstuvwxyz");
         assertThat(getReverseBuffer("  \n    \n  ").trim().toString()).isEqualTo("");
 
         // Test empty

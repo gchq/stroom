@@ -18,24 +18,25 @@
  * limitations under the License.
  *
  */
+
 package stroom.dropwizard.common;
 
-import io.dropwizard.jersey.errors.ErrorMessage;
 import org.glassfish.jersey.spi.ExtendedExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.util.Set;
 
 public class DelegatingExceptionMapper implements ExtendedExceptionMapper<Throwable> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DelegatingExceptionMapper.class);
 
     private final Set<ExceptionMapper> exceptionMappers;
+    private final ExceptionMapper<Throwable> basicExceptionMapper = new BasicExceptionMapper();
 
     @Inject
     DelegatingExceptionMapper(final Set<ExceptionMapper> exceptionMappers) {
@@ -52,11 +53,7 @@ public class DelegatingExceptionMapper implements ExtendedExceptionMapper<Throwa
             }
         }
 
-        LOGGER.debug(throwable.getMessage(), throwable);
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())
-            .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(new ErrorMessage(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), throwable.getMessage(), throwable.toString()))
-            .build();
+        return basicExceptionMapper.toResponse(throwable);
     }
 
     @Override

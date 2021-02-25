@@ -21,9 +21,9 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchModel {
+
     private final SearchBus searchBus;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
@@ -45,7 +46,7 @@ public class SearchModel {
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
-    private SearchResponse currentResult;
+    private DashboardSearchResponse currentResult;
     private DashboardUUID dashboardUUID;
     private DashboardQueryKey currentQueryKey;
     private Search currentSearch;
@@ -125,7 +126,7 @@ public class SearchModel {
 
     /**
      * Prepares the necessary parts for a search without actually starting the search. Intended
-     * for use when you just want the complete {@link SearchRequest} object
+     * for use when you just want the complete {@link DashboardSearchRequest} object
      */
     private Map<String, ComponentSettings> initModel(final ExpressionOperator expression,
                                                      final String params,
@@ -281,7 +282,7 @@ public class SearchModel {
      *
      * @param result The search response.
      */
-    void update(final SearchResponse result) {
+    void update(final DashboardSearchResponse result) {
         currentResult = result;
 
         // Give results to the right components.
@@ -330,7 +331,7 @@ public class SearchModel {
      *
      * @return The current search request.
      */
-    SearchRequest getCurrentRequest() {
+    DashboardSearchRequest getCurrentRequest() {
         final Search search = currentSearch;
         final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
@@ -338,18 +339,18 @@ public class SearchModel {
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
             requests.add(componentResultRequest);
         }
-        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
+        return new DashboardSearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     /**
      * Initialises the model for passed expression and current result settings and returns
-     * the corresponding {@link SearchRequest} object
+     * the corresponding {@link DashboardSearchRequest} object
      */
-    public SearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
-                                                    final String params,
-                                                    final boolean incremental,
-                                                    final boolean storeHistory,
-                                                    final String queryInfo) {
+    public DashboardSearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
+                                                             final String params,
+                                                             final boolean incremental,
+                                                             final boolean storeHistory,
+                                                             final String queryInfo) {
         Search search = null;
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
@@ -385,7 +386,7 @@ public class SearchModel {
             requests.add(componentResultRequest);
         }
 
-        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
+        return new DashboardSearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {
@@ -413,7 +414,7 @@ public class SearchModel {
                 dashboardUUID.getComponentId());
     }
 
-    public SearchResponse getCurrentResult() {
+    public DashboardSearchResponse getCurrentResult() {
         return currentResult;
     }
 
@@ -432,6 +433,8 @@ public class SearchModel {
     }
 
     public enum Mode {
-        ACTIVE, INACTIVE, PAUSED
+        ACTIVE,
+        INACTIVE,
+        PAUSED
     }
 }

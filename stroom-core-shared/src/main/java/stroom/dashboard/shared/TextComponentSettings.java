@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Search.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Field;
 
@@ -44,6 +43,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class TextComponentSettings implements ComponentSettings {
+
     @JsonProperty("tableId")
     private final String tableId;
     @JsonProperty
@@ -144,10 +144,15 @@ public class TextComponentSettings implements ComponentSettings {
         return modelVersion;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TextComponentSettings that = (TextComponentSettings) o;
         return showAsHtml == that.showAsHtml &&
                 showStepping == that.showStepping &&
@@ -165,7 +170,18 @@ public class TextComponentSettings implements ComponentSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableId, streamIdField, partNoField, recordNoField, lineFromField, colFromField, lineToField, colToField, pipeline, showAsHtml, showStepping, modelVersion);
+        return Objects.hash(tableId,
+                streamIdField,
+                partNoField,
+                recordNoField,
+                lineFromField,
+                colFromField,
+                lineToField,
+                colToField,
+                pipeline,
+                showAsHtml,
+                showStepping,
+                modelVersion);
     }
 
     @Override
@@ -195,6 +211,7 @@ public class TextComponentSettings implements ComponentSettings {
     }
 
     public static final class Builder {
+
         private String tableId;
         private Field streamIdField;
         private Field partNoField;

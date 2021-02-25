@@ -27,6 +27,7 @@ import java.util.List;
  * structure.
  */
 public class XMLStyler {
+
     private static final String DOCTYPE_START = "<!DOCTYPE";
     private static final String EMPTY_ELEMENT_END = "/>";
     private static final String END_ELEMENT_START = "</";
@@ -169,7 +170,10 @@ public class XMLStyler {
                         if (commentState == CommentState.START && pos > elementStartPos + 3) {
                             commentState = CommentState.CONTENT;
                         }
-                        if (commentState == CommentState.CONTENT && c == '-' && forward(1) == '-' && forward(2) == '>') {
+                        if (commentState == CommentState.CONTENT
+                                && c == '-'
+                                && forward(1) == '-'
+                                && forward(2) == '>') {
                             commentState = CommentState.END;
                         }
                     }
@@ -654,8 +658,16 @@ public class XMLStyler {
      * Individual styles for each XML fragment type.
      */
     public enum Style {
-        SYNTAX("s"), PI("pi"), DOCTYPE("d"), ELEMENT_NAME("e"), ATTRIBUTE_NAME("an"), ATTRIBUTE_VALUE("av"), CONTENT(
-                "c"), COMMENT("z"), HIGHLIGHT("hl");
+        SYNTAX("s"),
+        PI("pi"),
+        DOCTYPE("d"),
+        ELEMENT_NAME("e"),
+        ATTRIBUTE_NAME("an"),
+        ATTRIBUTE_VALUE("av"),
+        CONTENT(
+                "c"),
+        COMMENT("z"),
+        HIGHLIGHT("hl");
 
         private final String start;
         private final String end;
@@ -683,8 +695,14 @@ public class XMLStyler {
      * The different fragment types of an XML instance.
      */
     private enum ElementType {
-        DOCTYPE(Style.DOCTYPE), START(Style.ELEMENT_NAME), END(Style.ELEMENT_NAME), EMPTY(Style.ELEMENT_NAME), PI(
-                Style.PI), COMMENT(Style.COMMENT), CONTENT(Style.CONTENT);
+        DOCTYPE(Style.DOCTYPE),
+        START(Style.ELEMENT_NAME),
+        END(Style.ELEMENT_NAME),
+        EMPTY(Style.ELEMENT_NAME),
+        PI(
+                Style.PI),
+        COMMENT(Style.COMMENT),
+        CONTENT(Style.CONTENT);
 
         private final Style style;
 
@@ -698,6 +716,8 @@ public class XMLStyler {
     }
 
     private enum CommentState {
-        START, CONTENT, END
+        START,
+        CONTENT,
+        END
     }
 }

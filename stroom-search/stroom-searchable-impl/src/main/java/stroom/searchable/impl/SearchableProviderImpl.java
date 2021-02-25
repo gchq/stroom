@@ -5,15 +5,16 @@ import stroom.explorer.api.ExplorerDecorator;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class SearchableProviderImpl implements SearchableProvider, ExplorerDecorator {
+
     private final Set<Searchable> searchables;
 
     @Inject

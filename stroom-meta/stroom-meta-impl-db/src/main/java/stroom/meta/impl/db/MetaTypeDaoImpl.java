@@ -28,16 +28,17 @@ import stroom.util.shared.Clearable;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
 @Singleton
 class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
+
     private static final String CACHE_NAME = "Meta Type Cache";
 
     private final ICache<String, Integer> cache;

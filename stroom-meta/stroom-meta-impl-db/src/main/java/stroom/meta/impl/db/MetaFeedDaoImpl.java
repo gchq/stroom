@@ -28,15 +28,16 @@ import stroom.util.shared.Clearable;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
 @Singleton
 class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
+
     private static final String CACHE_NAME = "Meta Feed Cache";
 
     private final ICache<String, Integer> cache;

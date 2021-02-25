@@ -33,6 +33,7 @@ public class ValueStoreMeta {
         return referenceCount;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

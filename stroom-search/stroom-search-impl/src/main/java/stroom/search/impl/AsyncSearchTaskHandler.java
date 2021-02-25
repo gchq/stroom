@@ -46,13 +46,6 @@ import stroom.util.logging.TempTagCloudDebug;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -65,8 +58,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 class AsyncSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -164,19 +165,30 @@ class AsyncSearchTaskHandler {
                         final String nodeName = entry.getKey();
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
-                            final Runnable runnable = taskContextFactory.context(parentContext, "Node search", taskContext ->
-                                    searchNode(sourceNode, nodeName, shards, task, query, storedFields, taskContext));
-                            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
+                            final Runnable runnable = taskContextFactory.context(parentContext,
+                                    "Node search",
+                                    taskContext ->
+                                            searchNode(sourceNode,
+                                                    nodeName,
+                                                    shards,
+                                                    task,
+                                                    query,
+                                                    storedFields,
+                                                    taskContext));
+                            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
+                                    executor);
                             futures.add(completableFuture);
                         } else {
                             resultCollector.onFailure(nodeName,
-                                    new SearchException("Node is not enabled or active. Some search results may be missing."));
+                                    new SearchException(
+                                            "Node is not enabled or active. Some search results may be missing."));
                         }
                     }
 
                     // Wait for all nodes to finish.
                     LOGGER.debug(() -> "Waiting for completion");
-                    final CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    final CompletableFuture<Void> all = CompletableFuture.allOf(
+                            futures.toArray(new CompletableFuture[0]));
                     all.join();
                     LOGGER.debug(() -> "Done waiting for completion");
 
@@ -235,7 +247,8 @@ class AsyncSearchTaskHandler {
             }
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
-                final SearchException searchException = new SearchException("Failed to start remote search on node: " + targetNode);
+                final SearchException searchException = new SearchException(
+                        "Failed to start remote search on node: " + targetNode);
                 resultCollector.onFailure(targetNode, searchException);
                 throw searchException;
             }

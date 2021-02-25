@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface ExplorerTreeDao {
+
     TreeModel createModel(Function<String, String> iconUrlProvider);
 
     void update(ExplorerTreeNode node);

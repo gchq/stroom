@@ -8,14 +8,15 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class SteppingService {
+
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Stepping",
             5,

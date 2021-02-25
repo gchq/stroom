@@ -5,9 +5,9 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
-import java.util.List;
 
 public class UserResourceImpl implements UserResource {
 
@@ -51,9 +51,9 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public List<User> get(final String name,
-                          final Boolean isGroup,
-                          final String uuid) {
+    public List<User> find(final String name,
+                           final Boolean isGroup,
+                           final String uuid) {
 
         // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
         //   that are currently unused.
@@ -67,7 +67,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public User get(String userUuid) {
+    public User fetch(String userUuid) {
         // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
         //   that are currently unused.
 

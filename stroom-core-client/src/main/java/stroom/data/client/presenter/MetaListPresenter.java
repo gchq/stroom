@@ -28,10 +28,11 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import javax.inject.Provider;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
+
     @Inject
     public MetaListPresenter(final EventBus eventBus,
                              final RestFactory restFactory,

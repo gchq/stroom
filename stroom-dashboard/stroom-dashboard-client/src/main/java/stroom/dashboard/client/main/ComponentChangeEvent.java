@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ComponentChangeEvent extends GwtEvent<ComponentChangeEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final String componentId;
     private final Component component;
@@ -60,6 +61,7 @@ public class ComponentChangeEvent extends GwtEvent<ComponentChangeEvent.Handler>
     }
 
     public interface Handler extends EventHandler {
+
         void onChange(ComponentChangeEvent event);
     }
 }

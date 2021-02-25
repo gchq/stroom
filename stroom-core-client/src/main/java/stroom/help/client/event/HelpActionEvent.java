@@ -19,6 +19,7 @@ package stroom.help.client.event;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class HelpActionEvent extends GwtEvent<HelpActionHandler> {
+
     private static Type<HelpActionHandler> TYPE;
 
     public static Type<HelpActionHandler> getType() {

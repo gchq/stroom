@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
@@ -32,56 +30,73 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
+import com.codahale.metrics.annotation.Timed;
+import io.swagger.v3.oas.annotations.Parameter;
+
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final SecurityContext securityContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public StroomIndexQueryResourceImpl(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
                                         final IndexStore indexStore,
-                                        final SecurityContext securityContext) {
+                                        final SecurityContext securityContext,
+                                        final TaskContextFactory taskContextFactory) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexStore = indexStore;
         this.securityContext = securityContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
+    @Override
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            final IndexDoc index = indexStore.readDocument(docRef);
-            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
-        });
+        return securityContext.useAsReadResult(taskContextFactory.contextResult("Getting Data Source",
+                taskContext -> {
+                    final IndexDoc index = indexStore.readDocument(docRef);
+                    return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
+                }));
     }
 
+    @Override
     @Timed
     public SearchResponse search(final SearchRequest request) {
+        return taskContextFactory.contextResult("Getting search results",
+                taskContext -> {
+                    // if this is the first call for this query key then it will create a searchResponseCreator
+                    // (& store) that have a lifespan beyond the scope of this request and then begin the search for
+                    // the data If it is not the first call for this query key then it will return the existing
+                    // searchResponseCreator with access to whatever data has been found so far
+                    final SearchResponseCreator searchResponseCreator =
+                            searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
 
-        //if this is the first call for this query key then it will create a searchResponseCreator (& store) that have
-        //a lifespan beyond the scope of this request and then begin the search for the data
-        //If it is not the first call for this query key then it will return the existing searchResponseCreator with
-        //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
+                    //create a response from the data found so far, this could be complete/incomplete
+                    taskContext.info(() -> "Creating search result");
+                    SearchResponse searchResponse = searchResponseCreator.create(request);
 
-        //create a response from the data found so far, this could be complete/incomplete
-        SearchResponse searchResponse = searchResponseCreator.create(request);
+                    LAMBDA_LOGGER.trace(() ->
+                            getResponseInfoForLogging(request, searchResponse));
 
-        LAMBDA_LOGGER.trace(() ->
-                getResponseInfoForLogging(request, searchResponse));
-
-        return searchResponse;
+                    return searchResponse;
+                }).get();
     }
 
-    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request, final SearchResponse searchResponse) {
+    private String getResponseInfoForLogging(
+            @Parameter(description = "SearchRequest", required = true) final SearchRequest request,
+            final SearchResponse searchResponse) {
         String resultInfo;
 
         if (searchResponse.getResults() != null) {
@@ -120,9 +135,14 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
                 resultInfo);
     }
 
+    @Override
     @Timed
     public Boolean destroy(final QueryKey queryKey) {
-        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
-        return Boolean.TRUE;
+        return taskContextFactory.contextResult("Destroy search",
+                taskContext -> {
+                    taskContext.info(queryKey::getUuid);
+                    searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
+                    return Boolean.TRUE;
+                }).get();
     }
 }

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class WrappedInputStream extends InputStream {
+
     private final InputStream inputStream;
 
     public WrappedInputStream(final InputStream inputStream) {

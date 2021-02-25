@@ -20,7 +20,9 @@ package stroom.receive.rules.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum RuleAction implements HasDisplayValue {
-    RECEIVE("Receive"), REJECT("Reject"), DROP("Drop");
+    RECEIVE("Receive"),
+    REJECT("Reject"),
+    DROP("Drop");
 
     private final String displayValue;
 

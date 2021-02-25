@@ -19,7 +19,9 @@ package stroom.dashboard.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum DownloadSearchResultFileType implements HasDisplayValue {
-    EXCEL("Excel", "xlsx"), CSV("CSV", "csv"), TSV("TSV", "tsv");
+    EXCEL("Excel", "xlsx"),
+    CSV("CSV", "csv"),
+    TSV("TSV", "tsv");
 
     private final String name;
     private final String extension;

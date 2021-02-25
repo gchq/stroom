@@ -16,6 +16,14 @@
 
 package stroom.search.solr.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.item.client.ItemListBox;
+import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
+import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
+import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,19 +35,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
-import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
-import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
-import stroom.widget.tickbox.client.view.TickBox;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSettingsUiHandlers> implements SolrIndexSettingsView, ReadOnlyChangeHandler {
+public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSettingsUiHandlers>
+        implements SolrIndexSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -201,5 +204,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     }
 
     public interface Binder extends UiBinder<Widget, SolrIndexSettingsViewImpl> {
+
     }
 }

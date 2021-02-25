@@ -20,6 +20,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 public interface LinkTabsLayoutView extends View {
+
     TabBar getTabBar();
 
     LayerContainer getLayerContainer();

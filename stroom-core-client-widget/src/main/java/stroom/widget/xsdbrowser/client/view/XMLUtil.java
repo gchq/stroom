@@ -16,11 +16,13 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import com.google.gwt.xml.client.CharacterData;
-import com.google.gwt.xml.client.Node;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
 
+import com.google.gwt.xml.client.CharacterData;
+import com.google.gwt.xml.client.Node;
+
 public final class XMLUtil {
+
     private XMLUtil() {
         // Utility class.
     }

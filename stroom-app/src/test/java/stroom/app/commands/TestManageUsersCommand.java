@@ -89,7 +89,7 @@ class TestManageUsersCommand {
 
         LOGGER.info("help\n{}", subparser.formatHelp());
 
-        String[] args = new String[] {
+        String[] args = new String[]{
                 "manageUsers",
                 asArg(CREATE_USER_ARG_NAME),
                 "jbloggs",

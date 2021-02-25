@@ -17,16 +17,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
@@ -60,10 +50,10 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -72,6 +62,17 @@ import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,7 +83,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
-        implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler, PipelineStructureUiHandlers {
+        implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler,
+        PipelineStructureUiHandlers {
+
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
@@ -142,7 +145,8 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         rest
                 .onSuccess(result -> {
                     final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
-                            result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType, FetchPropertyTypesResult::getPropertyTypes));
+                            result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
+                                    FetchPropertyTypesResult::getPropertyTypes));
 
                     propertyListPresenter.setPropertyTypes(propertyTypes);
                     pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
@@ -333,9 +337,27 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new IconParentMenuItem(0, SvgPresets.ADD, SvgPresets.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
-        menuItems.add(new IconParentMenuItem(1, SvgPresets.UNDO, SvgPresets.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
-        menuItems.add(new IconMenuItem(2, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
+        menuItems.add(new IconParentMenuItem(0,
+                SvgPresets.ADD,
+                SvgPresets.ADD,
+                "Add",
+                null,
+                addMenuItems != null && addMenuItems.size() > 0,
+                addMenuItems));
+        menuItems.add(new IconParentMenuItem(1,
+                SvgPresets.UNDO,
+                SvgPresets.UNDO,
+                "Restore",
+                null,
+                restoreMenuItems != null && restoreMenuItems.size() > 0,
+                restoreMenuItems));
+        menuItems.add(new IconMenuItem(2,
+                SvgPresets.REMOVE,
+                SvgPresets.REMOVE,
+                "Remove",
+                null,
+                selected != null,
+                () -> onRemove(null)));
 
         return menuItems;
     }
@@ -554,7 +576,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         getView().setAddEnabled(!readOnly && addMenuItems != null && addMenuItems.size() > 0);
         getView().setRestoreEnabled(!readOnly && restoreMenuItems != null && restoreMenuItems.size() > 0);
-        getView().setRemoveEnabled(!readOnly && advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
+        getView().setRemoveEnabled(!readOnly
+                && advancedMode
+                && selectedElement != null
+                && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
     }
 
     @Override
@@ -599,7 +624,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                         try {
                             pipelineModel.build();
                         } catch (final PipelineModelException e) {
-                            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                            AlertEvent.fireError(
+                                    PipelineStructurePresenter.this,
+                                    e.getMessage(),
+                                    null);
                         }
                     })
                     .call(PIPELINE_RESOURCE)
@@ -611,6 +639,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     public interface PipelineStructureView extends View, HasUiHandlers<PipelineStructureUiHandlers> {
+
         void setInheritanceTree(View view);
 
         void setTreeView(View view);
@@ -627,6 +656,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private class AddPipelineElementCommand implements Command {
+
         private final PipelineElementType elementType;
 
         public AddPipelineElementCommand(final PipelineElementType elementType) {
@@ -649,7 +679,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                 pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                                 setDirty(true);
                             } catch (final RuntimeException e) {
-                                AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                                AlertEvent.fireError(
+                                        PipelineStructurePresenter.this,
+                                        e.getMessage(),
+                                        null);
                             }
                         }
 
@@ -663,6 +696,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private class RestorePipelineElementCommand implements Command {
+
         private final PipelineElement element;
 
         public RestorePipelineElementCommand(final PipelineElement element) {

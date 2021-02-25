@@ -17,7 +17,6 @@
 
 package stroom.search.solr;
 
-import org.apache.solr.client.solrj.SolrClient;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -25,15 +24,18 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.apache.solr.client.solrj.SolrClient;
+
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexClientCacheImpl.class);
     private static final String CACHE_NAME = "Solr Client Cache";
 
@@ -116,6 +118,7 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     }
 
     private static class State {
+
         private int useCount;
         private boolean stale;
 

@@ -17,4 +17,5 @@
 package stroom.svg.client;
 
 public interface Icon {
+
 }

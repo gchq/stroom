@@ -18,8 +18,8 @@ package stroom.legacy.db.migration;
 
 import stroom.db.util.DbUtil;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
-import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.db.ObjectMarshaller;
+import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.entity.StatisticStoreSerialiser;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -38,10 +38,12 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_013__SqlStatistics extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final StatisticStoreSerialiser serialiser = new StatisticStoreSerialiser(new Serialiser2FactoryImpl());
-        final ObjectMarshaller<StatisticsDataSourceData> statisticsDataSourceDataMarshaller = new ObjectMarshaller<>(StatisticsDataSourceData.class);
+        final ObjectMarshaller<StatisticsDataSourceData> statisticsDataSourceDataMarshaller = new ObjectMarshaller<>(
+                StatisticsDataSourceData.class);
 
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
@@ -89,7 +91,8 @@ public class V07_00_00_013__SqlStatistics extends BaseJavaMigration {
                     document.setPrecision(pres);
                     document.setEnabled(enbl);
 
-                    final StatisticsDataSourceData statisticsDataSourceData = statisticsDataSourceDataMarshaller.unmarshal(dat);
+                    final StatisticsDataSourceData statisticsDataSourceData = statisticsDataSourceDataMarshaller.unmarshal(
+                            dat);
                     if (statisticsDataSourceData != null) {
                         document.setConfig(MappingUtil.map(statisticsDataSourceData));
                     }

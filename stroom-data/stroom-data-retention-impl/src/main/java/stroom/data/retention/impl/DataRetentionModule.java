@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class DataRetentionModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
@@ -51,6 +52,7 @@ public class DataRetentionModule extends AbstractModule {
     }
 
     private static class DataRetention extends RunnableWrapper {
+
         @Inject
         DataRetention(final DataRetentionPolicyExecutor dataRetentionPolicyExecutor) {
             super(dataRetentionPolicyExecutor::exec);

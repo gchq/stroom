@@ -21,7 +21,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
-import stroom.security.shared.InvalidateSessionResource;
+import stroom.security.shared.GwtStroomSessionResource;
 import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -35,7 +35,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class LoginManager implements HasHandlers {
-    private static final InvalidateSessionResource STROOM_SESSION_RESOURCE = GWT.create(InvalidateSessionResource.class);
+
+    private static final GwtStroomSessionResource STROOM_SESSION_RESOURCE =
+            GWT.create(GwtStroomSessionResource.class);
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final EventBus eventBus;
@@ -90,7 +92,7 @@ public class LoginManager implements HasHandlers {
                 })
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
                 .call(STROOM_SESSION_RESOURCE)
-                .invalidate();
+                .gwtInvalidateStroomSession();
     }
 
     @Override

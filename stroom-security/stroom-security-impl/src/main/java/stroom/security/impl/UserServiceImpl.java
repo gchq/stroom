@@ -22,8 +22,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +29,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class UserServiceImpl implements UserService {
+
     private final SecurityContext securityContext;
     private final UserDao userDao;
 
@@ -71,7 +72,8 @@ class UserServiceImpl implements UserService {
             return userDao.getByName(name)
                     .filter(user -> {
                         if (!user.getName().equals(name)) {
-                            throw new RuntimeException("Unexpected: returned user name does not match requested user name");
+                            throw new RuntimeException(
+                                    "Unexpected: returned user name does not match requested user name");
                         }
                         return true;
                     });

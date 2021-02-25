@@ -30,11 +30,13 @@ public interface EntryConsumer {
     /**
      * Accept the key/value pair of buffers associated with the passed transaction. The buffers should
      * not be mutated or used outside the scope of the accept method.
+     *
      * @param txn The current transaction
      */
     void accept(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer, final ByteBuffer valueBuffer);
 
     static EntryConsumer doNothingConsumer() {
-        return (txn, keyBuffer, valueBuffer) -> {};
+        return (txn, keyBuffer, valueBuffer) -> {
+        };
     }
 }

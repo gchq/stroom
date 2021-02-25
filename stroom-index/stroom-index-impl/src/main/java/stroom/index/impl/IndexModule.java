@@ -36,6 +36,7 @@ import static stroom.job.api.Schedule.ScheduleType.CRON;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class IndexModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new IndexElementModule());
@@ -62,9 +63,6 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUIIndexResourceImpl.class)
-                .bind(NewUIIndexVolumeGroupResourceImpl.class)
-                .bind(NewUIIndexVolumeResourceImpl.class)
                 .bind(IndexResourceImpl.class)
                 .bind(IndexVolumeGroupResourceImpl.class)
                 .bind(IndexVolumeResourceImpl.class);
@@ -79,7 +77,8 @@ public class IndexModule extends AbstractModule {
                         .schedule(CRON, "0 0 *"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
-                        .description("Job to set index shards to have a status of deleted that have past their retention period")
+                        .description("Job to set index shards to have a status of deleted that have past their " +
+                                "retention period")
                         .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
@@ -100,6 +99,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardDelete extends RunnableWrapper {
+
         @Inject
         IndexShardDelete(final IndexShardManager indexShardManager) {
             super(indexShardManager::deleteFromDisk);
@@ -107,6 +107,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardRetention extends RunnableWrapper {
+
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
@@ -114,6 +115,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexWriterCacheSweep extends RunnableWrapper {
+
         @Inject
         IndexWriterCacheSweep(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::sweep);
@@ -121,6 +123,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexWriterFlush extends RunnableWrapper {
+
         @Inject
         IndexWriterFlush(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::flushAll);
@@ -128,6 +131,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class VolumeStatus extends RunnableWrapper {
+
         @Inject
         VolumeStatus(final IndexVolumeService volumeService) {
             super(volumeService::rescan);
@@ -135,6 +139,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
+
         @Inject
         IndexShardWriterCacheStartup(final IndexShardWriterCacheImpl indexShardWriterCache) {
             super(indexShardWriterCache::startup);
@@ -142,6 +147,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
+
         @Inject
         IndexShardWriterCacheShutdown(final IndexShardWriterCacheImpl indexShardWriterCache) {
             super(indexShardWriterCache::shutdown);

@@ -8,6 +8,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public interface HasHealthCheck {
+
     HealthCheck.Result getHealth();
 
     default HealthCheck getHealthCheck() {

@@ -28,6 +28,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"streamNo", "lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
 public class StreamLocation implements Location {
+
     private static final Comparator<StreamLocation> STREAM_LINE_COL_COMPARATOR = Comparator
             .comparingLong(StreamLocation::getStreamNo)
             .thenComparing(LINE_COL_COMPARATOR);
@@ -62,10 +63,15 @@ public class StreamLocation implements Location {
         return colNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final StreamLocation that = (StreamLocation) o;
         return streamNo == that.streamNo &&
                 lineNo == that.lineNo &&

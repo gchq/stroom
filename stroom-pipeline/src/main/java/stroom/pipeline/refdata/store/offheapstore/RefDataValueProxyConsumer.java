@@ -17,9 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+
 import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.trans.XPathException;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
 
 public interface RefDataValueProxyConsumer {
 
@@ -31,6 +32,7 @@ public interface RefDataValueProxyConsumer {
     Location NULL_LOCATION = new NullLocation();
 
     static class NullLocation implements Location {
+
         @Override
         public String getSystemId() {
             return null;

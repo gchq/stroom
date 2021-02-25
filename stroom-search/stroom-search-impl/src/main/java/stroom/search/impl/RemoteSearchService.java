@@ -11,15 +11,16 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.TempTagCloudDebug;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class RemoteSearchService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchService.class);
 
     private final RemoteSearchResults remoteSearchResults;
@@ -72,11 +73,16 @@ public class RemoteSearchService {
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
 
                 if (coprocessors != null && coprocessors.size() > 0) {
-                    final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(), taskContext -> {
-                        taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
-                        final ClusterSearchTaskHandler clusterSearchTaskHandler = clusterSearchTaskHandlerProvider.get();
-                        clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, coprocessors, remoteSearchResultFactory);
-                    });
+                    final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(),
+                            taskContext -> {
+                                taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
+                                final ClusterSearchTaskHandler clusterSearchTaskHandler =
+                                        clusterSearchTaskHandlerProvider.get();
+                                clusterSearchTaskHandler.exec(taskContext,
+                                        clusterSearchTask,
+                                        coprocessors,
+                                        remoteSearchResultFactory);
+                            });
 
                     final Executor executor = executorProvider.get();
                     CompletableFuture.runAsync(runnable, executor);

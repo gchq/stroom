@@ -6,6 +6,7 @@ import stroom.receive.common.StroomStreamHandler;
 import java.io.IOException;
 
 public interface StreamHandler extends StroomStreamHandler {
+
     void setAttributeMap(AttributeMap attributeMap);
 
     void handleHeader() throws IOException;

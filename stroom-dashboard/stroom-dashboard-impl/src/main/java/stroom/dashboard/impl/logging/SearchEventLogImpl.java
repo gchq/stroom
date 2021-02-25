@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public class SearchEventLogImpl implements SearchEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -101,7 +102,11 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        securityContext.insecure(() -> downloadResults("Download search results", dataSourceRef, expression, queryInfo, e));
+        securityContext.insecure(() -> downloadResults("Download search results",
+                dataSourceRef,
+                expression,
+                queryInfo,
+                e));
     }
 
     @Override
@@ -185,8 +190,8 @@ public class SearchEventLogImpl implements SearchEventLog {
     private Purpose getPurpose(final String queryInfo) {
         return queryInfo != null
                 ? Purpose.builder()
-                    .withJustification(queryInfo)
-                    .build()
+                .withJustification(queryInfo)
+                .build()
                 : null;
     }
 }

@@ -9,15 +9,16 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
+
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
@@ -179,7 +180,8 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then test for `Use` instead of `Read`.
+        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
+        // test for `Use` instead of `Read`.
         String perm = permission;
         if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
             perm = DocumentPermissionNames.USE;
@@ -207,7 +209,9 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
+    private boolean hasUserDocumentPermission(final String userUuid,
+                                              final String documentUuid,
+                                              final String permission) {
         final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
         if (userDocumentPermissions != null) {
             return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);

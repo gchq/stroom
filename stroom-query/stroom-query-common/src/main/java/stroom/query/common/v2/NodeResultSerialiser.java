@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class NodeResultSerialiser {
+
     public static boolean read(final Input input,
                                final Coprocessors coprocessors,
                                final Consumer<String> errorConsumer,

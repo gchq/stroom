@@ -19,9 +19,11 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
@@ -30,28 +32,49 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Message;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 class DataServiceImpl implements DataService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataServiceImpl.class);
+
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;
     private final DataDownloadTaskHandler dataDownloadTaskHandlerProvider;
@@ -61,23 +84,53 @@ class DataServiceImpl implements DataService {
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
 
+    private final DataFetcher dataFetcher;
+
     @Inject
     DataServiceImpl(final ResourceStore resourceStore,
-                    final DataUploadTaskHandler dataUploadTaskHandlerProvider,
-                    final DataDownloadTaskHandler dataDownloadTaskHandlerProvider,
+                    final DataUploadTaskHandler dataUploadTaskHandler,
+                    final DataDownloadTaskHandler dataDownloadTaskHandler,
                     final DocRefInfoService docRefInfoService,
                     final MetaService metaService,
                     final AttributeMapFactory attributeMapFactory,
                     final SecurityContext securityContext,
-                    final FeedStore feedStore) {
+                    final FeedStore feedStore,
+                    final Store streamStore,
+                    final FeedProperties feedProperties,
+                    final Provider<FeedHolder> feedHolderProvider,
+                    final Provider<MetaDataHolder> metaDataHolderProvider,
+                    final Provider<PipelineHolder> pipelineHolderProvider,
+                    final Provider<MetaHolder> metaHolderProvider,
+                    final PipelineStore pipelineStore,
+                    final Provider<PipelineFactory> pipelineFactoryProvider,
+                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                    final PipelineDataCache pipelineDataCache,
+                    final PipelineScopeRunnable pipelineScopeRunnable,
+                    final SourceConfig sourceConfig
+
+    ) {
         this.resourceStore = resourceStore;
-        this.dataUploadTaskHandlerProvider = dataUploadTaskHandlerProvider;
-        this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandlerProvider;
+        this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
+        this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandler;
         this.docRefInfoService = docRefInfoService;
         this.metaService = metaService;
         this.attributeMapFactory = attributeMapFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
+
+        this.dataFetcher = new DataFetcher(streamStore,
+                feedProperties,
+                feedHolderProvider,
+                metaDataHolderProvider,
+                pipelineHolderProvider,
+                metaHolderProvider,
+                pipelineStore,
+                pipelineFactoryProvider,
+                errorReceiverProxyProvider,
+                pipelineDataCache,
+                securityContext,
+                pipelineScopeRunnable,
+                sourceConfig);
     }
 
     @Override
@@ -93,13 +146,17 @@ class DataServiceImpl implements DataService {
             }
 
             final DataDownloadSettings settings = new DataDownloadSettings();
-            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria, file.getParent(), fileName, settings);
+            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria,
+                    file.getParent(),
+                    fileName,
+                    settings);
 
             if (result.getRecordsWritten() == 0) {
-                if (result.getMessageList() != null && result.getMessageList().size() > 0){
+                if (result.getMessageList() != null && result.getMessageList().size() > 0) {
                     throw new RuntimeException("Download failed with errors: " +
-                            result.getMessageList().stream().map(m -> m.getMessage()).
-                                    collect(Collectors.joining(", ")));
+                            result.getMessageList().stream()
+                                    .map(Message::getMessage)
+                                    .collect(Collectors.joining(", ")));
                 }
             }
             return new ResourceGeneration(resourceKey, result.getMessageList());
@@ -145,7 +202,8 @@ class DataServiceImpl implements DataService {
 
     @Override
     public List<DataInfoSection> info(final long id) {
-        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
+        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(
+                new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
         final MetaRow metaRow = metaRows.getFirst();
 
 //        final Meta meta = metaService.getMeta(id, true);
@@ -196,6 +254,43 @@ class DataServiceImpl implements DataService {
         }
 
         return sections;
+    }
+
+    @Override
+    public AbstractFetchDataResult fetch(final FetchDataRequest request) {
+        try {
+            final String permissionName = request.getPipeline() != null
+                    ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
+                    : PermissionNames.VIEW_DATA_PERMISSION;
+
+            return securityContext.secureResult(permissionName, () ->
+                    dataFetcher.getData(request));
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Set<String> getChildStreamTypes(final long id, final long partNo) {
+        try {
+            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
+
+            return securityContext.secureResult(permissionName, () -> {
+
+                final Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
+                LOGGER.debug(() ->
+                        LogUtil.message("childTypes {}",
+                                childTypes.stream()
+                                        .sorted()
+                                        .collect(Collectors.joining(","))));
+                return childTypes;
+            });
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
+                    id, partNo), e);
+            throw e;
+        }
     }
 
     private String convertDuration(final String value) {
@@ -265,7 +360,9 @@ class DataServiceImpl implements DataService {
         }
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid(), pipelineName));
+            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                    meta.getPipelineUuid(),
+                    pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
         }
         return entries;
@@ -283,9 +380,12 @@ class DataServiceImpl implements DataService {
 //            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
 //            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
+                    attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
+                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
+                    attributeMap.get(DataRetentionFields.RETENTION_RULE)));
         }
 
         return entries;

@@ -18,10 +18,6 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -37,6 +33,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataViewImpl extends ViewImpl implements DataView {
+
     private final Widget widget;
 
     @UiField
@@ -107,5 +104,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {
+
     }
 }

@@ -17,9 +17,6 @@
 package stroom.index;
 
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
@@ -49,17 +46,22 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestIndexingPipeline extends AbstractProcessIntegrationTest {
+
     private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.data.xml";
     private static final String SAMPLE_INDEX_INPUT = "TestIndexingPipeline/TestIndexes.out";
 
@@ -126,10 +128,13 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             metaHolderProvider.get().setMeta(meta);
 
             // Create the pipeline.
-            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
+                    StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
+                    "index",
+                    indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

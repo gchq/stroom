@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Deprecated
 class TestEntityReferenceReplacer {
+
     @Test
     void testEntityStreamType() {
         final String original = "<property><element>test</element><name>streamType</name><value><entity><type>StreamType</type><path>Events</path></entity></value></property>";
@@ -77,6 +78,7 @@ class TestEntityReferenceReplacer {
     }
 
     private class Replacer extends EntityReferenceReplacer {
+
         @Override
         String getUUID(Connection connection, String table, String id) {
             return "uuid";

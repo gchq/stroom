@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.docstore.shared.DocRefUtil;
+import stroom.lmdb.LmdbDb;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -37,16 +39,14 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.lmdb.LmdbDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
-import stroom.util.io.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -69,8 +69,6 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -94,10 +92,12 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.
- *
+ * <p>
  * Essentially each ref stream (a {@link RefStreamDefinition}) contains 1-* map names.
  * Multiple ref streams can contain the same map name.
  * Within a ref stream + map combo (a {@link MapDefinition}) there are 1-* entries.
@@ -106,6 +106,7 @@ import java.util.stream.Stream;
  */
 @Singleton
 public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
@@ -323,7 +324,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                     .flatMap(valueStoreKeyBuffer -> {
                                         // we are going to use the valueStoreKeyBuffer as a key in multiple
                                         // get() calls so need to clone it first.
-                                        final ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                        final ByteBuffer valueStoreKeyBufferClone =
+                                                valueStoreKeyPooledBufferClone.getByteBuffer();
                                         ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
                                         return Optional.of(valueStoreKeyBufferClone);
                                     })
@@ -380,7 +382,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     if (doesStoreContainRanges) {
                         // we have ranges for this map def so we would expect to be able to convert the key
                         throw new RuntimeException(LogUtil.message(
-                                "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                                "Key {} cannot be used with the range store as it cannot be converted to a long", key),
+                                e);
                     }
                     // no ranges for this map def so the fact that we could not convert the key to a long
                     // is not a problem. Do nothing.
@@ -413,7 +416,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             .flatMap(valueStoreKeyBuffer -> {
                                 // we are going to use the valueStoreKeyBuffer as a key in multiple
                                 // get() calls so need to clone it first.
-                                final ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                final ByteBuffer valueStoreKeyBufferClone =
+                                        valueStoreKeyPooledBufferClone.getByteBuffer();
                                 ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
                                 return Optional.of(valueStoreKeyBufferClone);
                             })
@@ -489,7 +493,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
         try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(now, purgeAge);
-             final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
+                final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
             final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
@@ -614,18 +618,22 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         //open a write txn
         //open a cursor on the process info table to scan all records
         //subtract purge age prop val from current time to give purge cut off ms
-        //for each proc info record one test the last access time against the cut off time (without de-serialising to long)
+        //for each proc info record one test the last access time against the cut off time (without
+        // de-serialising to long)
         //if it is older than cut off date then change its state to PURGE_IN_PROGRESS
 
 
         //process needs to be idempotent so we can continue a part finished purge. A new txn MUST always check the
         //processing info state to ensure it is still PURGE_IN_PROGRESS in case another txn has started a load, in which
-        //case we won't purge. A purge txn must wrap at least the deletion of the key(range)/entry, the value (if no other
+        //case we won't purge. A purge txn must wrap at least the deletion of the key(range)/entry, the value
+        // (if no other
         //refs). The deletion of the mapdef<=>uid paiur must be done in a txn to ensure consistency.
-        //Each processing info entry should be be fetched with a read txn, then get a StripedSemaphore for the streamdef
+        //Each processing info entry should be be fetched with a read txn, then get a StripedSemaphore for the
+        // streamdef
         //then open the write txn. This should stop any conflict with load jobs for that stream.
 
-        //when overwrites happen we may have two values that had an association with same mapDef + key.  The above process
+        //when overwrites happen we may have two values that had an association with same mapDef + key.  The
+        // above process
         //will only remove the currently associated value.  We would have to scan the whole value table to look for
 
 
@@ -634,7 +642,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // mapUID => ValueKeys
         // ValueKey => value
 
-        // <pipe uuid 2-18><pipe ver 2-18><stream id 8> => <create time 8><last access time 8><effective time 8><state 1>
+        // <pipe uuid 2-18><pipe ver 2-18><stream id 8> => <create time 8><last access time 8><effective time 8><state1>
         // <pipe uuid 12-18><pipe ver 2-18><stream id 8><map name ?> => <mapUID 4>
         // <mapUID 4> => <pipe uuid 2-18><pipe ver 2-18><stream id 8><map name ?>
         // <mapUID 4><string Key ?> => <valueHash 4><id 2>
@@ -650,14 +658,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // - overwrite key(Range)/Value entry (-1 on old value key)
         // - delete key(Range)/Value entry
 
-        // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
+        // change to ref counter MUST be done in same txn as the thing that is making it change,
+        // e.g the KV entry removal
     }
 
     @NotNull
-    private Optional<RefStreamDefinition> findNextRefStreamDef(final PooledByteBufferPair procInfoPooledBufferPair,
-                                                               final AtomicReference<ByteBuffer> currRefStreamDefBufRef,
-                                                               final Predicate<ByteBuffer> accessTimePredicate,
-                                                               final Txn<ByteBuffer> readTxn) {
+    private Optional<RefStreamDefinition> findNextRefStreamDef(
+            final PooledByteBufferPair procInfoPooledBufferPair,
+            final AtomicReference<ByteBuffer> currRefStreamDefBufRef,
+            final Predicate<ByteBuffer> accessTimePredicate,
+            final Txn<ByteBuffer> readTxn) {
+
         procInfoPooledBufferPair.clear();
         Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                 readTxn,
@@ -874,7 +885,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     KeyRange.all(),
                     entryStream -> entryStream
                             .limit(rangeEntriesLimit)
-                            .map(entry-> {
+                            .map(entry -> {
                                 final RangeStoreKey rangeStoreKey = entry._1();
                                 final ValueStoreKey valueStoreKey = entry._2();
                                 final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
@@ -896,7 +907,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final MapDefinition mapDefinition = mapDefinitionUIDStore.get(readTxn, mapUid)
                 .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
 
-        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn, mapDefinition.getRefStreamDefinition())
+        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
+                mapDefinition.getRefStreamDefinition())
                 .orElse(null);
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);
@@ -953,14 +965,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
+            final Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange =
+                    processingInfoDb.getLastAccessedTimeRange();
 
-            SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
                     .addDetail("Path", dbDir.toAbsolutePath().toString())
                     .addDetail("Environment max size", maxSize)
-                    .addDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
+                    .addDetail("Environment current size",
+                            ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .addDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .addDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
+                    .addDetail("Purge cut off",
+                            TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .addDetail("Max readers", maxReaders)
                     .addDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
@@ -997,7 +1012,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         }
                     })
                     .sum();
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException
+                | RuntimeException e) {
             LOGGER.error("Error calculating disk usage for path {}", dbDir.toAbsolutePath().toString(), e);
             totalSizeBytes = -1;
         }
@@ -1031,6 +1047,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private static final class PurgeCounts {
+
         final int refStreamDefsDeletedCount;
         final RefStreamPurgeCounts refStreamPurgeCounts;
 
@@ -1053,6 +1070,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private static final class RefStreamPurgeCounts {
+
         final int mapsDeletedCount;
         final int valuesDeletedCount;
         final int valuesDeReferencedCount;
@@ -1071,6 +1089,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     0,
                     0);
         }
+
         public RefStreamPurgeCounts add(final RefStreamPurgeCounts other) {
             return increment(
                     other.mapsDeletedCount,

@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public class CompareBuilder {
+
     private int comparison;
 
     public CompareBuilder() {

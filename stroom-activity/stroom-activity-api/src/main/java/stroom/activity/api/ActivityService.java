@@ -24,6 +24,7 @@ import stroom.util.shared.filter.FilterFieldDefinition;
 import java.util.List;
 
 public interface ActivityService {
+
     Activity create();
 
     Activity fetch(int id);

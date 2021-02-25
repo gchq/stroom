@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -29,8 +31,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.ArrayList;
-import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"preferredSize", "dimension", "children"})
@@ -38,6 +38,7 @@ import java.util.List;
 @XmlRootElement(name = "splitLayout")
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
+
     /**
      * The preferred size of this layout in width, height.
      */
@@ -140,7 +141,8 @@ public class SplitLayoutConfig extends LayoutConfig {
     }
 
     public enum Direction {
-        ACROSS(0), DOWN(1);
+        ACROSS(0),
+        DOWN(1);
 
         private final int dimension;
 

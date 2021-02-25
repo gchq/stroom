@@ -30,12 +30,13 @@ import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class Activity implements HasAuditInfo, HasIntegerId {
+
     public static final String ENTITY_TYPE = "Activity";
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
     private Long createTimeMs;
     @JsonProperty
@@ -175,11 +176,16 @@ public class Activity implements HasAuditInfo, HasIntegerId {
 
     @Override
     public String toString() {
-        return details.toString();
+        if (details != null) {
+            return details.toString();
+        } else {
+            return "Undefined Activity Details";
+        }
     }
 
     @JsonInclude(Include.NON_NULL)
     public static class ActivityDetails {
+
         @JsonProperty
         private final List<Prop> properties;
 
@@ -224,6 +230,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
 
     @JsonInclude(Include.NON_NULL)
     public static class Prop {
+
         @JsonProperty
         private String id;
         @JsonProperty

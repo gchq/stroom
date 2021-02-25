@@ -22,6 +22,7 @@ import stroom.security.api.UserIdentity;
 import java.util.function.Supplier;
 
 public class MockSecurityContext implements SecurityContext {
+
     private static final AdminUserIdentity ADMIN_USER_IDENTITY = new AdminUserIdentity();
 
     @Override
@@ -125,6 +126,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     private static class AdminUserIdentity implements UserIdentity {
+
         @Override
         public String getId() {
             return "admin";

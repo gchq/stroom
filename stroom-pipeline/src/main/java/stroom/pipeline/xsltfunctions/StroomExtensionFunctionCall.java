@@ -16,6 +16,12 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.shared.Location;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.NodeInfo;
@@ -24,15 +30,11 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.LocationFactory;
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.shared.Location;
-import stroom.util.shared.Severity;
 
 import java.util.List;
 
 abstract class StroomExtensionFunctionCall {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomExtensionFunctionCall.class);
 
     private ErrorReceiver errorReceiver;
@@ -60,7 +62,10 @@ abstract class StroomExtensionFunctionCall {
 //        }
 //    }
 
-    String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
+    String getSafeString(final String functionName,
+                         final XPathContext context,
+                         final Sequence[] arguments,
+                         final int index) throws XPathException {
         String string = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -82,7 +87,10 @@ abstract class StroomExtensionFunctionCall {
         return string;
     }
 
-    Boolean getSafeBoolean(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
+    Boolean getSafeBoolean(final String functionName,
+                           final XPathContext context,
+                           final Sequence[] arguments,
+                           final int index) throws XPathException {
         Boolean bool = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {

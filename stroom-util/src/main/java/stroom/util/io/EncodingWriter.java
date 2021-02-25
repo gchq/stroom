@@ -23,6 +23,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 
 public class EncodingWriter extends Writer {
+
     private final OutputStreamWriter writer;
 
     public EncodingWriter(final OutputStream out, final Charset cs) {
@@ -42,7 +43,7 @@ public class EncodingWriter extends Writer {
     }
 
     @Override
-    public void write(final char cbuf[], final int off, final int len) throws IOException {
+    public void write(final char[] cbuf, final int off, final int len) throws IOException {
         writer.write(cbuf, off, len);
     }
 

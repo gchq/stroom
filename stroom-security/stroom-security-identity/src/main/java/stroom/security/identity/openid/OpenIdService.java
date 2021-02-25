@@ -17,18 +17,19 @@ import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.UriBuilder;
 
 
 class OpenIdService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenIdService.class);
 
     private final UriFactory uriFactory;

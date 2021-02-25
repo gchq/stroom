@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandlers>
         implements ExplorerTreePresenter.ExplorerTreeView {
+
     private final Widget widget;
     @UiField(provided = true)
     SvgButton newItem;
@@ -47,6 +48,7 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     SimplePanel treeContainer;
     @UiField(provided = true)
     SvgButton typeFilter;
+
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
         newItem = SvgButton.create(SvgPresets.NEW_ITEM);
@@ -95,5 +97,6 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     }
 
     public interface Binder extends UiBinder<Widget, ExplorerTreeViewImpl> {
+
     }
 }

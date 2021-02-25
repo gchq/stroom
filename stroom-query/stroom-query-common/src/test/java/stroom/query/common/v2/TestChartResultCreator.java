@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import org.junit.jupiter.api.Test;
 
 class TestChartResultCreator {
+
     private static final String[] SERIES_CHOICE = new String[]{"", "Test1", "Test2"};
 
     @Test

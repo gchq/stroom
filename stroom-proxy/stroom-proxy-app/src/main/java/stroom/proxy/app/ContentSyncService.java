@@ -16,16 +16,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -37,8 +27,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 public class ContentSyncService implements Managed, HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
 
     private final ProxyConfig proxyConfig;
@@ -108,7 +109,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                             if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                                 LOGGER.error(response.getStatusInfo().getReasonPhrase());
                             } else {
-                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>(){});
+                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
+                                });
                                 docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
                                 LOGGER.info("Synced {} documents", docRefs.size());
                             }

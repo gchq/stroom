@@ -36,6 +36,7 @@ import java.util.List;
 
 public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter.CommonAlertView>
         implements PopupUiHandlers {
+
     private final List<CommonAlertEvent<?>> stack = new ArrayList<>();
 
     @Inject
@@ -109,6 +110,7 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
     }
 
     public interface CommonAlertView extends View {
+
         void setQuestion(SafeHtml text);
 
         void setInfo(SafeHtml text);

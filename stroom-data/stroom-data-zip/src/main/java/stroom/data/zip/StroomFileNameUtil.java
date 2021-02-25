@@ -1,8 +1,9 @@
 package stroom.data.zip;
 
+import stroom.meta.api.AttributeMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMap;
 
 import java.util.Arrays;
 
@@ -13,7 +14,8 @@ import java.util.Arrays;
  * So file 1 is 001 and file 1000 is 001/000 etc...
  */
 public final class StroomFileNameUtil {
-    private final static int MAX_PART_LENGTH = 255;
+
+    private static final int MAX_PART_LENGTH = 255;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomFileNameUtil.class);
 
@@ -60,7 +62,8 @@ public final class StroomFileNameUtil {
     }
 
     /**
-     * Clean a path so that it doesn't contain leading or trailing separators, no double separators and no invalid characters.
+     * Clean a path so that it doesn't contain leading or trailing separators, no double separators and no
+     * invalid characters.
      *
      * @param path The path to clean.
      * @return A cleaned path.

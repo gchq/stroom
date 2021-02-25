@@ -1,17 +1,19 @@
 package stroom.meta.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.util.date.DateUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
 class StreamAttributeMapUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapUtil.class);
 
     private StreamAttributeMapUtil() {

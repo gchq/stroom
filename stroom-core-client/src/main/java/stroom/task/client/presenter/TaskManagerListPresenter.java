@@ -77,6 +77,7 @@ import java.util.function.Function;
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
         implements HasDataSelectionHandlers<Set<String>>, Refreshable {
+
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
@@ -95,7 +96,7 @@ public class TaskManagerListPresenter
 
     private Column<TaskProgress, Expander> expanderColumn;
 
-    private TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -133,11 +134,7 @@ public class TaskManagerListPresenter
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 // As we get data async from all nodes we can't be sure when we have finished so
                 // need to clear the expandAllRequestState prior to fetching
                 treeAction.resetExpandAllRequestState();
@@ -227,7 +224,9 @@ public class TaskManagerListPresenter
         // Node.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                        taskProgress.getNodeName() != null ? taskProgress.getNodeName() : "?"))
+                        taskProgress.getNodeName() != null
+                                ? taskProgress.getNodeName()
+                                : "?"))
                         .withSorting(FindTaskProgressCriteria.FIELD_NODE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
@@ -252,7 +251,7 @@ public class TaskManagerListPresenter
         // Submit Time.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                        ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
@@ -280,7 +279,7 @@ public class TaskManagerListPresenter
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
         return TooltipUtil.builder()
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                     tableBuilder.addHeaderRow("Task")
                             .addRow("Name", row.getTaskName())
                             .addRow("User", row.getUserName())
@@ -415,6 +414,7 @@ public class TaskManagerListPresenter
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

@@ -6,6 +6,7 @@ import stroom.query.api.v2.TableSettings;
 import java.util.Map;
 
 public interface DataStoreFactory {
+
     DataStore create(String queryKey,
                      String componentId,
                      TableSettings tableSettings,

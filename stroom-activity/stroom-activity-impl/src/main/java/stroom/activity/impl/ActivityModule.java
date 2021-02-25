@@ -7,6 +7,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ActivityModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ActivityService.class).to(ActivityServiceImpl.class);
@@ -16,11 +17,13 @@ public class ActivityModule extends AbstractModule {
                 .bind(ActivityResourceImpl.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

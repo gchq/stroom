@@ -2,12 +2,13 @@ package stroom.security.impl.session;
 
 import stroom.security.api.UserIdentity;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.Arrays;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 public final class UserIdentitySessionUtil {
+
     private static final String SESSION_USER_IDENTITY = "SESSION_USER_IDENTITY";
     private static final String STROOM_SESSION_ID = "STROOM_SESSION_ID";
     private static final String JSESSIONID = "JSESSIONID";

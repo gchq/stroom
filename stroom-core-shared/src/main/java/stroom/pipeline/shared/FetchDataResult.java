@@ -17,8 +17,8 @@
 package stroom.pipeline.shared;
 
 import stroom.data.shared.DataType;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Count;
+import stroom.util.shared.OffsetRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -45,7 +45,7 @@ public class FetchDataResult extends AbstractFetchDataResult {
                            @JsonProperty("streamTypeName") final String streamTypeName,
                            @JsonProperty("classification") final String classification,
                            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                           @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+                           @JsonProperty("itemRange") final OffsetRange itemRange,
                            @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
                            @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                            @JsonProperty("totalBytes") final Long totalBytes,

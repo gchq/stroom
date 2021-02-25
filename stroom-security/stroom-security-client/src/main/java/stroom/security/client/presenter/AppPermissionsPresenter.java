@@ -16,12 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -35,6 +29,13 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,8 @@ import java.util.Set;
 
 public class AppPermissionsPresenter extends
         MyPresenterWidget<DataGridViewImpl<String>> {
-    private final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
+
+    private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
@@ -109,7 +111,9 @@ public class AppPermissionsPresenter extends
 
     private void addColumns() {
         final boolean updateable = isCurrentUserUpdate();
-        final TickBoxCell.Appearance appearance = updateable ? new TickBoxCell.DefaultAppearance() : new TickBoxCell.NoBorderAppearance();
+        final TickBoxCell.Appearance appearance = updateable
+                ? new TickBoxCell.DefaultAppearance()
+                : new TickBoxCell.NoBorderAppearance();
 
         getView().addColumn(new Column<String, String>(new TextCell()) {
             @Override
@@ -133,7 +137,8 @@ public class AppPermissionsPresenter extends
         };
         if (updateable) {
             selectionColumn.setFieldUpdater((index, permission, value) -> {
-                final ChangeUserRequest request = new ChangeUserRequest(relatedUser, new ChangeSet<>(), new ChangeSet<>());
+                final ChangeUserRequest request = new ChangeUserRequest(
+                        relatedUser, new ChangeSet<>(), new ChangeSet<>());
                 if (value.toBoolean()) {
                     request.getChangedAppPermissions().add(permission);
                 } else {

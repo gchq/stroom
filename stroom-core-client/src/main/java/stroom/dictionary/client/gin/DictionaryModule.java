@@ -24,10 +24,13 @@ import stroom.dictionary.client.presenter.DictionarySettingsPresenter.Dictionary
 import stroom.dictionary.client.view.DictionarySettingsViewImpl;
 
 public class DictionaryModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(DictionaryPlugin.class);
         bind(DictionaryPresenter.class);
-        bindPresenterWidget(DictionarySettingsPresenter.class, DictionarySettingsView.class, DictionarySettingsViewImpl.class);
+        bindPresenterWidget(DictionarySettingsPresenter.class,
+                DictionarySettingsView.class,
+                DictionarySettingsViewImpl.class);
     }
 }
