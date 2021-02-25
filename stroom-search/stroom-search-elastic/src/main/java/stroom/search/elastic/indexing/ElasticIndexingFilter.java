@@ -87,7 +87,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private Map<String, Object> document = new HashMap<>();
 
     private int batchSize = 10000;
-    private boolean refreshAfterEachBatch = true;
+    private boolean refreshAfterEachBatch = false;
     private int fieldsIndexed;
     private long docsIndexed;
 
@@ -360,7 +360,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         this.batchSize = batchSize;
     }
 
-    @PipelineProperty(description = "Refresh the index after each batch is processed, making the indexed documents visible to searches", defaultValue = "true")
+    @PipelineProperty(description = "Refresh the index after each batch is processed, making the indexed documents visible to searches", defaultValue = "false")
     public void setRefreshAfterEachBatch(final boolean refreshAfterEachBatch) {
         this.refreshAfterEachBatch = refreshAfterEachBatch;
     }
