@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged
 class FeedResourceImpl implements FeedResource {
@@ -49,19 +50,19 @@ class FeedResourceImpl implements FeedResource {
         SUPPORTED_ENCODINGS = list;
     }
 
-    private final FeedStore feedStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<FeedStore> feedStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    FeedResourceImpl(final FeedStore feedStore,
-                     final DocumentResourceHelper documentResourceHelper) {
-        this.feedStore = feedStore;
-        this.documentResourceHelper = documentResourceHelper;
+    FeedResourceImpl(final Provider<FeedStore> feedStoreProvider,
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.feedStoreProvider = feedStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public FeedDoc fetch(final String uuid) {
-        return documentResourceHelper.read(feedStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(feedStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -69,7 +70,7 @@ class FeedResourceImpl implements FeedResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(feedStore, doc);
+        return documentResourceHelperProvider.get().update(feedStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {
