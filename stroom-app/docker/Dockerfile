@@ -21,7 +21,10 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-FROM openjdk:15-jdk-alpine3.12 as stroom-base-stage
+# Using 'openjdk' on apline is not fully supported so using AdoptOpenJdk
+# to ensure we have a known jdk version
+# See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
+FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -32,15 +35,6 @@ RUN echo "http_proxy: $http_proxy" && \
         curl \
         su-exec \
         tini
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-# ~~~ fat jar stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Intermediate build stage to copy the stroom fat jar to allow stroom 
-# and proxy builds to re-use the same cached layer with the fat jar in it
-FROM scratch as fat-jar-stage
-COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -125,14 +119,15 @@ RUN \
 # Copy in the content packs downloaded by gradle
 COPY --chown=stroom:stroom ./build/content_packs /stroom/content_pack_import
 
-# Copy all the fat jars for the application and connectors
+# Copy all the distribution scripts
 COPY --chown=stroom:stroom *.sh /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
 COPY --chown=stroom:stroom build/config.yml /stroom/config_fallback/config.yml
 
-COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
+# The application fat jar
+COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/
 
 # Label the image so we can see what commit/tag it came from
 ARG GIT_COMMIT=unspecified

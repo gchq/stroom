@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change stroom/proxy docker image base to `adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine`
+
 * Add authentication config to swagger spec.
 
 
