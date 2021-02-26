@@ -18,6 +18,7 @@ package stroom.feed.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
+@AutoLogged
 class FeedResourceImpl implements FeedResource {
 
     private static final List<String> SUPPORTED_ENCODINGS;

@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-feed:stroom-feed-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-meta:stroom-meta-api')
