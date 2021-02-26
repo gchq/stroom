@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.89] - 2021-02-26
+
 * Change stroom/proxy docker image base to `adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine`
 
 * Add authentication config to swagger spec.
@@ -3117,7 +3120,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.88...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.89...HEAD
+[v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89
 [v7.0-beta.88]: https://github.com/gchq/stroom/compare/v7.0-beta.87...v7.0-beta.88
 [v7.0-beta.87]: https://github.com/gchq/stroom/compare/v7.0-beta.86...v7.0-beta.87
 [v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
