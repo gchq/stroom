@@ -22,8 +22,10 @@ import stroom.docstore.api.DocumentStore;
 import stroom.script.shared.ScriptDoc;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ScriptStore extends DocumentStore<ScriptDoc> {
+    List<ScriptDoc> fetchLinkedScripts(final DocRef script, final Set<DocRef> loadedScripts);
 
     List<DocRef> list();
 }
