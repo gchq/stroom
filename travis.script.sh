@@ -61,8 +61,10 @@ gather_release_artefacts() {
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
   local -r release_config_dir="${TRAVIS_BUILD_DIR}/stroom-app/build/release/config"
-  local -r docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-app/build/release/config"
   local -r proxy_release_config_dir="${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
+
+  local -r docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-app/docker/build"
+  local -r proxy_docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build"
 
   echo "Copying release artefacts to ${RELEASE_ARTEFACTS_DIR}"
 
@@ -89,7 +91,7 @@ gather_release_artefacts() {
     "${RELEASE_ARTEFACTS_DIR}"
 
   # Stroom-Proxy
-  cp "${docker_build_dir}/config.yml" \
+  cp "${proxy_docker_build_dir}/config.yml" \
     "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
 
   cp "${proxy_release_config_dir}/config-defaults.yml" \
