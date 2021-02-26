@@ -78,7 +78,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
 
     @Override
     public SystemInfoResource getRestResource() {
-        return new SystemInfoResourceImpl(systemInfoService, stroomEventLoggingService);
+        return new SystemInfoResourceImpl(() -> systemInfoService, () -> stroomEventLoggingService);
     }
 
     @Override
