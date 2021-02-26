@@ -9,6 +9,10 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Stroom API
   version: v1/v2
+servers:
+- url: /api
+security:
+- ApiKeyAuth: []
 paths:
   /account/v1:
     get:
@@ -10824,3 +10828,8 @@ components:
           type: string
         version:
           type: string
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey

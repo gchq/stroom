@@ -13,6 +13,12 @@
     "title" : "Stroom API",
     "version" : "v1/v2"
   },
+  "servers" : [ {
+    "url" : "/api"
+  } ],
+  "security" : [ {
+    "ApiKeyAuth" : [ ]
+  } ],
   "paths" : {
     "/account/v1" : {
       "get" : {
@@ -15212,6 +15218,13 @@
             "type" : "string"
           }
         }
+      }
+    },
+    "securitySchemes" : {
+      "ApiKeyAuth" : {
+        "in" : "header",
+        "name" : "Authorization",
+        "type" : "apiKey"
       }
     }
   }

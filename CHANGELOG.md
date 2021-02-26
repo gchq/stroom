@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add authentication config to swagger spec.
+
 
 ## [v7.0-beta.88] - 2021-02-26
 
