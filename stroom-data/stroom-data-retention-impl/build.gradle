@@ -6,6 +6,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-retention-api')
 //    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-security:stroom-security-api')

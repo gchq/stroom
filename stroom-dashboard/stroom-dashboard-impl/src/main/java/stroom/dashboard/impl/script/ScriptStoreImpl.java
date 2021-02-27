@@ -27,9 +27,13 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,11 +46,14 @@ import javax.inject.Singleton;
 class ScriptStoreImpl implements ScriptStore {
 
     private final Store<ScriptDoc> store;
+    private final SecurityContext securityContext;
 
     @Inject
     ScriptStoreImpl(final StoreFactory storeFactory,
-                    final ScriptSerialiser serialiser) {
+                    final ScriptSerialiser serialiser,
+                    final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
+        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -190,5 +197,55 @@ class ScriptStoreImpl implements ScriptStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<ScriptDoc> fetchLinkedScripts(final DocRef script, final Set<DocRef> loadedScripts) {
+        return securityContext.secureResult(() -> {
+            // Elevate the users permissions for the duration of this task so they can read the script if
+            // they have 'use' permission.
+            return securityContext.useAsReadResult(() -> {
+                final List<ScriptDoc> scripts = new ArrayList<>();
+
+                final Set<DocRef> uiLoadedScripts;
+                if (loadedScripts == null) {
+                    uiLoadedScripts = new HashSet<>();
+                } else {
+                    uiLoadedScripts = loadedScripts;
+                }
+
+                // Load the script and it's dependencies.
+                loadScripts(script, uiLoadedScripts, new HashSet<>(), scripts);
+
+                return scripts;
+            });
+        });
+    }
+
+    private void loadScripts(final DocRef docRef,
+                             final Set<DocRef> uiLoadedScripts,
+                             final Set<DocRef> loadedScripts,
+                             final List<ScriptDoc> scripts) {
+        // Prevent circular reference loading with this set.
+        if (!loadedScripts.contains(docRef)) {
+            loadedScripts.add(docRef);
+
+
+            final ScriptDoc loadedScript = readDocument(docRef);
+            if (loadedScript != null) {
+                // Add required dependencies first.
+                if (loadedScript.getDependencies() != null) {
+                    for (final DocRef dep : loadedScript.getDependencies()) {
+                        loadScripts(dep, uiLoadedScripts, loadedScripts, scripts);
+                    }
+                }
+
+                // Add this script.
+                if (!uiLoadedScripts.contains(docRef)) {
+                    uiLoadedScripts.add(docRef);
+                    scripts.add(loadedScript);
+                }
+            }
+        }
     }
 }

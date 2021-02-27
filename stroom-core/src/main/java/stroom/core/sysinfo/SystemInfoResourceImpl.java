@@ -1,6 +1,8 @@
 package stroom.core.sysinfo;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -12,40 +14,43 @@ import event.logging.ViewEventAction;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SystemInfoResourceImpl implements SystemInfoResource {
 
-    private final SystemInfoService systemInfoService;
-    private final StroomEventLoggingService stroomEventLoggingService;
+    private final Provider<SystemInfoService> systemInfoServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    public SystemInfoResourceImpl(final SystemInfoService systemInfoService,
-                                  final StroomEventLoggingService stroomEventLoggingService) {
-        this.systemInfoService = systemInfoService;
-        this.stroomEventLoggingService = stroomEventLoggingService;
+    public SystemInfoResourceImpl(final Provider<SystemInfoService> systemInfoServiceProvider,
+                                  final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+        this.systemInfoServiceProvider = systemInfoServiceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Override
     public SystemInfoResultList getAll() {
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get()
+                .loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info results",
                 buildViewEventAction(""),
                 () ->
-                        SystemInfoResultList.of(systemInfoService.getAll())
+                        SystemInfoResultList.of(systemInfoServiceProvider.get().getAll())
         );
     }
 
     @Override
     public List<String> getNames() {
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info result names",
                 buildViewEventAction(NAMES_PATH_PART),
-                () -> systemInfoService.getNames().stream()
+                () -> systemInfoServiceProvider.get().getNames().stream()
                         .sorted()
                         .collect(Collectors.toList())
         );
@@ -58,11 +63,11 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
             throw new BadRequestException("name not supplied");
         }
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "getSystemInfo",
                 "Getting system info results for " + name,
                 buildViewEventAction("/"),
-                () -> systemInfoService.get(name)
+                () -> systemInfoServiceProvider.get().get(name)
                         .orElseThrow(() ->
                                 new NotFoundException(LogUtil.message("Name {} not found", name)))
         );

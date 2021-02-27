@@ -25,6 +25,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,5 +47,7 @@ class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
         final ScriptDoc loaded = scriptStore.readDocument(docRef);
 
         assertThat(loaded.getData()).isEqualTo(data);
+        List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
+        assertThat(linkedScripts).hasSize(1);
     }
 }
