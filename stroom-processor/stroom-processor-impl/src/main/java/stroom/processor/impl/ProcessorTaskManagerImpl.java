@@ -218,7 +218,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
 
         try {
+
             if (processorConfig.isAssignTasks() && count > 0) {
+
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
@@ -234,8 +236,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             // Add as many tasks as we can for this filter.
                             ProcessorTask streamTask = queue.poll();
                             while (streamTask != null) {
-                                final ProcessorTask assigned = processorTaskDao.changeTaskStatus(streamTask, nodeName,
-                                        TaskStatus.ASSIGNED, null, null);
+                                final ProcessorTask assigned = processorTaskDao.changeTaskStatus(
+                                        streamTask,
+                                        nodeName,
+                                        TaskStatus.ASSIGNED,
+                                        null,
+                                        null);
                                 if (assigned != null) {
                                     assignedStreamTasks.add(assigned);
                                 }
@@ -642,8 +648,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
     }
 
-    private int addUnownedTasks(final TaskContext taskContext, final String nodeName, final ProcessorFilter filter,
-                                final StreamTaskQueue queue, final int tasksToCreate) {
+    private int addUnownedTasks(final TaskContext taskContext,
+                                final String nodeName,
+                                final ProcessorFilter filter,
+                                final StreamTaskQueue queue,
+                                final int tasksToCreate) {
         int count = 0;
 
         try {
@@ -682,29 +691,36 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                 if (metaList.size() > 0) {
                     // Change the ownership of tasks where we have unlocked meta data.
-                    final Map<Long, ProcessorTask> metaIdToTaskMap = processorTasks.stream()
-                            .collect(Collectors.toMap(ProcessorTask::getMetaId, task -> task));
+                    final Map<Long, List<ProcessorTask>> metaIdToTaskMap = processorTasks.stream()
+                            .collect(Collectors.groupingBy(ProcessorTask::getMetaId));
 
                     for (final Meta meta : metaList) {
-                        final ProcessorTask processorTask = metaIdToTaskMap.get(meta.getId());
+                        final List<ProcessorTask> processorTasksForStream = metaIdToTaskMap.get(meta.getId());
 
-                        try {
-                            final ProcessorTask modified = processorTaskDao.changeTaskStatus(processorTask, nodeName,
-                                    TaskStatus.UNPROCESSED, null, null);
-                            if (modified != null) {
-                                queue.add(modified);
-                                count++;
-                                final int finalCount = count;
-                                taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
-                                        finalCount,
-                                        size));
-                            }
+                        for (final ProcessorTask processorTask : processorTasksForStream) {
+                            try {
+                                final ProcessorTask modified = processorTaskDao.changeTaskStatus(
+                                        processorTask,
+                                        nodeName,
+                                        TaskStatus.UNPROCESSED,
+                                        null,
+                                        null);
 
-                            if (Thread.currentThread().isInterrupted()) {
-                                break;
+                                if (modified != null) {
+                                    queue.add(modified);
+                                    count++;
+                                    final int finalCount = count;
+                                    taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
+                                            finalCount,
+                                            size));
+                                }
+
+                                if (Thread.currentThread().isInterrupted()) {
+                                    break;
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorTask, e);
                             }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorTask, e);
                         }
                     }
                 }
