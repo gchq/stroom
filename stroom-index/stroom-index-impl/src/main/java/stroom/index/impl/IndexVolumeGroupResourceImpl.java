@@ -7,40 +7,41 @@ import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged
 class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
 
-    private final IndexVolumeGroupService indexVolumeGroupService;
+    private final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider;
 
     @Inject
-    IndexVolumeGroupResourceImpl(final IndexVolumeGroupService indexVolumeGroupService) {
-        this.indexVolumeGroupService = indexVolumeGroupService;
+    IndexVolumeGroupResourceImpl(final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
+        this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
     }
 
     @Override
     public ResultPage<IndexVolumeGroup> find(final ExpressionCriteria request) {
-        return ResultPage.createUnboundedList(indexVolumeGroupService.getAll());
+        return ResultPage.createUnboundedList(indexVolumeGroupServiceProvider.get().getAll());
     }
 
     @Override
     public IndexVolumeGroup create(final String name) {
-        return indexVolumeGroupService.getOrCreate(name);
+        return indexVolumeGroupServiceProvider.get().getOrCreate(name);
     }
 
     @Override
     public IndexVolumeGroup fetch(final Integer id) {
-        return indexVolumeGroupService.get(id);
+        return indexVolumeGroupServiceProvider.get().get(id);
     }
 
     @Override
     public IndexVolumeGroup update(final Integer id, final IndexVolumeGroup indexVolumeGroup) {
-        return indexVolumeGroupService.update(indexVolumeGroup);
+        return indexVolumeGroupServiceProvider.get().update(indexVolumeGroup);
     }
 
     @Override
     public Boolean delete(final Integer id) {
-        indexVolumeGroupService.delete(id);
+        indexVolumeGroupServiceProvider.get().delete(id);
         return true;
     }
 }
