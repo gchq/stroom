@@ -26,6 +26,6 @@ public class ImportExportHandlerModule extends AbstractModule {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ContentResourceImpl.class);
+                .bind(ContentServiceImpl.class);
     }
 }
