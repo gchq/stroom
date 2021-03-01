@@ -143,8 +143,9 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return -1;
     }
 
+    @Override
     public <T_RESP> T_RESP remoteRestResult(final String nodeName,
-                                            final String fullPath,
+                                            final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Invocation.Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper) {
@@ -163,7 +164,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPath;
+                    nodeName) + fullPathSupplier.get();
             LOGGER.debug("Fetching value from remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory
@@ -188,7 +189,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public void remoteRestCall(final String nodeName,
-                               final String fullPath,
+                               final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc) {
 
@@ -204,7 +205,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPath;
+                    nodeName) + fullPathSupplier.get();
             LOGGER.debug("Calling remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory
