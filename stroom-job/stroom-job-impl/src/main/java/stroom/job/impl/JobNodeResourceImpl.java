@@ -122,9 +122,9 @@ class JobNodeResourceImpl implements JobNodeResource {
             jobNodeInfo = jobNodeServiceProvider.get().getInfo(jobName);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl
-                    (nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
+                    nodeServiceProvider.get(), nodeName) +
+                    ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
             try {
                 final Response response = webTargetFactoryProvider.get()
                         .create(url)
