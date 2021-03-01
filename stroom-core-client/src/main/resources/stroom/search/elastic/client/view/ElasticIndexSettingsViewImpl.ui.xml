@@ -42,6 +42,24 @@
                         </g:customCell>
                     </g:row>
                     <g:row>
+                        <g:cell>Use authentication</g:cell>
+                        <g:customCell>
+                            <t:TickBox ui:field="useAuthentication" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key ID:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="apiKeyId" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key secret:</g:cell>
+                        <g:customCell>
+                            <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
                         <g:cell></g:cell>
                         <g:customCell>
                             <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>

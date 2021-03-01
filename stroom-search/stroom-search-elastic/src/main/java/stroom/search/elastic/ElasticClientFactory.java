@@ -2,15 +2,18 @@ package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.NumberFormat;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,9 +39,34 @@ public class ElasticClientFactory {
             }
         }
 
-        final RestClientBuilder restClient = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+        final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
 
-        return new RestHighLevelClient(restClient);
+        // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
+        final String apiKey = getEncodedApiKey(config);
+        if (config.getUseAuthentication() && apiKey != null) {
+            final Header[] defaultHeaders = new Header[] {
+                new BasicHeader("Authorization", "ApiKey " + apiKey)
+            };
+
+            restClientBuilder.setDefaultHeaders(defaultHeaders);
+        }
+
+        return new RestHighLevelClient(restClientBuilder);
+    }
+
+    /**
+     * Encode the API key ID and secret in base64 for use in a HTTP request.
+     * @return Base-64 encoded string. If no API key or secret are defined, returns `null`.
+     */
+    private String getEncodedApiKey(ElasticConnectionConfig config) {
+        final String apiKeyId = config.getApiKeyId();
+        final String apiKeySecret = config.getApiKeySecret();
+
+        if (apiKeyId == null || apiKeyId.isEmpty() || apiKeySecret == null || apiKeySecret.isEmpty())
+            return null;
+
+        final String combinedSecret = apiKeyId + ":" + apiKeySecret;
+        return Base64.getEncoder().encodeToString(combinedSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

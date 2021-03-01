@@ -85,6 +85,9 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         if (connectionConfig != null) {
             getView().setConnectionUrls(connectionConfig.getConnectionUrls());
+            getView().setUseAuthentication(connectionConfig.getUseAuthentication());
+            getView().setApiKeyId(connectionConfig.getApiKeyId());
+            getView().setApiKeySecret(connectionConfig.getApiKeySecret());
         }
 
         getView().setDescription(index.getDescription());
@@ -101,8 +104,10 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     @Override
     protected void onWrite(final ElasticIndex index) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
-
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
+        connectionConfig.setUseAuthentication(getView().getUseAuthentication());
+        connectionConfig.setApiKeyId(getView().getApiKeyId());
+        connectionConfig.setApiKeySecret(getView().getApiKeySecret());
         index.setConnectionConfig(connectionConfig);
 
         index.setDescription(getView().getDescription().trim());
@@ -128,6 +133,18 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         List<String> getConnectionUrls();
 
         void setConnectionUrls(List<String> connectionUrls);
+
+        boolean getUseAuthentication();
+
+        void setUseAuthentication(boolean useAuthentication);
+
+        String getApiKeyId();
+
+        void setApiKeyId(String apiKeyId);
+
+        String getApiKeySecret();
+
+        void setApiKeySecret(String apiKeySecret);
 
         void setRententionExpressionView(final View view);
     }

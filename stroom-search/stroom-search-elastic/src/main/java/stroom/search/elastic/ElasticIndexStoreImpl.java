@@ -17,7 +17,6 @@
 
 package stroom.search.elastic;
 
-import stroom.docstore.server.JsonSerialiser;
 import stroom.docstore.server.Store;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -28,12 +27,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,18 +47,14 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Inject
     public ElasticIndexStoreImpl(final Store<ElasticIndex> store,
-                                 final ElasticIndexService elasticIndexService
+                                 final ElasticIndexService elasticIndexService,
+                                 @Value("#{propertyConfigurer.getProperty('stroom.secret.encryptionKey')}") final String secretEncryptionKey
     ) {
         this.store = store;
         this.elasticIndexService = elasticIndexService;
 
         store.setType(ElasticIndex.ENTITY_TYPE, ElasticIndex.class);
-        store.setSerialiser(new JsonSerialiser<ElasticIndex>() {
-            @Override
-            public void write(final OutputStream outputStream, final ElasticIndex document, final boolean export) throws IOException {
-                super.write(outputStream, document, export);
-            }
-        });
+        store.setSerialiser(new ElasticIndexJsonSerialiser(secretEncryptionKey));
     }
 
     ////////////////////////////////////////////////////////////////////////

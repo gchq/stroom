@@ -20,12 +20,14 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -47,6 +49,12 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextArea connectionUrls;
     @UiField
+    TickBox useAuthentication;
+    @UiField
+    TextBox apiKeyId;
+    @UiField
+    PasswordTextBox apiKeySecret;
+    @UiField
     Button testConnection;
     @UiField
     ResizeSimplePanel retentionExpressionPanel;
@@ -58,6 +66,9 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
         connectionUrls.addKeyDownHandler(e -> fireChange());
+        useAuthentication.addValueChangeHandler(e -> fireChange());
+        apiKeyId.addKeyDownHandler(e -> fireChange());
+        apiKeySecret.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -77,37 +88,43 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public void setDescription(final String description) {
-        if (description == null) {
-            this.description.setText("");
-        } else {
-            this.description.setText(description);
-        }
-    }
+    public void setDescription(final String description) { this.description.setText(description); }
 
     @Override
-    public String getIndexName() {
-        return indexName.getText().trim();
-    }
+    public String getIndexName() { return indexName.getText().trim(); }
 
     @Override
-    public void setIndexName(final String indexName) {
-        this.indexName.setText(indexName);
-    }
+    public void setIndexName(final String indexName) { this.indexName.setText(indexName); }
 
     @Override
     public List<String> getConnectionUrls() {
-        return Arrays.stream(connectionUrls.getText().split("\n")).collect(Collectors.toList());
+        return Arrays.stream(connectionUrls.getText().split("\n"))
+            .map(String::trim)
+            .collect(Collectors.toList());
     }
 
     @Override
     public void setConnectionUrls(final List<String> connectionUrls) {
-        if (connectionUrls == null) {
-            this.connectionUrls.setText("");
-        } else {
-            this.connectionUrls.setText(String.join("\n", connectionUrls));
-        }
+        this.connectionUrls.setText(String.join("\n", connectionUrls));
     }
+
+    @Override
+    public boolean getUseAuthentication() { return useAuthentication.getBooleanValue(); }
+
+    @Override
+    public void setUseAuthentication(final boolean useAuthentication) { this.useAuthentication.setBooleanValue(useAuthentication); }
+
+    @Override
+    public String getApiKeyId() { return apiKeyId.getText().trim(); }
+
+    @Override
+    public void setApiKeyId(final String apiKeyId) { this.apiKeyId.setText(apiKeyId); }
+
+    @Override
+    public String getApiKeySecret() { return apiKeySecret.getText().trim(); }
+
+    @Override
+    public void setApiKeySecret(final String apiKeySecret) { this.apiKeySecret.setText(apiKeySecret); }
 
     @Override
     public void setRententionExpressionView(final View view) {
@@ -118,6 +135,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         connectionUrls.setEnabled(!readOnly);
+        indexName.setEnabled(!readOnly);
+        useAuthentication.setEnabled(!readOnly);
+        apiKeyId.setEnabled(!readOnly);
+        apiKeySecret.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

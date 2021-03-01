@@ -73,9 +73,7 @@ public class ElasticIndex extends Doc {
     }
 
     @JsonProperty("fields")
-    public List<ElasticIndexField> getFields() {
-        return fields;
-    }
+    public List<ElasticIndexField> getFields() { return fields; }
 
     @JsonProperty("fields")
     public void setFields(final List<ElasticIndexField> fields) {
@@ -89,9 +87,7 @@ public class ElasticIndex extends Doc {
     public void setDataSourceFields(final List<DataSourceField> dataSourceFields) { this.dataSourceFields = dataSourceFields; }
 
     @JsonProperty("retentionExpression")
-    public ExpressionOperator getRetentionExpression() {
-        return retentionExpression;
-    }
+    public ExpressionOperator getRetentionExpression() { return retentionExpression; }
 
     @JsonProperty("retentionExpression")
     public void setRetentionExpression(final ExpressionOperator retentionExpression) { this.retentionExpression = retentionExpression; }
