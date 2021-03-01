@@ -64,16 +64,14 @@ class TaskResourceImpl implements TaskResource {
 
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        final String path = ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                TaskResource.FIND_PATH_PART,
-                nodeName);
-
         return nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         TaskProgressResponse.class,
-                        path,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.FIND_PATH_PART,
+                                nodeName),
                         () -> {
                             final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
                                     .find(request.getCriteria());
@@ -109,18 +107,15 @@ class TaskResourceImpl implements TaskResource {
             verb = "Terminating")
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
 
-        final String path = ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                TaskResource.TERMINATE_PATH_PART,
-                nodeName);
-
-
         // TODO @AT Add custom logging to set the Process.Action to TERMINATE
 //        Runnable work = () -> {
         nodeServiceProvider.get()
                 .remoteRestCall(
                         nodeName,
-                        path,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.TERMINATE_PATH_PART,
+                                nodeName),
                         () ->
                                 taskManagerProvider.get().terminate(
                                         request.getCriteria(),

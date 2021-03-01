@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2056** : Fix error sending permission change events to other cluster nodes.
+
 
 ## [v7.0-beta.89] - 2021-02-26
 
