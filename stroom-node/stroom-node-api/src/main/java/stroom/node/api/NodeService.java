@@ -79,7 +79,8 @@ public interface NodeService {
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
      *                            call and get the result from a node where nodeName is not equal to this node's
      *                            name.
-     * @param responseMapper      A function to map the response of the local supplier or rest call to into another type.
+     * @param responseMapper      A function to map the response of the local supplier or rest call to into another
+     *                            type.
      */
     <T_RESP> T_RESP remoteRestResult(final String nodeName,
                                      final Supplier<String> fullPathSupplier,
