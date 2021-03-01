@@ -366,10 +366,10 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new JobNodeResourceImpl(
-                jobNodeService,
-                nodeService,
-                nodeInfo,
-                webTargetFactory(),
-                documentEventLog);
+                () -> jobNodeService,
+                () -> nodeService,
+                () -> nodeInfo,
+                () -> webTargetFactory(),
+                () -> documentEventLog);
     }
 }
