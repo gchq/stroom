@@ -60,6 +60,7 @@ include 'stroom-dashboard-gwt'
 include 'stroom-app-gwt'
 
 include 'stroom-search:stroom-search-extraction'
+include 'stroom-search:stroom-search-elastic'
 include 'stroom-search:stroom-search-solr'
 include 'stroom-search:stroom-searchable-api'
 include 'stroom-search:stroom-searchable-impl'

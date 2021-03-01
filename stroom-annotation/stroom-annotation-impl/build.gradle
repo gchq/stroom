@@ -8,6 +8,7 @@ dependencies {
 //    compile project(':stroom-explorer:stroom-explorer-api')
 //    compile project(':stroom-explorer:stroom-collection-api')
 //    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-index-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-search:stroom-searchable-api')
@@ -20,6 +21,7 @@ dependencies {
     compile libs.eventLogging
     compile libs.guice4
     compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.javax_inject
 //    compile libs.slf4j_api
     compile libs.spring_context

@@ -27,11 +27,14 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.eventLogging
     compile libs.guava
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.jackson_annotations
     compile libs.jackson_core
+    permitUnusedDeclared libs.jackson_databind_sources
     compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api
+    compile libs.javax_xml_bind
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api

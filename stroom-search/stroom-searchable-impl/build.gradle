@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.searchable.impl'
 
 dependencies {
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-util')
 

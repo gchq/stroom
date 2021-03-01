@@ -18,6 +18,8 @@ plugins {
     //id "org.nosphere.honker" version "0.3.0"
 //    id 'org.flywaydb.flyway' version '5.0.7'
     id "de.undercouch.download"
+
+    id 'java'
 }
 
 def uiDir = project.file('src/main/resources/ui')
@@ -28,6 +30,8 @@ def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+
 mainClassName = 'stroom.startup.App'
 
 jar {
@@ -41,12 +45,11 @@ jar {
                 "Main-Class" : "stroom.startup.App"
         )
     }
+
     archiveName jarName
 
     exclude '**/gwt-unitCache'
 }
-
-import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
 
 shadowJar {
     // Allows us to build fat jars with lots of files
@@ -56,9 +59,10 @@ shadowJar {
     mergeServiceFiles()
 
     // A transformer to merge spring's generated config files, e.g. spring.handlers and spring.schemas
-    transform(ServiceFileTransformer) {
-        include 'META-INF/spring.*'
+    mergeServiceFiles {
+        path = 'META-INF/spring.*'
     }
+
     archiveName fatJarName
 
     exclude '**/gwt-unitCache'
@@ -91,9 +95,11 @@ dependencies {
     permitUnusedDeclared project(':stroom-search:stroom-search-extraction') // picked up by DI
     compile project(':stroom-search:stroom-searchable-impl')
     permitUnusedDeclared project(':stroom-search:stroom-searchable-impl') // picked up by DI
+    compile project(path: ':stroom-search:stroom-search-elastic', configuration: 'shadow')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-ruleset-server')
+    compile project(':stroom-ruleset-shared')
 
     compile libs.stroomQueryApi
 
@@ -101,6 +107,7 @@ dependencies {
     compile libs.guava
     compile libs.guice3
     compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.javax_inject
     compile libs.jcommander
     compile libs.jetty_servlet

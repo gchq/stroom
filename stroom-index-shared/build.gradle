@@ -6,4 +6,5 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
+    compile libs.javax_xml_bind
 }
