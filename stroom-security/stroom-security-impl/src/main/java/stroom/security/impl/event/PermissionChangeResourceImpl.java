@@ -16,59 +16,39 @@
 
 package stroom.security.impl.event;
 
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.Entity;
 
 class PermissionChangeResourceImpl implements PermissionChangeResource {
 
     private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
     private final PermissionChangeEventHandlers permissionChangeEventHandlers;
-    private final WebTargetFactory webTargetFactory;
 
     @Inject
     PermissionChangeResourceImpl(final NodeService nodeService,
-                                 final NodeInfo nodeInfo,
-                                 final PermissionChangeEventHandlers permissionChangeEventHandlers,
-                                 final WebTargetFactory webTargetFactory) {
+                                 final PermissionChangeEventHandlers permissionChangeEventHandlers) {
         this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
         this.permissionChangeEventHandlers = permissionChangeEventHandlers;
-        this.webTargetFactory = webTargetFactory;
     }
 
     @Override
     public Boolean fireChange(final String nodeName, final PermissionChangeRequest request) {
-        Boolean result;
-
-        // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            permissionChangeEventHandlers.fireLocally(request.getEvent());
-            result = true;
-
-        } else {
-            String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    PermissionChangeResource.BASE_PATH,
-                    PermissionChangeResource.FIRE_CHANGE_PATH_PART,
-                    nodeName);
-            final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
-            if (response.getStatus() != 200) {
-                throw new WebApplicationException(response);
-            }
-            result = response.readEntity(Boolean.class);
-        }
+        final Boolean result = nodeService.remoteRestResult(
+                nodeName,
+                Boolean.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        PermissionChangeResource.BASE_PATH,
+                        PermissionChangeResource.FIRE_CHANGE_PATH_PART,
+                        nodeName),
+                () -> {
+                    permissionChangeEventHandlers.fireLocally(request.getEvent());
+                    return true;
+                },
+                builder ->
+                        builder.post(Entity.json(request)));
 
         return result;
     }

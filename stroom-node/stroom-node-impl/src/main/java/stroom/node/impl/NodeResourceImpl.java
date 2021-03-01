@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -142,15 +143,11 @@ class NodeResourceImpl implements NodeResource {
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
-        final String path = ResourcePaths.buildAuthenticatedApiPath(
+        final Supplier<String> pathSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
                 NodeResource.BASE_PATH,
                 NodeResource.INFO_PATH_PART,
                 nodeName);
 
-        final String url = NodeCallUtil.getBaseEndpointUrl(
-                nodeInfoProvider.get(),
-                nodeServiceProvider.get(),
-                nodeName) + path;
 
         try {
             final long now = System.currentTimeMillis();
@@ -158,12 +155,16 @@ class NodeResourceImpl implements NodeResource {
             clusterNodeInfo = nodeServiceProvider.get().remoteRestResult(
                     nodeName,
                     ClusterNodeInfo.class,
-                    path,
+                    pathSupplier,
                     () ->
                             clusterNodeManagerProvider.get().getClusterNodeInfo(),
                     SyncInvoker::get);
 
             if (clusterNodeInfo == null) {
+                final String url = NodeCallUtil.getBaseEndpointUrl(
+                        nodeInfoProvider.get(),
+                        nodeServiceProvider.get(),
+                        nodeName) + pathSupplier.get();
                 throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
             }
 
@@ -190,7 +191,7 @@ class NodeResourceImpl implements NodeResource {
         final Long ping = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Long.class,
-                ResourcePaths.buildAuthenticatedApiPath(
+                () -> ResourcePaths.buildAuthenticatedApiPath(
                         NodeResource.BASE_PATH,
                         NodeResource.PING_PATH_PART,
                         nodeName),
