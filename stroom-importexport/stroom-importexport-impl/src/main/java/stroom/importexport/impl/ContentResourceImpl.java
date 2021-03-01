@@ -119,6 +119,7 @@ public class ContentResourceImpl implements ContentResource {
                         .build())
                 .build();
     }
+
     @Override
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return contentServiceProvider.get().fetchDependencies(criteria);

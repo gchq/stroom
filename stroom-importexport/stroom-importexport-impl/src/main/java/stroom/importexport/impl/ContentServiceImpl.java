@@ -104,14 +104,14 @@ class ContentServiceImpl implements ContentService {
         Objects.requireNonNull(docRefs);
 
         return securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
-                            final List<Message> messageList = new ArrayList<>();
-                            ResourceStore resourceStore = this.resourceStore;
-                            final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
-                            final Path file = resourceStore.getTempFile(guiKey);
-                            importExportService.exportConfig(docRefs.getDocRefs(), file, messageList);
+            final List<Message> messageList = new ArrayList<>();
+            ResourceStore resourceStore = this.resourceStore;
+            final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
+            final Path file = resourceStore.getTempFile(guiKey);
+            importExportService.exportConfig(docRefs.getDocRefs(), file, messageList);
 
-                            return new ResourceGeneration(guiKey, messageList);
-                        });
+            return new ResourceGeneration(guiKey, messageList);
+        });
     }
 
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {

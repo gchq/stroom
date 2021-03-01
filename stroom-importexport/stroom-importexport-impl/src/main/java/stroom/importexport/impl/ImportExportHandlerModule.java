@@ -16,6 +16,7 @@
 
 package stroom.importexport.impl;
 
+import stroom.importexport.api.ContentService;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -25,7 +26,9 @@ public class ImportExportHandlerModule extends AbstractModule {
     protected void configure() {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
+        bind(ContentService.class).to(ContentServiceImpl.class);
+
         RestResourcesBinder.create(binder())
-                .bind(ContentServiceImpl.class);
+                .bind(ContentResourceImpl.class);
     }
 }
