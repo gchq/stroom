@@ -127,8 +127,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
         }
         for (final String baseName : stroomZipNameSet.getBaseNameList()) {
-            if (stroomZipNameSet.getName(baseName, StroomZipFileType.Meta) == null) {
-                zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.Meta.getExtension()));
+            if (stroomZipNameSet.getName(baseName, StroomZipFileType.META) == null) {
+                zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.META.getExtension()));
                 AttributeMapUtil.write(attributeMap, zipOutputStream);
                 zipOutputStream.closeEntry();
             }
@@ -158,7 +158,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         if (entryCount == 0) {
             final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT",
                     "NULL",
-                    StroomZipFileType.Data).getFullName());
+                    StroomZipFileType.DATA).getFullName());
             os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
             os.close();
         }

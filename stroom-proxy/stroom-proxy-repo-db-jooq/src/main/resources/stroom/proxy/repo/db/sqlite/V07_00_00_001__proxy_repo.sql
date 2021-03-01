@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS source_item (
   feed_name                 VARCHAR(255),
   type_name                 VARCHAR(255) DEFAULT NULL,
   fk_source_id              INTEGER NOT NULL,
-  in_aggregate              BOOLEAN,
+  aggregated                BOOLEAN,
   UNIQUE                    (name, fk_source_id),
   FOREIGN KEY               (fk_source_id) REFERENCES source (id)
 );
@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS aggregate (
   type_name                 VARCHAR(255) DEFAULT NULL,
   byte_size                 BIGINT NOT NULL,
   items                     INTEGER NOT NULL,
-  complete                  BOOLEAN
+  complete                  BOOLEAN,
+  forward_error             BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS aggregate_item (
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS forward_aggregate (
   fk_forward_url_id         INTEGER,
   fk_aggregate_id           INTEGER,
   success                   BOOLEAN,
+  error                     VARCHAR(255) NOT NULL,
   FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );

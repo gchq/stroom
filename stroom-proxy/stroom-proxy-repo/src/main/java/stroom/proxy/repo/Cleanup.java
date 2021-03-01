@@ -37,66 +37,35 @@ import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
-class Cleanup {
+public class Cleanup {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cleanup.class);
 
     private final ProxyRepoDbConnProvider connProvider;
-    private final ProxyRepoConfig proxyRepoConfig;
+    private final ProxyRepo proxyRepo;
     private final CleanupConfig cleanupConfig;
-
-    private volatile String hostName = null;
 
     @Inject
     Cleanup(final ProxyRepoDbConnProvider connProvider,
-            final ProxyRepoConfig proxyRepoConfig,
+            final ProxyRepo proxyRepo,
             final CleanupConfig cleanupConfig) {
         this.connProvider = connProvider;
-        this.proxyRepoConfig = proxyRepoConfig;
+        this.proxyRepo = proxyRepo;
         this.cleanupConfig = cleanupConfig;
     }
 
-    public void deleteSourceEntries() {
+    public void cleanup() {
+        // Find source items that have been aggregated but no longer have an associated aggregate.
         final SelectConditionStep<Record1<Integer>> select = DSL
                 .select(SOURCE_ITEM.ID)
                 .from(SOURCE_ITEM)
                 .leftOuterJoin(AGGREGATE_ITEM)
                 .on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.IN_AGGREGATE.isTrue())
+                .where(SOURCE_ITEM.AGGREGATED.isTrue())
                 .and(AGGREGATE_ITEM.ID.isNull());
 
         // Start a transaction for all of the database changes.
         JooqUtil.transaction(connProvider, context -> {
-//            final List<Record2<Integer, Integer>> list = context
-//                    .select(SOURCE_ITEM.ID, SOURCE_ITEM.FK_SOURCE_ID)
-//                    .from(SOURCE_ITEM)
-//                    .leftOuterJoin(AGGREGATE_ITEM)
-//                    .on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-//                    .where(SOURCE_ITEM.IN_AGGREGATE.isTrue())
-//                    .and(AGGREGATE_ITEM.ID.isNull())
-//                    .limit(1000)
-//                    .fetch();
-//
-//            final Set<Integer> sourceItemIdList = list
-//                    .stream()
-//                    .map(r -> r.get(SOURCE_ITEM.ID))
-//                    .collect(Collectors.toSet());
-//
-//            final Set<Integer> sourceIdList = list
-//                    .stream()
-//                    .map(r -> r.get(SOURCE_ITEM.FK_SOURCE_ID))
-//                    .collect(Collectors.toSet());
-//
-//            context
-//                    .deleteFrom(SOURCE_ENTRY)
-//                    .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(sourceItemIdList))
-//                    .execute();
-//
-//            context
-//                    .deleteFrom(SOURCE_ITEM)
-//                    .where(SOURCE_ITEM.ID.in(sourceItemIdList))
-//                    .execute();
-
             context
                     .deleteFrom(SOURCE_ENTRY)
                     .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(select))
@@ -106,33 +75,28 @@ class Cleanup {
                     .deleteFrom(SOURCE_ITEM)
                     .where(SOURCE_ITEM.ID.in(select))
                     .execute();
-
-
         });
+
+        deleteSource();
     }
 
     private void deleteSource() {
-        final Path repoPath = Paths.get(proxyRepoConfig.getRepoDir());
-
         JooqUtil.context(connProvider, context -> {
             try (final Stream<Record2<Integer, String>> stream = context
                     .selectDistinct(SOURCE.ID, SOURCE.PATH)
                     .from(SOURCE)
                     .leftOuterJoin(SOURCE_ITEM)
                     .on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
-                    .where(SOURCE_ITEM.ID.isNull())
-                    .limit(cleanupConfig.getCleanupBatchSize())
+                    .where(SOURCE.EXAMINED.isTrue())
+                    .and(SOURCE_ITEM.ID.isNull())
                     .stream()) {
 
                 stream.forEach(record -> {
                     final int sourceId = record.get(SOURCE.ID);
                     final String sourcePath = record.get(SOURCE.PATH);
-                    final Path sourceFile = repoPath.resolve(sourcePath);
 
                     try {
-                        LOGGER.debug("Deleting: " + sourceFile.toAbsolutePath().toString());
-                        Files.deleteIfExists(sourceFile);
-
+                        proxyRepo.deleteRepoFile(sourcePath);
                         context
                                 .deleteFrom(SOURCE)
                                 .where(SOURCE.ID.eq(sourceId))

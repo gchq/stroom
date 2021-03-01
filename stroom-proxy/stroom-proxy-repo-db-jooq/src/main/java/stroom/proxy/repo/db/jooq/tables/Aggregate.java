@@ -11,7 +11,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row7;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -81,6 +81,11 @@ public class Aggregate extends TableImpl<AggregateRecord> {
      * The column <code>aggregate.complete</code>.
      */
     public final TableField<AggregateRecord, Boolean> COMPLETE = createField(DSL.name("complete"), SQLDataType.BOOLEAN, this, "");
+
+    /**
+     * The column <code>aggregate.forward_error</code>.
+     */
+    public final TableField<AggregateRecord, Boolean> FORWARD_ERROR = createField(DSL.name("forward_error"), SQLDataType.BOOLEAN, this, "");
 
     private Aggregate(Name alias, Table<AggregateRecord> aliased) {
         this(alias, aliased, null);
@@ -157,11 +162,11 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Integer, Long, String, String, Long, Integer, Boolean> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row8<Integer, Long, String, String, Long, Integer, Boolean, Boolean> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 }

@@ -1,10 +1,10 @@
 package stroom.data.zip;
 
 public enum StroomZipFileType {
-    Data(".dat"),
-    Context(".ctx"),
-    Meta(".meta"),
-    Manifest(".mf");
+    DATA(".dat"),
+    CONTEXT(".ctx"),
+    META(".meta"),
+    MANIFEST(".mf");
 
     private final String extValue;
 

@@ -78,9 +78,9 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     public final TableField<SourceItemRecord, Integer> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>source_item.in_aggregate</code>.
+     * The column <code>source_item.aggregated</code>.
      */
-    public final TableField<SourceItemRecord, Boolean> IN_AGGREGATE = createField(DSL.name("in_aggregate"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<SourceItemRecord, Boolean> AGGREGATED = createField(DSL.name("aggregated"), SQLDataType.BOOLEAN, this, "");
 
     private SourceItem(Name alias, Table<SourceItemRecord> aliased) {
         this(alias, aliased, null);

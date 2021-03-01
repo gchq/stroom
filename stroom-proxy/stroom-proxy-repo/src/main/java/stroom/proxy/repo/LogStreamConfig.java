@@ -2,6 +2,9 @@ package stroom.proxy.repo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class LogStreamConfig {
 
     private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn";

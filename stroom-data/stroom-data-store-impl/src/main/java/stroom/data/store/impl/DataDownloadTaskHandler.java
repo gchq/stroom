@@ -218,7 +218,7 @@ public class DataDownloadTaskHandler {
                             try (final OutputStream outputStream = stroomZipOutputStream
                                     .addEntry(new StroomZipEntry(null,
                                             basePartName,
-                                            StroomZipFileType.Manifest).getFullName())) {
+                                            StroomZipFileType.MANIFEST).getFullName())) {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
                             }
                         }
@@ -227,19 +227,19 @@ public class DataDownloadTaskHandler {
                             streamToStream(dataInputStream,
                                     stroomZipOutputStream,
                                     basePartName,
-                                    StroomZipFileType.Data);
+                                    StroomZipFileType.DATA);
                         }
                         try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
                             streamToStream(metaInputStream,
                                     stroomZipOutputStream,
                                     basePartName,
-                                    StroomZipFileType.Meta);
+                                    StroomZipFileType.META);
                         }
                         try (final InputStream contextInputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                             streamToStream(contextInputStream,
                                     stroomZipOutputStream,
                                     basePartName,
-                                    StroomZipFileType.Context);
+                                    StroomZipFileType.CONTEXT);
                         }
                     }
                 }

@@ -69,7 +69,6 @@ import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,24 +97,26 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private BufferFactory bufferFactory;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private Provider<FileSetProcessor> filePackProcessorProvider;
+    //    @Inject
+//    private Provider<FileSetProcessor> filePackProcessorProvider;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private ProxyAggregationExecutor proxyAggregationExecutor;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                executorProvider,
-                taskContextFactory,
-                filePackProcessorProvider,
-                proxyDir,
-                10,
-                10000,
-                10000,
-                maxAggregation,
-                maxStreamSize);
+//        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
+//                executorProvider,
+//                taskContextFactory,
+//                filePackProcessorProvider,
+//                proxyDir,
+//                10,
+//                10000,
+//                10000,
+//                maxAggregation,
+//                maxStreamSize);
         proxyAggregationExecutor.exec();
     }
 

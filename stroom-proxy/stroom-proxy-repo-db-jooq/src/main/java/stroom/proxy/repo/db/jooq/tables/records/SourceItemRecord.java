@@ -106,16 +106,16 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     }
 
     /**
-     * Setter for <code>source_item.in_aggregate</code>.
+     * Setter for <code>source_item.aggregated</code>.
      */
-    public void setInAggregate(Boolean value) {
+    public void setAggregated(Boolean value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>source_item.in_aggregate</code>.
+     * Getter for <code>source_item.aggregated</code>.
      */
-    public Boolean getInAggregate() {
+    public Boolean getAggregated() {
         return (Boolean) get(6);
     }
 
@@ -174,7 +174,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Field<Boolean> field7() {
-        return SourceItem.SOURCE_ITEM.IN_AGGREGATE;
+        return SourceItem.SOURCE_ITEM.AGGREGATED;
     }
 
     @Override
@@ -209,7 +209,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Boolean component7() {
-        return getInAggregate();
+        return getAggregated();
     }
 
     @Override
@@ -244,7 +244,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Boolean value7() {
-        return getInAggregate();
+        return getAggregated();
     }
 
     @Override
@@ -285,7 +285,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public SourceItemRecord value7(Boolean value) {
-        setInAggregate(value);
+        setAggregated(value);
         return this;
     }
 
@@ -315,7 +315,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     /**
      * Create a detached, initialised SourceItemRecord
      */
-    public SourceItemRecord(Integer id, Integer number, String name, String feedName, String typeName, Integer fkSourceId, Boolean inAggregate) {
+    public SourceItemRecord(Integer id, Integer number, String name, String feedName, String typeName, Integer fkSourceId, Boolean aggregated) {
         super(SourceItem.SOURCE_ITEM);
 
         setId(id);
@@ -324,6 +324,6 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
         setFeedName(feedName);
         setTypeName(typeName);
         setFkSourceId(fkSourceId);
-        setInAggregate(inAggregate);
+        setAggregated(aggregated);
     }
 }

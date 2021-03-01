@@ -73,10 +73,12 @@ public class ManualProxyAggregationTest {
     private ExecutorProvider executorProvider;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private Provider<FileSetProcessor> filePackProcessorProvider;
+//    @Inject
+//    private Provider<FileSetProcessor> filePackProcessorProvider;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private ProxyAggregationExecutor proxyAggregationExecutor;
 
     private static final int FEED_COUNT = 5;
     private static final int ENTRIES_PER_ZIP = 10;
@@ -275,16 +277,16 @@ public class ManualProxyAggregationTest {
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                executorProvider,
-                taskContextFactory,
-                filePackProcessorProvider,
-                proxyDir,
-                10,
-                10000,
-                10000,
-                maxAggregation,
-                maxStreamSize);
+//        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
+//                executorProvider,
+//                taskContextFactory,
+//                filePackProcessorProvider,
+//                proxyDir,
+//                10,
+//                10000,
+//                10000,
+//                maxAggregation,
+//                maxStreamSize);
         proxyAggregationExecutor.exec();
     }
 

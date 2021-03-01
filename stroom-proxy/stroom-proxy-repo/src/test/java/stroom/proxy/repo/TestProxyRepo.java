@@ -32,12 +32,12 @@ class TestProxyRepo {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
 
         final ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, true, 100, 0, false);
+                repoDir, null, null, 100, 0);
 
         try (final StroomZipOutputStream out1 = proxyRepo.getStroomZipOutputStream()) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out1,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         }
 
@@ -46,19 +46,16 @@ class TestProxyRepo {
         try (final StroomZipOutputStream out2 = proxyRepo.getStroomZipOutputStream()) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out2,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         }
-
-        proxyRepo.roll();
 
         // Re open.
         final ProxyRepo reopenProxyRepo = new ProxyRepo(repoDir,
                 null,
-                false,
-                100,
-                0,
-                false);
+                null,
+                100L,
+                0L);
 
         reopenProxyRepo.scanRepository((min, max) -> {
             assertThat(1L == min)
@@ -87,7 +84,7 @@ class TestProxyRepo {
                 .resolve("repo2"));
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, false, 10000, 0, false);
+                repoDir, null, null, 10000, 0);
 
         StroomZipOutputStreamImpl out1;
         try (final StroomZipOutputStreamImpl out =
@@ -95,7 +92,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -109,7 +106,7 @@ class TestProxyRepo {
 
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out2,
-                new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         assertThat(Files.isRegularFile(out2.getFile()))
                 .isFalse();
@@ -119,7 +116,7 @@ class TestProxyRepo {
         // Leave open
 
         proxyRepo = new ProxyRepo(
-                repoDir, null, false, 1000, 0, false);
+                repoDir, null, null, 1000, 0);
         assertThat(Files.isRegularFile(out1.getFile()))
                 .as("Expecting pucker file to be left")
                 .isTrue();
@@ -131,7 +128,7 @@ class TestProxyRepo {
                 (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out3,
-                new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         final Path lockFile3 = out3.getLockFile();
         assertThat(Files.isRegularFile(lockFile3))
@@ -159,7 +156,7 @@ class TestProxyRepo {
                 .resolve("repo2"));
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, false, 10000, 0, false);
+                repoDir, null, null, 10000, 0);
 
         Path repoDirPath = Paths.get(repoDir);
         assertThat(repoDirPath).exists();
@@ -179,7 +176,7 @@ class TestProxyRepo {
         int cleanDelayMs = (int) Duration.ofHours(1).toMillis();
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, false, 10000, cleanDelayMs, false);
+                repoDir, null, null, 10000, cleanDelayMs);
 
         Path repoDirPath = Paths.get(repoDir);
         assertThat(repoDirPath).exists();
@@ -200,10 +197,9 @@ class TestProxyRepo {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
         ProxyRepo proxyRepo = new ProxyRepo(repoDir,
                 repositoryFormat,
-                false,
+                null,
                 10000,
-                0,
-                false);
+                0);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", "myFeed");
@@ -217,7 +213,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -248,10 +244,9 @@ class TestProxyRepo {
                 .resolve("repo3"));
         ProxyRepo proxyRepo = new ProxyRepo(repoDir,
                 repositoryFormat,
-                false,
+                null,
                 10000,
-                0,
-                false);
+                0);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", FEED_NAME);
@@ -262,7 +257,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -298,16 +293,15 @@ class TestProxyRepo {
 
         final ProxyRepo proxyRepo = new ProxyRepo(repoDir,
                 repositoryFormat,
-                false,
+                null,
                 10000,
-                0,
-                false);
+                0);
         StroomZipOutputStreamImpl out1;
         try (final StroomZipOutputStreamImpl out =
                 (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();

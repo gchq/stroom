@@ -22,7 +22,6 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
-    compile project(':stroom-proxy:stroom-proxy-repo-db')
     compile project(':stroom-proxy:stroom-proxy-repo-db-jooq')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')

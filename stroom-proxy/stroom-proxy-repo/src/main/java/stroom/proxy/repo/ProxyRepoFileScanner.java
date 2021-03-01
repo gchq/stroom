@@ -33,9 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -45,62 +42,21 @@ public final class ProxyRepoFileScanner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepoFileScanner.class);
 
-    private volatile ScheduledExecutorService executorService;
     private final TaskContextFactory taskContextFactory;
 
     private final ProxyRepoSources proxyRepoSources;
-    private final ProxyRepoFileScannerConfig config;
     private final Path repoPath;
     private final String repoDir;
 
     private volatile long lastScanTimeMs = -1;
-    private volatile Thread currentThread;
-    private volatile boolean stop;
 
     public ProxyRepoFileScanner(final TaskContextFactory taskContextFactory,
                                 final String proxyDir,
-                                final ProxyRepoSources proxyRepoSources,
-                                final ProxyRepoFileScannerConfig config) {
+                                final ProxyRepoSources proxyRepoSources) {
         this.taskContextFactory = taskContextFactory;
         this.proxyRepoSources = proxyRepoSources;
-        this.config = config;
         repoPath = Paths.get(proxyDir);
         repoDir = FileUtil.getCanonicalPath(repoPath);
-    }
-
-    public void start() {
-        if (config.isEnabled()) {
-            if (executorService == null) {
-                executorService = Executors.newSingleThreadScheduledExecutor();
-            }
-            executorService.schedule(this::execAsync, 0, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    public void stop() {
-        stop = true;
-        if (currentThread != null) {
-            currentThread.interrupt();
-        }
-    }
-
-    private void execAsync() {
-        currentThread = Thread.currentThread();
-        if (config.isEnabled() && !currentThread.isInterrupted()) {
-            final long start = System.currentTimeMillis();
-            
-            if (!stop) {
-                scan();
-
-                // Run the aggregation again on the next set of data.
-                final long frequency = config.getScanFrequency().toMillis();
-                // How long were we running for?
-                final long duration = System.currentTimeMillis() - start;
-                final long delay = Math.max(0, frequency - duration);
-                executorService.schedule(this::start, delay, TimeUnit.MILLISECONDS);
-            }
-        }
-        currentThread = null;
     }
 
     /**
@@ -111,15 +67,6 @@ public final class ProxyRepoFileScanner {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("Started");
 
-//            taskContext.info(() -> LogUtil.message(
-//                    "Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, " +
-//                            "maxFilesPerAggregate {}, maxUncompressedFileSize {}",
-//                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
-//                    ModelStringUtil.formatCsv(maxFileScan),
-//                    ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
-//                    ModelStringUtil.formatCsv(maxFilesPerAggregate),
-//                    ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize)));
-
             try {
                 if (Files.isDirectory(repoPath)) {
                     if (LOGGER.isDebugEnabled()) {
@@ -128,8 +75,7 @@ public final class ProxyRepoFileScanner {
 
                     // Discover and store locations of each zip file.
                     final long startTimeMs = System.currentTimeMillis();
-                    scanZipFiles(taskContext,
-                            taskContextFactory);
+                    scanZipFiles(taskContext);
                     lastScanTimeMs = startTimeMs;
 
                     LOGGER.debug("Completed");
@@ -147,8 +93,7 @@ public final class ProxyRepoFileScanner {
         runnable.run();
     }
 
-    private void scanZipFiles(final TaskContext taskContext,
-                              final TaskContextFactory taskContextFactory) {
+    private void scanZipFiles(final TaskContext taskContext) {
         try {
             Files.walkFileTree(repoPath,
                     EnumSet.of(FileVisitOption.FOLLOW_LINKS),

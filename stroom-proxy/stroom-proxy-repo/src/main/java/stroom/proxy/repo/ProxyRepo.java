@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
 
 /**
  * Class that represents a repository on the file system. By default files are
@@ -52,7 +53,6 @@ import java.util.function.BiConsumer;
  */
 public class ProxyRepo {
 
-    static final String LOCK_EXTENSION = ".lock";
     public static final String ZIP_EXTENSION = ".zip";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepo.class);
@@ -61,13 +61,9 @@ public class ProxyRepo {
     private static final String ID_VAR = "${id}";
     private static final String EXECUTION_UUID_PARAM = "${" + StroomFileNameUtil.EXECUTION_UUID + "}";
 
-    // A somewhat hacky way of preventing a directory from being deleted before data can be written to it
-    // which assumes the data is written within 10s.
-    private static final int DEFAULT_CLEAN_DELAY = 1000 * 10; // Ten seconds
-
     private final AtomicLong fileCount = new AtomicLong(0);
-    private final int lockDeleteAgeMs;
-    private final int cleanDelayMs;
+    private final long lockDeleteAgeMs;
+    private final long cleanDelayMs;
 
     private final String repositoryFormat;
     private final ProxyRepoSources proxyRepoSources;
@@ -78,21 +74,25 @@ public class ProxyRepo {
     private final Path rootDir;
     private final String executionUuid;
 
-    ProxyRepo(final String dir,
-              final String repositoryFormat,
-              final ProxyRepoSources proxyRepoSources,
-              final int lockDeleteAgeMs) {
-        this(dir, repositoryFormat, proxyRepoSources, lockDeleteAgeMs, DEFAULT_CLEAN_DELAY);
+
+    @Inject
+    ProxyRepo(final ProxyRepoConfig proxyRepoConfig,
+              final ProxyRepoSources proxyRepoSources) {
+        this(proxyRepoConfig.getRepoDir(),
+                proxyRepoConfig.getFormat(),
+                proxyRepoSources,
+                proxyRepoConfig.getLockDeleteAge().toMillis(),
+                proxyRepoConfig.getDirCleanDelay().toMillis());
     }
 
     /**
      * Open a repository (with or without locking).
      */
-    ProxyRepo(final String dir,
-              final String repositoryFormat,
-              final ProxyRepoSources proxyRepoSources,
-              final int lockDeleteAgeMs,
-              final int cleanDelayMs) {
+    public ProxyRepo(final String dir,
+                     final String repositoryFormat,
+                     final ProxyRepoSources proxyRepoSources,
+                     final long lockDeleteAgeMs,
+                     final long cleanDelayMs) {
         this.proxyRepoSources = proxyRepoSources;
         this.executionUuid = UUID.randomUUID().toString();
 
@@ -320,7 +320,13 @@ public class ProxyRepo {
         return outputStream;
     }
 
-    void clean(final boolean deleteRootDirectory) {
+    public void deleteRepoFile(final String sourcePath) throws IOException {
+        final Path sourceFile = rootDir.resolve(sourcePath);
+        LOGGER.debug("Deleting: " + sourceFile.toAbsolutePath().toString());
+        Files.deleteIfExists(sourceFile);
+    }
+
+    public void clean(final boolean deleteRootDirectory) {
         LOGGER.info("clean() " + rootDir);
         clean(rootDir, deleteRootDirectory);
     }
@@ -328,8 +334,9 @@ public class ProxyRepo {
     private void clean(final Path path, final boolean deleteRootDirectory) {
         try {
             if (path != null && Files.isDirectory(path)) {
-                final long oldestDirMs = System.currentTimeMillis() - cleanDelayMs;
-                final long oldestLockFileMs = System.currentTimeMillis() - lockDeleteAgeMs;
+                final long now = System.currentTimeMillis();
+                final long oldestDirMs = now - cleanDelayMs;
+                final long oldestLockFileMs = now - lockDeleteAgeMs;
 
                 cleanDir(path, oldestDirMs, oldestLockFileMs, deleteRootDirectory);
             }

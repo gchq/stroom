@@ -3,13 +3,17 @@ package stroom.proxy.repo;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.util.io.FileUtil;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import javax.inject.Singleton;
 
 @Singleton
@@ -19,6 +23,8 @@ public class ProxyRepoConfig implements HasDbConfig {
     private String repoDir;
     private String format = "${pathId}/${id}";
     private DbConfig dbConfig;
+    private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
+    private StroomDuration dirCleanDelay = StroomDuration.of(Duration.ofSeconds(10));
 
     @JsonProperty
     public boolean isStoringEnabled() {
@@ -37,7 +43,6 @@ public class ProxyRepoConfig implements HasDbConfig {
         return repoDir;
     }
 
-    @JsonProperty
     public void setRepoDir(final String repoDir) {
         this.repoDir = repoDir;
     }
@@ -63,9 +68,26 @@ public class ProxyRepoConfig implements HasDbConfig {
         return format;
     }
 
-    @JsonProperty
     public void setFormat(final String format) {
         this.format = format;
+    }
+
+    @JsonProperty
+    public StroomDuration getLockDeleteAge() {
+        return lockDeleteAge;
+    }
+
+    public void setLockDeleteAge(final StroomDuration lockDeleteAge) {
+        this.lockDeleteAge = lockDeleteAge;
+    }
+
+    @JsonProperty
+    public StroomDuration getDirCleanDelay() {
+        return dirCleanDelay;
+    }
+
+    public void setDirCleanDelay(final StroomDuration dirCleanDelay) {
+        this.dirCleanDelay = dirCleanDelay;
     }
 
     @JsonProperty("db")

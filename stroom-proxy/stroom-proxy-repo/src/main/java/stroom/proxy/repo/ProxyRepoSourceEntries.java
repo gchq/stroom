@@ -20,23 +20,31 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
+@Singleton
 public class ProxyRepoSourceEntries {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepoSourceEntries.class);
 
     private final ProxyRepoDbConnProvider connProvider;
     private final ErrorReceiver errorReceiver;
     private final Path repoDir;
+
+    private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     public ProxyRepoSourceEntries(final ProxyRepoDbConnProvider connProvider,
@@ -45,12 +53,10 @@ public class ProxyRepoSourceEntries {
         this.connProvider = connProvider;
         this.errorReceiver = errorReceiver;
         repoDir = Paths.get(proxyRepoConfig.getRepoDir());
-
-
-
     }
 
     public void examine() {
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
         JooqUtil.context(connProvider, context -> {
             try (final Stream<Record2<Integer, String>> stream = context
                     .select(SOURCE.ID, SOURCE.PATH)
@@ -62,14 +68,18 @@ public class ProxyRepoSourceEntries {
                     final int id = record.get(SOURCE.ID);
                     final String path = record.get(SOURCE.PATH);
 
-                    CompletableFuture.runAsync(() -> examine(id, path));
+                    final CompletableFuture<Void> completableFuture =
+                            CompletableFuture.runAsync(() -> examineSource(id, path));
+                    futures.add(completableFuture);
                 });
             }
         });
+        // Wait for all futures to complete.
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    private void examine(final int sourceId,
-                         final String sourcePath) {
+    public void examineSource(final int sourceId,
+                              final String sourcePath) {
         final Path fullPath = repoDir.resolve(sourcePath);
         final AtomicInteger itemNumber = new AtomicInteger();
 
@@ -100,7 +110,7 @@ public class ProxyRepoSourceEntries {
                             String typeName = null;
 
                             int extensionType = -1;
-                            if (StroomZipFileType.Meta.getExtension().equals(extension)) {
+                            if (StroomZipFileType.META.getExtension().equals(extension)) {
                                 // We need to be able to sort by extension so we can get meta data first.
                                 extensionType = 1;
 
@@ -117,9 +127,9 @@ public class ProxyRepoSourceEntries {
                                     errorReceiver.onError(fullPath, e.getMessage());
                                     LOGGER.error(e.getMessage(), e);
                                 }
-                            } else if (StroomZipFileType.Context.getExtension().equals(extension)) {
+                            } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
                                 extensionType = 2;
-                            } else if (StroomZipFileType.Data.getExtension().equals(extension)) {
+                            } else if (StroomZipFileType.DATA.getExtension().equals(extension)) {
                                 extensionType = 3;
                             }
 
@@ -148,6 +158,9 @@ public class ProxyRepoSourceEntries {
                         .set(SOURCE.EXAMINED, true)
                         .where(SOURCE.ID.eq(sourceId))
                         .execute();
+
+                // Let others know there are new source entries to consume.
+                listeners.forEach(listener -> listener.onChange(sourceId));
 
             } catch (final IOException | RuntimeException e) {
                 // Unable to open file ... must be bad.
@@ -194,24 +207,32 @@ public class ProxyRepoSourceEntries {
                         SOURCE_ITEM.TYPE_NAME)
                 .values(sourceId, itemMumber.incrementAndGet(), name, feedName, typeName)
                 .returning(SOURCE_ITEM.ID)
-                .fetchOne()
-                .getId();
+                .fetchOptional()
+                .map(SourceItemRecord::getId)
+                .orElse(-1);
     }
 
-    private int addItemEntry(final DSLContext context,
-                             final int dataId,
-                             final String extension,
-                             final int extensionType,
-                             final long size) {
-        return context
+    private void addItemEntry(final DSLContext context,
+                              final int dataId,
+                              final String extension,
+                              final int extensionType,
+                              final long size) {
+        context
                 .insertInto(SOURCE_ENTRY,
                         SOURCE_ENTRY.FK_SOURCE_ITEM_ID,
                         SOURCE_ENTRY.EXTENSION,
                         SOURCE_ENTRY.EXTENSION_TYPE,
                         SOURCE_ENTRY.BYTE_SIZE)
                 .values(dataId, extension, extensionType, size)
-                .returning(SOURCE_ENTRY.ID)
-                .fetchOne()
-                .getId();
+                .execute();
+    }
+
+    public void addChangeListener(final ChangeListener changeListener) {
+        listeners.add(changeListener);
+    }
+
+    public interface ChangeListener {
+
+        void onChange(int sourceId);
     }
 }

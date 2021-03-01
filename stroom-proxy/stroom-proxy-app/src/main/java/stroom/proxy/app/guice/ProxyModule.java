@@ -21,14 +21,14 @@ import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
-import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.app.ProxyLifecycle;
+import stroom.proxy.app.forwarder.ForwardStreamHandlersImpl;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
-import stroom.proxy.repo.ProxyLifecycle;
-import stroom.proxy.repo.StreamHandlerFactory;
+import stroom.proxy.repo.ForwardStreamHandlers;
 import stroom.proxy.repo.ProxyRepoDbModule;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
@@ -113,14 +113,12 @@ public class ProxyModule extends AbstractModule {
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
-        bind(ProxyRepositoryManager.class).asEagerSingleton();
-        bind(ProxyRepositoryReader.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
-        bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
+        bind(ForwardStreamHandlers.class).to(ForwardStreamHandlersImpl.class);
 
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
@@ -128,10 +126,9 @@ public class ProxyModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResource.class)
-                .bind(ForwardStreamHandlerFactory.class)
+                .bind(ForwardStreamHandlersImpl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
-                .bind(ProxyRepositoryManager.class)
                 .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())

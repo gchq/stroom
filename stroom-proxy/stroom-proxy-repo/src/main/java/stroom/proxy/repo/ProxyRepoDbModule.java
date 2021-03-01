@@ -14,8 +14,6 @@ public class ProxyRepoDbModule extends AbstractFlyWayDbModule<ProxyRepoConfig, P
     @Override
     protected void configure() {
         super.configure();
-        bind(ZipInfoStoreDao.class).to(ProxyRepoSourceEntries.class);
-        bind(ZipInfoStore.class).to(ZipInfoStoreImpl.class);
     }
 
     @Override

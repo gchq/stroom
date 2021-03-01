@@ -35,9 +35,9 @@ public class StroomZipNameSet {
 
     static {
         HashMap<StroomZipFileType, Set<String>> map = new HashMap<>();
-        map.put(StroomZipFileType.Context, CONTEXT_FILE_EXT);
-        map.put(StroomZipFileType.Meta, META_FILE_EXT);
-        map.put(StroomZipFileType.Manifest, MANIFEST_FILE_EXT);
+        map.put(StroomZipFileType.CONTEXT, CONTEXT_FILE_EXT);
+        map.put(StroomZipFileType.META, META_FILE_EXT);
+        map.put(StroomZipFileType.MANIFEST, MANIFEST_FILE_EXT);
         FILE_EXT_MAP = Collections.unmodifiableMap(map);
 
     }
@@ -87,7 +87,7 @@ public class StroomZipNameSet {
                 .filter(entry -> looksLike(fileName, entry.getValue()) != null)
                 .map(Entry::getKey)
                 .findFirst()
-                .orElse(StroomZipFileType.Data);
+                .orElse(StroomZipFileType.DATA);
         return type;
     }
 
@@ -125,21 +125,21 @@ public class StroomZipNameSet {
                 baseName = fileName.substring(0, i);
 
                 // We already have an entry for this file
-                if (entryMap.get(StroomZipFileType.Data).containsKey(baseName)) {
+                if (entryMap.get(StroomZipFileType.DATA).containsKey(baseName)) {
                     break;
                 }
 
                 // Do we already know about this base name type
                 if (baseNameSet.contains(baseName)) {
-                    keyEntry(StroomZipFileType.Data, fileName, baseName);
-                    return new StroomZipEntry(fileName, baseName, StroomZipFileType.Data);
+                    keyEntry(StroomZipFileType.DATA, fileName, baseName);
+                    return new StroomZipEntry(fileName, baseName, StroomZipFileType.DATA);
                 }
             }
         }
         // Did not find any matching context or header
         unknownFileNameSet.add(fileName);
         unknownFileNameList.add(fileName);
-        return new StroomZipEntry(fileName, null, StroomZipFileType.Data);
+        return new StroomZipEntry(fileName, null, StroomZipFileType.DATA);
     }
 
     private void checkBaseName(String baseName) {
@@ -166,16 +166,16 @@ public class StroomZipNameSet {
                     unknownFileNameItr.remove();
                     unknownFileNameSet.remove(unknownFileName);
                     if (unknownFileName.equals(bestMatch)) {
-                        keyEntry(StroomZipFileType.Data, unknownFileName, baseName);
+                        keyEntry(StroomZipFileType.DATA, unknownFileName, baseName);
                         break;
                     } else {
-                        keyEntry(StroomZipFileType.Data, unknownFileName, unknownFileName);
+                        keyEntry(StroomZipFileType.DATA, unknownFileName, unknownFileName);
                     }
                 }
             } else {
                 unknownFileNameSet.remove(bestMatch);
                 // key this pair
-                keyEntry(StroomZipFileType.Data, bestMatch, baseName);
+                keyEntry(StroomZipFileType.DATA, bestMatch, baseName);
             }
         }
     }
@@ -185,7 +185,7 @@ public class StroomZipNameSet {
      */
     public Set<String> getBaseNameSet() {
         return Stream.concat(
-                entryMap.get(StroomZipFileType.Data).keySet().stream(),
+                entryMap.get(StroomZipFileType.DATA).keySet().stream(),
                 unknownFileNameSet.stream())
                 .collect(Collectors.toSet());
     }
@@ -242,7 +242,7 @@ public class StroomZipNameSet {
      * @return given a base name return back the full file name
      */
     public String getName(String baseName, StroomZipFileType stroomZipFileType) {
-        if (StroomZipFileType.Data.equals(stroomZipFileType)) {
+        if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
             if (unknownFileNameSet.contains(baseName)) {
                 return baseName;
             }

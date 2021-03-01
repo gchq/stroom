@@ -1,9 +1,10 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.app.forwarder.ForwardStreamConfig;
-import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
+import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 
@@ -17,13 +18,13 @@ public class ProxyConfig {
     private boolean useDefaultOpenIdCredentials = true;
 
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
-    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+    private AggregatorConfig aggregatorConfig = new AggregatorConfig();
+    private ForwarderConfig forwarderConfig = new ForwarderConfig();
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-
     private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
 
 
@@ -39,7 +40,7 @@ public class ProxyConfig {
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
     }
 
-    @JsonProperty
+    @JsonProperty("request")
     public ProxyRequestConfig getProxyRequestConfig() {
         return proxyRequestConfig;
     }
@@ -49,17 +50,7 @@ public class ProxyConfig {
         this.proxyRequestConfig = proxyRequestConfig;
     }
 
-    @JsonProperty
-    public ForwardStreamConfig getForwardStreamConfig() {
-        return forwardStreamConfig;
-    }
-
-    @JsonProperty
-    public void setForwardStreamConfig(final ForwardStreamConfig forwardStreamConfig) {
-        this.forwardStreamConfig = forwardStreamConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("repository")
     public ProxyRepoConfig getProxyRepositoryConfig() {
         return proxyRepoConfig;
     }
@@ -69,14 +60,32 @@ public class ProxyConfig {
         this.proxyRepoConfig = proxyRepoConfig;
     }
 
-    @JsonProperty
-    public ProxyRepoFileScannerConfig getProxyRepositoryReaderConfig() {
+    @JsonProperty("scanner")
+    public ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig() {
         return proxyRepoFileScannerConfig;
     }
 
-    @JsonProperty
-    public void setProxyRepositoryReaderConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
+    public void setProxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
         this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
+    }
+
+    @JsonProperty("aggregator")
+    public AggregatorConfig getAggregatorConfig() {
+        return aggregatorConfig;
+    }
+
+    public void setAggregatorConfig(final AggregatorConfig aggregatorConfig) {
+        this.aggregatorConfig = aggregatorConfig;
+    }
+
+    @JsonProperty("forwarder")
+    public ForwarderConfig getForwardStreamConfig() {
+        return forwarderConfig;
+    }
+
+    @JsonProperty
+    public void setForwardStreamConfig(final ForwarderConfig forwarderConfig) {
+        this.forwarderConfig = forwarderConfig;
     }
 
     @JsonProperty

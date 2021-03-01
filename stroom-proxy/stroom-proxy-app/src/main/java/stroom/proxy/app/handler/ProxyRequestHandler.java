@@ -6,7 +6,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
@@ -18,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -37,17 +34,17 @@ public class ProxyRequestHandler implements RequestHandler {
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);
 
-    private final MasterStreamHandlerFactory streamHandlerFactory;
+    private final ReceiveStreamHandlers receiveStreamHandlerProvider;
     private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
     private final BufferFactory bufferFactory;
 
     @Inject
-    public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
+    public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream,
                                final BufferFactory bufferFactory) {
-        this.streamHandlerFactory = streamHandlerFactory;
+        this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
         this.logStream = logStream;
         this.bufferFactory = bufferFactory;
         attributeMapFilter = attributeMapFilterFactory.create();
@@ -79,41 +76,12 @@ public class ProxyRequestHandler implements RequestHandler {
                 // Test to see if we are going to accept this stream or drop the data.
                 if (attributeMapFilter.filter(attributeMap)) {
                     // Send the data
-                    final List<StreamHandler> handlers = streamHandlerFactory.addReceiveHandlers(new ArrayList<>());
-
-                    try {
-                        // Set the meta map for all handlers.
-                        for (final StreamHandler streamHandler : handlers) {
-                            streamHandler.setAttributeMap(attributeMap);
-                        }
-
-                        final byte[] buffer = bufferFactory.create();
+                    receiveStreamHandlerProvider.handle(attributeMap, handler -> {
                         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                attributeMap, handlers, buffer, "DataFeedServlet");
-
+                                attributeMap, handler);
                         stroomStreamProcessor.processRequestHeader(request);
-
-                        for (final StreamHandler streamHandler : handlers) {
-                            streamHandler.handleHeader();
-                        }
-
                         stroomStreamProcessor.process(inputStream, "");
-
-                        for (final StreamHandler streamHandler : handlers) {
-                            streamHandler.handleFooter();
-                        }
-
-                    } catch (final RuntimeException e) {
-                        for (final StreamHandler streamHandler : handlers) {
-                            try {
-                                streamHandler.handleError();
-                            } catch (final IOException | RuntimeException ex) {
-                                LOGGER.error(ex.getMessage(), ex);
-                            }
-                        }
-
-                        throw e;
-                    }
+                    });
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
                     logStream.log(
@@ -130,6 +98,9 @@ public class ProxyRequestHandler implements RequestHandler {
                     final byte[] buffer = bufferFactory.create();
                     while (inputStream.read(buffer) >= 0) {
                         // Ignore data.
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(new String(buffer));
+                        }
                     }
                     returnCode = HttpServletResponse.SC_OK;
                     LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(attributeMap));

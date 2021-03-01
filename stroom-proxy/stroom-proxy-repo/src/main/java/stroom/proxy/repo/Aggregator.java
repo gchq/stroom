@@ -22,13 +22,10 @@ import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import org.jooq.Condition;
 import org.jooq.Record4;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -38,32 +35,25 @@ import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
-class Aggregator {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Aggregator.class);
+public class Aggregator {
 
     private final ProxyRepoDbConnProvider connProvider;
     private final AggregatorConfig config;
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
     private AggregateDataCollection currentCollection;
     private long lastClosedAggregates = -1;
+
+    private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     Aggregator(final ProxyRepoDbConnProvider connProvider,
                final AggregatorConfig config) {
         this.connProvider = connProvider;
         this.config = config;
-
-        // Start aggregation.
-        aggregate();
     }
 
     public void aggregate() {
-        final long start = System.currentTimeMillis();
-
         // Start by trying to close old aggregates.
-        closeOldAggregates(start);
+        closeOldAggregates();
 
         // Start a transaction for all of the database changes.
         JooqUtil.context(connProvider, context -> {
@@ -76,7 +66,7 @@ class Aggregator {
                     .from(SOURCE_ITEM)
                     .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
                     .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                    .and(SOURCE_ITEM.IN_AGGREGATE.isFalse())
+                    .where(SOURCE_ITEM.AGGREGATED.isFalse())
                     .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.NUMBER)
                     .stream()) {
                 stream.forEach(record -> {
@@ -88,7 +78,6 @@ class Aggregator {
                     if (currentCollection != null && currentCollection.dataId != dataId) {
                         addCollection(currentCollection);
                         currentCollection = null;
-                        closeOldAggregates(System.currentTimeMillis());
                     }
 
                     if (currentCollection == null) {
@@ -106,21 +95,60 @@ class Aggregator {
         if (currentCollection != null) {
             addCollection(currentCollection);
             currentCollection = null;
-            closeOldAggregates(System.currentTimeMillis());
         }
+    }
 
-        // Run the aggregation again on the next set of data.
-        final long frequency = config.getAggregationFrequency().toMillis();
-        // How long were we running for?
-        final long duration = System.currentTimeMillis() - start;
-        final long delay = Math.max(0, frequency - duration);
-        executorService.schedule(this::aggregate, delay, TimeUnit.MILLISECONDS);
+    public void aggregate(final int sourceId) {
+        // Start by trying to close old aggregates.
+        closeOldAggregates();
+
+        // Start a transaction for all of the database changes.
+        JooqUtil.context(connProvider, context -> {
+            // Get all data items that have not been added to aggregate destinations.
+            try (final Stream<Record4<Integer, String, String, Long>> stream = context
+                    .select(SOURCE_ITEM.ID,
+                            SOURCE_ITEM.FEED_NAME,
+                            SOURCE_ITEM.TYPE_NAME,
+                            SOURCE_ENTRY.BYTE_SIZE)
+                    .from(SOURCE_ITEM)
+                    .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                    .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
+                    .and(SOURCE_ITEM.AGGREGATED.isFalse())
+                    .orderBy(SOURCE_ITEM.NUMBER)
+                    .stream()) {
+                stream.forEach(record -> {
+                    final int dataId = record.get(SOURCE_ITEM.ID);
+                    final String feedName = record.get(SOURCE_ITEM.FEED_NAME);
+                    final String typeName = record.get(SOURCE_ITEM.TYPE_NAME);
+                    final long byteSize = record.get(SOURCE_ENTRY.BYTE_SIZE);
+
+                    if (currentCollection != null && currentCollection.dataId != dataId) {
+                        addCollection(currentCollection);
+                        currentCollection = null;
+                    }
+
+                    if (currentCollection == null) {
+                        currentCollection = new AggregateDataCollection(
+                                dataId,
+                                feedName,
+                                typeName);
+                    }
+                    currentCollection.addEntry(byteSize);
+                });
+            }
+        });
+
+        // Add final entry.
+        if (currentCollection != null) {
+            addCollection(currentCollection);
+            currentCollection = null;
+        }
     }
 
     private synchronized void addCollection(final AggregateDataCollection collection) {
         final long maxUncompressedByteSize = config.getMaxUncompressedByteSize();
         final int maxItemsPerAggregate = config.getMaxItemsPerAggregate();
-        final long maxDestSize = Math.max(0, maxUncompressedByteSize - collection.totalSize);
+        final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - collection.totalSize);
 
         JooqUtil.transaction(connProvider, context -> {
             // See if we can get an existing aggregate that will fit this data collection.
@@ -128,27 +156,27 @@ class Aggregator {
                     .selectFrom(AGGREGATE)
                     .where(AGGREGATE.FEED_NAME.equal(collection.feedName))
                     .and(AGGREGATE.TYPE_NAME.equal(collection.typeName))
-                    .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxDestSize))
+                    .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
                     .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
                     .and(AGGREGATE.COMPLETE.isFalse())
                     .orderBy(AGGREGATE.CREATE_TIME_MS)
                     .fetchOptional();
 
-            int destId;
+            int aggregateId;
             if (optionalRecord.isPresent()) {
-                destId = optionalRecord.get().getId();
+                aggregateId = optionalRecord.get().getId();
 
                 // We have somewhere we can add the data collection so add it to the aggregate.
                 context
                         .update(AGGREGATE)
                         .set(AGGREGATE.BYTE_SIZE, AGGREGATE.BYTE_SIZE.plus(collection.totalSize))
                         .set(AGGREGATE.ITEMS, AGGREGATE.ITEMS.plus(1))
-                        .where(AGGREGATE.ID.eq(destId))
+                        .where(AGGREGATE.ID.eq(aggregateId))
                         .execute();
 
             } else {
                 // Create a new aggregate to add this data collection to.
-                destId = context
+                aggregateId = context
                         .insertInto(
                                 AGGREGATE,
                                 AGGREGATE.FEED_NAME,
@@ -162,26 +190,31 @@ class Aggregator {
                                 1,
                                 System.currentTimeMillis())
                         .returning(AGGREGATE.ID)
-                        .fetchOne()
-                        .getId();
+                        .fetchOptional()
+                        .map(AggregateRecord::getId)
+                        .orElse(-1);
             }
 
             // Add the data collection.
             context
                     .insertInto(AGGREGATE_ITEM, AGGREGATE_ITEM.FK_AGGREGATE_ID, AGGREGATE_ITEM.FK_SOURCE_ITEM_ID)
-                    .values(destId, collection.dataId)
+                    .values(aggregateId, collection.dataId)
                     .execute();
 
             // Mark data collection as added.
             context
                     .update(SOURCE_ITEM)
-                    .set(SOURCE_ITEM.IN_AGGREGATE, true)
+                    .set(SOURCE_ITEM.AGGREGATED, true)
                     .where(SOURCE_ITEM.ID.eq(collection.dataId))
                     .execute();
         });
+
+        // Close any old aggregates.
+        closeOldAggregates();
     }
 
-    private void closeOldAggregates(final long now) {
+    private void closeOldAggregates() {
+        final long now = System.currentTimeMillis();
         if (lastClosedAggregates == -1 ||
                 now > lastClosedAggregates - config.getAggregationFrequency().toMillis()) {
             lastClosedAggregates = now;
@@ -197,16 +230,33 @@ class Aggregator {
                     AGGREGATE.COMPLETE.eq(false)
             );
 
-            closeDestinations(condition);
+            final int count = closeAggregates(condition);
+
+            // If we have closed some aggregates then let others know there are some available.
+            if (count > 0) {
+                fireChange();
+            }
         }
     }
 
-    private synchronized int closeDestinations(final Condition condition) {
+    private synchronized int closeAggregates(final Condition condition) {
         return JooqUtil.contextResult(connProvider, context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.COMPLETE, true)
                 .where(condition)
                 .execute());
+    }
+
+    private void fireChange() {
+        listeners.forEach(listener -> fireChange());
+    }
+
+    public void addChangeListener(final ChangeListener changeListener) {
+        listeners.add(changeListener);
+    }
+
+    public interface ChangeListener {
+        void onChange();
     }
 
     private static class AggregateDataCollection {

@@ -128,7 +128,7 @@ public final class StreamUtil {
             return byteArrayOutputStream;
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -151,7 +151,7 @@ public final class StreamUtil {
             Files.write(file, string.getBytes(charset));
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -173,7 +173,7 @@ public final class StreamUtil {
 
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -190,7 +190,7 @@ public final class StreamUtil {
             return new String(bytes, charset);
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -202,7 +202,7 @@ public final class StreamUtil {
 //            return new BufferedInputStream(Files.newInputStream(file));
 //        } catch (final IOException ioEx) {
 //            // Wrap it
-//            throw new RuntimeException(ioEx);
+//            throw new UncheckedIOException(ioEx);
 //        }
 //    }
 
@@ -228,7 +228,7 @@ public final class StreamUtil {
             }
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -247,9 +247,15 @@ public final class StreamUtil {
      * Take a stream to another stream.
      */
     public static long streamToStream(final InputStream inputStream, final OutputStream outputStream) {
+        return streamToStream(inputStream, outputStream, new byte[BUFFER_SIZE]);
+    }
+
+    /**
+     * Take a stream to another stream.
+     */
+    public static long streamToStream(final InputStream inputStream, final OutputStream outputStream, final byte[] buffer) {
         long bytesWritten = 0;
         try {
-            final byte[] buffer = new byte[BUFFER_SIZE];
             int len;
             while ((len = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, len);
@@ -258,7 +264,7 @@ public final class StreamUtil {
             return bytesWritten;
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 

@@ -27,7 +27,6 @@ public class ReceiveDataModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(BufferFactory.class).to(BufferFactoryImpl.class);
-        bind(FileSetProcessor.class).to(DataStoreFileSetProcessor.class);
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
     }

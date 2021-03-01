@@ -11,7 +11,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row4;
+import org.jooq.Row5;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -66,6 +66,11 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
      * The column <code>forward_aggregate.success</code>.
      */
     public final TableField<ForwardAggregateRecord, Boolean> SUCCESS = createField(DSL.name("success"), SQLDataType.BOOLEAN, this, "");
+
+    /**
+     * The column <code>forward_aggregate.error</code>.
+     */
+    public final TableField<ForwardAggregateRecord, String> ERROR = createField(DSL.name("error"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     private ForwardAggregate(Name alias, Table<ForwardAggregateRecord> aliased) {
         this(alias, aliased, null);
@@ -164,11 +169,11 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row4 type methods
+    // Row5 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row4<Integer, Integer, Integer, Boolean> fieldsRow() {
-        return (Row4) super.fieldsRow();
+    public Row5<Integer, Integer, Integer, Boolean, String> fieldsRow() {
+        return (Row5) super.fieldsRow();
     }
 }

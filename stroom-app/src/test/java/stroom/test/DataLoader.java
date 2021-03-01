@@ -17,26 +17,22 @@
 
 package stroom.test;
 
-import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
-import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.MetaProperties;
-import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.receive.common.StreamTargetStreamHandlers;
+import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -60,13 +56,14 @@ public class DataLoader {
     private static final String ZIP_EXTENSION = ".zip";
 
     private final FeedProperties feedProperties;
-    private final Store streamStore;
+    private final StreamTargetStreamHandlers streamTargetStreamHandlers;
 
     public static final DateTimeFormatter EFFECTIVE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
-    public DataLoader(final FeedProperties feedProperties, final Store streamStore) {
+    public DataLoader(final FeedProperties feedProperties,
+                      final StreamTargetStreamHandlers streamTargetStreamHandlers) {
         this.feedProperties = feedProperties;
-        this.streamStore = streamStore;
+        this.streamTargetStreamHandlers = streamTargetStreamHandlers;
     }
 
     public void read(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
@@ -105,15 +102,26 @@ public class DataLoader {
 
     private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         final String feedName = getFeedName(file);
-        try (final InputStream inputStream = Files.newInputStream(file)) {
-            loadInputStream(feedName, FileUtil.getCanonicalPath(file), inputStream, mandateEffectiveDate, effectiveMs);
+        try (final InputStream metaInputStream = createTestMetaInputStream();
+                final InputStream dataInputStream = Files.newInputStream(file)) {
+            loadInputStream(
+                    feedName,
+                    FileUtil.getCanonicalPath(file),
+                    metaInputStream,
+                    dataInputStream,
+                    mandateEffectiveDate,
+                    effectiveMs);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void loadInputStream(final String feedName, final String info, final InputStream inputStream,
-                                final boolean mandateEffectiveDate, final Long effectiveMs) {
+    public void loadInputStream(final String feedName,
+                                final String info,
+                                final InputStream metaInputStream,
+                                final InputStream dataInputStream,
+                                final boolean mandateEffectiveDate,
+                                final Long effectiveMs) {
         final boolean isReference = feedProperties.isReference(feedName);
         if (isReference == mandateEffectiveDate) {
             final String effDateStr = effectiveMs != null
@@ -121,30 +129,35 @@ public class DataLoader {
                     : "null";
             LOGGER.info("Loading data: " + info + " with eff. date " + effDateStr);
 
-            final String streamTypeName = feedProperties.getStreamTypeName(feedName);
+            final AttributeMap map = new AttributeMap();
+            map.put(StandardHeaderArguments.FEED, feedName);
+            map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
-            final MetaProperties metaProperties = MetaProperties.builder()
-                    .feedName(feedName)
-                    .typeName(streamTypeName)
-                    .effectiveMs(effectiveMs)
-                    .build();
-
-            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
-                try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
-                    try (final SegmentOutputStream outputStream = outputStreamProvider.get()) {
-                        StreamUtil.streamToStream(inputStream, outputStream);
+            streamTargetStreamHandlers.handle(map, handler -> {
+                try {
+                    // Write meta.
+                    if (metaInputStream != null) {
+                        handler.addEntry("001" + StroomZipFileType.META.getExtension(), metaInputStream);
                     }
 
-                    try (final SegmentOutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
-                        final AttributeMap map = new AttributeMap();
-                        map.put("TestData", "Loaded By SetupSampleData");
-                        AttributeMapUtil.write(map, outputStream);
+                    // Write data.
+                    if (dataInputStream != null) {
+                        handler.addEntry("001" + StroomZipFileType.DATA.getExtension(), dataInputStream);
                     }
+
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            });
         }
+    }
+
+    private InputStream createTestMetaInputStream() throws IOException {
+        final AttributeMap meta = new AttributeMap();
+        meta.put("TestData", "Loaded By SetupSampleData");
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        AttributeMapUtil.write(meta, byteArrayOutputStream);
+        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     private void loadZipFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
@@ -153,77 +166,38 @@ public class DataLoader {
         if (feedProperties.isReference(feedName) == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-            try {
-                final StroomZipFile stroomZipFile = new StroomZipFile(file);
-                final byte[] buffer = new byte[1024];
-                final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler =
-                        new StreamTargetStroomStreamHandler(
-                                streamStore,
-                                feedProperties,
-                                null,
-                                feedName,
-                                feedProperties.getStreamTypeName(feedName),
-                                false);
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
 
                 final AttributeMap map = new AttributeMap();
+                map.put(StandardHeaderArguments.FEED, feedName);
                 map.put("TestData", "Loaded By SetupSampleData");
+                map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
-                streamTargetStroomStreamHandler.handleHeader(map);
-                for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
-                    streamTargetStroomStreamHandler
-                            .handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Context));
-                    InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-                    int read;
-                    while ((read = inputStream.read(buffer)) != -1) {
-                        streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
+                streamTargetStreamHandlers.handle(map, handler -> {
+                    try {
+                        for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
+                            // Add context data.
+                            try (final InputStream inputStream =
+                                    stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT)) {
+                                handler.addEntry(baseName + StroomZipFileType.CONTEXT.getExtension(), inputStream);
+                            }
+
+                            // Add data.
+                            try (final InputStream inputStream =
+                                    stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA)) {
+                                handler.addEntry(baseName + StroomZipFileType.DATA.getExtension(), inputStream);
+                            }
+                        }
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
                     }
-                    streamTargetStroomStreamHandler.handleEntryEnd();
-
-                    streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null,
-                            baseName,
-                            StroomZipFileType.Data));
-                    inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    while ((read = inputStream.read(buffer)) != -1) {
-                        streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
-                    }
-                    streamTargetStroomStreamHandler.handleEntryEnd();
-
-                }
-                streamTargetStroomStreamHandler.close();
-
-                stroomZipFile.close();
+                });
 
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
     }
-
-//    private FeedDoc getFeed(final Path file) {
-//        // Get the stem of the file name.
-//        String stem = file.getFileName().toString();
-//        int index = stem.indexOf('.');
-//        if (index != -1) {
-//            stem = stem.substring(0, index);
-//        }
-//        index = stem.indexOf('~');
-//        if (index != -1) {
-//            stem = stem.substring(0, index);
-//        }
-//
-//        return getFeed(stem);
-//    }
-//
-//    public FeedDoc getFeed(final String name) {
-//        // Find the associated feed.
-//        final Optional<FeedDoc> optional = feedDocCache.get(name);
-//
-//        if (!optional.isPresent()) {
-//            throw new RuntimeException("Feed not found \"" + name + "\"");
-//        }
-//
-//        return optional.get();
-//    }
 
     private String getFeedName(final Path file) {
         // Get the stem of the file name.

@@ -5,17 +5,9 @@ ext.moduleName = 'stroom.storedquery.impl.db.jooq'
 dependencies {
     compile libs.javax_annotation
     permitUnusedDeclared libs.javax_annotation
-    
     compile libs.jooq
 
     jooqGenerator libs.mysql_connector_java
-
-//    // The following are required to put JAXB on the JOOQ classpath for the purpose of JOOQ code generation in J9+.
-//    // Later versions of the JOOQ Gradle plugin should make this unnecessary.
-//    jooqRuntime 'javax.activation:activation:1.1.1'
-//    jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
-//    jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'
-//    jooqRuntime 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
 }
 
 // Configure jooq plugin to generate code
@@ -25,7 +17,9 @@ jooq {
 
     configurations {
         main {  // name of the jOOQ configuration
-            generateSchemaSourceOnCompilation = true  // default (can be omitted)
+
+            // Disable JOOQ code generation on build
+            generateSchemaSourceOnCompilation = false
 
             generationTool {
                 logging = org.jooq.meta.jaxb.Logging.WARN

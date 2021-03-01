@@ -16,15 +16,10 @@
 
 package stroom.receive.common;
 
-import stroom.data.zip.StroomZipEntry;
-
 import java.io.IOException;
+import java.io.InputStream;
 
-public interface StroomStreamHandler {
+public interface StreamHandler {
 
-    void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException;
-
-    void handleEntryData(byte[] data, int off, int len) throws IOException;
-
-    void handleEntryEnd() throws IOException;
+    void addEntry(String entry, InputStream inputStream) throws IOException;
 }

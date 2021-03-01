@@ -1,15 +1,16 @@
 package stroom.proxy.repo;
 
-import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
+import stroom.receive.common.StreamHandler;
+import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import javax.inject.Inject;
 
 /**
  * Factory to return back handlers for incoming and outgoing requests.
@@ -18,65 +19,42 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
 
-    private final ProxyRepo proxyRepo;
+    private final AttributeMap attributeMap;
+    private final StroomZipOutputStream stroomZipOutputStream;
+    private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
 
-    private AttributeMap attributeMap;
-    private StroomZipOutputStream stroomZipOutputStream;
-    private OutputStream entryStream;
     private boolean doneOne = false;
 
-    @Inject
-    public ProxyRepositoryStreamHandler(final ProxyRepo proxyRepo) {
-        this.proxyRepo = proxyRepo;
-    }
-
-    @Override
-    public void setAttributeMap(final AttributeMap attributeMap) {
+    public ProxyRepositoryStreamHandler(final ProxyRepo proxyRepo,
+                                        final AttributeMap attributeMap) throws IOException {
         this.attributeMap = attributeMap;
-    }
-
-    @Override
-    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
-        doneOne = true;
-        entryStream = stroomZipOutputStream.addEntry(stroomZipEntry.getFullName());
-    }
-
-    @Override
-    public void handleEntryEnd() throws IOException {
-        entryStream.close();
-        entryStream = null;
-    }
-
-    @Override
-    public void handleEntryData(byte[] buffer, int off, int len) throws IOException {
-        entryStream.write(buffer, off, len);
-    }
-
-    @Override
-    public void handleFooter() throws IOException {
-        if (doneOne) {
-            stroomZipOutputStream.addMissingAttributeMap(attributeMap);
-            stroomZipOutputStream.close();
-        } else {
-            stroomZipOutputStream.closeDelete();
-        }
-        stroomZipOutputStream = null;
-    }
-
-    @Override
-    public void handleHeader() throws IOException {
         stroomZipOutputStream = proxyRepo.getStroomZipOutputStream(attributeMap);
     }
 
     @Override
-    public void handleError() throws IOException {
-        if (stroomZipOutputStream != null) {
-            LOGGER.info("Removing part written file {}", stroomZipOutputStream);
-            stroomZipOutputStream.closeDelete();
+    public void addEntry(final String entry, final InputStream inputStream) throws IOException {
+        doneOne = true;
+        try (final OutputStream outputStream = stroomZipOutputStream.addEntry(entry)) {
+            StreamUtil.streamToStream(inputStream, outputStream, buffer);
         }
     }
 
-    @Override
-    public void validate() {
+    void error() {
+        try {
+            LOGGER.info("Error writing file {}", stroomZipOutputStream);
+            stroomZipOutputStream.closeDelete();
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    void close() throws IOException {
+        if (doneOne) {
+            stroomZipOutputStream.addMissingAttributeMap(attributeMap);
+            stroomZipOutputStream.close();
+        } else {
+            LOGGER.info("Removing part written file {}", stroomZipOutputStream);
+            stroomZipOutputStream.closeDelete();
+        }
     }
 }

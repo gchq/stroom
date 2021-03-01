@@ -7,14 +7,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
 public class AggregatorConfig {
 
     private int maxItemsPerAggregate = 1000;
-    private StroomDuration maxAggregateAge;
-    private StroomDuration aggregationFrequency;
+    private StroomDuration maxAggregateAge = StroomDuration.of(Duration.ofMinutes(1));
+    private StroomDuration aggregationFrequency = StroomDuration.of(Duration.ofMinutes(1));
     private long maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString("1G");
 
     @JsonPropertyDescription("Maximum number of data items to add to an aggregate before a new one is created")
