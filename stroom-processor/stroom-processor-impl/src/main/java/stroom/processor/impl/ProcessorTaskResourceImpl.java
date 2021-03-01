@@ -19,8 +19,6 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.AssignTasksRequest;
@@ -28,38 +26,33 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskResourceImpl.class);
+
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog documentEventLog;
     private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
     private final ProcessorTaskManager processorTaskManager;
 
     @Inject
     ProcessorTaskResourceImpl(final ProcessorTaskService processorTaskService,
                               final DocumentEventLog documentEventLog,
                               final NodeService nodeService,
-                              final NodeInfo nodeInfo,
-                              final WebTargetFactory webTargetFactory,
                               final ProcessorTaskManager processorTaskManager) {
         this.processorTaskService = processorTaskService;
         this.documentEventLog = documentEventLog;
         this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
         this.processorTaskManager = processorTaskManager;
     }
 
@@ -123,57 +116,35 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
     @Override
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return processorTaskManager.assignTasks(request.getNodeName(), request.getCount());
-
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    ProcessorTaskResource.BASE_PATH,
-                    ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                return response.readEntity(ProcessorTaskList.class);
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        LOGGER.debug("assignTasks called for nodeName: {}, {}", nodeName, request);
+        final ProcessorTaskList processorTaskList = nodeService.remoteRestResult(
+                nodeName,
+                ProcessorTaskList.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        ProcessorTaskResource.BASE_PATH,
+                        ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
+                        nodeName),
+                () ->
+                        processorTaskManager.assignTasks(request.getNodeName(), request.getCount()),
+                builder ->
+                        builder.post(Entity.json(request)));
+        return processorTaskList;
     }
 
     @Override
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
-        // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return processorTaskManager.abandonTasks(request);
-
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    ProcessorTaskResource.BASE_PATH,
-                    ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .put(Entity.json(request));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                return response.readEntity(Boolean.class);
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        LOGGER.debug("abandonTasks called for nodeName: {}, {}", nodeName, request);
+        final Boolean result = nodeService.remoteRestResult(
+                nodeName,
+                Boolean.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        ProcessorTaskResource.BASE_PATH,
+                        ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
+                        nodeName),
+                () ->
+                        processorTaskManager.abandonTasks(request),
+                builder ->
+                        builder.put(Entity.json(request)));
+        return result;
     }
 }
