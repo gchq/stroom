@@ -48,6 +48,10 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
     compile libs.swagger_annotations
+    compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
+    compile libs.jackson_databind
+    permitUnusedDeclared libs.jackson_databind_sources
     compile libs.javax_inject
     compile libs.ws_rs_api
     compile libs.xml_apis
