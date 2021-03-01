@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
+## [v6.2.0 - Unreleased]
+
+* Add Elasticsearch integration
+
+* Issue **#2058** : Support authenticating Elasticsearch requests with an API token
+
+* Remove legacy Elasticsearch integration assets
+
+* Add common secret property encryption utils (`CryptoUtils`)
+
+* Add common property `stroom.secret.encryptionKey` for encrypting secrets at rest
 
 ## [v6.1.32] - 2021-01-28
 
