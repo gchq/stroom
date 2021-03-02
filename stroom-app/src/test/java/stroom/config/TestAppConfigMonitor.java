@@ -146,5 +146,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isEqualTo(newPathValue);
+
+        Files.deleteIfExists(Path.of(newPathValue));
     }
 }
