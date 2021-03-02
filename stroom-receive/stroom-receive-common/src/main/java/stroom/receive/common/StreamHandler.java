@@ -21,5 +21,5 @@ import java.io.InputStream;
 
 public interface StreamHandler {
 
-    void addEntry(String entry, InputStream inputStream) throws IOException;
+    long addEntry(String entry, InputStream inputStream) throws IOException;
 }

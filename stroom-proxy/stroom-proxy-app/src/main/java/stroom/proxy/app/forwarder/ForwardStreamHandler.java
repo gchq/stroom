@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.net.ssl.SSLSocketFactory;
@@ -34,12 +35,14 @@ public class ForwardStreamHandler implements StreamHandler {
     private final AttributeMap attributeMap;
     private final String forwardUrl;
     private final Integer forwardDelayMs;
-    private final byte[] buffer = new byte[4096];
+    private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+    private final Consumer<Long> progressHandler = (totalBytes) -> {
+    };
 
     private HttpURLConnection connection;
     private final ZipOutputStream zipOutputStream;
     private final long startTimeMs;
-    private long bytesSent = 0;
+    private long totalBytesSent = 0;
 
     public ForwardStreamHandler(final LogStream logStream,
                                 final ForwardDestinationConfig forwardDestinationConfig,
@@ -63,8 +66,9 @@ public class ForwardStreamHandler implements StreamHandler {
         connection = (HttpURLConnection) url.openConnection();
 
         connection.setRequestProperty("User-Agent", userAgent);
-
-        SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
+        if (sslSocketFactory != null) {
+            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
+        }
 
         if (forwardTimeoutMs != null) {
             connection.setConnectTimeout(forwardTimeoutMs);
@@ -96,11 +100,12 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     @Override
-    public void addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
         // First call we set up if we are going to do chunked streaming
         zipOutputStream.putNextEntry(new ZipEntry(entry));
 
-        bytesSent += StreamUtil.streamToStream(inputStream, zipOutputStream, buffer);
+        final long bytesSent = StreamUtil.streamToStream(inputStream, zipOutputStream, buffer, progressHandler);
+        totalBytesSent += bytesSent;
 
         if (forwardDelayMs != null) {
             try {
@@ -115,6 +120,8 @@ public class ForwardStreamHandler implements StreamHandler {
         }
 
         zipOutputStream.closeEntry();
+
+        return bytesSent;
     }
 
     void error() {
@@ -138,15 +145,11 @@ public class ForwardStreamHandler implements StreamHandler {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytesSent, duration);
+                logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, totalBytesSent, duration);
 
                 connection.disconnect();
                 connection = null;
             }
         }
-    }
-
-    public String getForwardUrl() {
-        return forwardUrl;
     }
 }

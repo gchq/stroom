@@ -28,7 +28,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.TaskId;
 import stroom.util.AbstractCommandLineTool;
-import stroom.util.io.BufferFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.Injector;
@@ -128,12 +127,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final Store streamStore = injector.getInstance(Store.class);
         final MetaService metaService = injector.getInstance(MetaService.class);
         final SecurityContext securityContext = injector.getInstance(SecurityContext.class);
-        final BufferFactory bufferFactory = () -> new byte[4096];
         final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(null,
                 streamStore,
                 metaService,
-                securityContext,
-                bufferFactory);
+                securityContext);
 
         securityContext.asProcessingUser(() ->
                 download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler));

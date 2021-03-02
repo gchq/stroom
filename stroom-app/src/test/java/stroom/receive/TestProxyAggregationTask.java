@@ -41,7 +41,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -93,8 +92,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private TaskContextFactory taskContextFactory;
     @Inject
     private ExecutorProvider executorProvider;
-    @Inject
-    private BufferFactory bufferFactory;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     //    @Inject

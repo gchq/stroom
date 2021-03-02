@@ -41,7 +41,7 @@ public class ProxyRepoDbModule extends AbstractFlyWayDbModule<ProxyRepoConfig, P
         return new DataSourceImpl(dataSource);
     }
 
-    private static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
+    public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);

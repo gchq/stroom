@@ -44,56 +44,56 @@ public class ProxyLifecycle implements Managed {
                           final CleanupConfig cleanupConfig) {
         services = new ArrayList<>();
 
-        // Create a service to cleanup the repo to remove empty dirs and stale lock files.
         if (proxyRepoConfig.isStoringEnabled()) {
+            // Create a service to cleanup the repo to remove empty dirs and stale lock files.
             final FrequencyExecutor cleanupRepoExecutor = new FrequencyExecutor(
                     ProxyRepo.class.getSimpleName(),
                     () -> proxyRepo.clean(false),
                     cleanupConfig.getCleanupFrequency().toMillis());
             services.add(cleanupRepoExecutor);
-        }
 
-        // Add executor to open source files and scan entries
-        final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
-                ProxyRepoSourceEntries.class.getSimpleName(),
-                proxyRepoSourceEntries::examine,
-                100);
-        proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
-        services.add(proxyRepoSourceEntriesExecutor);
-
-        if (proxyRepoFileScannerConfig.isEnabled()) {
-            // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.
-            final FrequencyExecutor proxyRepoFileScannerExecutor = new FrequencyExecutor(
-                    ProxyRepoFileScanner.class.getSimpleName(),
-                    proxyRepoFileScanner::scan,
-                    proxyRepoFileScannerConfig.getScanFrequency().toMillis());
-            services.add(proxyRepoFileScannerExecutor);
-        }
-
-        final FrequencyExecutor aggregatorExecutor = new FrequencyExecutor(
-                Aggregator.class.getSimpleName(),
-                aggregator::aggregate,
-                aggregatorConfig.getAggregationFrequency().toMillis());
-        services.add(aggregatorExecutor);
-
-        if (forwarderConfig.isForwardingEnabled() &&
-                forwarderConfig.getForwardDestinations() != null &&
-                forwarderConfig.getForwardDestinations().size() > 0) {
-            final ChangeListenerExecutor forwarderExecutor = new ChangeListenerExecutor(
-                    Forwarder.class.getSimpleName(),
-                    forwarder::forward,
+            // Add executor to open source files and scan entries
+            final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
+                    ProxyRepoSourceEntries.class.getSimpleName(),
+                    proxyRepoSourceEntries::examine,
                     100);
-            // Forward whenever we have new aggregates.
-            aggregator.addChangeListener(forwarderExecutor::onChange);
-            services.add(forwarderExecutor);
+            proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
+            services.add(proxyRepoSourceEntriesExecutor);
 
-            final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
-                    Cleanup.class.getSimpleName(),
-                    cleanup::cleanup,
-                    cleanupConfig.getCleanupFrequency().toMillis());
-            // Cleanup whenever we have forwarded data.
-            forwarder.addChangeListener(cleanupExecutor::onChange);
-            services.add(cleanupExecutor);
+            if (proxyRepoFileScannerConfig.isEnabled()) {
+                // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.
+                final FrequencyExecutor proxyRepoFileScannerExecutor = new FrequencyExecutor(
+                        ProxyRepoFileScanner.class.getSimpleName(),
+                        proxyRepoFileScanner::scan,
+                        proxyRepoFileScannerConfig.getScanFrequency().toMillis());
+                services.add(proxyRepoFileScannerExecutor);
+            }
+
+            if (forwarderConfig.isForwardingEnabled() &&
+                    forwarderConfig.getForwardDestinations() != null &&
+                    forwarderConfig.getForwardDestinations().size() > 0) {
+                final FrequencyExecutor aggregatorExecutor = new FrequencyExecutor(
+                        Aggregator.class.getSimpleName(),
+                        aggregator::aggregate,
+                        aggregatorConfig.getAggregationFrequency().toMillis());
+                services.add(aggregatorExecutor);
+
+                final ChangeListenerExecutor forwarderExecutor = new ChangeListenerExecutor(
+                        Forwarder.class.getSimpleName(),
+                        forwarder::forward,
+                        100);
+                // Forward whenever we have new aggregates.
+                aggregator.addChangeListener(forwarderExecutor::onChange);
+                services.add(forwarderExecutor);
+
+                final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
+                        Cleanup.class.getSimpleName(),
+                        cleanup::cleanup,
+                        cleanupConfig.getCleanupFrequency().toMillis());
+                // Cleanup whenever we have forwarded data.
+                forwarder.addChangeListener(cleanupExecutor::onChange);
+                services.add(cleanupExecutor);
+            }
         }
     }
 

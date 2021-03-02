@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
@@ -11,10 +12,10 @@ import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
-public class AggregatorConfig {
+public class AggregatorConfig extends AbstractConfig {
 
     private int maxItemsPerAggregate = 1000;
-    private StroomDuration maxAggregateAge = StroomDuration.of(Duration.ofMinutes(1));
+    private StroomDuration maxAggregateAge = StroomDuration.of(Duration.ofMinutes(10));
     private StroomDuration aggregationFrequency = StroomDuration.of(Duration.ofMinutes(1));
     private long maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString("1G");
 

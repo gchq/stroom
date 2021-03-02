@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ForwarderConfig {
 
-    private boolean isForwardingEnabled = false;
+    private boolean forwardingEnabled = false;
     private String userAgent;
     private List<ForwardDestinationConfig> forwardDestinations = new ArrayList<>();
     private StroomDuration forwardingFrequency = StroomDuration.of(Duration.ofSeconds(10));
@@ -22,12 +22,12 @@ public class ForwarderConfig {
      */
     @JsonProperty
     public boolean isForwardingEnabled() {
-        return isForwardingEnabled;
+        return forwardingEnabled;
     }
 
     @JsonProperty
     public void setForwardingEnabled(final boolean forwardingEnabled) {
-        isForwardingEnabled = forwardingEnabled;
+        this.forwardingEnabled = forwardingEnabled;
     }
 
     /**

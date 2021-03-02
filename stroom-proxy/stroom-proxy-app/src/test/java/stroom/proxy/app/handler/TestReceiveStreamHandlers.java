@@ -18,61 +18,87 @@ import stroom.util.io.FileUtil;
 import stroom.util.shared.BuildInfo;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+
+import java.io.UncheckedIOException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
-class TestProxyHandlerFactory extends StroomUnitTest {
+class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @Test
     void testStoreAndForward() {
         final ReceiveStreamHandlers streamHandlers =
-                getProxyHandlerFactory(true, true);
+                getProxyHandlerFactory(
+                        true,
+                        true,
+                        List.of("https://url1", "https://url2"));
         streamHandlers.handle(new AttributeMap(), handler ->
                 assertThat(handler instanceof ProxyRepositoryStreamHandler).as(
                         "Expecting a handler that stores").isTrue());
     }
 
     @Test
-    void testForward() {
-        final ReceiveStreamHandlers streamHandlers =
-                getProxyHandlerFactory(false, true);
-        streamHandlers.handle(new AttributeMap(), handler ->
-                assertThat(handler instanceof ForwardStreamHandler).as(
-                        "Expecting a handler that forward to other URLS").isTrue());
+    void testForwardOnlySingle() {
+        assertThatThrownBy(() -> {
+                    final ReceiveStreamHandlers streamHandlers =
+                            getProxyHandlerFactory(
+                                    false,
+                                    true,
+                                    List.of("https://url1"));
+                    streamHandlers.handle(new AttributeMap(), handler ->
+                            assertThat(handler instanceof ForwardStreamHandler).as(
+                                    "Expecting a handler that forward to other URLS").isTrue());
+                },
+                "Expected unreachable host exception")
+                .isInstanceOf(UncheckedIOException.class);
+    }
+
+    @Test
+    void testForwardOnlyMulti() {
+        assertThatThrownBy(() -> {
+                    final ReceiveStreamHandlers streamHandlers =
+                            getProxyHandlerFactory(
+                                    false,
+                                    true,
+                                    List.of("https://url1", "https://url2"));
+                    streamHandlers.handle(new AttributeMap(), handler ->
+                            assertThat(handler instanceof ForwardStreamHandler).as(
+                                    "Expecting a handler that forward to other URLS").isTrue());
+                },
+                "Expected error trying to forward to multiple destinations without storing.")
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void testStore() {
         final ReceiveStreamHandlers streamHandlers =
-                getProxyHandlerFactory(true, false);
+                getProxyHandlerFactory(
+                        true,
+                        false,
+                        List.of("https://url1", "https://url2"));
         streamHandlers.handle(new AttributeMap(), handler ->
                 assertThat(handler instanceof ProxyRepositoryStreamHandler).as(
                         "Expecting a handler that stores").isTrue());
     }
 
     private ReceiveStreamHandlers getProxyHandlerFactory(final boolean isStoringEnabled,
-                                                         final boolean isForwardingEnabled) {
+                                                         final boolean isForwardingEnabled,
+                                                         final List<String> forwardUrlList) {
         final LogStreamConfig logRequestConfig = new LogStreamConfig();
         final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         final ForwarderConfig forwarderConfig = new ForwarderConfig();
 
         proxyRepoConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
         proxyRepoConfig.setStoringEnabled(isStoringEnabled);
-
         forwarderConfig.setForwardingEnabled(isForwardingEnabled);
-        ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig();
-        destinationConfig1.setForwardUrl("https://url1");
 
-        ForwardDestinationConfig destinationConfig2 = new ForwardDestinationConfig();
-        destinationConfig2.setForwardUrl("https://url2");
-        forwarderConfig.getForwardDestinations().add(destinationConfig1);
-        forwarderConfig.getForwardDestinations().add(destinationConfig2);
+        for (final String url : forwardUrlList) {
+            ForwardDestinationConfig destinationConfig = new ForwardDestinationConfig();
+            destinationConfig.setForwardUrl(url);
+            forwarderConfig.getForwardDestinations().add(destinationConfig);
+        }
 
         final ProxyRepoSources proxyRepoSources = new ProxyRepoSources(null);
         final ProxyRepo proxyRepo = new ProxyRepo(

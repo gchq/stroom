@@ -1,6 +1,7 @@
 package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
+import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.impl.NewUiDictionaryResource2;
@@ -17,7 +18,6 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
-import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -45,6 +45,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
+import stroom.util.db.ForceCoreMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -52,7 +53,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
@@ -98,6 +98,7 @@ public class ProxyModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new DbModule());
         install(new ProxyRepoDbModule());
         install(new MockCollectionModule());
 
@@ -109,7 +110,6 @@ public class ProxyModule extends AbstractModule {
         install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
-        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
@@ -157,6 +157,10 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetService.class)
                 .addBinding(DictionaryStore.class);
+
+        // Not using all the DB modules so just bind to an empty anonymous class
+        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
+        });
     }
 
     @Provides

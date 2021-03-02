@@ -1,6 +1,5 @@
 package stroom.core.receive;
 
-import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
@@ -11,13 +10,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ReceiveDataConfig extends AbstractConfig {
 
-    /**
-     * Same size as JDK's Buffered Output Stream.
-     */
-    private static final int DEFAULT_BUFFER_SIZE = 8192;
-
     private String receiptPolicyUuid;
-    private int bufferSize = DEFAULT_BUFFER_SIZE;
     private String unknownClassification = "UNKNOWN CLASSIFICATION";
     private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
 
@@ -29,17 +22,6 @@ public class ReceiveDataConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setReceiptPolicyUuid(final String receiptPolicyUuid) {
         this.receiptPolicyUuid = receiptPolicyUuid;
-    }
-
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If set the default buffer size to use")
-    public int getBufferSize() {
-        return bufferSize;
-    }
-
-    @SuppressWarnings("unused")
-    public void setBufferSize(final int bufferSize) {
-        this.bufferSize = bufferSize;
     }
 
     @JsonPropertyDescription("The classification banner to display for data if one is not defined")
@@ -67,7 +49,6 @@ public class ReceiveDataConfig extends AbstractConfig {
     public String toString() {
         return "DataFeedConfig{" +
                 "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-                ", bufferSize=" + bufferSize +
                 ", unknownClassification='" + unknownClassification + '\'' +
                 ", feedNamePattern='" + feedNamePattern + '\'' +
                 '}';

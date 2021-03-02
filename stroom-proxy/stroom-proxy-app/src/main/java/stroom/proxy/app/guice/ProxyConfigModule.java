@@ -5,6 +5,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -32,7 +33,8 @@ public class ProxyConfigModule extends AbstractModule {
         bind(ProxyRepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepoFileScannerConfig.class).toInstance(proxyConfig.getProxyRepoFileScannerConfig());
         bind(AggregatorConfig.class).toInstance(proxyConfig.getAggregatorConfig());
-        bind(ForwarderConfig.class).toInstance(proxyConfig.getForwardStreamConfig());
+        bind(ForwarderConfig.class).toInstance(proxyConfig.getForwarderConfig());
+        bind(CleanupConfig.class).toInstance(proxyConfig.getCleanupConfig());
         bind(LogStreamConfig.class).toInstance(proxyConfig.getLogStreamConfig());
         bind(ContentSyncConfig.class).toInstance(proxyConfig.getContentSyncConfig());
         bind(FeedStatusConfig.class).toInstance(proxyConfig.getFeedStatusConfig());

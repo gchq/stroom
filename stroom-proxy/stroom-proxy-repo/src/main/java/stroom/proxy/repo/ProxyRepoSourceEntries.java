@@ -41,17 +41,14 @@ public class ProxyRepoSourceEntries {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepoSourceEntries.class);
 
     private final ProxyRepoDbConnProvider connProvider;
-    private final ErrorReceiver errorReceiver;
     private final Path repoDir;
 
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     public ProxyRepoSourceEntries(final ProxyRepoDbConnProvider connProvider,
-                                  final ErrorReceiver errorReceiver,
                                   final ProxyRepoConfig proxyRepoConfig) {
         this.connProvider = connProvider;
-        this.errorReceiver = errorReceiver;
         repoDir = Paths.get(proxyRepoConfig.getRepoDir());
     }
 
@@ -116,7 +113,7 @@ public class ProxyRepoSourceEntries {
 
                                 try (final InputStream metaStream = zipFile.getInputStream(entry)) {
                                     if (metaStream == null) {
-                                        errorReceiver.onError(fullPath, "Unable to find meta?");
+                                        LOGGER.error(fullPath + ": unable to find meta");
                                     } else {
                                         final AttributeMap attributeMap = new AttributeMap();
                                         AttributeMapUtil.read(metaStream, attributeMap);
@@ -124,8 +121,8 @@ public class ProxyRepoSourceEntries {
                                         typeName = attributeMap.get(StandardHeaderArguments.TYPE);
                                     }
                                 } catch (final RuntimeException e) {
-                                    errorReceiver.onError(fullPath, e.getMessage());
-                                    LOGGER.error(e.getMessage(), e);
+                                    LOGGER.error(fullPath + " " + e.getMessage());
+                                    LOGGER.debug(e.getMessage(), e);
                                 }
                             } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
                                 extensionType = 2;
@@ -164,7 +161,7 @@ public class ProxyRepoSourceEntries {
 
             } catch (final IOException | RuntimeException e) {
                 // Unable to open file ... must be bad.
-                errorReceiver.onError(fullPath, e.getMessage());
+                LOGGER.error(fullPath + " " + e.getMessage());
                 LOGGER.error(e.getMessage(), e);
             }
         });
@@ -172,7 +169,7 @@ public class ProxyRepoSourceEntries {
 
     private int addItem(final DSLContext context,
                         final int sourceId,
-                        final AtomicInteger itemMumber,
+                        final AtomicInteger itemNumber,
                         final String name,
                         final String feedName,
                         final String typeName) {
@@ -205,7 +202,7 @@ public class ProxyRepoSourceEntries {
                         SOURCE_ITEM.NAME,
                         SOURCE_ITEM.FEED_NAME,
                         SOURCE_ITEM.TYPE_NAME)
-                .values(sourceId, itemMumber.incrementAndGet(), name, feedName, typeName)
+                .values(sourceId, itemNumber.incrementAndGet(), name, feedName, typeName)
                 .returning(SOURCE_ITEM.ID)
                 .fetchOptional()
                 .map(SourceItemRecord::getId)

@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Type of {@link StreamHandler} that store the entries in the stream store.
@@ -67,7 +68,9 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamTargetStreamHandler.class);
 
-    private final byte[] buffer = new byte[4096];
+    private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+    private final Consumer<Long> progressHandler = (totalBytes) -> {
+    };
     private final Store store;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
@@ -103,7 +106,8 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
     @Override
-    public void addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
+        long bytesWritten;
         LOGGER.debug(() -> LogUtil.message("handleEntryStart() - {}", entry));
 
         StroomZipFileType stroomZipFileType = StroomZipFileType.DATA;
@@ -139,20 +143,32 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
             // Header we just buffer up
             currentHeaderByteArrayOutputStream.reset();
 
-            StreamUtil.streamToStream(inputStream, currentHeaderByteArrayOutputStream, buffer);
+            bytesWritten = StreamUtil.streamToStream(
+                    inputStream,
+                    currentHeaderByteArrayOutputStream,
+                    buffer,
+                    progressHandler);
 
         } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
             // Check to see if we need to move to the next output and do so if necessary.
             checkLayer(stroomZipFileType);
             try (final OutputStream currentOutputStream = currentOutputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                StreamUtil.streamToStream(inputStream, currentOutputStream, buffer);
+                bytesWritten = StreamUtil.streamToStream(
+                        inputStream,
+                        currentOutputStream,
+                        buffer,
+                        progressHandler);
             }
 
         } else {
             // Check to see if we need to move to the next output and do so if necessary.
             checkLayer(stroomZipFileType);
             try (final OutputStream currentOutputStream = currentOutputStreamProvider.get()) {
-                StreamUtil.streamToStream(inputStream, currentOutputStream, buffer);
+                bytesWritten = StreamUtil.streamToStream(
+                        inputStream,
+                        currentOutputStream,
+                        buffer,
+                        progressHandler);
             }
         }
 
@@ -207,6 +223,8 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
             lastCtxStroomZipEntry = currentStroomZipEntry;
         }
+
+        return bytesWritten;
     }
 
     /**

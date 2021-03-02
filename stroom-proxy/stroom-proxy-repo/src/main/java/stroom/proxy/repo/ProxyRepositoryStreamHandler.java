@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 
 /**
  * Factory to return back handlers for incoming and outgoing requests.
@@ -22,6 +23,8 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     private final AttributeMap attributeMap;
     private final StroomZipOutputStream stroomZipOutputStream;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+    private final Consumer<Long> progressHandler = (totalBytes) -> {
+    };
 
     private boolean doneOne = false;
 
@@ -32,11 +35,13 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     }
 
     @Override
-    public void addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
         doneOne = true;
+        long bytesWritten;
         try (final OutputStream outputStream = stroomZipOutputStream.addEntry(entry)) {
-            StreamUtil.streamToStream(inputStream, outputStream, buffer);
+            bytesWritten = StreamUtil.streamToStream(inputStream, outputStream, buffer, progressHandler);
         }
+        return bytesWritten;
     }
 
     void error() {

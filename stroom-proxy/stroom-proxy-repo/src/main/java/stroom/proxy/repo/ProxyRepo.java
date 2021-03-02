@@ -419,6 +419,7 @@ public class ProxyRepo {
     boolean deleteIfEmpty() {
         if (deleteEmptyDir(rootDir)) {
             LOGGER.debug("deleteIfEmpty() - Removed " + rootDir);
+            return true;
         }
 
         return false;

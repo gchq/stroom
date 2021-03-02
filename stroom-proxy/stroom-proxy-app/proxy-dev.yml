@@ -76,14 +76,36 @@ proxyConfig:
   proxyContentDir: "/tmp/stroom-proxy/config"
   useDefaultOpenIdCredentials: true
 
-# If you want to use a receipt policy then the RuleSet must exist
-# in Stroom and have the UUID as specified below in receiptPolicyUuid
+  # If you want to use a receipt policy then the RuleSet must exist
+  # in Stroom and have the UUID as specified below in receiptPolicyUuid
   proxyRequestConfig:
     receiptPolicyUuid:
-  feedStatus:
-    url: "https://localhost/api/feedStatus/v1"
-  forwardStreamConfig:
+
+  repository:
+    storingEnabled: true
+    repoDir: "/tmp/stroom-proxy/repo"
+    format: "${pathId}/${id}"
+#    db:
+    lockDeleteAge: 1h
+    dirCleanDelay: 10s
+
+  # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
+  # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
+  # the receipt of new data automatically triggers any required process.
+  scanner:
+    enabled: false
+    scanFrequency: 10s
+
+  # If we are storing data in a proxy repository we can aggregate it before forwarding.
+  aggregator:
+    maxItemsPerAggregate: 1000
+    maxAggregateAge: 10m
+    aggregationFrequency: 1m
+    maxUncompressedByteSize: "1G"
+
+  forwarder:
     forwardingEnabled: true
+    userAgent:
     forwardDestinations:
       - forwardUrl: "https://localhost/stroom/datafeeddirect"
         sslConfig:
@@ -93,15 +115,14 @@ proxyConfig:
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
       - forwardUrl: "http://localhost/stroom/datafeed"
-  proxyRepositoryConfig:
-    storingEnabled: true
-    repoDir: "/tmp/stroom-proxy/repo"
-    format: "${pathId}/${id}"
-    rollCron: "* * *"
-  proxyRepositoryReaderConfig:
-    readCron: "* * *"
+    forwardingFrequency: 10s
+
+  cleanup:
+    cleanupFrequency: 1h
+
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+
 #  contentSyncConfig:
 #    contentSyncEnabled: false
 #    upstreamUrl:
@@ -109,6 +130,10 @@ proxyConfig:
 #      Dictionary: "http://localhost/api/dictionary/v1"
 #    syncFrequency: 30000
 #    apiKey: ""
+
+  feedStatus:
+    url: "https://localhost/api/feedStatus/v1"
+
   jerseyClient:
     timeout: 500ms
     connectionTimeout: 500ms

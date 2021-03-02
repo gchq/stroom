@@ -33,7 +33,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
@@ -60,19 +59,16 @@ public class DataUploadTaskHandler {
     private final TaskContextFactory taskContextFactory;
     private final Store streamStore;
     private final SecurityContext securityContext;
-    private final BufferFactory bufferFactory;
     private final StreamTargetStreamHandlers streamHandlers;
 
     @Inject
     DataUploadTaskHandler(final TaskContextFactory taskContextFactory,
                           final Store streamStore,
                           final SecurityContext securityContext,
-                          final BufferFactory bufferFactory,
                           final StreamTargetStreamHandlers streamHandlers) {
         this.taskContextFactory = taskContextFactory;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
-        this.bufferFactory = bufferFactory;
         this.streamHandlers = streamHandlers;
     }
 
@@ -273,12 +269,11 @@ public class DataUploadTaskHandler {
 
     private void streamToStream(final InputStream inputStream,
                                 final OutputStream outputStream,
-                                final StreamProgressMonitor streamProgressMonitor) throws IOException {
-        final byte[] buffer = bufferFactory.create();
-        int len;
-        while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
-            outputStream.write(buffer, 0, len);
-            streamProgressMonitor.progress(len);
-        }
+                                final StreamProgressMonitor streamProgressMonitor) {
+        StreamUtil.streamToStream(
+                inputStream,
+                outputStream,
+                new byte[StreamUtil.BUFFER_SIZE],
+                streamProgressMonitor::progress);
     }
 }

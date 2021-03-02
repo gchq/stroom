@@ -10,8 +10,8 @@ import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +37,13 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ReceiveStreamHandlers receiveStreamHandlerProvider;
     private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
-    private final BufferFactory bufferFactory;
 
     @Inject
     public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
-                               final LogStream logStream,
-                               final BufferFactory bufferFactory) {
+                               final LogStream logStream) {
         this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
         this.logStream = logStream;
-        this.bufferFactory = bufferFactory;
         attributeMapFilter = attributeMapFilterFactory.create();
     }
 
@@ -95,7 +92,7 @@ public class ProxyRequestHandler implements RequestHandler {
 
                 } else {
                     // Just read the stream in and ignore it
-                    final byte[] buffer = bufferFactory.create();
+                    final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
                     while (inputStream.read(buffer) >= 0) {
                         // Ignore data.
                         if (LOGGER.isTraceEnabled()) {

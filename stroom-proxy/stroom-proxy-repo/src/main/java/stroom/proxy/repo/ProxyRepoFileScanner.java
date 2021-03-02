@@ -33,7 +33,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -50,6 +52,7 @@ public final class ProxyRepoFileScanner {
 
     private volatile long lastScanTimeMs = -1;
 
+    @Inject
     public ProxyRepoFileScanner(final TaskContextFactory taskContextFactory,
                                 final String proxyDir,
                                 final ProxyRepoSources proxyRepoSources) {
@@ -136,7 +139,15 @@ public final class ProxyRepoFileScanner {
                                     }
 
                                     final Path relativePath = repoPath.relativize(file);
-                                    proxyRepoSources.addSource(relativePath.toString(), lastModified);
+                                    final String relativePathString = relativePath.toString();
+
+                                    // See if we already know about this source.
+                                    final Optional<Integer> optionalSourceId =
+                                            proxyRepoSources.getSource(relativePathString);
+                                    if (optionalSourceId.isEmpty()) {
+                                        // This is an unrecorded source so add it.
+                                        proxyRepoSources.addSource(relativePathString, lastModified);
+                                    }
                                 }
                             }
 

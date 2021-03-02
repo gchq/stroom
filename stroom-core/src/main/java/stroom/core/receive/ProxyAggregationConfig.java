@@ -1,11 +1,8 @@
 package stroom.core.receive;
 
-import stroom.data.zip.BufferSizeUtil;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ModelStringUtil;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -27,15 +24,6 @@ public class ProxyAggregationConfig extends AbstractConfig {
 
     public void setProxyDir(final String proxyDir) {
         this.proxyDir = proxyDir;
-    }
-
-    @JsonPropertyDescription("The amount of memory to use for buffering reads/writes")
-    public int getBuffferSize() {
-        return BufferSizeUtil.get();
-    }
-
-    public void setBuffferSize(final int buffferSize) {
-        BufferSizeUtil.setValue(buffferSize);
     }
 
     @JsonPropertyDescription("Number of threads used in aggregation")

@@ -34,7 +34,6 @@ import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
@@ -65,8 +64,6 @@ public class DataDownloadTaskHandler {
     private final Store streamStore;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final BufferFactory bufferFactory;
-
     private final AtomicLong fileCount = new AtomicLong(0);
     private String lastPossibleFileName;
 
@@ -74,13 +71,11 @@ public class DataDownloadTaskHandler {
     public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
                                    final Store streamStore,
                                    final MetaService metaService,
-                                   final SecurityContext securityContext,
-                                   final BufferFactory bufferFactory) {
+                                   final SecurityContext securityContext) {
         this.taskContextFactory = taskContextFactory;
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.bufferFactory = bufferFactory;
     }
 
     public DataDownloadResult downloadData(final FindMetaCriteria criteria,
@@ -255,12 +250,7 @@ public class DataDownloadTaskHandler {
         if (inputStream != null) {
             final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
             try (final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName())) {
-                final byte[] buffer = bufferFactory.create();
-
-                int len;
-                while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
-                    outputStream.write(buffer, 0, len);
-                }
+                StreamUtil.streamToStream(inputStream, outputStream);
             }
         }
     }

@@ -18,7 +18,6 @@ package stroom.core.receive;
 
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RequestHandler;
-import stroom.util.io.BufferFactory;
 
 import com.google.inject.AbstractModule;
 
@@ -26,7 +25,6 @@ public class ReceiveDataModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
     }

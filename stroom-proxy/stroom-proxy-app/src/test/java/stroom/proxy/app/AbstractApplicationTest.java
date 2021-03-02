@@ -32,7 +32,7 @@ public abstract class AbstractApplicationTest {
 
         // The key/trust store paths will not be available in travis so null them out
         config.getProxyConfig()
-                .getForwardStreamConfig()
+                .getForwarderConfig()
                 .getForwardDestinations()
                 .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
 

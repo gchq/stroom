@@ -144,15 +144,13 @@ public class StroomStreamProcessor {
                 // Read an initial buffer full so we can see if there is any un-compressed data
                 // Some apps that roll log files may create a gziped rolled log from an empty live log
                 bufferedInputStream.mark(1);
-                final int len = bufferedInputStream.read(new byte[1]);
-                bufferedInputStream.reset();
-
-                if (len == -1) {
+                if (bufferedInputStream.read() == -1) {
                     LOGGER.warn("process() - Skipping Zero Content in GZIP stream" + globalAttributeMap);
                 } else {
-                    long totalRead = 0;
+                    bufferedInputStream.reset();
 
-                    handler.addEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName(), bufferedInputStream);
+                    final long totalRead = handler
+                            .addEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName(), bufferedInputStream);
 
                     final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                     entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));

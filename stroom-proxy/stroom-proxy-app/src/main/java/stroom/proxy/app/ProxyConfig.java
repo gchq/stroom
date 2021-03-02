@@ -4,6 +4,7 @@ import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
@@ -22,6 +23,7 @@ public class ProxyConfig {
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
     private ForwarderConfig forwarderConfig = new ForwarderConfig();
+    private CleanupConfig cleanupConfig = new CleanupConfig();
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
@@ -40,7 +42,7 @@ public class ProxyConfig {
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
     }
 
-    @JsonProperty("request")
+    @JsonProperty("proxyRequestConfig")
     public ProxyRequestConfig getProxyRequestConfig() {
         return proxyRequestConfig;
     }
@@ -79,13 +81,22 @@ public class ProxyConfig {
     }
 
     @JsonProperty("forwarder")
-    public ForwarderConfig getForwardStreamConfig() {
+    public ForwarderConfig getForwarderConfig() {
         return forwarderConfig;
     }
 
     @JsonProperty
-    public void setForwardStreamConfig(final ForwarderConfig forwarderConfig) {
+    public void setForwarderConfig(final ForwarderConfig forwarderConfig) {
         this.forwarderConfig = forwarderConfig;
+    }
+
+    @JsonProperty("cleanup")
+    public CleanupConfig getCleanupConfig() {
+        return cleanupConfig;
+    }
+
+    public void setCleanupConfig(final CleanupConfig cleanupConfig) {
+        this.cleanupConfig = cleanupConfig;
     }
 
     @JsonProperty

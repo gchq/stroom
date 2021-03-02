@@ -5,10 +5,13 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,10 +20,10 @@ import java.time.temporal.TemporalUnit;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyRepoConfig implements HasDbConfig {
+public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
 
     private boolean isStoringEnabled = false;
-    private String repoDir;
+    private static String repoDir;
     private String format = "${pathId}/${id}";
     private DbConfig dbConfig;
     private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
@@ -95,7 +98,7 @@ public class ProxyRepoConfig implements HasDbConfig {
         if (dbConfig == null) {
             Path path;
             if (repoDir == null) {
-                path = Paths.get("");
+                throw new RuntimeException("No proxy repository dir has been defined");
             } else {
                 path = Paths.get(repoDir);
             }

@@ -55,7 +55,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
         streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
         final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
-        final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
+        final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream);
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
                 streamProgressMonitor);
         zipOutputStream = new ZipOutputStream(progressOutputStream);

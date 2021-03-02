@@ -256,6 +256,7 @@ public class Aggregator {
     }
 
     public interface ChangeListener {
+
         void onChange();
     }
 
