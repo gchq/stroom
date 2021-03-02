@@ -16,17 +16,16 @@
 
 package stroom.event.logging.rs.impl;
 
-import stroom.docref.DocRef;
+import stroom.docref.HasName;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.FetchWithIntegerId;
+import stroom.util.shared.FetchWithLongId;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasName;
-import stroom.util.shared.HasType;
-import stroom.util.shared.HasUuid;
-import stroom.util.shared.ReadWithDocRef;
-import stroom.util.shared.ReadWithIntegerId;
-import stroom.util.shared.ReadWithLongId;
 
 import java.util.Map.Entry;
 import java.util.Set;
@@ -84,44 +83,43 @@ class RequestInfo {
             //TODO execute as processing user to maximise chance of logging the correct object
             try {
 
-                if (resource instanceof ReadWithIntegerId<?>) {
-                    ReadWithIntegerId<?> integerReadSupportingResource = (ReadWithIntegerId<?>) resource;
+                if (resource instanceof FetchWithIntegerId<?>) {
+                    FetchWithIntegerId<?> integerReadSupportingResource = (FetchWithIntegerId<?>) resource;
                     if (template instanceof HasIntegerId) {
-                        result = integerReadSupportingResource.read(((HasIntegerId) template).getId());
+                        result = integerReadSupportingResource.fetch(((HasIntegerId) template).getId());
                     } else if (template instanceof HasId) {
                         HasId hasId = (HasId) template;
                         if (hasId.getId() > Integer.MAX_VALUE) {
                             RestResourceAutoLoggerImpl.LOGGER.error("ID out of range for int in request of type " +
                                     template.getClass().getSimpleName());
                         } else {
-                            result = integerReadSupportingResource.read((int) ((HasId) template).getId());
+                            result = integerReadSupportingResource.fetch((int) ((HasId) template).getId());
                         }
                     } else {
                         RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
                                 template.getClass().getSimpleName());
                     }
-                } else if (resource instanceof ReadWithLongId<?>) {
-                    ReadWithLongId<?> integerReadSupportingResource = (ReadWithLongId<?>) resource;
+                } else if (resource instanceof FetchWithLongId<?>) {
+                    FetchWithLongId<?> integerReadSupportingResource = (FetchWithLongId<?>) resource;
                     if (template instanceof HasIntegerId) {
-                        result = integerReadSupportingResource.read(((HasIntegerId) template).getId().longValue());
+                        result = integerReadSupportingResource.fetch(((HasIntegerId) template).getId().longValue());
                     } else if (template instanceof HasId) {
                         HasId hasId = (HasId) template;
                         if (hasId.getId() > Integer.MAX_VALUE) {
                             RestResourceAutoLoggerImpl.LOGGER.error("ID out of range for int in request of type " +
                                     template.getClass().getSimpleName());
                         } else {
-                            result = integerReadSupportingResource.read(((HasId) template).getId());
+                            result = integerReadSupportingResource.fetch(((HasId) template).getId());
                         }
                     } else {
                         RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
                                 template.getClass().getSimpleName());
                     }
-                } else if (resource instanceof ReadWithDocRef<?>) {
-                    ReadWithDocRef<?> docrefReadSupportingResource = (ReadWithDocRef<?>) resource;
+                } else if (resource instanceof FetchWithUuid<?>) {
+                    FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
                     if (template instanceof HasUuid && template instanceof HasType) {
-                        String type = ((HasType) template).getType();
                         String uuid = ((HasUuid) template).getUuid();
-                        result = docrefReadSupportingResource.read(new DocRef(type, uuid));
+                        result = docrefReadSupportingResource.fetch(uuid);
                     } else {
                         RestResourceAutoLoggerImpl.LOGGER.error(
                                 "Unable to extract uuid and type from request of type " +

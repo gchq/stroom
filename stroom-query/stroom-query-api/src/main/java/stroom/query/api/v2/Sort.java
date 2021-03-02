@@ -23,26 +23,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"order", "direction"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "Describes the sorting applied to a field")
+@Schema(description = "Describes the sorting applied to a field")
 public final class Sort {
 
-    @ApiModelProperty(
-            value = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
-                    "field to sort on",
+    @Schema(description = "Where multiple fields are sorted this value describes the sort order, with 0 being the " +
+            "first field to sort on",
             example = "0",
             required = true)
     @JsonProperty
     private final Integer order;
 
-    @ApiModelProperty(
-            value = "The direction to sort in, ASCENDING or DESCENDING",
+    @Schema(description = "The direction to sort in, ASCENDING or DESCENDING",
             example = "ASCENDING",
             required = true)
     @JsonProperty

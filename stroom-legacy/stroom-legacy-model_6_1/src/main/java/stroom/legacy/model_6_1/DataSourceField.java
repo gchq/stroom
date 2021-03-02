@@ -16,53 +16,49 @@
 
 package stroom.legacy.model_6_1;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import stroom.legacy.model_6_1.ExpressionTerm.Condition;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "docRefType", "name", "queryable", "conditions"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The definition of a field within a data source")
+@Schema(description = "The definition of a field within a data source")
 @Deprecated
 public final class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The data type for the field",
+    @Schema(description = "The data type for the field",
             required = true)
     private DataSourceFieldType type;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The doc ref type for the field",
+    @Schema(description = "The doc ref type for the field",
             required = true)
     private String docRefType;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The name of the field",
+    @Schema(description = "The name of the field",
             example = "field1",
             required = true)
     private String name;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Whether the field can be used in predicate in a query",
+    @Schema(description = "Whether the field can be used in predicate in a query",
             example = "true",
             required = true)
     private Boolean queryable;
@@ -74,8 +70,7 @@ public final class DataSourceField implements Serializable, HasDisplayValue {
      */
     @XmlElementWrapper(name = "conditions")
     @XmlElement(name = "condition")
-    @ApiModelProperty(
-            value = "The supported predicate conditions for this field",
+    @Schema(description = "The supported predicate conditions for this field",
             required = true)
     private List<Condition> conditions;
 

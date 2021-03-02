@@ -18,15 +18,19 @@ package stroom.feed.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
+import stroom.util.shared.EntityServiceException;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class FeedResourceImpl implements FeedResource {
 
     private static final List<String> SUPPORTED_ENCODINGS;
@@ -46,24 +50,34 @@ class FeedResourceImpl implements FeedResource {
         SUPPORTED_ENCODINGS = list;
     }
 
-    private final FeedStore feedStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<FeedStore> feedStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    FeedResourceImpl(final FeedStore feedStore,
-                     final DocumentResourceHelper documentResourceHelper) {
-        this.feedStore = feedStore;
-        this.documentResourceHelper = documentResourceHelper;
+    FeedResourceImpl(final Provider<FeedStore> feedStoreProvider,
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.feedStoreProvider = feedStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
-    public FeedDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(feedStore, docRef);
+    public FeedDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(feedStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public FeedDoc update(final FeedDoc doc) {
-        return documentResourceHelper.update(feedStore, doc);
+    public FeedDoc update(final String uuid, final FeedDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(feedStoreProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(FeedDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

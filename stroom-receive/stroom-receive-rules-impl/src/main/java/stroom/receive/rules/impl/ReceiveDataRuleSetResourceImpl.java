@@ -25,6 +25,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.shared.EntityServiceException;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -45,13 +46,23 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
-    public ReceiveDataRules read(final DocRef docRef) {
-        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), docRef);
+    public ReceiveDataRules fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public ReceiveDataRules update(final ReceiveDataRules doc) {
+    public ReceiveDataRules update(final String uuid, final ReceiveDataRules doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelperProvider.get().update(ruleSetServiceProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(ReceiveDataRules.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

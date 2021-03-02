@@ -21,76 +21,44 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.statistics.impl.sql.StatisticsQueryService;
-import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Sql Statistics Query")
+@Tag(name = "Sql Statistics Query")
 @Path("/sqlstatistics" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class SqlStatisticsQueryResource implements RestResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
-
-    private final Provider<StatisticsQueryService> statisticsQueryServiceProvider;
-
-    @Inject
-    public SqlStatisticsQueryResource(final Provider<StatisticsQueryService> statisticsQueryServiceProvider) {
-        this.statisticsQueryServiceProvider = statisticsQueryServiceProvider;
-    }
+public interface SqlStatisticsQueryResource extends RestResource {
 
     @POST
     @Path("/dataSource")
-    @Timed
-    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
-    public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
-
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(docRef);
-            LOGGER.debug("/dataSource called with docRef:\n{}", json);
-        }
-        return statisticsQueryServiceProvider.get().getDataSource(docRef);
-    }
+    @Operation(
+            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            operationId = "getSqlStatisticsDataSource")
+    DataSource getDataSource(@Parameter(description = "DocRef", required = true) DocRef docRef);
 
     @POST
     @Path("/search")
-    @Timed
-    @ApiOperation("Submit a search request")
-    public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(request);
-            LOGGER.debug("/search called with searchRequest:\n{}", json);
-        }
-
-        return statisticsQueryServiceProvider.get().search(request);
-    }
+    @Operation(
+            summary = "Submit a search request",
+            operationId = "searchSqlStatistics")
+    SearchResponse search(
+            @Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
     @Path("/destroy")
-    @Timed
-    @ApiOperation("Destroy a running query")
-    public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
-            LOGGER.debug("/destroy called with queryKey:\n{}", json);
-        }
-        return statisticsQueryServiceProvider.get().destroy(queryKey);
-    }
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "destroySqlStatisticsSearch")
+    Boolean destroy(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 }

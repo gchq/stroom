@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -45,7 +44,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
+@Schema(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
@@ -53,8 +52,7 @@ public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Whether this item in the expression tree is enabled or not",
+    @Schema(description = "Whether this item in the expression tree is enabled or not",
             example = "true")
     @JsonProperty(value = "enabled")
     private Boolean enabled; // TODO : XML serilisation still requires no-arg constructor and mutable fields

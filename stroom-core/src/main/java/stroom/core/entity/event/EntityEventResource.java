@@ -20,9 +20,9 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
@@ -31,7 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Entity Events")
+@Tag(name = "Entity Events")
 @Path(EntityEventResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,7 +42,9 @@ public interface EntityEventResource extends RestResource {
 
     @PUT
     @Path(NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Sends an entity event")
+    @Operation(
+            summary = "Sends an entity event",
+            operationId = "fireEntityEvent")
     Boolean fireEvent(@PathParam("nodeName") String nodeName,
-                      @ApiParam("entityevent") EntityEvent entityEvent);
+                      @Parameter(description = "entityevent", required = true) EntityEvent entityEvent);
 }

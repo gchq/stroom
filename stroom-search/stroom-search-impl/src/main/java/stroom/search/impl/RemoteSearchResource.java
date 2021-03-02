@@ -19,9 +19,8 @@ package stroom.search.impl;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,7 +31,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(tags = "Remote Search")
+@Tag(name = "Remote Search")
 @Path(RemoteSearchResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,19 +44,23 @@ public interface RemoteSearchResource extends RestResource {
 
     @POST
     @Path(START_PATH_PART)
-    @Timed
-    @ApiOperation("Start a search")
+    @Operation(
+            summary = "Start a search",
+            operationId = "startRemoteSearch")
     Boolean start(ClusterSearchTask clusterSearchTask);
 
     @GET
     @Path(POLL_PATH_PART)
     @Produces("application/octet-stream")
-    @ApiOperation("Poll the server for search results for the supplied queryKey")
+    @Operation(
+            summary = "Poll the server for search results for the supplied queryKey",
+            operationId = "pollRemoteSearch")
     StreamingOutput poll(@QueryParam("queryKey") String queryKey);
 
     @GET
     @Path(DESTROY_PATH_PART)
-    @Timed
-    @ApiOperation("Destroy search results")
+    @Operation(
+            summary = "Destroy search results",
+            operationId = "destroyRemoteSearch")
     Boolean destroy(@QueryParam("queryKey") String queryKey);
 }

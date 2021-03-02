@@ -23,28 +23,27 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
+@Schema(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
 public final class Field implements HasDisplayValue {
 
-    @ApiModelProperty(value = "The internal id of the field for equality purposes")
+    @JsonPropertyDescription("The internal id of the field for equality purposes")
     @JsonProperty
     private final String id;
 
-    @ApiModelProperty(value = "The name of the field for display purposes")
+    @JsonPropertyDescription("The name of the field for display purposes")
     @JsonProperty
     private final String name;
 
-    @ApiModelProperty(
-            value = "The expression to use to generate the value for this field",
+    @Schema(description = "The expression to use to generate the value for this field",
             required = true,
             example = "SUM(${count})")
     @JsonProperty
@@ -59,25 +58,21 @@ public final class Field implements HasDisplayValue {
     @JsonProperty
     private final Format format;
 
-    @ApiModelProperty(
-            value = "If this field is to be grouped then this defines the level of grouping, with 0 being the top " +
-                    "level of grouping, 1 being the next level down, etc.")
+    @JsonPropertyDescription("If this field is to be grouped then this defines the level of grouping, with 0 being " +
+            "the top level of grouping, 1 being the next level down, etc.")
     @JsonProperty
     private final Integer group;
 
     // Settings for visible table only.
-    @ApiModelProperty(
-            value = "IGNORE: UI use only",
+    @Schema(description = "IGNORE: UI use only",
             hidden = true)
     @JsonProperty
     private final Integer width;
-    @ApiModelProperty(
-            value = "IGNORE: UI use only",
+    @Schema(description = "IGNORE: UI use only",
             hidden = true)
     @JsonProperty
     private final Boolean visible;
-    @ApiModelProperty(
-            value = "IGNORE: UI use only",
+    @Schema(description = "IGNORE: UI use only",
             hidden = true)
     @JsonProperty
     private final Boolean special;

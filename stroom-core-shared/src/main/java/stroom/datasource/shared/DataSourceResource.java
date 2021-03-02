@@ -21,9 +21,9 @@ import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Data Sources")
+@Tag(name = "Data Sources")
 @Path("/dataSource" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,6 +41,8 @@ public interface DataSourceResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchFields")
-    @ApiOperation(value = "Fetch data source fields")
-    List<AbstractField> fetchFields(@ApiParam("dataSourceRef") DocRef dataSourceRef);
+    @Operation(
+            summary = "Fetch data source fields",
+            operationId = "fetchDataSourceFields")
+    List<AbstractField> fetchFields(@Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 }

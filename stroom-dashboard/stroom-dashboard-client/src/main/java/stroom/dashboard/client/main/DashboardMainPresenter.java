@@ -111,7 +111,7 @@ public class DashboardMainPresenter
                     .onSuccess(this::onLoadSuccess)
                     .onFailure(this::onLoadFailure)
                     .call(DASHBOARD_RESOURCE)
-                    .read(docRef);
+                    .fetch(docRef.getUuid());
         }
     }
 

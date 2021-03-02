@@ -68,7 +68,7 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SOLR_INDEX_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SOLR_INDEX_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

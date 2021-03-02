@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.node.api.NodeCallUtil;
@@ -12,52 +13,55 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+@AutoLogged
 class IndexVolumeResourceImpl implements IndexVolumeResource {
-    private final IndexVolumeService indexVolumeService;
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
+
+    private final Provider<IndexVolumeService> indexVolumeServiceProvider;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<WebTargetFactory> webTargetFactoryProvider;
 
     @Inject
-    public IndexVolumeResourceImpl(final IndexVolumeService indexVolumeService,
-                                   final NodeService nodeService,
-                                   final NodeInfo nodeInfo,
-                                   final WebTargetFactory webTargetFactory) {
-        this.indexVolumeService = indexVolumeService;
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
+    public IndexVolumeResourceImpl(final Provider<IndexVolumeService> indexVolumeServiceProvider,
+                                   final Provider<NodeService> nodeServiceProvider,
+                                   final Provider<NodeInfo> nodeInfoProvider,
+                                   final Provider<WebTargetFactory> webTargetFactoryProvider) {
+        this.indexVolumeServiceProvider = indexVolumeServiceProvider;
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.webTargetFactoryProvider = webTargetFactoryProvider;
     }
 
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
-        return indexVolumeService.find(criteria);
+        return indexVolumeServiceProvider.get().find(criteria);
     }
 
     @Override
     public IndexVolume create(final IndexVolume indexVolume) {
-        return indexVolumeService.create(indexVolume);
+        return indexVolumeServiceProvider.get().create(indexVolume);
     }
 
     @Override
-    public IndexVolume read(final Integer id) {
-        return indexVolumeService.read(id);
+    public IndexVolume fetch(final Integer id) {
+        return indexVolumeServiceProvider.get().read(id);
     }
 
     @Override
     public IndexVolume update(final Integer id, final IndexVolume indexVolume) {
-        return indexVolumeService.update(indexVolume);
+        return indexVolumeServiceProvider.get().update(indexVolume);
     }
 
     @Override
     public Boolean delete(final Integer id) {
-        return indexVolumeService.delete(id);
+        return indexVolumeServiceProvider.get().delete(id);
     }
 
     @Override
@@ -65,16 +69,17 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         // If this is the node that was contacted then just resolve it locally
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            indexVolumeService.rescan();
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            indexVolumeServiceProvider.get().rescan();
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
+                    nodeServiceProvider.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     IndexVolumeResource.BASE_PATH,
                     IndexVolumeResource.RESCAN_SUB_PATH);
             try {
                 // A different node to make a rest call to the required node
-                final Response response = webTargetFactory
+                final Response response = webTargetFactoryProvider.get()
                         .create(url)
                         .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)

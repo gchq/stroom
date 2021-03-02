@@ -36,7 +36,7 @@ export const useTokenManager = (): UseTokenManager => {
 
   const search = useCallback(() => {
     exec(
-      (api) => api.token.search(request),
+      (api) => api.token.searchTokens(request),
       (response) => {
         if (response) {
           setResultPage(response);
@@ -48,7 +48,7 @@ export const useTokenManager = (): UseTokenManager => {
   const remove = useCallback(
     (userId: number) => {
       exec(
-        (api) => api.token.delete(userId),
+        (api) => api.token.deleteToken(userId),
         () => search(),
       );
     },

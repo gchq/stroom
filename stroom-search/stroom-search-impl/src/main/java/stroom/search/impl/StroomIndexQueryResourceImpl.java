@@ -36,7 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -94,8 +94,9 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
                 }).get();
     }
 
-    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request,
-                                             final SearchResponse searchResponse) {
+    private String getResponseInfoForLogging(
+            @Parameter(description = "SearchRequest", required = true) final SearchRequest request,
+            final SearchResponse searchResponse) {
         String resultInfo;
 
         if (searchResponse.getResults() != null) {

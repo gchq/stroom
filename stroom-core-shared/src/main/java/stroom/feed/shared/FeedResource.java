@@ -16,42 +16,49 @@
 
 package stroom.feed.shared;
 
-import stroom.docref.DocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Feeds")
+@Tag(name = "Feeds")
 @Path("/feed" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface FeedResource extends RestResource, DirectRestService {
+public interface FeedResource extends RestResource, DirectRestService, FetchWithUuid<FeedDoc> {
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a feed doc")
-    FeedDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch a feed doc by its UUID",
+            operationId = "fetchFeed")
+    FeedDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
-    @ApiOperation("Update a feed doc")
-    FeedDoc update(@ApiParam("xslt") FeedDoc xslt);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a feed doc",
+            operationId = "updateFeed")
+    FeedDoc update(@PathParam("uuid") String uuid,
+                   @Parameter(description = "doc", required = true) FeedDoc doc);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @ApiOperation("Fetch supported encodings")
+    @Operation(
+            summary = "Fetch supported encodings",
+            operationId = "fetchSupportedEncodings")
     List<String> fetchSupportedEncodings();
 }

@@ -19,9 +19,9 @@ package stroom.processor.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Processor Filters")
+@Tag(name = "Processor Filters")
 @Path("/processorFilter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,41 +43,60 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @POST
     @Path("find")
-    @ApiOperation("Finds processors and filters matching request")
-    ProcessorListRowResultPage find(@ApiParam("request") FetchProcessorRequest request);
+    @Operation(
+            summary = "Finds processors and filters matching request",
+            operationId = "findProcessorFilters")
+    ProcessorListRowResultPage find(
+            @Parameter(description = "request", required = true) FetchProcessorRequest request);
 
     @POST
-    @ApiOperation("Creates a filter")
-    ProcessorFilter create(@ApiParam("request") CreateProcessFilterRequest request);
+    @Operation(
+            summary = "Creates a filter",
+            operationId = "createProcessorFilter")
+    ProcessorFilter create(
+            @Parameter(description = "request", required = true) CreateProcessFilterRequest request);
 
 
     @POST
     @Path("/reprocess")
-    @ApiOperation("Create filters to reprocess data")
-    List<ReprocessDataInfo> reprocess(@ApiParam("criteria") CreateReprocessFilterRequest request);
+    @Operation(
+            summary = "Create filters to reprocess data",
+            operationId = "reprocessData")
+    List<ReprocessDataInfo> reprocess(
+            @Parameter(description = "criteria", required = true) CreateReprocessFilterRequest request);
 
     @GET
     @Path("/{id}")
-    @ApiOperation("Gets a filter")
-    ProcessorFilter read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch a filter",
+            operationId = "fetchProcessorFilter")
+    ProcessorFilter fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation("Updates a filter")
+    @Operation(
+            summary = "Updates a filter",
+            operationId = "updateProcessorFilter")
     ProcessorFilter update(@PathParam("id") Integer id, ProcessorFilter processorFilter);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation("Deletes a filter")
+    @Operation(
+            summary = "Deletes a filter",
+            operationId = "deleteProcessorFilter")
     void delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/priority")
-    @ApiOperation(value = "Sets the priority for a filter")
+    @Operation(
+            summary = "Sets the priority for a filter",
+            operationId = "setProcessorFilterPriority")
     void setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
     @Path("/{id}/enabled")
-    @ApiOperation(value = "Sets the enabled/disabled state for a filter")
+    @Operation(
+            summary = "Sets the enabled/disabled state for a filter",
+            operationId = "setProcessorFilterEnabled")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

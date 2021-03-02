@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -48,13 +49,23 @@ class SolrIndexResourceImpl implements SolrIndexResource {
     }
 
     @Override
-    public SolrIndexDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(solrIndexStore, docRef);
+    public SolrIndexDoc fetch(final String uuid) {
+        return documentResourceHelper.read(solrIndexStore, getDocRef(uuid));
     }
 
     @Override
-    public SolrIndexDoc update(final SolrIndexDoc doc) {
+    public SolrIndexDoc update(final String uuid, final SolrIndexDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
         return documentResourceHelper.update(solrIndexStore, doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(SolrIndexDoc.DOCUMENT_TYPE)
+                .build();
     }
 
     @Override

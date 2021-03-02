@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Common to all Stroom management scripts
+# Common to all Stroom (Proxy) management scripts
 
 # Exit script on any error
 set -e
@@ -45,15 +45,23 @@ ask_about_logs() {
 }
 
 ensure_file_exists() {
-  local log_file="$1"
-  if [ ! -f "${log_file}" ]; then
-    info "Creating empty file ${BLUE}${log_file}${NC}"
+  local file_path="$1"
+  if [ ! -f "${file_path}" ]; then
+    info "Creating empty file ${BLUE}${file_path}${NC}"
     # File doesn't exists so ensure the dir and file both exist
     local dir
     # get dir part by removing everything before last slash
-    dir="${log_file%/*}"
+    dir="${file_path%/*}"
     mkdir -p "${dir}"
-    touch "${log_file}" 
+    touch "${file_path}" 
+  fi
+}
+
+ensure_dir_exists() {
+  local dir_path="$1"
+  if [ ! -d "${dir_path}" ]; then
+    info "Creating directory ${BLUE}${dir_path}${NC}"
+    mkdir -p "${dir_path}"
   fi
 }
 
@@ -108,33 +116,19 @@ info() {
 #}
 
 check_is_configured() {
-  if [ ! -e "${PATH_TO_CONFIG}" ]; then
-    error "Config file ${PATH_TO_CONFIG} does not exist${NC}"
+  local path_to_config="${1}"
+  if [ ! -f "${path_to_config}" ]; then
+    error "Config file ${path_to_config} does not exist${NC}"
     exit 1
   fi
 
   local IP_ADDRESS_TAG="IP_ADDRESS"
-  if grep -q "${IP_ADDRESS_TAG}" "${PATH_TO_CONFIG}"; then
+  if grep -q "${IP_ADDRESS_TAG}" "${path_to_config}"; then
     echo 
     error "It looks like you haven't configured IP addresses in" \
-      "${BLUE}${PATH_TO_CONFIG}${NC}.\nYou need to replace all instances" \
-      "of ${BLUE}IP_ADDRESS${NC} before Stroom can start."
+      "${BLUE}${path_to_config}${NC}.\nYou need to replace all instances" \
+      "of ${BLUE}IP_ADDRESS${NC} before ${APP_NAME} can start."
     exit 1
-  fi
-}
-
-check_start_is_not_erroring() {
-  # Check for a configuration parsing error
-  local LOG_ERROR_PATTERN="io.dropwizard.configuration.ConfigurationParsingException"
-  local SCRIPT_LOG_LOCATION="logs/start.sh.log"
-
-  if [ -f "${SCRIPT_LOG_LOCATION}" ]; then
-    if grep -q "${LOG_ERROR_PATTERN}" "${SCRIPT_LOG_LOCATION}"; then
-      echo -e
-      error "It looks like you have a problem with something in ${BLUE}config/config.yml${NC}.\n" \
-        "Look in ${BLUE}logs/start.sh.log${NC} for the details.${NC}"
-      exit 1
-    fi
   fi
 }
 
@@ -143,7 +137,8 @@ determine_host_address() {
     # Code required to find IP address is different in MacOS
     ip=$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk 'NR==1{print $2}')
   else
-    ip=$(ip route get 1 |awk 'match($0,"src [0-9\\.]+") {print substr($0,RSTART+4,RLENGTH-4)}')
+    ip=$(ip route get 1 \
+      | awk 'match($0,"src [0-9\\.]+") {print substr($0,RSTART+4,RLENGTH-4)}')
   fi
 
   if [[ ! "${ip}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then

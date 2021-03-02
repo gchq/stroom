@@ -4,7 +4,6 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
-import stroom.dictionary.impl.NewUiDictionaryResource2;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -32,7 +31,7 @@ import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoDbModule;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
-import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
@@ -125,7 +124,7 @@ public class ProxyModule extends AbstractModule {
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(FeedStatusResource.class)
+                .bind(FeedStatusResourceImpl.class)
                 .bind(ForwarderDestinationsImpl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
@@ -142,9 +141,8 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUiDictionaryResource2.class)
                 .bind(ReceiveDataRuleSetResourceImpl.class)
-                .bind(FeedStatusResource.class);
+                .bind(FeedStatusResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

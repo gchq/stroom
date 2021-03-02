@@ -5,7 +5,6 @@ import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
-import stroom.util.rest.RestUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.Response;
 
 @SuppressWarnings("unused")
 public class SessionResourceImpl implements SessionResource {
@@ -36,7 +34,7 @@ public class SessionResourceImpl implements SessionResource {
     }
 
     @Override
-    public LoginResponse login(final HttpServletRequest request, final String referrer) {
+    public SessionLoginResponse login(final HttpServletRequest request, final String referrer) {
         String redirectUri = null;
         try {
             LOGGER.info("Logging in session for '{}'", referrer);
@@ -55,7 +53,7 @@ public class SessionResourceImpl implements SessionResource {
                 redirectUri = OpenId.removeReservedParams(referrer);
             }
 
-            return new LoginResponse(userIdentity.isPresent(), redirectUri);
+            return new SessionLoginResponse(userIdentity.isPresent(), redirectUri);
 
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -64,7 +62,7 @@ public class SessionResourceImpl implements SessionResource {
     }
 
     @Override
-    public Response logout(final String authSessionId) {
+    public Boolean logout(final String authSessionId) {
         LOGGER.info("Logging out session {}", authSessionId);
 
         // TODO : We need to lookup the auth session in our user sessions
@@ -80,7 +78,7 @@ public class SessionResourceImpl implements SessionResource {
             eventLog.logoff(ui.getId());
         });
 
-        return RestUtil.ok("Logout successful");
+        return Boolean.TRUE;
     }
 
     @Override

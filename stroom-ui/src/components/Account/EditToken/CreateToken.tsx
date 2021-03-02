@@ -158,7 +158,7 @@ export const CreateToken: React.FunctionComponent<{
       comments: undefined,
       enabled: true,
     };
-    exec((api) => api.token.create(request), handleResponse);
+    exec((api) => api.token.createToken(request), handleResponse);
   };
 
   if (tokenConfig === undefined) {

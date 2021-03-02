@@ -16,11 +16,13 @@
 
 package stroom.xmlschema.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -31,19 +33,25 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "XML Schemas")
+@Tag(name = "XML Schemas")
 @Path("/xmlSchema" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface XmlSchemaResource extends RestResource, DirectRestService {
+public interface XmlSchemaResource extends RestResource, DirectRestService, FetchWithUuid<XmlSchemaDoc> {
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Get an xml schema doc")
-    XmlSchemaDoc fetch(@PathParam("uuid") String uuid);
+    @Operation(
+            summary = "Fetch a xml schema doc by its UUID",
+            operationId = "fetchXmlSchema")
+    XmlSchemaDoc fetch(
+            @PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/")
-    @ApiOperation("Update an xml schema doc")
-    XmlSchemaDoc update(XmlSchemaDoc xslt);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a xml schema doc",
+            operationId = "updateXmlSchema")
+    XmlSchemaDoc update(
+            @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) XmlSchemaDoc doc);
 }

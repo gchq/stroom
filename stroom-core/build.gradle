@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-feed:stroom-feed-api')
     compile project(':stroom-importexport:stroom-importexport-api')

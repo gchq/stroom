@@ -17,35 +17,32 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"order", "direction"})
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "Describes the sorting applied to a field")
+@Schema(description = "Describes the sorting applied to a field")
 @Deprecated
 public final class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
+    @Schema(description = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
                     "field to sort on",
             example = "0",
             required = true)
     private Integer order;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The direction to sort in, ASCENDING or DESCENDING",
+    @Schema(description = "The direction to sort in, ASCENDING or DESCENDING",
             example = "ASCENDING",
             required = true)
     private SortDirection direction;

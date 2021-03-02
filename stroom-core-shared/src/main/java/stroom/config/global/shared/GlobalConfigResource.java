@@ -5,9 +5,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Global Config")
+@Tag(name = "Global Config")
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -53,39 +53,56 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @POST
     @Path(PROPERTIES_SUB_PATH)
-    @ApiOperation(value = "List all properties matching the criteria on the current node.")
-    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
+    @Operation(
+            summary = "List all properties matching the criteria on the current node.",
+            operationId = "listConfigProperties")
+    ListConfigResponse list(
+            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "List all properties matching the criteria on the requested node.")
+    @Operation(
+            summary = "List all properties matching the criteria on the requested node.",
+            operationId = "listConfigPropertiesByNode")
     ListConfigResponse listByNode(
             final @PathParam("nodeName") String nodeName,
-            final @ApiParam("criteria") GlobalConfigCriteria criteria);
+            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
-    @ApiOperation(value = "Fetch a property by its name, e.g. 'stroom.path.home'")
+    @Operation(
+            summary = "Fetch a property by its name, e.g. 'stroom.path.home'",
+            operationId = "getConfigPropertyByName")
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Get the property value from the YAML configuration in the specified node.")
+    @Operation(
+            summary = "Get the property value from the YAML configuration in the specified node.",
+            operationId = "getConfigYamlValueByNodeAndName")
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
     @POST
-    @ApiOperation(value = "Create a configuration property")
-    ConfigProperty create(@ApiParam("configProperty") final ConfigProperty configProperty);
+    @Operation(
+            summary = "Create a configuration property",
+            operationId = "createConfigProperty")
+    ConfigProperty create(
+            @Parameter(description = "configProperty", required = true) final ConfigProperty configProperty);
 
     @PUT
     @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
-    @ApiOperation(value = "Update a configuration property")
+    @Operation(
+            summary = "Update a configuration property",
+            operationId = "updateConfigProperty")
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final @ApiParam("configProperty") ConfigProperty configProperty);
+                          final @Parameter(description = "configProperty", required = true)
+                                  ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)
-    @ApiOperation(value = "Fetch the UI configuration")
+    @Operation(
+            summary = "Fetch the UI configuration",
+            operationId = "fetchUiConfig")
     UiConfig fetchUiConfig();
 }

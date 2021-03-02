@@ -16,12 +16,13 @@
 
 package stroom.visualisation.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -32,19 +33,24 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Visualisations")
+@Tag(name = "Visualisations")
 @Path("/visualisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface VisualisationResource extends RestResource, DirectRestService {
+public interface VisualisationResource extends RestResource, DirectRestService, FetchWithUuid<VisualisationDoc> {
 
     @GET
-    @Path("/")
-    @ApiOperation("Get a visualisation doc")
-    VisualisationDoc fetch(@PathParam("uuid") final String uuid);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch a visualisation doc by its UUID",
+            operationId = "fetchVisualisation")
+    VisualisationDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/")
-    @ApiOperation("Update a visualisation doc")
-    VisualisationDoc update(@ApiParam("visualisationDoc") final VisualisationDoc visualisationDoc);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a visualisation doc",
+            operationId = "updateVisualisation")
+    VisualisationDoc update(
+            @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) VisualisationDoc doc);
 }

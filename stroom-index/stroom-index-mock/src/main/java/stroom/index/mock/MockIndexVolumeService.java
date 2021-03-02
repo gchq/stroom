@@ -40,7 +40,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume update(IndexVolume updateVolumeDTO) {
+    public IndexVolume update(IndexVolume indexVolume) {
         return null;
     }
 

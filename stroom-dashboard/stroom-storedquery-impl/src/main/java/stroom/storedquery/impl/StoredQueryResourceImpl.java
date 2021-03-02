@@ -116,7 +116,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
     }
 
     @Override
-    public StoredQuery read(final StoredQuery storedQuery) {
+    public StoredQuery fetch(final StoredQuery storedQuery) {
         StoredQuery result;
         try {
             result = storedQueryService.fetch(storedQuery.getId());

@@ -16,42 +16,41 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "XSLTs")
+@Tag(name = "XSLTs")
 @Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface XsltResource extends RestResource, DirectRestService {
-
-    @PUT
-    @Path("/")
-    @ApiOperation("Update an xslt doc")
-    XsltDoc update(XsltDoc xslt);
+public interface XsltResource extends RestResource, DirectRestService, FetchWithUuid<XsltDoc> {
 
     @GET
-    @Path("/{xsltId}")
-    @ApiOperation("Fetch an xslt doc by its UUID")
-    XsltDoc fetch(@PathParam("xsltId") final String xsltId);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch an xslt doc by its UUID",
+            operationId = "fetchXslt")
+    XsltDoc fetch(@PathParam("uuid") String uuid);
 
-    @POST
-    @Path("/{xsltId}")
-    @ApiOperation("Update an xslt doc")
-    void save(@PathParam("xsltId") final String xsltId,
-              @ApiParam("xsltDto") final XsltDTO xsltDto);
+    @PUT
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a an xslt doc",
+            operationId = "updateXslt")
+    XsltDoc update(@PathParam("uuid") String uuid,
+                   @Parameter(description = "doc", required = true) XsltDoc doc);
 }

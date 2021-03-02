@@ -18,12 +18,13 @@ package stroom.receive.rules.shared;
 
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Set;
@@ -32,39 +33,52 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Rule Set")
+@Tag(name = "Rule Set")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
+public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService, FetchWithUuid<ReceiveDataRules> {
 
     String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V2;
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Get a rules doc")
-    ReceiveDataRules read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch a rules doc by its UUID",
+            operationId = "fetchReceiveDataRules")
+    ReceiveDataRules fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
-    @ApiOperation("Update a rules doc")
-    ReceiveDataRules update(@ApiParam("receiveDataRules") ReceiveDataRules receiveDataRules);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update a rules doc",
+            operationId = "updateReceiveDataRules")
+    ReceiveDataRules update(@PathParam("uuid") String uuid,
+                            @Parameter(description = "doc", required = true) ReceiveDataRules doc);
 
     @GET
     @Path("/list")
-    @ApiOperation("Submit a request for a list of doc refs held by this service")
+    @Operation(
+            summary = "Submit a request for a list of doc refs held by this service",
+            operationId = "listReceiveDataRules")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @ApiOperation("Submit an import request")
-    DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
+    @Operation(
+            summary = "Submit an import request",
+            operationId = "importReceiveDataRules")
+    DocRef importDocument(
+            @Parameter(description = "DocumentData", required = true) Base64EncodedDocumentData documentData);
 
     @POST
     @Path("/export")
-    @ApiOperation("Submit an export request")
-    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
+    @Operation(
+            summary = "Submit an export request",
+            operationId = "exportReceiveDataRules")
+    Base64EncodedDocumentData exportDocument(@Parameter(description = "DocRef", required = true) DocRef docRef);
 }

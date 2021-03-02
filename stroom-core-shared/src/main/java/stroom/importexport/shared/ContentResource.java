@@ -23,9 +23,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -36,7 +36,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Content")
+@Tag(name = "Content")
 @Path("/content" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,21 +44,33 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("import")
-    @ApiOperation("Import content")
-    ResourceKey importContent(@NotNull @ApiParam("request") ImportConfigRequest request);
+    @Operation(
+            summary = "Import content",
+            operationId = "importContent")
+    ResourceKey importContent(
+            @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
 
     @POST
     @Path("confirmImport")
-    @ApiOperation("Get import confirmation state")
-    List<ImportState> confirmImport(@ApiParam("resourceKey") ResourceKey resourceKey);
+    @Operation(
+            summary = "Get import confirmation state",
+            operationId = "confirmContentImport")
+    List<ImportState> confirmImport(
+            @Parameter(description = "resourceKey", required = true) ResourceKey resourceKey);
 
     @POST
     @Path("export")
-    @ApiOperation("Export content")
-    ResourceGeneration exportContent(@NotNull @ApiParam("docRefs") DocRefs docRefs);
+    @Operation(
+            summary = "Export content",
+            operationId = "exportContent")
+    ResourceGeneration exportContent(
+            @NotNull @Parameter(description = "docRefs", required = true) DocRefs docRefs);
 
     @POST
     @Path("fetchDependencies")
-    @ApiOperation("Fetch content dependencies")
-    ResultPage<Dependency> fetchDependencies(@ApiParam("criteria") DependencyCriteria criteria);
+    @Operation(
+            summary = "Fetch content dependencies",
+            operationId = "fetchContentDependencies")
+    ResultPage<Dependency> fetchDependencies(
+            @Parameter(description = "criteria", required = true) DependencyCriteria criteria);
 }

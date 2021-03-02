@@ -137,7 +137,7 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
             rest
                     .onSuccess(this::edit)
                     .call(INDEX_VOLUME_GROUP_RESOURCE)
-                    .read(volume.getId());
+                    .fetch(volume.getId());
         }
     }
 

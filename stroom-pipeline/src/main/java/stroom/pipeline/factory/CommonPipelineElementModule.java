@@ -64,8 +64,5 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.writer.HTTPAppender.class);
         bindElement(stroom.pipeline.writer.RollingFileAppender.class);
         bindElement(stroom.pipeline.writer.TestAppender.class);
-
-        RestResourcesBinder.create(binder())
-                .bind(ElementResource.class);
     }
 }

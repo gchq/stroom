@@ -17,44 +17,40 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A row of data in a result set")
+@Schema(description = "A row of data in a result set")
 @Deprecated
 public final class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "TODO",
+    @Schema(description = "TODO",
             required = true)
     private String groupKey;
 
     @XmlElementWrapper(name = "values")
     @XmlElement(name = "value")
-    @ApiModelProperty(
-            value = "The value for this row of data. The values in the list are in the same order as the fields in " +
-                    "the ResultRequest",
+    @Schema(description = "The value for this row of data. The values in the list are in the same order as the fields in " +
+            "the ResultRequest",
             required = true)
     private List<String> values;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
+    @Schema(description = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
             example = "0",
             required = true)
     private Integer depth;
@@ -83,21 +79,41 @@ public final class Row implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final Row row = (Row) o;
 
-        if (groupKey != null ? !groupKey.equals(row.groupKey) : row.groupKey != null) return false;
-        if (values != null ? !values.equals(row.values) : row.values != null) return false;
-        return depth != null ? depth.equals(row.depth) : row.depth == null;
+        if (groupKey != null
+                ? !groupKey.equals(row.groupKey)
+                : row.groupKey != null) {
+            return false;
+        }
+        if (values != null
+                ? !values.equals(row.values)
+                : row.values != null) {
+            return false;
+        }
+        return depth != null
+                ? depth.equals(row.depth)
+                : row.depth == null;
     }
 
     @Override
     public int hashCode() {
-        int result = groupKey != null ? groupKey.hashCode() : 0;
-        result = 31 * result + (values != null ? values.hashCode() : 0);
-        result = 31 * result + (depth != null ? depth.hashCode() : 0);
+        int result = groupKey != null
+                ? groupKey.hashCode()
+                : 0;
+        result = 31 * result + (values != null
+                ? values.hashCode()
+                : 0);
+        result = 31 * result + (depth != null
+                ? depth.hashCode()
+                : 0);
         return result;
     }
 
@@ -122,7 +138,6 @@ public final class Row implements Serializable {
 
         /**
          * @param value TODO
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder groupKey(final String value) {
@@ -133,17 +148,15 @@ public final class Row implements Serializable {
         /**
          * @param values The value for this row of data.
          *               The values in the list are in the same order as the fields in the ResultRequest
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addValues(final String...values) {
+        public Builder addValues(final String... values) {
             this.values.addAll(Arrays.asList(values));
             return this;
         }
 
         /**
          * @param value The grouping depth, where 0 is the top level of grouping, or where there is no grouping
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder depth(final Integer value) {

@@ -858,5 +858,6 @@ appConfig:
     defaultIndexVolumeFilesystemUtilisation: 0.9
   logging:
     logEveryRestCallEnabled: false
+    omitRecordDetailsLoggingEnabled: true
     maxListElements: 5
     maxDataElementStringLength: 500

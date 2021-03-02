@@ -16,60 +16,72 @@
 
 package stroom.index.shared;
 
-import stroom.docref.DocRef;
-import stroom.util.shared.ReadWithDocRef;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Indexes (v2)")
+@Tag(name = "Indexes (v2)")
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource, DirectRestService, ReadWithDocRef<IndexDoc> {
+public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<IndexDoc> {
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
-    @Override
-    @POST
-    @Path("/read")
-    @ApiOperation("Get an index doc")
-    IndexDoc read(@ApiParam("docRef") DocRef docRef);
+    @GET
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Fetch a index doc by its UUID",
+            operationId = "fetchIndex")
+    IndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
-    @Path("/update")
-    @ApiOperation("Update an index doc")
-    IndexDoc update(IndexDoc indexDoc);
+    @Path("/{uuid}")
+    @Operation(
+            summary = "Update an index doc",
+            operationId = "updateIndex")
+    IndexDoc update(@PathParam("uuid") String uuid,
+                    @Parameter(description = "doc", required = true) IndexDoc doc);
 
     @POST
     @Path("/shard/find")
-    @ApiOperation("Find matching index shards")
-    ResultPage<IndexShard> findIndexShards(@ApiParam("criteria") FindIndexShardCriteria criteria);
+    @Operation(
+            summary = "Find matching index shards",
+            operationId = "findIndexShards")
+    ResultPage<IndexShard> findIndexShards(
+            @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
-    @ApiOperation("Delete matching index shards")
+    @Operation(
+            summary = "Delete matching index shards",
+            operationId = "deleteIndexShards")
     Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
-                           @ApiParam("criteria") FindIndexShardCriteria criteria);
+                           @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
-    @ApiOperation("Flush matching index shards")
+    @Operation(
+            summary = "Flush matching index shards",
+            operationId = "flushIndexShards")
     Long flushIndexShards(@QueryParam("nodeName") String nodeName,
-                          @ApiParam("criteria") FindIndexShardCriteria criteria);
+                          @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 }

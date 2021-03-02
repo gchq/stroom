@@ -22,10 +22,9 @@ import stroom.security.identity.config.TokenConfig;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -44,7 +43,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/token/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(tags = "Api Keys")
+@Tag(name = "Api Keys")
 public interface TokenResource extends RestResource {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
@@ -54,77 +53,91 @@ public interface TokenResource extends RestResource {
 
     @GET
     @Path("/")
-    @Timed
     @NotNull
-    @ApiOperation(value = "Get all tokens.")
+    @Operation(
+            summary = "Get all tokens.",
+            operationId = "listTokens")
     TokenResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @POST
     @Path("search")
-    @Timed
-    @ApiOperation(value = "Submit a search request for tokens")
+    @Operation(
+            summary = "Submit a search request for tokens",
+            operationId = "searchTokens")
     TokenResultPage search(@Context @NotNull HttpServletRequest httpServletRequest,
-                           @ApiParam("SearchRequest") @NotNull @Valid SearchTokenRequest request);
+                           @Parameter(description = "SearchRequest", required = true)
+                           @NotNull
+                           @Valid SearchTokenRequest request);
 
     @POST
-    @Timed
-    @ApiOperation(value = "Create a new token.")
+    @Operation(
+            summary = "Create a new token.",
+            operationId = "createToken")
     Token create(@Context @NotNull HttpServletRequest httpServletRequest,
-                 @ApiParam("CreateTokenRequest") @NotNull CreateTokenRequest createTokenRequest);
+                 @Parameter(description = "CreateTokenRequest", required = true)
+                 @NotNull CreateTokenRequest createTokenRequest);
 
-    @ApiOperation(value = "Read a token by the token string itself.")
+    @Operation(
+            summary = "Read a token by the token string itself.",
+            operationId = "fetchTokenByContent")
     @GET
     @Path("/byToken/{token}")
-    @Timed
     Token read(@Context @NotNull HttpServletRequest httpServletRequest,
                @PathParam("token") String token);
 
-    @ApiOperation(value = "Read a token by ID.")
+    @Operation(
+            summary = "Read a token by ID.",
+            operationId = "fetchToken")
     @GET
     @Path("/{id}")
-    @Timed
     Token read(@Context @NotNull HttpServletRequest httpServletRequest,
                @PathParam("id") int tokenId);
 
-    @ApiOperation(value = "Enable or disable the state of a token.")
+    @Operation(
+            summary = "Enable or disable the state of a token.",
+            operationId = "toggleTokenEnabled")
     @GET
     @Path("/{id}/enabled")
-    @Timed
     Integer toggleEnabled(@Context @NotNull HttpServletRequest httpServletRequest,
                           @NotNull @PathParam("id") int tokenId,
                           @NotNull @QueryParam("enabled") boolean enabled);
 
-    @ApiOperation(value = "Delete a token by ID.")
+    @Operation(
+            summary = "Delete a token by ID.",
+            operationId = "deleteToken")
     @DELETE
     @Path("/{id}")
-    @Timed
     Integer delete(@Context @NotNull HttpServletRequest httpServletRequest,
                    @PathParam("id") int tokenId);
 
-    @ApiOperation(value = "Delete a token by the token string itself.")
+    @Operation(
+            summary = "Delete a token by the token string itself.",
+            operationId = "deleteTokenByContent")
     @DELETE
     @Path("/byToken/{token}")
-    @Timed
     Integer deleteByToken(@Context @NotNull HttpServletRequest httpServletRequest,
                           @PathParam("token") String token);
 
-    @ApiOperation(value = "Delete all tokens.")
+    @Operation(
+            summary = "Delete all tokens.",
+            operationId = "deleteAllTokens")
     @DELETE
-    @Timed
     Integer deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
 
 
-    @ApiOperation(value = "Provides access to this service's current public key. " +
-                    "A client may use these keys to verify JWTs issued by this service.")
+    @Operation(
+            summary = "Provides access to this service's current public key. " +
+                    "A client may use these keys to verify JWTs issued by this service.",
+            operationId = "getPublicKey")
     @GET
     @Path("/publickey")
-    @Timed
     String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
 
+    @Operation(
+            summary = "Get the token configuration",
+            operationId = "fetchTokenConfig")
     @GET
     @Path("/noauth/fetchTokenConfig")
-    @Timed
     @NotNull
-    @ApiOperation(value = "Get the token configuration")
     TokenConfig fetchTokenConfig();
 }

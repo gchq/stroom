@@ -19,10 +19,9 @@ package stroom.pipeline.xslt;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.pipeline.shared.XsltDTO;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
-import stroom.util.rest.RestUtil;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -41,35 +40,21 @@ class XsltResourceImpl implements XsltResource {
     }
 
     @Override
-    public XsltDoc update(final XsltDoc doc) {
-        return documentResourceHelperProvider.get()
-                .update(xsltStoreProvider.get(), doc);
+    public XsltDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(xsltStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public XsltDoc fetch(final String xsltId) {
-        return documentResourceHelperProvider.get()
-                .read(xsltStoreProvider.get(), getDocRef(xsltId));
-    }
-
-    // Used by react UI?
-    @Override
-    public void save(final String xsltId,
-                     final XsltDTO xsltDto) {
-        RestUtil.requireMatchingUuids(xsltId, xsltDto);
-
-        final XsltDoc xsltDoc = fetch(xsltId);
-
-        if (xsltDoc != null) {
-            xsltDoc.setDescription(xsltDto.getDescription());
-            xsltDoc.setData(xsltDto.getData());
-            update(xsltDoc);
+    public XsltDoc update(final String uuid, final XsltDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
         }
+        return documentResourceHelperProvider.get().update(xsltStoreProvider.get(), doc);
     }
 
-    private DocRef getDocRef(final String xsltId) {
+    private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
-                .uuid(xsltId)
+                .uuid(uuid)
                 .type(XsltDoc.DOCUMENT_TYPE)
                 .build();
     }

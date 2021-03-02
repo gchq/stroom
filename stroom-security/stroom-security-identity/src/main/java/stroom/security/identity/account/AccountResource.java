@@ -18,14 +18,13 @@
 
 package stroom.security.identity.account;
 
-import stroom.util.shared.ReadWithIntegerId;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -43,8 +42,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(tags = "Account")
-public interface AccountResource extends RestResource, ReadWithIntegerId<Account> {
+@Tag(name = "Account")
+public interface AccountResource extends RestResource, FetchWithIntegerId<Account> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
     FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField("Email");
@@ -52,54 +51,59 @@ public interface AccountResource extends RestResource, ReadWithIntegerId<Account
     FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField("FirstName");
     FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName");
 
-    @ApiOperation(value = "Get all accounts.")
+    @Operation(
+            summary = "Get all accounts.",
+            operationId = "listAccounts")
     @GET
     @Path("/")
-    @Timed
     @NotNull
     AccountResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @ApiOperation(value = "Search for an account by email.")
+    @Operation(
+            summary = "Search for an account by email.",
+            operationId = "searchAccounts")
     @POST
     @Path("search")
-    @Timed
     @NotNull
-    AccountResultPage search(@ApiParam("account") SearchAccountRequest request);
+    AccountResultPage search(@Parameter(description = "account", required = true) SearchAccountRequest request);
 
-    @ApiOperation(value = "Create an account.")
+    @Operation(
+            summary = "Create an account.",
+            operationId = "createAccount")
     @POST
     @Path("/")
-    @Timed
     @NotNull
     Integer create(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("account") @NotNull CreateAccountRequest request);
+            @Parameter(description = "account", required = true) @NotNull CreateAccountRequest request);
 
-    @ApiOperation(value = "Get an account by ID.")
+    @Operation(
+            summary = "Get an account by ID.",
+            operationId = "fetchAccount")
     @GET
     @Path("{id}")
-    @Timed
     @NotNull
-    Account read(@PathParam("id") final Integer accountId);
+    Account fetch(@PathParam("id") final Integer accountId);
 
-    @ApiOperation(value = "Update an account.")
+    @Operation(
+            summary = "Update an account.",
+            operationId = "updateAccount")
     @PUT
     @Path("{id}")
-    @Timed
     @NotNull
     Boolean update(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("account") @NotNull UpdateAccountRequest request,
+            @Parameter(description = "account", required = true) @NotNull UpdateAccountRequest request,
             @PathParam("id") int accountId);
 
-    @ApiOperation(value = "Delete an account by ID.")
+    @Operation(
+            summary = "Delete an account by ID.",
+            operationId = "deleteAccount")
     @DELETE
     @Path("{id}")
-    @Timed
     @NotNull
     Boolean delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int accountId);
-
 }
 

@@ -2,6 +2,8 @@ ext.moduleName = 'stroom.proxy.app'
 
 def fatJarName = 'stroom-proxy-app-all.jar'
 def releaseBuildDir = 'build/release'
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -64,6 +66,7 @@ dependencies {
     testCompile libs.classgraph
     testCompile libs.guice_grapher
     testCompile libs.jinjava
+    testCompile libs.mbknor_jackson_jsonSchema
     testCompile libs.mockito_junit_jupiter
 
     testCompile libs.junit_jupiter_api
@@ -134,41 +137,6 @@ test {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin
 // We have our own buildDistribution task so disable the standard ones to avoid confusion
@@ -185,12 +153,15 @@ task copyJar(type: Copy) {
 
 task copyCommonSupportingFiles(type: Copy) {
     from '../../dist'
+    // migrate is a stroom only thing
+    exclude '**/migrate.sh'
     into releaseBuildDir
 }
 
 task copySupportingFiles(type: Copy) {
     dependsOn copyCommonSupportingFiles
 
+    from 'src/main/resources/banner.txt'
     from 'src/dist'
     into releaseBuildDir
 
@@ -203,6 +174,16 @@ task copySupportingFiles(type: Copy) {
     }
 }
 
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
+    //dependsOn ':stroom-config:stroom-config-app:compileJava'
+    //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = project(':stroom-proxy:stroom-proxy-app').sourceSets.test.runtimeClasspath
+    main = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
+    args = [configDefaultsFile, configSchemaFile]
+}
+
 // Build the release distribution zip for stroom proxy
 task buildDistribution(type: Zip) {
 
@@ -210,6 +191,7 @@ task buildDistribution(type: Zip) {
     dependsOn copyJar
     dependsOn copySupportingFiles
     dependsOn generateConfigFiles
+    dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir
 }

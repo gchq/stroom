@@ -74,7 +74,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
-                ResourcePaths.buildAuthenticatedApiPath(
+                () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
                         nodeName),
@@ -112,7 +112,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
-                ResourcePaths.buildAuthenticatedApiPath(
+                () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
                         propertyName,

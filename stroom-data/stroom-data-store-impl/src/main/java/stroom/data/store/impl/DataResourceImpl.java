@@ -29,8 +29,8 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.util.shared.Count;
+import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.ReadWithLongId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -46,7 +46,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
-class DataResourceImpl implements DataResource, ReadWithLongId<List<DataInfoSection>> {
+class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSection>> {
 
     private final Provider<DataService> dataServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
@@ -194,7 +194,7 @@ class DataResourceImpl implements DataResource, ReadWithLongId<List<DataInfoSect
     }
 
     @Override
-    public List<DataInfoSection> read(final Long id) {
+    public List<DataInfoSection> fetch(final Long id) {
         // Provide the info when failing to read the info
         return viewInfo(id);
     }

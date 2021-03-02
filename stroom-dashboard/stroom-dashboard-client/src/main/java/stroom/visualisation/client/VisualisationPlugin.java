@@ -81,7 +81,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

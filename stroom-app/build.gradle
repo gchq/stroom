@@ -12,7 +12,32 @@ buildscript {
 plugins {
 //    id "com.benjaminsproule.swagger" version "1.0.14"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
-    id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.6"
+    id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.7"
+}
+
+configurations {
+    swagger {
+        extendsFrom runtimeClasspath
+        resolutionStrategy {
+            // The swagger plugin seems to need a particular version of jackson wich is more recent
+            // than ours so force it here.
+            force "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-core:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-databind:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-dataformat-yaml:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-datatype-jsr310:${versions.jackson_swagger}"
+
+            //dependencySubstitution {
+                //// for some reason the DEBUG logging in the swagger plugin is being
+                //// output as part of the gradle build. This is a very crude hack to stop it
+                //// accepting that you will get no logging at all, even errors.
+                //substitute 
+                    //module("ch.qos.logback:logback-classic") 
+                    //using module("org.slf4j:slf4j-nop:1.7.30") 
+                    //because "We don't want all the debug"
+            //}
+        }
+    }
 }
 
 ext.moduleName = 'stroom.app'
@@ -407,7 +432,11 @@ resolve {
     prettyPrint = 'TRUE'
     sortOutput = 'TRUE'
     openApiFile = file('openapi.yaml')
-    classpath = sourceSets.main.runtimeClasspath
+    // As we are pulling in the whole classpath, that includes stroom-app and all the dropwiz
+    // deps which includes logback-classic.  In the absence of a logback.xml logback will output
+    // DEBUG which makes for a LOT of output. Thus provide it with a logback.xml to use
+    // so we have control.
+    classpath = configurations.swagger + files("../config/swagger-plugin")
     resourcePackages = ['stroom']
     outputDir = file('src/main/resources/ui/noauth/swagger')
 }
@@ -497,6 +526,7 @@ task copyCommonSupportingFiles(type: Copy) {
 task copySupportingFiles(type: Copy) {
     dependsOn copyCommonSupportingFiles
 
+    from 'src/main/resources/banner.txt'
     from 'src/dist'
     into releaseBuildDir
 

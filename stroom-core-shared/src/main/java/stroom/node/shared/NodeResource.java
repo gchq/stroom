@@ -19,9 +19,9 @@ package stroom.node.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -33,7 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Nodes")
+@Tag(name = "Nodes")
 @Path(NodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,37 +48,51 @@ public interface NodeResource extends RestResource, DirectRestService {
 
     @GET
     @Path(INFO_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Gets detailed information about a node")
+    @Operation(
+            summary = "Gets detailed information about a node",
+            operationId = "fetchNodeInfo")
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
 
     @GET
     @Path("/all")
-    @ApiOperation("Lists all nodes")
+    @Operation(
+            summary = "Lists all nodes",
+            operationId = "listAllNodes")
     List<String> listAllNodes();
 
     @GET
     @Path("/enabled")
-    @ApiOperation("Lists enabled nodes")
+    @Operation(
+            summary = "Lists enabled nodes",
+            operationId = "listEnabledNodes")
     List<String> listEnabledNodes();
 
     @GET
-    @ApiOperation("Lists nodes")
+    @Operation(
+            summary = "Lists nodes",
+            operationId = "findNodes")
     FetchNodeStatusResponse find();
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Gets a ping time for a node")
+    @Operation(
+            summary = "Gets a ping time for a node",
+            operationId = "pingNode")
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Sets the priority of a node")
+    @Operation(
+            summary = "Sets the priority of a node",
+            operationId = "setNodePriority")
     void setPriority(@PathParam("nodeName") String nodeName,
-                     @ApiParam("nodeName") Integer priority);
+                     @Parameter(description = "nodeName", required = true) Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Sets whether a node is enabled")
+    @Operation(
+            summary = "Sets whether a node is enabled",
+            operationId = "setNodeEnabled")
     void setEnabled(@PathParam("nodeName") String nodeName,
-                    @ApiParam("enabled") Boolean enabled);
+                    @Parameter(description = "enabled", required = true) Boolean enabled);
 }
