@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2064** : Delete empty directories left by running unit test.
+
 * Issue **#2056** : Fix error sending permission change events to other cluster nodes.
 
 * Add JVM OOM args to zip distribution scripts.
