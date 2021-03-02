@@ -1,10 +1,7 @@
 package stroom.proxy.app.forwarder;
 
-import stroom.util.time.StroomDuration;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
@@ -15,7 +12,7 @@ public class ForwarderConfig {
     private boolean forwardingEnabled = false;
     private String userAgent;
     private List<ForwardDestinationConfig> forwardDestinations = new ArrayList<>();
-    private StroomDuration forwardingFrequency = StroomDuration.of(Duration.ofSeconds(10));
+//    private StroomDuration forwardingFrequency = StroomDuration.of(Duration.ofSeconds(10));
 
     /**
      * True if received streams should be forwarded to another stroom(-proxy) instance.
@@ -56,12 +53,12 @@ public class ForwarderConfig {
         this.forwardDestinations = forwardDestinations;
     }
 
-    @JsonProperty
-    public StroomDuration getForwardingFrequency() {
-        return forwardingFrequency;
-    }
-
-    public void setForwardingFrequency(final StroomDuration forwardingFrequency) {
-        this.forwardingFrequency = forwardingFrequency;
-    }
+//    @JsonProperty
+//    public StroomDuration getForwardingFrequency() {
+//        return forwardingFrequency;
+//    }
+//
+//    public void setForwardingFrequency(final StroomDuration forwardingFrequency) {
+//        this.forwardingFrequency = forwardingFrequency;
+//    }
 }

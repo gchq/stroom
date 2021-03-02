@@ -2,9 +2,8 @@ package stroom.proxy.app.forwarder;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.ProxyRepositoryStreamHandler;
-import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StreamHandler;
+import stroom.receive.common.StreamHandlers;
 import stroom.util.cert.SSLUtil;
 
 import org.slf4j.Logger;
@@ -53,14 +52,14 @@ public class ForwardStreamHandlers implements StreamHandlers {
             consumer.accept(streamHandler);
             streamHandler.close();
         } catch (final RuntimeException e) {
-                if (streamHandler != null) {
-                    streamHandler.error();
-                }
+            if (streamHandler != null) {
+                streamHandler.error();
+            }
             throw e;
         } catch (final IOException e) {
-                if (streamHandler != null) {
-                    streamHandler.error();
-                }
+            if (streamHandler != null) {
+                streamHandler.error();
+            }
             throw new UncheckedIOException(e);
         }
     }

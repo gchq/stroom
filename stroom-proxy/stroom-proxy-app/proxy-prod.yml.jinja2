@@ -147,17 +147,37 @@ logging:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
 proxyConfig:
-  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
   proxyContentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
+  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
 #  proxyRequestConfig:
 #    receiptPolicyUuid: "{{ (rootPath + 'content') | envVar('RECEIPT_POLICY_UUID') }}"
-  feedStatus:
-    url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
-    apiKey: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_API_KEY') }}"
-  forwardStreamConfig:
+
+  repository:
+    storingEnabled: {{ true | envVar('STORING_ENABLED') }}
+    repoDir: "{{ (rootPath + 'repo') | envVar('REPO_DIR') }}"
+    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+#    db:
+#    lockDeleteAge: 1h
+#    dirCleanDelay: 10s
+
+  # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
+  # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
+  # the receipt of new data automatically triggers any required process.
+  scanner:
+    enabled: false
+    scanFrequency: 10s
+
+  # If we are storing data in a proxy repository we can aggregate it before forwarding.
+  aggregator:
+    maxItemsPerAggregate: 1000
+    maxAggregateAge: 10m
+    aggregationFrequency: 1m
+    maxUncompressedByteSize: "1G"
+
+  forwarder:
     forwardingEnabled: {{ true | envVar('FORWARDING_ENABLED') }}
     forwardDestinations:
       # If you want multiple forward destinations then you will need to edit this file directly
@@ -171,16 +191,13 @@ proxyConfig:
           trustStorePassword: "{{ 'password' | envVar('FORWARDING_TRUSTSTORE_PASSWORD') }}"
           trustStoreType: "{{ 'JKS' | envVar('FORWARDING_TRUSTSTORE_TYPE') }}"
           hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
-  proxyRepositoryConfig:
-    storingEnabled: {{ true | envVar('STORING_ENABLED') }}
-    repoDir: "{{ (rootPath + 'repo') | envVar('REPO_DIR') }}"
-    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
-    # Uncomment this for rolled repositories
-    # rollCron: "* * *"
-  proxyRepositoryReaderConfig:
-    readCron: "* * *"
+
+  cleanup:
+    cleanupFrequency: 1h
+
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+
 #  contentSyncConfig:
 #    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
 #    upstreamUrl:
@@ -188,6 +205,11 @@ proxyConfig:
 #      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
 #    syncFrequency: 30000
 #    apiKey: "{{ '' | envVar('SYNC_API_KEY') }}"
+
+  feedStatus:
+    url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
+    apiKey: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_API_KEY') }}"
+
   # jerseyClient is used for making feed status REST calls
   jerseyClient:
     timeout: "{{ '10s' | envVar('JERSEY_TIMEOUT') }}"

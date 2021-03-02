@@ -2,7 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.forwarder.ForwarderConfig;
-import stroom.proxy.repo.ForwardStreamHandlers;
+import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.receive.common.StreamHandler;
@@ -22,7 +22,7 @@ public class ReceiveStreamHandlers implements StreamHandlers {
     @Inject
     ReceiveStreamHandlers(final ProxyRepoConfig proxyRepoConfig,
                           final ProxyRepositoryStreamHandlers proxyRepositoryStreamHandlerProvider,
-                          final ForwardStreamHandlers forwardStreamHandlers,
+                          final ForwarderDestinations forwarderDestinations,
                           final ForwarderConfig forwarderConfig) {
         // Check the config is valid.
         if (proxyRepoConfig.isStoringEnabled()) {
@@ -37,8 +37,8 @@ public class ReceiveStreamHandlers implements StreamHandlers {
             } else if (forwarderConfig.getForwardDestinations().size() > 1) {
                 throw new RuntimeException("You must store data to be able to forward to multiple destinations");
             }
-            streamHandlers = forwardStreamHandlers
-                    .getProvider(forwardStreamHandlers.getDestinationNames().get(0));
+            streamHandlers = forwarderDestinations
+                    .getProvider(forwarderDestinations.getDestinationNames().get(0));
         }
     }
 

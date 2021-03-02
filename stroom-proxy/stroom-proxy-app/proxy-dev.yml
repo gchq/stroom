@@ -105,7 +105,6 @@ proxyConfig:
 
   forwarder:
     forwardingEnabled: true
-    userAgent:
     forwardDestinations:
       - forwardUrl: "https://localhost/stroom/datafeeddirect"
         sslConfig:
@@ -115,7 +114,6 @@ proxyConfig:
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
       - forwardUrl: "http://localhost/stroom/datafeed"
-    forwardingFrequency: 10s
 
   cleanup:
     cleanupFrequency: 1h

@@ -4,7 +4,7 @@ import stroom.receive.common.StreamHandlers;
 
 import java.util.List;
 
-public interface ForwardStreamHandlers {
+public interface ForwarderDestinations {
 
     List<String> getDestinationNames();
 

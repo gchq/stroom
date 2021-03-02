@@ -3,9 +3,9 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.forwarder.ForwardStreamHandler;
-import stroom.proxy.app.forwarder.ForwardStreamHandlersImpl;
 import stroom.proxy.app.forwarder.ForwarderConfig;
-import stroom.proxy.repo.ForwardStreamHandlers;
+import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
+import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepo;
@@ -114,7 +114,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
         final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
 
-        final ForwardStreamHandlers forwardStreamHandlers = new ForwardStreamHandlersImpl(
+        final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 logStream,
                 forwarderConfig,
                 proxyRepoConfig,
@@ -123,7 +123,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         return new ReceiveStreamHandlers(
                 proxyRepoConfig,
                 proxyRepositoryRequestHandlerProvider,
-                forwardStreamHandlers,
+                forwarderDestinations,
                 forwarderConfig);
     }
 }

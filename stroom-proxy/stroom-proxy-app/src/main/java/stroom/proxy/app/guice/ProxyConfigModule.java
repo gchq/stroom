@@ -2,12 +2,12 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 

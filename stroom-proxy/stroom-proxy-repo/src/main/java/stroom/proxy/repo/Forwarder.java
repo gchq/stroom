@@ -70,7 +70,7 @@ public class Forwarder {
     private final ProxyRepoDbConnProvider connProvider;
     private final ProxyRepoConfig proxyRepoConfig;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
-    private final ForwardStreamHandlers forwardStreamHandlers;
+    private final ForwarderDestinations forwarderDestinations;
 
     private final Map<Integer, String> forwardIdUrlMap = new HashMap<>();
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
@@ -80,15 +80,15 @@ public class Forwarder {
     @Inject
     Forwarder(final ProxyRepoDbConnProvider connProvider,
               final ProxyRepoConfig proxyRepoConfig,
-              final ForwardStreamHandlers forwardStreamHandlers) {
+              final ForwarderDestinations forwarderDestinations) {
         this.connProvider = connProvider;
         this.proxyRepoConfig = proxyRepoConfig;
-        this.forwardStreamHandlers = forwardStreamHandlers;
+        this.forwarderDestinations = forwarderDestinations;
 
-        if (forwardStreamHandlers.getDestinationNames().size() > 0) {
+        if (forwarderDestinations.getDestinationNames().size() > 0) {
             // Create a map of forward URLs to DB ids.
             JooqUtil.context(connProvider, context -> {
-                for (final String destinationName : forwardStreamHandlers.getDestinationNames()) {
+                for (final String destinationName : forwarderDestinations.getDestinationNames()) {
                     final Optional<Integer> optionalId = context
                             .select(FORWARD_URL.ID)
                             .from(FORWARD_URL)
@@ -230,7 +230,7 @@ public class Forwarder {
                 attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
             }
 
-            final StreamHandlers streamHandlers = forwardStreamHandlers.getProvider(forwardUrl);
+            final StreamHandlers streamHandlers = forwarderDestinations.getProvider(forwardUrl);
 
             // Start the POST
             try {
