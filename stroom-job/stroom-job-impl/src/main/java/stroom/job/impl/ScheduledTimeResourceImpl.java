@@ -16,6 +16,7 @@
 
 package stroom.job.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
@@ -23,6 +24,7 @@ import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
+@AutoLogged
 public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
 
     private final ScheduleService scheduleService;
