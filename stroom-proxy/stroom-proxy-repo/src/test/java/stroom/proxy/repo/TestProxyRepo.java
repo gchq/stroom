@@ -44,7 +44,7 @@ class TestProxyRepo {
 
     @BeforeAll
     static void setup() throws IOException {
-        repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));//.resolve("repo1"));
+        repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));
         new ProxyRepoConfig().setRepoDir(repoDir);
     }
 
