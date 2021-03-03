@@ -51,17 +51,17 @@ public class ElasticConnectionTestHandler extends AbstractTaskHandler<ElasticCon
 
             MainResponse response = elasticClient.info(RequestOptions.DEFAULT);
 
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Cluster URLs: ");
-            sb.append(connectionConfig.getConnectionUrls());
-            sb.append("\nCluster name: ");
-            sb.append(response.getClusterName());
-            sb.append("\nCluster UUID: ");
-            sb.append(response.getClusterUuid());
-            sb.append("\nNode name: ");
-            sb.append(response.getNodeName());
-            sb.append("\nVersion: ");
-            sb.append(response.getVersion().getNumber());
+            final StringBuilder sb = new StringBuilder()
+                .append("Cluster URLs: ")
+                .append(connectionConfig.getConnectionUrls())
+                .append("\nCluster name: ")
+                .append(response.getClusterName())
+                .append("\nCluster UUID: ")
+                .append(response.getClusterUuid())
+                .append("\nNode name: ")
+                .append(response.getNodeName())
+                .append("\nVersion: ")
+                .append(response.getVersion().getNumber());
 
             // Check whether the specified index exists
             final String indexName = action.getElasticIndex().getIndexName();
