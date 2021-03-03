@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.IntStream;
 
 class TestAsciiTable {
 
@@ -62,6 +63,28 @@ class TestAsciiTable {
         final String table = AsciiTable.from(sourceData);
 
         LOGGER.info("table:\n{}", table);
+    }
+
+    @Test
+    void testAsciiBar1() {
+
+        final int min = 0;
+        final int max = 64;
+        IntStream.rangeClosed(min, max)
+                .boxed()
+                .map(i -> AsciiTable.asciiBar(i, min, max, 8))
+                .forEach(System.out::println);
+    }
+
+    @Test
+    void testAsciiBar2() {
+
+        final int min = 10;
+        final int max = 74;
+        IntStream.rangeClosed(min, max)
+                .boxed()
+                .map(i -> AsciiTable.asciiBar(i, min, max, 8))
+                .forEach(System.out::println);
     }
 
     private static class Pojo {
