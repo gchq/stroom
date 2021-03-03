@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2058** : Support authenticating Elasticsearch requests with an API token
 
+* Add ability to provide a custom CA certificate for verifying TLS connections, such as requests to
+  Elasticsearch clusters via HTTPS
+  
+* Add common property `stroom.pki.caCert` for specifying the path to a CA PEM certificate, which
+  may be used as required, to perform X.509 verification
+
 * Remove legacy Elasticsearch integration assets
 
 * Add common secret property encryption utils (`CryptoUtils`)
