@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ChangeListenerExecutor implements Managed {
 
@@ -21,7 +22,7 @@ public class ChangeListenerExecutor implements Managed {
     private final Runnable command;
     private final long frequency;
 
-    private volatile CountDownLatch latch = new CountDownLatch(0);
+    private final AtomicReference<CountDownLatch> latchRef = new AtomicReference<>(new CountDownLatch(0));
     private volatile boolean stop = false;
     private volatile Thread thread;
 
@@ -49,7 +50,8 @@ public class ChangeListenerExecutor implements Managed {
 
         try {
             if (!stop) {
-                latch = new CountDownLatch(1);
+                final CountDownLatch latch = new CountDownLatch(1);
+                latchRef.set(latch);
                 try {
                     command.run();
                 } catch (final RuntimeException e) {
@@ -81,6 +83,14 @@ public class ChangeListenerExecutor implements Managed {
     }
 
     public void onChange() {
-        latch.countDown();
+        CountDownLatch latchBefore = latchRef.get();
+        CountDownLatch latchAfter = latchBefore;
+        do {
+            latchBefore = latchAfter;
+            latchBefore.countDown();
+            latchAfter = latchRef.get();
+
+            // If the latch reference changed after we first got it then try again.
+        } while (!latchBefore.equals(latchAfter));
     }
 }

@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Class that represents a repository on the file system. By default files are
@@ -51,6 +52,7 @@ import javax.inject.Inject;
  * per dir and dir's are created by padding the id to multiplier of 3 and using
  * each 3 part as a dir separator.
  */
+@Singleton
 public class ProxyRepo {
 
     public static final String ZIP_EXTENSION = ".zip";
@@ -73,7 +75,6 @@ public class ProxyRepo {
      */
     private final Path rootDir;
     private final String executionUuid;
-
 
     @Inject
     ProxyRepo(final ProxyRepoConfig proxyRepoConfig,

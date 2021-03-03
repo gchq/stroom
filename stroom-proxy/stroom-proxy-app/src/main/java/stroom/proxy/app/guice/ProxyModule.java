@@ -164,7 +164,7 @@ public class ProxyModule extends AbstractModule {
     @Provides
     @Singleton
     Persistence providePersistence() {
-        return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
+        return new FSPersistence(Paths.get(configuration.getProxyConfig().getContentDir()));
     }
 
     @Provides

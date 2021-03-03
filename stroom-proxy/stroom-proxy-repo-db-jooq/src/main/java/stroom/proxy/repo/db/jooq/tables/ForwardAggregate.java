@@ -55,17 +55,17 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     /**
      * The column <code>forward_aggregate.fk_forward_url_id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER, this, "");
+    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.fk_aggregate_id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER, this, "");
+    public final TableField<ForwardAggregateRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.success</code>.
      */
-    public final TableField<ForwardAggregateRecord, Boolean> SUCCESS = createField(DSL.name("success"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<ForwardAggregateRecord, Boolean> SUCCESS = createField(DSL.name("success"), SQLDataType.BOOLEAN.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.error</code>.

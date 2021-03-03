@@ -65,7 +65,7 @@ public class Source extends TableImpl<SourceRecord> {
     /**
      * The column <code>source.examined</code>.
      */
-    public final TableField<SourceRecord, Boolean> EXAMINED = createField(DSL.name("examined"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<SourceRecord, Boolean> EXAMINED = createField(DSL.name("examined"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     private Source(Name alias, Table<SourceRecord> aliased) {
         this(alias, aliased, null);

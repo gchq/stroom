@@ -16,6 +16,7 @@
 
 package stroom.core.receive;
 
+import stroom.proxy.repo.ForwarderDestinations;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RequestHandler;
 
@@ -27,5 +28,8 @@ public class ReceiveDataModule extends AbstractModule {
     protected void configure() {
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
+
+        // Make Stroom produce proxy aggregation forwarding destinations that put data into Stroom.
+        bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
     }
 }

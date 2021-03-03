@@ -19,7 +19,7 @@ package stroom.proxy.repo;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
-import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.SqliteJooqUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardUrlRecord;
@@ -87,7 +87,7 @@ public class Forwarder {
 
         if (forwarderDestinations.getDestinationNames().size() > 0) {
             // Create a map of forward URLs to DB ids.
-            JooqUtil.context(connProvider, context -> {
+            SqliteJooqUtil.context(connProvider, context -> {
                 for (final String destinationName : forwarderDestinations.getDestinationNames()) {
                     final Optional<Integer> optionalId = context
                             .select(FORWARD_URL.ID)
@@ -112,7 +112,7 @@ public class Forwarder {
 
     public void forward() {
         // Start a transaction for all of the database changes.
-        JooqUtil.context(connProvider, context -> {
+        SqliteJooqUtil.context(connProvider, context -> {
             // Get all completed aggregates.
             try (final Stream<Record3<Integer, String, String>> stream = context
                     .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
@@ -140,7 +140,7 @@ public class Forwarder {
         final AtomicBoolean previousFailure = new AtomicBoolean();
 
         // See if this data has been sent to all forward URLs.
-        JooqUtil.context(connProvider, context -> context
+        SqliteJooqUtil.context(connProvider, context -> context
                 .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
                 .from(FORWARD_AGGREGATE)
                 .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
@@ -177,7 +177,7 @@ public class Forwarder {
                         deleteAggregate(aggregateId);
                     } else {
                         // Mark the aggregate as having errors so we don't keep endlessly trying to send it.
-                        JooqUtil.context(connProvider, context -> context
+                        SqliteJooqUtil.context(connProvider, context -> context
                                 .update(AGGREGATE)
                                 .set(AGGREGATE.FORWARD_ERROR, true)
                                 .where(AGGREGATE.ID.eq(aggregateId))
@@ -195,7 +195,7 @@ public class Forwarder {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
-        final List<Record3<String, String, String>> entries = JooqUtil.contextResult(connProvider, context -> {
+        final List<Record3<String, String, String>> entries = SqliteJooqUtil.contextResult(connProvider, context -> {
             // Get all of the source zip entries that we want to write to the forwarding location.
             return context
                     .select(SOURCE.PATH,
@@ -308,7 +308,7 @@ public class Forwarder {
         }
 
         // Record that we sent the data or if there was no data to send.
-        JooqUtil.context(connProvider, context ->
+        SqliteJooqUtil.context(connProvider, context ->
                 context
                         .insertInto(
                                 FORWARD_AGGREGATE,
@@ -323,7 +323,7 @@ public class Forwarder {
     }
 
     private void deleteAggregate(final int aggregateId) {
-        JooqUtil.transaction(connProvider, context -> {
+        SqliteJooqUtil.transaction(connProvider, context -> {
             context
                     .deleteFrom(FORWARD_AGGREGATE)
                     .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.equal(aggregateId))

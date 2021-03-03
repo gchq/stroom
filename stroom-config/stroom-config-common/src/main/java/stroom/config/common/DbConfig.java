@@ -4,10 +4,15 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
 @NotInjectableConfig
+@JsonPropertyOrder({
+        DbConfig.PROP_NAME_CONNECTION,
+        DbConfig.PROP_NAME_CONNECTION_POOL
+})
 public class DbConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CONNECTION = "connection";

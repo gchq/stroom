@@ -60,7 +60,7 @@ public class ProxyLifecycle implements Managed {
             proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
             services.add(proxyRepoSourceEntriesExecutor);
 
-            if (proxyRepoFileScannerConfig.isEnabled()) {
+            if (proxyRepoFileScannerConfig.isScanningEnabled()) {
                 // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.
                 final FrequencyExecutor proxyRepoFileScannerExecutor = new FrequencyExecutor(
                         ProxyRepoFileScanner.class.getSimpleName(),

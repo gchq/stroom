@@ -40,15 +40,15 @@ public class AttributeMapFilterFactory {
 
     @Inject
     public AttributeMapFilterFactory(
-            final ProxyRequestConfig proxyRequestConfig,
+            final ReceiptPolicyConfig receiptPolicyConfig,
             final FeedStatusConfig feedStatusConfig,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
             final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
 
-        if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
+        if (StringUtils.isNotBlank(receiptPolicyConfig.getReceiptPolicyUuid())) {
             LOGGER.info("Using data receipt policy to filter received data");
             attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
-                    new DocRef(ReceiveDataRules.DOCUMENT_TYPE, proxyRequestConfig.getReceiptPolicyUuid()));
+                    new DocRef(ReceiveDataRules.DOCUMENT_TYPE, receiptPolicyConfig.getReceiptPolicyUuid()));
         } else if (StringUtils.isNotBlank(feedStatusConfig.getFeedStatusUrl())) {
             LOGGER.info("Using remote feed status service to filter received data");
             final RemoteFeedStatusService remoteFeedStatusService = remoteFeedStatusServiceProvider.get();

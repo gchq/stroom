@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -141,13 +140,13 @@ public final class ProxyRepoFileScanner {
                                     final Path relativePath = repoPath.relativize(file);
                                     final String relativePathString = relativePath.toString();
 
-                                    // See if we already know about this source.
-                                    final Optional<Integer> optionalSourceId =
-                                            proxyRepoSources.getSource(relativePathString);
-                                    if (optionalSourceId.isEmpty()) {
-                                        // This is an unrecorded source so add it.
-                                        proxyRepoSources.addSource(relativePathString, lastModified);
-                                    }
+//                                    // See if we already know about this source.
+//                                    final Optional<Integer> optionalSourceId =
+//                                            proxyRepoSources.getSource(relativePathString);
+//                                    if (optionalSourceId.isEmpty()) {
+                                    // This is an unrecorded source so add it.
+                                    proxyRepoSources.addSource(relativePathString, lastModified);
+//                                    }
                                 }
                             }
 

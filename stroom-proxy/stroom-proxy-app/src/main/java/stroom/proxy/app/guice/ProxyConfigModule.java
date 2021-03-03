@@ -4,7 +4,7 @@ import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.app.handler.ProxyRequestConfig;
+import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
@@ -29,7 +29,7 @@ public class ProxyConfigModule extends AbstractModule {
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
-        bind(ProxyRequestConfig.class).toInstance(proxyConfig.getProxyRequestConfig());
+        bind(ReceiptPolicyConfig.class).toInstance(proxyConfig.getReceiptPolicyConfig());
         bind(ProxyRepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepoFileScannerConfig.class).toInstance(proxyConfig.getProxyRepoFileScannerConfig());
         bind(AggregatorConfig.class).toInstance(proxyConfig.getAggregatorConfig());

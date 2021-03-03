@@ -16,7 +16,6 @@
 
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 
 import org.jooq.Condition;
@@ -56,7 +55,7 @@ public class Aggregator {
         closeOldAggregates();
 
         // Start a transaction for all of the database changes.
-        JooqUtil.context(connProvider, context -> {
+        SqliteJooqUtil.context(connProvider, context -> {
             // Get all data items that have not been added to aggregate destinations.
             try (final Stream<Record4<Integer, String, String, Long>> stream = context
                     .select(SOURCE_ITEM.ID,
@@ -103,7 +102,7 @@ public class Aggregator {
         closeOldAggregates();
 
         // Start a transaction for all of the database changes.
-        JooqUtil.context(connProvider, context -> {
+        SqliteJooqUtil.context(connProvider, context -> {
             // Get all data items that have not been added to aggregate destinations.
             try (final Stream<Record4<Integer, String, String, Long>> stream = context
                     .select(SOURCE_ITEM.ID,
@@ -150,7 +149,7 @@ public class Aggregator {
         final int maxItemsPerAggregate = config.getMaxItemsPerAggregate();
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - collection.totalSize);
 
-        JooqUtil.transaction(connProvider, context -> {
+        SqliteJooqUtil.transaction(connProvider, context -> {
             // See if we can get an existing aggregate that will fit this data collection.
             final Optional<AggregateRecord> optionalRecord = context
                     .selectFrom(AGGREGATE)
@@ -213,7 +212,7 @@ public class Aggregator {
         closeOldAggregates();
     }
 
-    private void closeOldAggregates() {
+    void closeOldAggregates() {
         final long now = System.currentTimeMillis();
         if (lastClosedAggregates == -1 ||
                 now > lastClosedAggregates - config.getAggregationFrequency().toMillis()) {
@@ -221,14 +220,15 @@ public class Aggregator {
 
             final long oldest = now - config.getMaxAggregateAge().toMillis();
 
-            final Condition condition = DSL.and(
-                    DSL.or(
-                            AGGREGATE.ITEMS.greaterOrEqual(config.getMaxItemsPerAggregate()),
-                            AGGREGATE.BYTE_SIZE.greaterOrEqual(config.getMaxUncompressedByteSize()),
-                            AGGREGATE.CREATE_TIME_MS.lessOrEqual(oldest)
-                    ),
+            final Condition condition =
                     AGGREGATE.COMPLETE.eq(false)
-            );
+                            .and(
+                                    DSL.or(
+                                            AGGREGATE.ITEMS.greaterOrEqual(config.getMaxItemsPerAggregate()),
+                                            AGGREGATE.BYTE_SIZE.greaterOrEqual(config.getMaxUncompressedByteSize()),
+                                            AGGREGATE.CREATE_TIME_MS.lessOrEqual(oldest)
+                                    )
+                            );
 
             final int count = closeAggregates(condition);
 
@@ -240,7 +240,7 @@ public class Aggregator {
     }
 
     private synchronized int closeAggregates(final Condition condition) {
-        return JooqUtil.contextResult(connProvider, context -> context
+        return SqliteJooqUtil.contextResult(connProvider, context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.COMPLETE, true)
                 .where(condition)

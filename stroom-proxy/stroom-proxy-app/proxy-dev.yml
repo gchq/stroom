@@ -73,12 +73,10 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 proxyConfig:
-  proxyContentDir: "/tmp/stroom-proxy/config"
-  useDefaultOpenIdCredentials: true
 
   # If you want to use a receipt policy then the RuleSet must exist
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
-  proxyRequestConfig:
+  receiptPolicy:
     receiptPolicyUuid:
 
   repository:
@@ -93,15 +91,15 @@ proxyConfig:
   # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
   # the receipt of new data automatically triggers any required process.
   scanner:
-    enabled: false
+    scanningEnabled: false
     scanFrequency: 10s
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
     maxItemsPerAggregate: 1000
+    maxUncompressedByteSize: "1G"
     maxAggregateAge: 10m
     aggregationFrequency: 1m
-    maxUncompressedByteSize: "1G"
 
   forwarder:
     forwardingEnabled: true
@@ -118,16 +116,18 @@ proxyConfig:
   cleanup:
     cleanupFrequency: 1h
 
-  logStreamConfig:
+  logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
 
-#  contentSyncConfig:
+  contentDir: "/tmp/stroom-proxy/config"
+#  contentSync:
 #    contentSyncEnabled: false
 #    upstreamUrl:
 #      ReceiveDataRuleSet: "http://localhost/api/ruleset/v1"
 #      Dictionary: "http://localhost/api/dictionary/v1"
 #    syncFrequency: 30000
 #    apiKey: ""
+  useDefaultOpenIdCredentials: true
 
   feedStatus:
     url: "https://localhost/api/feedStatus/v1"

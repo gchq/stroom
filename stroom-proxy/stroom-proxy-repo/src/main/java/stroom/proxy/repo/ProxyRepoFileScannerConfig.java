@@ -3,23 +3,28 @@ package stroom.proxy.repo;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({
+        "scanningEnabled",
+        "scanFrequency"
+})
 public class ProxyRepoFileScannerConfig {
 
-    private boolean enabled;
+    private boolean scanningEnabled;
     private StroomDuration scanFrequency = StroomDuration.of(Duration.ofSeconds(10));
 
     @JsonProperty
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isScanningEnabled() {
+        return scanningEnabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    public void setScanningEnabled(final boolean scanningEnabled) {
+        this.scanningEnabled = scanningEnabled;
     }
 
     @JsonProperty

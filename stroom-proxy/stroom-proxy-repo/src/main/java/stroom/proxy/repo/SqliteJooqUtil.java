@@ -1,4 +1,4 @@
-package stroom.db.util;
+package stroom.proxy.repo;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
@@ -35,14 +35,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.sql.DataSource;
 
-public final class JooqUtil {
+public final class SqliteJooqUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqliteJooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
 
-    private JooqUtil() {
+    private SqliteJooqUtil() {
         // Utility class.
     }
 
@@ -54,7 +54,7 @@ public final class JooqUtil {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
-        return DSL.using(connection, SQLDialect.MYSQL, settings);
+        return DSL.using(connection, SQLDialect.SQLITE, settings);
     }
 
     public static DSLContext createContextWithOptimisticLocking(final Connection connection) {
@@ -62,7 +62,7 @@ public final class JooqUtil {
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
         settings = settings.withExecuteWithOptimisticLocking(true);
-        return DSL.using(connection, SQLDialect.MYSQL, settings);
+        return DSL.using(connection, SQLDialect.SQLITE, settings);
     }
 
     public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
@@ -164,7 +164,7 @@ public final class JooqUtil {
                                                     final Field<Integer> field,
                                                     final int id) {
 
-        return JooqUtil.contextResult(dataSource, context ->
+        return SqliteJooqUtil.contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(field.eq(id))
@@ -182,7 +182,7 @@ public final class JooqUtil {
                                                     final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(dataSource, context ->
+        return SqliteJooqUtil.contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(idField.eq(id))
@@ -203,7 +203,7 @@ public final class JooqUtil {
                                                               final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(dataSource, context ->
+        return SqliteJooqUtil.contextResult(dataSource, context ->
                 context
                         .fetchOptional(table, idField.eq(id))
                         .map(record ->
@@ -393,14 +393,14 @@ public final class JooqUtil {
     }
 
     /**
-     * Converts a time in millis since epoch to a {@link java.sql.Timestamp}
+     * Converts a time in millis since epoch to a {@link Timestamp}
      */
     public static Field<Timestamp> epochMsToTimestamp(Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.TIMESTAMP, field);
     }
 
     /**
-     * Converts a time in millis since epoch to a {@link java.sql.Date}
+     * Converts a time in millis since epoch to a {@link Date}
      */
     public static Field<Date> epochMsToDate(Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.DATE, field);

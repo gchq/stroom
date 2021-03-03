@@ -65,7 +65,7 @@ public class SourceEntry extends TableImpl<SourceEntryRecord> {
     /**
      * The column <code>source_entry.byte_size</code>.
      */
-    public final TableField<SourceEntryRecord, Long> BYTE_SIZE = createField(DSL.name("byte_size"), SQLDataType.BIGINT, this, "");
+    public final TableField<SourceEntryRecord, Long> BYTE_SIZE = createField(DSL.name("byte_size"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
 
     /**
      * The column <code>source_entry.fk_source_item_id</code>.

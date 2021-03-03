@@ -55,7 +55,8 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
-        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+        final T_CONFIG config = modifyConfig(configProvider.get());
+        final DataSource dataSource = dataSourceFactory.create(config);
 
         // Prevent migrations from being re-run for each test
         Set<String> set = COMPLETED_MIGRATIONS.get();
@@ -74,6 +75,10 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
         }
 
         return createConnectionProvider(dataSource);
+    }
+
+    protected T_CONFIG modifyConfig(final T_CONFIG config) {
+        return config;
     }
 
     protected abstract void performMigration(DataSource dataSource);

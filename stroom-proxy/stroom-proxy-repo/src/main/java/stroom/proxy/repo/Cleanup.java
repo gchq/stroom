@@ -16,7 +16,7 @@
 
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.SqliteJooqUtil;
 
 import org.jooq.Record1;
 import org.jooq.Record2;
@@ -62,7 +62,7 @@ public class Cleanup {
                 .and(AGGREGATE_ITEM.ID.isNull());
 
         // Start a transaction for all of the database changes.
-        JooqUtil.transaction(connProvider, context -> {
+        SqliteJooqUtil.transaction(connProvider, context -> {
             context
                     .deleteFrom(SOURCE_ENTRY)
                     .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(select))
@@ -78,7 +78,7 @@ public class Cleanup {
     }
 
     private void deleteSource() {
-        JooqUtil.context(connProvider, context -> {
+        SqliteJooqUtil.context(connProvider, context -> {
             try (final Stream<Record2<Integer, String>> stream = context
                     .selectDistinct(SOURCE.ID, SOURCE.PATH)
                     .from(SOURCE)

@@ -147,12 +147,10 @@ logging:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
 proxyConfig:
-  proxyContentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
-  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
-#  proxyRequestConfig:
+#  receiptPolicy:
 #    receiptPolicyUuid: "{{ (rootPath + 'content') | envVar('RECEIPT_POLICY_UUID') }}"
 
   repository:
@@ -167,15 +165,15 @@ proxyConfig:
   # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
   # the receipt of new data automatically triggers any required process.
   scanner:
-    enabled: false
+    scanningEnabled: false
     scanFrequency: 10s
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
     maxItemsPerAggregate: 1000
+    maxUncompressedByteSize: "1G"
     maxAggregateAge: 10m
     aggregationFrequency: 1m
-    maxUncompressedByteSize: "1G"
 
   forwarder:
     forwardingEnabled: {{ true | envVar('FORWARDING_ENABLED') }}
@@ -195,16 +193,18 @@ proxyConfig:
   cleanup:
     cleanupFrequency: 1h
 
-  logStreamConfig:
+  logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
 
-#  contentSyncConfig:
+  contentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
+#  contentSync:
 #    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
 #    upstreamUrl:
 #      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
 #      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
 #    syncFrequency: 30000
 #    apiKey: "{{ '' | envVar('SYNC_API_KEY') }}"
+  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
 
   feedStatus:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"

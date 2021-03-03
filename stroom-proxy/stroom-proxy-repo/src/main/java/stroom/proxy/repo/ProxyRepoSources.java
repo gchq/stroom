@@ -1,6 +1,5 @@
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.db.jooq.tables.records.SourceRecord;
 import stroom.util.shared.Clearable;
 
@@ -24,7 +23,7 @@ public class ProxyRepoSources implements Clearable {
     }
 
     public Optional<Integer> getSource(final String path) {
-        return JooqUtil.contextResult(connProvider, context -> context
+        return SqliteJooqUtil.contextResult(connProvider, context -> context
                 .select(SOURCE.ID)
                 .from(SOURCE)
                 .where(SOURCE.PATH.eq(path))
@@ -32,23 +31,24 @@ public class ProxyRepoSources implements Clearable {
                 .map(r -> r.get(SOURCE.ID)));
     }
 
-    public void addSource(final String path, final long lastModifiedTimeMs) {
-        JooqUtil.contextResult(connProvider, context -> context
+    public int addSource(final String path, final long lastModifiedTimeMs) {
+        final int sourceId = SqliteJooqUtil.contextResult(connProvider, context -> context
                 .insertInto(SOURCE, SOURCE.PATH, SOURCE.LAST_MODIFIED_TIME_MS)
                 .values(path, lastModifiedTimeMs)
-                .execute());
+                .onDuplicateKeyIgnore()
+                .returning(SOURCE.ID)
+                .fetchOptional()
+                .map(SourceRecord::getId)
+                .orElse(-1));
 
-        if (changeListeners.size() > 0) {
-            final Optional<Integer> optionalSourceId = getSource(path);
-            final int sourceId = optionalSourceId.orElseThrow(() ->
-                    new RuntimeException("Expected source id for new path: " + path));
-            changeListeners.forEach(listener -> listener.onChange(sourceId, path));
-        }
+        changeListeners.forEach(listener -> listener.onChange(sourceId, path));
+
+        return sourceId;
     }
 
     @Override
     public void clear() {
-        JooqUtil.contextResult(connProvider, context -> context
+        SqliteJooqUtil.contextResult(connProvider, context -> context
                 .deleteFrom(SOURCE)
                 .execute());
     }

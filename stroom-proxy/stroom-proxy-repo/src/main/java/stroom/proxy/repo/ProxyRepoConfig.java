@@ -1,29 +1,31 @@
 package stroom.proxy.repo;
 
-import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.data.retention.shared.TimeUnit;
-import stroom.util.io.FileUtil;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({
+        "storingEnabled",
+        "repoDir",
+        "format",
+        "db",
+        "lockDeleteAge",
+        "dirCleanDelay"
+})
 public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
 
-    private boolean isStoringEnabled = false;
-    private static String repoDir;
+    private boolean storingEnabled = false;
+    public static String repoDir;
     private String format = "${pathId}/${id}";
     private DbConfig dbConfig;
     private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
@@ -31,23 +33,24 @@ public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
 
     @JsonProperty
     public boolean isStoringEnabled() {
-        return isStoringEnabled;
+        return storingEnabled;
     }
 
     public void setStoringEnabled(final boolean storingEnabled) {
-        isStoringEnabled = storingEnabled;
+        this.storingEnabled = storingEnabled;
     }
 
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
+    @RequiresRestart(value = RestartScope.SYSTEM)
     @JsonProperty
     public String getRepoDir() {
         return repoDir;
     }
 
     public void setRepoDir(final String repoDir) {
-        this.repoDir = repoDir;
+        ProxyRepoConfig.repoDir = repoDir;
     }
 
     /**
@@ -95,32 +98,32 @@ public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
-        if (dbConfig == null) {
-            Path path;
-            if (repoDir == null) {
-                throw new RuntimeException("No proxy repository dir has been defined");
-            } else {
-                path = Paths.get(repoDir);
-            }
-            if (!Files.isDirectory(path)) {
-                throw new RuntimeException("Unable to find repo dir: " + FileUtil.getCanonicalPath(path));
-            }
-
-            path = path.resolve("db");
-            FileUtil.mkdirs(path);
-            path = path.resolve("proxy-repo.db");
-
-            final String fullPath = FileUtil.getCanonicalPath(path);
-
-            final ConnectionConfig connectionConfig = new ConnectionConfig();
-            connectionConfig.setClassName("org.sqlite.JDBC");
-            connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-//            connectionConfig.setUser("sa");
-//            connectionConfig.setPassword("sa");
-
-            dbConfig = new DbConfig();
-            dbConfig.setConnectionConfig(connectionConfig);
-        }
+//        if (dbConfig == null) {
+//            Path path;
+//            if (repoDir == null) {
+//                throw new RuntimeException("No proxy repository dir has been defined");
+//            } else {
+//                path = Paths.get(repoDir);
+//            }
+//            if (!Files.isDirectory(path)) {
+//                throw new RuntimeException("Unable to find repo dir: " + FileUtil.getCanonicalPath(path));
+//            }
+//
+//            path = path.resolve("db");
+//            FileUtil.mkdirs(path);
+//            path = path.resolve("proxy-repo.db");
+//
+//            final String fullPath = FileUtil.getCanonicalPath(path);
+//
+//            final ConnectionConfig connectionConfig = new ConnectionConfig();
+//            connectionConfig.setClassName("org.sqlite.JDBC");
+//            connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
+////            connectionConfig.setUser("sa");
+////            connectionConfig.setPassword("sa");
+//
+//            dbConfig = new DbConfig();
+//            dbConfig.setConnectionConfig(connectionConfig);
+//        }
 
         return dbConfig;
     }

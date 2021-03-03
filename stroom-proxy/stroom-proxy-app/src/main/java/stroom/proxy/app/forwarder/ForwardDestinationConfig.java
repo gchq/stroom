@@ -3,7 +3,15 @@ package stroom.proxy.app.forwarder;
 import stroom.util.cert.SSLConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({
+        "forwardUrl",
+        "forwardTimeoutMs",
+        "forwardDelayMs",
+        "forwardChunkSize",
+        "sslConfig"
+})
 public class ForwardDestinationConfig {
 
     private String forwardUrl;

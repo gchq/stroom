@@ -446,9 +446,9 @@ appConfig:
     proxyThreads: 10
     aggregate:
       maxItemsPerAggregate: 1000
+      maxUncompressedByteSize: "1.0G"
       maxAggregateAge: "PT10M"
       aggregationFrequency: "PT1M"
-      maxUncompressedByteSize: "1.0G"
   publicUri:
     scheme: "https"
     hostname: null

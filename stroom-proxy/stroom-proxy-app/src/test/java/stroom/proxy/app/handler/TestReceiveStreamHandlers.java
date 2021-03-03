@@ -39,6 +39,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                         "Expecting a handler that stores").isTrue());
     }
 
+    @SuppressWarnings("checkstyle:Indentation")
     @Test
     void testForwardOnlySingle() {
         assertThatThrownBy(() -> {
@@ -55,6 +56,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 .isInstanceOf(UncheckedIOException.class);
     }
 
+    @SuppressWarnings("checkstyle:Indentation")
     @Test
     void testForwardOnlyMulti() {
         assertThatThrownBy(() -> {

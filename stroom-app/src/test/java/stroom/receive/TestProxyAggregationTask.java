@@ -26,7 +26,6 @@ import stroom.data.store.api.Store;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.docref.DocRef;
-import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -34,12 +33,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.statistics.api.MetaStatistics;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -49,6 +44,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -85,21 +82,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private FeedProperties feedProperties;
-    @Inject
-    private MetaStatistics metaStatistics;
-    @Inject
-    private TaskContextFactory taskContextFactory;
-    @Inject
-    private ExecutorProvider executorProvider;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    //    @Inject
-//    private Provider<FileSetProcessor> filePackProcessorProvider;
-    @Inject
-    private CommonTestControl commonTestControl;
-    @Inject
     private ProxyAggregationExecutor proxyAggregationExecutor;
+
+    private static String initialRepoDir;
+    private static Path proxyDir;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
@@ -122,11 +108,21 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
     }
 
+    @BeforeAll
+    static void beforeAll() throws IOException {
+        initialRepoDir = ProxyRepoConfig.repoDir;
+        proxyDir = Files.createTempDirectory("stroom");
+        ProxyRepoConfig.repoDir = FileUtil.getCanonicalPath(proxyDir);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        ProxyRepoConfig.repoDir = initialRepoDir;
+    }
+
     @Test
     void testImport() throws IOException {
         // commonTestControl.deleteAll();
-
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
@@ -220,7 +216,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     void testImportLots() throws IOException {
         // commonTestControl.deleteAll();
 
-        final Path proxyDir = getProxyDir();
 
 //        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
 //        createFeeds(feedName1);
@@ -409,7 +404,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Test
     void testImportLockedFiles() throws IOException {
         // commonTestControl.deleteAll();
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         createFeeds(feedName1);
@@ -456,7 +450,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     void testImportZipWithContextFiles() throws IOException {
         // commonTestControl.deleteAll();
 
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         createFeeds(feedName1);
@@ -516,7 +509,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testImportZipWithContextFiles2() throws IOException {
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         createFeeds(feedName1);
@@ -708,7 +700,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     void testAggregationLimits_SmallFiles() throws IOException {
         // commonTestControl.deleteAll();
 
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         createFeeds(feedName1);
@@ -732,7 +723,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     void testAggregationLimits_SmallCount() throws IOException {
         // commonTestControl.deleteAll();
 
-        final Path proxyDir = getProxyDir();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         createFeeds(feedName1);
@@ -774,7 +764,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 //    }
 
     private Path createProxyDirectory() {
-        final Path proxyDir = getProxyDir();
 
         try {
             Files.createDirectory(proxyDir);
@@ -784,9 +773,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         return proxyDir;
     }
 
-    private Path getProxyDir() {
-        return getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
-    }
+//    private Path getProxyDir() {
+//        return getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
+//    }
 
 //    @Override
 //    protected boolean teardownEnabled() {

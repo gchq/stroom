@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.data.zip.StroomZipFileType;
-import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.SqliteJooqUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -54,7 +54,7 @@ public class ProxyRepoSourceEntries {
 
     public void examine() {
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
-        JooqUtil.context(connProvider, context -> {
+        SqliteJooqUtil.context(connProvider, context -> {
             try (final Stream<Record2<Integer, String>> stream = context
                     .select(SOURCE.ID, SOURCE.PATH)
                     .from(SOURCE)
@@ -85,7 +85,7 @@ public class ProxyRepoSourceEntries {
         }
 
         // Start a transaction for all of the database changes.
-        JooqUtil.transaction(connProvider, context -> {
+        SqliteJooqUtil.transaction(connProvider, context -> {
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fullPath))) {
 
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
@@ -97,7 +97,7 @@ public class ProxyRepoSourceEntries {
                         final String fileName = entry.getName();
 
                         // Split into stem and extension.
-                        int index = fileName.indexOf(".");
+                        final int index = fileName.indexOf(".");
                         if (index != -1) {
                             final String dataName = fileName.substring(0, index);
                             final String extension = fileName.substring(index).toLowerCase();

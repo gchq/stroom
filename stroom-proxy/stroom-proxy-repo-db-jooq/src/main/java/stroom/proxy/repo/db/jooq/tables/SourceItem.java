@@ -65,7 +65,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     /**
      * The column <code>source_item.feed_name</code>.
      */
-    public final TableField<SourceItemRecord, String> FEED_NAME = createField(DSL.name("feed_name"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<SourceItemRecord, String> FEED_NAME = createField(DSL.name("feed_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
 
     /**
      * The column <code>source_item.type_name</code>.
@@ -80,7 +80,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     /**
      * The column <code>source_item.aggregated</code>.
      */
-    public final TableField<SourceItemRecord, Boolean> AGGREGATED = createField(DSL.name("aggregated"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<SourceItemRecord, Boolean> AGGREGATED = createField(DSL.name("aggregated"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     private SourceItem(Name alias, Table<SourceItemRecord> aliased) {
         this(alias, aliased, null);

@@ -18,17 +18,17 @@ CREATE TABLE IF NOT EXISTS source (
   id                        INTEGER PRIMARY KEY,
   path                      VARCHAR(255) NOT NULL UNIQUE,
   last_modified_time_ms     BIGINT NOT NULL,
-  examined                  BOOLEAN
+  examined                  BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS source_item (
   id                        INTEGER PRIMARY KEY,
   number                    INTEGER NOT NULL,
   name                      VARCHAR(255) NOT NULL,
-  feed_name                 VARCHAR(255),
+  feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,
   fk_source_id              INTEGER NOT NULL,
-  aggregated                BOOLEAN,
+  aggregated                BOOLEAN DEFAULT FALSE,
   UNIQUE                    (name, fk_source_id),
   FOREIGN KEY               (fk_source_id) REFERENCES source (id)
 );
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS source_entry (
   id                        INTEGER PRIMARY KEY,
   extension                 VARCHAR(255) NOT NULL,
   extension_type            INTEGER NOT NULL,
-  byte_size                 BIGINT,
+  byte_size                 BIGINT DEFAULT 0,
   fk_source_item_id         INTEGER NOT NULL,
   FOREIGN KEY               (fk_source_item_id) REFERENCES source_item (id)
 );
@@ -49,14 +49,14 @@ CREATE TABLE IF NOT EXISTS aggregate (
   type_name                 VARCHAR(255) DEFAULT NULL,
   byte_size                 BIGINT NOT NULL,
   items                     INTEGER NOT NULL,
-  complete                  BOOLEAN,
-  forward_error             BOOLEAN
+  complete                  BOOLEAN DEFAULT FALSE,
+  forward_error             BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS aggregate_item (
   id                        INTEGER PRIMARY KEY,
-  fk_aggregate_id           INTEGER,
-  fk_source_item_id         INTEGER,
+  fk_aggregate_id           INTEGER NOT NULL,
+  fk_source_item_id         INTEGER NOT NULL,
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id),
   FOREIGN KEY               (fk_source_item_id) REFERENCES source_item (id)
 );
@@ -69,9 +69,9 @@ CREATE TABLE IF NOT EXISTS forward_url (
 
 CREATE TABLE IF NOT EXISTS forward_aggregate (
   id                        INTEGER PRIMARY KEY,
-  fk_forward_url_id         INTEGER,
-  fk_aggregate_id           INTEGER,
-  success                   BOOLEAN,
+  fk_forward_url_id         INTEGER NOT NULL,
+  fk_aggregate_id           INTEGER NOT NULL,
+  success                   BOOLEAN NOT NULL,
   error                     VARCHAR(255) NOT NULL,
   FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)

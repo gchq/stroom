@@ -1,12 +1,18 @@
 package stroom.proxy.app.forwarder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({
+        "forwardingEnabled",
+        "userAgent",
+        "forwardDestinations"
+})
 public class ForwarderConfig {
 
     private boolean forwardingEnabled = false;

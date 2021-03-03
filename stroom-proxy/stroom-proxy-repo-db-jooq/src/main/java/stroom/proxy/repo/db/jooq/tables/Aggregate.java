@@ -80,12 +80,12 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     /**
      * The column <code>aggregate.complete</code>.
      */
-    public final TableField<AggregateRecord, Boolean> COMPLETE = createField(DSL.name("complete"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<AggregateRecord, Boolean> COMPLETE = createField(DSL.name("complete"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>aggregate.forward_error</code>.
      */
-    public final TableField<AggregateRecord, Boolean> FORWARD_ERROR = createField(DSL.name("forward_error"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<AggregateRecord, Boolean> FORWARD_ERROR = createField(DSL.name("forward_error"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     private Aggregate(Name alias, Table<AggregateRecord> aliased) {
         this(alias, aliased, null);

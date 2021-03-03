@@ -55,12 +55,12 @@ public class AggregateItem extends TableImpl<AggregateItemRecord> {
     /**
      * The column <code>aggregate_item.fk_aggregate_id</code>.
      */
-    public final TableField<AggregateItemRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER, this, "");
+    public final TableField<AggregateItemRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>aggregate_item.fk_source_item_id</code>.
      */
-    public final TableField<AggregateItemRecord, Integer> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.INTEGER, this, "");
+    public final TableField<AggregateItemRecord, Integer> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     private AggregateItem(Name alias, Table<AggregateItemRecord> aliased) {
         this(alias, aliased, null);

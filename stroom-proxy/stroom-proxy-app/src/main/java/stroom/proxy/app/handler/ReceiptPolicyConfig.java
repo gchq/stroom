@@ -1,11 +1,13 @@
 package stroom.proxy.app.handler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyRequestConfig {
+@JsonPropertyOrder({"receiptPolicyUuid"})
+public class ReceiptPolicyConfig {
 
     private String receiptPolicyUuid;
 
