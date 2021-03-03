@@ -18,12 +18,14 @@ package stroom.statistics.impl.sql.entity;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 
+@AutoLogged
 class StatisticResourceImpl implements StatisticResource {
 
     private final StatisticStoreStore statisticStoreStore;

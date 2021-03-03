@@ -16,12 +16,15 @@
 
 package stroom.security.impl.event;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 
+@AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl
 class PermissionChangeResourceImpl implements PermissionChangeResource {
 
     private final NodeService nodeService;

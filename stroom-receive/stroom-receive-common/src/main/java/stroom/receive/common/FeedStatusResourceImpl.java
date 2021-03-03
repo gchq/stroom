@@ -16,6 +16,7 @@
 
 package stroom.receive.common;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
@@ -25,6 +26,7 @@ import com.codahale.metrics.health.HealthCheck.Result;
 
 import javax.inject.Inject;
 
+@AutoLogged
 public class FeedStatusResourceImpl implements FeedStatusResource, HasHealthCheck {
 
     private final FeedStatusService feedStatusService;

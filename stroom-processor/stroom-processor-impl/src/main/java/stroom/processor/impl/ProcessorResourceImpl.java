@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorResource;
 import stroom.util.logging.LambdaLogger;
@@ -24,7 +25,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 
-// TODO : @66 add event logging
+@AutoLogged
 class ProcessorResourceImpl implements ProcessorResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorResourceImpl.class);
 

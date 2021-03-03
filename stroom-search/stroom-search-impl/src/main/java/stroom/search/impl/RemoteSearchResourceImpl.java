@@ -16,11 +16,15 @@
 
 package stroom.search.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+
 import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.StreamingOutput;
 
+@AutoLogged(OperationType.UNLOGGED)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
 
     private final RemoteSearchService remoteSearchService;

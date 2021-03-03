@@ -18,12 +18,14 @@ package stroom.pipeline.textconverter;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 
+@AutoLogged
 class TextConverterResourceImpl implements TextConverterResource {
 
     private final TextConverterStore textConverterStore;
