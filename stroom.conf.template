@@ -11,6 +11,10 @@ stroom.node=node1a
 stroom.rack=rack1
 stroom.temp=/tmp/stroom/
 
+# CA certificate for X.509 verification
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stroom.pki.caCert=/stroom/pki/ca.crt
+
 # Uncomment this to enable browser's right click menu for development
 #stroom.ui.oncontextmenu=
 
