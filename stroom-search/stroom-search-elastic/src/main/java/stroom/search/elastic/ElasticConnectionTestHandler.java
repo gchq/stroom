@@ -29,16 +29,25 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.MainResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 
 @TaskHandlerBean(task = ElasticConnectionTestAction.class)
 @Scope(StroomScope.TASK)
 public class ElasticConnectionTestHandler extends AbstractTaskHandler<ElasticConnectionTestAction, SharedString> {
+    private final String caCertPath;
+
+    public ElasticConnectionTestHandler(
+        @Value("#{propertyConfigurer.getProperty('stroom.pki.caCert')}") final String caCertPath
+    ) {
+        this.caCertPath = caCertPath;
+    }
+
     @Override
     public SharedString exec(final ElasticConnectionTestAction action) {
         try {
             final ElasticConnectionConfig connectionConfig = action.getElasticIndex().getConnectionConfig();
-            final RestHighLevelClient elasticClient = new ElasticClientFactory().create(connectionConfig);
+            final RestHighLevelClient elasticClient = new ElasticClientFactory(caCertPath).create(connectionConfig);
 
             MainResponse response = elasticClient.info(RequestOptions.DEFAULT);
 

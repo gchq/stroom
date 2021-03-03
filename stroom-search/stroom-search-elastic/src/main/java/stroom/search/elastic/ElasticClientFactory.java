@@ -4,14 +4,29 @@ import stroom.search.elastic.shared.ElasticConnectionConfig;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.net.ssl.SSLContext;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.regex.Matcher;
@@ -21,10 +36,16 @@ public class ElasticClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
     private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+):\\/\\/(.+?)(?:(?::([0-9]+)\\/?)?)$");
 
-    public ElasticClientFactory() { }
+    private final String caCertPath;
+
+    @Inject
+    public ElasticClientFactory(final String caCertPath) {
+        this.caCertPath = caCertPath;
+    }
 
     public RestHighLevelClient create(final ElasticConnectionConfig config) {
         final ArrayList<HttpHost> httpHosts = new ArrayList<>();
+        boolean useHttps = false;
 
         // Parse list of connection URLs into their component parts (scheme, host and port)
         for (final String url : config.getConnectionUrls()) {
@@ -33,6 +54,10 @@ public class ElasticClientFactory {
             if (host != null) {
                 // Extract the host, port and scheme
                 httpHosts.add(host);
+
+                if (host.getSchemeName().equalsIgnoreCase("https")) {
+                    useHttps = true;
+                }
             }
             else {
                 LOGGER.error("Invalid Elasticsearch URL format: '" + url + "'");
@@ -40,6 +65,19 @@ public class ElasticClientFactory {
         }
 
         final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+
+        // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
+        if (useHttps && caCertPath != null && !caCertPath.isEmpty()) {
+            final SSLContext sslContext = getSslContext();
+            if (sslContext != null) {
+                restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+                    @Override
+                    public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
+                        return httpClientBuilder.setSSLContext(sslContext);
+                    }
+                });
+            }
+        }
 
         // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
         final String apiKey = getEncodedApiKey(config);
@@ -52,6 +90,34 @@ public class ElasticClientFactory {
         }
 
         return new RestHighLevelClient(restClientBuilder);
+    }
+
+    private SSLContext getSslContext() {
+        final Path caCertPath = Paths.get(this.caCertPath);
+
+        try {
+            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            final InputStream certInputStream = Files.newInputStream(caCertPath);
+            final Certificate trustedCa = certFactory.generateCertificate(certInputStream);
+
+            final KeyStore trustStore = KeyStore.getInstance("pkcs12");
+            trustStore.load(null, null);
+            trustStore.setCertificateEntry("ca", trustedCa);
+
+            final SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
+            return sslContextBuilder.build();
+        }
+        catch (NoSuchFileException e) {
+            LOGGER.warn("CA cert file '" + caCertPath + "'. Skipping verification");
+        }
+        catch (CertificateException e) {
+            LOGGER.error("Failed to create a certificate factory", e);
+        }
+        catch (Exception e) {
+            LOGGER.error("Failed to load CA certificate from '" + caCertPath + "'", e);
+        }
+
+        return null;
     }
 
     /**
