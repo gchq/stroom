@@ -30,6 +30,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -40,22 +43,20 @@ import javax.inject.Provider;
 
 @AutoLogged
 class DictionaryResourceImpl implements DictionaryResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryResourceImpl.class);
 
     private final Provider<DictionaryStore> dictionaryStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
-    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
     DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
                            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                            final Provider<ResourceStore> resourceStoreProvider,
-                           final Provider<DocumentEventLog> documentEventLogProvider,
                            final Provider<SecurityContext> securityContext) {
         this.dictionaryStoreProvider = dictionaryStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
-        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
@@ -79,7 +80,6 @@ class DictionaryResourceImpl implements DictionaryResource {
     }
 
     @Override
-    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceGeneration download(final DocRef dictionaryRef) {
         // Get dictionary.
         final DictionaryDoc dictionary = dictionaryStoreProvider.get().readDocument(dictionaryRef);
@@ -87,16 +87,14 @@ class DictionaryResourceImpl implements DictionaryResource {
             throw new EntityServiceException("Unable to find dictionary");
         }
 
+        final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
+        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
-            final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
             Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
-            documentEventLogProvider.get().download(dictionary, null);
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
-
         } catch (final IOException e) {
-            documentEventLogProvider.get().download(dictionary, e);
+            LOGGER.error("Unable to download Dictionary", e);
             throw new UncheckedIOException(e);
         }
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 }
