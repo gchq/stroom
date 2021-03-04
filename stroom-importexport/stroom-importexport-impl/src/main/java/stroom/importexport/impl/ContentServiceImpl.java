@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.importexport.impl;
 
-import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -26,6 +26,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -34,30 +35,28 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.inject.Inject;
-
-;
-
 
 class ContentServiceImpl implements ContentService {
 
     private final ImportExportService importExportService;
-    private final StroomEventLoggingService eventLoggingService;
     private final ResourceStore resourceStore;
     private final DependencyService dependencyService;
     private final SecurityContext securityContext;
+    private final ExportConfig exportConfig;
 
     @Inject
     ContentServiceImpl(final ImportExportService importExportService,
-                       final StroomEventLoggingService eventLoggingService,
+                       final ExportConfig exportConfig,
                        final ResourceStore resourceStore,
                        final DependencyService dependencyService,
                        final SecurityContext securityContext) {
         this.importExportService = importExportService;
-        this.eventLoggingService = eventLoggingService;
         this.resourceStore = resourceStore;
         this.dependencyService = dependencyService;
         this.securityContext = securityContext;
+        this.exportConfig = exportConfig;
     }
 
     public ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
@@ -116,6 +115,24 @@ class ContentServiceImpl implements ContentService {
 
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
+    }
+
+    @Override
+    public ResourceKey exportAll() {
+        if (!securityContext.hasAppPermission("Export Configuration")) {
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to export all config");
+        }
+        if  (!exportConfig.isEnabled()) {
+            throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
+        }
+
+        final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
+
+        final Path tempFile = resourceStore.getTempFile(tempResourceKey);
+        importExportService.exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
+
+        return tempResourceKey;
     }
 
 
