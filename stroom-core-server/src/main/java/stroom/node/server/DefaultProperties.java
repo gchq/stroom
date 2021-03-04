@@ -33,14 +33,6 @@ public class DefaultProperties {
                 .description("Temp folder to write stuff to. Should only be set per node in application property file")
                 .build());
 
-        // PKI
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.pki.caCert")
-                .value("/stroom/pki/ca.crt")
-                .description("CA certificate, for verifying outbound TLS connections to external services")
-                .editable(true)
-                .build());
-
         // Stroom Proxy Repository and Aggregation 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.feed.receiptPolicyUuid")
