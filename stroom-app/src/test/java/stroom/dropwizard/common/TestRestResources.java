@@ -372,24 +372,24 @@ class TestRestResources {
         final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
         LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
 
-//        // Check that all member variables are providers.
-//        assertProviders(resourceClass, softAssertions);
-//        // Check that resource doesn't attempt to handle security
-//        assertNoSecurityContext(resourceClass, softAssertions);
-//
-//        Arrays.stream(resourceClass.getMethods())
-//                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-//                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
-//                .forEach(method -> {
-//                    final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
-//
-//                    softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
-//                            .withFailMessage(() -> "Method " + method.getName() +
-//                                    "(...) or its class must be annotated with @AutoLogged")
-//                            .isTrue();
-//                });
-//
-//        assertFetchDeclared(resourceClass, softAssertions);
+        // Check that all member variables are providers.
+        assertProviders(resourceClass, softAssertions);
+        // Check that resource doesn't attempt to handle security
+        assertNoSecurityContext(resourceClass, softAssertions);
+
+        Arrays.stream(resourceClass.getMethods())
+                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
+                .forEach(method -> {
+                    final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
+
+                    softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
+                            .withFailMessage(() -> "Method " + method.getName() +
+                                    "(...) or its class must be annotated with @AutoLogged")
+                            .isTrue();
+                });
+
+        assertFetchDeclared(resourceClass, softAssertions);
     }
 
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
