@@ -19,6 +19,8 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -40,6 +42,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@AutoLogged
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog documentEventLog;
@@ -64,6 +67,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTask> result;
 
@@ -93,6 +97,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTaskSummary> result;
 
@@ -122,6 +127,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
@@ -150,6 +156,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
