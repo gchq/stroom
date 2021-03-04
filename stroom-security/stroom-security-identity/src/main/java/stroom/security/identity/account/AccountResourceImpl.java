@@ -20,6 +20,8 @@ package stroom.security.identity.account;
 
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.AdvancedQuery;
@@ -48,7 +50,7 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 
-// TODO : @66 Add audit logging
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class AccountResourceImpl implements AccountResource {
 
     private final Provider<AccountService> serviceProvider;
