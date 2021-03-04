@@ -18,6 +18,8 @@ package stroom.node.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -45,7 +47,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.SyncInvoker;
 
-// TODO : @66 add event logging
+@AutoLogged
 class NodeResourceImpl implements NodeResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
@@ -140,6 +142,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
@@ -185,6 +188,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 

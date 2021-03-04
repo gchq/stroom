@@ -8,6 +8,7 @@ import stroom.kafka.shared.KafkaConfigResource;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -23,7 +24,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
-public class KafkaConfigResourceImpl implements KafkaConfigResource {
+public class KafkaConfigResourceImpl implements KafkaConfigResource, FetchWithUuid<KafkaConfigDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConfigResourceImpl.class);
 
     private final Provider<KafkaConfigStore> kafkaConfigStoreProvider;

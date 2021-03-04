@@ -112,6 +112,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Fetch explorer nodes",
             operationId = "fetchExplorerNodes")
-    FetchExplorerNodeResult fetch(
+    FetchExplorerNodeResult fetchExplorerNodes(
             @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
 }

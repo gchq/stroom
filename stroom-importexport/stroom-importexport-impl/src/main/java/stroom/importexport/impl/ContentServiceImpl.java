@@ -37,7 +37,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 class ContentServiceImpl implements ContentService {
 
     private final ImportExportService importExportService;

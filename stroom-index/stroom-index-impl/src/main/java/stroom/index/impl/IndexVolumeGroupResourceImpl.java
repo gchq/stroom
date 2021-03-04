@@ -4,6 +4,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;

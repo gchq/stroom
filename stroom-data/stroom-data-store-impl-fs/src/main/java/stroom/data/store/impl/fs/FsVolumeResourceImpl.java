@@ -26,6 +26,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
