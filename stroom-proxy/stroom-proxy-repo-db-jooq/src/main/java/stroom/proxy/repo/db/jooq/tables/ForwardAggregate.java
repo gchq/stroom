@@ -70,7 +70,7 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     /**
      * The column <code>forward_aggregate.error</code>.
      */
-    public final TableField<ForwardAggregateRecord, String> ERROR = createField(DSL.name("error"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ForwardAggregateRecord, String> ERROR = createField(DSL.name("error"), SQLDataType.VARCHAR(255), this, "");
 
     private ForwardAggregate(Name alias, Table<ForwardAggregateRecord> aliased) {
         this(alias, aliased, null);

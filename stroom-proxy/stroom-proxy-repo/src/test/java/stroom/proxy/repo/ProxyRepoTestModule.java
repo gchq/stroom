@@ -15,5 +15,7 @@ public class ProxyRepoTestModule extends AbstractModule {
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
         });
+
+        bind(ForwarderDestinations.class).to(MockForwardDestinations.class);
     }
 }

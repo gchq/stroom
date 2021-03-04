@@ -28,6 +28,8 @@ public class ProxyLifecycle implements Managed {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyLifecycle.class);
 
     private final List<Managed> services;
+    private final ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private final Forwarder forwarder;
 
     @Inject
     public ProxyLifecycle(final ProxyRepoConfig proxyRepoConfig,
@@ -42,6 +44,9 @@ public class ProxyLifecycle implements Managed {
                           final ForwarderConfig forwarderConfig,
                           final Cleanup cleanup,
                           final CleanupConfig cleanupConfig) {
+        this.proxyRepoSourceEntries = proxyRepoSourceEntries;
+        this.forwarder = forwarder;
+
         services = new ArrayList<>();
 
         if (proxyRepoConfig.isStoringEnabled()) {
@@ -119,6 +124,10 @@ public class ProxyLifecycle implements Managed {
                 LOGGER.error("error", e);
             }
         }
+
+        // Make sure all other async activity completes and shuts down.
+        proxyRepoSourceEntries.shutdown();
+        forwarder.shutdown();
 
         // This method is part of DW  Managed which is managed by Jersey so we need to ensure any interrupts
         // are cleared before it goes back to Jersey

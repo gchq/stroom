@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS forward_aggregate (
   fk_forward_url_id         INTEGER NOT NULL,
   fk_aggregate_id           BIGINT NOT NULL,
   success                   BOOLEAN NOT NULL,
-  error                     VARCHAR(255) NOT NULL,
+  error                     VARCHAR(255),
   FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );

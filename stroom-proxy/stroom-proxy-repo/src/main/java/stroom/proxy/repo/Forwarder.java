@@ -23,9 +23,12 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardUrlRecord;
 import stroom.receive.common.StreamHandlers;
+import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.net.HostNameUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -47,6 +50,9 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,6 +75,18 @@ public class Forwarder {
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
     private static final int BATCH_SIZE = 1000000;
 
+    private final ThreadFactory threadFactory = new CustomThreadFactory(
+            "Forward Data",
+            StroomThreadGroup.instance(),
+            Thread.NORM_PRIORITY - 1);
+    private final ExecutorService executor = ScalingThreadPoolExecutor.newScalingThreadPool(
+            1,
+            10,
+            100,
+            10,
+            TimeUnit.MINUTES,
+            threadFactory);
+
     private final SqliteJooqHelper jooq;
     private final ProxyRepoConfig proxyRepoConfig;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
@@ -78,6 +96,7 @@ public class Forwarder {
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
     private volatile String hostName = null;
+    private volatile boolean shutdown;
 
     @Inject
     Forwarder(final ProxyRepoDbConnProvider connProvider,
@@ -114,7 +133,7 @@ public class Forwarder {
 
     public void forward() {
         boolean run = true;
-        while (run) {
+        while (run && !shutdown) {
 
             final AtomicInteger count = new AtomicInteger();
 
@@ -130,13 +149,14 @@ public class Forwarder {
                             .fetch());
 
             result.forEach(record -> {
-                final long aggregateId = record.get(AGGREGATE.ID);
-                final String feedName = record.get(AGGREGATE.FEED_NAME);
-                final String typeName = record.get(AGGREGATE.TYPE_NAME);
+                if (!shutdown) {
+                    final long aggregateId = record.get(AGGREGATE.ID);
+                    final String feedName = record.get(AGGREGATE.FEED_NAME);
+                    final String typeName = record.get(AGGREGATE.TYPE_NAME);
 
-                forwardAggregate(aggregateId, feedName, typeName);
-
-                count.incrementAndGet();
+                    count.incrementAndGet();
+                    forwardAggregate(aggregateId, feedName, typeName);
+                }
             });
 
             // Stop forwarding if the last query did not return a result as big as the batch size.
@@ -146,9 +166,9 @@ public class Forwarder {
         }
     }
 
-    public void forwardAggregate(final long aggregateId,
-                                 final String feedName,
-                                 final String typeName) {
+    private void forwardAggregate(final long aggregateId,
+                                  final String feedName,
+                                  final String typeName) {
         final Map<Integer, String> remainingForwardUrl = new HashMap<>(forwardIdUrlMap);
         final AtomicBoolean previousFailure = new AtomicBoolean();
 
@@ -176,7 +196,7 @@ public class Forwarder {
                 if (success) {
                     successCount.incrementAndGet();
                 }
-            });
+            }, executor);
             futures.add(completableFuture);
         }
 
@@ -196,7 +216,7 @@ public class Forwarder {
                                 .where(AGGREGATE.ID.eq(aggregateId))
                                 .execute());
                     }
-                });
+                }, executor);
     }
 
 
@@ -361,6 +381,18 @@ public class Forwarder {
             hostName = HostNameUtil.determineHostName();
         }
         return hostName;
+    }
+
+    public void shutdown() {
+        shutdown = true;
+        executor.shutdown();
+        try {
+            while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                LOGGER.debug("Shutting down");
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void fireChange() {

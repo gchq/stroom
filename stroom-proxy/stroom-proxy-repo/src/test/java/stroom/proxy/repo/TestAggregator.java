@@ -31,8 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestAggregator {
 
     @Inject
-    private ProxyRepoConfig proxyRepoConfig;
-    @Inject
     private ProxyRepo proxyRepo;
     @Inject
     private ProxyRepoSources proxyRepoSources;
@@ -40,6 +38,10 @@ public class TestAggregator {
     private ProxyRepoSourceEntries proxyRepoSourceEntries;
     @Inject
     private Aggregator aggregator;
+    @Inject
+    private Forwarder forwarder;
+    @Inject
+    private MockForwardDestinations mockForwardDestinations;
 
     private static String repoDir;
     private static String initialRepoDir;
@@ -89,6 +91,8 @@ public class TestAggregator {
                 aggregator.aggregate(sourceId));
 
         aggregator.addChangeListener(total::addAndGet);
+
+        aggregator.addChangeListener(count -> forwarder.forward());
 
 //            services.add(proxyRepoSourceEntriesExecutor);
 
@@ -155,5 +159,11 @@ public class TestAggregator {
         aggregator.closeOldAggregates(System.currentTimeMillis());
 
         assertThat(total.get()).isEqualTo(10);
+
+        // Force all final work to be done.
+        proxyRepoSourceEntries.shutdown();
+        forwarder.shutdown();
+
+        assertThat(mockForwardDestinations.getForwardCount()).isEqualTo(10);
     }
 }
