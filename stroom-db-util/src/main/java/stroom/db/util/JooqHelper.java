@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.db.util;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
@@ -13,6 +13,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.jooq.conf.Settings;
@@ -35,37 +36,47 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.sql.DataSource;
 
-public final class SqliteJooqUtil {
+public class JooqHelper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqliteJooqUtil.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(JooqHelper.class);
 
-    private static final String DEFAULT_ID_FIELD_NAME = "id";
-    private static final Boolean RENDER_SCHEMA = false;
+    private final String DEFAULT_ID_FIELD_NAME = "id";
+    private final Boolean RENDER_SCHEMA = false;
 
-    private SqliteJooqUtil() {
-        // Utility class.
+    private final DataSource dataSource;
+    private final SQLDialect sqlDialect;
+
+    public JooqHelper(final DataSource dataSource) {
+        this.dataSource = dataSource;
+        this.sqlDialect = SQLDialect.MYSQL;
     }
 
-    public static void disableJooqLogoInLogs() {
+    public JooqHelper(final DataSource dataSource,
+                      final SQLDialect sqlDialect) {
+        this.dataSource = dataSource;
+        this.sqlDialect = sqlDialect;
+    }
+
+    public void disableJooqLogoInLogs() {
         System.getProperties().setProperty("org.jooq.no-logo", "true");
     }
 
-    public static DSLContext createContext(final Connection connection) {
+    private DSLContext createContext(final Connection connection) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
-        return DSL.using(connection, SQLDialect.SQLITE, settings);
+        return DSL.using(connection, sqlDialect, settings);
     }
 
-    public static DSLContext createContextWithOptimisticLocking(final Connection connection) {
+    private DSLContext createContextWithOptimisticLocking(final Connection connection) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
         settings = settings.withExecuteWithOptimisticLocking(true);
-        return DSL.using(connection, SQLDialect.SQLITE, settings);
+        return DSL.using(connection, sqlDialect, settings);
     }
 
-    public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+    public void context(final Consumer<DSLContext> consumer) {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             consumer.accept(context);
@@ -75,8 +86,7 @@ public final class SqliteJooqUtil {
         }
     }
 
-    public static <R extends Record> void truncateTable(final DataSource dataSource,
-                                                        final Table<R> table) {
+    public <R extends Record> void truncateTable(final Table<R> table) {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             context
@@ -91,23 +101,22 @@ public final class SqliteJooqUtil {
         }
     }
 
-    public static <R extends Record> int getTableCount(final DataSource dataSource,
-                                                       final Table<R> table) {
-
+    public <R extends Record> int getTableCount(final Table<R> table) {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             return context
                     .selectCount()
                     .from(table)
-                    .fetchOne()
-                    .value1();
+                    .fetchOptional()
+                    .map(Record1::value1)
+                    .orElse(0);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public <R> R contextResult(final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
@@ -119,7 +128,7 @@ public final class SqliteJooqUtil {
         return result;
     }
 
-//    public static void contextResultWithOptimisticLocking(
+//    public void contextResultWithOptimisticLocking(
 //    final DataSource dataSource, final Consumer<DSLContext> consumer) {
 //        try (final Connection connection = dataSource.getConnection()) {
 //            final DSLContext context = createContextWithOptimisticLocking(connection);
@@ -130,8 +139,7 @@ public final class SqliteJooqUtil {
 //        }
 //    }
 
-    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
-                                                           final Function<DSLContext, R> function) {
+    public <R> R contextResultWithOptimisticLocking(final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContextWithOptimisticLocking(connection);
@@ -143,13 +151,12 @@ public final class SqliteJooqUtil {
         return result;
     }
 
-    public static void transaction(final DataSource dataSource, final Consumer<DSLContext> consumer) {
-        context(dataSource, context -> context.transaction(nested -> consumer.accept(DSL.using(nested))));
+    public void transaction(final Consumer<DSLContext> consumer) {
+        context(context -> context.transaction(nested -> consumer.accept(DSL.using(nested))));
     }
 
-    public static <R> R transactionResult(final DataSource dataSource, final Function<DSLContext, R> function) {
-        return contextResult(dataSource,
-                context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+    public <R> R transactionResult(final Function<DSLContext, R> function) {
+        return contextResult(context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
     /**
@@ -159,16 +166,13 @@ public final class SqliteJooqUtil {
      * @param id    The id value to match on
      * @return The number of deleted records
      */
-    public static <R extends Record> int deleteById(final DataSource dataSource,
-                                                    final Table<R> table,
-                                                    final Field<Integer> field,
-                                                    final int id) {
-
-        return SqliteJooqUtil.contextResult(dataSource, context ->
-                context
-                        .deleteFrom(table)
-                        .where(field.eq(id))
-                        .execute());
+    public <R extends Record> int deleteById(final Table<R> table,
+                                             final Field<Integer> field,
+                                             final int id) {
+        return contextResult(context -> context
+                .deleteFrom(table)
+                .where(field.eq(id))
+                .execute());
     }
 
     /**
@@ -177,16 +181,13 @@ public final class SqliteJooqUtil {
      * @param id The id value to match on
      * @return The number of deleted records
      */
-    public static <R extends Record> int deleteById(final DataSource dataSource,
-                                                    final Table<R> table,
-                                                    final int id) {
-
+    public <R extends Record> int deleteById(final Table<R> table,
+                                             final int id) {
         final Field<Integer> idField = getIdField(table);
-        return SqliteJooqUtil.contextResult(dataSource, context ->
-                context
-                        .deleteFrom(table)
-                        .where(idField.eq(id))
-                        .execute());
+        return contextResult(context -> context
+                .deleteFrom(table)
+                .where(idField.eq(id))
+                .execute());
     }
 
     /**
@@ -197,20 +198,17 @@ public final class SqliteJooqUtil {
      * @param id   The id to match on
      * @return An optional containing the record if it was found.
      */
-    public static <R extends Record, T> Optional<T> fetchById(final DataSource dataSource,
-                                                              final Table<R> table,
-                                                              final Class<T> type,
-                                                              final int id) {
-
+    public <R extends Record, T> Optional<T> fetchById(final Table<R> table,
+                                                       final Class<T> type,
+                                                       final int id) {
         final Field<Integer> idField = getIdField(table);
-        return SqliteJooqUtil.contextResult(dataSource, context ->
-                context
-                        .fetchOptional(table, idField.eq(id))
-                        .map(record ->
-                                record.into(type)));
+        return contextResult(context -> context
+                .fetchOptional(table, idField.eq(id))
+                .map(record ->
+                        record.into(type)));
     }
 
-    private static Field<Integer> getIdField(Table<?> table) {
+    private Field<Integer> getIdField(Table<?> table) {
         final Field<Integer> idField = table.field(DEFAULT_ID_FIELD_NAME, Integer.class);
         if (idField == null) {
             throw new RuntimeException(LogUtil.message("Field [id] not found on table [{}]", table.getName()));
@@ -218,14 +216,14 @@ public final class SqliteJooqUtil {
         return idField;
     }
 
-    public static int getLimit(final PageRequest pageRequest,
-                               final boolean oneLarger) {
+    public int getLimit(final PageRequest pageRequest,
+                        final boolean oneLarger) {
         return getLimit(pageRequest, oneLarger, Integer.MAX_VALUE);
     }
 
-    public static int getLimit(final PageRequest pageRequest,
-                               final boolean oneLarger,
-                               final int defaultValue) {
+    public int getLimit(final PageRequest pageRequest,
+                        final boolean oneLarger,
+                        final int defaultValue) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
                 if (oneLarger) {
@@ -239,7 +237,7 @@ public final class SqliteJooqUtil {
         return defaultValue;
     }
 
-    public static int getOffset(final PageRequest pageRequest) {
+    public int getOffset(final PageRequest pageRequest) {
         if (pageRequest != null) {
             if (pageRequest.getOffset() != null) {
                 return pageRequest.getOffset().intValue();
@@ -251,7 +249,7 @@ public final class SqliteJooqUtil {
 
     @SafeVarargs
     @SuppressWarnings("varargs") // Creating a stream from an array is safe
-    public static Collection<Condition> conditions(final Optional<Condition>... conditions) {
+    public final Collection<Condition> conditions(final Optional<Condition>... conditions) {
         return Stream.of(conditions)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -266,7 +264,7 @@ public final class SqliteJooqUtil {
      * @param <T>      The type of the range
      * @return A condition that applies the given range.
      */
-    public static <T extends Number> Optional<Condition> getRangeCondition(
+    public <T extends Number> Optional<Condition> getRangeCondition(
             final Field<T> field,
             final Range<T> criteria) {
         if (criteria == null || !criteria.isConstrained()) {
@@ -306,7 +304,7 @@ public final class SqliteJooqUtil {
      * @param <T>      The type of the range
      * @return A condition that applies the given set.
      */
-    public static <T> Optional<Condition> getSetCondition(
+    public <T> Optional<Condition> getSetCondition(
             final Field<T> field,
             final Selection<T> criteria) {
         if (criteria == null || criteria.isMatchAll()) {
@@ -322,7 +320,7 @@ public final class SqliteJooqUtil {
      * @param criteria The criteria to apply
      * @return A condition that applies the given criteria
      */
-    public static Optional<Condition> getStringCondition(
+    public Optional<Condition> getStringCondition(
             final Field<String> field,
             final StringCriteria criteria) {
         if (criteria == null || !criteria.isConstrained()) {
@@ -351,9 +349,9 @@ public final class SqliteJooqUtil {
         return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
     }
 
-    private static Optional<Condition> convertMatchNull(final Field<?> field,
-                                                        final Boolean matchNull,
-                                                        final Optional<Condition> condition) {
+    private Optional<Condition> convertMatchNull(final Field<?> field,
+                                                 final Boolean matchNull,
+                                                 final Optional<Condition> condition) {
         if (matchNull == null) {
             return condition;
         }
@@ -363,8 +361,8 @@ public final class SqliteJooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
-                                                           final BaseCriteria criteria) {
+    public Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
+                                                    final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
             return Collections.emptyList();
         }
@@ -377,8 +375,8 @@ public final class SqliteJooqUtil {
                 .collect(Collectors.toList());
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
-                                                         final CriteriaFieldSort sort) {
+    private Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
+                                                  final CriteriaFieldSort sort) {
         final Field<?> field = fieldMap.get(sort.getId());
 
         if (field != null) {
@@ -395,25 +393,25 @@ public final class SqliteJooqUtil {
     /**
      * Converts a time in millis since epoch to a {@link Timestamp}
      */
-    public static Field<Timestamp> epochMsToTimestamp(Field<? extends Number> field) {
+    public Field<Timestamp> epochMsToTimestamp(final Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.TIMESTAMP, field);
     }
 
     /**
      * Converts a time in millis since epoch to a {@link Date}
      */
-    public static Field<Date> epochMsToDate(Field<? extends Number> field) {
+    public Field<Date> epochMsToDate(Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.DATE, field);
     }
 
-    public static Field<Integer> periodDiff(final Field<? extends Date> date1,
-                                            final Field<? extends Date> date2) {
+    public Field<Integer> periodDiff(final Field<? extends Date> date1,
+                                     final Field<? extends Date> date2) {
         return DSL.field("period_diff(extract(year_month from {0}), extract(year_month from {1}))",
                 SQLDataType.INTEGER, date1, date2);
     }
 
-    public static Field<Integer> periodDiff(final Field<? extends Date> date1,
-                                            final Date date2) {
+    public Field<Integer> periodDiff(final Field<? extends Date> date1,
+                                     final Date date2) {
         return DSL.field("period_diff(extract(year_month from {0}), extract(year_month from {1}))",
                 SQLDataType.INTEGER, date1, date2);
     }

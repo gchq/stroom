@@ -50,7 +50,7 @@ public class Source extends TableImpl<SourceRecord> {
     /**
      * The column <code>source.id</code>.
      */
-    public final TableField<SourceRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<SourceRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>source.path</code>.
@@ -112,7 +112,7 @@ public class Source extends TableImpl<SourceRecord> {
 
     @Override
     public List<UniqueKey<SourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceRecord>>asList(Keys.PK_SOURCE, Keys.SQLITE_AUTOINDEX_SOURCE_1);
+        return Arrays.<UniqueKey<SourceRecord>>asList(Keys.PK_SOURCE, Keys.SQLITE_AUTOINDEX_SOURCE_2);
     }
 
     @Override
@@ -146,7 +146,7 @@ public class Source extends TableImpl<SourceRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row4<Integer, String, Long, Boolean> fieldsRow() {
+    public Row4<Long, String, Long, Boolean> fieldsRow() {
         return (Row4) super.fieldsRow();
     }
 }

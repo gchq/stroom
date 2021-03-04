@@ -83,7 +83,7 @@ public class ProxyLifecycle implements Managed {
                         forwarder::forward,
                         100);
                 // Forward whenever we have new aggregates.
-                aggregator.addChangeListener(forwarderExecutor::onChange);
+                aggregator.addChangeListener(count -> forwarderExecutor.onChange());
                 services.add(forwarderExecutor);
 
                 final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(

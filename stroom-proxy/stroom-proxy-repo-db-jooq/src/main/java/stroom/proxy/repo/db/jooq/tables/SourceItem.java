@@ -50,7 +50,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     /**
      * The column <code>source_item.id</code>.
      */
-    public final TableField<SourceItemRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<SourceItemRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>source_item.number</code>.
@@ -75,7 +75,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     /**
      * The column <code>source_item.fk_source_id</code>.
      */
-    public final TableField<SourceItemRecord, Integer> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<SourceItemRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source_item.aggregated</code>.
@@ -127,7 +127,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
 
     @Override
     public List<UniqueKey<SourceItemRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceItemRecord>>asList(Keys.PK_SOURCE_ITEM, Keys.SQLITE_AUTOINDEX_SOURCE_ITEM_1);
+        return Arrays.<UniqueKey<SourceItemRecord>>asList(Keys.PK_SOURCE_ITEM, Keys.SQLITE_AUTOINDEX_SOURCE_ITEM_2);
     }
 
     @Override
@@ -175,7 +175,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Integer, Integer, String, String, String, Integer, Boolean> fieldsRow() {
+    public Row7<Long, Integer, String, String, String, Long, Boolean> fieldsRow() {
         return (Row7) super.fieldsRow();
     }
 }

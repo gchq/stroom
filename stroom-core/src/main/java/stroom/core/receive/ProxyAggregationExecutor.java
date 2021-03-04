@@ -42,9 +42,6 @@ public class ProxyAggregationExecutor {
     private final ProxyRepo proxyRepo;
     private final ProxyRepoFileScanner proxyRepoFileScanner;
     private final Aggregator aggregator;
-    private final Forwarder forwarder;
-
-//    private volatile boolean firstRun = true;
 
     @Inject
     public ProxyAggregationExecutor(final ProxyRepo proxyRepo,
@@ -57,23 +54,18 @@ public class ProxyAggregationExecutor {
         this.proxyRepo = proxyRepo;
         this.proxyRepoFileScanner = proxyRepoFileScanner;
         this.aggregator = aggregator;
-        this.forwarder = forwarder;
 
         proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
         proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
-        aggregator.addChangeListener(forwarder::forward);
+        aggregator.addChangeListener(count -> forwarder.forward());
         forwarder.addChangeListener(cleanup::cleanup);
     }
 
     public void exec() {
         if (!Thread.currentThread().isInterrupted()) {
             try {
-//                // On first startup run aggregation and forwarding just to clean up and half finished forwarding jobs.
-//                if (firstRun) {
-//                    firstRun = false;
+                // Try aggregating again.
                 aggregator.aggregate();
-                forwarder.forward();
-//                }
 
                 // Scan the proxy repo to find new files to aggregate.
                 proxyRepoFileScanner.scan();

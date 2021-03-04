@@ -50,17 +50,17 @@ public class AggregateItem extends TableImpl<AggregateItemRecord> {
     /**
      * The column <code>aggregate_item.id</code>.
      */
-    public final TableField<AggregateItemRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<AggregateItemRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>aggregate_item.fk_aggregate_id</code>.
      */
-    public final TableField<AggregateItemRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<AggregateItemRecord, Long> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>aggregate_item.fk_source_item_id</code>.
      */
-    public final TableField<AggregateItemRecord, Integer> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<AggregateItemRecord, Long> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     private AggregateItem(Name alias, Table<AggregateItemRecord> aliased) {
         this(alias, aliased, null);
@@ -163,7 +163,7 @@ public class AggregateItem extends TableImpl<AggregateItemRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row3<Integer, Integer, Integer> fieldsRow() {
+    public Row3<Long, Long, Long> fieldsRow() {
         return (Row3) super.fieldsRow();
     }
 }

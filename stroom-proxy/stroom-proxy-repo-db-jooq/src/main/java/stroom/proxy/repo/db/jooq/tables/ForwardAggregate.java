@@ -50,7 +50,7 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     /**
      * The column <code>forward_aggregate.id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<ForwardAggregateRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>forward_aggregate.fk_forward_url_id</code>.
@@ -60,7 +60,7 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     /**
      * The column <code>forward_aggregate.fk_aggregate_id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ForwardAggregateRecord, Long> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.success</code>.
@@ -173,7 +173,7 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Integer, Integer, Integer, Boolean, String> fieldsRow() {
+    public Row5<Long, Integer, Long, Boolean, String> fieldsRow() {
         return (Row5) super.fieldsRow();
     }
 }

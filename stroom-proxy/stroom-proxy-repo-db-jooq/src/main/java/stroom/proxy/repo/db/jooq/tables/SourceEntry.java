@@ -50,7 +50,7 @@ public class SourceEntry extends TableImpl<SourceEntryRecord> {
     /**
      * The column <code>source_entry.id</code>.
      */
-    public final TableField<SourceEntryRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<SourceEntryRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>source_entry.extension</code>.
@@ -70,7 +70,7 @@ public class SourceEntry extends TableImpl<SourceEntryRecord> {
     /**
      * The column <code>source_entry.fk_source_item_id</code>.
      */
-    public final TableField<SourceEntryRecord, Integer> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<SourceEntryRecord, Long> FK_SOURCE_ITEM_ID = createField(DSL.name("fk_source_item_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     private SourceEntry(Name alias, Table<SourceEntryRecord> aliased) {
         this(alias, aliased, null);
@@ -165,7 +165,7 @@ public class SourceEntry extends TableImpl<SourceEntryRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Integer, String, Integer, Long, Integer> fieldsRow() {
+    public Row5<Long, String, Integer, Long, Long> fieldsRow() {
         return (Row5) super.fieldsRow();
     }
 }

@@ -50,7 +50,7 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     /**
      * The column <code>aggregate.id</code>.
      */
-    public final TableField<AggregateRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER, this, "");
+    public final TableField<AggregateRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>aggregate.create_time_ms</code>.
@@ -166,7 +166,7 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, Long, String, String, Long, Integer, Boolean, Boolean> fieldsRow() {
+    public Row8<Long, Long, String, String, Long, Integer, Boolean, Boolean> fieldsRow() {
         return (Row8) super.fieldsRow();
     }
 }

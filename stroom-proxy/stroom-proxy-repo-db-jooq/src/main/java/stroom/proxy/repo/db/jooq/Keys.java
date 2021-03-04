@@ -43,10 +43,10 @@ public class Keys {
     public static final UniqueKey<ForwardUrlRecord> PK_FORWARD_URL = Internal.createUniqueKey(ForwardUrl.FORWARD_URL, DSL.name("pk_forward_url"), new TableField[] { ForwardUrl.FORWARD_URL.ID }, true);
     public static final UniqueKey<ForwardUrlRecord> SQLITE_AUTOINDEX_FORWARD_URL_1 = Internal.createUniqueKey(ForwardUrl.FORWARD_URL, DSL.name("sqlite_autoindex_forward_url_1"), new TableField[] { ForwardUrl.FORWARD_URL.URL }, true);
     public static final UniqueKey<SourceRecord> PK_SOURCE = Internal.createUniqueKey(Source.SOURCE, DSL.name("pk_source"), new TableField[] { Source.SOURCE.ID }, true);
-    public static final UniqueKey<SourceRecord> SQLITE_AUTOINDEX_SOURCE_1 = Internal.createUniqueKey(Source.SOURCE, DSL.name("sqlite_autoindex_source_1"), new TableField[] { Source.SOURCE.PATH }, true);
+    public static final UniqueKey<SourceRecord> SQLITE_AUTOINDEX_SOURCE_2 = Internal.createUniqueKey(Source.SOURCE, DSL.name("sqlite_autoindex_source_2"), new TableField[] { Source.SOURCE.PATH }, true);
     public static final UniqueKey<SourceEntryRecord> PK_SOURCE_ENTRY = Internal.createUniqueKey(SourceEntry.SOURCE_ENTRY, DSL.name("pk_source_entry"), new TableField[] { SourceEntry.SOURCE_ENTRY.ID }, true);
     public static final UniqueKey<SourceItemRecord> PK_SOURCE_ITEM = Internal.createUniqueKey(SourceItem.SOURCE_ITEM, DSL.name("pk_source_item"), new TableField[] { SourceItem.SOURCE_ITEM.ID }, true);
-    public static final UniqueKey<SourceItemRecord> SQLITE_AUTOINDEX_SOURCE_ITEM_1 = Internal.createUniqueKey(SourceItem.SOURCE_ITEM, DSL.name("sqlite_autoindex_source_item_1"), new TableField[] { SourceItem.SOURCE_ITEM.NAME, SourceItem.SOURCE_ITEM.FK_SOURCE_ID }, true);
+    public static final UniqueKey<SourceItemRecord> SQLITE_AUTOINDEX_SOURCE_ITEM_2 = Internal.createUniqueKey(SourceItem.SOURCE_ITEM, DSL.name("sqlite_autoindex_source_item_2"), new TableField[] { SourceItem.SOURCE_ITEM.NAME, SourceItem.SOURCE_ITEM.FK_SOURCE_ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

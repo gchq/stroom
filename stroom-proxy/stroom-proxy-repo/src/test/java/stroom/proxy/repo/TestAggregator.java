@@ -7,10 +7,6 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.Aggregator;
-import stroom.proxy.repo.ProxyRepo;
-import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoSources;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -25,7 +21,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
@@ -73,13 +72,24 @@ public class TestAggregator {
 //                    cleanupConfig.getCleanupFrequency().toMillis());
 //            services.add(cleanupRepoExecutor);
 
-        // Add executor to open source files and scan entries
-        final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
-                ProxyRepoSourceEntries.class.getSimpleName(),
-                proxyRepoSourceEntries::examine,
-                100);
-        proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
-        proxyRepoSourceEntriesExecutor.start();
+//        // Add executor to open source files and scan entries
+//        final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
+//                ProxyRepoSourceEntries.class.getSimpleName(),
+//                proxyRepoSourceEntries::examine,
+//                100);
+//        proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
+//        proxyRepoSourceEntriesExecutor.start();
+
+        final AtomicInteger total = new AtomicInteger();
+
+        proxyRepoSources.addChangeListener((sourceId, sourcePath) ->
+                proxyRepoSourceEntries.examineSource(sourceId, sourcePath));
+
+        proxyRepoSourceEntries.addChangeListener(sourceId ->
+                aggregator.aggregate(sourceId));
+
+        aggregator.addChangeListener(total::addAndGet);
+
 //            services.add(proxyRepoSourceEntriesExecutor);
 
 //            if (proxyRepoFileScannerConfig.isScanningEnabled()) {
@@ -139,8 +149,11 @@ public class TestAggregator {
                             entryOutputStream);
                 }
             }
-
-            proxyRepoSources.addSource("test" + i, System.currentTimeMillis());
         }
+
+        // Produce final aggregates.
+        aggregator.closeOldAggregates(System.currentTimeMillis());
+
+        assertThat(total.get()).isEqualTo(10);
     }
 }

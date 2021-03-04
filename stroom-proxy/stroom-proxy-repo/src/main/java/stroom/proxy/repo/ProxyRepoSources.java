@@ -1,11 +1,13 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.db.jooq.tables.records.SourceRecord;
 import stroom.util.shared.Clearable;
 
+import org.jooq.Record1;
+import org.jooq.impl.DSL;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -14,32 +16,39 @@ import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 @Singleton
 public class ProxyRepoSources implements Clearable {
 
-    private final ProxyRepoDbConnProvider connProvider;
+    private final SqliteJooqHelper jooq;
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
+
+    private final AtomicLong sourceRecordId = new AtomicLong();
 
     @Inject
     public ProxyRepoSources(final ProxyRepoDbConnProvider connProvider) {
-        this.connProvider = connProvider;
-    }
+        this.jooq = new SqliteJooqHelper(connProvider);
 
-    public Optional<Integer> getSource(final String path) {
-        return SqliteJooqUtil.contextResult(connProvider, context -> context
-                .select(SOURCE.ID)
+        final long maxSourceRecordId = jooq.contextResult(context -> context
+                .select(DSL.max(SOURCE.ID))
                 .from(SOURCE)
-                .where(SOURCE.PATH.eq(path))
                 .fetchOptional()
-                .map(r -> r.get(SOURCE.ID)));
+                .map(Record1::value1)
+                .orElse(0L));
+        sourceRecordId.set(maxSourceRecordId);
     }
 
-    public int addSource(final String path, final long lastModifiedTimeMs) {
-        final int sourceId = SqliteJooqUtil.contextResult(connProvider, context -> context
-                .insertInto(SOURCE, SOURCE.PATH, SOURCE.LAST_MODIFIED_TIME_MS)
-                .values(path, lastModifiedTimeMs)
-                .onDuplicateKeyIgnore()
-                .returning(SOURCE.ID)
-                .fetchOptional()
-                .map(SourceRecord::getId)
-                .orElse(-1));
+//    public Optional<Long> getSource(final String path) {
+//        return jooq.contextResult(context -> context
+//                .select(SOURCE.ID)
+//                .from(SOURCE)
+//                .where(SOURCE.PATH.eq(path))
+//                .fetchOptional()
+//                .map(r -> r.get(SOURCE.ID)));
+//    }
+
+    public long addSource(final String path, final long lastModifiedTimeMs) {
+        final long sourceId = sourceRecordId.incrementAndGet();
+        jooq.context(context -> context
+                .insertInto(SOURCE, SOURCE.ID, SOURCE.PATH, SOURCE.LAST_MODIFIED_TIME_MS)
+                .values(sourceId, path, lastModifiedTimeMs)
+                .execute());
 
         changeListeners.forEach(listener -> listener.onChange(sourceId, path));
 
@@ -48,7 +57,7 @@ public class ProxyRepoSources implements Clearable {
 
     @Override
     public void clear() {
-        SqliteJooqUtil.contextResult(connProvider, context -> context
+        jooq.contextResult(context -> context
                 .deleteFrom(SOURCE)
                 .execute());
     }
@@ -59,6 +68,6 @@ public class ProxyRepoSources implements Clearable {
 
     public interface ChangeListener {
 
-        void onChange(int sourceId, String sourcePath);
+        void onChange(long sourceId, String sourcePath);
     }
 }
