@@ -1,7 +1,11 @@
 package stroom.dropwizard.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
+import stroom.util.shared.FetchWithIntegerId;
+import stroom.util.shared.FetchWithLongId;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.RestResource;
 
 import com.codahale.metrics.annotation.Timed;
@@ -25,6 +29,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -363,12 +368,14 @@ class TestRestResources {
                 annotationClass -> annotationClass.getPackageName().contains("swagger"),
                 "Swagger");
 
-//        // Check auto logging
-//        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
-//        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
-//
+        // Check auto logging
+        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
+
 //        // Check that all member variables are providers.
 //        assertProviders(resourceClass, softAssertions);
+//        // Check that resource doesn't attempt to handle security
+//        assertNoSecurityContext(resourceClass, softAssertions);
 //
 //        Arrays.stream(resourceClass.getMethods())
 //                .filter(method -> !Modifier.isPrivate(method.getModifiers()))
@@ -381,6 +388,24 @@ class TestRestResources {
 //                                    "(...) or its class must be annotated with @AutoLogged")
 //                            .isTrue();
 //                });
+//
+//        assertFetchDeclared(resourceClass, softAssertions);
+    }
+
+    private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
+                  final SoftAssertions softAssertions) {
+        boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
+                .filter(m -> m.getName().equals("fetch") && m.getParameterCount() == 1).findFirst().isPresent();
+        boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
+                .filter(m -> m.getName().equals("update") || m.getName().equals("delete")).findFirst().isPresent();
+        if (fetchMethodPresent && updateOrDeleteMethodPresent) {
+            if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
+                    !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
+                !FetchWithLongId.class.isAssignableFrom(resourceClass)) {
+                softAssertions.fail("Resource classes that support fetch() should" +
+                        " declare the appropriate FetchWithSomething<FetchedThing> interface");
+            }
+        }
     }
 
     private void assertProviders(final Class<? extends RestResource> resourceClass,
@@ -400,6 +425,39 @@ class TestRestResources {
             softAssertions.assertThat(nonProvidedFields)
                     .withFailMessage("Resource implementations/classes must inject all objects " +
                             "via Providers.")
+                    .isEmpty();
+        }
+    }
+
+    private void assertNoSecurityContext(final Class<? extends RestResource> resourceClass,
+                                 final SoftAssertions softAssertions) {
+        List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
+                .filter(field -> {
+                    if (SecurityContext.class.isAssignableFrom(field.getType())) {
+                        return true;
+                    } else if (Provider.class.isAssignableFrom(field.getType())) {
+                        //Really would like to check for presence of Provider<SecurityContext>
+                        //but not possible in Java.
+                        // Check for what we can manage, which is a field of type that extends Provider<SecurityContext>
+                        if (field.getType().getGenericSuperclass() instanceof ParameterizedType) {
+                            ParameterizedType providerType = (ParameterizedType) field.getType().getGenericSuperclass();
+
+                            return Arrays.stream(providerType.getActualTypeArguments())
+                                    .filter(type -> SecurityContext.class.isAssignableFrom(type.getClass()))
+                                    .findAny()
+                                    .isPresent();
+                        }
+                    }
+                    return false;
+
+                })
+                .collect(Collectors.toList());
+
+        if (!securityContextFields.isEmpty()) {
+            LOGGER.warn("SecurityContext fields {}", securityContextFields);
+            softAssertions.assertThat(securityContextFields)
+                    .withFailMessage("Resource implementations/classes should delegate SecurityContext " +
+                            "operations to an internal service.")
                     .isEmpty();
         }
     }
