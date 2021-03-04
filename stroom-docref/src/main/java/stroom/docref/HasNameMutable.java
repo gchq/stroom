@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,6 @@
 
 package stroom.docref;
 
-public interface HasName {
-    String getName();
+public interface HasNameMutable extends HasName {
+    void setName(final String name);
 }

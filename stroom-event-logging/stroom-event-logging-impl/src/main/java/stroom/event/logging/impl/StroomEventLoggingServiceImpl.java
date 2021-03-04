@@ -583,9 +583,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         ignorePropertiesFromSuperType(obj, HasId.class, ignore);
         ignorePropertiesFromSuperType(obj, HasName.class, ignore);
         ignorePropertiesFromSuperType(obj, HasUuid.class, ignore);
-        ignorePropertiesFromSuperType(obj, HasName.class, ignore);
         ignorePropertiesFromSuperType(obj, HasType.class, ignore);
-        ignorePropertiesFromSuperType(obj, HasName.class, ignore);
 
         //No interface defined yet - but version has a reasonably standard meaning and can be ignored
         ignore.add("version");
