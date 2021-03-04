@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.docref;
+package stroom.explorer.api;
 
-public interface HasName {
-    String getName();
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodePermissions;
+
+import java.util.List;
+import java.util.Set;
+
+public interface ExplorerNodePermissionsService {
+    Set<ExplorerNodePermissions> fetchExplorerPermissions(final List<ExplorerNode> explorerNodes);
 }

@@ -21,6 +21,8 @@ import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
@@ -34,31 +36,31 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class DictionaryResourceImpl implements DictionaryResource {
 
-    private final DictionaryStore dictionaryStore;
-    private final DocumentResourceHelper documentResourceHelper;
-    private final ResourceStore resourceStore;
-    private final DocumentEventLog documentEventLog;
-    private final SecurityContext securityContext;
+    private final Provider<DictionaryStore> dictionaryStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<ResourceStore> resourceStoreProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
-    DictionaryResourceImpl(final DictionaryStore dictionaryStore,
-                           final DocumentResourceHelper documentResourceHelper,
-                           final ResourceStore resourceStore,
-                           final DocumentEventLog documentEventLog,
-                           final SecurityContext securityContext) {
-        this.dictionaryStore = dictionaryStore;
-        this.documentResourceHelper = documentResourceHelper;
-        this.resourceStore = resourceStore;
-        this.documentEventLog = documentEventLog;
-        this.securityContext = securityContext;
+    DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
+                           final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                           final Provider<ResourceStore> resourceStoreProvider,
+                           final Provider<DocumentEventLog> documentEventLogProvider,
+                           final Provider<SecurityContext> securityContext) {
+        this.dictionaryStoreProvider = dictionaryStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.resourceStoreProvider = resourceStoreProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public DictionaryDoc fetch(final String uuid) {
-        return documentResourceHelper.read(dictionaryStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(dictionaryStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -66,7 +68,7 @@ class DictionaryResourceImpl implements DictionaryResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(dictionaryStore, doc);
+        return documentResourceHelperProvider.get().update(dictionaryStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {
@@ -77,25 +79,24 @@ class DictionaryResourceImpl implements DictionaryResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceGeneration download(final DocRef dictionaryRef) {
-        return securityContext.secureResult(() -> {
-            // Get dictionary.
-            final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
-            if (dictionary == null) {
-                throw new EntityServiceException("Unable to find dictionary");
-            }
+        // Get dictionary.
+        final DictionaryDoc dictionary = dictionaryStoreProvider.get().readDocument(dictionaryRef);
+        if (dictionary == null) {
+            throw new EntityServiceException("Unable to find dictionary");
+        }
 
-            try {
-                final ResourceKey resourceKey = resourceStore.createTempFile("dictionary.txt");
-                final Path file = resourceStore.getTempFile(resourceKey);
-                Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
-                documentEventLog.download(dictionary, null);
-                return new ResourceGeneration(resourceKey, new ArrayList<>());
+        try {
+            final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
+            final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+            Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
+            documentEventLogProvider.get().download(dictionary, null);
+            return new ResourceGeneration(resourceKey, new ArrayList<>());
 
-            } catch (final IOException e) {
-                documentEventLog.download(dictionary, null);
-                throw new UncheckedIOException(e);
-            }
-        });
+        } catch (final IOException e) {
+            documentEventLogProvider.get().download(dictionary, e);
+            throw new UncheckedIOException(e);
+        }
     }
 }

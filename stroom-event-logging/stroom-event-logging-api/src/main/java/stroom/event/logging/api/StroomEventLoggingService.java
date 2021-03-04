@@ -30,6 +30,8 @@ import java.util.function.Supplier;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
+    String UNKNOWN_OBJECT_DESCRIPTION = "Unknown";
+
 //    Event createSkeletonEvent(final String typeId,
 //                              final String description);
 //
