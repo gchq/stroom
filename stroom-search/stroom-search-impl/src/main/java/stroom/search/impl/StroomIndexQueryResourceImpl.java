@@ -18,6 +18,8 @@ package stroom.search.impl;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.StroomIndexQueryResource;
 import stroom.index.shared.IndexDoc;
@@ -41,6 +43,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
+@AutoLogged
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
@@ -137,6 +140,7 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
 
     @Override
     @Timed
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
         return taskContextFactory.contextResult("Destroy search",
                 taskContext -> {
