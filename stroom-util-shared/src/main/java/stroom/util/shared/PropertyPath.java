@@ -1,5 +1,7 @@
 package stroom.util.shared;
 
+import stroom.docref.HasName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,9 +19,10 @@ import java.util.Objects;
  * stroom.node.name
  * The aim is to break the dot delimited path strings into its parts to
  * reduce the memory overhead of holding all the paths as many parts are similar
+ *
  */
 @JsonInclude(Include.NON_NULL)
-public class PropertyPath implements Comparable<PropertyPath> {
+public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
@@ -176,6 +179,16 @@ public class PropertyPath implements Comparable<PropertyPath> {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @Override
+    public String getName() {
+        return this.toString();
+    }
+
+    @Override
+    public void setName(final String name) {
+        throw new UnsupportedOperationException("PropertyPath is immutable.");
     }
 
     public static final class Builder {
