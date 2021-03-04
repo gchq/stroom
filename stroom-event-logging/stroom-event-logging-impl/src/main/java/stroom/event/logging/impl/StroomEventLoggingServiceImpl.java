@@ -90,8 +90,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
-    private static final String NULL_OBJECT_DESCRIPTION = "Unknown";
-
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
     private static final String GENERATOR = "StroomEventLoggingService";
@@ -326,7 +324,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return convert(object, useInfoProviders);
         } else {
             return OtherObject.builder()
-                    .withDescription(NULL_OBJECT_DESCRIPTION)
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
                     .build();
         }
     }
@@ -335,7 +333,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     public BaseObject convert(final Object object, final boolean useInfoProviders) {
         if (object == null) {
             return OtherObject.builder()
-                    .withDescription(NULL_OBJECT_DESCRIPTION)
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
                     .build();
         }
 
@@ -427,7 +425,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     @Override
     public String describe(final Object object) {
         if (object == null) {
-            return NULL_OBJECT_DESCRIPTION;
+            return UNKNOWN_OBJECT_DESCRIPTION;
         }
         final StringBuilder desc = new StringBuilder();
         final String objectType = getObjectType(object);
@@ -549,6 +547,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                         .collect(Collectors.joining(", "));
                                 builder.withValue(collectionValue);
                             }
+                        } else if (HasName.class.isAssignableFrom(valObj.getClass())) {
+                            builder.withValue(((HasName) valObj).getName());
                         } else if (isLeafPropertyType(valObj.getClass())) {
                             final String value;
                             if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
