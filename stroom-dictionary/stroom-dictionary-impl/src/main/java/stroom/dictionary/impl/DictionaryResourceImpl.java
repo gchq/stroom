@@ -53,8 +53,7 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
     @Inject
     DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
                            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-                           final Provider<ResourceStore> resourceStoreProvider,
-                           final Provider<SecurityContext> securityContext) {
+                           final Provider<ResourceStore> resourceStoreProvider) {
         this.dictionaryStoreProvider = dictionaryStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
