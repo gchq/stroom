@@ -31,28 +31,18 @@ import javax.inject.Provider;
 class DataSourceResourceImpl implements DataSourceResource {
 
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                           final Provider<SecurityContext> securityContextProvider) {
+    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
     public List<AbstractField> fetchFields(final DocRef dataSourceRef) {
-        return securityContextProvider.get().secureResult(() -> {
-            if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-                return MetaFields.getFields();
-            }
+        if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
+            return MetaFields.getFields();
+        }
 
-            // Elevate the users permissions for the duration of this task so they can read the index if
-            // they have 'use' permission.
-            return securityContextProvider.get().useAsReadResult(
-                    () -> dataSourceProviderRegistryProvider.get().getDataSourceProvider(dataSourceRef)
-                            .map(provider -> provider.getDataSource(dataSourceRef).getFields())
-                            .orElse(null));
-        });
+        return dataSourceProviderRegistryProvider.get().getFieldsForDataSource(dataSourceRef);
     }
 }

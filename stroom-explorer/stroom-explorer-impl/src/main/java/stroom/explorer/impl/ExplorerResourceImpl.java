@@ -132,7 +132,8 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public FetchExplorerNodeResult fetch(final FindExplorerNodeCriteria request) {
+    @AutoLogged(OperationType.SEARCH)
+    public FetchExplorerNodeResult fetchExplorerNodes(final FindExplorerNodeCriteria request) {
         return explorerServiceProvider.get().getData(request);
     }
 }
