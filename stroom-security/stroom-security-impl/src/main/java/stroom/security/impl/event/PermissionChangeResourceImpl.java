@@ -22,24 +22,27 @@ import stroom.node.api.NodeService;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.client.Entity;
 
+@Singleton
 @AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl
 class PermissionChangeResourceImpl implements PermissionChangeResource {
 
-    private final NodeService nodeService;
-    private final PermissionChangeEventHandlers permissionChangeEventHandlers;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<PermissionChangeEventHandlers> permissionChangeEventHandlersProvider;
 
     @Inject
-    PermissionChangeResourceImpl(final NodeService nodeService,
-                                 final PermissionChangeEventHandlers permissionChangeEventHandlers) {
-        this.nodeService = nodeService;
-        this.permissionChangeEventHandlers = permissionChangeEventHandlers;
+    PermissionChangeResourceImpl(final Provider<NodeService> nodeServiceProvider,
+                                 final Provider<PermissionChangeEventHandlers> permissionChangeEventHandlersProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.permissionChangeEventHandlersProvider = permissionChangeEventHandlersProvider;
     }
 
     @Override
     public Boolean fireChange(final String nodeName, final PermissionChangeRequest request) {
-        final Boolean result = nodeService.remoteRestResult(
+        final Boolean result = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Boolean.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
@@ -47,7 +50,7 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
                         PermissionChangeResource.FIRE_CHANGE_PATH_PART,
                         nodeName),
                 () -> {
-                    permissionChangeEventHandlers.fireLocally(request.getEvent());
+                    permissionChangeEventHandlersProvider.get().fireLocally(request.getEvent());
                     return true;
                 },
                 builder ->
