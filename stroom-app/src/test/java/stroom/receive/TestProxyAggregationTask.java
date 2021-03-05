@@ -33,7 +33,10 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
+import stroom.proxy.repo.Aggregator;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.statistics.impl.sql.SQLStatisticAggregationTransactionHelper.AggregateConfig;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
@@ -83,6 +86,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private FeedStore feedStore;
     @Inject
     private ProxyAggregationExecutor proxyAggregationExecutor;
+    @Inject
+    private AggregatorConfig aggregatorConfig;
+    @Inject
+    private Aggregator aggregator;
 
     private static String initialRepoDir;
     private static Path proxyDir;
@@ -90,6 +97,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
+        aggregatorConfig.setMaxItemsPerAggregate(maxAggregation);
+        aggregatorConfig.setMaxUncompressedByteSize(maxStreamSize);
+
 //        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
 //                executorProvider,
 //                taskContextFactory,
@@ -101,6 +111,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 //                maxAggregation,
 //                maxStreamSize);
         proxyAggregationExecutor.exec();
+
+        // Force close of old aggregates.
+        aggregator.closeOldAggregates(System.currentTimeMillis());
     }
 
     private void aggregate(final String proxyDir,

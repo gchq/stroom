@@ -74,6 +74,8 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final Store store;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
+    private final String typeName;
+    private final AttributeMap globalAttributeMap;
     private final HashSet<Meta> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
     private final Map<String, Target> targetMap = new HashMap<>();
@@ -82,8 +84,6 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
     private String currentFeedName;
-    private final String typeName;
-    private final AttributeMap globalAttributeMap;
     private AttributeMap currentAttributeMap;
 
     private OutputStreamProvider currentOutputStreamProvider;
@@ -114,9 +114,9 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         final int index = entry.lastIndexOf(".");
         if (index != -1) {
             final String extension = entry.substring(index);
-            if (StroomZipFileType.META.getExtension().equals(extension)) {
+            if (StroomZipFileType.META.getExtension().equalsIgnoreCase(extension)) {
                 stroomZipFileType = StroomZipFileType.META;
-            } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
+            } else if (StroomZipFileType.CONTEXT.getExtension().equalsIgnoreCase(extension)) {
                 stroomZipFileType = StroomZipFileType.CONTEXT;
             }
         }
@@ -140,41 +140,14 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         currentStroomZipEntry = nextEntry;
 
         if (StroomZipFileType.META.equals(stroomZipFileType)) {
-            // Header we just buffer up
+            // Buffer up the header.
             currentHeaderByteArrayOutputStream.reset();
-
             bytesWritten = StreamUtil.streamToStream(
                     inputStream,
                     currentHeaderByteArrayOutputStream,
                     buffer,
                     progressHandler);
 
-        } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
-            // Check to see if we need to move to the next output and do so if necessary.
-            checkLayer(stroomZipFileType);
-            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                bytesWritten = StreamUtil.streamToStream(
-                        inputStream,
-                        currentOutputStream,
-                        buffer,
-                        progressHandler);
-            }
-
-        } else {
-            // Check to see if we need to move to the next output and do so if necessary.
-            checkLayer(stroomZipFileType);
-            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get()) {
-                bytesWritten = StreamUtil.streamToStream(
-                        inputStream,
-                        currentOutputStream,
-                        buffer,
-                        progressHandler);
-            }
-        }
-
-        LOGGER.debug(() -> LogUtil.message("handleEntryEnd() - {}", entry));
-
-        if (StroomZipFileType.META.equals(stroomZipFileType)) {
             final byte[] headerBytes = currentHeaderByteArrayOutputStream.toByteArray();
             currentAttributeMap = null;
             if (globalAttributeMap != null) {
@@ -215,13 +188,32 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
             try (final OutputStream outputStream = currentOutputStreamProvider.get(StreamTypeNames.META)) {
                 outputStream.write(headerBytes);
             }
-        }
 
-        if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
-            lastDatStroomZipEntry = currentStroomZipEntry;
-        }
-        if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
+        } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
+            // Check to see if we need to move to the next output and do so if necessary.
+            checkLayer(stroomZipFileType);
+            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+                bytesWritten = StreamUtil.streamToStream(
+                        inputStream,
+                        currentOutputStream,
+                        buffer,
+                        progressHandler);
+            }
+
             lastCtxStroomZipEntry = currentStroomZipEntry;
+
+        } else {
+            // Check to see if we need to move to the next output and do so if necessary.
+            checkLayer(stroomZipFileType);
+            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get()) {
+                bytesWritten = StreamUtil.streamToStream(
+                        inputStream,
+                        currentOutputStream,
+                        buffer,
+                        progressHandler);
+            }
+
+            lastDatStroomZipEntry = currentStroomZipEntry;
         }
 
         return bytesWritten;

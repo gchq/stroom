@@ -108,7 +108,7 @@ public class ProxyRepositoryCreator {
 
                     // Add meta data.
                     final AttributeMap map = createMap(feedName, effectiveMs);
-                    try (final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null,
+                    try (final OutputStream zipPart = zipOutputStream.addEntry(StroomZipEntry.create(
                             newName,
                             StroomZipFileType.META).getFullName())) {
                         AttributeMapUtil.write(map, zipPart);
@@ -116,7 +116,7 @@ public class ProxyRepositoryCreator {
 
                     // Add data.
                     try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-                            final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null,
+                            final OutputStream zipPart = zipOutputStream.addEntry(StroomZipEntry.create(
                                     newName,
                                     StroomZipFileType.DATA).getFullName())) {
                         StreamUtil.streamToStream(inputStream, zipPart);
@@ -153,7 +153,7 @@ public class ProxyRepositoryCreator {
                         }
                     }
                     try (final OutputStream outputStream = zipOutputStream
-                            .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.META).getFullName())) {
+                            .addEntry(StroomZipEntry.create(newName, StroomZipFileType.META).getFullName())) {
                         AttributeMapUtil.write(map, outputStream);
                     }
 
@@ -161,7 +161,7 @@ public class ProxyRepositoryCreator {
                     try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT)) {
                         if (inputStream != null) {
                             try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
+                                    .addEntry(StroomZipEntry.create(
                                             newName,
                                             StroomZipFileType.CONTEXT).getFullName())) {
                                 StreamUtil.streamToStream(inputStream, outputStream);
@@ -173,7 +173,7 @@ public class ProxyRepositoryCreator {
                     try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA)) {
                         if (inputStream != null) {
                             try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
+                                    .addEntry(StroomZipEntry.create(
                                             newName,
                                             StroomZipFileType.DATA).getFullName())) {
                                 StreamUtil.streamToStream(inputStream, outputStream);

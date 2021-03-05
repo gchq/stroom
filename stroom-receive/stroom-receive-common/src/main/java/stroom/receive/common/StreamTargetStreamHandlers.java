@@ -40,7 +40,7 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
             }
 
             String type = typeName;
-            if (type.isEmpty()) {
+            if (type == null || type.isEmpty()) {
                 // If no type name is supplied then get the default for the feed.
                 type = feedProperties.getStreamTypeName(feedName);
             }

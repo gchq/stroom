@@ -2,18 +2,31 @@ package stroom.data.zip;
 
 public class StroomZipEntry {
 
-    private final String baseName;
     private final String fullName;
+    private final String baseName;
     private final StroomZipFileType stroomZipFileType;
 
-    public StroomZipEntry(String fullName, final String baseName, final StroomZipFileType stroomZipFileType) {
+    private StroomZipEntry(final String fullName,
+                           final String baseName,
+                           final StroomZipFileType stroomZipFileType) {
         this.baseName = baseName;
+        this.fullName = fullName;
         this.stroomZipFileType = stroomZipFileType;
-        if (fullName == null && baseName != null && stroomZipFileType != null) {
-            this.fullName = baseName + stroomZipFileType.getExtension();
-        } else {
-            this.fullName = fullName;
+    }
+
+    public static StroomZipEntry create(final String baseName,
+                                        final StroomZipFileType stroomZipFileType) {
+        return create(null, baseName, stroomZipFileType);
+    }
+
+    public static StroomZipEntry create(final String fullName,
+                                        final String baseName,
+                                        final StroomZipFileType stroomZipFileType) {
+        String full = fullName;
+        if (full == null && baseName != null && stroomZipFileType != null) {
+            full = baseName + stroomZipFileType.getExtension();
         }
+        return new StroomZipEntry(full, baseName, stroomZipFileType);
     }
 
     public boolean equalsBaseName(StroomZipEntry other) {

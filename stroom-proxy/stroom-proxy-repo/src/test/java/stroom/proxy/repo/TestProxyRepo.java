@@ -70,7 +70,7 @@ class TestProxyRepo {
         try (final StroomZipOutputStream out1 = proxyRepo.getStroomZipOutputStream()) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out1,
-                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         }
 
@@ -79,7 +79,7 @@ class TestProxyRepo {
         try (final StroomZipOutputStream out2 = proxyRepo.getStroomZipOutputStream()) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out2,
-                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         }
 
@@ -125,7 +125,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -139,7 +139,7 @@ class TestProxyRepo {
 
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out2,
-                new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                StroomZipEntry.create("file", StroomZipFileType.DATA),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         assertThat(Files.isRegularFile(out2.getFile()))
                 .isFalse();
@@ -161,7 +161,7 @@ class TestProxyRepo {
                 (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out3,
-                new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                StroomZipEntry.create("file", StroomZipFileType.DATA),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         final Path lockFile3 = out3.getLockFile();
         assertThat(Files.isRegularFile(lockFile3))
@@ -246,7 +246,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -290,7 +290,7 @@ class TestProxyRepo {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
-                    new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile()))
                     .isFalse();
@@ -337,7 +337,7 @@ class TestProxyRepo {
                     (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
                 StroomZipOutputStreamUtil.addSimpleEntry(
                         out,
-                        new StroomZipEntry(null, "file", StroomZipFileType.DATA),
+                        StroomZipEntry.create("file", StroomZipFileType.DATA),
                         "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 assertThat(Files.isRegularFile(out.getFile()))
                         .isFalse();

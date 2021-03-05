@@ -292,7 +292,7 @@ public class Forwarder {
                                 targetName = StroomFileNameUtil.getIdPath(sequenceId++);
                             }
 
-                            final StroomZipEntry targetEntry = new StroomZipEntry(
+                            final StroomZipEntry targetEntry = StroomZipEntry.create(
                                     targetName + extension,
                                     targetName,
                                     StroomZipFileType.valueOf(extension));

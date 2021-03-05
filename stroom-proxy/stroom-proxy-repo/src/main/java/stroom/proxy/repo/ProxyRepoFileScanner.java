@@ -53,11 +53,11 @@ public final class ProxyRepoFileScanner {
 
     @Inject
     public ProxyRepoFileScanner(final TaskContextFactory taskContextFactory,
-                                final String proxyDir,
+                                final ProxyRepoConfig proxyRepoConfig,
                                 final ProxyRepoSources proxyRepoSources) {
         this.taskContextFactory = taskContextFactory;
         this.proxyRepoSources = proxyRepoSources;
-        repoPath = Paths.get(proxyDir);
+        repoPath = Paths.get(proxyRepoConfig.getRepoDir());
         repoDir = FileUtil.getCanonicalPath(repoPath);
     }
 

@@ -211,7 +211,7 @@ public class DataDownloadTaskHandler {
                         // Write out the manifest
                         if (index == 0) {
                             try (final OutputStream outputStream = stroomZipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
+                                    .addEntry(StroomZipEntry.create(
                                             basePartName,
                                             StroomZipFileType.MANIFEST).getFullName())) {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
@@ -248,7 +248,7 @@ public class DataDownloadTaskHandler {
                                 final String basePartName,
                                 final StroomZipFileType fileType) throws IOException {
         if (inputStream != null) {
-            final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
+            final StroomZipEntry stroomZipEntry = StroomZipEntry.create(basePartName, fileType);
             try (final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName())) {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }

@@ -217,7 +217,7 @@ public class Aggregator {
         }
     }
 
-    synchronized void closeOldAggregates(final long oldest) {
+    public synchronized void closeOldAggregates(final long oldest) {
         final Condition condition =
                 AGGREGATE.COMPLETE.eq(false)
                         .and(

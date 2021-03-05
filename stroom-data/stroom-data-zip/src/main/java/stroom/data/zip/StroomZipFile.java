@@ -13,9 +13,9 @@ public class StroomZipFile implements Closeable {
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
 
-    public static final StroomZipEntry SINGLE_DATA_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,
+    public static final StroomZipEntry SINGLE_DATA_ENTRY = StroomZipEntry.create(SINGLE_ENTRY_ZIP_BASE_NAME,
             StroomZipFileType.DATA);
-    public static final StroomZipEntry SINGLE_META_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,
+    public static final StroomZipEntry SINGLE_META_ENTRY = StroomZipEntry.create(SINGLE_ENTRY_ZIP_BASE_NAME,
             StroomZipFileType.META);
 
     private final Path file;

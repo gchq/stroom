@@ -293,8 +293,7 @@ public class StroomStreamProcessor {
                                 .remove(stroomZipEntry.getBaseName());
                         if (entryAttributeMap != null) {
                             entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                            final StroomZipEntry entry = new StroomZipEntry(
-                                    null,
+                            final StroomZipEntry entry = StroomZipEntry.create(
                                     stroomZipEntry.getBaseName(),
                                     StroomZipFileType.META);
                             final byte[] headerBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
@@ -322,7 +321,7 @@ public class StroomStreamProcessor {
                     final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                     entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE,
                             String.valueOf(dataStreamSizeMap.remove(dataFileName)));
-                    sendHeader(new StroomZipEntry(null, baseName, StroomZipFileType.META), entryAttributeMap);
+                    sendHeader(StroomZipEntry.create(baseName, StroomZipFileType.META), entryAttributeMap);
                 }
             }
         } catch (final IOException e) {

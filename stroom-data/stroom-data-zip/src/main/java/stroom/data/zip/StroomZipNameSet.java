@@ -3,7 +3,6 @@ package stroom.data.zip;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,23 +23,17 @@ import java.util.stream.Stream;
  */
 public class StroomZipNameSet {
 
-    private static final Set<String> CONTEXT_FILE_EXT = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(".ctx", ".context")));
-    private static final Set<String> META_FILE_EXT = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(".hdr", ".header", ".meta", ".met")));
-    private static final Set<String> MANIFEST_FILE_EXT = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(".mf", ".manifest")));
-
-    private static final Map<StroomZipFileType, Set<String>> FILE_EXT_MAP;
-
-    static {
-        HashMap<StroomZipFileType, Set<String>> map = new HashMap<>();
-        map.put(StroomZipFileType.CONTEXT, CONTEXT_FILE_EXT);
-        map.put(StroomZipFileType.META, META_FILE_EXT);
-        map.put(StroomZipFileType.MANIFEST, MANIFEST_FILE_EXT);
-        FILE_EXT_MAP = Collections.unmodifiableMap(map);
-
-    }
+    private static final Set<String> CONTEXT_FILE_EXT = Set.of(".ctx", ".context");
+    private static final Set<String> META_FILE_EXT = Set.of(".hdr", ".header", ".meta", ".met");
+    private static final Set<String> MANIFEST_FILE_EXT = Set.of(".mf", ".manifest");
+    private static final Map<StroomZipFileType, Set<String>> FILE_EXT_MAP = Map.of(
+            StroomZipFileType.CONTEXT,
+            CONTEXT_FILE_EXT,
+            StroomZipFileType.META,
+            META_FILE_EXT,
+            StroomZipFileType.MANIFEST,
+            MANIFEST_FILE_EXT
+    );
 
     private final Map<StroomZipFileType, Map<String, String>> entryMap;
     private final Map<String, String> fileNameToBaseNameMap;
@@ -82,13 +75,12 @@ public class StroomZipNameSet {
     }
 
     public static StroomZipFileType getStroomZipFileType(final String fileName) {
-        StroomZipFileType type = FILE_EXT_MAP.entrySet()
+        return FILE_EXT_MAP.entrySet()
                 .stream()
                 .filter(entry -> looksLike(fileName, entry.getValue()) != null)
                 .map(Entry::getKey)
                 .findFirst()
                 .orElse(StroomZipFileType.DATA);
-        return type;
     }
 
     private static String looksLike(final String fileName, Set<String> extSet) {
@@ -108,13 +100,13 @@ public class StroomZipNameSet {
     }
 
     public StroomZipEntry add(final String fileName) {
-        String baseName = null;
+        String baseName;
 
         // Header or Context File ?
         for (StroomZipFileType stroomZipFileType : FILE_EXT_MAP.keySet()) {
             baseName = addToMapIfLooksLike(stroomZipFileType, fileName);
             if (baseName != null) {
-                return new StroomZipEntry(fileName, baseName, stroomZipFileType);
+                return StroomZipEntry.create(fileName, baseName, stroomZipFileType);
             }
         }
 
@@ -132,14 +124,14 @@ public class StroomZipNameSet {
                 // Do we already know about this base name type
                 if (baseNameSet.contains(baseName)) {
                     keyEntry(StroomZipFileType.DATA, fileName, baseName);
-                    return new StroomZipEntry(fileName, baseName, StroomZipFileType.DATA);
+                    return StroomZipEntry.create(fileName, baseName, StroomZipFileType.DATA);
                 }
             }
         }
         // Did not find any matching context or header
         unknownFileNameSet.add(fileName);
         unknownFileNameList.add(fileName);
-        return new StroomZipEntry(fileName, null, StroomZipFileType.DATA);
+        return StroomZipEntry.create(fileName, null, StroomZipFileType.DATA);
     }
 
     private void checkBaseName(String baseName) {

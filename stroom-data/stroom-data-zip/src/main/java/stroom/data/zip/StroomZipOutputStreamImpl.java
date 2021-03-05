@@ -36,10 +36,9 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         this(file, taskContext, true);
     }
 
-    public StroomZipOutputStreamImpl(final Path path, final TaskContext taskContext, final boolean monitorEntries)
+    public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext, final boolean monitorEntries)
             throws IOException {
-        Path file = path;
-        Path lockFile = path.getParent().resolve(path.getFileName().toString() + LOCK_EXTENSION);
+        Path lockFile = file.getParent().resolve(file.getFileName().toString() + LOCK_EXTENSION);
 
         if (Files.deleteIfExists(file)) {
             LOGGER.warn("deleted file " + file);
@@ -63,21 +62,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
             stroomZipNameSet = new StroomZipNameSet(false);
         }
     }
-
-//    public StroomZipOutputStreamImpl(final OutputStream outputStream) throws IOException {
-//        this(outputStream, null);
-//    }
-//
-//    public StroomZipOutputStreamImpl(final OutputStream outputStream, final Monitor monitor) throws IOException {
-//        this.monitor = monitor;
-//
-//        file = null;
-//        lockFile = null;
-//        streamProgressMonitor = new StreamProgressMonitor(monitor, "Write");
-//        zipOutputStream = new ZipOutputStream(
-//                new FilterOutputStreamProgressMonitor(new BufferedOutputStream(outputStream), streamProgressMonitor));
-//        stroomZipNameSet = new StroomZipNameSet(false);
-//    }
 
     @Override
     public long getProgressSize() {
@@ -156,9 +140,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     public void closeDelete() throws IOException {
         // ZIP's don't like to be empty !
         if (entryCount == 0) {
-            final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT",
-                    "NULL",
-                    StroomZipFileType.DATA).getFullName());
+            final OutputStream os = addEntry("NULL.DAT");
             os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
             os.close();
         }
