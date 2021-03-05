@@ -59,7 +59,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache {
             }
 
             // Create a new instance of `RestHighLevelClient`
-            return new ElasticClientFactory(caCertPath).create(k);
+            return new ElasticClientFactory().create(k);
         });
 
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()

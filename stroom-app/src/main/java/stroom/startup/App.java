@@ -16,30 +16,6 @@
 
 package stroom.startup;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.dropwizard.Application;
-import io.dropwizard.Configuration;
-import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.servlets.tasks.LogConfigurationTask;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.annotation.impl.db.spring.AnnotationConfiguration;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
@@ -80,6 +56,7 @@ import stroom.ruleset.shared.RuleSet;
 import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
+import stroom.search.elastic.ElasticClusterConfiguration;
 import stroom.search.elastic.ElasticIndexConfiguration;
 import stroom.search.elastic.search.ElasticIndexQueryResource;
 import stroom.search.solr.SolrIndexConfiguration;
@@ -126,6 +103,31 @@ import stroom.util.config.StroomProperties.Source;
 import stroom.util.db.DbUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.dropwizard.Application;
+import io.dropwizard.Configuration;
+import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.servlets.tasks.LogConfigurationTask;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -483,6 +485,7 @@ public class App extends Application<Config> {
                 PipelineConfiguration.class,
                 ExplorerConfiguration.class,
                 IndexConfiguration.class,
+                ElasticClusterConfiguration.class,
                 ElasticIndexConfiguration.class,
                 SolrIndexConfiguration.class,
                 SearchConfiguration.class,

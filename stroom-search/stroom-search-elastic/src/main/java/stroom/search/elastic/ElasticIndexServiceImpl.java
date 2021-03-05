@@ -19,6 +19,7 @@ package stroom.search.elastic;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
@@ -47,10 +48,15 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexServiceImpl.class);
 
     private final ElasticClientCache elasticClientCache;
+    private final ElasticClusterStore elasticClusterStore;
 
     @Inject
-    public ElasticIndexServiceImpl(final ElasticClientCache elasticClientCache) {
+    public ElasticIndexServiceImpl(
+        final ElasticClientCache elasticClientCache,
+        final ElasticClusterStore elasticClusterStore
+    ) {
         this.elasticClientCache = elasticClientCache;
+        this.elasticClusterStore = elasticClusterStore;
     }
 
     public List<DataSourceField> getDataSourceFields(ElasticIndex index) {
@@ -184,7 +190,9 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
         try {
-            return elasticClientCache.contextResult(elasticIndex.getConnectionConfig(), elasticClient -> {
+            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+
+            return elasticClientCache.contextResult(elasticCluster.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
                 final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
                 request.indices(indexName);
@@ -200,7 +208,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     LOGGER.error(e::getMessage, e);
                 }
 
-                return null;
+                return new HashMap<>();
             });
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

@@ -2,6 +2,7 @@ package stroom.search.elastic;
 
 import stroom.crypto.shared.CryptoUtils;
 import stroom.docstore.server.Serialiser;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticIndex;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,12 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class ElasticIndexJsonSerialiser implements Serialiser<ElasticIndex> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticIndexJsonSerialiser.class);
+public class ElasticClusterJsonSerialiser implements Serialiser<ElasticCluster> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClusterJsonSerialiser.class);
     private final ObjectMapper mapper;
     private final String secretEncryptionKey;
 
-    public ElasticIndexJsonSerialiser(final String secretEncryptionKey) {
+    public ElasticClusterJsonSerialiser(final String secretEncryptionKey) {
         this.secretEncryptionKey = secretEncryptionKey;
         this.mapper = createMapper();
     }
@@ -36,8 +37,8 @@ public class ElasticIndexJsonSerialiser implements Serialiser<ElasticIndex> {
     }
 
     @Override
-    public ElasticIndex read(final InputStream inputStream, final Class<ElasticIndex> clazz) throws IOException {
-        final ElasticIndex document = mapper.readValue(inputStream, clazz);
+    public ElasticCluster read(final InputStream inputStream, final Class<ElasticCluster> clazz) throws IOException {
+        final ElasticCluster document = mapper.readValue(inputStream, clazz);
         final String apiKey = document.getConnectionConfig().getApiKeySecretEncrypted();
         String decryptedApiKey;
 
@@ -46,7 +47,7 @@ public class ElasticIndexJsonSerialiser implements Serialiser<ElasticIndex> {
             decryptedApiKey = CryptoUtils.decrypt(apiKey, secretEncryptionKey);
         }
         catch (Exception e) {
-            LOGGER.warn("Failed to decrypt API key for Elasticsearch index: '" + document.getName() + "'", e.getMessage());
+            LOGGER.warn("Failed to decrypt API key for Elasticsearch cluster: '" + document.getName() + "'", e.getMessage());
 
             // Value is probably already decrypted, so use as-is
             decryptedApiKey = apiKey;
@@ -58,12 +59,12 @@ public class ElasticIndexJsonSerialiser implements Serialiser<ElasticIndex> {
     }
 
     @Override
-    public void write(final OutputStream outputStream, final ElasticIndex document) throws IOException {
+    public void write(final OutputStream outputStream, final ElasticCluster document) throws IOException {
         write(outputStream, document, false);
     }
 
     @Override
-    public void write(final OutputStream outputStream, final ElasticIndex document, final boolean export) throws IOException {
+    public void write(final OutputStream outputStream, final ElasticCluster document, final boolean export) throws IOException {
         final String apiKey = document.getConnectionConfig().getApiKeySecret();
         String encryptedApiKey;
 
@@ -72,7 +73,7 @@ public class ElasticIndexJsonSerialiser implements Serialiser<ElasticIndex> {
             encryptedApiKey = CryptoUtils.encrypt(apiKey, secretEncryptionKey);
         }
         catch (Exception e) {
-            LOGGER.warn("Failed to encrypt API key for Elasticsearch index: '" + document.getName() + "'", e.getMessage());
+            LOGGER.warn("Failed to encrypt API key for Elasticsearch cluster: '" + document.getName() + "'", e.getMessage());
 
             // Prevent plain-text key leaking to storage
             encryptedApiKey = "";

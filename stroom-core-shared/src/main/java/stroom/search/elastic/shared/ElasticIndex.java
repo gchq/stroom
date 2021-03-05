@@ -18,6 +18,7 @@ package stroom.search.elastic.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,15 +29,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection", "indexName", "fields", "dataSourceFields", "retentionExpression"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "clusterRef", "indexName", "fields", "dataSourceFields", "retentionExpression"})
 public class ElasticIndex extends Doc {
     public static final String ENTITY_TYPE = "ElasticIndex";
 
-    private static final long serialVersionUID = 2648729644398564919L;
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
+     */
+    private DocRef clusterRef;
 
     private String description;
     private String indexName;
-    private ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
     private List<ElasticIndexField> fields;
     private List<DataSourceField> dataSourceFields;
     private ExpressionOperator retentionExpression;
@@ -50,8 +55,18 @@ public class ElasticIndex extends Doc {
 
     public void setDescription(final String description) { this.description = description; }
 
+    @JsonProperty("clusterRef")
+    public DocRef getClusterRef() { return clusterRef; }
+
+    @JsonProperty("clusterRef")
+    public void setClusterRef(final DocRef clusterRef) {
+        this.clusterRef = clusterRef;
+    }
+
+    @JsonProperty("indexName")
     public String getIndexName() { return indexName; }
 
+    @JsonProperty("indexName")
     public void setIndexName(final String indexName)
     {
         if (indexName == null || indexName.trim().isEmpty()) {
@@ -60,16 +75,6 @@ public class ElasticIndex extends Doc {
         else {
             this.indexName = indexName;
         }
-    }
-
-    @JsonProperty("connection")
-    public ElasticConnectionConfig getConnectionConfig() {
-        return connectionConfig;
-    }
-
-    @JsonProperty("connection")
-    public void setConnectionConfig(final ElasticConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
     }
 
     @JsonProperty("fields")
@@ -105,23 +110,23 @@ public class ElasticIndex extends Doc {
         if (!super.equals(o)) return false;
         final ElasticIndex elasticIndex = (ElasticIndex) o;
         return Objects.equals(description, elasticIndex.description) &&
+                Objects.equals(clusterRef, elasticIndex.clusterRef) &&
                 Objects.equals(indexName, elasticIndex.indexName) &&
-                Objects.equals(connectionConfig, elasticIndex.connectionConfig) &&
                 Objects.equals(fields, elasticIndex.fields) &&
                 Objects.equals(dataSourceFields, elasticIndex.dataSourceFields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, connectionConfig, fields, dataSourceFields);
+        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields, dataSourceFields);
     }
 
     @Override
     public String toString() {
         return "ElasticIndex{" +
                 "description='" + description + '\'' +
+                ", clusterRef='" + clusterRef + '\'' +
                 ", indexName='" + indexName + '\'' +
-                ", connectionConfig=" + connectionConfig +
                 ", fields=" + fields +
                 ", dataSourceFields=" + dataSourceFields +
                 '}';

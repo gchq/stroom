@@ -36,12 +36,8 @@ public class ElasticClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
     private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+):\\/\\/(.+?)(?:(?::([0-9]+)\\/?)?)$");
 
-    private final String caCertPath;
-
     @Inject
-    public ElasticClientFactory(final String caCertPath) {
-        this.caCertPath = caCertPath;
-    }
+    public ElasticClientFactory() { }
 
     public RestHighLevelClient create(final ElasticConnectionConfig config) {
         final ArrayList<HttpHost> httpHosts = new ArrayList<>();
@@ -67,17 +63,17 @@ public class ElasticClientFactory {
         final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
-        if (useHttps && caCertPath != null && !caCertPath.isEmpty()) {
-            final SSLContext sslContext = getSslContext();
-            if (sslContext != null) {
-                restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder.setSSLContext(sslContext);
-                    }
-                });
-            }
-        }
+//        if (useHttps) {
+//            final SSLContext sslContext = getSslContext();
+//            if (sslContext != null) {
+//                restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+//                    @Override
+//                    public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
+//                        return httpClientBuilder.setSSLContext(sslContext);
+//                    }
+//                });
+//            }
+//        }
 
         // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
         final String apiKey = getEncodedApiKey(config);
@@ -92,33 +88,33 @@ public class ElasticClientFactory {
         return new RestHighLevelClient(restClientBuilder);
     }
 
-    private SSLContext getSslContext() {
-        final Path caCertPath = Paths.get(this.caCertPath);
-
-        try {
-            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            final InputStream certInputStream = Files.newInputStream(caCertPath);
-            final Certificate trustedCa = certFactory.generateCertificate(certInputStream);
-
-            final KeyStore trustStore = KeyStore.getInstance("pkcs12");
-            trustStore.load(null, null);
-            trustStore.setCertificateEntry("ca", trustedCa);
-
-            final SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
-            return sslContextBuilder.build();
-        }
-        catch (NoSuchFileException e) {
-            LOGGER.warn("CA cert file '" + caCertPath + "'. Skipping verification");
-        }
-        catch (CertificateException e) {
-            LOGGER.error("Failed to create a certificate factory", e);
-        }
-        catch (Exception e) {
-            LOGGER.error("Failed to load CA certificate from '" + caCertPath + "'", e);
-        }
-
-        return null;
-    }
+//    private SSLContext getSslContext() {
+//        final Path caCertPath = Paths.get(this.caCertPath);
+//
+//        try {
+//            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+//            final InputStream certInputStream = Files.newInputStream(caCertPath);
+//            final Certificate trustedCa = certFactory.generateCertificate(certInputStream);
+//
+//            final KeyStore trustStore = KeyStore.getInstance("pkcs12");
+//            trustStore.load(null, null);
+//            trustStore.setCertificateEntry("ca", trustedCa);
+//
+//            final SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
+//            return sslContextBuilder.build();
+//        }
+//        catch (NoSuchFileException e) {
+//            LOGGER.warn("CA cert file '" + caCertPath + "'. Skipping verification");
+//        }
+//        catch (CertificateException e) {
+//            LOGGER.error("Failed to create a certificate factory", e);
+//        }
+//        catch (Exception e) {
+//            LOGGER.error("Failed to load CA certificate from '" + caCertPath + "'", e);
+//        }
+//
+//        return null;
+//    }
 
     /**
      * Encode the API key ID and secret in base64 for use in a HTTP request.
