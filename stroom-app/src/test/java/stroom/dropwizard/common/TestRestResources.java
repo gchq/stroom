@@ -309,13 +309,14 @@ class TestRestResources {
                                         resourceClass.getName() + "::" + methodSignature.getName());
 
                                 final String existingOperation;
-                                if (existing != null){
+                                if (existing != null) {
                                     existingOperation = existing;
                                 } else {
-                                    existingOperation = resourceClass.getName() + "::" + methodSignature.getName();//New
+                                    existingOperation = resourceClass.getName() + "::" + methodSignature.getName();
                                 }
 
-                                if (!existingOperation.equals(resourceClass.getName() + "::" + methodSignature.getName())){
+                                if (!existingOperation.equals(resourceClass.getName() + "::" +
+                                        methodSignature.getName())) {
                                     LOGGER.warn("Method '" +
                                             method.getName() +
                                             "' does not have a globally unique `operationId` '" +
@@ -388,7 +389,7 @@ class TestRestResources {
                 softAssertions,
                 annotationClass -> annotationClass.getPackageName().contains("swagger"),
                 "Swagger");
-//
+
 //        // Check auto logging
 //        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
 //        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
