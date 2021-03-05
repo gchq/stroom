@@ -42,18 +42,15 @@ public class Cleanup {
 
     private final SqliteJooqHelper jooq;
     private final ProxyRepo proxyRepo;
-    private final CleanupConfig cleanupConfig;
 
     @Inject
     Cleanup(final ProxyRepoDbConnProvider connProvider,
-            final ProxyRepo proxyRepo,
-            final CleanupConfig cleanupConfig) {
+            final ProxyRepo proxyRepo) {
         this.jooq = new SqliteJooqHelper(connProvider);
         this.proxyRepo = proxyRepo;
-        this.cleanupConfig = cleanupConfig;
     }
 
-    public void cleanup() {
+    public synchronized void cleanup() {
         // Find source items that have been aggregated but no longer have an associated aggregate.
         final SelectConditionStep<Record1<Long>> select = DSL
                 .select(SOURCE_ITEM.ID)

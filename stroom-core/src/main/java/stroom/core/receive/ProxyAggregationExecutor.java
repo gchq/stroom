@@ -42,6 +42,7 @@ public class ProxyAggregationExecutor {
     private final ProxyRepo proxyRepo;
     private final ProxyRepoFileScanner proxyRepoFileScanner;
     private final Aggregator aggregator;
+//    private final Cleanup cleanup;
 
     @Inject
     public ProxyAggregationExecutor(final ProxyRepo proxyRepo,
@@ -54,6 +55,7 @@ public class ProxyAggregationExecutor {
         this.proxyRepo = proxyRepo;
         this.proxyRepoFileScanner = proxyRepoFileScanner;
         this.aggregator = aggregator;
+//        this.cleanup = cleanup;
 
         proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
         proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
@@ -62,6 +64,10 @@ public class ProxyAggregationExecutor {
     }
 
     public void exec() {
+        exec(false);
+    }
+
+    public void exec(boolean forceAggregation) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
                 // Try aggregating again.
@@ -69,6 +75,14 @@ public class ProxyAggregationExecutor {
 
                 // Scan the proxy repo to find new files to aggregate.
                 proxyRepoFileScanner.scan();
+
+                if (forceAggregation) {
+                    // Force close of old aggregates.
+                    aggregator.closeOldAggregates(System.currentTimeMillis());
+                }
+
+//                // Cleanup the DB and files that have been forwarded into Stroom.
+//                cleanup.cleanup();
 
                 // Cleanup the repo to remove empty dirs and stale lock files.
                 proxyRepo.clean(false);

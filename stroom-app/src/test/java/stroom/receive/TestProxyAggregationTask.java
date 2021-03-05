@@ -36,7 +36,6 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.statistics.impl.sql.SQLStatisticAggregationTransactionHelper.AggregateConfig;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
@@ -110,10 +109,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 //                10000,
 //                maxAggregation,
 //                maxStreamSize);
-        proxyAggregationExecutor.exec();
-
-        // Force close of old aggregates.
-        aggregator.closeOldAggregates(System.currentTimeMillis());
+        proxyAggregationExecutor.exec(true);
+//
+//        // Force close of old aggregates.
+//        aggregator.closeOldAggregates(System.currentTimeMillis());
     }
 
     private void aggregate(final String proxyDir,
@@ -538,8 +537,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
         final List<Meta> list = metaService.find(criteria).getValues();
-        assertThat(list.size())
-                .isEqualTo(1);
+        assertThat(list.size()).isEqualTo(1);
 
         try (final Source source = store.openSource(list.get(0).getId())) {
             assertContent("expecting meta data", source, true, StreamTypeNames.META);

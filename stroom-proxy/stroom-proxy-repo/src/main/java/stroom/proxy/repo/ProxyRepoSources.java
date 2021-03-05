@@ -34,15 +34,6 @@ public class ProxyRepoSources implements Clearable {
         sourceRecordId.set(maxSourceRecordId);
     }
 
-//    public Optional<Long> getSource(final String path) {
-//        return jooq.contextResult(context -> context
-//                .select(SOURCE.ID)
-//                .from(SOURCE)
-//                .where(SOURCE.PATH.eq(path))
-//                .fetchOptional()
-//                .map(r -> r.get(SOURCE.ID)));
-//    }
-
     public long addSource(final String path, final long lastModifiedTimeMs) {
         final long sourceId = sourceRecordId.incrementAndGet();
         jooq.context(context -> context

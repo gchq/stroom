@@ -14,6 +14,7 @@ import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -59,9 +60,31 @@ public class TestAggregator {
         ProxyRepoConfig.repoDir = initialRepoDir;
     }
 
+    @BeforeEach
+    void beforeEach() {
+        aggregator.clear();
+    }
+
     @Test
     void testCloseOldAggregates() {
         aggregator.closeOldAggregates();
+    }
+
+    @Test
+    void testAddItem() {
+        // Make sure we have no existing aggregates.
+        int count = aggregator.closeOldAggregates(System.currentTimeMillis());
+        assertThat(count).isEqualTo(0);
+
+        for (int i = 0; i < 10; i++) {
+            // Add an item but make sure no aggregation takes place.
+            count = aggregator.addItem(1, "TEST_FEED", null, 10);
+            assertThat(count).isEqualTo(0);
+        }
+
+        // Now force aggregation and ensure we end up with 1 aggregate.
+        count = aggregator.closeOldAggregates(System.currentTimeMillis());
+        assertThat(count).isEqualTo(1);
     }
 
     @Test

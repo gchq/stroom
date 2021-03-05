@@ -17,14 +17,14 @@
 package stroom.proxy.repo;
 
 import stroom.data.zip.StroomFileNameUtil;
-import stroom.data.zip.StroomZipEntry;
-import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardUrlRecord;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.CustomThreadFactory;
@@ -34,8 +34,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jooq.Record3;
 import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -47,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -71,7 +70,7 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 @Singleton
 public class Forwarder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Forwarder.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Forwarder.class);
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
     private static final int BATCH_SIZE = 1000000;
 
@@ -131,7 +130,7 @@ public class Forwarder {
         }
     }
 
-    public void forward() {
+    public synchronized void forward() {
         boolean run = true;
         while (run && !shutdown) {
 
@@ -148,6 +147,7 @@ public class Forwarder {
                             .limit(BATCH_SIZE)
                             .fetch());
 
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
             result.forEach(record -> {
                 if (!shutdown) {
                     final long aggregateId = record.get(AGGREGATE.ID);
@@ -155,9 +155,13 @@ public class Forwarder {
                     final String typeName = record.get(AGGREGATE.TYPE_NAME);
 
                     count.incrementAndGet();
-                    forwardAggregate(aggregateId, feedName, typeName);
+                    final CompletableFuture<Void> completableFuture = forwardAggregate(aggregateId, feedName, typeName);
+                    futures.add(completableFuture);
                 }
             });
+
+            // Wait for all forwarding jobs to complete.
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             // Stop forwarding if the last query did not return a result as big as the batch size.
             if (count.get() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
@@ -166,9 +170,9 @@ public class Forwarder {
         }
     }
 
-    private void forwardAggregate(final long aggregateId,
-                                  final String feedName,
-                                  final String typeName) {
+    private CompletableFuture<Void> forwardAggregate(final long aggregateId,
+                                                     final String feedName,
+                                                     final String typeName) {
         final Map<Integer, String> remainingForwardUrl = new HashMap<>(forwardIdUrlMap);
         final AtomicBoolean previousFailure = new AtomicBoolean();
 
@@ -201,7 +205,7 @@ public class Forwarder {
         }
 
         // When all futures complete we want to try and delete the aggregate.
-        CompletableFuture
+        return CompletableFuture
                 .allOf(futures.toArray(new CompletableFuture[0]))
                 .thenRunAsync(() -> {
                     // Delete the aggregate if we have successfully forwarded to all destinations.
@@ -245,12 +249,9 @@ public class Forwarder {
         });
 
         if (entries.size() > 0) {
-
             final long thisPostId = proxyForwardId.incrementAndGet();
             final String info = thisPostId + " " + feedName + " - " + typeName;
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("processFeedFiles() - proxyForwardId " + info);
-            }
+            LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
 
             final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
@@ -264,59 +265,54 @@ public class Forwarder {
             // Start the POST
             try {
                 streamHandlers.handle(feedName, typeName, attributeMap, handler -> {
-                    String lastDataName = null;
+                    EntryKey lastSourceKey = null;
                     String targetName = null;
                     long sequenceId = 1;
 
                     for (final Record3<String, String, String> record : entries) {
                         // Send no more if told to finish
                         if (Thread.currentThread().isInterrupted()) {
-                            LOGGER.info("processFeedFiles() - Quitting early as we have been told to stop");
+                            LOGGER.info(() -> "processFeedFiles() - Quitting early as we have been told to stop");
                             throw new RuntimeException(
                                     "processFeedFiles() - Quitting early as we have been told to stop");
                         }
 
                         final String sourcePath = record.get(SOURCE.PATH);
-                        final String dataName = record.get(SOURCE_ITEM.NAME);
+                        final String sourceName = record.get(SOURCE_ITEM.NAME);
                         final String extension = record.get(SOURCE_ENTRY.EXTENSION);
+                        final EntryKey sourceKey = new EntryKey(sourcePath, sourceName);
 
                         final Path repoDir = Paths.get(proxyRepoConfig.getRepoDir());
                         final Path zipFilePath = repoDir.resolve(sourcePath);
 
                         try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
-                            final ZipArchiveEntry zipArchiveEntry = zipFile.getEntry(dataName + extension);
-
-                            // If the data name has changed then change the target name.
-                            if (lastDataName == null || !lastDataName.equals(dataName)) {
-                                lastDataName = dataName;
+                            // If the source name has changed then change the target name.
+                            if (lastSourceKey == null || !lastSourceKey.equals(sourceKey)) {
+                                lastSourceKey = sourceKey;
                                 targetName = StroomFileNameUtil.getIdPath(sequenceId++);
                             }
 
-                            final StroomZipEntry targetEntry = StroomZipEntry.create(
-                                    targetName + extension,
-                                    targetName,
-                                    StroomZipFileType.valueOf(extension));
+                            final String fullSourceName = sourceName + extension;
+                            final String fullTargetName = targetName + extension;
 
+                            final ZipArchiveEntry zipArchiveEntry = zipFile.getEntry(fullSourceName);
                             try (final ByteCountInputStream inputStream =
                                     new ByteCountInputStream(zipFile.getInputStream(zipArchiveEntry))) {
-                                if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("sendEntry() - " + targetEntry);
-                                }
+                                LOGGER.debug(() -> "sendEntry() - " + fullTargetName);
 
                                 handler.addEntry(targetName + extension, inputStream);
                                 final long totalRead = inputStream.getCount();
 
-                                if (LOGGER.isTraceEnabled()) {
-                                    LOGGER.trace("sendEntry() - " +
-                                            targetEntry +
-                                            " " +
-                                            ModelStringUtil.formatIECByteSizeString(
-                                                    totalRead));
-                                }
+                                LOGGER.trace(() -> "sendEntry() - " +
+                                        fullTargetName +
+                                        " " +
+                                        ModelStringUtil.formatIECByteSizeString(
+                                                totalRead));
+
                                 if (totalRead == 0) {
-                                    LOGGER.warn("sendEntry() - " + targetEntry + " IS BLANK");
+                                    LOGGER.warn(() -> "sendEntry() - " + fullTargetName + " IS BLANK");
                                 }
-                                LOGGER.debug("sendEntry() - {} size is {}", targetEntry, totalRead);
+                                LOGGER.debug(() -> "sendEntry() - " + fullTargetName + " size is " + totalRead);
                             }
                         } catch (final IOException e) {
                             throw new UncheckedIOException(e);
@@ -327,10 +323,8 @@ public class Forwarder {
                 });
             } catch (final RuntimeException ex) {
                 error.set(ex.getMessage());
-                LOGGER.warn("processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("processFeedFiles() - Debug trace " + info, ex);
-                }
+                LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
+                LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
             }
         } else {
             success.set(true);
@@ -384,7 +378,7 @@ public class Forwarder {
         executor.shutdown();
         try {
             while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                LOGGER.debug("Shutting down");
+                LOGGER.debug(() -> "Shutting down");
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -392,7 +386,7 @@ public class Forwarder {
     }
 
     private void fireChange() {
-        changeListeners.forEach(listener -> fireChange());
+        changeListeners.forEach(ChangeListener::onChange);
     }
 
     public void addChangeListener(final ChangeListener changeListener) {
@@ -402,5 +396,32 @@ public class Forwarder {
     public interface ChangeListener {
 
         void onChange();
+    }
+
+    private static class EntryKey {
+        private final String path;
+        private final String name;
+
+        public EntryKey(final String path, final String name) {
+            this.path = path;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final EntryKey entryKey = (EntryKey) o;
+            return path.equals(entryKey.path) && name.equals(entryKey.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path, name);
+        }
     }
 }

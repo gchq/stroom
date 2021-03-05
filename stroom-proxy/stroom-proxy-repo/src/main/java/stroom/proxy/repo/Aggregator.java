@@ -136,23 +136,25 @@ public class Aggregator {
         });
     }
 
-    private synchronized void addItem(final long sourceItemId,
-                                      final String feedName,
-                                      final String typeName,
-                                      final long totalSize) {
+    synchronized int addItem(final long sourceItemId,
+                              final String feedName,
+                              final String typeName,
+                              final long totalSize) {
         final long maxUncompressedByteSize = config.getMaxUncompressedByteSize();
         final int maxItemsPerAggregate = config.getMaxItemsPerAggregate();
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - totalSize);
+        final Condition condition = DSL
+                .and(feedName == null ? AGGREGATE.FEED_NAME.isNull() : AGGREGATE.FEED_NAME.equal(feedName))
+                .and(typeName == null ? AGGREGATE.TYPE_NAME.isNull() : AGGREGATE.TYPE_NAME.equal(typeName))
+                .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
+                .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
+                .and(AGGREGATE.COMPLETE.isFalse());
 
         jooq.transaction(context -> {
             // See if we can get an existing aggregate that will fit this data collection.
             final Optional<AggregateRecord> optionalRecord = context
                     .selectFrom(AGGREGATE)
-                    .where(AGGREGATE.FEED_NAME.equal(feedName))
-                    .and(AGGREGATE.TYPE_NAME.equal(typeName))
-                    .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
-                    .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
-                    .and(AGGREGATE.COMPLETE.isFalse())
+                    .where(condition)
                     .orderBy(AGGREGATE.CREATE_TIME_MS)
                     .fetchOptional();
 
@@ -179,13 +181,15 @@ public class Aggregator {
                                 AGGREGATE.TYPE_NAME,
                                 AGGREGATE.BYTE_SIZE,
                                 AGGREGATE.ITEMS,
-                                AGGREGATE.CREATE_TIME_MS)
+                                AGGREGATE.CREATE_TIME_MS,
+                                AGGREGATE.COMPLETE)
                         .values(aggregateId,
                                 feedName,
                                 typeName,
                                 totalSize,
                                 1,
-                                System.currentTimeMillis())
+                                System.currentTimeMillis(),
+                                false)
                         .execute();
             }
 
@@ -204,20 +208,21 @@ public class Aggregator {
         });
 
         // Close any old aggregates.
-        closeOldAggregates();
+        return closeOldAggregates();
     }
 
-    synchronized void closeOldAggregates() {
+    synchronized int closeOldAggregates() {
         final long now = System.currentTimeMillis();
         if (now > lastClosedAggregates + config.getAggregationFrequency().toMillis()) {
             lastClosedAggregates = now;
 
             final long oldest = now - config.getMaxAggregateAge().toMillis();
-            closeOldAggregates(oldest);
+            return closeOldAggregates(oldest);
         }
+        return 0;
     }
 
-    public synchronized void closeOldAggregates(final long oldest) {
+    public synchronized int closeOldAggregates(final long oldest) {
         final Condition condition =
                 AGGREGATE.COMPLETE.eq(false)
                         .and(
@@ -235,6 +240,8 @@ public class Aggregator {
             firstRun = false;
             fireChange(count);
         }
+
+        return count;
     }
 
     private synchronized int closeAggregates(final Condition condition) {
@@ -251,6 +258,16 @@ public class Aggregator {
 
     public void addChangeListener(final ChangeListener changeListener) {
         listeners.add(changeListener);
+    }
+
+    public void clear() {
+        jooq.context(context -> {
+            context.deleteFrom(AGGREGATE_ITEM).execute();
+            context.deleteFrom(AGGREGATE).execute();
+            context.deleteFrom(SOURCE_ENTRY).execute();
+            context.deleteFrom(SOURCE_ITEM).execute();
+            context.deleteFrom(SOURCE).execute();
+        });
     }
 
     public interface ChangeListener {
