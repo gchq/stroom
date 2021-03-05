@@ -60,6 +60,7 @@ public interface StoredQueryResource extends RestResource, DirectRestService, Fe
     @Operation(
             summary = "Fetch a stored query",
             operationId = "fetchStoredQuery")
+    @Override
     StoredQuery fetch(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @PUT
