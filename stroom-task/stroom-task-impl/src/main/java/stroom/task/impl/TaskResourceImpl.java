@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
@@ -39,7 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
 
-//@AutoLogged  see
+@AutoLogged
 class TaskResourceImpl implements TaskResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
@@ -84,6 +85,7 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.SEARCH)
     public TaskProgressResponse userTasks(final String nodeName) {
         try {
             final String sessionId = sessionIdProvider.get().get();
@@ -102,13 +104,9 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
-    @AutoLogged(
-            value = OperationType.PROCESS,
-            verb = "Terminating")
+    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
+            decorator = TerminateDecorator.class)
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
-
-        // TODO @AT Add custom logging to set the Process.Action to TERMINATE
-//        Runnable work = () -> {
         nodeServiceProvider.get()
                 .remoteRestCall(
                         nodeName,
@@ -122,25 +120,8 @@ class TaskResourceImpl implements TaskResource {
                                         request.isKill()),
                         builder ->
                                 builder.post(Entity.json(request)));
-//        };
-
-//        stroomEventLoggingService.loggedAction(
-//                StroomEventLoggingUtil.buildTypeId(this, "terminate"),
-//                "just kill it",
-//                ProcessEventAction.builder()
-//                        .withAction(ProcessAction.TERMINATE)
-//                        .withInput(stroomEventLoggingService.convertToMulti(request))
-//                        .build(),
-//                () -> {
-//                    // do stuff
-//                });
 
         return true;
-    }
-
-    static interface EventActionDecorator<T extends EventAction> {
-
-        T decorate(final T eventAction);
     }
 
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {

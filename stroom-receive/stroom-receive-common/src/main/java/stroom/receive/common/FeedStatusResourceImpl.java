@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
@@ -25,22 +26,23 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck.Result;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-@AutoLogged
+@AutoLogged(OperationType.UNLOGGED)
 public class FeedStatusResourceImpl implements FeedStatusResource, HasHealthCheck {
 
-    private final FeedStatusService feedStatusService;
+    private final Provider<FeedStatusService> feedStatusServiceProvider;
 
     @Inject
-    public FeedStatusResourceImpl(final FeedStatusService feedStatusService) {
-        this.feedStatusService = feedStatusService;
+    public FeedStatusResourceImpl(final Provider<FeedStatusService> feedStatusServiceProvider) {
+        this.feedStatusServiceProvider = feedStatusServiceProvider;
     }
 
     @Timed
     @Override
     // TODO This should really be a GET with the feedName and senderDn as params
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        return feedStatusService.getFeedStatus(request);
+        return feedStatusServiceProvider.get().getFeedStatus(request);
     }
 
     @Override

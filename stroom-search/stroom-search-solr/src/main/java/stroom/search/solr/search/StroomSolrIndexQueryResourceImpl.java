@@ -18,6 +18,8 @@ package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -39,6 +41,7 @@ import com.codahale.metrics.annotation.Timed;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
+@AutoLogged
 public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResourceImpl.class);
@@ -125,6 +128,7 @@ public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryRes
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;

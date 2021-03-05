@@ -368,10 +368,10 @@ class TestRestResources {
                 annotationClass -> annotationClass.getPackageName().contains("swagger"),
                 "Swagger");
 
-        // Check auto logging
-        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
-        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
-
+//        // Check auto logging
+//        final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+//        LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
+//
 //        // Check that all member variables are providers.
 //        assertProviders(resourceClass, softAssertions);
 //        // Check that resource doesn't attempt to handle security
