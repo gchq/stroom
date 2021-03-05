@@ -53,7 +53,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -347,11 +346,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private void loadZipData(final Path file, final FeedDoc feed) throws IOException {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-        attributeMap.put(StandardHeaderArguments.FEED, feed.getName());
-        attributeMap.put(StandardHeaderArguments.TYPE, feed.getStreamType());
 
         try (final InputStream inputStream = Files.newInputStream(file)) {
-            streamHandlers.handle(attributeMap, handler -> {
+            streamHandlers.handle(feed.getName(), feed.getStreamType(), attributeMap, handler -> {
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
                 stroomStreamProcessor.process(inputStream, "test");
             });

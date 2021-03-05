@@ -4,11 +4,9 @@ import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -31,28 +29,24 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
     }
 
     @Override
-    public void handle(final AttributeMap attributeMap, final Consumer<StreamHandler> consumer) {
+    public void handle(final String feedName,
+                       final String typeName,
+                       final AttributeMap attributeMap,
+                       final Consumer<StreamHandler> consumer) {
         StreamTargetStreamHandler streamHandler = null;
         try {
-            final String feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
-                    .map(String::trim)
-                    .orElse("");
             if (feedName.isEmpty()) {
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
             }
 
-            // Get the type name from the header arguments if supplied.
-            String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
-                    .map(String::trim)
-                    .orElse("");
-            if (typeName.isEmpty()) {
+            String type = typeName;
+            if (type.isEmpty()) {
                 // If no type name is supplied then get the default for the feed.
-                typeName = feedProperties.getStreamTypeName(feedName);
-                attributeMap.put(StandardHeaderArguments.TYPE, typeName);
+                type = feedProperties.getStreamTypeName(feedName);
             }
 
             // Validate the data type name.
-            if (!metaService.getTypes().contains(typeName)) {
+            if (!metaService.getTypes().contains(type)) {
                 throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE);
             }
 
@@ -61,7 +55,7 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
                     feedProperties,
                     metaDataStatistics,
                     feedName,
-                    typeName,
+                    type,
                     attributeMap);
             consumer.accept(streamHandler);
             streamHandler.close();

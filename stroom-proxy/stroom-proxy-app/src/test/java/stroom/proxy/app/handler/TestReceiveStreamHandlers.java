@@ -52,7 +52,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                         true,
                         true,
                         List.of("https://url1", "https://url2"));
-        streamHandlers.handle(new AttributeMap(), handler ->
+        streamHandlers.handle("test", null, new AttributeMap(), handler ->
                 assertThat(handler instanceof ProxyRepositoryStreamHandler).as(
                         "Expecting a handler that stores").isTrue());
     }
@@ -66,7 +66,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                                     false,
                                     true,
                                     List.of("https://url1"));
-                    streamHandlers.handle(new AttributeMap(), handler ->
+                    streamHandlers.handle("test", null, new AttributeMap(), handler ->
                             assertThat(handler instanceof ForwardStreamHandler).as(
                                     "Expecting a handler that forward to other URLS").isTrue());
                 },
@@ -83,7 +83,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                                     false,
                                     true,
                                     List.of("https://url1", "https://url2"));
-                    streamHandlers.handle(new AttributeMap(), handler ->
+                    streamHandlers.handle("test", null, new AttributeMap(), handler ->
                             assertThat(handler instanceof ForwardStreamHandler).as(
                                     "Expecting a handler that forward to other URLS").isTrue());
                 },
@@ -98,7 +98,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                         true,
                         false,
                         List.of("https://url1", "https://url2"));
-        streamHandlers.handle(new AttributeMap(), handler ->
+        streamHandlers.handle("test", null, new AttributeMap(), handler ->
                 assertThat(handler instanceof ProxyRepositoryStreamHandler).as(
                         "Expecting a handler that stores").isTrue());
     }

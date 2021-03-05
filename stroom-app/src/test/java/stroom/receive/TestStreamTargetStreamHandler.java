@@ -69,15 +69,15 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         feedStore.writeDocument(feedDoc);
 
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.FEED, feedName);
-        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_REFERENCE);
+//        attributeMap.put(StandardHeaderArguments.FEED, feedName);
+//        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_REFERENCE);
 
         final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
                 streamStore,
                 feedProperties,
                 metaService,
                 null);
-        streamTargetStreamHandlers.handle(attributeMap, handler -> {
+        streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
                 handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
@@ -100,7 +100,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
      * @throws IOException
      */
     @Test
-    void testFeedChange() throws IOException {
+    void testFeedChange() {
         streamStore.clear();
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
@@ -118,7 +118,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 feedProperties,
                 metaService,
                 null);
-        streamTargetStreamHandlers.handle(attributeMap1, handler -> {
+        streamTargetStreamHandlers.handle(feedName1, StreamTypeNames.RAW_EVENTS, attributeMap1, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
                 handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
@@ -128,7 +128,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
             }
         });
 
-        streamTargetStreamHandlers.handle(attributeMap2, handler -> {
+        streamTargetStreamHandlers.handle(feedName2, StreamTypeNames.RAW_EVENTS, attributeMap2, handler -> {
             try {
                 handler.addEntry("2" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
                 handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
@@ -144,8 +144,6 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
     /**
      * This test is used to check that streams are aggregated if the feed is not
      * reference.
-     *
-     * @throws IOException
      */
     @Test
     void testFeedAggregation() {
@@ -161,7 +159,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 feedProperties,
                 metaService,
                 null);
-        streamTargetStreamHandlers.handle(attributeMap, handler -> {
+        streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
                 handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));

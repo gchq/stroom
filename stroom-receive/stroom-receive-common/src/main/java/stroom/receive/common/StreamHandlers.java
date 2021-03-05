@@ -6,5 +6,8 @@ import java.util.function.Consumer;
 
 public interface StreamHandlers {
 
-    void handle(AttributeMap attributeMap, Consumer<StreamHandler> consumer);
+    void handle(String feedName,
+                String typeName,
+                AttributeMap attributeMap,
+                Consumer<StreamHandler> consumer);
 }

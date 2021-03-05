@@ -133,7 +133,7 @@ public class DataLoader {
             map.put(StandardHeaderArguments.FEED, feedName);
             map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
-            streamTargetStreamHandlers.handle(map, handler -> {
+            streamTargetStreamHandlers.handle(feedName, null, map, handler -> {
                 try {
                     // Write meta.
                     if (metaInputStream != null) {
@@ -173,7 +173,7 @@ public class DataLoader {
                 map.put("TestData", "Loaded By SetupSampleData");
                 map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
-                streamTargetStreamHandlers.handle(map, handler -> {
+                streamTargetStreamHandlers.handle(feedName, null, map, handler -> {
                     try {
                         for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
                             // Add context data.

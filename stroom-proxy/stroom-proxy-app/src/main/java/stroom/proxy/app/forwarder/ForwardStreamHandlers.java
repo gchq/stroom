@@ -1,9 +1,13 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
+import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
 
 import org.slf4j.Logger;
@@ -40,7 +44,15 @@ public class ForwardStreamHandlers implements StreamHandlers {
     }
 
     @Override
-    public void handle(final AttributeMap attributeMap, final Consumer<StreamHandler> consumer) {
+    public void handle(final String feedName,
+                       final String typeName,
+                       final AttributeMap attributeMap,
+                       final Consumer<StreamHandler> consumer) {
+        if (feedName.isEmpty()) {
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+        }
+        AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
+
         ForwardStreamHandler streamHandler = null;
         try {
             streamHandler = new ForwardStreamHandler(

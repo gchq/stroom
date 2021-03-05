@@ -68,12 +68,13 @@ public class ProxyRequestHandler implements RequestHandler {
             if (feedName == null || feedName.trim().isEmpty()) {
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
             }
+            final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.
                 if (attributeMapFilter.filter(attributeMap)) {
                     // Send the data
-                    receiveStreamHandlerProvider.handle(attributeMap, handler -> {
+                    receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
                         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                                 attributeMap, handler);
                         stroomStreamProcessor.processRequestHeader(request);

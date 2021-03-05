@@ -19,6 +19,7 @@ package stroom.core.receive;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.RequestHandler;
@@ -68,8 +69,12 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
+
+                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+
                 try (final InputStream inputStream = request.getInputStream()) {
-                    streamTargetStreamHandlerProvider.handle(attributeMap, handler -> {
+                    streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
                         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                                 attributeMap,
                                 handler);

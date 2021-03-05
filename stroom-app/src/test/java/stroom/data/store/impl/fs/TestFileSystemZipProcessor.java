@@ -254,8 +254,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-        attributeMap.put(StandardHeaderArguments.FEED, feedName);
-        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+//        attributeMap.put(StandardHeaderArguments.FEED, feedName);
+//        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
 //        final List<StreamTargetStreamHandler> handlerList = StreamTargetStreamHandler
 //                .buildSingleHandlerList(
@@ -267,7 +267,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         final AtomicReference<StreamTargetStreamHandler> handlerRef = new AtomicReference<>();
         try (final InputStream inputStream = Files.newInputStream(file)) {
-            streamTargetStreamHandlers.handle(attributeMap, handler -> {
+            streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
                 handlerRef.set((StreamTargetStreamHandler) handler);
 
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(

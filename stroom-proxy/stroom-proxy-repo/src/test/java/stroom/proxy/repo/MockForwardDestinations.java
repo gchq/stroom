@@ -19,7 +19,7 @@ public class MockForwardDestinations implements ForwarderDestinations {
 
     @Override
     public StreamHandlers getProvider(final String forwardUrl) {
-        return (attributeMap, consumer) -> forwardCount.incrementAndGet();
+        return (feeName, typeName, attributeMap, consumer) -> forwardCount.incrementAndGet();
     }
 
     public int getForwardCount() {

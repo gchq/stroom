@@ -86,7 +86,7 @@ public class DataUploadTaskHandler {
                             final String fileName,
                             final Path file,
                             final String feedName,
-                            final String streamTypeName,
+                            final String typeName,
                             final Long effectiveMs,
                             final String metaData) {
         securityContext.secure(() -> {
@@ -94,7 +94,7 @@ public class DataUploadTaskHandler {
             if (feedName == null) {
                 throw new EntityServiceException("Feed not set!");
             }
-            if (streamTypeName == null) {
+            if (typeName == null) {
                 throw new EntityServiceException("Stream Type not set!");
             }
             if (fileName == null) {
@@ -118,14 +118,14 @@ public class DataUploadTaskHandler {
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
-            attributeMap.put(StandardHeaderArguments.TYPE, streamTypeName);
+            attributeMap.put(StandardHeaderArguments.TYPE, typeName);
             attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
 
             if (name.endsWith(FILE_SEPARATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
                 attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-                uploadZipFile(taskContext, file, feedName, streamTypeName, effectiveMs, attributeMap);
+                uploadZipFile(taskContext, file, feedName, typeName, effectiveMs, attributeMap);
             } else {
                 if (name.endsWith(FILE_SEPARATOR + StandardHeaderArguments.COMPRESSION_GZIP)) {
                     attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
@@ -133,7 +133,7 @@ public class DataUploadTaskHandler {
                 if (name.endsWith(FILE_SEPARATOR + GZ)) {
                     attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
                 }
-                uploadStreamFile(file, attributeMap);
+                uploadStreamFile(file, feedName, typeName, attributeMap);
             }
         });
     }
@@ -175,9 +175,11 @@ public class DataUploadTaskHandler {
     }
 
     private void uploadStreamFile(final Path file,
+                                  final String feedName,
+                                  final String typeName,
                                   final AttributeMap attributeMap) {
         try (final InputStream inputStream = Files.newInputStream(file)) {
-            streamHandlers.handle(attributeMap, handler -> {
+            streamHandlers.handle(feedName, typeName, attributeMap, handler -> {
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                         attributeMap,
                         handler);

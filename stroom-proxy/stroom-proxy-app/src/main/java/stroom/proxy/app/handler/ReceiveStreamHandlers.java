@@ -43,7 +43,10 @@ public class ReceiveStreamHandlers implements StreamHandlers {
     }
 
     @Override
-    public void handle(final AttributeMap attributeMap, final Consumer<StreamHandler> consumer) {
-        streamHandlers.handle(attributeMap, consumer);
+    public void handle(final String feedName,
+                       final String typeName,
+                       final AttributeMap attributeMap,
+                       final Consumer<StreamHandler> consumer) {
+        streamHandlers.handle(feedName, typeName, attributeMap, consumer);
     }
 }

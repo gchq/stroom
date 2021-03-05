@@ -253,10 +253,6 @@ public class Forwarder {
             }
 
             final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(StandardHeaderArguments.FEED, feedName);
-            if (typeName != null && !typeName.isBlank()) {
-                attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());
-            }
             attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
             attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
             if (LOGGER.isDebugEnabled()) {
@@ -267,7 +263,7 @@ public class Forwarder {
 
             // Start the POST
             try {
-                streamHandlers.handle(attributeMap, handler -> {
+                streamHandlers.handle(feedName, typeName, attributeMap, handler -> {
                     String lastDataName = null;
                     String targetName = null;
                     long sequenceId = 1;
