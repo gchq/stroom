@@ -21,7 +21,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2059** : Fix `Duplicate key` error in task assignment.
 
+* Issue **#2064** : Delete empty directories left by running unit test.
+  
 * Issue **#2056** : Fix error sending permission change events to other cluster nodes.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
 
 ## [v7.0-beta.89] - 2021-02-26

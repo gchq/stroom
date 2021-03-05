@@ -8,6 +8,8 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +40,15 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private final ExplorerTreeDao explorerTreeDao;
     private final DocumentPermissionService documentPermissionService;
+    private final SecurityContext securityContext;
 
     @Inject
     ExplorerNodeServiceImpl(final ExplorerTreeDao explorerTreeDao,
-                            final DocumentPermissionService documentPermissionService) {
+                            final DocumentPermissionService documentPermissionService,
+                            final SecurityContext securityContext) {
         this.explorerTreeDao = explorerTreeDao;
         this.documentPermissionService = documentPermissionService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -219,8 +224,13 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
-        return getNodeForDocRef(docRef)
-                .map(this::createExplorerNode);
+        // Only return entries the user has permission to see.
+        if (docRef != null && securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
+            return getNodeForDocRef(docRef)
+                    .map(this::createExplorerNode);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package stroom.processor.shared;
 
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -39,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/processorFilter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ProcessorFilterResource extends RestResource, DirectRestService {
+public interface ProcessorFilterResource extends RestResource, DirectRestService, FetchWithIntegerId<ProcessorFilter> {
 
     @POST
     @Path("find")

@@ -48,6 +48,7 @@ public class PipelineModule extends AbstractModule {
         install(new XsltModule());
 
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
+        bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

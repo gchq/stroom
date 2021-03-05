@@ -40,7 +40,7 @@ import javax.xml.bind.annotation.XmlType;
 @Schema(description = DocRef.CLASS_DESC)
 @JsonPropertyOrder({"type", "uuid", "name"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid, HasName {
+public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid, HasNameMutable {
 
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
             "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";

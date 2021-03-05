@@ -16,8 +16,10 @@
 
 package stroom.dashboard.impl.datasource;
 
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DataSourceProviderRegistry {
@@ -32,4 +34,6 @@ public interface DataSourceProviderRegistry {
      * The service has no instances that are up and enabled.
      */
     Optional<DataSourceProvider> getDataSourceProvider(DocRef dataSourceRef);
+
+    List<AbstractField> getFieldsForDataSource(DocRef dataSourceRef);
 }

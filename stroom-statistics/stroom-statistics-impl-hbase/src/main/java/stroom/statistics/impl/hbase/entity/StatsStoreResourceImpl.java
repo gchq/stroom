@@ -18,27 +18,32 @@ package stroom.statistics.impl.hbase.entity;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@AutoLogged
+@Singleton
 class StatsStoreResourceImpl implements StatsStoreResource {
 
-    private final StroomStatsStoreStore stroomStatsStoreStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<StroomStatsStoreStore> stroomStatsStoreStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    StatsStoreResourceImpl(final StroomStatsStoreStore stroomStatsStoreStore,
-                           final DocumentResourceHelper documentResourceHelper) {
-        this.stroomStatsStoreStore = stroomStatsStoreStore;
-        this.documentResourceHelper = documentResourceHelper;
+    StatsStoreResourceImpl(final Provider<StroomStatsStoreStore> stroomStatsStoreStoreProvider,
+                           final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.stroomStatsStoreStoreProvider = stroomStatsStoreStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public StroomStatsStoreDoc fetch(final String uuid) {
-        return documentResourceHelper.read(stroomStatsStoreStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(stroomStatsStoreStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -46,7 +51,7 @@ class StatsStoreResourceImpl implements StatsStoreResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(stroomStatsStoreStore, doc);
+        return documentResourceHelperProvider.get().update(stroomStatsStoreStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {

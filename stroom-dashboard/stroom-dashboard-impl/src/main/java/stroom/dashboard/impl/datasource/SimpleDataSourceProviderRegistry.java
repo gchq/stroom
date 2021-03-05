@@ -17,6 +17,7 @@
 package stroom.dashboard.impl.datasource;
 
 import stroom.config.common.UriFactory;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -111,5 +113,15 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         return Optional.ofNullable(dataSourceRef)
                 .map(DocRef::getType)
                 .flatMap(this::getDataSourceProvider);
+    }
+
+    @Override
+    public List<AbstractField> getFieldsForDataSource(final DocRef dataSourceRef) {
+        // Elevate the users permissions for the duration of this task so they can read the index if
+        // they have 'use' permission.
+        return securityContext.useAsReadResult(
+                () -> getDataSourceProvider(dataSourceRef)
+                        .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                        .orElse(null));
     }
 }

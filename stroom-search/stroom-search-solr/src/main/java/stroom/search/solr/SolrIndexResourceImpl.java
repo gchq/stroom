@@ -18,10 +18,12 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -36,7 +38,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-class SolrIndexResourceImpl implements SolrIndexResource {
+@AutoLogged
+class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrIndexDoc> {
 
     private final SolrIndexStore solrIndexStore;
     private final DocumentResourceHelper documentResourceHelper;

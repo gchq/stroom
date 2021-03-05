@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.docref;
 
-public interface FetchWithUuid<T> {
-
-    T fetch(String uuid);
+public interface HasNameMutable extends HasName {
+    void setName(final String name);
 }

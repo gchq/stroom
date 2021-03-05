@@ -19,6 +19,8 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.AssignTasksRequest;
@@ -34,29 +36,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.client.Entity;
 
+@Singleton
+@AutoLogged
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskResourceImpl.class);
 
-    private final ProcessorTaskService processorTaskService;
-    private final DocumentEventLog documentEventLog;
-    private final NodeService nodeService;
-    private final ProcessorTaskManager processorTaskManager;
+    private final Provider<ProcessorTaskService> processorTaskServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<ProcessorTaskManager> processorTaskManagerProvider;
 
     @Inject
-    ProcessorTaskResourceImpl(final ProcessorTaskService processorTaskService,
-                              final DocumentEventLog documentEventLog,
-                              final NodeService nodeService,
-                              final ProcessorTaskManager processorTaskManager) {
-        this.processorTaskService = processorTaskService;
-        this.documentEventLog = documentEventLog;
-        this.nodeService = nodeService;
-        this.processorTaskManager = processorTaskManager;
+    ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
+                              final Provider<DocumentEventLog> documentEventLogProvider,
+                              final Provider<NodeService> nodeServiceProvider,
+                              final Provider<ProcessorTaskManager> processorTaskManagerProvider) {
+        this.processorTaskServiceProvider = processorTaskServiceProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.processorTaskManagerProvider = processorTaskManagerProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTask> result;
 
@@ -65,15 +72,15 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         final Query query = queryBuilder.build();
 
         try {
-            result = processorTaskService.find(criteria);
-            documentEventLog.search(
+            result = processorTaskServiceProvider.get().find(criteria);
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTask.class.getSimpleName(),
                     result.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTask.class.getSimpleName(),
@@ -86,6 +93,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTaskSummary> result;
 
@@ -94,15 +102,15 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         final Query query = queryBuilder.build();
 
         try {
-            result = processorTaskService.findSummary(criteria);
-            documentEventLog.search(
+            result = processorTaskServiceProvider.get().findSummary(criteria);
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTaskSummary.class.getSimpleName(),
                     result.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTaskSummary.class.getSimpleName(),
@@ -115,36 +123,42 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
         LOGGER.debug("assignTasks called for nodeName: {}, {}", nodeName, request);
-        final ProcessorTaskList processorTaskList = nodeService.remoteRestResult(
-                nodeName,
-                ProcessorTaskList.class,
-                () -> ResourcePaths.buildAuthenticatedApiPath(
-                        ProcessorTaskResource.BASE_PATH,
-                        ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
-                        nodeName),
-                () ->
-                        processorTaskManager.assignTasks(request.getNodeName(), request.getCount()),
-                builder ->
-                        builder.post(Entity.json(request)));
+        final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        ProcessorTaskList.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
+                                nodeName),
+                        () ->
+                                processorTaskManagerProvider.get()
+                                        .assignTasks(request.getNodeName(), request.getCount()),
+                        builder ->
+                                builder.post(Entity.json(request)));
         return processorTaskList;
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
         LOGGER.debug("abandonTasks called for nodeName: {}, {}", nodeName, request);
-        final Boolean result = nodeService.remoteRestResult(
-                nodeName,
-                Boolean.class,
-                () -> ResourcePaths.buildAuthenticatedApiPath(
-                        ProcessorTaskResource.BASE_PATH,
-                        ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
-                        nodeName),
-                () ->
-                        processorTaskManager.abandonTasks(request),
-                builder ->
-                        builder.put(Entity.json(request)));
+        final Boolean result = nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        Boolean.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
+                                nodeName),
+                        () ->
+                                processorTaskManagerProvider.get()
+                                        .abandonTasks(request),
+                        builder ->
+                                builder.put(Entity.json(request)));
         return result;
     }
 }

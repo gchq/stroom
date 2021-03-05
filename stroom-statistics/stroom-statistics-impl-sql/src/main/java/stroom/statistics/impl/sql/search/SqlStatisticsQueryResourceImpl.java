@@ -18,6 +18,8 @@ package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged
 public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResourceImpl.class);
@@ -66,6 +69,7 @@ public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResourc
 
     @Timed
     @Override
+    @AutoLogged(value = OperationType.DELETE, verb = "Closing Query")
     public Boolean destroy(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);

@@ -339,10 +339,5 @@ class TestStroomEventLoggingServiceImpl {
         public Boolean isSecret() {
             return secret;
         }
-
-        @Override
-        public void setName(final String name) {
-
-        }
     }
 }

@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.explorer.api;
 
-public interface FetchWithUuid<T> {
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodePermissions;
 
-    T fetch(String uuid);
+import java.util.List;
+import java.util.Set;
+
+public interface ExplorerNodePermissionsService {
+    Set<ExplorerNodePermissions> fetchExplorerPermissions(final List<ExplorerNode> explorerNodes);
 }

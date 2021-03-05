@@ -18,6 +18,8 @@ package stroom.receive.rules.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
@@ -33,6 +35,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
 
     private final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider;
@@ -66,11 +69,13 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public Set<DocRef> listDocuments() {
         return ruleSetServiceProvider.get().listDocuments();
     }
 
     @Override
+    @AutoLogged(value = OperationType.IMPORT, verb = "Importing data for ruleset")
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(),
@@ -88,6 +93,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
+    @AutoLogged(value = OperationType.EXPORT, verb = "Exporting data for ruleset")
     public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
         final Map<String, byte[]> map = ruleSetServiceProvider.get().exportDocument(
                 docRef,

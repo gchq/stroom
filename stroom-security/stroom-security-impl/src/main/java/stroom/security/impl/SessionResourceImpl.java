@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
@@ -15,7 +16,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-@SuppressWarnings("unused")
+@AutoLogged
 public class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
