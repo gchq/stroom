@@ -268,11 +268,11 @@ public class ProxyRepo {
         return rootDir;
     }
 
-    StroomZipOutputStream getStroomZipOutputStream() throws IOException {
+    public StroomZipOutputStream getStroomZipOutputStream() throws IOException {
         return getStroomZipOutputStream(null);
     }
 
-    StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
+    public StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
             throws IOException {
         final String filename = StroomFileNameUtil.constructFilename(executionUuid,
                 fileCount.incrementAndGet(),

@@ -111,7 +111,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         LOGGER.debug(() -> LogUtil.message("handleEntryStart() - {}", entry));
 
         StroomZipFileType stroomZipFileType = StroomZipFileType.DATA;
-        final int index = entry.indexOf(".");
+        final int index = entry.lastIndexOf(".");
         if (index != -1) {
             final String extension = entry.substring(index);
             if (StroomZipFileType.META.getExtension().equals(extension)) {

@@ -325,20 +325,20 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                     index++;
 
-                    map.forEach((key, value) -> {
+                    map.forEach((key, expected) -> {
                         if (key == null) {
                             try (final InputStream inputStream = inputStreamProvider.get()) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false))
-                                        .isEqualTo(value);
+                                final String actual = StreamUtil.streamToString(inputStream, false);
+                                assertThat(actual).isEqualTo(expected);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }
                         } else {
                             try (final InputStream inputStream = inputStreamProvider.get(key)) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false))
-                                        .isEqualTo(value);
+                                final String actual = StreamUtil.streamToString(inputStream, false);
+                                assertThat(actual).isEqualTo(expected);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }

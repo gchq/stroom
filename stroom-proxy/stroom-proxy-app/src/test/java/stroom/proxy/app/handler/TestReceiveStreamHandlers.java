@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.forwarder.ForwardStreamHandler;
@@ -10,22 +11,39 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.BuildInfo;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestReceiveStreamHandlers extends StroomUnitTest {
+
+    @Mock
+    private ProxyRepo proxyRepo;
+
+    @AfterAll
+    private static void afterAll() {
+        ProxyRepoConfig.repoDir = null;
+    }
 
     @Test
     void testStoreAndForward() {
@@ -102,13 +120,13 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
             forwarderConfig.getForwardDestinations().add(destinationConfig);
         }
 
-        final ProxyRepoSources proxyRepoSources = new ProxyRepoSources(null);
-        final ProxyRepo proxyRepo = new ProxyRepo(
-                proxyRepoConfig.getRepoDir(),
-                proxyRepoConfig.getFormat(),
-                proxyRepoSources,
-                0L,
-                0L);
+        try {
+            final StroomZipOutputStream mockStroomZipOutputStream = Mockito.mock(StroomZipOutputStream.class);
+            Mockito.when(proxyRepo.getStroomZipOutputStream(Mockito.any())).thenReturn(mockStroomZipOutputStream);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
                 new ProxyRepositoryStreamHandlers(proxyRepo);
 

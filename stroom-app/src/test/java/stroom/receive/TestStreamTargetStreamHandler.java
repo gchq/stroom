@@ -20,13 +20,13 @@ package stroom.receive;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
-import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -50,7 +50,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private StreamTargetStreamHandlers streamTargetStreamHandlers;
+    private MetaService metaService;
 
     /**
      * This test is used to check that feeds that are set to be reference feeds
@@ -59,7 +59,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
      * @throws IOException
      */
     @Test
-    void testReferenceNonAggregation() throws IOException {
+    void testReferenceNonAggregation() {
         streamStore.clear();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
@@ -72,6 +72,11 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_REFERENCE);
 
+        final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
+                streamStore,
+                feedProperties,
+                metaService,
+                null);
         streamTargetStreamHandlers.handle(attributeMap, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
@@ -108,6 +113,11 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
         attributeMap2.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
+        final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
+                streamStore,
+                feedProperties,
+                metaService,
+                null);
         streamTargetStreamHandlers.handle(attributeMap1, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
@@ -146,6 +156,11 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
+        final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
+                streamStore,
+                feedProperties,
+                metaService,
+                null);
         streamTargetStreamHandlers.handle(attributeMap, handler -> {
             try {
                 handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));

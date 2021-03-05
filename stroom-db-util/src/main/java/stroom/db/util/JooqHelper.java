@@ -38,10 +38,10 @@ import javax.sql.DataSource;
 
 public class JooqHelper {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(JooqHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JooqHelper.class);
 
-    private final String DEFAULT_ID_FIELD_NAME = "id";
-    private final Boolean RENDER_SCHEMA = false;
+    private static final String DEFAULT_ID_FIELD_NAME = "id";
+    private static final Boolean RENDER_SCHEMA = false;
 
     private final DataSource dataSource;
     private final SQLDialect sqlDialect;

@@ -1,41 +1,27 @@
 package stroom.core.receive;
 
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.CleanupConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.util.shared.AbstractConfig;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class ProxyAggregationConfig extends AbstractConfig {
 
-    private String proxyDir = "proxy_repo";
-    private volatile int proxyThreads = 10;
-
+    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
+    private CleanupConfig cleanupConfig = new CleanupConfig();
 
-    @JsonPropertyDescription("Folder to look for Stroom Proxy Content to aggregate. If the value is a " +
-            "relative path then it will be treated as being relative to stroom.path.home.")
-    public String getProxyDir() {
-        return proxyDir;
+    public ProxyRepoConfig getProxyRepoConfig() {
+        return proxyRepoConfig;
     }
 
-    public void setProxyDir(final String proxyDir) {
-        this.proxyDir = proxyDir;
+    public void setProxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
+        this.proxyRepoConfig = proxyRepoConfig;
     }
 
-    @JsonPropertyDescription("Number of threads used in aggregation")
-    public int getProxyThreads() {
-        return proxyThreads;
-    }
-
-    public void setProxyThreads(final int proxyThreads) {
-        this.proxyThreads = proxyThreads;
-    }
-
-    @JsonProperty("aggregate")
     public AggregatorConfig getAggregatorConfig() {
         return aggregatorConfig;
     }
@@ -44,12 +30,11 @@ public class ProxyAggregationConfig extends AbstractConfig {
         this.aggregatorConfig = aggregatorConfig;
     }
 
-    @Override
-    public String toString() {
-        return "ProxyAggregationConfig{" +
-                "proxyDir='" + proxyDir + '\'' +
-                ", proxyThreads=" + proxyThreads +
-                ", aggregatorConfig=" + aggregatorConfig +
-                '}';
+    public CleanupConfig getCleanupConfig() {
+        return cleanupConfig;
+    }
+
+    public void setCleanupConfig(final CleanupConfig cleanupConfig) {
+        this.cleanupConfig = cleanupConfig;
     }
 }
