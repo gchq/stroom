@@ -254,35 +254,24 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-//        attributeMap.put(StandardHeaderArguments.FEED, feedName);
-//        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-
-//        final List<StreamTargetStreamHandler> handlerList = StreamTargetStreamHandler
-//                .buildSingleHandlerList(
-//                        streamStore,
-//                        feedProperties,
-//                        null,
-//                        feedName,
-//                        StreamTypeNames.RAW_EVENTS);
 
         final AtomicReference<StreamTargetStreamHandler> handlerRef = new AtomicReference<>();
-        try (final InputStream inputStream = Files.newInputStream(file)) {
-            streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
-                handlerRef.set((StreamTargetStreamHandler) handler);
+        streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
+            handlerRef.set((StreamTargetStreamHandler) handler);
 
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                        attributeMap,
-                        handler);
-                stroomStreamProcessor.setAppendReceivedPath(false);
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                    attributeMap,
+                    handler);
+            stroomStreamProcessor.setAppendReceivedPath(false);
 
-
-                for (int i = 0; i < processCount; i++) {
+            for (int i = 0; i < processCount; i++) {
+                try (final InputStream inputStream = Files.newInputStream(file)) {
                     stroomStreamProcessor.process(inputStream, String.valueOf(i));
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+            }
+        });
 
         final StreamTargetStreamHandler streamTargetStreamHandler = handlerRef.get();
         final List<Path> files = streamMaintenanceService
