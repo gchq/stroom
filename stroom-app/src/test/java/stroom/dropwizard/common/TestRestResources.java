@@ -1,10 +1,12 @@
 package stroom.dropwizard.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
+import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.RestResource;
 
@@ -289,7 +291,8 @@ class TestRestResources {
 
                         if (hasOperationAnno) {
                             final Class<?> methodReturnClass = method.getReturnType();
-                            final Operation operation = method.getAnnotation(Operation.class);
+                            final Operation operation = AnnotationUtil
+                                    .getInheritedMethodAnnotation(Operation.class, method);
                             final ApiResponse[] responses = operation.responses();
 
                             softAssertions
@@ -303,9 +306,28 @@ class TestRestResources {
                             if (!operation.operationId().isBlank()) {
                                 final String existing = OPERATION_ID_MAP.put(
                                         operation.operationId(),
-                                        resourceClass.getName() + " - " + operation.method());
+                                        resourceClass.getName() + "::" + methodSignature.getName());
+
+                                final String existingOperation;
+                                if (existing != null) {
+                                    existingOperation = existing;
+                                } else {
+                                    existingOperation = resourceClass.getName() + "::" + methodSignature.getName();
+                                }
+
+                                if (!existingOperation.equals(resourceClass.getName() + "::" +
+                                        methodSignature.getName())) {
+                                    LOGGER.warn("Method '" +
+                                            method.getName() +
+                                            "' does not have a globally unique `operationId` '" +
+                                            operation.operationId() +
+                                            "'" +
+                                            " exists in " +
+                                            existingOperation);
+                                }
+
                                 softAssertions
-                                        .assertThat(existing)
+                                        .assertThat(existingOperation)
                                         .withFailMessage(() ->
                                                 "Method '" +
                                                         method.getName() +
@@ -313,8 +335,8 @@ class TestRestResources {
                                                         operation.operationId() +
                                                         "'" +
                                                         " exists in " +
-                                                        existing)
-                                        .isNull();
+                                                        existingOperation)
+                                        .isEqualTo(resourceClass.getName() + "::" +  methodSignature.getName());
                             }
 
                             // Only need to set response when Response is used
@@ -401,7 +423,8 @@ class TestRestResources {
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
                     !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
-                !FetchWithLongId.class.isAssignableFrom(resourceClass)) {
+                    !FetchWithLongId.class.isAssignableFrom(resourceClass) &&
+                    !FetchWithTemplate.class.isAssignableFrom(resourceClass)) {
                 softAssertions.fail("Resource classes that support fetch() should" +
                         " declare the appropriate FetchWithSomething<FetchedThing> interface");
             }

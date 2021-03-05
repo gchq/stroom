@@ -23,11 +23,15 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
+import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
@@ -80,7 +84,6 @@ class RequestInfo {
         //Only required for update and delete operations
         if (OperationType.UPDATE.equals(containerResourceInfo.getOperationType()) ||
                 OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
-            //TODO execute as processing user to maximise chance of logging the correct object
             try {
 
                 if (resource instanceof FetchWithIntegerId<?>) {
@@ -123,6 +126,23 @@ class RequestInfo {
                     } else {
                         RestResourceAutoLoggerImpl.LOGGER.error(
                                 "Unable to extract uuid and type from request of type " +
+                                        template.getClass().getSimpleName());
+                    }
+                } else if (resource instanceof FetchWithTemplate<?>) {
+                    FetchWithTemplate<Object> templateReadSupportingResource = (FetchWithTemplate<Object>) resource;
+
+                    Optional<Method> fetchMethodOptional =
+                            Arrays.stream(templateReadSupportingResource.getClass().getMethods())
+                            .filter(m -> m.getName().equals("fetch")
+                                    && m.getParameterCount() == 1
+                                    && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                            .findFirst();
+
+                    if (fetchMethodOptional.isPresent()) {
+                        result = templateReadSupportingResource.fetch(template);
+                    } else {
+                        RestResourceAutoLoggerImpl.LOGGER.error(
+                                "Unable to find appropriate fetch method for type " +
                                         template.getClass().getSimpleName());
                     }
                 } else {
