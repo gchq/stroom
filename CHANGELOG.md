@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2066** : Add data bars to node monitoring screen.
+
 * Issue **#2059** : Fix `Duplicate key` error in task assignment.
 
 * Issue **#2056** : Fix error sending permission change events to other cluster nodes.
