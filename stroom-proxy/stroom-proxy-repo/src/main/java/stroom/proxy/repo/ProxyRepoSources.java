@@ -6,6 +6,7 @@ import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -32,6 +33,14 @@ public class ProxyRepoSources implements Clearable {
                 .map(Record1::value1)
                 .orElse(0L));
         sourceRecordId.set(maxSourceRecordId);
+    }
+
+    public Optional<Long> getSourceId(final String path) {
+        return jooq.contextResult(context -> context
+                .select(SOURCE.ID)
+                .from(SOURCE)
+                .where(SOURCE.PATH.eq(path))
+                .fetchOptional(SOURCE.ID));
     }
 
     public long addSource(final String path, final long lastModifiedTimeMs) {
