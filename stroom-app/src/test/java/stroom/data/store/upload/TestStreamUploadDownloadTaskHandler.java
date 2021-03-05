@@ -116,7 +116,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         Files.write(file, "TEST".getBytes());
 
         dataUploadTaskHandler.uploadData("test.dat", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n");
+                StreamTypeNames.RAW_EVENTS, null, "Foo:One\nBar:Two\n");
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
     }

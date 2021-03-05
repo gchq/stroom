@@ -68,7 +68,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes());
             zipOut.closeEntry();
             zipOut.close();
@@ -94,7 +94,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
             zipOut.close();
@@ -128,13 +128,13 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("tom1.ctx"));
+            zipOut.putNextEntry(new ZipEntry("test1.ctx"));
             zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("tom1.meta"));
+            zipOut.putNextEntry(new ZipEntry("test1.meta"));
             zipOut.write("Meta11:1\nMeta12:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
             zipOut.close();
