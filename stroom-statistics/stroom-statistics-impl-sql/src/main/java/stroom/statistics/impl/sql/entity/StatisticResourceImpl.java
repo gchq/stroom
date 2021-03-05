@@ -24,23 +24,26 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
 @AutoLogged
 class StatisticResourceImpl implements StatisticResource {
 
-    private final StatisticStoreStore statisticStoreStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<StatisticStoreStore> statisticStoreStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    StatisticResourceImpl(final StatisticStoreStore statisticStoreStore,
-                          final DocumentResourceHelper documentResourceHelper) {
-        this.statisticStoreStore = statisticStoreStore;
-        this.documentResourceHelper = documentResourceHelper;
+    StatisticResourceImpl(final Provider<StatisticStoreStore> statisticStoreStoreProvider,
+                          final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.statisticStoreStoreProvider = statisticStoreStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public StatisticStoreDoc fetch(final String uuid) {
-        return documentResourceHelper.read(statisticStoreStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(statisticStoreStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -48,7 +51,7 @@ class StatisticResourceImpl implements StatisticResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(statisticStoreStore, doc);
+        return documentResourceHelperProvider.get().update(statisticStoreStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {
