@@ -43,7 +43,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import stroom.annotation.impl.db.spring.AnnotationConfiguration;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
-import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.content.ContentSyncService;
 import stroom.dashboard.spring.DashboardConfiguration;
@@ -354,7 +353,6 @@ public class App extends Application<Config> {
             SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
         }
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomKafkaProducerFactoryService.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomElasticProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SearchableResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
