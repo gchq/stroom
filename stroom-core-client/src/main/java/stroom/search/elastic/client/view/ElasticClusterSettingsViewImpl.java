@@ -45,6 +45,8 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     TextArea connectionUrls;
     @UiField
+    TextArea caCertificate;
+    @UiField
     TickBox useAuthentication;
     @UiField
     TextBox apiKeyId;
@@ -59,6 +61,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
         description.addKeyDownHandler(e -> fireChange());
         connectionUrls.addKeyDownHandler(e -> fireChange());
+        caCertificate.addKeyDownHandler(e -> fireChange());
         useAuthentication.addValueChangeHandler(e -> fireChange());
         apiKeyId.addKeyDownHandler(e -> fireChange());
         apiKeySecret.addKeyDownHandler(e -> fireChange());
@@ -96,6 +99,12 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
+    public String getCaCertificate() { return caCertificate.getText().trim(); }
+
+    @Override
+    public void setCaCertificate(final String caCertificate) { this.caCertificate.setText(caCertificate); }
+
+    @Override
     public boolean getUseAuthentication() { return useAuthentication.getBooleanValue(); }
 
     @Override
@@ -117,6 +126,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         connectionUrls.setEnabled(!readOnly);
+        caCertificate.setEnabled(!readOnly);
         useAuthentication.setEnabled(!readOnly);
         apiKeyId.setEnabled(!readOnly);
         apiKeySecret.setEnabled(!readOnly);

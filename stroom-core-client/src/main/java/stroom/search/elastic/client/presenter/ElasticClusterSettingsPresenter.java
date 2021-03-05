@@ -50,9 +50,7 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
     }
 
     @Override
-    protected void onBind() {
-        // TODO: Register handler for SSL config component
-    }
+    protected void onBind() { }
 
     @Override
     public void onChange() {
@@ -78,27 +76,26 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
 
         if (connectionConfig != null) {
             getView().setConnectionUrls(connectionConfig.getConnectionUrls());
+            getView().setCaCertificate(connectionConfig.getCaCertificate());
             getView().setUseAuthentication(connectionConfig.getUseAuthentication());
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
         }
 
         getView().setDescription(cluster.getDescription());
-        // TODO: Set SSL config
     }
 
     @Override
     protected void onWrite(final ElasticCluster cluster) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
+        connectionConfig.setCaCertificate(getView().getCaCertificate());
         connectionConfig.setUseAuthentication(getView().getUseAuthentication());
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
         cluster.setConnectionConfig(connectionConfig);
 
         cluster.setDescription(getView().getDescription().trim());
-
-        // TODO: Set SSL config
     }
 
     public interface ElasticClusterSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
@@ -109,6 +106,10 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
         List<String> getConnectionUrls();
 
         void setConnectionUrls(List<String> connectionUrls);
+
+        String getCaCertificate();
+
+        void setCaCertificate(String caCertificate);
 
         boolean getUseAuthentication();
 

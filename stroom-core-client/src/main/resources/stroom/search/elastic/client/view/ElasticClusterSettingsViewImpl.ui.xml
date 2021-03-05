@@ -36,6 +36,12 @@
                         </g:customCell>
                     </g:row>
                     <g:row>
+                        <g:cell>CA certificate:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="caCertificate" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
                         <g:cell>Use authentication</g:cell>
                         <g:customCell>
                             <t:TickBox ui:field="useAuthentication" width="400px"/>

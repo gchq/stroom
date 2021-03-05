@@ -14,13 +14,16 @@ import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"connectionUrls,useAuthentication,apiKeyId,apiKeySecret"})
+@JsonPropertyOrder({"connectionUrls,caCertificate,useAuthentication,apiKeyId,apiKeySecret"})
 @XmlRootElement(name = "connection")
-@XmlType(name = "ElasticConnectionConfig", propOrder = {"connectionUrls", "useAuthentication", "apiKeyId", "apiKeySecret"})
+@XmlType(name = "ElasticConnectionConfig", propOrder = {"connectionUrls", "caCertificate", "useAuthentication", "apiKeyId", "apiKeySecret"})
 public class ElasticConnectionConfig implements Serializable {
     private List<String> connectionUrls = new ArrayList<>();
 
-    // TODO: Add TLS config
+    /**
+     * DER or PEM-encoded CA certificate for X.509 verification
+     */
+    private String caCertificate;
 
     private boolean useAuthentication = false;
 
@@ -38,7 +41,9 @@ public class ElasticConnectionConfig implements Serializable {
 
     public void setConnectionUrls(final List<String> connectionUrls) { this.connectionUrls = connectionUrls; }
 
-    // TODO: Add TLS config
+    public String getCaCertificate() { return caCertificate; }
+
+    public void setCaCertificate(final String caCertificate) { this.caCertificate = caCertificate; }
 
     public boolean getUseAuthentication() { return useAuthentication; }
 
@@ -62,7 +67,11 @@ public class ElasticConnectionConfig implements Serializable {
         if (!(o instanceof ElasticConnectionConfig)) return false;
         final ElasticConnectionConfig that = (ElasticConnectionConfig)o;
 
-        return connectionUrls.equals(that.connectionUrls);
+        return Objects.equals(connectionUrls, that.connectionUrls) &&
+                Objects.equals(caCertificate, that.caCertificate) &&
+                Objects.equals(useAuthentication, that.useAuthentication) &&
+                Objects.equals(apiKeyId, that.apiKeyId) &&
+                Objects.equals(apiKeySecret, that.apiKeySecret);
     }
 
     @Override
@@ -74,6 +83,7 @@ public class ElasticConnectionConfig implements Serializable {
     public String toString() {
         return "ElasticConnectionConfig{" +
                 "connectionUrls='" + String.join(",", connectionUrls) + '\'' +
+                "caCertPath='" + caCertificate + '\'' +
                 "useAuthentication=" + useAuthentication +
                 "apiKeyId='" + apiKeyId + '\'' +
                 "apiKeySecret='<redacted>'" +
