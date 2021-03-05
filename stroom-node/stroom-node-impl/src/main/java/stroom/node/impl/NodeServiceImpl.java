@@ -39,6 +39,7 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -81,6 +82,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.entityEventBus = entityEventBus;
         this.webTargetFactory = webTargetFactory;
 
+        // Ensure the node record for this node is in the DB
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
@@ -101,7 +103,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     ResultPage<Node> find(final FindNodeCriteria criteria) {
         return securityContext.secureResult(() -> {
-            ensureNodeCreated();
             return nodeDao.find(criteria);
         });
 
@@ -112,6 +113,22 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return find(criteria)
                 .getValues()
                 .stream()
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getEnabledNodesByPriority() {
+
+        final FindNodeCriteria findNodeCriteria = new FindNodeCriteria();
+        findNodeCriteria.setEnabled(true);
+
+        return find(findNodeCriteria)
+                .getValues()
+                .stream()
+                .sorted(Comparator.comparingInt(Node::getPriority)
+                        .reversed()
+                        .thenComparing(Node::getName))
                 .map(Node::getName)
                 .collect(Collectors.toList());
     }
@@ -226,7 +243,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     Node getNode(final String nodeName) {
         return securityContext.secureResult(() -> {
-            ensureNodeCreated();
             return nodeDao.getNode(nodeName);
         });
     }

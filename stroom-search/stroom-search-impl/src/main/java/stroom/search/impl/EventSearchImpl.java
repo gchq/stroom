@@ -39,6 +39,7 @@ class EventSearchImpl implements EventSearch {
                        final long maxEventsPerStream,
                        final int resultSendFrequency,
                        final Consumer<EventRefs> consumer) {
+
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final EventSearchTask eventSearchTask = new EventSearchTask(
                 key,
@@ -48,12 +49,17 @@ class EventSearchImpl implements EventSearch {
                 maxStreams,
                 maxEvents,
                 maxEventsPerStream);
-        final Supplier<EventRefs> supplier = taskContextFactory.contextResult("Event Search", taskContext -> {
-            final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
-            return eventSearchTaskHandler.exec(eventSearchTask);
-        });
+
+        final Supplier<EventRefs> supplier = taskContextFactory.contextResult(
+                "Event Search",
+                taskContext -> {
+                    final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
+                    return eventSearchTaskHandler.exec(eventSearchTask);
+                });
+
         CompletableFuture
                 .supplyAsync(supplier, executor)
-                .whenComplete((r, t) -> consumer.accept(r));
+                .whenComplete((r, t) ->
+                        consumer.accept(r));
     }
 }
