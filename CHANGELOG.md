@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add index to cluster_lock table to fix whole table locking for single lock key.
+
 * Issue **#2066** : Add data bars to node monitoring screen.
 
 * Issue **#2059** : Fix `Duplicate key` error in task assignment.
