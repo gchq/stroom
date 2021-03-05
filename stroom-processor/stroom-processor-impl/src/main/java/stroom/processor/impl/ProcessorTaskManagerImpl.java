@@ -214,6 +214,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     @Override
     public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+        LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
+
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserId(),
                     "Only the processing user is allowed to assign tasks");
@@ -273,13 +275,20 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         taskStatusTraceLog.assignTasks(ProcessorTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Assigning " + assignedStreamTasks.size() + " to node " + nodeName);
+            LOGGER.debug("Assigning " + assignedStreamTasks.size()
+                    + " tasks (" + count + " requested) to node " + nodeName);
         }
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
     @Override
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
+        LOGGER.debug(() -> LogUtil.message("abandonTasks() called for {} tasks",
+                Optional.ofNullable(processorTaskList)
+                        .map(ProcessorTaskList::getList)
+                        .map(List::size)
+                        .orElse(0)));
+
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserId(),
                     "Only the processing user is allowed to abandon tasks");

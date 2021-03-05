@@ -125,7 +125,6 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        LOGGER.debug("assignTasks called for nodeName: {}, {}", nodeName, request);
         final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
@@ -145,7 +144,6 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
-        LOGGER.debug("abandonTasks called for nodeName: {}, {}", nodeName, request);
         final Boolean result = nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
