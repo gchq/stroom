@@ -56,7 +56,6 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
-    private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
@@ -68,7 +67,6 @@ class NodeResourceImpl implements NodeResource {
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.clusterNodeManagerProvider = clusterNodeManagerProvider;
-        this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
     }
 
