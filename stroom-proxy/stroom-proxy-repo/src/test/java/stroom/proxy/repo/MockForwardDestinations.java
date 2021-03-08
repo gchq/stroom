@@ -25,4 +25,8 @@ public class MockForwardDestinations implements ForwarderDestinations {
     public int getForwardCount() {
         return forwardCount.get();
     }
+
+    public void clear() {
+        forwardCount.set(0);
+    }
 }

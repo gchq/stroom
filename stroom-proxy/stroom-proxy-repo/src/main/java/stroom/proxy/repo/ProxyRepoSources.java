@@ -2,9 +2,6 @@ package stroom.proxy.repo;
 
 import stroom.util.shared.Clearable;
 
-import org.jooq.Record1;
-import org.jooq.impl.DSL;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -26,12 +23,7 @@ public class ProxyRepoSources implements Clearable {
     public ProxyRepoSources(final ProxyRepoDbConnProvider connProvider) {
         this.jooq = new SqliteJooqHelper(connProvider);
 
-        final long maxSourceRecordId = jooq.contextResult(context -> context
-                .select(DSL.max(SOURCE.ID))
-                .from(SOURCE)
-                .fetchOptional()
-                .map(Record1::value1)
-                .orElse(0L));
+        final long maxSourceRecordId = jooq.getMaxId(SOURCE, SOURCE.ID).orElse(0L);
         sourceRecordId.set(maxSourceRecordId);
     }
 

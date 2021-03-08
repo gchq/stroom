@@ -16,6 +16,7 @@
 
 package stroom.proxy.repo;
 
+import org.jooq.Condition;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Result;
@@ -40,6 +41,26 @@ public class Cleanup {
     private static final Logger LOGGER = LoggerFactory.getLogger(Cleanup.class);
     private static final int BATCH_SIZE = 1000000;
 
+    // Find source items that have been aggregated but no longer have an associated aggregate.
+    private static final SelectConditionStep<Record1<Long>> SELECT_SOURCE_ITEM_ID = DSL
+            .select(SOURCE_ITEM.ID)
+            .from(SOURCE_ITEM)
+            .where(SOURCE_ITEM.AGGREGATED.isTrue())
+            .andNotExists(DSL
+                    .select(AGGREGATE_ITEM.ID)
+                    .from(AGGREGATE_ITEM)
+                    .where(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID)));
+    private static final Condition DELETE_SOURCE_ENTRY_CONDITION =
+            SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(SELECT_SOURCE_ITEM_ID);
+    private static final Condition DELETE_SOURCE_ITEM_CONDITION =
+            SOURCE_ITEM.ID.in(SELECT_SOURCE_ITEM_ID);
+    private static final Condition DELETE_SOURCE_CONDITION =
+            SOURCE.EXAMINED.isTrue()
+                    .andNotExists(DSL
+                            .select(SOURCE_ITEM.ID)
+                            .from(SOURCE_ITEM)
+                            .where(SOURCE_ITEM.ID.eq(SOURCE.ID)));
+
     private final SqliteJooqHelper jooq;
     private final ProxyRepo proxyRepo;
 
@@ -51,29 +72,23 @@ public class Cleanup {
     }
 
     public synchronized void cleanup() {
-        // Find source items that have been aggregated but no longer have an associated aggregate.
-        final SelectConditionStep<Record1<Long>> select = DSL
-                .select(SOURCE_ITEM.ID)
-                .from(SOURCE_ITEM)
-                .leftOuterJoin(AGGREGATE_ITEM)
-                .on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.AGGREGATED.isTrue())
-                .and(AGGREGATE_ITEM.ID.isNull());
+        deleteSourceEntries();
+        deleteSource();
+    }
 
+    void deleteSourceEntries() {
         // Start a transaction for all of the database changes.
         jooq.transaction(context -> {
             context
                     .deleteFrom(SOURCE_ENTRY)
-                    .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(select))
+                    .where(DELETE_SOURCE_ENTRY_CONDITION)
                     .execute();
 
             context
                     .deleteFrom(SOURCE_ITEM)
-                    .where(SOURCE_ITEM.ID.in(select))
+                    .where(DELETE_SOURCE_ITEM_CONDITION)
                     .execute();
         });
-
-        deleteSource();
     }
 
     private void deleteSource() {
@@ -82,15 +97,7 @@ public class Cleanup {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record2<Long, String>> result = jooq.contextResult(context -> context
-                    .selectDistinct(SOURCE.ID, SOURCE.PATH)
-                    .from(SOURCE)
-                    .leftOuterJoin(SOURCE_ITEM)
-                    .on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
-                    .where(SOURCE.EXAMINED.isTrue())
-                    .and(SOURCE_ITEM.ID.isNull())
-                    .limit(BATCH_SIZE)
-                    .fetch());
+            final Result<Record2<Long, String>> result = getDeletableSources(BATCH_SIZE);
 
             result.forEach(record -> {
                 final long sourceId = record.get(SOURCE.ID);
@@ -115,5 +122,30 @@ public class Cleanup {
                 run = false;
             }
         }
+    }
+
+    Result<Record1<Long>> getDeletableSourceItems() {
+        return jooq.contextResult(context -> context
+                .selectDistinct(SOURCE_ITEM.ID)
+                .from(SOURCE_ITEM)
+                .where(DELETE_SOURCE_ITEM_CONDITION)
+                .fetch());
+    }
+
+    Result<Record1<Long>> getDeletableSourceEntries() {
+        return jooq.contextResult(context -> context
+                .selectDistinct(SOURCE_ENTRY.ID)
+                .from(SOURCE_ENTRY)
+                .where(DELETE_SOURCE_ENTRY_CONDITION)
+                .fetch());
+    }
+
+    Result<Record2<Long, String>> getDeletableSources(final int limit) {
+        return jooq.contextResult(context -> context
+                .selectDistinct(SOURCE.ID, SOURCE.PATH)
+                .from(SOURCE)
+                .where(DELETE_SOURCE_CONDITION)
+                .limit(limit)
+                .fetch());
     }
 }

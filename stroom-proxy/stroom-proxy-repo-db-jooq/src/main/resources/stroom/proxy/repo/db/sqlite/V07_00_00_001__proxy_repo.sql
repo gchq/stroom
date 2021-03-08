@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS source (
 
 CREATE TABLE IF NOT EXISTS source_item (
   id                        BIGINT PRIMARY KEY,
-  number                    INTEGER NOT NULL,
   name                      VARCHAR(255) NOT NULL,
   feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,

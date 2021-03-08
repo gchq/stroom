@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class MockProxyRepoConfig implements ProxyRepoConfig {
 
     private boolean storingEnabled = false;

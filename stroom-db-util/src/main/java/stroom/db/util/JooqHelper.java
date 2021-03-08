@@ -271,6 +271,14 @@ public class JooqHelper {
                 .execute());
     }
 
+    public <T> Optional<T> getMaxId(final Table<?> table, final Field<T> idField) {
+        return contextResult(context -> context
+                .select(DSL.max(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1));
+    }
+
     /**
      * Used to build JOOQ conditions from our Criteria Range
      *

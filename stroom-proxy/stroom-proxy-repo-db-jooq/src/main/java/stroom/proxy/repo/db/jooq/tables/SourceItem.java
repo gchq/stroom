@@ -11,7 +11,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row7;
+import org.jooq.Row6;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -51,11 +51,6 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
      * The column <code>source_item.id</code>.
      */
     public final TableField<SourceItemRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>source_item.number</code>.
-     */
-    public final TableField<SourceItemRecord, Integer> NUMBER = createField(DSL.name("number"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>source_item.name</code>.
@@ -171,11 +166,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row6 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, Integer, String, String, String, Long, Boolean> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row6<Long, String, String, String, Long, Boolean> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 }

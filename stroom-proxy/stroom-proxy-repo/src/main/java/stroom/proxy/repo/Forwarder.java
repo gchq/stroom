@@ -19,7 +19,6 @@ package stroom.proxy.repo;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.db.jooq.tables.records.ForwardUrlRecord;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.ByteCountInputStream;
@@ -97,6 +96,9 @@ public class Forwarder {
     private volatile String hostName = null;
     private volatile boolean shutdown;
 
+    private final AtomicInteger forwardUrlRecordId = new AtomicInteger();
+    private final AtomicLong forwardAggregateId = new AtomicLong();
+
     @Inject
     Forwarder(final ProxyRepoDbConnProvider connProvider,
               final ProxyRepoConfig proxyRepoConfig,
@@ -105,29 +107,40 @@ public class Forwarder {
         this.proxyRepoConfig = proxyRepoConfig;
         this.forwarderDestinations = forwarderDestinations;
 
+        final int maxForwardUrlRecordId = jooq.getMaxId(FORWARD_URL, FORWARD_URL.ID).orElse(0);
+        forwardUrlRecordId.set(maxForwardUrlRecordId);
+
+        final long maxForwardAggregateRecordId = jooq
+                .getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
+        forwardAggregateId.set(maxForwardAggregateRecordId);
+
         if (forwarderDestinations.getDestinationNames().size() > 0) {
             // Create a map of forward URLs to DB ids.
-            jooq.context(context -> {
-                for (final String destinationName : forwarderDestinations.getDestinationNames()) {
-                    final Optional<Integer> optionalId = context
-                            .select(FORWARD_URL.ID)
-                            .from(FORWARD_URL)
-                            .where(FORWARD_URL.URL.equal(destinationName))
-                            .fetchOptional()
-                            .map(r -> r.get(FORWARD_URL.ID));
-
-                    final int id = optionalId.orElseGet(() -> context
-                            .insertInto(FORWARD_URL, FORWARD_URL.URL)
-                            .values(destinationName)
-                            .returning(FORWARD_URL.ID)
-                            .fetchOptional()
-                            .map(ForwardUrlRecord::getId)
-                            .orElse(-1));
-
-                    forwardIdUrlMap.put(id, destinationName);
-                }
-            });
+            for (final String destinationName : forwarderDestinations.getDestinationNames()) {
+                final int id = getForwardUrlId(destinationName);
+                forwardIdUrlMap.put(id, destinationName);
+            }
         }
+    }
+
+    int getForwardUrlId(final String forwardUrl) {
+        return jooq.contextResult(context -> {
+            final Optional<Integer> optionalId = context
+                    .select(FORWARD_URL.ID)
+                    .from(FORWARD_URL)
+                    .where(FORWARD_URL.URL.equal(forwardUrl))
+                    .fetchOptional()
+                    .map(r -> r.get(FORWARD_URL.ID));
+
+            return optionalId.orElseGet(() -> {
+                final int newId = forwardUrlRecordId.incrementAndGet();
+                context
+                        .insertInto(FORWARD_URL, FORWARD_URL.ID, FORWARD_URL.URL)
+                        .values(newId, forwardUrl)
+                        .execute();
+                return newId;
+            });
+        });
     }
 
     public synchronized void forward() {
@@ -136,16 +149,7 @@ public class Forwarder {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record3<Long, String, String>> result =
-                    jooq.contextResult(context -> context
-                            // Get all completed aggregates.
-                            .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
-                            .from(AGGREGATE)
-                            .where(AGGREGATE.COMPLETE.isTrue())
-                            .and(AGGREGATE.FORWARD_ERROR.isFalse())
-                            .orderBy(AGGREGATE.CREATE_TIME_MS)
-                            .limit(BATCH_SIZE)
-                            .fetch());
+            final Result<Record3<Long, String, String>> result = getCompletedAggregates(BATCH_SIZE);
 
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             result.forEach(record -> {
@@ -170,6 +174,18 @@ public class Forwarder {
         }
     }
 
+    Result<Record3<Long, String, String>> getCompletedAggregates(final int limit) {
+        return jooq.contextResult(context -> context
+                // Get all completed aggregates.
+                .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
+                .from(AGGREGATE)
+                .where(AGGREGATE.COMPLETE.isTrue())
+                .and(AGGREGATE.FORWARD_ERROR.isFalse())
+                .orderBy(AGGREGATE.CREATE_TIME_MS)
+                .limit(limit)
+                .fetch());
+    }
+
     private CompletableFuture<Void> forwardAggregate(final long aggregateId,
                                                      final String feedName,
                                                      final String typeName) {
@@ -183,8 +199,11 @@ public class Forwarder {
                 .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
                 .fetch()
                 .forEach(r -> {
-                    remainingForwardUrl.remove(r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID));
-                    if (!r.get(FORWARD_AGGREGATE.SUCCESS)) {
+                    final long forwardUrlId = r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID);
+                    final boolean success = r.get(FORWARD_AGGREGATE.SUCCESS);
+
+                    remainingForwardUrl.remove(forwardUrlId);
+                    if (!success) {
                         previousFailure.set(true);
                     }
                 }));
@@ -224,11 +243,11 @@ public class Forwarder {
     }
 
 
-    private boolean forwardAggregateData(final long aggregateId,
-                                         final String feedName,
-                                         final String typeName,
-                                         final int forwardUrlId,
-                                         final String forwardUrl) {
+    boolean forwardAggregateData(final long aggregateId,
+                                 final String feedName,
+                                 final String typeName,
+                                 final int forwardUrlId,
+                                 final String forwardUrl) {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
@@ -244,7 +263,7 @@ public class Forwarder {
                     .join(AGGREGATE_ITEM).on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
                     .join(AGGREGATE).on(AGGREGATE.ID.eq(AGGREGATE_ITEM.FK_AGGREGATE_ID))
                     .where(AGGREGATE.ID.eq(aggregateId))
-                    .orderBy(SOURCE.PATH, SOURCE_ITEM.NAME, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
+                    .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
                     .fetch();
         });
 
@@ -331,20 +350,31 @@ public class Forwarder {
         }
 
         // Record that we sent the data or if there was no data to send.
-        jooq.context(context -> context
-                .insertInto(
-                        FORWARD_AGGREGATE,
-                        FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
-                        FORWARD_AGGREGATE.FK_AGGREGATE_ID,
-                        FORWARD_AGGREGATE.SUCCESS,
-                        FORWARD_AGGREGATE.ERROR)
-                .values(forwardUrlId, aggregateId, success.get(), error.get())
-                .execute());
+        createForwardRecord(forwardUrlId, aggregateId, success.get(), error.get());
 
         return success.get();
     }
 
-    private void deleteAggregate(final long aggregateId) {
+    /**
+     * Create a record of the fact that we forwarded an aggregate or at least tried to.
+     */
+    void createForwardRecord(final int forwardUrlId,
+                             final long aggregateId,
+                             final boolean success,
+                             final String error) {
+        jooq.context(context -> context
+                .insertInto(
+                        FORWARD_AGGREGATE,
+                        FORWARD_AGGREGATE.ID,
+                        FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
+                        FORWARD_AGGREGATE.FK_AGGREGATE_ID,
+                        FORWARD_AGGREGATE.SUCCESS,
+                        FORWARD_AGGREGATE.ERROR)
+                .values(forwardAggregateId.incrementAndGet(), forwardUrlId, aggregateId, success, error)
+                .execute());
+    }
+
+    void deleteAggregate(final long aggregateId) {
         jooq.transaction(context -> {
             context
                     .deleteFrom(FORWARD_AGGREGATE)
@@ -399,6 +429,7 @@ public class Forwarder {
     }
 
     private static class EntryKey {
+
         private final String path;
         private final String name;
 

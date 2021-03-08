@@ -13,10 +13,8 @@ import stroom.util.thread.StroomThreadGroup;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Result;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,36 +78,20 @@ public class ProxyRepoSourceEntries {
         this.jooq = new SqliteJooqHelper(connProvider);
         repoDir = Paths.get(proxyRepoConfig.getRepoDir());
 
-        final long maxSourceItemRecordId = jooq.contextResult(context -> context
-                .select(DSL.max(SOURCE_ITEM.ID))
-                .from(SOURCE_ITEM)
-                .fetchOptional()
-                .map(Record1::value1)
-                .orElse(0L));
+        final long maxSourceItemRecordId = jooq.getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID).orElse(0L);
         sourceItemRecordId.set(maxSourceItemRecordId);
 
-        final long maxSourceEntryRecordId = jooq.contextResult(context -> context
-                .select(DSL.max(SOURCE_ENTRY.ID))
-                .from(SOURCE_ENTRY)
-                .fetchOptional()
-                .map(Record1::value1)
-                .orElse(0L));
+        final long maxSourceEntryRecordId = jooq.getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID).orElse(0L);
         sourceEntryRecordId.set(maxSourceEntryRecordId);
     }
 
-    public void examine() {
+    public synchronized void examine() {
         boolean run = true;
         while (run && !shutdown) {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record2<Long, String>> result = jooq.contextResult(context -> context
-                    .select(SOURCE.ID, SOURCE.PATH)
-                    .from(SOURCE)
-                    .where(SOURCE.EXAMINED.isFalse())
-                    .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
-                    .limit(BATCH_SIZE)
-                    .fetch());
+            final Result<Record2<Long, String>> result = getNewSources();
 
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             result.forEach(record -> {
@@ -134,11 +116,32 @@ public class ProxyRepoSourceEntries {
         }
     }
 
+    Result<Record2<Long, String>> getNewSources() {
+        return jooq.contextResult(context -> context
+                .select(SOURCE.ID, SOURCE.PATH)
+                .from(SOURCE)
+                .where(SOURCE.EXAMINED.isFalse())
+                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
+                .limit(BATCH_SIZE)
+                .fetch());
+    }
+
+    int countSources() {
+        return jooq.count(SOURCE);
+    }
+
+    int countItems() {
+        return jooq.count(SOURCE_ITEM);
+    }
+
+    int countEntries() {
+        return jooq.count(SOURCE_ENTRY);
+    }
+
     public void examineSource(final long sourceId,
                               final String sourcePath) {
         if (!shutdown) {
             final Path fullPath = repoDir.resolve(sourcePath);
-            final AtomicInteger itemNumber = new AtomicInteger();
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Storing zip info for  '" + FileUtil.getCanonicalPath(fullPath) + "'");
@@ -211,7 +214,6 @@ public class ProxyRepoSourceEntries {
                                     sourceItemId = this.sourceItemRecordId.incrementAndGet();
                                     sourceItemRecord = new SourceItemRecord(
                                             sourceItemId,
-                                            itemNumber.incrementAndGet(),
                                             dataName,
                                             feedName,
                                             typeName,
@@ -245,33 +247,40 @@ public class ProxyRepoSourceEntries {
             }
 
             // We now have a map of all source entries so add them to the DB.
-            jooq.transaction(context -> {
-                final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
-                final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
-                for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
-                    if (sourceItemRecord.getFeedName() == null) {
-                        LOGGER.error("Source item has no feed name: " + fullPath + " - " + sourceItemRecord.getName());
-                    } else {
-                        sourceItemRecords.add(sourceItemRecord);
-                        final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
-                        sourceEntryRecords.addAll(entries);
-                    }
-                }
-
-                context.batchInsert(sourceItemRecords).execute();
-                context.batchInsert(sourceEntryRecords).execute();
-
-                // Mark the source as having been examined.
-                context
-                        .update(SOURCE)
-                        .set(SOURCE.EXAMINED, true)
-                        .where(SOURCE.ID.eq(sourceId))
-                        .execute();
-            });
+            addEntries(fullPath, sourceId, itemNameMap, entryMap);
 
             // Let others know there are new source entries to consume.
             listeners.forEach(listener -> listener.onChange(sourceId));
         }
+    }
+
+    void addEntries(final Path fullPath,
+                    final long sourceId,
+                    final Map<String, SourceItemRecord> itemNameMap,
+                    final Map<Long, List<SourceEntryRecord>> entryMap) {
+        jooq.transaction(context -> {
+            final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
+            final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
+            for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
+                if (sourceItemRecord.getFeedName() == null) {
+                    LOGGER.error("Source item has no feed name: " + fullPath + " - " + sourceItemRecord.getName());
+                } else {
+                    sourceItemRecords.add(sourceItemRecord);
+                    final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
+                    sourceEntryRecords.addAll(entries);
+                }
+            }
+
+            context.batchInsert(sourceItemRecords).execute();
+            context.batchInsert(sourceEntryRecords).execute();
+
+            // Mark the source as having been examined.
+            context
+                    .update(SOURCE)
+                    .set(SOURCE.EXAMINED, true)
+                    .where(SOURCE.ID.eq(sourceId))
+                    .execute();
+        });
     }
 
     public void shutdown() {

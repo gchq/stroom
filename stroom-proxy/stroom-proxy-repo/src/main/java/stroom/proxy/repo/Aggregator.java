@@ -19,7 +19,6 @@ package stroom.proxy.repo;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 
 import org.jooq.Condition;
-import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
@@ -36,7 +35,6 @@ import javax.inject.Singleton;
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
@@ -62,12 +60,7 @@ public class Aggregator {
         this.jooq = new SqliteJooqHelper(connProvider);
         this.config = config;
 
-        final long maxAggregateRecordId = jooq.contextResult(context -> context
-                .select(DSL.max(AGGREGATE.ID))
-                .from(AGGREGATE)
-                .fetchOptional()
-                .map(Record1::value1)
-                .orElse(0L));
+        final long maxAggregateRecordId = jooq.getMaxId(AGGREGATE, AGGREGATE.ID).orElse(0L);
         aggregateRecordId.set(maxAggregateRecordId);
     }
 
@@ -80,20 +73,7 @@ public class Aggregator {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record4<Long, String, String, BigDecimal>> result = jooq.contextResult(context -> context
-                    // Get all data items that have not been added to aggregate destinations.
-                    .select(SOURCE_ITEM.ID,
-                            SOURCE_ITEM.FEED_NAME,
-                            SOURCE_ITEM.TYPE_NAME,
-                            DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                    .from(SOURCE_ITEM)
-                    .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                    .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                    .where(SOURCE_ITEM.AGGREGATED.isFalse())
-                    .groupBy(SOURCE_ITEM.ID)
-                    .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.NUMBER)
-                    .limit(BATCH_SIZE)
-                    .fetch());
+            final Result<Record4<Long, String, String, BigDecimal>> result = getNewSourceItems();
             result.forEach(record -> {
                 final long sourceItemId = record.value1();
                 final String feedName = record.value2();
@@ -115,19 +95,7 @@ public class Aggregator {
         // Start by trying to close old aggregates.
         closeOldAggregates();
 
-        final Result<Record4<Long, String, String, BigDecimal>> result = jooq.contextResult(context -> context
-                // Get all data items that have not been added to aggregate destinations.
-                .select(SOURCE_ITEM.ID,
-                        SOURCE_ITEM.FEED_NAME,
-                        SOURCE_ITEM.TYPE_NAME,
-                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                .from(SOURCE_ITEM)
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
-                .and(SOURCE_ITEM.AGGREGATED.isFalse())
-                .groupBy(SOURCE_ITEM.ID)
-                .orderBy(SOURCE_ITEM.NUMBER)
-                .fetch());
+        final Result<Record4<Long, String, String, BigDecimal>> result = getNewSourceItemsForSource(sourceId);
         result.forEach(record -> {
             final long sourceItemId = record.value1();
             final String feedName = record.value2();
@@ -138,16 +106,53 @@ public class Aggregator {
         });
     }
 
+    Result<Record4<Long, String, String, BigDecimal>> getNewSourceItems() {
+        return jooq.contextResult(context -> context
+                // Get all data items that have not been added to aggregate destinations.
+                .select(SOURCE_ITEM.ID,
+                        SOURCE_ITEM.FEED_NAME,
+                        SOURCE_ITEM.TYPE_NAME,
+                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
+                .from(SOURCE_ITEM)
+                .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
+                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                .where(SOURCE_ITEM.AGGREGATED.isFalse())
+                .groupBy(SOURCE_ITEM.ID)
+                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.ID)
+                .limit(BATCH_SIZE)
+                .fetch());
+    }
+
+    Result<Record4<Long, String, String, BigDecimal>> getNewSourceItemsForSource(final long sourceId) {
+        return jooq.contextResult(context -> context
+                // Get all data items that have not been added to aggregate destinations.
+                .select(SOURCE_ITEM.ID,
+                        SOURCE_ITEM.FEED_NAME,
+                        SOURCE_ITEM.TYPE_NAME,
+                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
+                .from(SOURCE_ITEM)
+                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
+                .and(SOURCE_ITEM.AGGREGATED.isFalse())
+                .groupBy(SOURCE_ITEM.ID)
+                .orderBy(SOURCE_ITEM.ID)
+                .fetch());
+    }
+
     synchronized int addItem(final long sourceItemId,
-                              final String feedName,
-                              final String typeName,
-                              final long totalSize) {
+                             final String feedName,
+                             final String typeName,
+                             final long totalSize) {
         final long maxUncompressedByteSize = config.getMaxUncompressedByteSize();
         final int maxItemsPerAggregate = config.getMaxItemsPerAggregate();
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - totalSize);
         final Condition condition = DSL
-                .and(feedName == null ? AGGREGATE.FEED_NAME.isNull() : AGGREGATE.FEED_NAME.equal(feedName))
-                .and(typeName == null ? AGGREGATE.TYPE_NAME.isNull() : AGGREGATE.TYPE_NAME.equal(typeName))
+                .and(feedName == null
+                        ? AGGREGATE.FEED_NAME.isNull()
+                        : AGGREGATE.FEED_NAME.equal(feedName))
+                .and(typeName == null
+                        ? AGGREGATE.TYPE_NAME.isNull()
+                        : AGGREGATE.TYPE_NAME.equal(typeName))
                 .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
                 .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
                 .and(AGGREGATE.COMPLETE.isFalse());
@@ -277,7 +282,6 @@ public class Aggregator {
         total += jooq.deleteAll(SOURCE_ENTRY);
         total += jooq.deleteAll(SOURCE_ITEM);
         total += jooq.deleteAll(SOURCE);
-
 
 
         jooq.context(context -> {

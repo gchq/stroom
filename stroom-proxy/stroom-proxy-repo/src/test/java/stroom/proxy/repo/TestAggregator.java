@@ -11,6 +11,8 @@ import stroom.util.io.StreamUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.jooq.Record3;
+import org.jooq.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,17 +40,97 @@ public class TestAggregator {
     @Inject
     private Forwarder forwarder;
     @Inject
+    private Cleanup cleanup;
+    @Inject
     private MockForwardDestinations mockForwardDestinations;
+    @Inject
+    private TestSourceEntries testSourceEntries;
 
     @BeforeEach
     void beforeEach() {
         proxyRepoSources.clear();
         aggregator.clear();
+        mockForwardDestinations.clear();
     }
 
     @Test
     void testCloseOldAggregates() {
         aggregator.closeOldAggregates();
+    }
+
+    @Test
+    void testWithSourceEntries() {
+        assertThat(aggregator.getNewSourceItems().size()).isZero();
+        assertThat(aggregator.getNewSourceItemsForSource(1).size()).isZero();
+        ensureNonDeletable();
+
+        // Add entries.
+        final long sourceId = testSourceEntries.addEntries();
+        ensureNonDeletable();
+
+        // Check that there is now something to aggregate.
+        assertThat(aggregator.getNewSourceItems().size()).isEqualTo(1000);
+        assertThat(aggregator.getNewSourceItemsForSource(sourceId).size()).isEqualTo(1000);
+
+        // Make sure we have no existing aggregates.
+        int count = aggregator.closeOldAggregates(System.currentTimeMillis());
+        assertThat(count).isEqualTo(0);
+
+        // Aggregate.
+        aggregator.aggregate();
+
+        // Check that we now have nothing left to aggregate.
+        assertThat(aggregator.getNewSourceItems().size()).isZero();
+        assertThat(aggregator.getNewSourceItemsForSource(1).size()).isZero();
+        ensureNonDeletable();
+
+        // Check that the new aggregates are not yet completed.
+        assertThat(forwarder.getCompletedAggregates(Integer.MAX_VALUE).size()).isZero();
+        // Close all aggregates.
+        aggregator.closeOldAggregates(System.currentTimeMillis());
+        // Check that we now have some aggregates.
+        final Result<Record3<Long, String, String>> completedAggregates =
+                forwarder.getCompletedAggregates(Integer.MAX_VALUE);
+        assertThat(completedAggregates.size()).isEqualTo(10);
+        ensureNonDeletable();
+
+        // Now forward the completed aggregates.
+        final String forwardUrl = "http://test-url.com";
+        final int forwardUrlId = forwarder.getForwardUrlId(forwardUrl);
+        for (final Record3<Long, String, String> aggregate : completedAggregates) {
+            forwarder.forwardAggregateData(
+                    aggregate.value1(),
+                    aggregate.value2(),
+                    aggregate.value3(),
+                    forwardUrlId,
+                    forwardUrl);
+        }
+
+        // Check we still can't delete sources.
+        ensureNonDeletable();
+
+        // Now delete forward records and aggregates.
+        for (final Record3<Long, String, String> aggregate : completedAggregates) {
+            forwarder.deleteAggregate(aggregate.value1());
+        }
+
+        // Now we should be able to delete sources.
+        assertThat(cleanup.getDeletableSourceEntries().size()).isEqualTo(3000);
+        assertThat(cleanup.getDeletableSourceItems().size()).isEqualTo(1000);
+        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
+
+        cleanup.deleteSourceEntries();
+
+        // WE should now have no source entries but some sources we can delete.
+        assertThat(cleanup.getDeletableSourceEntries().size()).isZero();
+        assertThat(cleanup.getDeletableSourceItems().size()).isZero();
+        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isEqualTo(1);
+    }
+
+    private void ensureNonDeletable() {
+        assertThat(cleanup.getDeletableSourceEntries().size()).isZero();
+        assertThat(cleanup.getDeletableSourceItems().size()).isZero();
+        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
     }
 
     @Test
