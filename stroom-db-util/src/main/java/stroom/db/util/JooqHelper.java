@@ -256,6 +256,21 @@ public class JooqHelper {
                 .collect(Collectors.toList());
     }
 
+    public int count(final Table<?> table) {
+        return contextResult(context -> context
+                .select(DSL.count())
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(0));
+    }
+
+    public int deleteAll(final Table<?> table) {
+        return contextResult(context -> context
+                .deleteFrom(table)
+                .execute());
+    }
+
     /**
      * Used to build JOOQ conditions from our Criteria Range
      *

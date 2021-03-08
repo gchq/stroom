@@ -9,8 +9,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import java.util.HashSet;
-import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -30,7 +28,6 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
     protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
-    private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
     @Override
     protected void configure() {
@@ -55,30 +52,9 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
-        final T_CONFIG config = modifyConfig(configProvider.get());
-        final DataSource dataSource = dataSourceFactory.create(config);
-
-        // Prevent migrations from being re-run for each test
-        Set<String> set = COMPLETED_MIGRATIONS.get();
-        if (set == null) {
-            set = new HashSet<>();
-            COMPLETED_MIGRATIONS.set(set);
-        }
-        final boolean required = set.add(getModuleName());
-
-//        final boolean required = COMPLETED_MIGRATIONS
-//                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-//                .add(getModuleName());
-
-        if (required) {
-            performMigration(dataSource);
-        }
-
+        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+        performMigration(dataSource);
         return createConnectionProvider(dataSource);
-    }
-
-    protected T_CONFIG modifyConfig(final T_CONFIG config) {
-        return config;
     }
 
     protected abstract void performMigration(DataSource dataSource);

@@ -35,6 +35,8 @@ import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
+import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
@@ -261,12 +263,31 @@ public class Aggregator {
     }
 
     public void clear() {
+        int total = 0;
+        total += jooq.count(FORWARD_AGGREGATE);
+        total += jooq.count(AGGREGATE_ITEM);
+        total += jooq.count(AGGREGATE);
+        total += jooq.count(SOURCE_ENTRY);
+        total += jooq.count(SOURCE_ITEM);
+        total += jooq.count(SOURCE);
+
+        total += jooq.deleteAll(FORWARD_AGGREGATE);
+        total += jooq.deleteAll(AGGREGATE_ITEM);
+        total += jooq.deleteAll(AGGREGATE);
+        total += jooq.deleteAll(SOURCE_ENTRY);
+        total += jooq.deleteAll(SOURCE_ITEM);
+        total += jooq.deleteAll(SOURCE);
+
+
+
         jooq.context(context -> {
-            context.deleteFrom(AGGREGATE_ITEM).execute();
-            context.deleteFrom(AGGREGATE).execute();
-            context.deleteFrom(SOURCE_ENTRY).execute();
-            context.deleteFrom(SOURCE_ITEM).execute();
-            context.deleteFrom(SOURCE).execute();
+//            context.select(DSL.count()).from(FORWARD_AGGREGATE).fetchOptional().map(Record1::value1).orElse(0);
+//
+//            int count = context.deleteFrom(AGGREGATE_ITEM).execute();
+//            count = context.deleteFrom(AGGREGATE).execute();
+//            count = context.deleteFrom(SOURCE_ENTRY).execute();
+//            count = context.deleteFrom(SOURCE_ITEM).execute();
+//            count = context.deleteFrom(SOURCE).execute();
         });
     }
 

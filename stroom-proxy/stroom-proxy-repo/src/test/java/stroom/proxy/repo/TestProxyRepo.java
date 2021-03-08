@@ -10,8 +10,6 @@ import stroom.util.io.FileUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,22 +39,8 @@ class TestProxyRepo {
     @Inject
     private ProxyRepoSources proxyRepoSources;
 
-    private static String initialRepoDir;
-
-    @BeforeAll
-    static void beforeAll() throws IOException {
-        initialRepoDir = ProxyRepoConfig.repoDir;
-        final String dbDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));
-        ProxyRepoConfig.repoDir = dbDir;
-    }
-
-    @AfterAll
-    static void afterAll() {
-        ProxyRepoConfig.repoDir = initialRepoDir;
-    }
-
     @BeforeEach
-    void clear() {
+    void beforeEach() {
         proxyRepoSources.clear();
     }
 

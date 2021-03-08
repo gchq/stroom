@@ -41,7 +41,7 @@ import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.CleanupConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.RepoConfig;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
@@ -101,6 +101,8 @@ public class AppConfigModule extends AbstractModule {
         // get hold of it via guice
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(configHolder.getConfigFile()));
+
+        bind(RepoConfig.class).to(ProxyAggregationConfig.class);
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
@@ -205,10 +207,6 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getProxyAggregationConfig,
                 AppConfig::setProxyAggregationConfig,
                 ProxyAggregationConfig.class, proxyAggregationConfig -> {
-                    bindConfig(proxyAggregationConfig,
-                            ProxyAggregationConfig::getProxyRepoConfig,
-                            ProxyAggregationConfig::setProxyRepoConfig,
-                            ProxyRepoConfig.class);
                     bindConfig(proxyAggregationConfig,
                             ProxyAggregationConfig::getAggregatorConfig,
                             ProxyAggregationConfig::setAggregatorConfig,

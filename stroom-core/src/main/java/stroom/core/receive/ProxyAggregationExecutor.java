@@ -84,8 +84,8 @@ public class ProxyAggregationExecutor {
 //                // Cleanup the DB and files that have been forwarded into Stroom.
 //                cleanup.cleanup();
 
-                // Cleanup the repo to remove empty dirs and stale lock files.
-                proxyRepo.clean(false);
+//                // Cleanup the repo to remove empty dirs and stale lock files.
+//                proxyRepo.clean(false);
 
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);

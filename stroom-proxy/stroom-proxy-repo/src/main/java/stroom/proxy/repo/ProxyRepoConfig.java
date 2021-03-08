@@ -1,7 +1,5 @@
 package stroom.proxy.repo;
 
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
@@ -22,12 +20,12 @@ import javax.inject.Singleton;
         "lockDeleteAge",
         "dirCleanDelay"
 })
-public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
+public class ProxyRepoConfig extends AbstractConfig implements RepoConfig {
 
     private boolean storingEnabled = false;
-    public static String repoDir;
+    private String repoDir;
+    private String dbDir;
     private String format = "${pathId}/${id}";
-    private DbConfig dbConfig;
     private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
     private StroomDuration dirCleanDelay = StroomDuration.of(Duration.ofSeconds(10));
 
@@ -50,7 +48,17 @@ public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
     }
 
     public void setRepoDir(final String repoDir) {
-        ProxyRepoConfig.repoDir = repoDir;
+        this.repoDir = repoDir;
+    }
+
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    public String getDbDir() {
+        return dbDir;
+    }
+
+    public void setDbDir(final String dbDir) {
+        this.dbDir = dbDir;
     }
 
     /**
@@ -94,41 +102,5 @@ public class ProxyRepoConfig extends AbstractConfig implements HasDbConfig {
 
     public void setDirCleanDelay(final StroomDuration dirCleanDelay) {
         this.dirCleanDelay = dirCleanDelay;
-    }
-
-    @JsonProperty("db")
-    public DbConfig getDbConfig() {
-//        if (dbConfig == null) {
-//            Path path;
-//            if (repoDir == null) {
-//                throw new RuntimeException("No proxy repository dir has been defined");
-//            } else {
-//                path = Paths.get(repoDir);
-//            }
-//            if (!Files.isDirectory(path)) {
-//                throw new RuntimeException("Unable to find repo dir: " + FileUtil.getCanonicalPath(path));
-//            }
-//
-//            path = path.resolve("db");
-//            FileUtil.mkdirs(path);
-//            path = path.resolve("proxy-repo.db");
-//
-//            final String fullPath = FileUtil.getCanonicalPath(path);
-//
-//            final ConnectionConfig connectionConfig = new ConnectionConfig();
-//            connectionConfig.setClassName("org.sqlite.JDBC");
-//            connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-////            connectionConfig.setUser("sa");
-////            connectionConfig.setPassword("sa");
-//
-//            dbConfig = new DbConfig();
-//            dbConfig.setConnectionConfig(connectionConfig);
-//        }
-
-        return dbConfig;
-    }
-
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
     }
 }

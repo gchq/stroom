@@ -17,6 +17,7 @@
 package stroom.receive;
 
 
+import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ProxyAggregationExecutor;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -47,8 +48,11 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -77,6 +81,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyAggregationTask.class);
 
+    @Inject
+    private ProxyAggregationConfig proxyAggregationConfig;
     @Inject
     private Store store;
     @Inject
@@ -120,18 +126,22 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
     }
 
-    @BeforeAll
-    static void beforeAll() throws IOException {
-        initialRepoDir = ProxyRepoConfig.repoDir;
-        proxyDir = Files.createTempDirectory("stroom");
-        ProxyRepoConfig.repoDir = FileUtil.getCanonicalPath(proxyDir);
+    private String initialDbDir;
+
+    @BeforeEach
+    void beforeEach() throws IOException {
+        initialDbDir = proxyAggregationConfig.getDbDir();
+        final String dbDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));
+        proxyAggregationConfig.setDbDir(dbDir);
+        aggregator.clear();
     }
 
-    @AfterAll
-    static void afterAll() {
-        ProxyRepoConfig.repoDir = initialRepoDir;
+    @AfterEach
+    void afterEach() {
+        proxyAggregationConfig.setDbDir(initialDbDir);
     }
 
+    @RepeatedTest(100)
     @Test
     void testImport() throws IOException {
         // commonTestControl.deleteAll();

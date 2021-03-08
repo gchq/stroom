@@ -7,13 +7,10 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
@@ -44,24 +40,9 @@ public class TestAggregator {
     @Inject
     private MockForwardDestinations mockForwardDestinations;
 
-    private static String repoDir;
-    private static String initialRepoDir;
-
-
-    @BeforeAll
-    static void beforeAll() throws IOException {
-        initialRepoDir = ProxyRepoConfig.repoDir;
-        repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));
-        ProxyRepoConfig.repoDir = repoDir;
-    }
-
-    @AfterAll
-    static void afterAll() {
-        ProxyRepoConfig.repoDir = initialRepoDir;
-    }
-
     @BeforeEach
     void beforeEach() {
+        proxyRepoSources.clear();
         aggregator.clear();
     }
 

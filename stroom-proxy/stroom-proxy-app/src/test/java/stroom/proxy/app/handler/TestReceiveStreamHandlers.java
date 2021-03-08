@@ -17,7 +17,6 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.BuildInfo;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -39,11 +38,6 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @Mock
     private ProxyRepo proxyRepo;
-
-    @AfterAll
-    private static void afterAll() {
-        ProxyRepoConfig.repoDir = null;
-    }
 
     @Test
     void testStoreAndForward() {
