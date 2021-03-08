@@ -47,6 +47,11 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 
+/**
+ * An abstract test class for use when testing a resource that is running on multiple nodes.
+ * Uses Grizzly http server to serve the resources. It is therefore not possible to debug the
+ * server side code.
+ */
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
