@@ -16,7 +16,7 @@ public class SolrIndexServiceImpl implements SolrIndexService {
     private final SecurityContext securityContext;
 
     @Inject
-    SolrIndexServiceImpl(final SolrIndexStore solrIndexStore, final SecurityContext securityContext){
+    SolrIndexServiceImpl(final SolrIndexStore solrIndexStore, final SecurityContext securityContext) {
         this.solrIndexStore = solrIndexStore;
         this.securityContext = securityContext;
     }
