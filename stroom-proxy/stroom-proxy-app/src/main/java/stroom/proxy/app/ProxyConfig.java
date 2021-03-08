@@ -7,6 +7,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoConfigImpl;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,7 +32,7 @@ import io.dropwizard.client.JerseyClientConfiguration;
 public class ProxyConfig {
 
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
-    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
+    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfigImpl();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
     private ForwarderConfig forwarderConfig = new ForwarderConfig();

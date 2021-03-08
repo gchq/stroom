@@ -1,65 +1,10 @@
 package stroom.proxy.repo;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
-import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+public interface ProxyRepoConfig extends RepoConfig {
 
-import java.time.Duration;
-import javax.inject.Singleton;
-
-@Singleton
-@JsonPropertyOrder({
-        "storingEnabled",
-        "repoDir",
-        "format",
-        "db",
-        "lockDeleteAge",
-        "dirCleanDelay"
-})
-public class ProxyRepoConfig extends AbstractConfig implements RepoConfig {
-
-    private boolean storingEnabled = false;
-    private String repoDir;
-    private String dbDir;
-    private String format = "${pathId}/${id}";
-    private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
-    private StroomDuration dirCleanDelay = StroomDuration.of(Duration.ofSeconds(10));
-
-    @JsonProperty
-    public boolean isStoringEnabled() {
-        return storingEnabled;
-    }
-
-    public void setStoringEnabled(final boolean storingEnabled) {
-        this.storingEnabled = storingEnabled;
-    }
-
-    /**
-     * Optional Repository DIR. If set any incoming request will be written to the file system.
-     */
-    @RequiresRestart(value = RestartScope.SYSTEM)
-    @JsonProperty
-    public String getRepoDir() {
-        return repoDir;
-    }
-
-    public void setRepoDir(final String repoDir) {
-        this.repoDir = repoDir;
-    }
-
-    @RequiresRestart(value = RestartScope.SYSTEM)
-    @JsonProperty
-    public String getDbDir() {
-        return dbDir;
-    }
-
-    public void setDbDir(final String dbDir) {
-        this.dbDir = dbDir;
-    }
+    boolean isStoringEnabled();
 
     /**
      * Optionally supply a template for naming the files in the repository. This can be specified using multiple
@@ -77,30 +22,9 @@ public class ProxyRepoConfig extends AbstractConfig implements RepoConfig {
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name,
      * failure to do this will result in an invalid repository.
      */
-    @JsonProperty
-    public String getFormat() {
-        return format;
-    }
+    String getFormat();
 
-    public void setFormat(final String format) {
-        this.format = format;
-    }
+    StroomDuration getLockDeleteAge();
 
-    @JsonProperty
-    public StroomDuration getLockDeleteAge() {
-        return lockDeleteAge;
-    }
-
-    public void setLockDeleteAge(final StroomDuration lockDeleteAge) {
-        this.lockDeleteAge = lockDeleteAge;
-    }
-
-    @JsonProperty
-    public StroomDuration getDirCleanDelay() {
-        return dirCleanDelay;
-    }
-
-    public void setDirCleanDelay(final StroomDuration dirCleanDelay) {
-        this.dirCleanDelay = dirCleanDelay;
-    }
+    StroomDuration getDirCleanDelay();
 }

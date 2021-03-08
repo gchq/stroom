@@ -4,7 +4,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
-import stroom.db.util.DataSourceProviderProxy;
+import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.io.FileUtil;
@@ -29,8 +29,6 @@ public class ProxyRepoDbModule extends AbstractModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
-    private volatile DataSource dataSource;
-
     @Override
     protected void configure() {
         super.configure();
@@ -45,25 +43,15 @@ public class ProxyRepoDbModule extends AbstractModule {
     public ProxyRepoDbConnProvider getConnectionProvider(
             final Provider<RepoConfig> configProvider,
             final DataSourceFactory dataSourceFactory) {
-        return new DataSourceImpl(() -> {
-            if (dataSource == null) {
-                synchronized (ProxyRepoDbModule.this) {
-                    if (dataSource == null) {
-                        LOGGER.debug(() -> "Getting connection provider for " + MODULE);
+        LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-                        final DbConfig config = getConfig(configProvider);
-                        final DataSource ds = dataSourceFactory.create(() -> config);
-                        FlywayUtil.migrate(ds, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-                        this.dataSource = ds;
-                    }
-                }
-            }
-
-            return dataSource;
-        });
+        final DbConfig config = getDbConfig(configProvider);
+        final DataSource dataSource = dataSourceFactory.create(() -> config);
+        FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
+        return new DataSourceImpl(dataSource);
     }
 
-    private DbConfig getConfig(final Provider<RepoConfig> repoConfigProvider) {
+    private DbConfig getDbConfig(final Provider<RepoConfig> repoConfigProvider) {
         final DbConfig dbConfig = new DbConfig();
         String dbDir = repoConfigProvider.get().getDbDir();
 
@@ -93,10 +81,10 @@ public class ProxyRepoDbModule extends AbstractModule {
         return dbConfig;
     }
 
-    public static class DataSourceImpl extends DataSourceProviderProxy implements ProxyRepoDbConnProvider {
+    public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
-        private DataSourceImpl(final Provider<DataSource> dataSourceProvider) {
-            super(dataSourceProvider);
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
         }
     }
 }
