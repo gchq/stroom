@@ -5,6 +5,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.dropwizard.jersey.errors.ErrorMessage;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -34,13 +35,17 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
@@ -424,15 +429,17 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
                 @Override
                 protected Application configure() {
+                    final LoggingFeature loggingFeature = new LoggingFeature(
+                            java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                            Level.INFO,
+                            LoggingFeature.Verbosity.PAYLOAD_ANY,
+                            LoggingFeature.DEFAULT_MAX_ENTITY_SIZE);
+
                     return new ResourceConfig()
                             .register(resourceSupplier.get())
                             .register(listener)
-                            .register(
-                                    new LoggingFeature(
-                                            java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                                            Level.INFO,
-                                            LoggingFeature.Verbosity.PAYLOAD_ANY,
-                                            LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+                            .register(new MyExceptionMapper()) // So we can get details of server side exceptions
+                            .register(loggingFeature);
                 }
 
                 @Override
@@ -453,7 +460,9 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         private final int port;
         private final boolean isEnabled;
 
-        public TestNode(final String nodeName, final int port, final boolean isEnabled) {
+        public TestNode(final String nodeName,
+                        final int port,
+                        final boolean isEnabled) {
             this.nodeName = nodeName;
             this.port = port;
             this.isEnabled = isEnabled;
@@ -528,4 +537,31 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             return requestLog;
         }
     }
+
+    private static class MyExceptionMapper implements ExceptionMapper<Throwable> {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(MyExceptionMapper.class);
+
+        @Override
+        public Response toResponse(final Throwable exception) {
+            if (exception instanceof WebApplicationException) {
+                WebApplicationException wae = (WebApplicationException) exception;
+                return wae.getResponse();
+            } else {
+                return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
+            }
+        }
+
+        private Response createExceptionResponse(final Response.Status status,
+                                                 final Throwable throwable) {
+            LOGGER.debug(throwable.getMessage(), throwable);
+            return Response.status(status)
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .entity(new ErrorMessage(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            throwable.getMessage(),
+                            throwable.toString()))
+                    .build();
+        }
+    }
+
 }
