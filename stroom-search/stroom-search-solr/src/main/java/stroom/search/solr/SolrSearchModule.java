@@ -46,6 +46,7 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexCache.class).to(SolrIndexCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
+        bind(SolrIndexService.class).to(SolrIndexServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(SolrIndexCacheImpl.class);
