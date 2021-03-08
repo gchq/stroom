@@ -28,6 +28,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.search.solr.SolrIndexService;
 import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
@@ -47,25 +48,19 @@ public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryRes
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResourceImpl.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final SolrIndexStore solrIndexStore;
-    private final SecurityContext securityContext;
+    private final SolrIndexService solrIndexService;
 
     @Inject
     StroomSolrIndexQueryResourceImpl(final SolrSearchResponseCreatorManager searchResponseCreatorManager,
-                                     final SolrIndexStore solrIndexStore,
-                                     final SecurityContext securityContext) {
+                                     final SolrIndexService solrIndexService) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.solrIndexStore = solrIndexStore;
-        this.securityContext = securityContext;
+        this.solrIndexService = solrIndexService;
     }
 
     @Timed
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            return new DataSource(SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
-        });
+        return solrIndexService.getDataSource(docRef);
     }
 
     @Timed
