@@ -51,7 +51,12 @@ import javax.inject.Singleton;
  * Component that remembers the node list and who is the current master node
  */
 @Singleton
-@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
+@EntityEventHandler(
+        type = Node.ENTITY_TYPE,
+        action = {
+                EntityAction.CREATE,
+                EntityAction.DELETE,
+                EntityAction.UPDATE})
 public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterNodeManagerImpl.class);

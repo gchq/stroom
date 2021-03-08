@@ -30,7 +30,7 @@ public class ClusterState {
     private final ConcurrentMap<String, Boolean> enabledActiveNodes = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Boolean> enabledNodes = new ConcurrentHashMap<>();
 
-    private AtomicReference<String> masterNodeNameRef = new AtomicReference<>(null);
+    private final AtomicReference<String> masterNodeNameRef = new AtomicReference<>(null);
     private volatile long updateTime;
 
     public Set<String> getAllNodes() {
