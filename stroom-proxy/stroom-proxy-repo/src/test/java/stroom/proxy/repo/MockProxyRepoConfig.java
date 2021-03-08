@@ -10,7 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class MockProxyRepoConfig implements ProxyRepoConfig {
+public class MockProxyRepoConfig extends ProxyRepoConfig {
 
     private boolean storingEnabled = false;
     private final String dbDir;

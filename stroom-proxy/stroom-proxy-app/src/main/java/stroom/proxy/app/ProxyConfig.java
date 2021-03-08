@@ -4,10 +4,8 @@ import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoConfigImpl;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,7 +19,6 @@ import io.dropwizard.client.JerseyClientConfiguration;
         "scanner",
         "aggregator",
         "forwarder",
-        "cleanup",
         "logStream",
         "contentDir",
         "contentSync",
@@ -32,11 +29,10 @@ import io.dropwizard.client.JerseyClientConfiguration;
 public class ProxyConfig {
 
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
-    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfigImpl();
+    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
     private ForwarderConfig forwarderConfig = new ForwarderConfig();
-    private CleanupConfig cleanupConfig = new CleanupConfig();
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private String contentDir;
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
@@ -89,15 +85,6 @@ public class ProxyConfig {
     @JsonProperty
     public void setForwarderConfig(final ForwarderConfig forwarderConfig) {
         this.forwarderConfig = forwarderConfig;
-    }
-
-    @JsonProperty("cleanup")
-    public CleanupConfig getCleanupConfig() {
-        return cleanupConfig;
-    }
-
-    public void setCleanupConfig(final CleanupConfig cleanupConfig) {
-        this.cleanupConfig = cleanupConfig;
     }
 
     @JsonProperty("logStream")

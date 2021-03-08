@@ -82,8 +82,9 @@ proxyConfig:
   repository:
     storingEnabled: true
     repoDir: "/tmp/stroom-proxy/repo"
+    dbDir: "/tmp/stroom-proxy/repo/db"
     format: "${pathId}/${id}"
-#    db:
+    cleanupFrequency: 1h
     lockDeleteAge: 1h
     dirCleanDelay: 10s
 
@@ -112,9 +113,6 @@ proxyConfig:
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
       - forwardUrl: "http://localhost/stroom/datafeed"
-
-  cleanup:
-    cleanupFrequency: 1h
 
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"

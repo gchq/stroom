@@ -5,7 +5,6 @@ import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ChangeListenerExecutor;
 import stroom.proxy.repo.Cleanup;
-import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.Forwarder;
 import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.ProxyRepo;
@@ -42,8 +41,7 @@ public class ProxyLifecycle implements Managed {
                           final AggregatorConfig aggregatorConfig,
                           final Forwarder forwarder,
                           final ForwarderConfig forwarderConfig,
-                          final Cleanup cleanup,
-                          final CleanupConfig cleanupConfig) {
+                          final Cleanup cleanup) {
         this.proxyRepoSourceEntries = proxyRepoSourceEntries;
         this.forwarder = forwarder;
 
@@ -54,7 +52,7 @@ public class ProxyLifecycle implements Managed {
             final FrequencyExecutor cleanupRepoExecutor = new FrequencyExecutor(
                     ProxyRepo.class.getSimpleName(),
                     () -> proxyRepo.clean(false),
-                    cleanupConfig.getCleanupFrequency().toMillis());
+                    proxyRepoConfig.getCleanupFrequency().toMillis());
             services.add(cleanupRepoExecutor);
 
             // Add executor to open source files and scan entries
@@ -94,7 +92,7 @@ public class ProxyLifecycle implements Managed {
                 final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
                         Cleanup.class.getSimpleName(),
                         cleanup::cleanup,
-                        cleanupConfig.getCleanupFrequency().toMillis());
+                        proxyRepoConfig.getCleanupFrequency().toMillis());
                 // Cleanup whenever we have forwarded data.
                 forwarder.addChangeListener(cleanupExecutor::onChange);
                 services.add(cleanupExecutor);

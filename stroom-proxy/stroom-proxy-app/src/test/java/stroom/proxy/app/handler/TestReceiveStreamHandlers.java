@@ -10,7 +10,7 @@ import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepo;
-import stroom.proxy.repo.ProxyRepoConfigImpl;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -101,7 +101,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                                                          final boolean isForwardingEnabled,
                                                          final List<String> forwardUrlList) {
         final LogStreamConfig logRequestConfig = new LogStreamConfig();
-        final ProxyRepoConfigImpl proxyRepoConfig = new ProxyRepoConfigImpl();
+        final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         final ForwarderConfig forwarderConfig = new ForwarderConfig();
 
         proxyRepoConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));

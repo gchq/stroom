@@ -442,9 +442,9 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "proxy_repo"
-    proxyThreads: 10
-    aggregate:
+    repoDir: null
+    dbDir: null
+    aggregator:
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
       maxAggregateAge: "PT10M"

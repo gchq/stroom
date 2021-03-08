@@ -1,10 +1,69 @@
 package stroom.proxy.repo;
 
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
-public interface ProxyRepoConfig extends RepoConfig {
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-    boolean isStoringEnabled();
+import java.time.Duration;
+import javax.inject.Singleton;
+
+@Singleton
+@JsonPropertyOrder({
+        "storingEnabled",
+        "repoDir",
+        "dbDir",
+        "format",
+        "cleanupFrequency",
+        "lockDeleteAge",
+        "dirCleanDelay"
+})
+public class ProxyRepoConfig extends AbstractConfig implements RepoConfig {
+
+    private boolean storingEnabled = false;
+    private String repoDir;
+    private String dbDir;
+    private String format = "${pathId}/${id}";
+    private StroomDuration cleanupFrequency = StroomDuration.of(Duration.ofHours(1));
+    private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
+    private StroomDuration dirCleanDelay = StroomDuration.of(Duration.ofSeconds(10));
+
+    @JsonProperty
+    public boolean isStoringEnabled() {
+        return storingEnabled;
+    }
+
+    public void setStoringEnabled(final boolean storingEnabled) {
+        this.storingEnabled = storingEnabled;
+    }
+
+    /**
+     * Optional Repository DIR. If set any incoming request will be written to the file system.
+     */
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    @Override
+    public String getRepoDir() {
+        return repoDir;
+    }
+
+    public void setRepoDir(final String repoDir) {
+        this.repoDir = repoDir;
+    }
+
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    @Override
+    public String getDbDir() {
+        return dbDir;
+    }
+
+    public void setDbDir(final String dbDir) {
+        this.dbDir = dbDir;
+    }
 
     /**
      * Optionally supply a template for naming the files in the repository. This can be specified using multiple
@@ -22,9 +81,39 @@ public interface ProxyRepoConfig extends RepoConfig {
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name,
      * failure to do this will result in an invalid repository.
      */
-    String getFormat();
+    @JsonProperty
+    public String getFormat() {
+        return format;
+    }
 
-    StroomDuration getLockDeleteAge();
+    public void setFormat(final String format) {
+        this.format = format;
+    }
 
-    StroomDuration getDirCleanDelay();
+    @JsonProperty
+    public StroomDuration getCleanupFrequency() {
+        return cleanupFrequency;
+    }
+
+    public void setCleanupFrequency(final StroomDuration cleanupFrequency) {
+        this.cleanupFrequency = cleanupFrequency;
+    }
+
+    @JsonProperty
+    public StroomDuration getLockDeleteAge() {
+        return lockDeleteAge;
+    }
+
+    public void setLockDeleteAge(final StroomDuration lockDeleteAge) {
+        this.lockDeleteAge = lockDeleteAge;
+    }
+
+    @JsonProperty
+    public StroomDuration getDirCleanDelay() {
+        return dirCleanDelay;
+    }
+
+    public void setDirCleanDelay(final StroomDuration dirCleanDelay) {
+        this.dirCleanDelay = dirCleanDelay;
+    }
 }

@@ -40,7 +40,6 @@ import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.RepoConfig;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
@@ -211,10 +210,6 @@ public class AppConfigModule extends AbstractModule {
                             ProxyAggregationConfig::getAggregatorConfig,
                             ProxyAggregationConfig::setAggregatorConfig,
                             AggregatorConfig.class);
-                    bindConfig(proxyAggregationConfig,
-                            ProxyAggregationConfig::getCleanupConfig,
-                            ProxyAggregationConfig::setCleanupConfig,
-                            CleanupConfig.class);
                 });
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);

@@ -5,8 +5,9 @@ proxyConfig:
   repository:
     storingEnabled: false
     repoDir: null
+    dbDir: null
     format: "${pathId}/${id}"
-    db: null
+    cleanupFrequency: "PT1H"
     lockDeleteAge: "PT1H"
     dirCleanDelay: "PT10S"
   scanner:
@@ -21,8 +22,6 @@ proxyConfig:
     forwardingEnabled: false
     userAgent: null
     forwardDestinations: []
-  cleanup:
-    cleanupFrequency: "PT1H"
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
   contentDir: null

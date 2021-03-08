@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TestProxyRepo {
 
     @Inject
-    private ProxyRepoConfigImpl proxyRepoConfig;
+    private ProxyRepoConfig proxyRepoConfig;
     @Inject
     private ProxyRepoSources proxyRepoSources;
 

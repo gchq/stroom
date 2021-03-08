@@ -6,10 +6,10 @@ import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.CleanupConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
+import stroom.proxy.repo.RepoConfig;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -30,11 +30,11 @@ public class ProxyConfigModule extends AbstractModule {
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
         bind(ReceiptPolicyConfig.class).toInstance(proxyConfig.getReceiptPolicyConfig());
+        bind(RepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepoFileScannerConfig.class).toInstance(proxyConfig.getProxyRepoFileScannerConfig());
         bind(AggregatorConfig.class).toInstance(proxyConfig.getAggregatorConfig());
         bind(ForwarderConfig.class).toInstance(proxyConfig.getForwarderConfig());
-        bind(CleanupConfig.class).toInstance(proxyConfig.getCleanupConfig());
         bind(LogStreamConfig.class).toInstance(proxyConfig.getLogStreamConfig());
         bind(ContentSyncConfig.class).toInstance(proxyConfig.getContentSyncConfig());
         bind(FeedStatusConfig.class).toInstance(proxyConfig.getFeedStatusConfig());
