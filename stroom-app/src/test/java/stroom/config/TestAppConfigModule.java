@@ -226,11 +226,13 @@ class TestAppConfigModule {
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
         // being public in the config class, else the config class may not be a property in the
         // AppConfig object tree
-        Assertions.assertThat(abstractConfigConcreteClasses)
-                .containsAll(appConfigTreeClasses);
+        Set<Class<?>> leftOvers = new HashSet<>(appConfigTreeClasses);
+        leftOvers.removeAll(abstractConfigConcreteClasses);
+        Assertions.assertThat(leftOvers.size()).isZero();
 
-        Assertions.assertThat(appConfigTreeClasses)
-                .containsAll(abstractConfigConcreteClasses);
+        leftOvers = new HashSet<>(abstractConfigConcreteClasses);
+        leftOvers.removeAll(appConfigTreeClasses);
+        Assertions.assertThat(leftOvers.size()).isZero();
 
         // Now we know the appConfig tree contains all the concrete AbstractConfig classes
         // check that guice will give us the right instance. This ensures

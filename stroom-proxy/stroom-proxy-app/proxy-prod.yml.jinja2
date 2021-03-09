@@ -156,8 +156,9 @@ proxyConfig:
   repository:
     storingEnabled: {{ true | envVar('STORING_ENABLED') }}
     repoDir: "{{ (rootPath + 'repo') | envVar('REPO_DIR') }}"
+    dbDir: "{{ (rootPath + 'db') | envVar('REPO_DIR') }}"
     format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
-#    db:
+#    cleanupFrequency: 1h
 #    lockDeleteAge: 1h
 #    dirCleanDelay: 10s
 
@@ -189,9 +190,6 @@ proxyConfig:
           trustStorePassword: "{{ 'password' | envVar('FORWARDING_TRUSTSTORE_PASSWORD') }}"
           trustStoreType: "{{ 'JKS' | envVar('FORWARDING_TRUSTSTORE_TYPE') }}"
           hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
-
-  cleanup:
-    cleanupFrequency: 1h
 
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"

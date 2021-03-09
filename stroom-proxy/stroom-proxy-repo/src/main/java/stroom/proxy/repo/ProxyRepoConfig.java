@@ -2,7 +2,6 @@ package stroom.proxy.repo;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
-import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,7 +20,7 @@ import javax.inject.Singleton;
         "lockDeleteAge",
         "dirCleanDelay"
 })
-public class ProxyRepoConfig extends AbstractConfig implements RepoConfig {
+public class ProxyRepoConfig implements RepoConfig {
 
     private boolean storingEnabled = false;
     private String repoDir;
