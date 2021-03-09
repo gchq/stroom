@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -243,120 +242,15 @@ public class ProxyRepoSourceEntries {
 
                 }
 
+                if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+                    errorReceiver.onError(fullPath, "Unable to find any entries?");
+                }
+
             } catch (final IOException e) {
                 // Unable to open file ... must be bad.
                 errorReceiver.onError(fullPath, e.getMessage());
-                LOGGER.error(fullPath + " " + e.getMessage());
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(e);
-            } catch (final RuntimeException e) {
-                // Unable to open file ... must be bad.
-                errorReceiver.onError(fullPath, e.getMessage());
-                LOGGER.error(fullPath + " " + e.getMessage());
-                LOGGER.error(e.getMessage(), e);
-                throw e;
+                LOGGER.debug(e.getMessage(), e);
             }
-
-            if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
-                errorReceiver.onError(fullPath, "Unable to find any entries?");
-            }
-
-
-//            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fullPath))) {
-//                final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-//                while (entries.hasMoreElements()) {
-//                    final ZipArchiveEntry entry = entries.nextElement();
-//
-//                    // Skip directories
-//                    if (!entry.isDirectory()) {
-//                        final String fileName = entry.getName();
-//
-//                        // Split into stem and extension.
-//                        final int index = fileName.indexOf(".");
-//                        if (index != -1) {
-//                            final String dataName = fileName.substring(0, index);
-//                            final String extension = fileName.substring(index).toLowerCase();
-//
-//                            // If this is a meta entry then get the feed name.
-//                            String feedName = null;
-//                            String typeName = null;
-//
-//                            int extensionType = -1;
-//                            if (StroomZipFileType.META.getExtension().equals(extension)) {
-//                                // We need to be able to sort by extension so we can get meta data first.
-//                                extensionType = 1;
-//
-//                                try (final InputStream metaStream = zipFile.getInputStream(entry)) {
-//                                    if (metaStream == null) {
-//                                        LOGGER.error(fullPath + ": unable to find meta");
-//                                    } else {
-//                                        final AttributeMap attributeMap = new AttributeMap();
-//                                        AttributeMapUtil.read(metaStream, attributeMap);
-//                                        feedName = attributeMap.get(StandardHeaderArguments.FEED);
-//                                        typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-//                                    }
-//                                } catch (final RuntimeException e) {
-//                                    LOGGER.error(fullPath + " " + e.getMessage());
-//                                    LOGGER.debug(e.getMessage(), e);
-//                                }
-//                            } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
-//                                extensionType = 2;
-//                            } else if (StroomZipFileType.DATA.getExtension().equals(extension)) {
-//                                extensionType = 3;
-//                            }
-//
-//                            // Don't add unknown types.
-//                            if (extensionType != -1) {
-//                                long sourceItemId;
-//                                SourceItemRecord sourceItemRecord = itemNameMap.get(dataName);
-//
-//                                if (sourceItemRecord != null) {
-//                                    sourceItemId = sourceItemRecord.getId();
-//
-//                                    // If we have an existing source item then update the feed and type names if we have
-//                                    // some.
-//                                    if (feedName != null && sourceItemRecord.getFeedName() == null) {
-//                                        sourceItemRecord.setFeedName(feedName);
-//                                    }
-//                                    if (typeName != null && sourceItemRecord.getTypeName() == null) {
-//                                        sourceItemRecord.setTypeName(typeName);
-//                                    }
-//
-//                                } else {
-//                                    sourceItemId = this.sourceItemRecordId.incrementAndGet();
-//                                    sourceItemRecord = new SourceItemRecord(
-//                                            sourceItemId,
-//                                            dataName,
-//                                            feedName,
-//                                            typeName,
-//                                            sourceId,
-//                                            false);
-//                                    itemNameMap.put(dataName, sourceItemRecord);
-//                                }
-//
-//                                entryMap
-//                                        .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
-//                                        .add(new SourceEntryRecord(
-//                                                sourceEntryRecordId.incrementAndGet(),
-//                                                extension,
-//                                                extensionType,
-//                                                entry.getSize(),
-//                                                sourceItemId));
-//                            }
-//                        }
-//                    }
-//                }
-//            } catch (final IOException e) {
-//                // Unable to open file ... must be bad.
-//                LOGGER.error(fullPath + " " + e.getMessage());
-//                LOGGER.error(e.getMessage(), e);
-//                throw new UncheckedIOException(e);
-//            } catch (final RuntimeException e) {
-//                // Unable to open file ... must be bad.
-//                LOGGER.error(fullPath + " " + e.getMessage());
-//                LOGGER.error(e.getMessage(), e);
-//                throw e;
-//            }
 
             // We now have a map of all source entries so add them to the DB.
             addEntries(fullPath, sourceId, itemNameMap, entryMap);

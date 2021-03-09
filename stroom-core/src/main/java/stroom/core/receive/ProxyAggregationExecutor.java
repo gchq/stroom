@@ -20,7 +20,6 @@ package stroom.core.receive;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.Cleanup;
 import stroom.proxy.repo.Forwarder;
-import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoFileScanner;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
@@ -29,33 +28,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>
  * Task read a proxy repository and sent it to the stream store.
  * </p>
  */
+@Singleton
 public class ProxyAggregationExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
-    private final ProxyRepo proxyRepo;
     private final ProxyRepoFileScanner proxyRepoFileScanner;
     private final Aggregator aggregator;
-//    private final Cleanup cleanup;
 
     @Inject
-    public ProxyAggregationExecutor(final ProxyRepo proxyRepo,
-                                    final ProxyRepoFileScanner proxyRepoFileScanner,
+    public ProxyAggregationExecutor(final ProxyRepoFileScanner proxyRepoFileScanner,
                                     final ProxyRepoSources proxyRepoSources,
                                     final ProxyRepoSourceEntries proxyRepoSourceEntries,
                                     final Aggregator aggregator,
                                     final Forwarder forwarder,
                                     final Cleanup cleanup) {
-        this.proxyRepo = proxyRepo;
         this.proxyRepoFileScanner = proxyRepoFileScanner;
         this.aggregator = aggregator;
-//        this.cleanup = cleanup;
 
         proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
         proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
@@ -81,12 +77,6 @@ public class ProxyAggregationExecutor {
                     // Force close of old aggregates.
                     aggregator.closeOldAggregates(System.currentTimeMillis());
                 }
-
-//                // Cleanup the DB and files that have been forwarded into Stroom.
-//                cleanup.cleanup();
-
-//                // Cleanup the repo to remove empty dirs and stale lock files.
-//                proxyRepo.clean(false);
 
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);

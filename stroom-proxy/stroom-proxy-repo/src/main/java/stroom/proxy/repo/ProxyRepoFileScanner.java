@@ -188,10 +188,10 @@ public final class ProxyRepoFileScanner {
             taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
             if (Files.isDirectory(file)) {
-               scanDir(file, taskContext);
-           } else {
-               addFile(file);
-           }
+                scanDir(file, taskContext);
+            } else {
+                addFile(file);
+            }
         });
     }
 
