@@ -5,40 +5,34 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * Holds state relating to the creation of tasks by the master node
+ * Holds state relating to the progress of creation of tasks by the master node
  */
 class TaskCreationProgressTracker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskCreationProgressTracker.class);
 
+    // The number of tasks we want to create which will be decremented as we create them
     private final AtomicInteger remainingTasksToCreateCounter;
-    private final CountDownLatch filtersProcessedCountDownLatch;
     private final ConcurrentMap<ProcessorFilter, AtomicInteger> tasksCreatedCountsMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<ProcessorFilter, StreamTaskQueue> queueMap;
     private final ProcessorConfig processorConfig;
+    private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
     public TaskCreationProgressTracker(final int totalTasksToCreate,
-                                       final int filterCount,
                                        final ConcurrentHashMap<ProcessorFilter, StreamTaskQueue> queueMap,
                                        final ProcessorConfig processorConfig) {
         this.remainingTasksToCreateCounter = new AtomicInteger(totalTasksToCreate);
-        this.filtersProcessedCountDownLatch = new CountDownLatch(filterCount);
         this.queueMap = queueMap;
         this.processorConfig = processorConfig;
-    }
-
-    public void countDownProcessedFilters() {
-        filtersProcessedCountDownLatch.countDown();
     }
 
     public boolean areAllTasksCreated() {
@@ -75,6 +69,13 @@ class TaskCreationProgressTracker {
                 .addAndGet(tasksCreated);
     }
 
+    /**
+     * Add any futures obtained during the task creation process so we can wait on them later
+     */
+    public void addFuture(final CompletableFuture<?> future) {
+        futures.add(future);
+    }
+
     public int getTaskCountToCreate(final ProcessorFilter filter) {
         final StreamTaskQueue queue = queueMap.get(filter);
         if (queue != null) {
@@ -106,6 +107,15 @@ class TaskCreationProgressTracker {
                 filtersWithCreatedTasksCount);
     }
 
+    /**
+     * @return The number of futures that are not yet complete, exceptionally or otherwise.
+     */
+    public long getOutstandingFuturesCount() {
+        return futures.stream()
+                .filter(future -> !future.isDone())
+                .count();
+    }
+
     public String getProgressDetailMessage() {
 
         final String filterCreateCountsStr = tasksCreatedCountsMap.entrySet()
@@ -122,49 +132,42 @@ class TaskCreationProgressTracker {
         return LogUtil.message("""
                         Current task creation state: \
                         remainingTasksToCreate: {}, \
-                        filtersToProcessCount: {}, \
+                        futures outstanding: {}, \
                         total tasks created: {}, \
                         creation counts:\n{}""",
                 remainingTasksToCreateCounter.get(),
-                filtersProcessedCountDownLatch.getCount(),
+                getOutstandingFuturesCount(),
                 getTotalTasksCreated(),
                 filterCreateCountsStr);
     }
 
+    public void waitForCompletion() {
+        if (!futures.isEmpty()) {
+            // Some of task creation is async (tasks for search queries) so we need
+            // to wait for them to finish
+            final CompletableFuture<Void> allOfFuture = CompletableFuture.allOf(
+                    futures.toArray(new CompletableFuture[futures.size()]));
 
-    public void waitForCompletionOfAllFilters() {
-        LOGGER.logDurationIfDebugEnabled(() -> {
-            try {
-                // Some of task creation is async (tasks for search queries) so we need
-                // to wait for them to finish
-                LOGGER.debug("Waiting for task creation to be completed for all filters");
-                final Instant startTime = Instant.now();
-                while (true) {
-                    final boolean isComplete = filtersProcessedCountDownLatch.await(10, TimeUnit.SECONDS);
-                    if (isComplete) {
-                        break;
-                    } else {
-                        LOGGER.warn(() -> LogUtil.message(
-                                "Still waiting for latch to count down, count: {}, wait so far: {}, progress:\n{}",
-                                filtersProcessedCountDownLatch.getCount(),
-                                Duration.between(startTime, Instant.now()),
-                                getProgressDetailMessage()));
-                        // go round again and carry on waiting
-                    }
-                }
-            } catch (InterruptedException e) {
-                LOGGER.error("Thread interrupted waiting for task creation to complete");
-                Thread.currentThread().interrupt();
-            }
-        }, "Waiting for task creation to be completed for all filters");
+            LOGGER.debug("Waiting for all async task creation to be completed");
+
+            LOGGER.logDurationIfDebugEnabled(
+                    allOfFuture::join,
+                    "Wait for futures to complete");
+
+            allOfFuture.join();
+        } else {
+            LOGGER.debug("No futures to wait for");
+        }
     }
 
     @Override
     public String toString() {
-        return "ProgressTracker{" +
+        return "TaskCreationProgressTracker{" +
                 "remainingTasksToCreateCounter=" + remainingTasksToCreateCounter +
-                ", filtersProcessedCountDownLatch=" + filtersProcessedCountDownLatch +
                 ", tasksCreatedCountsMap=" + tasksCreatedCountsMap +
+                ", queueMap=" + queueMap +
+                ", processorConfig=" + processorConfig +
+                ", futures=" + futures +
                 '}';
     }
 }
