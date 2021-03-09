@@ -23,6 +23,10 @@ public class ProxyRepoSources implements Clearable {
     public ProxyRepoSources(final ProxyRepoDbConnProvider connProvider) {
         this.jooq = new SqliteJooqHelper(connProvider);
 
+        init();
+    }
+
+    private void init() {
         final long maxSourceRecordId = jooq.getMaxId(SOURCE, SOURCE.ID).orElse(0L);
         sourceRecordId.set(maxSourceRecordId);
     }
@@ -49,9 +53,15 @@ public class ProxyRepoSources implements Clearable {
 
     @Override
     public void clear() {
-        jooq.contextResult(context -> context
-                .deleteFrom(SOURCE)
-                .execute());
+        jooq.deleteAll(SOURCE);
+
+        jooq
+                .getMaxId(SOURCE, SOURCE.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+
+        init();
     }
 
     public void addChangeListener(final ChangeListener changeListener) {

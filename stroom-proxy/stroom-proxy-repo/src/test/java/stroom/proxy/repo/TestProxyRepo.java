@@ -17,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -46,10 +45,9 @@ class TestProxyRepo {
 
     @Test
     void testScan() throws IOException {
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
-
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
         final ProxyRepo proxyRepo =
-                new ProxyRepo(repoDir, null, proxyRepoSources, 100, 0);
+                new ProxyRepo(() -> repoDir, null, proxyRepoSources, 100, 0);
 
         try (final StroomZipOutputStream out1 = proxyRepo.getStroomZipOutputStream()) {
             StroomZipOutputStreamUtil.addSimpleEntry(
@@ -68,7 +66,7 @@ class TestProxyRepo {
         }
 
         // Re open.
-        final ProxyRepo reopenProxyRepo = new ProxyRepo(repoDir,
+        final ProxyRepo reopenProxyRepo = new ProxyRepo(() -> repoDir,
                 null,
                 null,
                 100L,
@@ -85,23 +83,22 @@ class TestProxyRepo {
         assertThat(allZips.size())
                 .isEqualTo(2);
         try (final Stream<Path> stream = allZips.stream()) {
-            stream.forEach(ErrorFileUtil::deleteFileAndErrors);
+            stream.forEach(ErrorReceiverImpl::deleteFileAndErrors);
         }
 
         assertThat(reopenProxyRepo.deleteIfEmpty())
                 .isTrue();
-        assertThat(Files.isDirectory(Paths.get(repoDir)))
+        assertThat(Files.isDirectory(repoDir))
                 .as("Deleted REPO")
                 .isFalse();
     }
 
     @Test
     void testClean() throws IOException {
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")
-                .resolve("repo2"));
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo2");
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, proxyRepoSources, 10000, 0);
+                () -> repoDir, null, proxyRepoSources, 10000, 0);
 
         StroomZipOutputStreamImpl out1;
         try (final StroomZipOutputStreamImpl out =
@@ -133,7 +130,7 @@ class TestProxyRepo {
         // Leave open
 
         proxyRepo = new ProxyRepo(
-                repoDir, null, proxyRepoSources, 1000, 0);
+                () -> repoDir, null, proxyRepoSources, 1000, 0);
         assertThat(Files.isRegularFile(out1.getFile()))
                 .as("Expecting pucker file to be left")
                 .isTrue();
@@ -168,42 +165,39 @@ class TestProxyRepo {
     }
 
     @Test
-    void testClean_emptyRepo() throws IOException {
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")
-                .resolve("repo2"));
+    void testClean_emptyRepo() {
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo2");
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, proxyRepoSources, 10000, 0);
+                () -> repoDir, null, proxyRepoSources, 10000, 0);
 
-        Path repoDirPath = Paths.get(repoDir);
-        assertThat(repoDirPath).exists();
+        assertThat(repoDir).exists();
 
         proxyRepo.clean(false);
-        assertThat(repoDirPath).exists();
+        assertThat(repoDir).exists();
 
         proxyRepo.clean(true);
-        assertThat(repoDirPath).doesNotExist();
+        assertThat(repoDir).doesNotExist();
     }
 
     @Test
-    void testClean_tooNew() throws IOException {
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo2"));
+    void testClean_tooNew() {
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo2");
 
         // big delay to prevent deletion
         int cleanDelayMs = (int) Duration.ofHours(1).toMillis();
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                repoDir, null, proxyRepoSources, 10000, cleanDelayMs);
+                () -> repoDir, null, proxyRepoSources, 10000, cleanDelayMs);
 
-        Path repoDirPath = Paths.get(repoDir);
-        assertThat(repoDirPath).exists();
+        assertThat(repoDir).exists();
 
         proxyRepo.clean(false);
-        assertThat(repoDirPath).exists();
+        assertThat(repoDir).exists();
 
         // Dir is within the cleanDelayMs so it won't be deleted
         proxyRepo.clean(true);
-        assertThat(repoDirPath).exists();
+        assertThat(repoDir).exists();
     }
 
     @Test
@@ -211,8 +205,9 @@ class TestProxyRepo {
         // template should be case insensitive as far as key names go as the attribute map is case insensitive
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        ProxyRepo proxyRepo = new ProxyRepo(repoDir,
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo3");
+        ProxyRepo proxyRepo = new ProxyRepo(
+                () -> repoDir,
                 repositoryFormat,
                 proxyRepoSources,
                 10000,
@@ -257,9 +252,9 @@ class TestProxyRepo {
         final String repositoryFormat = "${year}-${month}-${day}/${feed}/${id}";
         final String FEED_NAME = "myFeed";
 
-        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")
-                .resolve("repo3"));
-        ProxyRepo proxyRepo = new ProxyRepo(repoDir,
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo3");
+        ProxyRepo proxyRepo = new ProxyRepo(
+                () -> repoDir,
                 repositoryFormat,
                 proxyRepoSources,
                 10000,
@@ -309,9 +304,10 @@ class TestProxyRepo {
         try {
             final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
             proxyRepoConfig.setFormat(repositoryFormat);
-            final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
+            final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo3");
 
-            final ProxyRepo proxyRepo = new ProxyRepo(repoDir,
+            final ProxyRepo proxyRepo = new ProxyRepo(
+                    () -> repoDir,
                     repositoryFormat,
                     proxyRepoSources,
                     10000,

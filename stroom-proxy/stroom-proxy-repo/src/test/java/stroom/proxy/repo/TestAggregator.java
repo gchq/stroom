@@ -48,8 +48,10 @@ public class TestAggregator {
 
     @BeforeEach
     void beforeEach() {
-        proxyRepoSources.clear();
+        forwarder.clear();
         aggregator.clear();
+        proxyRepoSourceEntries.clear();
+        proxyRepoSources.clear();
         mockForwardDestinations.clear();
     }
 

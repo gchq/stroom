@@ -4,8 +4,8 @@ proxyConfig:
     receiptPolicyUuid: null
   repository:
     storingEnabled: false
-    repoDir: null
-    dbDir: null
+    repoDir: "${stroom.home}/repo"
+    dbDir: "${stroom.home}/repo"
     format: "${pathId}/${id}"
     cleanupFrequency: "PT1H"
     lockDeleteAge: "PT1H"

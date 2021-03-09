@@ -81,8 +81,8 @@ proxyConfig:
 
   repository:
     storingEnabled: true
-    repoDir: "/tmp/stroom-proxy/repo"
-    dbDir: "/tmp/stroom-proxy/repo/db"
+    repoDir: "${stroom.home}/repo"
+    dbDir: "${stroom.home}/repo"
     format: "${pathId}/${id}"
     cleanupFrequency: 1h
     lockDeleteAge: 1h

@@ -64,17 +64,18 @@ public class ProxyAggregationExecutor {
     }
 
     public void exec() {
-        exec(false);
+        exec(false, false);
     }
 
-    public void exec(boolean forceAggregation) {
+    public void exec(final boolean forceAggregation,
+                     final boolean scanSorted) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
                 // Try aggregating again.
                 aggregator.aggregate();
 
                 // Scan the proxy repo to find new files to aggregate.
-                proxyRepoFileScanner.scan();
+                proxyRepoFileScanner.scan(scanSorted);
 
                 if (forceAggregation) {
                     // Force close of old aggregates.

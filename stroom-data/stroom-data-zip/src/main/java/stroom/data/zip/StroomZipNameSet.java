@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,17 +22,10 @@ import java.util.stream.Stream;
  */
 public class StroomZipNameSet {
 
-    private static final Set<String> CONTEXT_FILE_EXT = Set.of(".ctx", ".context");
-    private static final Set<String> META_FILE_EXT = Set.of(".hdr", ".header", ".meta", ".met");
-    private static final Set<String> MANIFEST_FILE_EXT = Set.of(".mf", ".manifest");
-    private static final Map<StroomZipFileType, Set<String>> FILE_EXT_MAP = Map.of(
-            StroomZipFileType.CONTEXT,
-            CONTEXT_FILE_EXT,
-            StroomZipFileType.META,
-            META_FILE_EXT,
+    private static final StroomZipFileType[] NON_DATA_TYPES = new StroomZipFileType[]{
             StroomZipFileType.MANIFEST,
-            MANIFEST_FILE_EXT
-    );
+            StroomZipFileType.META,
+            StroomZipFileType.CONTEXT};
 
     private final Map<StroomZipFileType, Map<String, String>> entryMap;
     private final Map<String, String> fileNameToBaseNameMap;
@@ -75,17 +67,20 @@ public class StroomZipNameSet {
     }
 
     public static StroomZipFileType getStroomZipFileType(final String fileName) {
-        return FILE_EXT_MAP.entrySet()
-                .stream()
-                .filter(entry -> looksLike(fileName, entry.getValue()) != null)
-                .map(Entry::getKey)
-                .findFirst()
-                .orElse(StroomZipFileType.DATA);
+        final String lowerFileName = fileName.toLowerCase(CharsetConstants.DEFAULT_LOCALE);
+        for (final StroomZipFileType stroomZipFileType : NON_DATA_TYPES) {
+            for (final String ext : stroomZipFileType.getRecognisedExtensions()) {
+                if (lowerFileName.endsWith(ext)) {
+                    return stroomZipFileType;
+                }
+            }
+        }
+        return StroomZipFileType.DATA;
     }
 
-    private static String looksLike(final String fileName, Set<String> extSet) {
-        String lowerFileName = fileName.toLowerCase(CharsetConstants.DEFAULT_LOCALE);
-        for (String ext : extSet) {
+    private static String looksLike(final String fileName, final StroomZipFileType stroomZipFileType) {
+        final String lowerFileName = fileName.toLowerCase(CharsetConstants.DEFAULT_LOCALE);
+        for (final String ext : stroomZipFileType.getRecognisedExtensions()) {
             if (lowerFileName.endsWith(ext)) {
                 return fileName.substring(0, fileName.length() - ext.length());
             }
@@ -103,7 +98,7 @@ public class StroomZipNameSet {
         String baseName;
 
         // Header or Context File ?
-        for (StroomZipFileType stroomZipFileType : FILE_EXT_MAP.keySet()) {
+        for (StroomZipFileType stroomZipFileType : NON_DATA_TYPES) {
             baseName = addToMapIfLooksLike(stroomZipFileType, fileName);
             if (baseName != null) {
                 return StroomZipEntry.create(fileName, baseName, stroomZipFileType);
@@ -202,7 +197,7 @@ public class StroomZipNameSet {
      */
     public List<List<String>> getBaseNameGroupedList(String grouping) {
         //TODO this method is not used by stroom-proxy or stroom-proxy-util but is used
-        //by StreamUploadTaskHandler in Stroom
+        // by StreamUploadTaskHandler in Stroom
 
         List<List<String>> rtnList = new ArrayList<>();
 
@@ -254,7 +249,7 @@ public class StroomZipNameSet {
     }
 
     private String addToMapIfLooksLike(StroomZipFileType stroomZipFileType, final String fileName) {
-        String baseName = looksLike(fileName, FILE_EXT_MAP.get(stroomZipFileType));
+        String baseName = looksLike(fileName, stroomZipFileType);
 
         if (baseName != null) {
             checkBaseName(baseName);

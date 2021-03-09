@@ -16,8 +16,6 @@ import com.google.inject.Provides;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -41,36 +39,27 @@ public class ProxyRepoDbModule extends AbstractModule {
     @Provides
     @Singleton
     public ProxyRepoDbConnProvider getConnectionProvider(
-            final Provider<RepoConfig> configProvider,
+            final RepoDbDirProvider repoDbDirProvider,
             final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-        final DbConfig config = getDbConfig(configProvider);
+        final DbConfig config = getDbConfig(repoDbDirProvider);
         final DataSource dataSource = dataSourceFactory.create(() -> config);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
         return new DataSourceImpl(dataSource);
     }
 
-    private DbConfig getDbConfig(final Provider<RepoConfig> repoConfigProvider) {
+    private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
         final DbConfig dbConfig = new DbConfig();
-        String dbDir = repoConfigProvider.get().getDbDir();
+        final Path dbDir = repoDbDirProvider.get();
 
-        Path path;
-        if (dbDir == null) {
-            throw new RuntimeException("No DB dir has been defined");
-        } else {
-            path = Paths.get(dbDir);
+        FileUtil.mkdirs(dbDir);
+        if (!Files.isDirectory(dbDir)) {
+            throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(dbDir));
         }
 
-        FileUtil.mkdirs(path);
-        if (!Files.isDirectory(path)) {
-            throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(path));
-        }
-
-        path = path.resolve("db");
-        FileUtil.mkdirs(path);
-        path = path.resolve("proxy-repo.db");
-
+        FileUtil.mkdirs(dbDir);
+        final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
 
         final ConnectionConfig connectionConfig = new ConnectionConfig();

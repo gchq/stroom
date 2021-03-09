@@ -30,11 +30,14 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 /**
@@ -47,44 +50,55 @@ public final class ProxyRepoFileScanner {
     private final TaskContextFactory taskContextFactory;
 
     private final ProxyRepoSources proxyRepoSources;
-    private final Path repoPath;
-    private final String repoDir;
+    private final Path repoDir;
+    private final String repoPath;
 
     private volatile long lastScanTimeMs = -1;
 
     @Inject
     public ProxyRepoFileScanner(final TaskContextFactory taskContextFactory,
-                                final ProxyRepoConfig proxyRepoConfig,
-                                final ProxyRepoSources proxyRepoSources) {
+                                final ProxyRepoSources proxyRepoSources,
+                                final RepoDirProvider repoDirProvider) {
         this.taskContextFactory = taskContextFactory;
         this.proxyRepoSources = proxyRepoSources;
-        repoPath = Paths.get(proxyRepoConfig.getRepoDir());
-        repoDir = FileUtil.getCanonicalPath(repoPath);
+        repoDir = repoDirProvider.get();
+        repoPath = FileUtil.getCanonicalPath(repoDir);
     }
 
     /**
      * Scan a proxy zip repository,
      */
     public void scan() {
+        scan(false);
+    }
+
+    /**
+     * Scan a proxy zip repository,
+     */
+    public void scan(final boolean sorted) {
         final Consumer<TaskContext> consumer = taskContext -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("Started");
 
             try {
-                if (Files.isDirectory(repoPath)) {
+                if (Files.isDirectory(repoDir)) {
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Scanning " + repoDir);
+                        LOGGER.debug("Scanning " + repoPath);
                     }
 
                     // Discover and store locations of each zip file.
                     final long startTimeMs = System.currentTimeMillis();
-                    scanZipFiles(taskContext);
+                    if (sorted) {
+                        scanZipFilesSorted(taskContext);
+                    } else {
+                        scanZipFiles(taskContext);
+                    }
                     lastScanTimeMs = startTimeMs;
 
                     LOGGER.debug("Completed");
 
                 } else {
-                    LOGGER.debug("Repo dir " + repoDir + " not found");
+                    LOGGER.debug("Repo dir " + repoPath + " not found");
                 }
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -98,7 +112,7 @@ public final class ProxyRepoFileScanner {
 
     private void scanZipFiles(final TaskContext taskContext) {
         try {
-            Files.walkFileTree(repoPath,
+            Files.walkFileTree(repoDir,
                     EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                     Integer.MAX_VALUE,
                     new AbstractFileVisitor() {
@@ -115,41 +129,8 @@ public final class ProxyRepoFileScanner {
                                 return FileVisitResult.TERMINATE;
                             }
 
-                            // Only process zip repo files
-                            final String fileName = file.getFileName().toString();
-                            if (fileName.endsWith(ProxyRepo.ZIP_EXTENSION)) {
-
-                                // Don't try to add files that are older than the last time we scanned.
-                                boolean add = true;
-                                long lastModified = -1;
-                                if (lastScanTimeMs != -1) {
-                                    try {
-                                        lastModified = Files.getLastModifiedTime(file).toMillis();
-                                        if (lastModified < lastScanTimeMs) {
-                                            add = false;
-                                        }
-                                    } catch (final IOException e) {
-                                        LOGGER.error(e.getMessage(), e);
-                                    }
-                                }
-
-                                if (add) {
-                                    if (lastModified == -1) {
-                                        lastModified = System.currentTimeMillis();
-                                    }
-
-                                    final Path relativePath = repoPath.relativize(file);
-                                    final String relativePathString = relativePath.toString();
-
-                                    // See if we already know about this source.
-                                    final Optional<Long> optionalSourceId =
-                                            proxyRepoSources.getSourceId(relativePathString);
-                                    if (optionalSourceId.isEmpty()) {
-                                        // This is an unrecorded source so add it.
-                                        proxyRepoSources.addSource(relativePathString, lastModified);
-                                    }
-                                }
-                            }
+                            // Add file.
+                            addFile(file);
 
                             return FileVisitResult.CONTINUE;
                         }
@@ -157,5 +138,83 @@ public final class ProxyRepoFileScanner {
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    private void addFile(final Path file) {
+        // Only process zip repo files
+        final String fileName = file.getFileName().toString();
+        if (fileName.endsWith(ProxyRepo.ZIP_EXTENSION)) {
+
+            // Don't try to add files that are older than the last time we scanned.
+            boolean add = true;
+            long lastModified = -1;
+            if (lastScanTimeMs != -1) {
+                try {
+                    lastModified = Files.getLastModifiedTime(file).toMillis();
+                    if (lastModified < lastScanTimeMs) {
+                        add = false;
+                    }
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+
+            if (add) {
+                if (lastModified == -1) {
+                    lastModified = System.currentTimeMillis();
+                }
+
+                final Path relativePath = repoDir.relativize(file);
+                final String relativePathString = relativePath.toString();
+
+                // See if we already know about this source.
+                final Optional<Long> optionalSourceId =
+                        proxyRepoSources.getSourceId(relativePathString);
+                if (optionalSourceId.isEmpty()) {
+                    // This is an unrecorded source so add it.
+                    proxyRepoSources.addSource(relativePathString, lastModified);
+                }
+            }
+        }
+    }
+
+    private void scanZipFilesSorted(final TaskContext taskContext) {
+        scanDir(repoDir, taskContext);
+    }
+
+    private void scanDir(final Path dir, final TaskContext taskContext) {
+        final List<Path> list = getSortedPathList(dir);
+        list.forEach(file -> {
+            taskContext.info(() -> FileUtil.getCanonicalPath(file));
+
+            if (Files.isDirectory(file)) {
+               scanDir(file, taskContext);
+           } else {
+               addFile(file);
+           }
+        });
+    }
+
+    private List<Path> getSortedPathList(final Path dir) {
+        try (final Stream<Path> stream = Files.list(dir)) {
+            return stream.sorted((o1, o2) -> {
+                final boolean o1IsDir = Files.isDirectory(o1);
+                final boolean o2IsDir = Files.isDirectory(o2);
+                if (o1IsDir) {
+                    if (o2IsDir) {
+                        return o1.getFileName().toString().compareTo(o2.getFileName().toString());
+                    }
+                    return 1;
+                }
+                if (o2IsDir) {
+                    return -1;
+                }
+                return o1.getFileName().toString().compareTo(o2.getFileName().toString());
+            })
+                    .collect(Collectors.toList());
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
     }
 }

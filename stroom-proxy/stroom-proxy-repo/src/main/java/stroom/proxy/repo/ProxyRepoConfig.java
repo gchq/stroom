@@ -23,8 +23,8 @@ import javax.inject.Singleton;
 public class ProxyRepoConfig implements RepoConfig {
 
     private boolean storingEnabled = false;
-    private String repoDir;
-    private String dbDir;
+    private String repoDir = "${stroom.home}/repo";
+    private String dbDir = "${stroom.home}/repo";
     private String format = "${pathId}/${id}";
     private StroomDuration cleanupFrequency = StroomDuration.of(Duration.ofHours(1));
     private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));

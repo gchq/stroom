@@ -17,7 +17,6 @@
 package stroom.receive;
 
 
-import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ProxyAggregationExecutor;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -36,6 +35,10 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.Forwarder;
+import stroom.proxy.repo.ProxyRepoSourceEntries;
+import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.RepoDirProvider;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
@@ -46,7 +49,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
@@ -79,8 +81,6 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyAggregationTask.class);
 
     @Inject
-    private ProxyAggregationConfig proxyAggregationConfig;
-    @Inject
     private Store store;
     @Inject
     private MetaService metaService;
@@ -92,12 +92,26 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private AggregatorConfig aggregatorConfig;
     @Inject
     private Aggregator aggregator;
+    @Inject
+    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    @Inject
+    private ProxyRepoSources proxyRepoSources;
+    @Inject
+    private RepoDirProvider repoDirProvider;
+    @Inject
+    private Forwarder forwarder;
 
-    private static String initialRepoDir;
-    private static Path proxyDir;
+    private Path proxyDir;
 
-    private void aggregate(final String proxyDir,
-                           final int maxAggregation,
+    /**
+     * Stop the proxy repo DB being deleted between tests as we will delete table contents manually.
+     */
+    @Override
+    protected boolean setupBetweenTests() {
+        return false;
+    }
+
+    private void aggregate(final int maxAggregation,
                            final long maxStreamSize) {
         aggregatorConfig.setMaxItemsPerAggregate(maxAggregation);
         aggregatorConfig.setMaxUncompressedByteSize(maxStreamSize);
@@ -112,30 +126,23 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 //                10000,
 //                maxAggregation,
 //                maxStreamSize);
-        proxyAggregationExecutor.exec(true);
+        proxyAggregationExecutor.exec(true, true);
 //
 //        // Force close of old aggregates.
 //        aggregator.closeOldAggregates(System.currentTimeMillis());
     }
 
-    private void aggregate(final String proxyDir,
-                           final int maxAggregation) {
-        aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
+    private void aggregate(final int maxAggregation) {
+        aggregate(maxAggregation, DEFAULT_MAX_STREAM_SIZE);
     }
-
-    private String initialDbDir;
 
     @BeforeEach
-    void beforeEach() throws IOException {
-        initialDbDir = proxyAggregationConfig.getDbDir();
-        final String dbDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy"));
-        proxyAggregationConfig.setDbDir(dbDir);
+    void beforeEach() {
+        proxyDir = repoDirProvider.get();
+        forwarder.clear();
         aggregator.clear();
-    }
-
-    @AfterEach
-    void afterEach() {
-        proxyAggregationConfig.setDbDir(initialDbDir);
+        proxyRepoSourceEntries.clear();
+        proxyRepoSources.clear();
     }
 
     @RepeatedTest(100)
@@ -174,7 +181,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 .as("Built test zip file")
                 .isTrue();
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+        aggregate(10);
 
         assertThat(Files.isRegularFile(testFile1))
                 .as("Expecting task to delete file once loaded into stream store")
@@ -262,7 +269,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         generateTestFiles(proxyDir, zipFilesPerFeed, entriesPerZip, eventFeeds);
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+        aggregate(10);
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(eventFeeds.get(0)));
@@ -300,7 +307,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         // Generate the feeds to use in the test
         final List<String> eventFeeds = generateFeeds(2);
 
-        final Path proxyDir = createProxyDirectory();
+//        final Path proxyDir = createProxyDirectory();
 
         generateTestFiles(proxyDir, 3, 2, eventFeeds);
     }
@@ -311,12 +318,12 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             final int entriesPerZip,
             final int maxEntriesPerOutputFile,
             final Path tempDir) {
-        final Path proxyDir = createProxyDirectory();
+//        final Path proxyDir = createProxyDirectory();
 
         // Generate the source zip files
         createData(proxyDir, feedCount, zipFilesPerFeed, entriesPerZip, tempDir);
         // Do the aggregation
-        aggregate(FileUtil.getCanonicalPath(proxyDir), maxEntriesPerOutputFile);
+        aggregate(maxEntriesPerOutputFile);
         checkStore(feedCount, entriesPerZip, zipFilesPerFeed, maxEntriesPerOutputFile);
     }
 
@@ -441,7 +448,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                     .as("Built test zip file")
                     .isTrue();
 
-            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+            aggregate(10);
 
             assertThat(Files.isRegularFile(testFile1))
                     .as("Expecting task to rename bad zip file")
@@ -454,7 +461,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                     .isFalse();
 
             // run again and it should clear down the one
-            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+            aggregate(10);
 
             assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")))
                     .as("Expecting bad zip file to still be there")
@@ -482,7 +489,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 .as("Built test zip file")
                 .isTrue();
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+        aggregate(10);
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
@@ -539,7 +546,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path testFile2 = proxyDir.resolve(getFileName(2));
         writeTestFileWithContext(testFile2, feedName1, "data2\ndata2\n", "context2\ncontext2\n");
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+        aggregate(10);
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
@@ -729,7 +736,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             writeTestFile(testFile1, feedName1, "data1\ndata1\n");
         }
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 50, 1L);
+        aggregate(50, 1L);
 
         final FindMetaCriteria findMetaCriteria1 = new FindMetaCriteria();
         findMetaCriteria1.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
@@ -752,7 +759,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             writeTestFile(testFile1, feedName1, "data1\ndata1\n");
         }
 
-        aggregate(FileUtil.getCanonicalPath(proxyDir), 25);
+        aggregate(25);
 
         final FindMetaCriteria findMetaCriteria1 = new FindMetaCriteria();
         findMetaCriteria1.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
@@ -780,16 +787,16 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 //        }
 //        return proxyDir;
 //    }
-
-    private Path createProxyDirectory() {
-
-        try {
-            Files.createDirectory(proxyDir);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return proxyDir;
-    }
+//
+//    private Path createProxyDirectory() {
+//
+//        try {
+//            Files.createDirectory(proxyDir);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return proxyDir;
+//    }
 
 //    private Path getProxyDir() {
 //        return getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());

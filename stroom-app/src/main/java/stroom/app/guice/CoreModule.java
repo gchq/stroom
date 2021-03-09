@@ -10,6 +10,7 @@ import stroom.util.io.TempDirProviderImpl;
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
@@ -26,6 +27,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
+        install(new stroom.core.receive.ProxyAggregationModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.sysinfo.SystemInfoModule());

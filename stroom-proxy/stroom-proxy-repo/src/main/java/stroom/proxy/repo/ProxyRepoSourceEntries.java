@@ -1,6 +1,8 @@
 package stroom.proxy.repo;
 
+import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipNameSet;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -23,7 +25,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class ProxyRepoSourceEntries {
 
     private final SqliteJooqHelper jooq;
     private final Path repoDir;
+    private final ErrorReceiver errorReceiver;
 
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -74,10 +76,16 @@ public class ProxyRepoSourceEntries {
 
     @Inject
     public ProxyRepoSourceEntries(final ProxyRepoDbConnProvider connProvider,
-                                  final ProxyRepoConfig proxyRepoConfig) {
+                                  final RepoDirProvider repoDirProvider,
+                                  final ErrorReceiver errorReceiver) {
         this.jooq = new SqliteJooqHelper(connProvider);
-        repoDir = Paths.get(proxyRepoConfig.getRepoDir());
+        this.errorReceiver = errorReceiver;
+        repoDir = repoDirProvider.get();
 
+        init();
+    }
+
+    private void init() {
         final long maxSourceItemRecordId = jooq.getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID).orElse(0L);
         sourceItemRecordId.set(maxSourceItemRecordId);
 
@@ -150,6 +158,7 @@ public class ProxyRepoSourceEntries {
             final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
             final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
 
+            final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fullPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
@@ -158,93 +167,196 @@ public class ProxyRepoSourceEntries {
                     // Skip directories
                     if (!entry.isDirectory()) {
                         final String fileName = entry.getName();
+                        final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(fileName);
+                        final String baseName = stroomZipEntry.getBaseName();
+                        final String extension = stroomZipEntry.getFullName().substring(baseName.length());
+                        final StroomZipFileType stroomZipFileType = stroomZipEntry.getStroomZipFileType();
 
-                        // Split into stem and extension.
-                        final int index = fileName.indexOf(".");
-                        if (index != -1) {
-                            final String dataName = fileName.substring(0, index);
-                            final String extension = fileName.substring(index).toLowerCase();
+                        // If this is a meta entry then get the feed name.
+                        String feedName = null;
+                        String typeName = null;
 
-                            // If this is a meta entry then get the feed name.
-                            String feedName = null;
-                            String typeName = null;
+                        int extensionType = -1;
+                        if (StroomZipFileType.META.equals(stroomZipFileType)) {
+                            // We need to be able to sort by extension so we can get meta data first.
+                            extensionType = 1;
 
-                            int extensionType = -1;
-                            if (StroomZipFileType.META.getExtension().equals(extension)) {
-                                // We need to be able to sort by extension so we can get meta data first.
-                                extensionType = 1;
-
-                                try (final InputStream metaStream = zipFile.getInputStream(entry)) {
-                                    if (metaStream == null) {
-                                        LOGGER.error(fullPath + ": unable to find meta");
-                                    } else {
-                                        final AttributeMap attributeMap = new AttributeMap();
-                                        AttributeMapUtil.read(metaStream, attributeMap);
-                                        feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                                        typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(fullPath + " " + e.getMessage());
-                                    LOGGER.debug(e.getMessage(), e);
-                                }
-                            } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
-                                extensionType = 2;
-                            } else if (StroomZipFileType.DATA.getExtension().equals(extension)) {
-                                extensionType = 3;
-                            }
-
-                            // Don't add unknown types.
-                            if (extensionType != -1) {
-                                long sourceItemId;
-                                SourceItemRecord sourceItemRecord = itemNameMap.get(dataName);
-
-                                if (sourceItemRecord != null) {
-                                    sourceItemId = sourceItemRecord.getId();
-
-                                    // If we have an existing source item then update the feed and type names if we have
-                                    // some.
-                                    if (feedName != null && sourceItemRecord.getFeedName() == null) {
-                                        sourceItemRecord.setFeedName(feedName);
-                                    }
-                                    if (typeName != null && sourceItemRecord.getTypeName() == null) {
-                                        sourceItemRecord.setTypeName(typeName);
-                                    }
-
+                            try (final InputStream metaStream = zipFile.getInputStream(entry)) {
+                                if (metaStream == null) {
+                                    LOGGER.error(fullPath + ": unable to find meta");
                                 } else {
-                                    sourceItemId = this.sourceItemRecordId.incrementAndGet();
-                                    sourceItemRecord = new SourceItemRecord(
-                                            sourceItemId,
-                                            dataName,
-                                            feedName,
-                                            typeName,
-                                            sourceId,
-                                            false);
-                                    itemNameMap.put(dataName, sourceItemRecord);
+                                    final AttributeMap attributeMap = new AttributeMap();
+                                    AttributeMapUtil.read(metaStream, attributeMap);
+                                    feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                                    typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(fullPath + " " + e.getMessage());
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                        } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
+                            extensionType = 2;
+                        } else if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
+                            extensionType = 3;
+                        }
+
+                        // Don't add unknown types.
+                        if (extensionType != -1) {
+                            long sourceItemId;
+                            SourceItemRecord sourceItemRecord = itemNameMap.get(baseName);
+
+                            if (sourceItemRecord != null) {
+                                sourceItemId = sourceItemRecord.getId();
+
+                                // If we have an existing source item then update the feed and type names if we have
+                                // some.
+                                if (feedName != null && sourceItemRecord.getFeedName() == null) {
+                                    sourceItemRecord.setFeedName(feedName);
+                                }
+                                if (typeName != null && sourceItemRecord.getTypeName() == null) {
+                                    sourceItemRecord.setTypeName(typeName);
                                 }
 
-                                entryMap
-                                        .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
-                                        .add(new SourceEntryRecord(
-                                                sourceEntryRecordId.incrementAndGet(),
-                                                extension,
-                                                extensionType,
-                                                entry.getSize(),
-                                                sourceItemId));
+                            } else {
+                                sourceItemId = this.sourceItemRecordId.incrementAndGet();
+                                sourceItemRecord = new SourceItemRecord(
+                                        sourceItemId,
+                                        baseName,
+                                        feedName,
+                                        typeName,
+                                        sourceId,
+                                        false);
+                                itemNameMap.put(baseName, sourceItemRecord);
                             }
+
+                            entryMap
+                                    .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
+                                    .add(new SourceEntryRecord(
+                                            sourceEntryRecordId.incrementAndGet(),
+                                            extension,
+                                            extensionType,
+                                            entry.getSize(),
+                                            sourceItemId));
                         }
+
                     }
+
                 }
+
             } catch (final IOException e) {
                 // Unable to open file ... must be bad.
+                errorReceiver.onError(fullPath, e.getMessage());
                 LOGGER.error(fullPath + " " + e.getMessage());
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(e);
             } catch (final RuntimeException e) {
                 // Unable to open file ... must be bad.
+                errorReceiver.onError(fullPath, e.getMessage());
                 LOGGER.error(fullPath + " " + e.getMessage());
                 LOGGER.error(e.getMessage(), e);
                 throw e;
             }
+
+            if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+                errorReceiver.onError(fullPath, "Unable to find any entries?");
+            }
+
+
+//            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fullPath))) {
+//                final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+//                while (entries.hasMoreElements()) {
+//                    final ZipArchiveEntry entry = entries.nextElement();
+//
+//                    // Skip directories
+//                    if (!entry.isDirectory()) {
+//                        final String fileName = entry.getName();
+//
+//                        // Split into stem and extension.
+//                        final int index = fileName.indexOf(".");
+//                        if (index != -1) {
+//                            final String dataName = fileName.substring(0, index);
+//                            final String extension = fileName.substring(index).toLowerCase();
+//
+//                            // If this is a meta entry then get the feed name.
+//                            String feedName = null;
+//                            String typeName = null;
+//
+//                            int extensionType = -1;
+//                            if (StroomZipFileType.META.getExtension().equals(extension)) {
+//                                // We need to be able to sort by extension so we can get meta data first.
+//                                extensionType = 1;
+//
+//                                try (final InputStream metaStream = zipFile.getInputStream(entry)) {
+//                                    if (metaStream == null) {
+//                                        LOGGER.error(fullPath + ": unable to find meta");
+//                                    } else {
+//                                        final AttributeMap attributeMap = new AttributeMap();
+//                                        AttributeMapUtil.read(metaStream, attributeMap);
+//                                        feedName = attributeMap.get(StandardHeaderArguments.FEED);
+//                                        typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+//                                    }
+//                                } catch (final RuntimeException e) {
+//                                    LOGGER.error(fullPath + " " + e.getMessage());
+//                                    LOGGER.debug(e.getMessage(), e);
+//                                }
+//                            } else if (StroomZipFileType.CONTEXT.getExtension().equals(extension)) {
+//                                extensionType = 2;
+//                            } else if (StroomZipFileType.DATA.getExtension().equals(extension)) {
+//                                extensionType = 3;
+//                            }
+//
+//                            // Don't add unknown types.
+//                            if (extensionType != -1) {
+//                                long sourceItemId;
+//                                SourceItemRecord sourceItemRecord = itemNameMap.get(dataName);
+//
+//                                if (sourceItemRecord != null) {
+//                                    sourceItemId = sourceItemRecord.getId();
+//
+//                                    // If we have an existing source item then update the feed and type names if we have
+//                                    // some.
+//                                    if (feedName != null && sourceItemRecord.getFeedName() == null) {
+//                                        sourceItemRecord.setFeedName(feedName);
+//                                    }
+//                                    if (typeName != null && sourceItemRecord.getTypeName() == null) {
+//                                        sourceItemRecord.setTypeName(typeName);
+//                                    }
+//
+//                                } else {
+//                                    sourceItemId = this.sourceItemRecordId.incrementAndGet();
+//                                    sourceItemRecord = new SourceItemRecord(
+//                                            sourceItemId,
+//                                            dataName,
+//                                            feedName,
+//                                            typeName,
+//                                            sourceId,
+//                                            false);
+//                                    itemNameMap.put(dataName, sourceItemRecord);
+//                                }
+//
+//                                entryMap
+//                                        .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
+//                                        .add(new SourceEntryRecord(
+//                                                sourceEntryRecordId.incrementAndGet(),
+//                                                extension,
+//                                                extensionType,
+//                                                entry.getSize(),
+//                                                sourceItemId));
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (final IOException e) {
+//                // Unable to open file ... must be bad.
+//                LOGGER.error(fullPath + " " + e.getMessage());
+//                LOGGER.error(e.getMessage(), e);
+//                throw new UncheckedIOException(e);
+//            } catch (final RuntimeException e) {
+//                // Unable to open file ... must be bad.
+//                LOGGER.error(fullPath + " " + e.getMessage());
+//                LOGGER.error(e.getMessage(), e);
+//                throw e;
+//            }
 
             // We now have a map of all source entries so add them to the DB.
             addEntries(fullPath, sourceId, itemNameMap, entryMap);
@@ -297,6 +409,24 @@ public class ProxyRepoSourceEntries {
 
     public void addChangeListener(final ChangeListener changeListener) {
         listeners.add(changeListener);
+    }
+
+    public void clear() {
+        jooq.deleteAll(SOURCE_ENTRY);
+        jooq.deleteAll(SOURCE_ITEM);
+
+        jooq
+                .getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+        jooq
+                .getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+
+        init();
     }
 
     public interface ChangeListener {

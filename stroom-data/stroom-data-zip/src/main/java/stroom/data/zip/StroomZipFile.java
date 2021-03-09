@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 
@@ -22,13 +23,13 @@ public class StroomZipFile implements Closeable {
     private ZipFile zipFile;
     private StroomZipNameSet stroomZipNameSet;
 
-    public StroomZipFile(Path path) {
+    public StroomZipFile(final Path path) {
         this.file = path;
     }
 
     private ZipFile getZipFile() throws IOException {
         if (zipFile == null) {
-            this.zipFile = new ZipFile(file.toFile());
+            this.zipFile = new ZipFile(Files.newByteChannel(file));
         }
         return zipFile;
     }

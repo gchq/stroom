@@ -34,7 +34,6 @@ import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
-import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
@@ -51,6 +50,7 @@ public class Aggregator {
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     private final AtomicLong aggregateRecordId = new AtomicLong();
+    private final AtomicLong aggregateItemRecordId = new AtomicLong();
 
     private volatile boolean firstRun = true;
 
@@ -60,8 +60,14 @@ public class Aggregator {
         this.jooq = new SqliteJooqHelper(connProvider);
         this.config = config;
 
+        init();
+    }
+
+    private void init() {
         final long maxAggregateRecordId = jooq.getMaxId(AGGREGATE, AGGREGATE.ID).orElse(0L);
         aggregateRecordId.set(maxAggregateRecordId);
+        final long maxAggregateItemRecordId = jooq.getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID).orElse(0L);
+        aggregateItemRecordId.set(maxAggregateItemRecordId);
     }
 
     public synchronized void aggregate() {
@@ -202,8 +208,12 @@ public class Aggregator {
 
             // Add the item.
             context
-                    .insertInto(AGGREGATE_ITEM, AGGREGATE_ITEM.FK_AGGREGATE_ID, AGGREGATE_ITEM.FK_SOURCE_ITEM_ID)
-                    .values(aggregateId, sourceItemId)
+                    .insertInto(
+                            AGGREGATE_ITEM,
+                            AGGREGATE_ITEM.ID,
+                            AGGREGATE_ITEM.FK_AGGREGATE_ID,
+                            AGGREGATE_ITEM.FK_SOURCE_ITEM_ID)
+                    .values(aggregateItemRecordId.incrementAndGet(), aggregateId, sourceItemId)
                     .execute();
 
             // Mark the item as added.
@@ -268,31 +278,21 @@ public class Aggregator {
     }
 
     public void clear() {
-        int total = 0;
-        total += jooq.count(FORWARD_AGGREGATE);
-        total += jooq.count(AGGREGATE_ITEM);
-        total += jooq.count(AGGREGATE);
-        total += jooq.count(SOURCE_ENTRY);
-        total += jooq.count(SOURCE_ITEM);
-        total += jooq.count(SOURCE);
+        jooq.deleteAll(AGGREGATE_ITEM);
+        jooq.deleteAll(AGGREGATE);
 
-        total += jooq.deleteAll(FORWARD_AGGREGATE);
-        total += jooq.deleteAll(AGGREGATE_ITEM);
-        total += jooq.deleteAll(AGGREGATE);
-        total += jooq.deleteAll(SOURCE_ENTRY);
-        total += jooq.deleteAll(SOURCE_ITEM);
-        total += jooq.deleteAll(SOURCE);
+        jooq
+                .getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+        jooq
+                .getMaxId(AGGREGATE, AGGREGATE.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
 
-
-        jooq.context(context -> {
-//            context.select(DSL.count()).from(FORWARD_AGGREGATE).fetchOptional().map(Record1::value1).orElse(0);
-//
-//            int count = context.deleteFrom(AGGREGATE_ITEM).execute();
-//            count = context.deleteFrom(AGGREGATE).execute();
-//            count = context.deleteFrom(SOURCE_ENTRY).execute();
-//            count = context.deleteFrom(SOURCE_ITEM).execute();
-//            count = context.deleteFrom(SOURCE).execute();
-        });
+        init();
     }
 
     public interface ChangeListener {

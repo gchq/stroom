@@ -33,7 +33,6 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -73,13 +72,14 @@ public class ProxyRepo {
     /**
      * Name of the repository while open
      */
-    private final Path rootDir;
+    private final Path repoDir;
     private final String executionUuid;
 
     @Inject
     ProxyRepo(final ProxyRepoConfig proxyRepoConfig,
-              final ProxyRepoSources proxyRepoSources) {
-        this(proxyRepoConfig.getRepoDir(),
+              final ProxyRepoSources proxyRepoSources,
+              final RepoDirProvider repoDirProvider) {
+        this(repoDirProvider,
                 proxyRepoConfig.getFormat(),
                 proxyRepoSources,
                 proxyRepoConfig.getLockDeleteAge().toMillis(),
@@ -89,20 +89,21 @@ public class ProxyRepo {
     /**
      * Open a repository (with or without locking).
      */
-    public ProxyRepo(final String dir,
+    public ProxyRepo(final RepoDirProvider repoDirProvider,
                      final String repositoryFormat,
                      final ProxyRepoSources proxyRepoSources,
                      final long lockDeleteAgeMs,
                      final long cleanDelayMs) {
         this.proxyRepoSources = proxyRepoSources;
         this.executionUuid = UUID.randomUUID().toString();
+        this.repoDir = repoDirProvider.get();
 
         if (repositoryFormat == null || repositoryFormat.trim().length() == 0) {
-            LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, dir);
+            LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, repoDir);
             this.repositoryFormat = DEFAULT_REPOSITORY_FORMAT;
 
         } else {
-            LOGGER.info("Using repository format: {} in directory {}", repositoryFormat, dir);
+            LOGGER.info("Using repository format: {} in directory {}", repositoryFormat, repoDir);
 
             // Validate the proxy repository format.
             final int index = repositoryFormat.indexOf(ID_VAR);
@@ -129,12 +130,11 @@ public class ProxyRepo {
 
         this.lockDeleteAgeMs = lockDeleteAgeMs;
         this.cleanDelayMs = cleanDelayMs;
-        this.rootDir = Paths.get(dir);
 
         // Create the root directory
-        if (!Files.isDirectory(rootDir)) {
+        if (!Files.isDirectory(repoDir)) {
             try {
-                Files.createDirectories(rootDir);
+                Files.createDirectories(repoDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -151,7 +151,7 @@ public class ProxyRepo {
             });
         }
 
-        LOGGER.debug("() - Opened REPO {} lastId = {}", rootDir, fileCount.get());
+        LOGGER.debug("() - Opened REPO {} lastId = {}", repoDir, fileCount.get());
     }
 
     /**
@@ -168,7 +168,7 @@ public class ProxyRepo {
         final AtomicLong minId = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong maxId = new AtomicLong(Long.MIN_VALUE);
 
-        final Path path = getRootDir();
+        final Path path = getRepoDir();
 
         try {
             if (path != null && Files.isDirectory(path)) {
@@ -264,8 +264,8 @@ public class ProxyRepo {
         return "";
     }
 
-    public Path getRootDir() {
-        return rootDir;
+    public Path getRepoDir() {
+        return repoDir;
     }
 
     public StroomZipOutputStream getStroomZipOutputStream() throws IOException {
@@ -279,7 +279,7 @@ public class ProxyRepo {
                 repositoryFormat,
                 attributeMap,
                 ZIP_EXTENSION);
-        final Path file = rootDir.resolve(filename);
+        final Path file = repoDir.resolve(filename);
 
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.
@@ -322,14 +322,14 @@ public class ProxyRepo {
     }
 
     public void deleteRepoFile(final String sourcePath) throws IOException {
-        final Path sourceFile = rootDir.resolve(sourcePath);
+        final Path sourceFile = repoDir.resolve(sourcePath);
         LOGGER.debug("Deleting: " + sourceFile.toAbsolutePath().toString());
         Files.deleteIfExists(sourceFile);
     }
 
     public void clean(final boolean deleteRootDirectory) {
-        LOGGER.info("clean() " + rootDir);
-        clean(rootDir, deleteRootDirectory);
+        LOGGER.info("clean() " + repoDir);
+        clean(repoDir, deleteRootDirectory);
     }
 
     private void clean(final Path path, final boolean deleteRootDirectory) {
@@ -378,7 +378,7 @@ public class ProxyRepo {
 
                         @Override
                         public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
-                            if (getRootDir().equals(dir) && !deleteRootDirectory) {
+                            if (getRepoDir().equals(dir) && !deleteRootDirectory) {
                                 LOGGER.debug("Won't attempt to delete directory {} as it is the root", dir);
                             } else {
                                 attemptDirDeletion(dir, oldestDirMs);
@@ -418,8 +418,8 @@ public class ProxyRepo {
     }
 
     boolean deleteIfEmpty() {
-        if (deleteEmptyDir(rootDir)) {
-            LOGGER.debug("deleteIfEmpty() - Removed " + rootDir);
+        if (deleteEmptyDir(repoDir)) {
+            LOGGER.debug("deleteIfEmpty() - Removed " + repoDir);
             return true;
         }
 
@@ -485,7 +485,7 @@ public class ProxyRepo {
     List<Path> listAllZipFiles() {
         final List<Path> list = new ArrayList<>();
         try {
-            Files.walkFileTree(getRootDir(),
+            Files.walkFileTree(getRepoDir(),
                     EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                     Integer.MAX_VALUE,
                     new AbstractFileVisitor() {

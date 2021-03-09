@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,9 +85,9 @@ public class Forwarder {
             threadFactory);
 
     private final SqliteJooqHelper jooq;
-    private final ProxyRepoConfig proxyRepoConfig;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
+    private final Path repoDir;
 
     private final Map<Integer, String> forwardIdUrlMap = new HashMap<>();
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
@@ -101,12 +100,16 @@ public class Forwarder {
 
     @Inject
     Forwarder(final ProxyRepoDbConnProvider connProvider,
-              final ProxyRepoConfig proxyRepoConfig,
-              final ForwarderDestinations forwarderDestinations) {
+              final ForwarderDestinations forwarderDestinations,
+              final RepoDirProvider repoDirProvider) {
         this.jooq = new SqliteJooqHelper(connProvider);
-        this.proxyRepoConfig = proxyRepoConfig;
         this.forwarderDestinations = forwarderDestinations;
+        this.repoDir = repoDirProvider.get();
 
+        init();
+    }
+
+    private void init() {
         final int maxForwardUrlRecordId = jooq.getMaxId(FORWARD_URL, FORWARD_URL.ID).orElse(0);
         forwardUrlRecordId.set(maxForwardUrlRecordId);
 
@@ -199,7 +202,7 @@ public class Forwarder {
                 .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
                 .fetch()
                 .forEach(r -> {
-                    final long forwardUrlId = r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID);
+                    final int forwardUrlId = r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID);
                     final boolean success = r.get(FORWARD_AGGREGATE.SUCCESS);
 
                     remainingForwardUrl.remove(forwardUrlId);
@@ -301,7 +304,6 @@ public class Forwarder {
                         final String extension = record.get(SOURCE_ENTRY.EXTENSION);
                         final EntryKey sourceKey = new EntryKey(sourcePath, sourceName);
 
-                        final Path repoDir = Paths.get(proxyRepoConfig.getRepoDir());
                         final Path zipFilePath = repoDir.resolve(sourcePath);
 
                         try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
@@ -413,6 +415,24 @@ public class Forwarder {
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public void clear() {
+        jooq.deleteAll(FORWARD_AGGREGATE);
+        jooq.deleteAll(FORWARD_URL);
+
+        jooq
+                .getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+        jooq
+                .getMaxId(FORWARD_URL, FORWARD_URL.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+
+        init();
     }
 
     private void fireChange() {

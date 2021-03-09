@@ -27,8 +27,14 @@ import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
+import stroom.proxy.repo.ErrorReceiver;
+import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoDbModule;
+import stroom.proxy.repo.RepoDbDirProvider;
+import stroom.proxy.repo.RepoDbDirProviderImpl;
+import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.RepoDirProviderImpl;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
@@ -111,6 +117,7 @@ public class ProxyModule extends AbstractModule {
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
+        bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
@@ -121,6 +128,8 @@ public class ProxyModule extends AbstractModule {
 
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+        bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
+        bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

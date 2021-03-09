@@ -1,7 +1,5 @@
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqHelper;
-
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +11,6 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
@@ -21,8 +18,6 @@ public class TestSource {
 
     @Inject
     private ProxyRepoSources proxyRepoSources;
-    @Inject
-    private ProxyRepoDbConnProvider connProvider;
 
     @BeforeEach
     void beforeEach() {
@@ -31,7 +26,7 @@ public class TestSource {
 
     @BeforeEach
     void cleanup() {
-        new JooqHelper(connProvider).deleteAll(SOURCE);
+        proxyRepoSources.clear();
     }
 
     @Test
@@ -48,6 +43,8 @@ public class TestSource {
                 proxyRepoSources.addSource("path", System.currentTimeMillis());
             }
         }, "Expected error");
+        proxyRepoSources.clear();
+        proxyRepoSources.addSource("path", System.currentTimeMillis());
     }
 
     @Test

@@ -110,21 +110,11 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         long bytesWritten;
         LOGGER.debug(() -> LogUtil.message("handleEntryStart() - {}", entry));
 
-        StroomZipFileType stroomZipFileType = StroomZipFileType.DATA;
-        final int index = entry.lastIndexOf(".");
-        if (index != -1) {
-            final String extension = entry.substring(index);
-            if (StroomZipFileType.META.getExtension().equalsIgnoreCase(extension)) {
-                stroomZipFileType = StroomZipFileType.META;
-            } else if (StroomZipFileType.CONTEXT.getExtension().equalsIgnoreCase(extension)) {
-                stroomZipFileType = StroomZipFileType.CONTEXT;
-            }
-        }
+        final StroomZipEntry nextEntry = stroomZipNameSet.add(entry);
+        final StroomZipFileType stroomZipFileType = nextEntry.getStroomZipFileType();
 
         // We don't want to aggregate reference feeds.
         final boolean singleEntry = feedProperties.isReference(currentFeedName);
-
-        final StroomZipEntry nextEntry = stroomZipNameSet.add(entry);
 
         if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
             // Close it if we have opened it.
