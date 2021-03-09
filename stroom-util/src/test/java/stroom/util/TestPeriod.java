@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPeriod {
+
     @Test
     void testPrecision() {
         assertThat(new Period(0L, 1000L).getPrecision(1)).isEqualTo(3);

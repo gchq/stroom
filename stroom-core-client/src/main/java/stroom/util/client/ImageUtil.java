@@ -19,6 +19,7 @@ package stroom.util.client;
 import com.google.gwt.core.client.GWT;
 
 public final class ImageUtil {
+
     private static String url;
 
     private ImageUtil() {

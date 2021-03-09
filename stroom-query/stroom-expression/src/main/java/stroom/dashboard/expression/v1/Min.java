@@ -16,7 +16,30 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Min.NAME,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The smallest of all values.",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the minimum value across all grouped records.",
+                        args = @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = ValNumber.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        description = "Determines the minimum value from all the arguments.",
+                        args = @FunctionArg(
+                                name = "arg",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValNumber.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))})
 class Min extends AbstractAggregateFunction {
+
     static final String NAME = "min";
 
     public Min(final String name) {
@@ -24,6 +47,7 @@ class Min extends AbstractAggregateFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

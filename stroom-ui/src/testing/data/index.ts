@@ -58,6 +58,7 @@ import { generate as generateScript } from "./script";
 import { generate as generateStatisticStore } from "./statisticStore";
 import { generate as generateStroomStatsStore } from "./stroomStatsStore";
 import { generateGenericTracker } from "./trackers";
+import { newToken } from "./tokens";
 import {
   disabledUser,
   inactiveUser,
@@ -314,6 +315,7 @@ export const fullTestData: TestData = {
   userAppPermissions,
   docPermissionByType,
   userDocPermission,
+  tokens: [newToken],
   users: [
     disabledUser,
     inactiveUser,

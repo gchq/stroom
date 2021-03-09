@@ -16,18 +16,20 @@
 
 package stroom.pipeline.cache;
 
-import org.xml.sax.ErrorHandler;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
 import stroom.util.io.StreamUtil;
 
+import org.xml.sax.ErrorHandler;
+
+import java.io.StringReader;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.StringReader;
 
 public class DSChooser {
+
     private static final String DATA_SPLITTER_ELEMENT = "<dataSplitter";
     private static final String DATA_SPLITTER_2_ELEMENT = "<dataSplitter";
     private static final String VERSION_ATTRIBUTE = "version=\"";

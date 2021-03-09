@@ -16,6 +16,8 @@
 
 package stroom.importexport.client.view;
 
+import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -23,9 +25,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 
 public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
+
     private final Widget widget;
     @UiField
     SimplePanel tree;
@@ -48,5 +50,6 @@ public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
     }
 
     public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
+
     }
 }

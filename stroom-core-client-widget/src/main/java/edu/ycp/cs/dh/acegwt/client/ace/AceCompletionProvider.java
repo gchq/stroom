@@ -29,6 +29,7 @@ package edu.ycp.cs.dh.acegwt.client.ace;
  * in future releases.
  */
 public interface AceCompletionProvider {
+
     /**
      * Call to get code completion proposals, which are delivered
      * to a callback. Note that it is fine for this method to
@@ -41,5 +42,5 @@ public interface AceCompletionProvider {
      * @param callback the {@link AceCompletionCallback} to which the
      *                 proposals should be delivered
      */
-    public void getProposals(AceEditor editor, AceEditorCursorPosition pos, String prefix, AceCompletionCallback callback);
+    void getProposals(AceEditor editor, AceEditorCursorPosition pos, String prefix, AceCompletionCallback callback);
 }

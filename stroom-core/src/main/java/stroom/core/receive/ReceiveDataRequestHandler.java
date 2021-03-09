@@ -36,14 +36,14 @@ import stroom.util.io.BufferFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 class ReceiveDataRequestHandler implements RequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataRequestHandler.class);
 
     private final SecurityContext securityContext;

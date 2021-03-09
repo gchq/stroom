@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class FindEventCriteria {
+
     private static final long serialVersionUID = -3542902750151448776L;
 
     private final Period period;
@@ -48,8 +49,10 @@ public class FindEventCriteria {
                 Collections.emptySet());
     }
 
-    public static FindEventCriteria instance(final Period period, final String statisticName,
-                                             final FilterTermsTree filterTermsTree, final Set<String> rolledUpFieldNames) {
+    public static FindEventCriteria instance(final Period period,
+                                             final String statisticName,
+                                             final FilterTermsTree filterTermsTree,
+                                             final Set<String> rolledUpFieldNames) {
         return new FindEventCriteria(period, statisticName, filterTermsTree, rolledUpFieldNames);
     }
 

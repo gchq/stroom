@@ -3,6 +3,7 @@ package stroom.elastic.impl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import stroom.query.audit.model.DocRefEntity;
 
 /**
@@ -11,11 +12,12 @@ import stroom.query.audit.model.DocRefEntity;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "elasticHttpUrl", "indexName", "indexedType", "mappingsJson"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexConfigDoc extends DocRefEntity {
+
     public static final String DOCUMENT_TYPE = "ElasticIndex";
 
     private String description;
     private String elasticHttpUrl;
-//    private String clusterName;
+    //    private String clusterName;
 //    private String transportHosts;
     private String indexName;
     private String indexedType;

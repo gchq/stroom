@@ -19,6 +19,7 @@ package stroom.widget.util.client;
 import java.util.function.Consumer;
 
 public interface Future<T> {
+
     Future<T> onSuccess(Consumer<T> resultConsumer);
 
     Future<T> onFailure(Consumer<Throwable> throwableConsumer);

@@ -25,6 +25,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ResourceGeneration {
+
     @JsonProperty
     private final ResourceKey resourceKey;
     @JsonProperty

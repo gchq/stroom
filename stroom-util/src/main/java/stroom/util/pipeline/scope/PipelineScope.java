@@ -43,6 +43,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @author Fedor Karpelevitch
  */
 public class PipelineScope implements Scope {
+
     private static final Provider<Object> SEEDED_KEY_PROVIDER =
             () -> {
                 throw new IllegalStateException("If you got here then it means that" +

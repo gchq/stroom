@@ -37,7 +37,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class BasicTextSettingsPresenter
-        extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView> implements BasicTextSettingsUiHandlers {
+        extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView>
+        implements BasicTextSettingsUiHandlers {
+
     private final EntityDropDownPresenter pipelinePresenter;
     private List<Component> tableList;
     private boolean ignoreTableChange;
@@ -224,6 +226,7 @@ public class BasicTextSettingsPresenter
     public interface BasicTextSettingsView extends
             BasicSettingsTabPresenter.SettingsView,
             HasUiHandlers<BasicTextSettingsUiHandlers> {
+
         void setTableList(List<Component> tableList);
 
         Component getTable();

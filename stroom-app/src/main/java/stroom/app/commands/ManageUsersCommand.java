@@ -23,17 +23,21 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * Creates an account in the internal identity provider
- *
- * e.g manage_users ../local.yml --createUser admin --createGroup Administrators --addToGroup admin Administrators --grantPermission Administrators Administrator
+ * <p>
+ * e.g manage_users ../local.yml
+ * --createUser admin
+ * --createGroup Administrators
+ * --addToGroup admin Administrators
+ * --grantPermission Administrators Administrator
  */
 public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
@@ -170,9 +174,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .sorted()
                     .collect(Collectors.joining("\n"));
             LOGGER.info("Valid application permission names:\n" +
-                    "--------------------\n" +
-                    "  {}\n" +
-                    "--------------------",
+                            "--------------------\n" +
+                            "  {}\n" +
+                            "--------------------",
                     perms);
         }
     }
@@ -191,7 +195,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private void createUserOrGroup(final String name, final boolean isGroup) {
-        final String msg = LogUtil.message("Creating {} '{}'", (isGroup ? "group" : "user"), name);
+        final String msg = LogUtil.message("Creating {} '{}'",
+                (isGroup
+                        ? "group"
+                        : "user"),
+                name);
         LOGGER.info(msg);
 
         try {
@@ -199,7 +207,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .ifPresentOrElse(
                             user -> {
                                 final String outcomeMsg = LogUtil.message("{} '{}' already exists",
-                                        (isGroup ? "Group" : "User"), name);
+                                        (isGroup
+                                                ? "Group"
+                                                : "User"), name);
                                 LOGGER.warn(outcomeMsg);
                                 logCreateUserOrGroupEvent(name, false, outcomeMsg, isGroup);
                             },
@@ -229,7 +239,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 userService.getUserByName(groupArgs.userOrGroupId)
                         .ifPresentOrElse(
                                 userOrGroup -> {
-                                    stroom.security.shared.User targetGroup = userService.getUserByName(groupArgs.targetGroupId)
+                                    stroom.security.shared.User targetGroup = userService.getUserByName(
+                                            groupArgs.targetGroupId)
                                             .orElseThrow(() ->
                                                     new RuntimeException("Target group " +
                                                             groupArgs.targetGroupId +
@@ -311,7 +322,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
     private void grantPermissions(final Namespace namespace) {
         final List<PermissionArgs> permissionArgsList = extractPermissionArgs(namespace, GRANT_PERMISSION_ARG_NAME);
-        permissionArgsList.forEach(permissionArgs-> {
+        permissionArgsList.forEach(permissionArgs -> {
             final String msg = LogUtil.message("Granting application permission '{}' to '{}'",
                     permissionArgs.permissionName, permissionArgs.userOrGroupId);
 
@@ -364,7 +375,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 namespace,
                 REVOKE_PERMISSION_ARG_NAME);
 
-        permissionArgsList.forEach(permissionArgs-> {
+        permissionArgsList.forEach(permissionArgs -> {
             final String msg = LogUtil.message("Revoking application permission from '{}' to '{}'",
                     permissionArgs.permissionName, permissionArgs.userOrGroupId);
 
@@ -476,10 +487,14 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 .build();
 
         stroomEventLoggingService.log(
-                "CliCreateStroom" + (isGroup ? "Group" : "User"),
+                "CliCreateStroom" + (isGroup
+                        ? "Group"
+                        : "User"),
                 LogUtil.message(
                         "A Stroom user account for {} {} was created",
-                        (isGroup ? "group" : "user"),
+                        (isGroup
+                                ? "group"
+                                : "user"),
                         username),
                 createEventAction);
     }
@@ -509,7 +524,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         stroomEventLoggingService.log(
                 "CliAddToGroup",
                 LogUtil.message("User/Group {} was {} to group {}",
-                        username, (isAddingGroup ? "added to" : "removed from"), groupName),
+                        username,
+                        (isAddingGroup
+                                ? "added to"
+                                : "removed from"),
+                        groupName),
                 authoriseBuilder
                         .withOutcome(Outcome.builder()
                                 .withSuccess(wasSuccessful)
@@ -519,6 +538,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private static class GroupArgs {
+
         private final String userOrGroupId;
         private final String targetGroupId;
 
@@ -537,6 +557,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private static class PermissionArgs {
+
         private final String userOrGroupId;
         private final String permissionName;
 

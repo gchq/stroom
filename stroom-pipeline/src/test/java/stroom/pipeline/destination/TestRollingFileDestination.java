@@ -17,8 +17,8 @@
 package stroom.pipeline.destination;
 
 
-import stroom.util.io.PathCreator;
 import stroom.util.date.DateUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.scheduler.SimpleCron;
 
 import org.junit.jupiter.api.Test;
@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRollingFileDestination {
+
     @Test
     void testFrequency(@TempDir Path tempDir) throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");

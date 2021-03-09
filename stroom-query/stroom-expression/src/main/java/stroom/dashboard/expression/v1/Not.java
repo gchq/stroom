@@ -19,7 +19,23 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Not.NAME,
+        commonCategory = FunctionCategory.LOGIC,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "The inverse of the supplied value.",
+        signatures = @FunctionSignature(
+                description = "Inverts boolean values making true, false etc. The value provided will be implicitly " +
+                        "cast to a boolean, e.g 'not(\"true\")' returns false",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, function or a constant that evaluates to a boolean.",
+                                argType = Val.class)
+                }))
 class Not extends AbstractFunction implements Serializable {
+
     static final String NAME = "not";
     private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
@@ -64,6 +80,7 @@ class Not extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator childGenerator) {

@@ -22,6 +22,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<H> {
+
     private final SafeHtml message;
     private final SafeHtml detail;
     private Level level = Level.WARN;
@@ -63,6 +64,9 @@ public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<
     }
 
     public enum Level {
-        INFO, QUESTION, WARN, ERROR
+        INFO,
+        QUESTION,
+        WARN,
+        ERROR
     }
 }

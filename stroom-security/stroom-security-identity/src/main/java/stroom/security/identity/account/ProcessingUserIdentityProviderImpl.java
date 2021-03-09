@@ -11,8 +11,6 @@ import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -20,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
@@ -34,8 +34,8 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
-    private AtomicLong lastFetchTime = new AtomicLong(0);
-    private AtomicLong lastTokenCreationTime = new AtomicLong(0);
+    private final AtomicLong lastFetchTime = new AtomicLong(0);
+    private final AtomicLong lastTokenCreationTime = new AtomicLong(0);
     private volatile UserIdentity userIdentity;
 
 
@@ -187,7 +187,6 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         token.setTokenType(tokenType.getText());
         token.setData(data);
         token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
-        token.setComments(INTERNAL_PROCESSING_USER);
         token.setEnabled(true);
 
         return tokenDao.create(account.getId(), token);

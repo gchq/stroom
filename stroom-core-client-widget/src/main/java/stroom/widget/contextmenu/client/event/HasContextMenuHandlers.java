@@ -20,5 +20,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public interface HasContextMenuHandlers extends HasHandlers {
+
     HandlerRegistration addContextMenuHandler(ContextMenuEvent.Handler handler);
 }

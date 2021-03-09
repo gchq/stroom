@@ -35,8 +35,6 @@ import stroom.util.shared.Clearable;
 
 import org.apache.lucene.index.IndexWriter;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -45,9 +43,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearcherCacheImpl.class);
     private static final String CACHE_NAME = "Index Shard Searcher Cache";
 
@@ -87,7 +88,10 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
             synchronized (this) {
                 result = cache;
                 if (result == null) {
-                    result = cacheManager.create(CACHE_NAME, indexShardSearchConfig::getIndexShardSearcherCache, this::create, this::destroy);
+                    result = cacheManager.create(CACHE_NAME,
+                            indexShardSearchConfig::getIndexShardSearcherCache,
+                            this::create,
+                            this::destroy);
                     cache = result;
                 }
             }
@@ -183,7 +187,13 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 // Create a scheduled executor for us to continually log close progress.
                 executor = Executors.newSingleThreadScheduledExecutor();
                 // Start logging action progress.
-                executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " readers to close"), 10, 10, TimeUnit.SECONDS);
+                executor.scheduleAtFixedRate(
+                        () ->
+                                LOGGER.info(() ->
+                                        "Waiting for " + closing.get() + " readers to close"),
+                        10,
+                        10,
+                        TimeUnit.SECONDS);
 
                 while (closing.get() > 0) {
                     Thread.sleep(500);
@@ -226,7 +236,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
 //    }
 
     /**
-     * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU items that exceed the capacity.
+     * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU
+     * items that exceed the capacity.
      */
     @Override
     public void refresh() {
@@ -249,6 +260,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     }
 
     public static class Key {
+
         private final long indexShardId;
         private final IndexWriter indexWriter;
 
@@ -257,10 +269,15 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
             this.indexWriter = indexWriter;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return indexShardId == key.indexShardId &&
                     Objects.equals(indexWriter, key.indexWriter);

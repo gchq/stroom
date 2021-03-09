@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ResizeFocusPanel extends FocusPanel implements RequiresResize, ProvidesResize {
+
     @Override
     public void onResize() {
         final Widget widget = getWidget();

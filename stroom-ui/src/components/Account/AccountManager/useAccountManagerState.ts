@@ -1,22 +1,21 @@
 import * as React from "react";
-import { Account } from "../types";
-import { ResultPage } from "../api/types";
+import { AccountResultPage } from "api/stroom";
 
 interface AccountManagerStateApi {
-  users: ResultPage<Account>;
-  setUsers: (users: ResultPage<Account>) => void;
+  users: AccountResultPage;
+  setUsers: (users: AccountResultPage) => void;
   selectedUser: string;
   setSelectedUser: (userId: string) => void;
 }
 
 interface AccountManagerState {
-  users: ResultPage<Account>;
+  users: AccountResultPage;
   selectedUser: string;
 }
 
 interface SetUsersAction {
   type: "set_user";
-  users: ResultPage<Account>;
+  users: AccountResultPage;
 }
 
 interface ChangeSelectedUserAction {
@@ -52,7 +51,7 @@ const useAccountManagerState = (): AccountManagerStateApi => {
     selectedUser: "",
   });
   const setUsers = React.useCallback(
-    (users: ResultPage<Account>) => dispatch({ type: "set_user", users }),
+    (users: AccountResultPage) => dispatch({ type: "set_user", users }),
     [dispatch],
   );
   const setSelectedUser = React.useCallback(

@@ -18,6 +18,8 @@
 
 package stroom.security.identity.token;
 
+import stroom.security.openid.api.OpenId;
+
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -27,12 +29,11 @@ import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import stroom.security.openid.api.OpenId;
-
 import java.time.Instant;
 import java.util.Optional;
 
 public class TokenBuilder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilder.class);
 
     private Instant expiryDate;

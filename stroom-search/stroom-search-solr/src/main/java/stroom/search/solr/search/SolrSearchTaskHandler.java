@@ -44,7 +44,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.util.DataEntry;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,8 +52,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class SolrSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchTaskHandler.class);
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
@@ -79,7 +80,8 @@ public class SolrSearchTaskHandler {
 
     public void exec(final TaskContext parentContext, final SolrSearchTask task) {
         taskContextFactory.context(parentContext, "Index Searcher", taskContext ->
-                LOGGER.logDurationIfDebugEnabled(() -> {
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> {
                             try {
                                 if (Thread.interrupted()) {
                                     Thread.currentThread().interrupt();
@@ -96,7 +98,8 @@ public class SolrSearchTaskHandler {
                                 error(task, e.getMessage(), e);
                             }
                         },
-                        () -> "exec()")).run();
+                        () -> "exec()"))
+                .run();
     }
 
     private void searchShard(final SolrSearchTask task, final TaskContext taskContext) {
@@ -132,7 +135,9 @@ public class SolrSearchTaskHandler {
         }
     }
 
-    private void fastStreamingDocsSearch(final SolrSearchTask task, final SolrIndexDoc solrIndexDoc, final SolrConnectionConfig connectionConfig) {
+    private void fastStreamingDocsSearch(final SolrSearchTask task,
+                                         final SolrIndexDoc solrIndexDoc,
+                                         final SolrConnectionConfig connectionConfig) {
         final Callback2 callback = new Callback2(
                 task.getTracker(),
                 task.getFieldNames(),
@@ -142,7 +147,9 @@ public class SolrSearchTaskHandler {
                 task.getReceiver().getCompletionConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
-                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(), task.getSolrParams(), callback);
+                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
+                        task.getSolrParams(),
+                        callback);
                 LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
             } catch (final SolrServerException | IOException | RuntimeException e) {
                 error(task, e.getMessage(), e);
@@ -150,7 +157,9 @@ public class SolrSearchTaskHandler {
         });
     }
 
-    private void streamingSearch(final SolrSearchTask task, final SolrIndexDoc solrIndexDoc, final SolrConnectionConfig connectionConfig) {
+    private void streamingSearch(final SolrSearchTask task,
+                                 final SolrIndexDoc solrIndexDoc,
+                                 final SolrConnectionConfig connectionConfig) {
         final Callback callback = new Callback(
                 task.getTracker(),
                 task.getFieldNames(),
@@ -158,7 +167,9 @@ public class SolrSearchTaskHandler {
                 task.getReceiver().getErrorConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
-                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(), task.getSolrParams(), callback);
+                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
+                        task.getSolrParams(),
+                        callback);
                 final DocListInfo docListInfo = callback.getDocListInfo();
                 LOGGER.debug(() -> "streamingSearch() - response=" + response);
                 LOGGER.debug(() -> "hitCount=" + task.getTracker().getHitCount());
@@ -169,7 +180,9 @@ public class SolrSearchTaskHandler {
                     throw new SolrServerException("docListInfo is null");
                 }
 //                else if (docListInfo.getNumFound() != task.getTracker().getDocumentCount()) {
-//                    throw new SolrServerException("Unexpected hit count - numFound=" + docListInfo.getNumFound() + " hitCount=" + task.getTracker().getHitCount());
+//                    throw new SolrServerException(
+//                    "Unexpected hit count - numFound=" + docListInfo.getNumFound() +
+//                    " hitCount=" + task.getTracker().getHitCount());
 //                }
 
             } catch (final SolrServerException | IOException | RuntimeException e) {
@@ -191,6 +204,7 @@ public class SolrSearchTaskHandler {
     }
 
     private static class Callback extends StreamingResponseCallback {
+
         private final Tracker tracker;
         private final String[] fieldNames;
         private final Consumer<Val[]> valuesConsumer;
@@ -266,6 +280,7 @@ public class SolrSearchTaskHandler {
     }
 
     private static class DocListInfo {
+
         private final long numFound;
         private final long start;
         private final Float maxScore;
@@ -299,6 +314,7 @@ public class SolrSearchTaskHandler {
     }
 
     private static class Callback2 implements FastStreamingDocsCallback {
+
         final Map<String, Val> map = new HashMap<>();
         private final Tracker tracker;
         private final String[] fieldNames;

@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
@@ -33,6 +34,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SearchRequestTestData {
+
     static DashboardQueryKey dashboardQueryKey() {
         return new DashboardQueryKey(
                 "queryKeyUuid",
@@ -50,8 +53,8 @@ public class SearchRequestTestData {
                 "queryId-1");
     }
 
-    static stroom.query.api.v2.SearchRequest apiSearchRequest() {
-        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
+    static SearchRequest apiSearchRequest() {
+        DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         return searchRequestMapper.mapRequest(
@@ -59,8 +62,8 @@ public class SearchRequestTestData {
                 dashboardSearchRequest);
     }
 
-    static stroom.dashboard.shared.SearchRequest dashboardSearchRequest() {
-        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
+    static DashboardSearchRequest dashboardSearchRequest() {
+        final DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
         ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
@@ -78,7 +81,9 @@ public class SearchRequestTestData {
                         .filter(new Filter("include1", "exclude1"))
                         .format(Format.builder()
                                 .type(Format.Type.NUMBER)
-                                .settings(new NumberFormatSettings(1, false))
+                                .settings(new NumberFormatSettings(
+                                        1,
+                                        false))
                                 .build())
                         .group(1)
                         .width(200)
@@ -133,7 +138,7 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
-        return new stroom.dashboard.shared.SearchRequest(
+        return new DashboardSearchRequest(
                 dashboardQueryKey(), search, componentResultRequests, "en-gb");
     }
 

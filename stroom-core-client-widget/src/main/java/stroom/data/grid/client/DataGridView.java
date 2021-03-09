@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public interface DataGridView<R> extends View, HasRows {
+
     void addColumn(Column<R, ?> column, String name, int width);
 
     void addColumn(Column<R, ?> column, String name);

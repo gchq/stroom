@@ -13,9 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -25,15 +22,20 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.Path;
 
 public class RestResources {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResources.class);
 
     private final Environment environment;
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
 
     @Inject
-    RestResources(final Environment environment, final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap) {
+    RestResources(final Environment environment,
+                  final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap) {
         this.environment = environment;
         this.providerMap = providerMap;
     }
@@ -92,7 +94,9 @@ public class RestResources {
                     StringUtils.rightPad(name, maxNameLength, " "),
                     resourceProvider.getResourcePath(),
                     ConsoleColour.red("**Duplicate path**"));
-            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}", resourceProvider.getResourcePath()));
+            throw new RuntimeException(LogUtil.message(
+                    "Duplicate REST resource path {}",
+                    resourceProvider.getResourcePath()));
         } else {
             LOGGER.info("\t{} => {}",
                     StringUtils.rightPad(name, maxNameLength, " "),
@@ -104,6 +108,7 @@ public class RestResources {
     }
 
     private static class HK2toGuiceModule extends AbstractBinder {
+
         private final List<ResourceProvider> resourceProviders;
 
         public HK2toGuiceModule(final List<ResourceProvider> resourceProviders) {
@@ -118,6 +123,7 @@ public class RestResources {
         }
 
         private static class ServiceFactory<T> implements Factory<T> {
+
             private final Provider<T> provider;
 
             ServiceFactory(final Provider<T> provider) {
@@ -136,6 +142,7 @@ public class RestResources {
     }
 
     private static class ResourceProvider {
+
         private final Class<?> resourceClass;
         private final Provider<RestResource> provider;
         private final String resourcePath;

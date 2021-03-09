@@ -16,12 +16,14 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.main.ComponentRegistry;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dashboard.client.main.ComponentRegistry;
 
 public class VisPlugin {
+
     @Inject
     public VisPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
                      final Provider<VisPresenter> provider) {

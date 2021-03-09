@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CompletionStateImpl implements CompletionState {
+
     private final AtomicBoolean complete = new AtomicBoolean();
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
     private final AtomicLong completionCount = new AtomicLong();

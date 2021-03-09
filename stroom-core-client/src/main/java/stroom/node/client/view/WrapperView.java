@@ -19,5 +19,6 @@ package stroom.node.client.view;
 import com.gwtplatform.mvp.client.View;
 
 public interface WrapperView extends View {
+
     void setView(View view);
 }

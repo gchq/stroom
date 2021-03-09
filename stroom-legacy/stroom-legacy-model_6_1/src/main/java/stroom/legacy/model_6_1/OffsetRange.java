@@ -17,34 +17,31 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonPropertyOrder({"offset", "length"})
 @XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The offset and length of a range of data in a sub-set of a query result set")
+@Schema(description = "The offset and length of a range of data in a sub-set of a query result set")
 @Deprecated
 public final class OffsetRange implements Serializable {
     private static final long serialVersionUID = 5045453517852867315L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The start offset for this sub-set of data, where zero is the offset of the first record " +
+    @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
                     "in the full result set",
             example = "0",
             required = true)
     private Long offset;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The length in records of the sub-set of results",
+    @Schema(description = "The length in records of the sub-set of results",
             example = "100",
             required = true)
     private Long length;

@@ -24,9 +24,9 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -54,6 +54,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FieldsManager implements HeadingListener {
+
     private static Resources resources;
     private final TablePresenter tablePresenter;
     private final Provider<RenameFieldPresenter> renameFieldPresenterProvider;
@@ -118,7 +119,10 @@ public class FieldsManager implements HeadingListener {
                             currentColIndex = colIndex;
                             final Element target = heading.getElement();
                             final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                    target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
+                                    target.getAbsoluteRight(),
+                                    target.getAbsoluteTop(),
+                                    target.getAbsoluteBottom(),
+                                    null,
                                     VerticalLocation.BELOW);
                             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                                 @Override
@@ -136,7 +140,7 @@ public class FieldsManager implements HeadingListener {
                             updateMenuItems(field);
 
                             Element element = event.getEventTarget().cast();
-                            while (!element.getTagName().toLowerCase().equals("th")) {
+                            while (!element.getTagName().equalsIgnoreCase("th")) {
                                 element = element.getParentElement();
                             }
 
@@ -402,7 +406,13 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(1, ImageIcon.create(resources.expression()), null, "Expression", null, true, () -> showExpression(field));
+        final Item item = new IconMenuItem(1,
+                ImageIcon.create(resources.expression()),
+                null,
+                "Expression",
+                null,
+                true,
+                () -> showExpression(field));
         if (field.getExpression() != null) {
             String expression = field.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
@@ -421,7 +431,13 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(
                 createSortOption(field, highlights, 1, resources.sortza(), "Sort Z to A", SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
-        final Item item = new IconParentMenuItem(2, ImageIcon.create(resources.sortaz()), null, "Sort", null, true, menuItems);
+        final Item item = new IconParentMenuItem(2,
+                ImageIcon.create(resources.sortaz()),
+                null,
+                "Sort",
+                null,
+                true,
+                menuItems);
         if (field.getSort() != null) {
             highlights.add(item);
         }
@@ -430,7 +446,13 @@ public class FieldsManager implements HeadingListener {
 
     private Item createSortOption(final Field field, final Set<Item> highlights, final int pos,
                                   final ImageResource icon, final String text, final SortDirection sortDirection) {
-        final Item item = new IconMenuItem(pos, ImageIcon.create(icon), null, text, null, true, () -> changeSort(field, sortDirection));
+        final Item item = new IconMenuItem(pos,
+                ImageIcon.create(icon),
+                null,
+                text,
+                null,
+                true,
+                () -> changeSort(field, sortDirection));
         if (field.getSort() != null && field.getSort().getDirection() == sortDirection) {
             highlights.add(item);
         }
@@ -442,7 +464,12 @@ public class FieldsManager implements HeadingListener {
         final int maxGroup = fixGroups(getFields());
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
-            final Item item = new IconMenuItem(i, ImageIcon.create(resources.group()), null, "Level " + (i + 1), null, true,
+            final Item item = new IconMenuItem(i,
+                    ImageIcon.create(resources.group()),
+                    null,
+                    "Level " + (i + 1),
+                    null,
+                    true,
                     () -> setGroup(field, group));
             menuItems.add(item);
 
@@ -454,15 +481,26 @@ public class FieldsManager implements HeadingListener {
         // Add the next possible group if the field isn't the only field in the
         // next group.
         if (addNextGroup(maxGroup, field)) {
-            final Item item = new IconMenuItem(maxGroup, ImageIcon.create(resources.group()), null, "Level " + (maxGroup + 1), null,
-                    true, () -> setGroup(field, maxGroup));
+            final Item item = new IconMenuItem(maxGroup,
+                    ImageIcon.create(resources.group()),
+                    null,
+                    "Level " + (maxGroup + 1),
+                    null,
+                    true,
+                    () -> setGroup(field, maxGroup));
             menuItems.add(item);
         }
 
         final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, () -> setGroup(field, null));
         menuItems.add(item);
 
-        final Item parentItem = new IconParentMenuItem(3, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
+        final Item parentItem = new IconParentMenuItem(3,
+                ImageIcon.create(resources.group()),
+                null,
+                "Group",
+                null,
+                true,
+                menuItems);
 
         if (field.getGroup() != null) {
             highlights.add(parentItem);
@@ -531,7 +569,13 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(4, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
+        final Item item = new IconMenuItem(4,
+                SvgPresets.FILTER,
+                SvgPresets.FILTER,
+                "Filter",
+                null,
+                true,
+                () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -541,7 +585,13 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFormatMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, ImageIcon.create(resources.format()), null, "Format", null, true, () -> showFormat(field));
+        final Item item = new IconMenuItem(5,
+                ImageIcon.create(resources.format()),
+                null,
+                "Format",
+                null,
+                true,
+                () -> showFormat(field));
         if (field.getFormat() != null && field.getFormat().getSettings() != null
                 && !field.getFormat().getSettings().isDefault()) {
             highlights.add(item);
@@ -573,10 +623,17 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Remove", null, true, () -> deleteField(field));
+        return new IconMenuItem(8,
+                SvgPresets.DELETE,
+                SvgPresets.DELETE,
+                "Remove",
+                null,
+                true,
+                () -> deleteField(field));
     }
 
     public interface Style extends CssResource {
+
         String labels();
 
         String label();
@@ -595,6 +652,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource expression();
 
         ImageResource sortaz();

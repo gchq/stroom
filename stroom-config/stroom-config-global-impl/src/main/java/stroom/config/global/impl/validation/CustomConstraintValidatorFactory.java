@@ -1,11 +1,12 @@
 package stroom.config.global.impl.validation;
 
-import com.google.inject.ConfigurationException;
-import com.google.inject.Injector;
-import com.google.inject.Key;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import com.google.inject.ConfigurationException;
+import com.google.inject.Injector;
+import com.google.inject.Key;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintValidator;
@@ -23,8 +24,8 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
     CustomConstraintValidatorFactory(final Injector injector) {
 
         this.delegate = Validation.byDefaultProvider()
-            .configure()
-            .getDefaultConstraintValidatorFactory();
+                .configure()
+                .getDefaultConstraintValidatorFactory();
 
         LOGGER.debug(() -> LogUtil.message("Using validation provider {}", delegate.getClass().getName()));
 

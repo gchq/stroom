@@ -20,5 +20,6 @@ import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ChangeStatusUiHandlers extends UiHandlers {
+
     void showStatusChooser(Element element);
 }

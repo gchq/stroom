@@ -16,8 +16,6 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.pipeline.PipelineConfig;
@@ -26,20 +24,24 @@ import stroom.util.cert.SSLUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 @Singleton
 public class HttpClientCache {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpClientCache.class);
 
     private static final String CACHE_NAME = "Http Client Cache";

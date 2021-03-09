@@ -16,17 +16,20 @@
 
 package stroom.iframe.client.presenter;
 
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 
-public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView> implements IFrameLoadUiHandlers, HasDirtyHandlers {
+public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
+        implements IFrameLoadUiHandlers, HasDirtyHandlers {
+
     @Inject
     public IFramePresenter(final EventBus eventBus, final IFrameView view) {
         super(eventBus, view);
@@ -60,6 +63,7 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     }
 
     public interface IFrameView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
+
         void setUrl(String url);
 
         void setCustomTitle(String customTitle);

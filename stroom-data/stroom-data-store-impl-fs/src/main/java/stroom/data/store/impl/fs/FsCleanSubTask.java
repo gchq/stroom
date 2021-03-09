@@ -21,6 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import java.time.Duration;
 
 class FsCleanSubTask {
+
     private final FsVolume volume;
     private final String path;
     private final String logPrefix;

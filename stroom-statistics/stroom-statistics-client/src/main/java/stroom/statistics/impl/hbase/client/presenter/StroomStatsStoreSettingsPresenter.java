@@ -17,15 +17,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -40,14 +31,27 @@ import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class StroomStatsStoreSettingsPresenter
         extends MyPresenterWidget<StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler,
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
+        ReadOnlyChangeHandler,
         StroomStatsStoreSettingsUiHandlers {
 
     @Inject
-    public StroomStatsStoreSettingsPresenter(final EventBus eventBus,
-                                             final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
+    public StroomStatsStoreSettingsPresenter(
+            final EventBus eventBus,
+            final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
+
         super(eventBus, view);
 
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
@@ -101,6 +105,7 @@ public class StroomStatsStoreSettingsPresenter
 
     public interface StroomStatsStoreSettingsView
             extends View, HasUiHandlers<StroomStatsStoreSettingsUiHandlers>, ReadOnlyChangeHandler {
+
         TextArea getDescription();
 
         StatisticType getStatisticType();

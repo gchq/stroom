@@ -18,8 +18,8 @@ package stroom.legacy.db.migration;
 
 import stroom.dashboard.impl.visualisation.VisualisationSerialiser;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
-import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.db.ObjectMarshaller;
+import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -35,6 +35,7 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_010__Visualisation extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final VisualisationSerialiser serialiser = new VisualisationSerialiser(new Serialiser2FactoryImpl());

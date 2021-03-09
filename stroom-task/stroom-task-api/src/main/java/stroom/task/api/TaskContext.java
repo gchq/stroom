@@ -21,6 +21,7 @@ import stroom.task.shared.TaskId;
 import java.util.function.Supplier;
 
 public interface TaskContext {
+
     void info(Supplier<String> messageSupplier);
 
     /**

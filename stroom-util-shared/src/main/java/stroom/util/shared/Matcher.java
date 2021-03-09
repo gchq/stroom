@@ -17,5 +17,6 @@
 package stroom.util.shared;
 
 public interface Matcher<T> {
+
     boolean isMatch(T item);
 }

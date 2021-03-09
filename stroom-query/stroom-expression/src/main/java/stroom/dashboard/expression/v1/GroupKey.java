@@ -16,13 +16,14 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
-import java.io.Serializable;
-import java.util.Arrays;
 
 final class GroupKey implements Serializable {
+
     private final byte[] parent;
     private final byte[] values;
 
@@ -50,10 +51,15 @@ final class GroupKey implements Serializable {
         return values;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final GroupKey groupKey = (GroupKey) o;
         return Arrays.equals(parent, groupKey.parent) && Arrays.equals(values, groupKey.values);
     }

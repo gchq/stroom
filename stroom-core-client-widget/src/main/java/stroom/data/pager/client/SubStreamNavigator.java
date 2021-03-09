@@ -389,5 +389,6 @@ public class SubStreamNavigator extends Composite {
     }
 
     public interface Binder extends UiBinder<Widget, SubStreamNavigator> {
+
     }
 }

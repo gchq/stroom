@@ -17,6 +17,7 @@
 package stroom.dashboard.impl;
 
 public class SampleGenerator {
+
     private final boolean sample;
     private final double threshold;
 

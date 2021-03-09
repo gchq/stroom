@@ -16,7 +16,17 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Null.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValNull.class,
+        commonReturnDescription = "A null value.",
+        signatures = @FunctionSignature(
+                description = "Returns a null value.",
+                args = {}))
 class Null extends AbstractStaticFunction {
+
     static final String NAME = "null";
 
     public Null(final String name) {

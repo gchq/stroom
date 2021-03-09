@@ -24,9 +24,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Map;
@@ -38,9 +35,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class LifecycleService implements Managed {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleService.class);
 
     private final Deque<Provider<Runnable>> startPending;

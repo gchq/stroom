@@ -16,20 +16,22 @@
 
 package stroom.task.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.core.client.presenter.MonitoringPlugin;
-import stroom.task.client.presenter.TaskManagerPresenter;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
+
     @Inject
     public TaskManagerPlugin(final EventBus eventBus, final ContentManager eventManager,
                              final Provider<TaskManagerPresenter> presenterProvider,

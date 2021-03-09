@@ -29,6 +29,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class EventRefs implements Iterable<EventRef> {
+
     @JsonProperty
     private final EventRef minEvent;
     @JsonProperty
@@ -156,6 +157,7 @@ public class EventRefs implements Iterable<EventRef> {
     }
 
     private static class EventRefComparator implements Comparator<EventRef> {
+
         @Override
         public int compare(final EventRef o1, final EventRef o2) {
             if (o1.getStreamId() == o2.getStreamId()) {

@@ -17,16 +17,18 @@
 
 package stroom.security.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView> {
+
     @Inject
     public ManageNewEntityPresenter(final EventBus eventBus, final NameDocumentView view) {
         super(eventBus, view);

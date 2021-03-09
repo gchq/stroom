@@ -1,16 +1,17 @@
 package stroom.security.identity.openid;
 
+import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.identity.config.IdentityConfig;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
 import java.security.SecureRandom;
 import java.util.Objects;
+import javax.inject.Inject;
 
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
+
     private static final String INTERNAL_STROOM_CLIENT = "Stroom Client Internal";
     private static final String CLIENT_ID_SUFFIX = ".client-id.apps.stroom-idp";
     private static final String CLIENT_SECRET_SUFFIX = ".client-secret.apps.stroom-idp";

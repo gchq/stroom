@@ -19,13 +19,14 @@ package stroom.data.retention.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -33,39 +34,39 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "dataRetentionRules - /v1")
+@Tag(name = "Data Retention Rules")
 @Path("/dataRetentionRules" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataRetentionRulesResource extends RestResource, DirectRestService {
 
-    @POST
-    @Path("/read")
-    @ApiOperation(
-            value = "Get data retention rules",
-            response = DataRetentionRules.class)
-    DataRetentionRules read();
+    @GET
+    @Path("/")
+    @Operation(
+            summary = "Get data retention rules",
+            operationId = "fetchDataRetentionRules")
+    DataRetentionRules fetch();
 
     @PUT
-    @Path("/update")
-    @ApiOperation(
-            value = "Update data retention rules",
-            response = DataRetentionRules.class)
-    DataRetentionRules update(@ApiParam("dataRetentionRules") DataRetentionRules dataRetentionRules);
+    @Path("/")
+    @Operation(
+            summary = "Update data retention rules",
+            operationId = "updateDataRetentionRules")
+    DataRetentionRules update(
+            @Parameter(description = "dataRetentionRules", required = true) DataRetentionRules dataRetentionRules);
 
     @POST
     @Path("/impactSummary")
-    @ApiOperation(
-            value = "Get a summary of meta deletions with the passed data retention rules",
-            response = DataRetentionDeleteSummary.class)
+    @Operation(
+            summary = "Get a summary of meta deletions with the passed data retention rules",
+            operationId = "getDataRetentionImpactSummary")
     DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
-            @ApiParam("request") DataRetentionDeleteSummaryRequest request);
+            @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request);
 
     @DELETE
     @Path("/impactSummary/{queryId}")
-    @ApiOperation(
-            value = "Delete a running query")
+    @Operation(
+            summary = "Stop a running query",
+            operationId = "stopDataRetentionImpactSummary")
     Boolean cancelQuery(@PathParam("queryId") final String queryId);
-
-
 }

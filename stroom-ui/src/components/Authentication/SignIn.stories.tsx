@@ -5,7 +5,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
 import { useState } from "react";
-import { AuthState } from "./api/types";
+import { AuthState } from "./types";
 import BackgroundLogo from "../Layout/BackgroundLogo";
 import FormContainer from "../Layout/FormContainer";
 import Background from "../Layout/Background";

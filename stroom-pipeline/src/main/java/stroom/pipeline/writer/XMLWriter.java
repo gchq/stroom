@@ -16,13 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import net.sf.saxon.s9api.XsltExecutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.cache.PoolItem;
@@ -53,16 +46,23 @@ import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
@@ -78,6 +78,7 @@ import java.util.Properties;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);
 
     private final LocationFactory locationFactory;
@@ -487,8 +488,10 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * java.lang.String)
      */
     @Override
-    public void processingInstruction(final String target, final String data) throws SAXException {
-        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we receive processing instruction events before a startDocument() event, see gh-225.
+    public void processingInstruction(final String target,
+                                      final String data) throws SAXException {
+        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we
+        // receive processing instruction events before a startDocument() event, see gh-225.
         startDocument();
 
         handler.processingInstruction(target, data);
@@ -526,26 +529,32 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
 
-    @PipelineProperty(description = "A previously saved XSLT, used to modify the output via xsl:output attributes.", displayPriority = 1)
+    @PipelineProperty(
+            description = "A previously saved XSLT, used to modify the output via xsl:output attributes.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 
-    @PipelineProperty(description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via xsl:output attributes.", displayPriority = 2)
+    @PipelineProperty(
+            description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via " +
+                    "xsl:output attributes.",
+            displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
-            defaultValue = "false", displayPriority = 3)
+    @PipelineProperty(
+            description = "If XSLT cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false",
+            displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
 
     /**
      * Used when XSLT is supplied (for xsl:output)
-     * @return
      */
     private String getFeedName() {
         if (feedHolder != null) {
@@ -559,7 +568,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     /**
      * Used when XSLT is supplied (for xsl:output)
-     * @return
      */
     private String getPipelineName() {
         if (pipelineHolder != null) {
@@ -584,7 +592,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         if (truncatedStr != null) {
             int strLen = truncatedStr.length();
             if (strLen > 100) {
-                truncatedStr = String.format("%s..TRUNCATED..%s", truncatedStr.substring(0, 45), truncatedStr.substring(strLen - 45));
+                truncatedStr = String.format("%s..TRUNCATED..%s",
+                        truncatedStr.substring(0, 45),
+                        truncatedStr.substring(strLen - 45));
             }
         } else {
             truncatedStr = "NULL";
@@ -604,7 +614,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         } catch (final RuntimeException e) {
             LOGGER.warn("Ignoring error {}", e.getMessage());
         }
-        return charBuffer != null ? charBuffer.toString() : "";
+        return charBuffer != null
+                ? charBuffer.toString()
+                : "";
     }
 
 

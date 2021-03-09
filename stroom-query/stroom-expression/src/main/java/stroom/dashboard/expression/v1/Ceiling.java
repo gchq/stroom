@@ -16,7 +16,36 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Ceiling.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The rounded value.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Rounds the supplied value up to the next whole number. e.g. ceiling(1.2) " +
+                                "returns 2.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValNumber.class,
+                                description = "The number to round up to the next whole number.")),
+                @FunctionSignature(
+                        description = "Rounds the supplied value up to the next digit keeping the specified " +
+                                "number of decimal places. e.g. ceiling(1.22345, 3) returns 1.224",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = ValNumber.class,
+                                        description = "The number to round up."),
+                                @FunctionArg(
+                                        name = "decimalPlaces",
+                                        argType = ValInteger.class,
+                                        description = "The maximum number of decimal places to round to.")}
+                )})
 class Ceiling extends AbstractRoundingFunction {
+
     static final String NAME = "ceiling";
 
     public Ceiling(final String name) {
@@ -34,6 +63,7 @@ class Ceiling extends AbstractRoundingFunction {
     }
 
     private static class NumericCeiling implements RoundCalculator {
+
         private static final long serialVersionUID = -2414316545075369054L;
 
         @Override
@@ -48,6 +78,7 @@ class Ceiling extends AbstractRoundingFunction {
     }
 
     private static class DecimalPlaceCeiling implements RoundCalculator {
+
         private static final long serialVersionUID = -5893918049538006730L;
 
         private final double multiplier;

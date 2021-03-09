@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.resources.client.ImageResource;
 
 public interface ImageButtonView extends HasClickHandlers, HasMouseDownHandlers {
+
     void setEnabledImage(ImageResource enabledImage);
 
     void setDisabledImage(ImageResource disabledImage);

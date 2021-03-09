@@ -26,6 +26,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_0_0_1__CRT_MS extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_1__CRT_MS.class);
 
     private static final String[] TABLES = {"SYS_GRP", "SYS_ROLE", "SYS_PERM", "SYS_USR", "RK", "ND", "VOL", "DICT",
@@ -52,7 +53,10 @@ public class V5_0_0_1__CRT_MS extends BaseJavaMigration {
         migrate(connection, "IDX_SHRD", "PART_TO_DT", "PART_TO_MS");
     }
 
-    private void migrate(final Connection connection, final String table, final String columnFrom, final String columnTo) throws Exception {
+    private void migrate(final Connection connection,
+                         final String table,
+                         final String columnFrom,
+                         final String columnTo) throws Exception {
         // QUERY already has this column.
         if (!("QUERY".equals(table) && columnTo.equals("CRT_MS"))) {
             try (final Statement statement = connection.createStatement()) {

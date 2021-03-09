@@ -16,6 +16,8 @@
 
 package stroom.statistics.impl.sql.rollup;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.sql.shared.StatisticField;
@@ -29,60 +31,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
+//Utility functions without side effects (at least by design)
+@AutoLogged(OperationType.UNLOGGED)
+@Singleton
 class StatisticRollupResourceImpl implements StatisticRollupResource {
+    final Provider<StatisticRollupService> statisticRollupServiceProvider;
+
+    @Inject
+    StatisticRollupResourceImpl(final Provider<StatisticRollupService> statisticRollupServiceProvider) {
+        this.statisticRollupServiceProvider = statisticRollupServiceProvider;
+    }
+
     @Override
     public List<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
-        final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);
-        final List<CustomRollUpMask> masks = new ArrayList<>();
-        for (final List<Integer> perm : perms) {
-            masks.add(new CustomRollUpMask(perm));
-        }
-        return masks;
+        return statisticRollupServiceProvider.get().bitMaskPermGeneration(fieldCount);
     }
 
     @Override
     public List<CustomRollUpMaskFields> bitMaskConversion(final List<Short> maskValues) {
-        final List<CustomRollUpMaskFields> customRollUpMaskFieldsList = new ArrayList<>();
-
-        int id = 0;
-        for (final Short maskValue : maskValues) {
-            final Set<Integer> tagPositions = RollUpBitMask.fromShort(maskValue).getTagPositions();
-            customRollUpMaskFieldsList.add(new CustomRollUpMaskFields(id++, maskValue, tagPositions));
-        }
-        Collections.sort(customRollUpMaskFieldsList);
-        return customRollUpMaskFieldsList;
+        return statisticRollupServiceProvider.get().bitMaskConversion(maskValues);
     }
 
     @Override
     public StatisticsDataSourceData fieldChange(final StatisticsDataSourceFieldChangeRequest request) {
-        final StatisticsDataSourceData oldStatisticsDataSourceData = request.getOldStatisticsDataSourceData();
-        final StatisticsDataSourceData newStatisticsDataSourceData = request.getNewStatisticsDataSourceData();
-        final StatisticsDataSourceData copy = newStatisticsDataSourceData.deepCopy();
-
-        if (!oldStatisticsDataSourceData.getFields()
-                .equals(newStatisticsDataSourceData.getFields())) {
-            final Map<Integer, Integer> newToOldFieldPositionMap = new HashMap<>();
-
-            int pos = 0;
-            for (final StatisticField newField : newStatisticsDataSourceData.getFields()) {
-                // old position may be null if this is a new field
-                newToOldFieldPositionMap.put(pos++,
-                        oldStatisticsDataSourceData.getFieldPositionInList(newField.getFieldName()));
-            }
-
-            copy.clearCustomRollUpMask();
-
-            for (final CustomRollUpMask oldCustomRollUpMask : oldStatisticsDataSourceData.getCustomRollUpMasks()) {
-                final RollUpBitMask oldRollUpBitMask = RollUpBitMask
-                        .fromTagPositions(oldCustomRollUpMask.getRolledUpTagPosition());
-
-                final RollUpBitMask newRollUpBitMask = oldRollUpBitMask.convert(newToOldFieldPositionMap);
-
-                copy.addCustomRollUpMask(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
-            }
-        }
-
-        return copy;
+        return statisticRollupServiceProvider.get().fieldChange(request.getOldStatisticsDataSourceData(),
+                request.getNewStatisticsDataSourceData());
     }
 }

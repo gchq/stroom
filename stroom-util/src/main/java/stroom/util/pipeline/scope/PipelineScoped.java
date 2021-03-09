@@ -13,4 +13,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @ScopeAnnotation
 public @interface PipelineScoped {
+
 }

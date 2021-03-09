@@ -30,8 +30,8 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
-import javax.inject.Inject;
 import java.time.Instant;
+import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
 

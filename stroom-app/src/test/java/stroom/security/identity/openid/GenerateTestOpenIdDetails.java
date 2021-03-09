@@ -39,15 +39,15 @@ import java.util.regex.Pattern;
  * Used for generating a set of OpenId Connect credentials and a corresponding
  * API key so that stroom-proxy can connect to stroom on first boot.
  * ONLY intended for test/demo purposes.
- *
+ * <p>
  * !!!!!!!!!! WARNING !!!!!!!!!!
- *
+ * <p>
  * If you run this and commit the new creds it will break any existing api keys
  * in any existing test environments that are upgrading and use these default creds.
  * If that happens you will need to delete any user API keys in the UI and recreate them.
  * There is an API key for INTERNAL_PROCESSING_USER which is system generated. You will also
  * need to delete that and reboot so stroom can recreated it.
- *
+ * <p>
  * !!!!!!!!!! WARNING !!!!!!!!!!
  */
 
@@ -108,11 +108,13 @@ public class GenerateTestOpenIdDetails {
 
         final PublicJsonWebKey publicJsonWebKey2 = RsaJsonWebKey.Factory.newPublicJwk(publicKeyAsJsonStr);
 
-        if (!Arrays.equals(publicJsonWebKey.getPublicKey().getEncoded(), publicJsonWebKey2.getPublicKey().getEncoded())) {
+        if (!Arrays.equals(publicJsonWebKey.getPublicKey().getEncoded(),
+                publicJsonWebKey2.getPublicKey().getEncoded())) {
             throw new RuntimeException("Public keys do not match");
         }
 
-        if (!Arrays.equals(publicJsonWebKey.getPrivateKey().getEncoded(), publicJsonWebKey2.getPrivateKey().getEncoded())) {
+        if (!Arrays.equals(publicJsonWebKey.getPrivateKey().getEncoded(),
+                publicJsonWebKey2.getPrivateKey().getEncoded())) {
             throw new RuntimeException("Private keys do not match");
         }
 
@@ -123,17 +125,19 @@ public class GenerateTestOpenIdDetails {
 
         final String generatedCode = "" +
                 "    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--" +
-                "\n    // ALL the content between these dashed lines was generated inserted using" +
+                "\n    // ALL the content between these dashed lines was generated and inserted using" +
                 "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
-                "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_SECRET = \"" + oAuth2Client.getClientSecret() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_URI_PATTERN = \"" + oAuth2Client.getUriPattern() + "\";" +
-
+                "\n    private static final String OAUTH2_CLIENT_ID = \"" +
+                oAuth2Client.getClientId() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_NAME = \"" +
+                oAuth2Client.getName() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_SECRET = \"" +
+                oAuth2Client.getClientSecret() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_URI_PATTERN = \"" +
+                oAuth2Client.getUriPattern() + "\";" +
                 "\n    private static final String PUBLIC_KEY_ID = \"" + publicJsonWebKey.getKeyId() + "\";" +
                 "\n    private static final String PUBLIC_KEY_JSON = \"" + escapedPublicKeyAsJsonStr + "\";" +
-
                 "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
                 "\n    private static final String API_KEY = \"" + apiKey + "\";" +
                 "\n    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--";

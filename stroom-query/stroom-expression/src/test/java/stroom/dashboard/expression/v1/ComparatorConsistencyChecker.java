@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 class ComparatorConsistencyChecker<T> {
+
     @SuppressWarnings("unchecked")
     void check(final List<T> list, final Comparator<T> comparator) {
         final Obj<T>[] objs = new Obj[list.size()];
@@ -70,12 +71,14 @@ class ComparatorConsistencyChecker<T> {
                         if (set.contains(o2)) {
                             final boolean changed = set.addAll(o2.equal);
                             if (changed) {
-                                throw new RuntimeException("Missing equality found between " + o1 + " and " + o2 + ".");
+                                throw new RuntimeException(
+                                        "Missing equality found between " + o1 + " and " + o2 + ".");
                             }
                         } else {
                             for (final Obj<T> o3 : o2.equal) {
                                 if (set.contains(o3)) {
-                                    throw new RuntimeException("Unexpected equality found between " + o1 + " and " + o3 + ".");
+                                    throw new RuntimeException(
+                                            "Unexpected equality found between " + o1 + " and " + o3 + ".");
                                 }
                             }
                         }
@@ -110,7 +113,11 @@ class ComparatorConsistencyChecker<T> {
         }
     }
 
-    private void recurseLess(final Obj<T>[] objs, final Comparator<T> comparator, final int depth, final Obj<T> obj, final Set<Obj<T>> all) {
+    private void recurseLess(final Obj<T>[] objs,
+                             final Comparator<T> comparator,
+                             final int depth,
+                             final Obj<T> obj,
+                             final Set<Obj<T>> all) {
         if (depth < 2) {
             for (final Obj<T> o : obj.less) {
                 boolean changed = all.addAll(o.less);
@@ -123,7 +130,11 @@ class ComparatorConsistencyChecker<T> {
         }
     }
 
-    private void recurseGreater(final Obj<T>[] objs, final Comparator<T> comparator, final int depth, final Obj<T> obj, final Set<Obj<T>> all) {
+    private void recurseGreater(final Obj<T>[] objs,
+                                final Comparator<T> comparator,
+                                final int depth,
+                                final Obj<T> obj,
+                                final Set<Obj<T>> all) {
         if (depth < 2) {
             for (final Obj<T> o : obj.greater) {
                 boolean changed = all.addAll(o.greater);
@@ -199,6 +210,7 @@ class ComparatorConsistencyChecker<T> {
     }
 
     private static class Obj<T> {
+
         final int index;
         final T value;
         final Set<Obj<T>> equal = new HashSet<>();
@@ -216,10 +228,15 @@ class ComparatorConsistencyChecker<T> {
             return "[" + index + " {" + value.getClass().getSimpleName() + "} - " + value.toString() + "]";
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Obj<?> obj = (Obj<?>) o;
             return index == obj.index;
         }

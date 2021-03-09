@@ -102,7 +102,9 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
                     baseMsg + ", due to: [{}] caused by: [{}] (enable DEBUG for full stacktrace)",
                     serviceClassName,
                     e.getMessage(),
-                    cause != null ? cause.getMessage() : "unknown");
+                    cause != null
+                            ? cause.getMessage()
+                            : "unknown");
             LOGGER.debug(baseMsg, serviceClassName, e);
         }
     }

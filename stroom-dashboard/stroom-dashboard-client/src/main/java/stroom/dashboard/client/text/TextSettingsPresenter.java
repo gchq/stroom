@@ -16,12 +16,14 @@
 
 package stroom.dashboard.client.text;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class TextSettingsPresenter extends SettingsPresenter {
+
     @Inject
     public TextSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                  final BasicTextSettingsPresenter basicSettingsPresenter) {

@@ -18,7 +18,9 @@ package stroom.dashboard.expression.v1;
 
 import java.text.ParseException;
 
+@ArchitecturalFunction
 class Brackets extends AbstractFunction {
+
     private Function function;
 
     public Brackets() {

@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 public class DataRetentionTracker {
+
     private final Instant lastRunTime;
     private final String rulesVersion;
 
@@ -25,10 +26,15 @@ public class DataRetentionTracker {
         return rulesVersion;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionTracker that = (DataRetentionTracker) o;
         return lastRunTime.equals(that.lastRunTime) &&
                 rulesVersion.equals(that.rulesVersion);

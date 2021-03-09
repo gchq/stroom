@@ -16,8 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.store.AlreadyClosedException;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -25,16 +23,20 @@ import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.store.AlreadyClosedException;
+
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Pool API into open index shards.
  */
 @Singleton
 public class IndexerImpl implements Indexer {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexerImpl.class);
     private static final int MAX_ATTEMPTS = 10000;
 
@@ -45,7 +47,7 @@ public class IndexerImpl implements Indexer {
 
     @Inject
     public IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
-                final IndexShardManager indexShardManager) {
+                       final IndexShardManager indexShardManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
     }

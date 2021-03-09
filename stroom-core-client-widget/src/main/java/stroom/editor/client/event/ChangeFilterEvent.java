@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ChangeFilterEvent extends GwtEvent<ChangeFilterEvent.ChangeFilterHandler> {
+
     public static final GwtEvent.Type<ChangeFilterHandler> TYPE = new GwtEvent.Type<>();
 
     protected ChangeFilterEvent() {
@@ -43,6 +44,7 @@ public class ChangeFilterEvent extends GwtEvent<ChangeFilterEvent.ChangeFilterHa
     }
 
     public interface ChangeFilterHandler extends EventHandler {
+
         void onShowFilter(ChangeFilterEvent event);
     }
 }

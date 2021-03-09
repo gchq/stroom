@@ -19,5 +19,6 @@ package stroom.config.global.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ManageGlobalPropertyUiHandlers extends UiHandlers {
+
     void changeNameFilter(String name);
 }

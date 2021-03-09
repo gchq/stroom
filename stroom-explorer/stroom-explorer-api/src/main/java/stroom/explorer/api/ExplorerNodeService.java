@@ -25,9 +25,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExplorerNodeService {
+
     void createNode(DocRef docRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
 
-    void copyNode(DocRef sourceDocRef, DocRef destDocRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
+    void copyNode(DocRef sourceDocRef,
+                  DocRef destDocRef,
+                  DocRef destinationFolderRef,
+                  PermissionInheritance permissionInheritance);
 
     void moveNode(DocRef docRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
 

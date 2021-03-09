@@ -16,6 +16,8 @@
 
 package stroom.cell.tickbox.client;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -32,7 +34,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import stroom.cell.tickbox.shared.TickBoxState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +43,7 @@ import java.util.Set;
  * toggled using the ENTER key as well as via mouse click.
  */
 public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState> {
+
     private static final Appearance DEFAULT_APPEARANCE = new DefaultAppearance();
     private final Appearance appearance;
     private final boolean dependsOnSelection;
@@ -54,7 +56,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
      * @param dependsOnSelection true if the cell depends on the selection state
      * @param handlesSelection   true if the cell modifies the selection state
      */
-    private TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection,
+    private TickBoxCell(final Appearance appearance,
+                        final boolean dependsOnSelection,
+                        final boolean handlesSelection,
                         final Set<String> consumedEvents) {
         super(consumedEvents);
         this.appearance = appearance;
@@ -67,11 +71,16 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         return create(DEFAULT_APPEARANCE, dependsOnSelection, handlesSelection, true);
     }
 
-    public static TickBoxCell create(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection) {
+    public static TickBoxCell create(final Appearance appearance,
+                                     final boolean dependsOnSelection,
+                                     final boolean handlesSelection) {
         return create(appearance, dependsOnSelection, handlesSelection, true);
     }
 
-    public static TickBoxCell create(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection, final boolean clickable) {
+    public static TickBoxCell create(final Appearance appearance,
+                                     final boolean dependsOnSelection,
+                                     final boolean handlesSelection,
+                                     final boolean clickable) {
         final Set<String> consumedEvents = new HashSet<>();
         if (clickable) {
             consumedEvents.add("click");
@@ -105,7 +114,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             final String type = event.getType();
 
             final Element target = event.getEventTarget().cast();
-            if ("IMG".equalsIgnoreCase(target.getTagName()) && clickable && "click".equals(type) && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if ("IMG".equalsIgnoreCase(target.getTagName())
+                    && clickable
+                    && "click".equals(type)
+                    && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 TickBoxState state = value;
                 SafeHtml image = appearance.getTick();
 
@@ -160,6 +172,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
      * The appearance used to render this Cell.
      */
     public interface Appearance {
+
         /**
          * Render the button and its contents.
          *
@@ -180,6 +193,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class DefaultAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -249,18 +263,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBox.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tick();
 
             ImageResource halfTick();
@@ -273,6 +290,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class NoBorderAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -342,18 +360,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBoxWithMargin.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tickNB();
 
             ImageResource halfTickNB();
@@ -366,6 +387,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class MarginAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -435,18 +457,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBoxWithMargin.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tick();
 
             ImageResource halfTick();

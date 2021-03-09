@@ -92,5 +92,6 @@ public class ItemSelectionViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, ItemSelectionViewImpl> {
+
     }
 }

@@ -35,6 +35,7 @@ import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 import com.google.inject.Singleton;
 
 public class DashboardModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();

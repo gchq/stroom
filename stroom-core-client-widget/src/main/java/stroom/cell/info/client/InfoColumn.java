@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 
 public abstract class InfoColumn<T> extends Column<T, SvgPreset> {
+
     public InfoColumn() {
         super(new SvgCell());
     }

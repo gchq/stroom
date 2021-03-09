@@ -53,7 +53,6 @@ import stroom.util.logging.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,11 +68,13 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * Script to create some base data for testing.
  */
 public final class SetupSampleDataBean {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupSampleDataBean.class);
 
     public static final String ROOT_DIR_NAME = "samples";
@@ -87,7 +88,8 @@ public final class SetupSampleDataBean {
     // 1,000 is just over 1hr at 5000ms intervals
     private static final int STATS_ITERATIONS_SMALL = 1_000;
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
-    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-app/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
+    private static final String STATS_COUNT_API_DATA_FILE =
+            "./stroom-app/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
 
     private static final int LOAD_CYCLES = 10;
 
@@ -176,7 +178,7 @@ public final class SetupSampleDataBean {
         final Path statisticsSamplesDir = Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources")
                 .resolve(ROOT_DIR_NAME);
 
-        final Path[] rootDirs = new Path[] {
+        final Path[] rootDirs = new Path[]{
                 coreServerSamplesDir,
                 statisticsSamplesDir};
 
@@ -280,14 +282,14 @@ public final class SetupSampleDataBean {
 
     private void checkVolumesExist() {
         final List<IndexVolume> indexVolumes = indexVolumeGroupService.getNames()
-                        .stream()
+                .stream()
                 .flatMap(groupName -> indexVolumeService.find(new ExpressionCriteria()).stream())
                 .collect(Collectors.toList());
 
         LOGGER.info("Checking available index volumes, found:\n{}",
                 indexVolumes.stream()
-                .map(IndexVolume::getPath)
-                .collect(Collectors.joining("\n")));
+                        .map(IndexVolume::getPath)
+                        .collect(Collectors.joining("\n")));
 
         final List<FsVolume> dataVolumes = fsVolumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         LOGGER.info("Checking available data volumes, found:\n{}",

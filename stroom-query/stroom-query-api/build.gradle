@@ -28,6 +28,8 @@ dependencies {
 //    compile libs.dropwizard_core // should be flagged
 //    testCompile libs.dropwizard_core // should be flagged
 
+    testCompile project(':stroom-util')
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
 

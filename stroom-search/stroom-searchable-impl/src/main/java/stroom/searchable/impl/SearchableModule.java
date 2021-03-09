@@ -23,11 +23,12 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class SearchableModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SearchableProvider.class).to(SearchableProviderImpl.class);
         bind(ExplorerDecorator.class).to(SearchableProviderImpl.class);
         RestResourcesBinder.create(binder())
-                .bind(SearchableResource.class);
+                .bind(SearchableResourceImpl.class);
     }
 }

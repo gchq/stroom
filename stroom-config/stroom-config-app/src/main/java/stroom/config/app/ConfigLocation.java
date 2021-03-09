@@ -1,14 +1,15 @@
 package stroom.config.app;
 
-import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 /**
  * Allows to use guice to pass round the config location
  */
 @Singleton
 public class ConfigLocation {
+
     private final Path configFilePath;
 
     public ConfigLocation(final Path configFilePath) {

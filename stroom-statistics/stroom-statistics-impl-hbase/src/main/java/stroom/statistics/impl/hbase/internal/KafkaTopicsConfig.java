@@ -1,12 +1,14 @@
 package stroom.statistics.impl.hbase.internal;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class KafkaTopicsConfig extends AbstractConfig {
+
     private String count = "statisticEvents-Count";
     private String value = "statisticEvents-Value";
 

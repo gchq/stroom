@@ -16,11 +16,13 @@
 
 package stroom.menubar.client.view;
 
-import com.google.gwt.user.client.ui.Widget;
 import stroom.item.client.view.ListViewImpl;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
 
+import com.google.gwt.user.client.ui.Widget;
+
 public class MenubarViewImpl extends ListViewImpl implements MenubarView {
+
     @Override
     public Widget asWidget() {
         final Widget widget = super.asWidget();

@@ -49,6 +49,7 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
+
     private final Store streamStore;
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
@@ -138,7 +139,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(
-            description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
+            description = "The feed that output stream should be written to. If not specified the feed the input " +
+                    "stream belongs to will be used.",
             displayPriority = 2)
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     public void setFeed(final DocRef feedRef) {
@@ -166,7 +168,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(
-            description = "Should the output stream be marked with indexed segments to allow fast access to individual records?",
+            description = "Should the output stream be marked with indexed segments to allow fast access to " +
+                    "individual records?",
             defaultValue = "true",
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {

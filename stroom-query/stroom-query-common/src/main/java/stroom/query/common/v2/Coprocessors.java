@@ -10,7 +10,6 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,8 +19,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 public class Coprocessors implements Iterable<Coprocessor> {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
     private final Map<Integer, Coprocessor> coprocessorMap;
@@ -44,19 +45,22 @@ public class Coprocessors implements Iterable<Coprocessor> {
     }
 
     public boolean readPayloads(final Input input) {
-        boolean partialSuccess = false;
+        // If the remote node hasn't started yet it will return 0 results so by default we need to tell the calling
+        // process that we still want to keep polling by returning true by default.
+        boolean allAccepted = true;
 
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
+            allAccepted = false;
             final int coprocessorId = input.readInt();
             final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
-            final boolean success = coprocessor.readPayload(input);
-            if (success) {
-                partialSuccess = true;
+            final boolean accepted = coprocessor.readPayload(input);
+            if (accepted) {
+                allAccepted = true;
             }
         }
 
-        return partialSuccess;
+        return allAccepted;
     }
 
     public void writePayloads(final Output output) {

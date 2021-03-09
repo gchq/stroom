@@ -20,7 +20,17 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = QueryParams.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        signatures = @FunctionSignature(
+                description = "Returns all the query parameters for the current query, e.g. 'user=jbloggs site=HQ'.",
+                returnDescription = "All query parameters as a space delimited string.",
+                args = {}))
 class QueryParams extends AbstractFunction {
+
     private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
 
     static final String NAME = "params";

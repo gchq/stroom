@@ -1,11 +1,12 @@
 package stroom.document.client;
 
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Singleton;
 
 @Singleton
 public class DocumentPluginRegistry {
+
     private final Map<String, DocumentPlugin<?>> pluginMap = new HashMap<>();
 
     public void register(String type, DocumentPlugin<?> plugin) {

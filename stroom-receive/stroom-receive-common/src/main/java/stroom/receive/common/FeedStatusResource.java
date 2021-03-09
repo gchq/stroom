@@ -16,51 +16,35 @@
 
 package stroom.receive.common;
 
-import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "feedStatus - /v1")
+@Tag(name = "Feed Status")
 @Path(FeedStatusResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class FeedStatusResource implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
+public interface FeedStatusResource extends RestResource {
 
-    private final FeedStatusService feedStatusService;
-
-    @Inject
-    public FeedStatusResource(final FeedStatusService feedStatusService) {
-        this.feedStatusService = feedStatusService;
-    }
+    String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
 
     @POST
     @Path("/getFeedStatus")
-    @Timed
-    @ApiOperation(
-            value = "Submit a request to get the status of a feed",
-            response = GetFeedStatusResponse.class)
-    // TODO This should really be a GET with the feedName and senderDn as params
-    public GetFeedStatusResponse getFeedStatus(@ApiParam("GetFeedStatusRequest") final GetFeedStatusRequest request) {
-        return feedStatusService.getFeedStatus(request);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
-    }
+    @Operation(
+            summary = "Submit a request to get the status of a feed",
+            operationId = "getFeedStatus")
+        // TODO This should really be a GET with the feedName and senderDn as params
+    GetFeedStatusResponse getFeedStatus(
+            @Parameter(description = "GetFeedStatusRequest", required = true) GetFeedStatusRequest request);
 }

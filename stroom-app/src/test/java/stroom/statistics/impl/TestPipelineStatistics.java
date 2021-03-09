@@ -16,18 +16,20 @@
 
 package stroom.statistics.impl;
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.task.api.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 
 class TestPipelineStatistics {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPipelineStatistics.class);
 
     @Inject

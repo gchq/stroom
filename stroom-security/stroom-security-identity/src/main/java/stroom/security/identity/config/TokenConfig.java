@@ -70,12 +70,15 @@ public class TokenConfig extends AbstractConfig {
     public TokenConfig() {
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
-    public TokenConfig(@JsonProperty("timeUntilExpirationForUserToken") final StroomDuration timeUntilExpirationForUserToken,
-                       @JsonProperty("timeUntilExpirationForEmailResetToken") final StroomDuration timeUntilExpirationForEmailResetToken,
-                       @JsonProperty("defaultApiKeyExpiryInMinutes") final Long defaultApiKeyExpiryInMinutes,
-                       @JsonProperty("jwsIssuer") final String jwsIssuer,
-                       @JsonProperty("algorithm") final String algorithm) {
+    public TokenConfig(
+            @JsonProperty("timeUntilExpirationForUserToken") final StroomDuration timeUntilExpirationForUserToken,
+            @JsonProperty("timeUntilExpirationForEmailResetToken") final StroomDuration timeUntilExpirationForEmailResetToken,
+            @JsonProperty("defaultApiKeyExpiryInMinutes") final Long defaultApiKeyExpiryInMinutes,
+            @JsonProperty("jwsIssuer") final String jwsIssuer,
+            @JsonProperty("algorithm") final String algorithm) {
+
         this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
         this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
         this.defaultApiKeyExpiryInMinutes = defaultApiKeyExpiryInMinutes;

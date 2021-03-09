@@ -4,25 +4,25 @@ import java.util.Optional;
 
 /**
  * Defines the state of a progress bar that has a sliding window i.e.
- *
+ * <p>
  * -----------------------------------------------------
- *            ===================
+ * ===================
  * -----------------------------------------------------
  * ^          ^                 ^                      ^
  * a          b                 c                      d
- *
+ * <p>
  * a lowerBound
  * b rangeFromInc
  * c rangeToInc
  * d upperBound
- *
+ * <p>
  * All values are in the domain units, e.g. if the progress is representing
  * the display of a range of characters in a file then all values would be
  * char offsets.
- *
+ * <p>
  * It can be user to represent a traditional progress bar if rangeFromInc is equal
  * to lowerBound.
- *
+ * <p>
  * -----------------------------------------------------
  * ==============================
  * -----------------------------------------------------
@@ -52,7 +52,7 @@ public class Progress {
 
     public static Progress simpleProgress(final double progress,
                                           final double upperBound) {
-        return new Progress(0,  upperBound, 0, progress);
+        return new Progress(0, upperBound, 0, progress);
     }
 
     public static Progress boundedRange(final double upperBound,

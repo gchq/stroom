@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ResizeSimplePanel extends SimplePanel implements RequiresResize, ProvidesResize {
+
     @Override
     public void onResize() {
         final Widget widget = getWidget();

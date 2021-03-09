@@ -20,6 +20,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.ModelStringUtil;
 
 public class FrequencyScheduler implements Scheduler {
+
     private final long interval;
     private volatile long intervalToUse;
     private volatile long lastExecution;

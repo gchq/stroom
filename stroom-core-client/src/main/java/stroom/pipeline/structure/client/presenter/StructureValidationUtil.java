@@ -19,10 +19,13 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.pipeline.shared.data.PipelineElementType;
 
 public class StructureValidationUtil {
+
     private StructureValidationUtil() {
     }
 
-    public static boolean isValidChildType(final PipelineElementType parentType, final PipelineElementType childType, final int currentChildCount) {
+    public static boolean isValidChildType(final PipelineElementType parentType,
+                                           final PipelineElementType childType,
+                                           final int currentChildCount) {
         if (parentType.hasRole(PipelineElementType.ROLE_WRITER)) {
             if (currentChildCount > 0) {
                 return false;

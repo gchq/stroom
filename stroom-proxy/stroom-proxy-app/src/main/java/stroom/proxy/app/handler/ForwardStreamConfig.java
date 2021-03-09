@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ForwardStreamConfig {
+
     private boolean isForwardingEnabled = false;
     private String userAgent;
     private List<ForwardDestinationConfig> forwardDestinations = new ArrayList<>();

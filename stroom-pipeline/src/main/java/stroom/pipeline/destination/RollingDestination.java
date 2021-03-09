@@ -16,10 +16,11 @@
 
 package stroom.pipeline.destination;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.scheduler.SimpleCron;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public abstract class RollingDestination implements Destination {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestination.class);
 
     private static final int ONE_MINUTE = 60000;
@@ -217,7 +219,9 @@ public abstract class RollingDestination implements Destination {
 
     @Override
     public String toString() {
-        return (key != null) ? key.toString() : null;
+        return (key != null)
+                ? key.toString()
+                : null;
     }
 
     /**

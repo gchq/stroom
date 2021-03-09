@@ -1,7 +1,5 @@
 package stroom.explorer.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -10,8 +8,12 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +21,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class ExplorerNodeServiceImpl implements ExplorerNodeService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerNodeServiceImpl.class);
 
     // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
@@ -36,16 +40,21 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private final ExplorerTreeDao explorerTreeDao;
     private final DocumentPermissionService documentPermissionService;
+    private final SecurityContext securityContext;
 
     @Inject
     ExplorerNodeServiceImpl(final ExplorerTreeDao explorerTreeDao,
-                            final DocumentPermissionService documentPermissionService) {
+                            final DocumentPermissionService documentPermissionService,
+                            final SecurityContext securityContext) {
         this.explorerTreeDao = explorerTreeDao;
         this.documentPermissionService = documentPermissionService;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public void createNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void createNode(final DocRef docRef,
+                           final DocRef destinationFolderRef,
+                           final PermissionInheritance permissionInheritance) {
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -76,7 +85,10 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public void copyNode(final DocRef sourceDocRef, final DocRef destDocRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void copyNode(final DocRef sourceDocRef,
+                         final DocRef destDocRef,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -88,19 +100,23 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         try {
             switch (perms) {
                 case NONE:
-                    // Ignore original permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    // Ignore original permissions, ignore permissions of the destination folder,
+                    // just make the new item owned by the current user.
                     addDocumentPermissions(null, destDocRef, true, true);
                     break;
                 case SOURCE:
-                    // Copy permissions from the original, ignore permissions of the destination folder, and make the new item owned by the current user.
+                    // Copy permissions from the original, ignore permissions of the destination
+                    // folder, and make the new item owned by the current user.
                     addDocumentPermissions(sourceDocRef, destDocRef, true, true);
                     break;
                 case DESTINATION:
-                    // Ignore permissions of the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Ignore permissions of the original, add permissions of the destination folder,
+                    // and make the new item owned by the current user.
                     addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
                 case COMBINED:
-                    // Copy permissions from the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Copy permissions from the original, add permissions of the destination folder,
+                    // and make the new item owned by the current user.
                     addDocumentPermissions(sourceDocRef, destDocRef, true, true);
                     addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
@@ -116,7 +132,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public void moveNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void moveNode(final DocRef docRef,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -128,7 +146,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         try {
             switch (perms) {
                 case NONE:
-                    // Remove all current permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    // Remove all current permissions, ignore permissions of the destination folder, just make the
+                    // new item owned by the current user.
                     clearDocumentPermissions(docRef);
                     addDocumentPermissions(null, docRef, true, true);
                     break;
@@ -136,12 +155,14 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     // We are keeping the permissions that we already have so do nothing.
                     break;
                 case DESTINATION:
-                    // Remove all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Remove all current permissions, add permissions of the destination folder, and make the new
+                    // item owned by the current user.
                     clearDocumentPermissions(docRef);
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
-                    // Keep all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Keep all current permissions, add permissions of the destination folder, and make the new
+                    // item owned by the current user.
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 default:
@@ -203,8 +224,13 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
-        return getNodeForDocRef(docRef)
-                .map(this::createExplorerNode);
+        // Only return entries the user has permission to see.
+        if (docRef != null && securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
+            return getNodeForDocRef(docRef)
+                    .map(this::createExplorerNode);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

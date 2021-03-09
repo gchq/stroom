@@ -17,8 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.ProcessingState;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -26,6 +26,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Optional;
 
 public interface ProcessorService extends HasIntCrud<Processor> {
+
     Processor create(DocRef pipelineRef, boolean enabled);
 
     Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled);

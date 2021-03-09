@@ -27,11 +27,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
+
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
 
     private TabData firstTab;
     private TabData selectedTab;
-    private boolean firstShowing = true;
+    private final boolean firstShowing = true;
 
     @Inject
     public LinkTabsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {

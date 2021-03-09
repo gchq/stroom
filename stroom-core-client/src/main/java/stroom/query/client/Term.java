@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public final class Term extends Item {
+
     private String field;
     private Condition condition;
     private String value;

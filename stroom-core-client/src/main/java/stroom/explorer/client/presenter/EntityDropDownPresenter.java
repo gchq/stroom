@@ -27,6 +27,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
+
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
     private boolean enabled = true;
 
@@ -41,7 +42,8 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> changeSelection(event.getSelectedItem())));
+        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event ->
+                changeSelection(event.getSelectedItem())));
     }
 
     public void setIncludedTypes(final String... includedTypes) {

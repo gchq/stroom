@@ -25,12 +25,13 @@ import stroom.util.entityevent.EntityEventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Set;
 
 @Singleton
 class UserAppPermissionServiceImpl implements UserAppPermissionService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionServiceImpl.class);
 
     private static final Set<String> ALL_PERMISSIONS = Set.of(PermissionNames.PERMISSIONS);

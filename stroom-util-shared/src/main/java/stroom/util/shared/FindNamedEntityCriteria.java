@@ -25,6 +25,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public abstract class FindNamedEntityCriteria extends BaseCriteria {
+
     public static final String FIELD_NAME = "Name";
 
     @JsonProperty
@@ -41,7 +42,7 @@ public abstract class FindNamedEntityCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindNamedEntityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                   @JsonProperty("sortList") final List<Sort> sortList,
+                                   @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                    @JsonProperty("name") final StringCriteria name) {
         super(pageRequest, sortList);
         this.name = name;

@@ -25,15 +25,16 @@ import stroom.db.util.JooqUtil;
 
 import org.jooq.Condition;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 
 public class ActivityDaoImpl implements ActivityDao {
+
     private final ActivityDbConnProvider activityDbConnProvider;
     private final GenericDao<ActivityRecord, Activity, Integer> genericDao;
 

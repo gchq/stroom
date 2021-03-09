@@ -44,16 +44,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DocumentPermissionsPresenter
         extends MyPresenterWidget<DocumentPermissionsView> {
+
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private static final Map<String, List<String>> ALL_PERMISSIONS_CACHE = new HashMap<>();
@@ -66,12 +67,14 @@ public class DocumentPermissionsPresenter
     private Changes changes = new Changes(new HashMap<>(), new HashMap<>());
 
     @Inject
-    public DocumentPermissionsPresenter(final EventBus eventBus,
-                                        final DocumentPermissionsView view,
-                                        final LinkTabsPresenter tabPresenter,
-                                        final RestFactory restFactory,
-                                        final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider,
-                                        final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
+    public DocumentPermissionsPresenter(
+            final EventBus eventBus,
+            final DocumentPermissionsView view,
+            final LinkTabsPresenter tabPresenter,
+            final RestFactory restFactory,
+            final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider,
+            final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
+
         super(eventBus, view);
         this.tabPresenter = tabPresenter;
         this.restFactory = restFactory;
@@ -112,7 +115,8 @@ public class DocumentPermissionsPresenter
                 final Rest<DocumentPermissions> rest = restFactory.create();
                 rest
                         .onSuccess(documentPermissions -> {
-                            // We want to wipe existing permissions, which means updating the removeSet on the changeSet.
+                            // We want to wipe existing permissions, which means updating the removeSet on the
+                            // changeSet.
                             final Map<String, Set<String>> permissionsToRemove = new HashMap<>();
                             permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getPermissions());
                             permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getPermissions());
@@ -121,8 +125,16 @@ public class DocumentPermissionsPresenter
                             changes = new Changes(documentPermissions.getPermissions(), permissionsToRemove);
 
                             // We need to set the document permissions so that what's been changed is visible.
-                            usersPresenter.setDocumentPermissions(allPermissions, documentPermissions, false, changes);
-                            groupsPresenter.setDocumentPermissions(allPermissions, documentPermissions, true, changes);
+                            usersPresenter.setDocumentPermissions(
+                                    allPermissions,
+                                    documentPermissions,
+                                    false,
+                                    changes);
+                            groupsPresenter.setDocumentPermissions(
+                                    allPermissions,
+                                    documentPermissions,
+                                    true,
+                                    changes);
                         })
                         .call(DOC_PERMISSION_RESOURCE)
                         .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
@@ -136,8 +148,16 @@ public class DocumentPermissionsPresenter
             final Rest<DocumentPermissions> rest = restFactory.create();
             rest
                     .onSuccess(documentPermissions -> {
-                        usersPresenter.setDocumentPermissions(allPermissions, documentPermissions, false, changes);
-                        groupsPresenter.setDocumentPermissions(allPermissions, documentPermissions, true, changes);
+                        usersPresenter.setDocumentPermissions(
+                                allPermissions,
+                                documentPermissions,
+                                false,
+                                changes);
+                        groupsPresenter.setDocumentPermissions(
+                                allPermissions,
+                                documentPermissions,
+                                true,
+                                changes);
 
                         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                             @Override
@@ -163,9 +183,19 @@ public class DocumentPermissionsPresenter
 
                         PopupSize popupSize;
                         if (DocumentTypes.isFolder(explorerNode.getType())) {
-                            popupSize = new PopupSize(384, 664, 384, 664, true);
+                            popupSize = new PopupSize(
+                                    384,
+                                    664,
+                                    384,
+                                    664,
+                                    true);
                         } else {
-                            popupSize = new PopupSize(384, 500, 384, 500, true);
+                            popupSize = new PopupSize(
+                                    384,
+                                    500,
+                                    384,
+                                    500,
+                                    true);
                         }
 
                         ShowPopupEvent.fire(
@@ -194,6 +224,7 @@ public class DocumentPermissionsPresenter
     }
 
     public interface DocumentPermissionsView extends View {
+
         void setTabsView(View view);
 
         ItemListBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();

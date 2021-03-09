@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FSPersistenceConfig {
+
     private String path;
 
     @JsonProperty

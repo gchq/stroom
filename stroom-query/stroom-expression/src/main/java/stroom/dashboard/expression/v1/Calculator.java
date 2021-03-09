@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 
 abstract class Calculator implements Serializable {
+
     private static final long serialVersionUID = 7429374303179048909L;
 
     Val calc(final Val current, final Val value) {

@@ -1,12 +1,18 @@
 import * as React from "react";
-import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { FormFieldState, FormField } from "./FormField";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { FormField, FormFieldState } from "./FormField";
 import { FormikProps } from "formik";
 import { createFormFieldState } from "./util";
-import { useAccountResource } from "../Account/api";
-import { SearchAccountRequest } from "../Account/api/types";
 import { AsyncTypeahead, Hint } from "react-bootstrap-typeahead";
 import { Form } from "react-bootstrap";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
+import { AccountResultPage, SearchAccountRequest } from "api/stroom";
 
 export interface UserSelectControlProps {
   className?: string;
@@ -37,6 +43,7 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
   const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
+    "allow-focus",
     className,
     touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
@@ -68,27 +75,36 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
   //   </div>
   // );
 
-  const { search } = useAccountResource();
+  const { exec } = useStroomApi();
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState([]);
 
-  const handleSearch = (query) => {
-    setIsLoading(true);
+  const handleSearch = useCallback(
+    (query) => {
+      setIsLoading(true);
 
-    const request: SearchAccountRequest = {
-      quickFilter: query,
-    };
+      const request: SearchAccountRequest = {
+        quickFilter: query,
+      };
 
-    search(request).then((result) => {
-      const options = result.values.map((i) => ({
-        id: i.id,
-        userId: i.userId,
-      }));
+      exec(
+        (api) => api.account.searchAccounts(request),
+        (result: AccountResultPage) => {
+          const options = result.values.map((i) => ({
+            id: i.id,
+            userId: i.userId,
+          }));
 
-      setOptions(options);
-      setIsLoading(false);
-    });
-  };
+          setOptions(options);
+          setIsLoading(false);
+        },
+      );
+    },
+    [exec],
+  );
+
+  // Load users on init.
+  useEffect(() => handleSearch(""), [handleSearch]);
 
   const renderInput = ({ inputRef, referenceElementRef, ...inputProps }) => (
     <div className="FormField__input-container">
@@ -134,7 +150,7 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
         ref={inputEl}
         isLoading={isLoading}
         labelKey="userId"
-        minLength={3}
+        minLength={0}
         onSearch={handleSearch}
         options={options}
         renderInput={renderInput}

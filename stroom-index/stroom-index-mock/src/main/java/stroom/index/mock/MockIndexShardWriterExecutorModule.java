@@ -21,6 +21,7 @@ import stroom.index.impl.IndexShardWriterExecutorProvider;
 import com.google.inject.AbstractModule;
 
 public class MockIndexShardWriterExecutorModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(IndexShardWriterExecutorProvider.class).to(MockIndexShardWriterExecutorProvider.class);

@@ -12,13 +12,14 @@ import java.util.function.Consumer;
 
 @JsonInclude(Include.NON_NULL)
 public class OverrideValue<T> {
+
     private static final OverrideValue<?> UNSET = new OverrideValue<>(false, null);
     private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);
 
     @JsonProperty
-    private boolean hasOverride;
+    private final boolean hasOverride;
     @JsonProperty
-    private T value;
+    private final T value;
 
     @SuppressWarnings("unchecked")
     public static <T> OverrideValue<T> unSet(final Class<T> type) {
@@ -41,8 +42,8 @@ public class OverrideValue<T> {
 
     // pkg private so GWT can see it
     @JsonCreator
-    OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
-                  final @JsonProperty("value") T value) {
+    OverrideValue(@JsonProperty("hasOverride") final boolean hasOverride,
+                  @JsonProperty("value") final T value) {
         this.hasOverride = hasOverride;
         this.value = value;
     }
@@ -52,7 +53,7 @@ public class OverrideValue<T> {
         return hasOverride;
     }
 
-    T getValue() {
+    public T getValue() {
         return value;
     }
 
@@ -111,10 +112,15 @@ public class OverrideValue<T> {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final OverrideValue<?> overrideValue = (OverrideValue<?>) o;
         return hasOverride == overrideValue.hasOverride &&
                 Objects.equals(value, overrideValue.value);

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public interface CompletionState extends Consumer<Long> {
+
     void complete();
 
     boolean isComplete();

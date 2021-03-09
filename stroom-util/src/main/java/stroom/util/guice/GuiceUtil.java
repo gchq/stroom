@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class GuiceUtil {
+
     private GuiceUtil() {
     }
 
@@ -35,7 +36,7 @@ public class GuiceUtil {
 
         public MultiBinderBuilder<T_INTERFACE> addBindings(final Class<? extends T_INTERFACE>... implementationTypes) {
             Arrays.stream(implementationTypes)
-                .forEach(implementationType -> multibinder.addBinding().to(implementationType));
+                    .forEach(implementationType -> multibinder.addBinding().to(implementationType));
             return this;
         }
 
@@ -51,11 +52,11 @@ public class GuiceUtil {
 
     @SuppressWarnings("unchecked")
     public static <K, V> TypeLiteral<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
-        return (TypeLiteral<Map<K, V>>)TypeLiteral.get(Types.mapOf(keyType, valueType));
+        return (TypeLiteral<Map<K, V>>) TypeLiteral.get(Types.mapOf(keyType, valueType));
     }
 
     @SuppressWarnings("unchecked")
     public static <T> TypeLiteral<List<T>> listOf(Class<T> type) {
-        return (TypeLiteral<List<T>>)TypeLiteral.get(Types.listOf(type));
+        return (TypeLiteral<List<T>>) TypeLiteral.get(Types.listOf(type));
     }
 }

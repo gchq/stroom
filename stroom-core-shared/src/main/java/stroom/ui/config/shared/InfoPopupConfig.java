@@ -1,23 +1,26 @@
 package stroom.ui.config.shared;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidRegex;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidRegex;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "validationRegex"})
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig {
+
     @JsonProperty
-    @JsonPropertyDescription("If you would like users to provide some query info when performing a query set this property to true.")
+    @JsonPropertyDescription("If you would like users to provide some query info when performing a query " +
+            "set this property to true.")
     private boolean enabled;
     @JsonProperty
     @JsonPropertyDescription("The title of the query info popup.")
@@ -84,14 +87,19 @@ public class InfoPopupConfig extends AbstractConfig {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final InfoPopupConfig that = (InfoPopupConfig) o;
         return enabled == that.enabled &&
-            Objects.equals(title, that.title) &&
-            Objects.equals(validationRegex, that.validationRegex);
+                Objects.equals(title, that.title) &&
+                Objects.equals(validationRegex, that.validationRegex);
     }
 
     @Override

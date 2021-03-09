@@ -17,8 +17,8 @@
 package stroom.headless;
 
 import stroom.content.ContentPacks;
-import stroom.test.ContentPackDownloader;
 import stroom.test.common.ComparisonHelper;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
@@ -44,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 class TestHeadless {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
@@ -51,7 +52,8 @@ class TestHeadless {
 
     @Test
     void test(@TempDir Path newTempDir) throws IOException {
-//        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
         // Make sure the new temp directory is empty.
         if (Files.isDirectory(newTempDir)) {
@@ -72,7 +74,9 @@ class TestHeadless {
         Files.createDirectories(inputDirPath);
         Files.createDirectories(outputDirPath);
 
-        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
+        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples")
+                .toAbsolutePath()
+                .normalize();
         final Path outputFilePath = outputDirPath.resolve("output");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 

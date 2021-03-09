@@ -16,10 +16,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -27,7 +23,13 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter.XPathFilterView> {
+
     final PopupSize popupSize = new PopupSize(400, 150, 400, 150, 1000, 150, true);
     private XPathFilter xPathFilter;
 
@@ -77,6 +79,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
     }
 
     public interface XPathFilterView extends View {
+
         String getXPath();
 
         void setXPath(String xPath);

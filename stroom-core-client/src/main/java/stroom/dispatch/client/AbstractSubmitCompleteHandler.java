@@ -16,17 +16,19 @@
 
 package stroom.dispatch.client;
 
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
-import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
-import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
+
 public abstract class AbstractSubmitCompleteHandler implements SubmitHandler, SubmitCompleteHandler {
+
     private final String taskName;
     private final HasHandlers parent;
 

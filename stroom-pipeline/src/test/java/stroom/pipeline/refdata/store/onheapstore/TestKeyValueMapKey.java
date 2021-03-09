@@ -18,13 +18,15 @@
 package stroom.pipeline.refdata.store.onheapstore;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestKeyValueMapKey {
+
     @Test
     void testEqualsAndHashcode() {
         KeyValueMapKey key1 = new KeyValueMapKey(

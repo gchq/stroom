@@ -17,6 +17,7 @@
 package stroom.processor.impl.db;
 
 interface Marshaller<E, O> {
+
     E marshal(E entity);
 
     E unmarshal(E entity);

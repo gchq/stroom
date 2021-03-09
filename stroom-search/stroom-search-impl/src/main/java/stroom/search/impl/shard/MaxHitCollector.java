@@ -16,9 +16,10 @@
 
 package stroom.search.impl.shard;
 
+import stroom.search.impl.SearchException;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
-import stroom.search.impl.SearchException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.List;
  * Collect results until we hit the max.
  */
 public class MaxHitCollector extends SimpleCollector {
+
     private final int maxHits;
     private final List<Integer> docIdList = new ArrayList<>(100);
     private int docBase;

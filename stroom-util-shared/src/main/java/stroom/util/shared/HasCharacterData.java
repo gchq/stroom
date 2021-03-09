@@ -102,6 +102,7 @@ public interface HasCharacterData {
 
     /**
      * Called when the character range popup is closed with a new range
+     *
      * @param dataRange The new data range
      */
     void setDataRange(final DataRange dataRange);

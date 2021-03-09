@@ -31,6 +31,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ClusterSearchTask implements Serializable {
+
     private static final long serialVersionUID = -1305243739417365803L;
 
     @JsonProperty

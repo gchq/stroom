@@ -17,8 +17,8 @@
 
 package stroom.data.store.api;
 
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.shared.Meta;
 
 /**
  * <p>
@@ -36,6 +36,7 @@ import stroom.meta.api.MetaProperties;
  * </p>
  */
 public interface Store {
+
     /**
      * <p>
      * Open a new target (i.e. new file) based on some meta data

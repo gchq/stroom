@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.gwtplatform.mvp.client.Layer;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
@@ -24,7 +23,10 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.docref.HasDisplayValue;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.gwtplatform.mvp.client.Layer;
+
 public interface Component extends TabData, Layer, HasDisplayValue {
+
     Components getComponents();
 
     void setComponents(Components components);

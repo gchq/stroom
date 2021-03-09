@@ -30,6 +30,7 @@ import java.util.Map;
  */
 @JsonInclude(Include.NON_NULL)
 public class ResourceKey {
+
     public static final String NAME = "name";
     public static final String KEY = "key";
 
@@ -63,6 +64,7 @@ public class ResourceKey {
         return key.hashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object other) {
         if (other == null) {

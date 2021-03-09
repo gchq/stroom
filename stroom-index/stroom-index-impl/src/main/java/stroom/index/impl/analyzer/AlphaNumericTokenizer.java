@@ -20,6 +20,7 @@ import org.apache.lucene.analysis.util.CharTokenizer;
 import org.apache.lucene.util.AttributeFactory;
 
 class AlphaNumericTokenizer extends CharTokenizer {
+
     AlphaNumericTokenizer() {
     }
 

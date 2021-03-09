@@ -2,8 +2,8 @@ package stroom.config;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.config.app.ConfigHolder;
 import stroom.config.app.Config;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
@@ -40,9 +40,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class TestAppConfigModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigModule.class);
     private static final String MODIFIED_JDBC_DRIVER = "modified.jdbc.driver";
-    private final static String STROOM_PACKAGE_PREFIX = "stroom.";
+    private static final String STROOM_PACKAGE_PREFIX = "stroom.";
 
     @AfterEach
     void afterEach() {
@@ -58,7 +59,10 @@ class TestAppConfigModule {
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
 //        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
-        int currentValue = modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().getPrepStmtCacheSize();
+        int currentValue = modifiedConfig.getAppConfig()
+                .getCommonDbConfig()
+                .getConnectionPoolConfig()
+                .getPrepStmtCacheSize();
         int newValue = currentValue + 1000;
 
         modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(newValue);
@@ -129,7 +133,7 @@ class TestAppConfigModule {
                 return Paths.get("NOT USED");
             }
         });
-        Injector injector = Guice.createInjector(appConfigModule);
+        final Injector injector = Guice.createInjector(appConfigModule);
 //        Injector injector = Guice.createInjector(new AbstractModule() {
 //            @Override
 //            protected void configure() {
@@ -153,8 +157,8 @@ class TestAppConfigModule {
         Predicate<Class<?>> classFilter = clazz -> {
 
             return clazz.getSimpleName().endsWith("Config")
-                && !clazz.equals(AbstractConfig.class)
-                && !clazz.equals(AppConfig.class);
+                    && !clazz.equals(AbstractConfig.class)
+                    && !clazz.equals(AppConfig.class);
         };
 
         LOGGER.info("Finding all AbstractConfig classes");
@@ -264,7 +268,10 @@ class TestAppConfigModule {
 
     static Path getDevYamlPath() throws FileNotFoundException {
         // Load dev.yaml
-        final String codeSourceLocation = TestAppConfigModule.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        final String codeSourceLocation = TestAppConfigModule.class.getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .getPath();
 
         Path path = Paths.get(codeSourceLocation);
         while (path != null && !path.getFileName().toString().equals("stroom-app")) {

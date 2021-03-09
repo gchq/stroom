@@ -16,6 +16,13 @@
 
 package stroom.config.global.client.view;
 
+import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
+import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Grid;
@@ -27,12 +34,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
-import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public final class GlobalPropertyEditViewImpl
         extends ViewWithUiHandlers<ManageGlobalPropertyEditUiHandlers>
@@ -223,5 +224,6 @@ public final class GlobalPropertyEditViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
+
     }
 }

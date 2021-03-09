@@ -22,6 +22,7 @@ import stroom.data.store.impl.fs.client.presenter.ManageFSVolumesPresenter;
 import stroom.data.store.impl.fs.client.view.FSVolumeEditViewImpl;
 
 public class FSVolumeModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(ManageFSVolumesPresenter.class);

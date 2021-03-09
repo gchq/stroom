@@ -1,34 +1,35 @@
 package stroom.security.identity.authenticate;
 
+import stroom.config.common.UriFactory;
+import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenService;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.identity.config.PasswordPolicyConfig;
-import stroom.config.common.UriFactory;
-import stroom.security.api.SecurityContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.UriBuilder;
-import java.net.URI;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 class AuthenticationServiceImpl implements AuthenticationService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final long MIN_CREDENTIAL_CONFIRMATION_INTERVAL = 600000;
@@ -46,7 +47,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Inject
     public AuthenticationServiceImpl(
             final UriFactory uriFactory,
-            final @NotNull IdentityConfig config,
+            @NotNull final IdentityConfig config,
             final TokenService tokenService,
             final EmailSender emailSender,
             final AccountDao accountDao,
@@ -152,7 +153,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //                        LOGGER.debug("The user identified by the certificate is not enabled!");
 //                        stroomEventLoggingService.createAction(
 //                                "Logon",
-//                                "User attempted to log in but failed because the account is " + User.UserState.LOCKED.getStateText() + ".");
+//                                "User attempted to log in but failed because the account is " +
+//                                User.UserState.LOCKED.getStateText() + ".");
 //                        String failureUrl = this.config.getUnauthorisedUrl() + "?reason=account_locked";
 //                        responseBuilder = seeOther(UriBuilder.fromUri(failureUrl).build());
 //                    }
@@ -229,20 +231,23 @@ class AuthenticationServiceImpl implements AuthenticationService {
             Optional<String> optionalSubject = getIdFromCertificate(cn);
 
             if (optionalSubject.isEmpty()) {
-                throw new RuntimeException("User is presenting a certificate but this certificate cannot be processed!");
+                throw new RuntimeException(
+                        "User is presenting a certificate but this certificate cannot be processed!");
 
             } else {
                 final String subject = optionalSubject.get();
                 final Optional<Account> optionalAccount = accountDao.get(subject);
                 if (optionalAccount.isEmpty()) {
                     // There's no user so we can't let them have access.
-                    throw new BadRequestException("The user identified by the certificate does not exist in the auth database.");
+                    throw new BadRequestException(
+                            "The user identified by the certificate does not exist in the auth database.");
 
                 } else {
                     final Account account = optionalAccount.get();
                     if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
                         LOGGER.info("Logging user in using DN with subject {}", subject);
-                        setAuthState(request.getSession(true), new AuthStateImpl(account, false, System.currentTimeMillis()));
+                        setAuthState(request.getSession(true),
+                                new AuthStateImpl(account, false, System.currentTimeMillis()));
 
                         // Reset last access, login failures, etc...
                         accountDao.recordSuccessfulLogin(subject);
@@ -257,7 +262,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
         clearSession(request);
 
         // Check the credentials
-        CredentialValidationResult result = accountDao.validateCredentials(loginRequest.getUserId(), loginRequest.getPassword());
+        CredentialValidationResult result = accountDao.validateCredentials(loginRequest.getUserId(),
+                loginRequest.getPassword());
         if (!result.isValidCredentials() && !result.isAccountDoesNotExist()) {
             LOGGER.debug("Password for {} is incorrect", loginRequest.getUserId());
             final boolean locked = accountDao.incrementLoginFailures(loginRequest.getUserId());
@@ -314,11 +320,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
         if (authState == null) {
             return new ConfirmPasswordResponse(false, "No user is currently signed in");
         }
-        final CredentialValidationResult result = accountDao.validateCredentials(authState.getSubject(), confirmPasswordRequest.getPassword());
+        final CredentialValidationResult result = accountDao.validateCredentials(authState.getSubject(),
+                confirmPasswordRequest.getPassword());
         final String message = result.toString();
         if (result.isAllOk()) {
             // Update tha last credential confirmation time.
-            setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), authState.isRequirePasswordChange(), System.currentTimeMillis()));
+            setAuthState(request.getSession(true),
+                    new AuthStateImpl(authState.getAccount(),
+                            authState.isRequirePasswordChange(),
+                            System.currentTimeMillis()));
             return new ConfirmPasswordResponse(true, message);
         }
 
@@ -334,30 +344,40 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
         final boolean forceSignIn = shouldForceSignIn(authState);
         if (forceSignIn) {
-            return new ChangePasswordResponse(false, "It has been too long since you last signed in, please sign in again", true);
+            return new ChangePasswordResponse(false,
+                    "It has been too long since you last signed in, please sign in again",
+                    true);
         }
 
         final String userId = authState.getSubject();
-        final CredentialValidationResult result = accountDao.validateCredentials(userId, changePasswordRequest.getCurrentPassword());
+        final CredentialValidationResult result = accountDao.validateCredentials(userId,
+                changePasswordRequest.getCurrentPassword());
 
         PasswordValidator.validateCredentials(result);
-        PasswordValidator.validateReuse(changePasswordRequest.getCurrentPassword(), changePasswordRequest.getNewPassword());
-        PasswordValidator.validateLength(changePasswordRequest.getNewPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
-        PasswordValidator.validateComplexity(changePasswordRequest.getNewPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
-        PasswordValidator.validateConfirmation(changePasswordRequest.getNewPassword(), changePasswordRequest.getConfirmNewPassword());
+        PasswordValidator.validateReuse(changePasswordRequest.getCurrentPassword(),
+                changePasswordRequest.getNewPassword());
+        PasswordValidator.validateLength(changePasswordRequest.getNewPassword(),
+                config.getPasswordPolicyConfig().getMinimumPasswordLength());
+        PasswordValidator.validateComplexity(changePasswordRequest.getNewPassword(),
+                config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+        PasswordValidator.validateConfirmation(changePasswordRequest.getNewPassword(),
+                changePasswordRequest.getConfirmNewPassword());
 
         accountDao.changePassword(userId, changePasswordRequest.getNewPassword());
 
         if (authState.getSubject().equals(userId)) {
-            setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), false, System.currentTimeMillis()));
+            setAuthState(request.getSession(true),
+                    new AuthStateImpl(authState.getAccount(), false, System.currentTimeMillis()));
         }
 
         return new ChangePasswordResponse(true, null, false);
     }
 
     public boolean resetEmail(final String emailAddress) {
-        final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException("Account not found for email: " + emailAddress));
-        final Token token = tokenService.createResetEmailToken(account, openIdClientDetailsFactory.getClient().getClientId());
+        final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException(
+                "Account not found for email: " + emailAddress));
+        final Token token = tokenService.createResetEmailToken(account,
+                openIdClientDetailsFactory.getClient().getClientId());
         final String resetToken = token.getData();
         emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), resetToken);
         return true;
@@ -376,7 +396,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         PasswordValidator.validateLength(resetPasswordRequest.getNewPassword(), conf.getMinimumPasswordLength());
         PasswordValidator.validateComplexity(resetPasswordRequest.getNewPassword(), conf.getPasswordComplexityRegex());
-        PasswordValidator.validateConfirmation(resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
+        PasswordValidator.validateConfirmation(resetPasswordRequest.getNewPassword(),
+                resetPasswordRequest.getConfirmNewPassword());
 
         accountDao.changePassword(loggedInUser, resetPasswordRequest.getNewPassword());
         return new ChangePasswordResponse(true, null, forceSignIn);
@@ -429,7 +450,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //        final String username = account.getEmail();
 //
 //        boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
-//                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
+//                username,
+//                config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
 //                config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
 //
 //        URI result;
@@ -462,7 +484,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         // Reset last access, login failures, etc...
         accountDao.recordSuccessfulLogin(userId);
-        setAuthState(request.getSession(true), new AuthStateImpl(account, userNeedsToChangePassword, System.currentTimeMillis()));
+        setAuthState(request.getSession(true),
+                new AuthStateImpl(account, userNeedsToChangePassword, System.currentTimeMillis()));
 
         return new LoginResponse(true, message, userNeedsToChangePassword);
     }
@@ -494,7 +517,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     //    private String getPostAuthenticationCheckUrl(final String redirectUri) {
 //        final URI uri = UriBuilder
-//                .fromUri(uriFactory.publicUri(ResourcePaths.API_ROOT_PATH + AuthenticationResource.BASE_PATH + AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
+//                .fromUri(uriFactory.publicUri(
+//                    ResourcePaths.API_ROOT_PATH +
+//                    AuthenticationResource.BASE_PATH +
+//                    AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
 //                .queryParam(OIDC.REDIRECT_URI, redirectUri)
 //                .build();
 //        return uri.toString();
@@ -560,12 +586,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
             return true;
         }
         if (authState.isRequirePasswordChange()) {
-            return authState.getLastCredentialCheckMs() < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
+            return authState.getLastCredentialCheckMs()
+                    < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
         }
         return false;
     }
 
     private static class AuthStateImpl implements AuthState {
+
         private final Account account;
         private final boolean requirePasswordChange;
         private final long lastCredentialCheckMs;

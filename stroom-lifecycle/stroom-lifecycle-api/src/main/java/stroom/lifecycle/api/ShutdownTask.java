@@ -1,6 +1,7 @@
 package stroom.lifecycle.api;
 
 public class ShutdownTask {
+
     private final int priority;
 
     ShutdownTask(final int priority) {

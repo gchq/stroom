@@ -7,11 +7,12 @@ import stroom.ui.config.shared.UiConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class SizesProviderImpl implements SizesProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SizesProviderImpl.class);
 
     private final UiConfig uiConfig;

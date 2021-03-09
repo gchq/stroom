@@ -16,6 +16,9 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.dashboard.shared.StoredQuery;
+import stroom.widget.customdatebox.client.ClientDateUtil;
+
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -23,10 +26,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.dashboard.shared.StoredQuery;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 
 public class QueryCell extends AbstractCell<StoredQuery> {
+
     private static Template template;
     private static Resources resources;
 
@@ -58,6 +60,7 @@ public class QueryCell extends AbstractCell<StoredQuery> {
     }
 
     public interface Style extends CssResource {
+
         String outer();
 
         String time();
@@ -66,11 +69,13 @@ public class QueryCell extends AbstractCell<StoredQuery> {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("querycell.css")
         Style style();
     }
 
     public interface Template extends SafeHtmlTemplates {
+
         @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span><span class=\"{3}\">{4}</span></div>")
         SafeHtml historyLayout(String outerClassName, String timeClassName, String time, String expressionClassName,
                                String expression);

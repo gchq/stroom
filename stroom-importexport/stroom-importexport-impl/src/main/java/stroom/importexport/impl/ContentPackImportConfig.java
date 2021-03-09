@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ContentPackImportConfig extends AbstractConfig {
+
     private boolean enabled;
     private String importDirectory = "content_pack_import";
 
@@ -33,7 +34,7 @@ public class ContentPackImportConfig extends AbstractConfig {
     }
 
     @SuppressWarnings("unused")
-    void setImportDirectory(final String importDirectory) {
+    public void setImportDirectory(final String importDirectory) {
         this.importDirectory = importDirectory;
     }
 

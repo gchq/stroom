@@ -34,14 +34,15 @@ import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
 
@@ -57,7 +58,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                 - TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
-        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
+                timeOutsideRetentionPeriod));
 
         final Meta metaInsideRetention = metaService.create(
                 MetaProperties.builder()
@@ -84,7 +86,9 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
-        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange, Collections.emptyList(), 100);
+        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange,
+                Collections.emptyList(),
+                100);
         final ResultPage<Meta> list = metaService.find(findMetaCriteria);
         assertThat(list.size()).isEqualTo(1);
     }

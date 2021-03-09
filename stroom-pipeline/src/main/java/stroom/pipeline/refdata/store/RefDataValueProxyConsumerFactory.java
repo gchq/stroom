@@ -17,17 +17,19 @@
 
 package stroom.pipeline.refdata.store;
 
-import com.google.inject.assistedinject.Assisted;
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
+
 import javax.inject.Inject;
 
 public class RefDataValueProxyConsumerFactory {
+
     private final Receiver receiver;
     private final PipelineConfiguration pipelineConfiguration;
 
@@ -73,6 +75,7 @@ public class RefDataValueProxyConsumerFactory {
     }
 
     public interface Factory {
+
         RefDataValueProxyConsumerFactory create(final Receiver receiver,
                                                 final PipelineConfiguration pipelineConfiguration);
     }

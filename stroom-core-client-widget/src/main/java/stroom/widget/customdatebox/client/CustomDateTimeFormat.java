@@ -23,11 +23,12 @@ import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_en_GB;
 import java.util.Date;
 
 public class CustomDateTimeFormat extends DateTimeFormat {
+
     private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private static final String INNER_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z' z";
     private static final String OFFSET = " +0000";
-    private DateTimeFormat inner = DateTimeFormat.getFormat(INNER_PATTERN);
-    private TimeZone timeZone = TimeZone.createTimeZone(0);
+    private final DateTimeFormat inner = DateTimeFormat.getFormat(INNER_PATTERN);
+    private final TimeZone timeZone = TimeZone.createTimeZone(0);
 
     public CustomDateTimeFormat() {
         super(PATTERN, new DateTimeFormatInfoImpl_en_GB());

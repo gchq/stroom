@@ -40,6 +40,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDocumentPermissionsServiceImpl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     private static UserService userService;
@@ -135,7 +136,8 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(
+                    docRef.getUuid());
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }

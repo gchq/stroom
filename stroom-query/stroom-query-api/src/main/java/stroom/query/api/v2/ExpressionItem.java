@@ -22,16 +22,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -45,15 +44,15 @@ import java.util.Objects;
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
+@Schema(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
+
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Whether this item in the expression tree is enabled or not",
+    @Schema(description = "Whether this item in the expression tree is enabled or not",
             example = "true")
     @JsonProperty(value = "enabled")
     private Boolean enabled; // TODO : XML serilisation still requires no-arg constructor and mutable fields
@@ -75,10 +74,15 @@ public abstract class ExpressionItem implements Serializable {
         return enabled == null || enabled;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExpressionItem)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExpressionItem)) {
+            return false;
+        }
         final ExpressionItem that = (ExpressionItem) o;
         return Objects.equals(enabled, that.enabled);
     }
@@ -107,7 +111,8 @@ public abstract class ExpressionItem implements Serializable {
      * Builder for constructing a {@link ExpressionItem}. This is an abstract type, each subclass
      * of ExpressionItem should provide a builder that extends this one.
      */
-    public static abstract class Builder<T extends ExpressionItem, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends ExpressionItem, T_CHILD_CLASS extends Builder<T, ?>> {
+
         Boolean enabled;
 
         Builder() {
@@ -129,7 +134,7 @@ public abstract class ExpressionItem implements Serializable {
          * @param enabled Sets the terms state to enabled if true or null, disabled if false
          * @return The Builder Builder, enabling method chaining
          */
-        public CHILD_CLASS enabled(final Boolean enabled) {
+        public T_CHILD_CLASS enabled(final Boolean enabled) {
             if (Boolean.TRUE.equals(enabled)) {
                 this.enabled = null;
             } else {
@@ -138,7 +143,7 @@ public abstract class ExpressionItem implements Serializable {
             return self();
         }
 
-        abstract CHILD_CLASS self();
+        abstract T_CHILD_CLASS self();
 
         public abstract T build();
     }

@@ -3,6 +3,7 @@ package stroom.security.openid.api;
 import java.util.Objects;
 
 public class OpenIdClient {
+
     private final String name;
     private final String clientId;
     private final String clientSecret;

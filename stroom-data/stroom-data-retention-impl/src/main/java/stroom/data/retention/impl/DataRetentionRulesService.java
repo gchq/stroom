@@ -21,5 +21,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docstore.api.DocumentStore;
 
 public interface DataRetentionRulesService extends DocumentStore<DataRetentionRules> {
+
     DataRetentionRules getOrCreate();
 }

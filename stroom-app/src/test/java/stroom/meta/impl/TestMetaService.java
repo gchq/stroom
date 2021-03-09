@@ -50,9 +50,9 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,6 +70,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestMetaService extends StroomIntegrationTest {
+
     private static final String TEST_USER = "test_user";
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";
     private static final String FEED_USE_PERMISSION = "FEED_USE_PERMISSION";
@@ -103,8 +104,12 @@ class TestMetaService extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.USE,
+                        FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();
                 assertThat(useExpression.get().getChildren().size() == 1);
@@ -119,8 +124,12 @@ class TestMetaService extends StroomIntegrationTest {
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
-                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.USE,
+                            FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.READ,
+                            FEED_FIELDS);
 
                     assertThat(useExpression2).isNotEmpty();
                     assertThat(useExpression2.get().getChildren().size() == 2);
@@ -147,8 +156,12 @@ class TestMetaService extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.USE,
+                        FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();
                 assertThat(useExpression.get().getChildren().size() == 1);
@@ -163,8 +176,12 @@ class TestMetaService extends StroomIntegrationTest {
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
-                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.USE,
+                            FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.READ,
+                            FEED_FIELDS);
 
                     assertThat(useExpression2).isNotEmpty();
                     assertThat(useExpression2.get().getChildren().size() == 2);
@@ -185,10 +202,14 @@ class TestMetaService extends StroomIntegrationTest {
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
-            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
@@ -211,7 +232,9 @@ class TestMetaService extends StroomIntegrationTest {
                 readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(0);
 
-                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                final Meta readPermissionChild2 = createMeta(readPermissionParent,
+                        FEED_READ_PERMISSION,
+                        "Cooked Events");
                 readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
             });
@@ -225,10 +248,14 @@ class TestMetaService extends StroomIntegrationTest {
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
-            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
@@ -251,7 +278,9 @@ class TestMetaService extends StroomIntegrationTest {
                 selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(0);
 
-                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                final Meta readPermissionChild2 = createMeta(readPermissionParent,
+                        FEED_READ_PERMISSION,
+                        "Cooked Events");
                 selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
             });

@@ -34,10 +34,12 @@ import java.util.function.Supplier;
 
 
 public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiHandlers> implements ManageActivityView {
+
     public interface Binder extends UiBinder<Widget, ManageActivityViewImpl> {
+
     }
 
-    private Widget widget;
+    private final Widget widget;
 
     @UiField
     QuickFilter nameFilter;

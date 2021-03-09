@@ -16,8 +16,85 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Data.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        signatures = @FunctionSignature(
+                description = "Produces a hyperlink for showing data within stroom.",
+                returnDescription = "A hyperlink that will open a popup or tab showing the required data.",
+                args = {
+                        @FunctionArg(
+                                name = Data.ARG_ID,
+                                description = "The ID of the stream.",
+                                argType = ValLong.class),
+                        @FunctionArg(
+                                name = Data.ARG_PART_NO,
+                                description = "The part number (one based). The part number is only applicable " +
+                                        "for non-segmented streams (i.e uncooked streams). If a stream is segmented " +
+                                        "or is not multi-part then the part number will be 1.",
+                                argType = ValLong.class),
+                        @FunctionArg(
+                                name = Data.ARG_RECORD_NO,
+                                description = "The record number (one based). The record number is only applicable " +
+                                        "for segmented streams (i.e. cooked streams). Its value will be ignored for " +
+                                        "non-segmented streams.",
+                                isOptional = true,
+                                argType = ValLong.class),
+                        @FunctionArg(
+                                name = Data.ARG_LINE_FROM,
+                                description = "The line number of the start of the desired range of data " +
+                                        "(inclusive, one based).",
+                                isOptional = true,
+                                argType = ValInteger.class),
+                        @FunctionArg(
+                                name = Data.ARG_COL_FROM,
+                                description = "The column number of the start of the desired range of data " +
+                                        "(inclusive, one based).",
+                                isOptional = true,
+                                argType = ValInteger.class),
+                        @FunctionArg(
+                                name = Data.ARG_LINE_TO,
+                                description = "The line number of the end of the desired range of data " +
+                                        "(inclusive, one based).",
+                                isOptional = true,
+                                argType = ValInteger.class),
+                        @FunctionArg(
+                                name = Data.ARG_COL_TO,
+                                description = "The column number of the end of the desired range of data " +
+                                        "(inclusive, one based).",
+                                isOptional = true,
+                                argType = ValInteger.class),
+                        @FunctionArg(
+                                name = Data.ARG_VIEW_TYPE,
+                                description = "The view of the data to display. 'preview' shows a formatted portion " +
+                                        "of the data starting, 'source' shows the un-formatted raw view of the data. " +
+                                        "Defaults to 'preview'.",
+                                isOptional = true,
+                                allowedValues = {"preview", "source"},
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = Data.ARG_DISPLAY_TYPE,
+                                description = "How the data will be displayed in the user interface. Defaults to " +
+                                        "'dialog'.",
+                                isOptional = true,
+                                allowedValues = {"dialog", "tab"},
+                                argType = ValString.class),
+                }))
 class Data extends AbstractLink {
+
     static final String NAME = "data";
+
+    static final String ARG_ID = "id";
+    static final String ARG_PART_NO = "partNo";
+    static final String ARG_RECORD_NO = "recordNo";
+    static final String ARG_LINE_FROM = "lineFrom";
+    static final String ARG_COL_FROM = "colFrom";
+    static final String ARG_LINE_TO = "lineTo";
+    static final String ARG_COL_TO = "colTo";
+    static final String ARG_VIEW_TYPE = "viewType";
+    static final String ARG_DISPLAY_TYPE = "displayType";
 
     public Data(final String name) {
         super(name, 2, 10);
@@ -29,6 +106,7 @@ class Data extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {
@@ -46,15 +124,15 @@ class Data extends AbstractLink {
         public Val eval() {
             final StringBuilder sb = new StringBuilder();
 
-            append(sb, 1, "id");
-            append(sb, 2, "partNo");
-            append(sb, 3, "recordNo");
-            append(sb, 4, "lineFrom");
-            append(sb, 5, "colFrom");
-            append(sb, 6, "lineTo");
-            append(sb, 7, "colTo");
-            append(sb, 8, "viewType");
-            append(sb, 9, "displayType");
+            append(sb, 1, ARG_ID);
+            append(sb, 2, ARG_PART_NO);
+            append(sb, 3, ARG_RECORD_NO);
+            append(sb, 4, ARG_LINE_FROM);
+            append(sb, 5, ARG_COL_FROM);
+            append(sb, 6, ARG_LINE_TO);
+            append(sb, 7, ARG_COL_TO);
+            append(sb, 8, ARG_VIEW_TYPE);
+            append(sb, 9, ARG_DISPLAY_TYPE);
 
             return makeLink(
                     getEscapedString(childGenerators[0].eval()),

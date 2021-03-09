@@ -17,10 +17,12 @@
 package stroom.elastic.impl;
 
 import com.google.inject.AbstractModule;
+
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 public class ElasticModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new ElasticElementModule());

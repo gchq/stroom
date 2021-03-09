@@ -21,11 +21,12 @@ import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class MockClusterNodeManager implements ClusterNodeManager {
+
     private final NodeInfo nodeInfo;
 
     @Inject

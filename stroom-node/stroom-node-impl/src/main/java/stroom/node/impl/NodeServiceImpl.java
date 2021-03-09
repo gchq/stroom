@@ -19,6 +19,7 @@ package stroom.node.impl;
 import stroom.config.common.UriFactory;
 import stroom.docref.DocRef;
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
@@ -29,6 +30,8 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.jersey.WebTargetFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -36,15 +39,24 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
 
     private final SecurityContext securityContext;
@@ -53,18 +65,21 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private final UriFactory uriFactory;
     private volatile Node thisNode;
     private final EntityEventBus entityEventBus;
+    private final WebTargetFactory webTargetFactory;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
                     final NodeDao nodeDao,
                     final NodeInfo nodeInfo,
                     final UriFactory uriFactory,
-                    final EntityEventBus entityEventBus) {
+                    final EntityEventBus entityEventBus,
+                    final WebTargetFactory webTargetFactory) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
         this.uriFactory = uriFactory;
         this.entityEventBus = entityEventBus;
+        this.webTargetFactory = webTargetFactory;
 
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
@@ -77,7 +92,9 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         final Node updated = nodeDao.update(node);
 
         // Let all nodes know that the node has changed.
-        EntityEvent.fire(entityEventBus, new DocRef(Node.ENTITY_TYPE, String.valueOf(updated.getId()), updated.getName()), EntityAction.UPDATE);
+        EntityEvent.fire(entityEventBus,
+                new DocRef(Node.ENTITY_TYPE, String.valueOf(updated.getId()), updated.getName()),
+                EntityAction.UPDATE);
 
         return updated;
     }
@@ -124,6 +141,87 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             return node.getPriority();
         }
         return -1;
+    }
+
+    @Override
+    public <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                            final Supplier<String> fullPathSupplier,
+                                            final Supplier<T_RESP> localSupplier,
+                                            final Function<Invocation.Builder, Response> responseBuilderFunc,
+                                            final Function<Response, T_RESP> responseMapper) {
+        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+
+        final T_RESP resp;
+
+        // If this is the node that was contacted then just resolve it locally
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+
+            LOGGER.debug("Executing locally");
+            resp = localSupplier.get();
+
+        } else {
+            // A different node to make a rest call to the required node
+            final String url = NodeCallUtil.getBaseEndpointUrl(
+                    nodeInfo,
+                    this,
+                    nodeName) + fullPathSupplier.get();
+            LOGGER.debug("Fetching value from remote node at {}", url);
+            try {
+                final Builder builder = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON);
+
+                final Response response = responseBuilderFunc.apply(builder);
+
+                LOGGER.debug("Response status {}", response.getStatus());
+                if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
+                resp = responseMapper.apply(response);
+
+                Objects.requireNonNull(resp, "Null response calling url " + url);
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            }
+        }
+        return resp;
+    }
+
+    @Override
+    public void remoteRestCall(final String nodeName,
+                               final Supplier<String> fullPathSupplier,
+                               final Runnable localRunnable,
+                               final Function<Builder, Response> responseBuilderFunc) {
+
+        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+
+        // If this is the node that was contacted then just resolve it locally
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+
+            LOGGER.debug("Executing locally");
+            localRunnable.run();
+        } else {
+            // A different node to make a rest call to the required node
+            final String url = NodeCallUtil.getBaseEndpointUrl(
+                    nodeInfo,
+                    this,
+                    nodeName) + fullPathSupplier.get();
+            LOGGER.debug("Calling remote node at {}", url);
+            try {
+                final Builder builder = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON);
+
+                final Response response = responseBuilderFunc.apply(builder);
+
+                LOGGER.debug("Response status {}", response.getStatus());
+                if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            }
+        }
     }
 
     Node getNode(final String nodeName) {

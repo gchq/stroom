@@ -17,6 +17,7 @@
 package stroom.widget.htree.client.treelayout;
 
 public class Dimension {
+
     private final double width;
     private final double height;
 

@@ -16,12 +16,14 @@
 
 package stroom.pipeline.client.event;
 
+import stroom.processor.shared.ProcessorFilter;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.processor.shared.ProcessorFilter;
 
 public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final ProcessorFilter processorFilter;
 
@@ -55,6 +57,7 @@ public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler>
     }
 
     public interface Handler extends EventHandler {
+
         void onCreate(CreateProcessorEvent event);
     }
 }

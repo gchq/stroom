@@ -16,12 +16,14 @@
 
 package stroom.explorer.client.event;
 
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerNode;
 
 public class HighlightExplorerNodeEvent extends GwtEvent<HighlightExplorerNodeEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final ExplorerNode explorerNode;
 
@@ -55,6 +57,7 @@ public class HighlightExplorerNodeEvent extends GwtEvent<HighlightExplorerNodeEv
     }
 
     public interface Handler extends EventHandler {
+
         void onHighlight(HighlightExplorerNodeEvent event);
     }
 }

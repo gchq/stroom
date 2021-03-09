@@ -23,7 +23,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.json.JsonUtil;
 
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class TestDataRetentionPolicySerialisation {
+
     @Test
     void test() throws Exception {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
@@ -52,7 +52,17 @@ class TestDataRetentionPolicySerialisation {
         System.out.println(json);
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return new DataRetentionRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit,
+                false);
     }
 }

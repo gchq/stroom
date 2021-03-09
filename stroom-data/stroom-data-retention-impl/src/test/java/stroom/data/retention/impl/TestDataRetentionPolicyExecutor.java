@@ -45,12 +45,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TestDataRetentionPolicyExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
     private static final String RULES_VERSION = "1234567";
 
-    private ClusterLockService clusterLockService = new MockClusterLockService();
-    private DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
-    private TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
+    private final ClusterLockService clusterLockService = new MockClusterLockService();
+    private final DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
+    private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
 
     @Mock
     private MetaService metaService;

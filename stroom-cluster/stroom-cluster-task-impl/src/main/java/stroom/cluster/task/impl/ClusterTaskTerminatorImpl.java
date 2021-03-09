@@ -1,7 +1,5 @@
 package stroom.cluster.task.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
@@ -13,12 +11,16 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
 
 public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterTaskTerminatorImpl.class);
 
     private final Executor executor;
@@ -48,13 +50,16 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        CompletableFuture.runAsync(()
-                -> securityContext.asProcessingUser(()
-                -> terminate(findTaskCriteria, searchName, taskName)), executor);
+        CompletableFuture.runAsync(() ->
+                securityContext.asProcessingUser(() ->
+                        terminate(findTaskCriteria, searchName, taskName)), executor);
     }
 
-    private void terminate(final FindTaskCriteria findTaskCriteria, final String searchName, final String taskName) {
-        final TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(findTaskCriteria, false);
+    private void terminate(final FindTaskCriteria findTaskCriteria,
+                           final String searchName,
+                           final String taskName) {
+        final TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
+                findTaskCriteria, false);
 
         taskContextFactory.context("Terminate: " + taskName, parentContext -> {
             parentContext.info(() -> searchName + " - terminating child tasks");
@@ -66,17 +71,21 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
                 targetNodes.forEach(nodeName -> {
-                    final Runnable runnable = taskContextFactory.context(parentContext, "Terminate '" + taskName + "' on node '" + nodeName + "'", taskContext -> {
-                        try {
-                            final Boolean response = taskResource.terminate(nodeName, terminateTaskProgressRequest);
-                            if (!Boolean.TRUE.equals(response)) {
-                                LOGGER.warn("Failed tp terminate task '" + taskName + "'");
-                            }
-                        } catch (final RuntimeException e) {
-                            LOGGER.warn(e.getMessage());
-                            LOGGER.debug(e.getMessage(), e);
-                        }
-                    });
+                    final Runnable runnable = taskContextFactory.context(
+                            parentContext,
+                            "Terminate '" + taskName + "' on node '" + nodeName + "'",
+                            taskContext -> {
+                                try {
+                                    final Boolean response = taskResource.terminate(
+                                            nodeName, terminateTaskProgressRequest);
+                                    if (!Boolean.TRUE.equals(response)) {
+                                        LOGGER.warn("Failed tp terminate task '" + taskName + "'");
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.warn(e.getMessage());
+                                    LOGGER.debug(e.getMessage(), e);
+                                }
+                            });
                     CompletableFuture.runAsync(runnable, executor);
                 });
 

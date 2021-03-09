@@ -19,6 +19,7 @@ package stroom.elastic.impl;
 import stroom.pipeline.factory.PipelineElementModule;
 
 public class ElasticElementModule extends PipelineElementModule {
+
     @Override
     protected void configureElements() {
         bindElement(ElasticIndexingFilter.class);

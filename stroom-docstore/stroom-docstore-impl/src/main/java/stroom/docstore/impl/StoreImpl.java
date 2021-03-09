@@ -43,7 +43,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
@@ -58,8 +57,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class StoreImpl<D extends Doc> implements Store<D> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreImpl.class);
 
     private final Persistence persistence;
@@ -585,8 +586,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         if (!securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException(
                     securityContext.getUserId(), "You are not authorised to update " + document.getType() +
-                    (((document.getName() != null) && document.getName().length() > 0)? " " + document.getName() : "")
-            + " (" + document.getUuid() + ")");
+                    (((document.getName() != null) && document.getName().length() > 0)
+                            ? " " + document.getName()
+                            : "")
+                    + " (" + document.getUuid() + ")");
         }
 
         try {

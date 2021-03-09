@@ -18,17 +18,16 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * {@value #CLASS_DESC}
@@ -37,7 +36,7 @@ import java.util.Objects;
 @XmlType(name = "DocRef", propOrder = {"type", "uuid", "name"})
 @XmlRootElement(name = "doc")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = DocRef.CLASS_DESC)
+@Schema(description = DocRef.CLASS_DESC)
 @Deprecated
 public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
 
@@ -47,22 +46,19 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
     private static final long serialVersionUID = -2121399789820829359L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The type of the 'document' that this DocRef refers to",
+    @Schema(description = "The type of the 'document' that this DocRef refers to",
             example = "StroomStatsStore",
             required = true)
     private String type;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The unique identifier for this 'document'",
+    @Schema(description = "The unique identifier for this 'document'",
             example = "9f6184b4-bd78-48bc-b0cd-6e51a357f6a6",
             required = true)
     private String uuid;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The name for the data source",
+    @Schema(description = "The name for the data source",
             example = "MyStatistic",
             required = true)
     private String name;

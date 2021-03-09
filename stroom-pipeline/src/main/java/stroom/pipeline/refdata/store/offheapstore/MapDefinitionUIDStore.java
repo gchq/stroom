@@ -1,10 +1,10 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
@@ -144,7 +144,7 @@ public class MapDefinitionUIDStore {
     void forEach(final Txn<ByteBuffer> txn,
                  final Consumer<Tuple2<MapDefinition, UID>> entryConsumer) {
 
-        mapUidForwardDb.forEachEntry( txn, KeyRange.all(), entryConsumer);
+        mapUidForwardDb.forEachEntry(txn, KeyRange.all(), entryConsumer);
     }
 
     private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn,

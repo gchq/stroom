@@ -3,6 +3,7 @@ package stroom.meta.api;
 import stroom.meta.shared.Meta;
 
 public class MetaProperties {
+
     private final Long parentId;
     private final String typeName;
     private final String feedName;
@@ -71,6 +72,7 @@ public class MetaProperties {
     }
 
     public static final class Builder {
+
         private Long parentId;
         private String typeName;
         private String feedName;
@@ -95,7 +97,8 @@ public class MetaProperties {
         }
 
         /**
-         * This is a utility method to perform common parent association behaviour, e.g. setting the effective time from the parent.
+         * This is a utility method to perform common parent association behaviour, e.g.
+         * setting the effective time from the parent.
          *
          * @param parent The parent to set.
          * @return The builder.
@@ -160,7 +163,9 @@ public class MetaProperties {
 
         public MetaProperties build() {
             // When were we created
-            long timeMs = createMs != null ? createMs : System.currentTimeMillis();
+            long timeMs = createMs != null
+                    ? createMs
+                    : System.currentTimeMillis();
 
             return new MetaProperties(
                     parentId,
@@ -169,7 +174,9 @@ public class MetaProperties {
                     processorUuid,
                     pipelineUuid,
                     timeMs,
-                    effectiveMs != null ? effectiveMs : timeMs, // Ensure an effective time
+                    effectiveMs != null
+                            ? effectiveMs
+                            : timeMs, // Ensure an effective time
                     statusMs);
         }
     }

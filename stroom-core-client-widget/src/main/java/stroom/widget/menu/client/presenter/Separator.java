@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 public class Separator extends Item {
+
     public Separator(final int priority) {
         super(priority);
     }

@@ -16,11 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SerializedString;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -32,10 +27,16 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.util.io.IgnoreCloseWriter;
 
-import javax.inject.Inject;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.io.SerializedString;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import javax.inject.Inject;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
@@ -49,6 +50,7 @@ import java.util.Deque;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.JSON)
 public class JSONWriter extends AbstractWriter {
+
     private final boolean addTrailingRootValueSeparator = true;
     private final String rootValueSeparator = "\n";
     private final Deque<String> elements = new ArrayDeque<>();

@@ -46,8 +46,8 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
     private final Provider<T> tabPresenterProvider;
 
     AbstractTabPresenterPlugin(final EventBus eventBus,
-                                      final ContentManager contentManager,
-                                      final Provider<T> tabPresenterProvider) {
+                               final ContentManager contentManager,
+                               final Provider<T> tabPresenterProvider) {
         super(eventBus);
         this.contentManager = contentManager;
         this.tabPresenterProvider = tabPresenterProvider;
@@ -59,8 +59,8 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
     abstract String getName();
 
     /**
-     * @param forceOpen If false will not open the presenter if it is not already open
-     * @param presenterKey The unique key that identifies the presenter
+     * @param forceOpen            If false will not open the presenter if it is not already open
+     * @param presenterKey         The unique key that identifies the presenter
      * @param tabPresenterConsumer Method to modify the presenter before it is opened, i.e. telling
      *                             it what content to display.
      * @return The
@@ -163,10 +163,10 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
     private CloseHandler createCloseHandler(final T tabPresenter) {
         return (CloseCallback closeCallback) -> {
             if (tabPresenter != null) {
-                    // Tell the presenter we are closing.
+                // Tell the presenter we are closing.
 //                    sourceTabPresenter.onClose();
-                    // Cleanup reference to this tab data.
-                    removeTabData(tabPresenter);
+                // Cleanup reference to this tab data.
+                removeTabData(tabPresenter);
                 // Tell the callback to close the tab if ok.
                 closeCallback.closeTab(true);
             }

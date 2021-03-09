@@ -1,6 +1,7 @@
 package stroom.dashboard.expression.v1;
 
 class Statistics {
+
     static double standardDeviation(final Double[] values) {
         return Math.sqrt(variance(values));
     }

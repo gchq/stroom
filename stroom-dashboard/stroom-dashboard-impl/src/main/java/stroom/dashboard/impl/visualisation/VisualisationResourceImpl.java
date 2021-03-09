@@ -18,29 +18,44 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.shared.EntityServiceException;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class VisualisationResourceImpl implements VisualisationResource {
-    private final VisualisationStore visualisationStore;
-    private final DocumentResourceHelper documentResourceHelper;
+
+    private final Provider<VisualisationStore> visualisationStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    VisualisationResourceImpl(final VisualisationStore visualisationStore,
-                              final DocumentResourceHelper documentResourceHelper) {
-        this.visualisationStore = visualisationStore;
-        this.documentResourceHelper = documentResourceHelper;
+    VisualisationResourceImpl(final Provider<VisualisationStore> visualisationStoreProvider,
+                              final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.visualisationStoreProvider = visualisationStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
-    public VisualisationDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(visualisationStore, docRef);
+    public VisualisationDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(visualisationStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public VisualisationDoc update(final VisualisationDoc doc) {
-        return documentResourceHelper.update(visualisationStore, doc);
+    public VisualisationDoc update(final String uuid, final VisualisationDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(visualisationStoreProvider.get(), doc);
+    }
+
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
+                .type(VisualisationDoc.DOCUMENT_TYPE)
+                .build();
     }
 }

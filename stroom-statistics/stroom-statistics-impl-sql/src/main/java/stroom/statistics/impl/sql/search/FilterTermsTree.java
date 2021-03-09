@@ -25,7 +25,8 @@ import java.util.List;
  * equals on an object type/value pair
  */
 public class FilterTermsTree {
-    private static FilterTermsTree emptyTree;
+
+    private static final FilterTermsTree emptyTree;
 
     static {
         emptyTree = new FilterTermsTree(null);
@@ -69,6 +70,7 @@ public class FilterTermsTree {
      * X=Y
      */
     public static class TermNode implements PrintableNode {
+
         private final String tag;
         private final String value;
 
@@ -110,6 +112,7 @@ public class FilterTermsTree {
      * AND/OR/NOT
      */
     public static class OperatorNode implements PrintableNode {
+
         private FilterOperationMode filterOperationMode;
         private List<PrintableNode> children = new ArrayList<>();
 
@@ -164,8 +167,9 @@ public class FilterTermsTree {
                 sb.append(",");
             }
             // remove the trailing comma
-            if (sb.charAt(sb.length() - 1) == ',')
+            if (sb.charAt(sb.length() - 1) == ',') {
                 sb.deleteCharAt(sb.length() - 1);
+            }
 
             sb.append(")");
         }
@@ -179,6 +183,7 @@ public class FilterTermsTree {
     }
 
     public static class FilterTermsTreeException extends RuntimeException {
+
         private static final long serialVersionUID = 8955006804383215661L;
 
         public FilterTermsTreeException(final String message) {

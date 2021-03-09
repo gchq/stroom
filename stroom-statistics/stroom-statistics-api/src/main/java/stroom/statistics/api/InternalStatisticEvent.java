@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class InternalStatisticEvent {
+
     private final InternalStatisticKey key;
     private final Type type;
     private final long timeMs;
@@ -21,7 +22,9 @@ public class InternalStatisticEvent {
         this.key = Preconditions.checkNotNull(key);
         this.type = Preconditions.checkNotNull(type);
         this.timeMs = timeMs;
-        this.tags = tags == null ? Collections.emptyMap() : tags;
+        this.tags = tags == null
+                ? Collections.emptyMap()
+                : tags;
         this.value = Preconditions.checkNotNull(value);
     }
 
@@ -79,16 +82,27 @@ public class InternalStatisticEvent {
         return (Double) value;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final InternalStatisticEvent that = (InternalStatisticEvent) o;
 
-        if (timeMs != that.timeMs) return false;
-        if (!key.equals(that.key)) return false;
-        if (!tags.equals(that.tags)) return false;
+        if (timeMs != that.timeMs) {
+            return false;
+        }
+        if (!key.equals(that.key)) {
+            return false;
+        }
+        if (!tags.equals(that.tags)) {
+            return false;
+        }
         return value.equals(that.value);
     }
 

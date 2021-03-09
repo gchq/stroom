@@ -17,13 +17,13 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
-import stroom.lmdb.PutOutcome;
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.PutOutcome;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -43,11 +43,11 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 
 
 /**
@@ -349,6 +349,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     }
 
     public interface Factory {
+
         ValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

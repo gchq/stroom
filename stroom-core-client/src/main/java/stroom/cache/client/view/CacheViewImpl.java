@@ -16,21 +16,24 @@
 
 package stroom.cache.client.view;
 
+import stroom.cache.client.presenter.CachePresenter;
+import stroom.cache.client.presenter.CachePresenter.CacheView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.cache.client.presenter.CachePresenter;
-import stroom.cache.client.presenter.CachePresenter.CacheView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class CacheViewImpl extends ViewImpl implements CacheView {
+
     private final Widget widget;
     @UiField
     ResizeSimplePanel cacheList;
     @UiField
     ResizeSimplePanel cacheNodeList;
+
     @Inject
     public CacheViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -51,5 +54,6 @@ public class CacheViewImpl extends ViewImpl implements CacheView {
     }
 
     public interface Binder extends UiBinder<Widget, CacheViewImpl> {
+
     }
 }

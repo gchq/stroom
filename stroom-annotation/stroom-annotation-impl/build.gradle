@@ -7,6 +7,7 @@ dependencies {
 //    compile project(':stroom-explorer:stroom-explorer-api')
 //    compile project(':stroom-explorer:stroom-collection-api')
 //    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-search:stroom-search-extraction')

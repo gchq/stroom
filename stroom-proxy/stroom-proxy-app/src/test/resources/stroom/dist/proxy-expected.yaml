@@ -1,0 +1,54 @@
+---
+proxyConfig:
+  proxyContentDir: null
+  useDefaultOpenIdCredentials: true
+  proxyRequestConfig:
+    receiptPolicyUuid: null
+  forwardStreamConfig:
+    userAgent: null
+    forwardDestinations: []
+    forwardingEnabled: false
+  proxyRepositoryConfig:
+    format: "${pathId}/${id}"
+    rollCron: null
+    storingEnabled: false
+    dir: null
+  proxyRepositoryReaderConfig:
+    readCron: null
+    forwardThreadCount: 3
+    maxFileScan: 100000
+    maxConcurrentMappedFiles: 100000
+    maxAggregation: 1000
+    maxStreamSize: "1.0G"
+  logStreamConfig:
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
+  contentSyncConfig:
+    upstreamUrl: null
+    syncFrequency: 0
+    apiKey: null
+    contentSyncEnabled: false
+  feedStatus:
+    url: null
+    apiKey: null
+  jerseyClient:
+    timeout: "500 milliseconds"
+    connectionTimeout: "500 milliseconds"
+    connectionRequestTimeout: "500 milliseconds"
+    timeToLive: "1 hour"
+    cookiesEnabled: false
+    maxConnections: 1024
+    maxConnectionsPerRoute: 1024
+    keepAlive: "0 milliseconds"
+    retries: 0
+    userAgent:
+      empty: true
+      present: false
+    validateAfterInactivityPeriod: "0 microseconds"
+    minThreads: 1
+    maxThreads: 128
+    workQueueSize: 8
+    gzipEnabled: true
+    gzipEnabledForRequests: true
+    chunkedEncodingEnabled: true
+    proxy: null
+    tls: null

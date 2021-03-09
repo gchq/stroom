@@ -31,6 +31,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_0_0_11__Visualisations extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_11__Visualisations.class);
 
     @Override
@@ -45,7 +46,8 @@ public class V5_0_0_11__Visualisations extends BaseJavaMigration {
             statement.executeUpdate("ALTER TABLE VIS ADD COLUMN SCRIPT longtext;");
         }
         try (final Statement statement = connection.createStatement()) {
-            try (final ResultSet resultSet = statement.executeQuery("SELECT v.ID, s.UUID, s.NAME FROM VIS v JOIN SCRIPT s ON (s.ID = v.FK_SCRIPT_ID);")) {
+            try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT v.ID, s.UUID, s.NAME FROM VIS v JOIN SCRIPT s ON (s.ID = v.FK_SCRIPT_ID);")) {
                 while (resultSet.next()) {
                     final long id = resultSet.getLong(1);
                     final String scriptUUID = resultSet.getString(2);
@@ -53,7 +55,8 @@ public class V5_0_0_11__Visualisations extends BaseJavaMigration {
                     final DocRef docRef = new DocRef("Script", scriptUUID, scriptName);
                     final String refXML = objectMarshaller.marshal(docRef);
 
-                    try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE VIS SET SCRIPT = ? WHERE ID = ?")) {
+                    try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                            "UPDATE VIS SET SCRIPT = ? WHERE ID = ?")) {
                         preparedStatement.setString(1, refXML);
                         preparedStatement.setLong(2, id);
                         preparedStatement.executeUpdate();

@@ -23,6 +23,7 @@ import java.util.Map;
  * Provide string constants for the permissions.
  */
 public final class DocumentPermissionNames {
+
     /**
      * Users with the use permission can use documents.
      */

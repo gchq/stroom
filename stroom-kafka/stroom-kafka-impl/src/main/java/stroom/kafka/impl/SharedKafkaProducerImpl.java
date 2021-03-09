@@ -1,9 +1,10 @@
 package stroom.kafka.impl;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
 import stroom.docref.DocRef;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -47,17 +48,23 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
 
     @Override
     public String getConfigName() {
-        return kafkaConfigRef != null ? kafkaConfigRef.getName() : null;
+        return kafkaConfigRef != null
+                ? kafkaConfigRef.getName()
+                : null;
     }
 
     @Override
     public String getConfigUuid() {
-        return sharedKafkaProducerIdentity != null ? sharedKafkaProducerIdentity.getConfigUuid() : null;
+        return sharedKafkaProducerIdentity != null
+                ? sharedKafkaProducerIdentity.getConfigUuid()
+                : null;
     }
 
     @Override
     public String getConfigVersion() {
-        return sharedKafkaProducerIdentity != null ? sharedKafkaProducerIdentity.getConfigVersion() : null;
+        return sharedKafkaProducerIdentity != null
+                ? sharedKafkaProducerIdentity.getConfigVersion()
+                : null;
     }
 
     /**
@@ -70,7 +77,8 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
 
     static SharedKafkaProducerImpl empty() {
         return new SharedKafkaProducerImpl(null,
-                kafkaProducerSupplier -> {},
+                kafkaProducerSupplier -> {
+                },
                 null,
                 null);
     }

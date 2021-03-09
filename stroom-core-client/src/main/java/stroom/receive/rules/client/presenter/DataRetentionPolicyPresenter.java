@@ -131,7 +131,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     update();
                 })
                 .call(DATA_RETENTION_RULES_RESOURCE)
-                .read();
+                .fetch();
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
@@ -282,13 +282,13 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     if (ok) {
                         final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
                         if (rule != null && !isDefaultRule(rule)) {
-                            int index = visibleRules.indexOf(rule);
                             visibleRules.remove(rule);
 
                             update();
                             setDirty(true);
 
                             // Select the next rule.
+                            int index = visibleRules.indexOf(rule);
                             if (index > 0) {
                                 index--;
                             }
@@ -540,6 +540,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     public interface DataRetentionPolicyView extends View {
+
         void setTableView(View view);
 
         void setExpressionView(View view);

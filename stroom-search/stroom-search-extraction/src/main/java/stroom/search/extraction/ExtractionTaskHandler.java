@@ -52,12 +52,13 @@ import stroom.util.shared.StoredError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import javax.inject.Inject;
 
 class ExtractionTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
@@ -108,7 +109,8 @@ class ExtractionTaskHandler {
                         () -> {
                             if (!Thread.currentThread().isInterrupted()) {
                                 final String streamId = String.valueOf(task.getStreamId());
-                                taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
+                                taskContext.info(() ->
+                                        "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
                                 extract(task);
                             }
@@ -219,21 +221,23 @@ class ExtractionTaskHandler {
                     } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
                         // stream.
-                        throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
-                                e);
+                        throw new ExtractionException("Unable to extract data from stream source with id: " +
+                                streamId + " - " + e.getMessage(), e);
                     }
                 } catch (final ExtractionException e) {
                     throw e;
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
-                    throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
+                    throw new ExtractionException("Unable to extract data from stream source with id: " +
+                            streamId + " - " + e.getMessage(), e);
                 }
             }
         } catch (final ExtractionException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
-            throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
+            throw new ExtractionException("Unable to extract data from stream source with id: " +
+                    streamId + " - " + e.getMessage(), e);
         }
     }
 

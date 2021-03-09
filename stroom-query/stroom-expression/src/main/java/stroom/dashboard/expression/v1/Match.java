@@ -20,7 +20,25 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Match.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if pattern matches input",
+        signatures = @FunctionSignature(
+                description = "Tests an input string using a regular expression pattern.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The string to test using the regex pattern.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern",
+                                description = "The regex pattern to test with.",
+                                argType = ValString.class)}))
 class Match extends AbstractManyChildFunction implements Serializable {
+
     static final String NAME = "match";
     private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
@@ -49,7 +67,8 @@ class Match extends AbstractManyChildFunction implements Serializable {
             final String regex = params[1].toString();
 
             if (regex.length() == 0) {
-                throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function", 0);
+                throw new ParseException(
+                        "An empty regex has been defined for second argument of '" + name + "' function", 0);
             }
 
             final Pattern pattern = PatternCache.get(regex);
@@ -61,7 +80,8 @@ class Match extends AbstractManyChildFunction implements Serializable {
                 // Test regex is valid.
                 final String regex = params[1].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function", 0);
+                    throw new ParseException(
+                            "An empty regex has been defined for second argument of '" + name + "' function", 0);
                 }
                 PatternCache.get(regex);
             }
@@ -90,6 +110,7 @@ class Match extends AbstractManyChildFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {

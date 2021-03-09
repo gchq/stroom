@@ -58,6 +58,7 @@ import java.util.Set;
 public class UserTaskManagerPresenter
         extends Presenter<UserTaskManagerView, UserTaskManagerProxy>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
+
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final Provider<UserTaskPresenter> taskPresenterProvider;
@@ -232,6 +233,7 @@ public class UserTaskManagerPresenter
     }
 
     public interface UserTaskManagerView extends View {
+
         void addTask(View task);
 
         void removeTask(View task);
@@ -239,5 +241,6 @@ public class UserTaskManagerPresenter
 
     @ProxyCodeSplit
     public interface UserTaskManagerProxy extends Proxy<UserTaskManagerPresenter> {
+
     }
 }

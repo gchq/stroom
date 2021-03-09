@@ -19,5 +19,6 @@ package stroom.meta.statistics.api;
 import java.util.Map;
 
 public interface MetaStatistics {
+
     void recordStatistics(Map<String, String> metaData);
 }

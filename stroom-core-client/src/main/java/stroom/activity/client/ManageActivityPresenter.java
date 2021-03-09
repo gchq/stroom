@@ -48,14 +48,15 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
     public static final String LIST = "LIST";
 
@@ -65,12 +66,13 @@ public class ManageActivityPresenter extends
     private final UiConfigCache uiConfigCache;
     private final UrlParameters urlParameters;
     private final CurrentActivity currentActivity;
-    private ButtonView newButton;
-    private ButtonView openButton;
-    private ButtonView deleteButton;
+    private final ButtonView newButton;
+    private final ButtonView openButton;
+    private final ButtonView deleteButton;
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private Supplier<SafeHtml> quickFilterTooltipSupplier;
+    private boolean isFirstShow = true;
 
     @Inject
     public ManageActivityPresenter(final EventBus eventBus,
@@ -185,7 +187,13 @@ public class ManageActivityPresenter extends
 
     private void show(final Activity activity, final Consumer<Activity> consumer) {
         setSelected(activity);
-        listPresenter.refresh();
+
+        if (isFirstShow) {
+            // Avoid the refresh on first show as this causes the data to be fetched twice
+            isFirstShow = false;
+        } else {
+            listPresenter.refresh();
+        }
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
@@ -236,7 +244,7 @@ public class ManageActivityPresenter extends
             rest
                     .onSuccess(this::onEdit)
                     .call(ACTIVITY_RESOURCE)
-                    .read(e.getId());
+                    .fetch(e.getId());
         }
     }
 
@@ -256,7 +264,8 @@ public class ManageActivityPresenter extends
     private void onDelete() {
         final Activity entity = getSelected();
         if (entity != null) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
+            ConfirmEvent.fire(this, "Are you sure you want to delete the selected " +
+                            getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
                             // Delete the activity
@@ -310,6 +319,7 @@ public class ManageActivityPresenter extends
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

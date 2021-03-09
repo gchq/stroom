@@ -20,18 +20,19 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamCloser;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.zip.GZIPInputStream;
+import javax.annotation.Nonnull;
 
 /**
  * @see BlockGZIPConstants
  */
 abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
+
     // Use to help track non-closed streams
     private final StreamCloser streamCloser = new BasicStreamCloser();
     /**
@@ -384,6 +385,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
      * read more than we are allowed to (for the gzip stream)
      */
     class GzipInputStreamAdaptor extends InputStream {
+
         private int bytesRead;
 
         // Start a new adaptor.

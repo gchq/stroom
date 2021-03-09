@@ -19,5 +19,6 @@ package stroom.data.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ClassificationUiHandlers extends UiHandlers {
+
     void setClassification(String classification);
 }

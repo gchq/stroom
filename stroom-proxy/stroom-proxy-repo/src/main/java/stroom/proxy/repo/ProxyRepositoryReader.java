@@ -14,8 +14,6 @@ import stroom.util.scheduler.SimpleCron;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,11 +27,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Class that reads repositories.
  */
 public final class ProxyRepositoryReader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
 
     private final TaskContextFactory taskContextFactory;
@@ -205,7 +206,9 @@ public final class ProxyRepositoryReader {
             // Only process the thing if we have some outgoing handlers.
             final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
             if (handlers.size() > 0) {
-                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(handlerFactory, bufferFactory);
+                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(
+                        handlerFactory,
+                        bufferFactory);
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
                         executorProvider,
                         taskContextFactory,

@@ -16,14 +16,15 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.factory.AbstractElement;
+import stroom.pipeline.factory.Processor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.factory.AbstractElement;
-import stroom.pipeline.factory.Processor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.List;
  * For this reason it should be used only when necessary.
  */
 public class XMLFilterFork extends AbstractElement implements XMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLFilterFork.class);
 
     private final XMLFilter[] filters;

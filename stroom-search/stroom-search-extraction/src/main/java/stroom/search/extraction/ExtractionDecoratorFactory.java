@@ -13,13 +13,14 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ExtractionDecoratorFactory {
+
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionConfig extractionConfig;
     private final MetaService metaService;
@@ -75,9 +76,15 @@ public class ExtractionDecoratorFactory {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Consumer<Val[]> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-                final Consumer<Throwable> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
-                final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));
+                final Consumer<Val[]> valuesConsumer = values ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getValuesConsumer().accept(values));
+                final Consumer<Throwable> errorConsumer = error ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getErrorConsumer().accept(error));
+                final Consumer<Long> completionConsumer = delta ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getCompletionConsumer().accept(delta));
                 receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 

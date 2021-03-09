@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -36,8 +36,8 @@ import io.swagger.annotations.ApiModelProperty;
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class ComponentResultRequest {
-    @ApiModelProperty(
-            value = "The ID of the component that will receive the results corresponding to this ResultRequest",
+
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
     @JsonProperty
     private final String componentId;

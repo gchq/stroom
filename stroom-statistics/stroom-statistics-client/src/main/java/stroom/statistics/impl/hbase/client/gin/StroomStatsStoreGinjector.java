@@ -16,11 +16,12 @@
 
 package stroom.statistics.impl.hbase.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.statistics.impl.hbase.client.StroomStatsStorePlugin;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreFieldEditPresenter;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStorePresenter;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreSettingsPresenter;
+
+import com.google.gwt.inject.client.AsyncProvider;
 
 public interface StroomStatsStoreGinjector {
 

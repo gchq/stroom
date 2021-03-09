@@ -21,6 +21,7 @@ import stroom.index.shared.IndexVolume;
 import java.util.List;
 
 public class MostFreePercentVolumeSelector implements VolumeSelector {
+
     public static final String NAME = "MostFreePercent";
 
     private final RoundRobinVolumeSelector roundRobinVolumeSelector = new RoundRobinVolumeSelector();

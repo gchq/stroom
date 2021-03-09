@@ -41,8 +41,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SteppingFilterPresenter extends
-        MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView, SteppingFilterPresenter.SteppingFilterSettingsProxy>
+        MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView,
+                SteppingFilterPresenter.SteppingFilterSettingsProxy>
         implements SteppingFilterUiHandlers, ShowSteppingFilterSettingsHandler, PopupUiHandlers {
+
     public static final String LIST = "LIST";
     private final XPathListPresenter xPathListPresenter;
     private final XPathFilterPresenter xPathFilterPresenter;
@@ -193,6 +195,7 @@ public class SteppingFilterPresenter extends
     }
 
     public interface SteppingFilterSettingsView extends View, HasUiHandlers<SteppingFilterUiHandlers> {
+
         Severity getSkipToErrors();
 
         void setSkipToErrors(Severity severity);
@@ -208,5 +211,6 @@ public class SteppingFilterPresenter extends
 
     @ProxyCodeSplit
     public interface SteppingFilterSettingsProxy extends Proxy<SteppingFilterPresenter> {
+
     }
 }

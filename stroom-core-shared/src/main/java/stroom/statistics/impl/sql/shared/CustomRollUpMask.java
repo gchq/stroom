@@ -16,13 +16,14 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.List;
 @JsonPropertyOrder({"rolledUpTagPosition"})
 @JsonInclude(Include.NON_NULL)
 public class CustomRollUpMask implements HasDisplayValue {
+
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
      * position number is based on the alphanumeric sorted list of tag/field
@@ -71,10 +73,8 @@ public class CustomRollUpMask implements HasDisplayValue {
                 Collections.sort(this.rolledUpTagPosition);
             }
         } else {
-            if (rolledUpTagPosition.contains(position)) {
-                rolledUpTagPosition.remove(position);
-                // no need to re-sort on remove as already in order
-            }
+            // no need to re-sort on remove as already in order
+            rolledUpTagPosition.remove(position);
         }
     }
 
@@ -92,25 +92,28 @@ public class CustomRollUpMask implements HasDisplayValue {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((rolledUpTagPosition == null) ? 0 : rolledUpTagPosition.hashCode());
+        result = prime * result + ((rolledUpTagPosition == null)
+                ? 0
+                : rolledUpTagPosition.hashCode());
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final CustomRollUpMask other = (CustomRollUpMask) obj;
         if (rolledUpTagPosition == null) {
-            if (other.rolledUpTagPosition != null)
-                return false;
-        } else if (!rolledUpTagPosition.equals(other.rolledUpTagPosition))
-            return false;
-        return true;
+            return other.rolledUpTagPosition == null;
+        } else return rolledUpTagPosition.equals(other.rolledUpTagPosition);
     }
 
     @Override

@@ -5,6 +5,7 @@ import stroom.job.api.ScheduledJob;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class ScheduledJobFunction implements Runnable {
+
     private final AtomicBoolean running;
     private final ScheduledJob scheduledJob;
     private final Runnable runnable;

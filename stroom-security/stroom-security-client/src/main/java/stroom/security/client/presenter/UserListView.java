@@ -20,5 +20,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public interface UserListView extends View, HasUiHandlers<UserListUiHandlers> {
+
     void setDatGridView(View view);
 }

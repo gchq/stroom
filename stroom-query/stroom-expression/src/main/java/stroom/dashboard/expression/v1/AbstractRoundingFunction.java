@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 
 abstract class AbstractRoundingFunction extends AbstractFunction {
+    static final String ROUND_SUB_CATEGORY = "Rounding";
     private RoundCalculator calculator;
     private Function function;
 

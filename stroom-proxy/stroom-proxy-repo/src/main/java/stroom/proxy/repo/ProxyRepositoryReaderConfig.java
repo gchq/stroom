@@ -1,11 +1,13 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.ModelStringUtil;
 
 public class ProxyRepositoryReaderConfig {
+
     private String readCron;
     private int forwardThreadCount = 3;
     private int maxFileScan = 100000;
@@ -13,7 +15,8 @@ public class ProxyRepositoryReaderConfig {
     private int maxAggregation = 1000;
     private long maxStreamSize = ModelStringUtil.parseIECByteSizeString("1G");
 
-    @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read any ready repositories (if not defined we read all the time)")
+    @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read " +
+            "any ready repositories (if not defined we read all the time)")
     @JsonProperty
     public String getReadCron() {
         return readCron;
@@ -36,7 +39,8 @@ public class ProxyRepositoryReaderConfig {
     }
 
 
-    @JsonPropertyDescription("Max number of files to scan over during forwarding. Once this limit is reached it will wait until next read interval")
+    @JsonPropertyDescription("Max number of files to scan over during forwarding. Once this limit is reached it " +
+            "will wait until next read interval")
     @JsonProperty
     public int getMaxFileScan() {
         return maxFileScan;
@@ -47,7 +51,8 @@ public class ProxyRepositoryReaderConfig {
         this.maxFileScan = maxFileScan;
     }
 
-    @JsonPropertyDescription("The maximum number of concurrent mapped files we can hold before we send the largest set for aggregation")
+    @JsonPropertyDescription("The maximum number of concurrent mapped files we can hold before we send the " +
+            "largest set for aggregation")
     @JsonProperty
     public int getMaxConcurrentMappedFiles() {
         return maxConcurrentMappedFiles;
@@ -58,7 +63,8 @@ public class ProxyRepositoryReaderConfig {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
     }
 
-    @JsonPropertyDescription("Aggregate size to break at when building an aggregate. 1G stream maybe a file around 100MB in size (with 90% compression)")
+    @JsonPropertyDescription("Aggregate size to break at when building an aggregate. 1G stream maybe a file " +
+            "around 100MB in size (with 90% compression)")
     @JsonProperty
     public int getMaxAggregation() {
         return maxAggregation;

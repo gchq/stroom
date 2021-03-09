@@ -8,6 +8,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
 public final class ProcessorTaskExpressionUtil {
+
     private ProcessorTaskExpressionUtil() {
         // Utility class.
     }

@@ -16,6 +16,10 @@
 
 package stroom.pipeline.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
+import stroom.pipeline.client.presenter.PipelineSettingsUiHandlers;
+
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,12 +28,10 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
-import stroom.pipeline.client.presenter.PipelineSettingsUiHandlers;
 
 public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSettingsUiHandlers>
         implements PipelineSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -68,5 +70,6 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
     }
 
     public interface Binder extends UiBinder<Widget, PipelineSettingsViewImpl> {
+
     }
 }

@@ -16,19 +16,21 @@
 
 package stroom.index.shared;
 
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.StringCriteria;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.FindDocumentEntityCriteria;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindIndexCriteria extends FindDocumentEntityCriteria {
+
     public FindIndexCriteria() {
     }
 
@@ -38,7 +40,7 @@ public class FindIndexCriteria extends FindDocumentEntityCriteria {
 
     @JsonCreator
     public FindIndexCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                             @JsonProperty("sortList") final List<Sort> sortList,
+                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("name") final StringCriteria name,
                              @JsonProperty("requiredPermission") final String requiredPermission) {
         super(pageRequest, sortList, name, requiredPermission);

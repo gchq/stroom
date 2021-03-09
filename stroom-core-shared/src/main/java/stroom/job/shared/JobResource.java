@@ -16,13 +16,14 @@
 
 package stroom.job.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,20 +33,23 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "job - /v1")
+@Tag(name = "Jobs")
 @Path("/job" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
+
     @GET
-    @ApiOperation(
-            value = "Lists jobs",
-            response = ResultPage.class)
+    @Operation(
+            summary = "Lists jobs",
+            operationId = "listJobs")
     ResultPage<Job> list();
 
     @PUT
     @Path("/{id}/enabled")
-    @ApiOperation(value = "Sets the enabled status of the job")
-    void setEnabled(@PathParam("id") Integer id, 
-                    @ApiParam("enabled") Boolean enabled);
+    @Operation(
+            summary = "Sets the enabled status of the job",
+            operationId = "setJobEnabled")
+    void setEnabled(@PathParam("id") Integer id,
+                    @Parameter(description = "enabled", required = true) Boolean enabled);
 }

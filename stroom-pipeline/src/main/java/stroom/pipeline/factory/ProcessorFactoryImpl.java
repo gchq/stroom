@@ -28,16 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 @PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -66,6 +67,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
     }
 
     static class MultiWayProcessor implements Processor {
+
         private final List<Processor> processors;
         private final Executor executor;
         private final TaskContextFactory taskContextFactory;
@@ -85,7 +87,9 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         public void process() {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
-                final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(), "Process", taskContext -> processor.process());
+                final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(),
+                        "Process",
+                        taskContext -> processor.process());
                 CompletableFuture
                         .runAsync(runnable, executor)
                         .whenComplete((r, t) -> {

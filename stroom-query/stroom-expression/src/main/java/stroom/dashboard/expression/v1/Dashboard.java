@@ -16,7 +16,41 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Dashboard.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "A hyperlink that will open a dashboard.",
+        commonDescription = "Produces a hyperlink for opening a specific dashboard.",
+        signatures = {
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        argType = ValString.class,
+                                        description = "The text that the hyperlink will display."),
+                                @FunctionArg(
+                                        name = "uuid",
+                                        argType = ValString.class,
+                                        description = "The UUID for the dashboard to link to.")}),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        argType = ValString.class,
+                                        description = "The text that the hyperlink will display."),
+                                @FunctionArg(
+                                        name = "uuid",
+                                        argType = ValString.class,
+                                        description = "The UUID for the dashboard to link to."),
+                                @FunctionArg(
+                                        name = "params",
+                                        argType = ValString.class,
+                                        description = "A String of space separated parameters to pass into the " +
+                                                "dashboard, e.g. 'usedId=user1 building=hq'")})})
 class Dashboard extends AbstractLink {
+
     static final String NAME = "dashboard";
 
     public Dashboard(final String name) {
@@ -29,6 +63,7 @@ class Dashboard extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

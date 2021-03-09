@@ -29,6 +29,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.LongSupplier;
 
 public class TimeAgnosticStatisticEvent implements Serializable {
+
     private static final long serialVersionUID = 6308709037286356273L;
     private final String name;
     private final List<StatisticTag> tagList;
@@ -58,10 +59,10 @@ public class TimeAgnosticStatisticEvent implements Serializable {
 
         // Hold the getters to save having to check each time
         if (StatisticType.COUNT.equals(statisticType)) {
-           countSupplier = () -> count;
-           valueSupplier = () -> {
-               throw new UnsupportedOperationException("getValue() not supported for a COUNT stat");
-           };
+            countSupplier = () -> count;
+            valueSupplier = () -> {
+                throw new UnsupportedOperationException("getValue() not supported for a COUNT stat");
+            };
         } else {
             countSupplier = () -> {
                 throw new UnsupportedOperationException("getCount() not supported for a VALUE stat");
@@ -184,45 +185,68 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     private int buildHashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((count == null) ? 0 : count.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((statisticType == null) ? 0 : statisticType.hashCode());
-        result = prime * result + ((tagList == null) ? 0 : tagList.hashCode());
-        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        result = prime * result + ((count == null)
+                ? 0
+                : count.hashCode());
+        result = prime * result + ((name == null)
+                ? 0
+                : name.hashCode());
+        result = prime * result + ((statisticType == null)
+                ? 0
+                : statisticType.hashCode());
+        result = prime * result + ((tagList == null)
+                ? 0
+                : tagList.hashCode());
+        result = prime * result + ((value == null)
+                ? 0
+                : value.hashCode());
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final TimeAgnosticStatisticEvent other = (TimeAgnosticStatisticEvent) obj;
         if (count == null) {
-            if (other.count != null)
+            if (other.count != null) {
                 return false;
-        } else if (!count.equals(other.count))
+            }
+        } else if (!count.equals(other.count)) {
             return false;
+        }
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
-        if (statisticType != other.statisticType)
+        }
+        if (statisticType != other.statisticType) {
             return false;
+        }
         if (tagList == null) {
-            if (other.tagList != null)
+            if (other.tagList != null) {
                 return false;
-        } else if (!tagList.equals(other.tagList))
+            }
+        } else if (!tagList.equals(other.tagList)) {
             return false;
+        }
         if (value == null) {
-            if (other.value != null)
+            if (other.value != null) {
                 return false;
-        } else if (!value.equals(other.value))
+            }
+        } else if (!value.equals(other.value)) {
             return false;
+        }
         return true;
     }
 

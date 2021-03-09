@@ -16,7 +16,17 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = False.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "The boolean false.",
+        signatures = @FunctionSignature(
+                description = "Returns the boolean false.",
+                args = {}))
 class False extends AbstractStaticFunction {
+
     static final String NAME = "false";
 
     public False(final String name) {

@@ -25,6 +25,7 @@ import java.io.Serializable;
 
 @JsonInclude(Include.NON_NULL)
 public class TaskId implements Serializable {
+
     private static final long serialVersionUID = -8404944210149631124L;
 
     @JsonProperty

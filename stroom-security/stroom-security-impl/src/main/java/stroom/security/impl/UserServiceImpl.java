@@ -26,7 +26,6 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +33,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class UserServiceImpl implements UserService {
+
     private final SecurityContext securityContext;
     private final UserDao userDao;
     private final EntityEventBus eventBus;
@@ -79,7 +80,8 @@ class UserServiceImpl implements UserService {
             return userDao.getByName(name)
                     .filter(user -> {
                         if (!user.getName().equals(name)) {
-                            throw new RuntimeException("Unexpected: returned user name does not match requested user name");
+                            throw new RuntimeException(
+                                    "Unexpected: returned user name does not match requested user name");
                         }
                         return true;
                     });

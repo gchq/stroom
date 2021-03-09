@@ -17,21 +17,22 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.RuleAction;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 
 public class RulePresenter extends MyPresenterWidget<RuleView> {
+
     private final EditExpressionPresenter editExpressionPresenter;
     private ReceiveDataRule originalRule;
 
@@ -58,10 +59,16 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
     ReceiveDataRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new ReceiveDataRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
+        return new ReceiveDataRule(originalRule.getRuleNumber(),
+                originalRule.getCreationTime(),
+                getView().getName(),
+                originalRule.isEnabled(),
+                expression,
+                getView().getAction());
     }
 
     public interface RuleView extends View {
+
         void setExpressionView(View view);
 
         String getName();

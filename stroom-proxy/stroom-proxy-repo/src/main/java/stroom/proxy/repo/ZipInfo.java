@@ -23,6 +23,7 @@ import stroom.util.shared.ModelStringUtil;
 import java.nio.file.Path;
 
 public class ZipInfo {
+
     private final Path path;
     private final FileSetKey key;
     private final Long uncompressedSize;

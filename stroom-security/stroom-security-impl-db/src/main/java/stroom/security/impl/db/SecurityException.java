@@ -1,6 +1,7 @@
 package stroom.security.impl.db;
 
 public class SecurityException extends RuntimeException {
+
     public SecurityException() {
     }
 

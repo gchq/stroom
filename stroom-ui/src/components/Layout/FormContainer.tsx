@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
+import { FunctionComponent } from "react";
 import * as React from "react";
 
-const FormContainer: React.FunctionComponent = ({ children }) => {
-  return <div className="Layout__form-container">{children}</div>;
+interface Props {
+  className?: string;
+}
+
+const FormContainer: FunctionComponent<Props> = (props) => {
+  return (
+    <div className="Layout__form-container" {...props}>
+      {props.children}
+    </div>
+  );
 };
 
 export default FormContainer;

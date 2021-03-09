@@ -16,8 +16,106 @@
 
 package stroom.dashboard.expression.v1;
 
+// TODO @AT Confirm behavior of annotation link in the app, i.e. can you have a link with no anno id and/or no linked
+//   event. Need to confirm which args are opt.
+
+/**
+ * See also HyperlinkEventHandlerImpl
+ */
+
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Annotation.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        signatures = {
+                @FunctionSignature(
+                        returnDescription = "A hyperlink to open the annotation edit screen for an existing " +
+                                "annotation.",
+                        description = "Creates a hyperlink that will open the annotation edit screen showing " +
+                                "the existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The displayed text of the annotation link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ANNOTATION_ID,
+                                        description = "The ID of the annotation.",
+                                        argType = ValString.class,
+                                        defaultValue = "${annotation:Id}")}),
+                @FunctionSignature(
+                        returnDescription = "A hyperlink to open the annotation edit screen.",
+                        description = "Creates a hyperlink that will open the annotation edit screen showing the " +
+                                "existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + " or if " +
+                                "that is '' or null() then it will show the edit screen pre-populated with the " +
+                                "supplied values ready to create a new annotation.",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The displayed text of the annotation link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ANNOTATION_ID,
+                                        description = "The ID of the existing annotation or null() if creating " +
+                                                "a new one.",
+                                        argType = ValString.class,
+                                        defaultValue = "${annotation:Id}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_STREAM_ID,
+                                        description = "The ID of the stream of the linked event. Must be provided " +
+                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                        isOptional = true,
+                                        argType = ValString.class,
+                                        defaultValue = "${streamId}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_EVENT_ID,
+                                        description = "The ID of the of the linked event. Must be provided " +
+                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                        isOptional = true,
+                                        argType = ValString.class,
+                                        defaultValue = "${eventId}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_TITLE,
+                                        description = "The title of the annotation",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_SUBJECT,
+                                        description = "The subject of the annotation.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_STATUS,
+                                        description = "The status of the annotation (see " +
+                                                "stroom.annotation.statusValues property for possible values.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ASSIGNED_TO,
+                                        description = "The username of the user that this annotation will be " +
+                                                "assigned to.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_COMMENT,
+                                        description = "A comment for this annotation.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                        })
+        })
 class Annotation extends AbstractLink {
+
     static final String NAME = "annotation";
+
+    protected static final String ARG_ANNOTATION_ID = "annotationId";
+    protected static final String ARG_STREAM_ID = "streamId";
+    protected static final String ARG_EVENT_ID = "eventId";
+    protected static final String ARG_TITLE = "title";
+    protected static final String ARG_SUBJECT = "subject";
+    protected static final String ARG_STATUS = "status";
+    protected static final String ARG_ASSIGNED_TO = "assignedTo";
+    protected static final String ARG_COMMENT = "comment";
 
     public Annotation(final String name) {
         super(name, 2, 9);
@@ -29,6 +127,7 @@ class Annotation extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {
@@ -45,16 +144,19 @@ class Annotation extends AbstractLink {
         @Override
         public Val eval() {
             final StringBuilder sb = new StringBuilder();
-            append(sb, 1, "annotationId");
-            append(sb, 2, "streamId");
-            append(sb, 3, "eventId");
-            append(sb, 4, "title");
-            append(sb, 5, "subject");
-            append(sb, 6, "status");
-            append(sb, 7, "assignedTo");
-            append(sb, 8, "comment");
+            append(sb, 1, ARG_ANNOTATION_ID);
+            append(sb, 2, ARG_STREAM_ID);
+            append(sb, 3, ARG_EVENT_ID);
+            append(sb, 4, ARG_TITLE);
+            append(sb, 5, ARG_SUBJECT);
+            append(sb, 6, ARG_STATUS);
+            append(sb, 7, ARG_ASSIGNED_TO);
+            append(sb, 8, ARG_COMMENT);
 
-            return makeLink(getEscapedString(childGenerators[0].eval()), EncodingUtil.encodeUrl(sb.toString()), "annotation");
+            return makeLink(getEscapedString(
+                    childGenerators[0].eval()),
+                    EncodingUtil.encodeUrl(sb.toString()),
+                    "annotation");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {

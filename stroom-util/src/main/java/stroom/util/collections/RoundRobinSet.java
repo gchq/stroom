@@ -17,7 +17,6 @@
 package stroom.util.collections;
 
 
-
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -30,7 +29,8 @@ import java.util.Set;
  * @param <E> type of set
  */
 public class RoundRobinSet<E> extends AbstractCollection<E> implements Set<E> {
-    private ArrayList<E> realList = new ArrayList<>();
+
+    private final ArrayList<E> realList = new ArrayList<>();
     private int startCursor = 0;
 
     /**
@@ -91,7 +91,7 @@ public class RoundRobinSet<E> extends AbstractCollection<E> implements Set<E> {
         boolean hasNext = i.hasNext();
         while (hasNext) {
             E o = i.next();
-            buf.append(String.valueOf(o));
+            buf.append(o);
             hasNext = i.hasNext();
             if (hasNext) {
                 buf.append(", ");

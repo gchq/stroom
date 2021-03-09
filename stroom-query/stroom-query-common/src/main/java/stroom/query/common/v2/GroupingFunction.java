@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class GroupingFunction implements Function<Stream<UnpackedItem>, Stream<UnpackedItem>> {
+
     //    private final GeneratorCombiner[] generatorCombiners;
     private final ItemSerialiser itemSerialiser;
 

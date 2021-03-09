@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class IndexFieldsMap extends HashMap<String, IndexField> {
+
     private static final long serialVersionUID = -7687167987530520359L;
 
     public IndexFieldsMap() {

@@ -1,23 +1,16 @@
 /* Customisations to standard bootstrap styles */
-@import "themes.scss";
-@import "themify.scss";
+@import "themes";
 
 .badge-success {
-  @include themify($themes) {
-    background-color: themed("valid");
-  }
+    background-color: var(--valid);
 }
 
 .badge-warning {
-  @include themify($themes) {
-    background-color: themed("warn");
-  }
+    background-color: var(--warn);
 }
 
 .badge-danger {
-  @include themify($themes) {
-    background-color: themed("error");
-  }
+    background-color: var(--error);
 }
 
 .dropdown-menu {
@@ -25,7 +18,9 @@
   font-size: inherit;
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
-  @include dialog($themes);
+  border: 1px solid var(--dialog__border-color);
+  -webkit-box-shadow: 0 5px 10px var(--dialog__border-color);
+  box-shadow: 0 5px 10px var(--dialog__border-color);
 }
 
 .dropdown-item {
@@ -33,68 +28,75 @@
 }
 
 .dropdown-item:active {
-  @include themify($themes) {
-    background-color: themed("primary");
-  }
+  background-color: var(--primary);
 }
 
 .form-control {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-    border-color: themed("control__border-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border-color: var(--control__border-color);
 }
 
 .form-control:focus {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-    border-color: themed("control__border-color");
-  }
-
-  //border-color: rgb(102,175,233);
-  //outline: 0;
-  //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
-  //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
-  @include focus-ring($themes, "primary")
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border-color: var(--control__border-color);
+  outline: 0;
+  box-shadow: none;
 }
+
+
+
+.allow-focus:focus {
+  outline: 0;
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-shadow);
+}
+
+.allow-focus:focus:not(:focus-visible) {
+  outline: 0;
+  border-color: var(--control__border-color);
+  box-shadow: none;
+}
+
+.allow-focus:focus-visible {
+}
+
+
 
 .form-control.is-invalid {
   // border-color: #dc354;
-  @include themify($themes) {
-    border-color: themed("invalid");
-  }
+  border-color: var(--invalid);
 }
 
 .form-control.is-invalid:focus {
-  @include focus-ring($themes, "invalid")
+  outline: 0;
+  border-color: var(--focus-border--invalid);
+  box-shadow: var(--focus-shadow--invalid);
 }
 
 .form-control.is-valid {
-  @include themify($themes) {
-    border-color: themed("valid");
-  }
+    border-color: var(--valid);
 }
 
 .form-control.is-valid:focus {
-  @include focus-ring($themes, "valid")
+  outline: 0;
+  border-color: var(--focus-border--valid);
+  box-shadow: var(--focus-shadow--valid);
 }
 
 .form-check > input:focus {
-  @include focus-ring($themes, "primary")
+  outline: 0;
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-shadow);
 }
 
 .invalid-feedback {
-  @include themify($themes) {
-    color: themed("feedback");
-  }
+    color: var(--feedback);
 }
 
 label {
-  @include themify($themes) {
-    color: themed("page__text-color");
-  }
+    color: var(--page__text-color);
 }
 
 .modal {
@@ -102,14 +104,14 @@ label {
 }
 
 .modal-dialog {
-  max-width: 100%;
-  max-height: 100%;
-  min-width: 10rem;
-  min-height: 10rem;
-
-  width: 100%;
-  height: 100%;
-  margin: 0;
+  //max-width: 100%;
+  //max-height: 100%;
+  //min-width: 10rem;
+  //min-height: 10rem;
+  //
+  //width: 100%;
+  //height: 100%;
+  //margin: 0;
 
   display: flex;
   align-content: center;
@@ -117,19 +119,43 @@ label {
 }
 
 .modal-content {
-  width: auto;
-  @include page($themes)
+  //width: auto;
+  //@include page($themes)
+
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  //align-items: stretch;
+  overflow: visible;
+  border: none;
 }
 
 .modal-header {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
   border-bottom: none;
 }
 
 .modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   padding: 0 1rem;
 }
 
 .modal-footer {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  align-items: flex-end;
   border-top: none;
   padding: 1rem;
 }

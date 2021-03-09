@@ -6,11 +6,11 @@ import stroom.task.shared.TaskId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.inject.Singleton;
 
 @Singleton
 class UserQueryRegistry {
@@ -68,6 +68,7 @@ class UserQueryRegistry {
     }
 
     private static class Key {
+
         private final String userId;
         private final String queryId;
 
@@ -76,10 +77,15 @@ class UserQueryRegistry {
             this.queryId = queryId;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return Objects.equals(userId, key.userId) &&
                     Objects.equals(queryId, key.queryId);

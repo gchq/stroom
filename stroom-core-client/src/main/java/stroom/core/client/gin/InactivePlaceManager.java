@@ -25,6 +25,7 @@ import com.gwtplatform.mvp.client.proxy.SetPlaceTitleHandler;
 import java.util.List;
 
 public class InactivePlaceManager implements PlaceManager {
+
     @Override
     public void fireEvent(GwtEvent<?> event) {
     }

@@ -12,10 +12,6 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -28,8 +24,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 class AmznJwtContextFactory implements JwtContextFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AmznJwtContextFactory.class);
     private static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
     private static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
@@ -93,7 +94,8 @@ class AmznJwtContextFactory implements JwtContextFactory {
             Objects.requireNonNull(publicKey, "Couldn't get public key");
 
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
+                    // to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
                     .setVerificationKey(publicKey)
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement

@@ -17,24 +17,26 @@
 
 package stroom.pipeline.xmlschema;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 public class XmlSchemaCache implements EntityEvent.Handler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;
 
@@ -153,10 +155,12 @@ public class XmlSchemaCache implements EntityEvent.Handler {
     }
 
     public interface ClearHandler {
+
         void onClear();
     }
 
     public static class SchemaSet {
+
         private final Map<String, List<XmlSchemaDoc>> schemaNameMap;
         private final Map<String, List<XmlSchemaDoc>> schemaNamespaceURIMap;
         private final Map<String, List<XmlSchemaDoc>> schemaSystemIdMap;

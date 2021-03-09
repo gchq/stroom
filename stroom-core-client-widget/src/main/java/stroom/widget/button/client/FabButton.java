@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 public class FabButton extends ButtonBase {
+
     private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.

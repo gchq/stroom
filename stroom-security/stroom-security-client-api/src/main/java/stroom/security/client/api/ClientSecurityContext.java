@@ -17,6 +17,7 @@
 package stroom.security.client.api;
 
 public interface ClientSecurityContext {
+
     /**
      * Get the id of the user associated with this security context.
      *
@@ -45,7 +46,7 @@ public interface ClientSecurityContext {
      * Check if the user associated with this security context has the requested
      * permission on the document specified by the document uuid.
      *
-     * @param documentUuid   The uuid of the document.
+     * @param documentUuid The uuid of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.

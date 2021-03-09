@@ -28,12 +28,13 @@ import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamAppender extends AbstractAppenderTest {
+
     @Inject
     private MetaService dataMetaService;
     @Inject

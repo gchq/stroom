@@ -4,6 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
@@ -12,7 +13,6 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -20,11 +20,11 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
-import stroom.util.shared.Count;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
@@ -47,14 +47,14 @@ import java.util.function.Consumer;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers {
 
-    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
     private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
-//    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
+    //    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
@@ -64,7 +64,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
     private TextRange currentHighlight = null;
-    private int highlightDelta = 0;
+    private final int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
@@ -124,11 +124,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
                 PermissionNames.STEPPING_PERMISSION);
 
-        if (hasStepPermission && !isSteppingSource) {
-            textPresenter.setControlsVisible(true);
-        } else {
-            textPresenter.setControlsVisible(false);
-        }
+        textPresenter.setControlsVisible(hasStepPermission && !isSteppingSource);
     }
 
     /**
@@ -143,6 +139,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     /**
      * Sets the source location/range according to the passed {@link SourceLocation}
      * If there is a highlight and it is outside the visible range then so be it.
+     *
      * @param force If true forces a re-fetch of the data even if the location/range is
      *              the same as last time.
      */
@@ -220,8 +217,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         if (optCurrLineCount
                 .filter(i -> i == 1)
                 .isPresent()
-            && highlight.isOnOneLine()
-            && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
+                && highlight.isOnOneLine()
+                && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
 
             // single line data and highlight
             final int newColNo;
@@ -240,7 +237,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 // to be some chars before the highlight to provide the user some context
                 newColNo = highlightStart.getColNo() - HIGHLIGHT_CONTEXT_CHARS_BEFORE;
             }
-            newSourceStart = DefaultLocation.of( 1, Math.max(1, newColNo));
+            newSourceStart = DefaultLocation.of(1, Math.max(1, newColNo));
         } else if (highlightStart.getLineNo() > HIGHLIGHT_CONTEXT_LINES_BEFORE) {
             final int newLineNo;
             if (isHighlightMovingBackwards && optCurrLineCount.isPresent()) {
@@ -253,10 +250,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 // so the user has some context
                 newLineNo = highlightStart.getLineNo() - HIGHLIGHT_CONTEXT_LINES_BEFORE;
             }
-            newSourceStart = DefaultLocation.of(  Math.max(1, newLineNo), 1);
+            newSourceStart = DefaultLocation.of(Math.max(1, newLineNo), 1);
         } else {
             // Shouldn't really come in here but just display from the start just in case
-            newSourceStart = DefaultLocation.of(1,1);
+            newSourceStart = DefaultLocation.of(1, 1);
         }
 
 //        GWT.log("Highlight: " + highlight.toString()
@@ -283,8 +280,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         } else {
             result = receivedSourceLocation.isSameSource(sourceLocation)
                     && sourceLocation.getHighlight().isInsideRange(
-                        receivedSourceLocation.getDataRange().getLocationFrom(),
-                        receivedSourceLocation.getDataRange().getLocationTo());
+                    receivedSourceLocation.getDataRange().getLocationFrom(),
+                    receivedSourceLocation.getDataRange().getLocationTo());
 
 //            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
 //                    + " isSameSource: " + receivedSourceLocation.isSameSource(sourceLocation)
@@ -339,7 +336,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .call(VIEW_DATA_RESOURCE)
+                .call(DATA_RESOURCE)
                 .fetch(request);
     }
 
@@ -385,12 +382,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void refreshProgressBar(final boolean isVisible) {
         Progress progress = null;
         if (dataNavigatorData.isSegmented()
-            && dataNavigatorData.getCharOffsetFrom().isPresent()
-            && dataNavigatorData.getCharOffsetTo().isPresent()) {
+                && dataNavigatorData.getCharOffsetFrom().isPresent()
+                && dataNavigatorData.getCharOffsetTo().isPresent()) {
 
             if (dataNavigatorData.getTotalChars().isExact()) {
                 progress = Progress.boundedRange(
-                        dataNavigatorData.getTotalChars().getCount() -1, // count to zero based bound
+                        dataNavigatorData.getTotalChars().getCount() - 1, // count to zero based bound
                         dataNavigatorData.getCharOffsetFrom().get(),
                         dataNavigatorData.getCharOffsetTo().get());
             } else {
@@ -513,7 +510,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         if (fetchDataResult.getSourceLocation() != null
                 && StreamTypeNames.META.equals(fetchDataResult.getSourceLocation().getChildType())) {
             mode = AceEditorMode.PROPERTIES;
-        } else {// We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
+        } else { // We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
             mode = AceEditorMode.XML;
         }
         textPresenter.setMode(mode);
@@ -575,6 +572,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
 
     private class DataNavigatorData implements HasCharacterData {
+
         private Count<Long> partsCount = Count.of(0L, false);
         private Count<Long> segmentsCount = Count.of(0L, false);
 
@@ -594,11 +592,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         @Override
         public void setDataRange(final DataRange dataRange) {
 //            doWithConfig(sourceConfig -> {
-                final SourceLocation newSourceLocation = requestedSourceLocation.clone()
-                        .withDataRange(dataRange)
-                        .build();
+            final SourceLocation newSourceLocation = requestedSourceLocation.clone()
+                    .withDataRange(dataRange)
+                    .build();
 
-                setSourceLocation(newSourceLocation);
+            setSourceLocation(newSourceLocation);
 //            });
         }
 

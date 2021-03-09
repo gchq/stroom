@@ -16,6 +16,9 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
+import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.resources.client.ClientBundle;
@@ -35,14 +38,13 @@ import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
-import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class XSDDisplay extends Composite {
+
     private static final Resources resources = GWT.create(Resources.class);
     private final FlowPanel contentPanel = new FlowPanel();
     private final Map<XSDNode, Integer> rowMap = new HashMap<>();
@@ -106,19 +108,52 @@ public class XSDDisplay extends Composite {
         midPanel.addStyleName("midPanel");
         midPanel.setSpacing(5);
 
-        midPanel.add(new XSDDisplayBox(resources.xsdTitleElements(), "Elements",
-                getNodeListDisplay(null, map, node, false, true, false, false, false), map, model, null, "100%",
-                "100%"));
-        midPanel.add(new XSDDisplayBox(resources.xsdTitleTypes(), "Types",
-                getNodeListDisplay(null, map, node, false, false, true, true, false), map, model, null, "100%",
+        midPanel.add(new XSDDisplayBox(
+                resources.xsdTitleElements(),
+                "Elements",
+                getNodeListDisplay(
+                        null,
+                        map,
+                        node,
+                        false,
+                        true,
+                        false,
+                        false,
+                        false),
+                map,
+                model,
+                null,
+                "100%",
                 "100%"));
 
-        final String targetNamespace = XMLUtil.getAttributeValue(node.getNode(), XSDAttribute.TARGET_NAMESPACE, false);
+        midPanel.add(new XSDDisplayBox(
+                resources.xsdTitleTypes(),
+                "Types",
+                getNodeListDisplay(
+                        null,
+                        map,
+                        node,
+                        false,
+                        false,
+                        true,
+                        true,
+                        false),
+                map,
+                model,
+                null,
+                "100%",
+                "100%"));
+
+        final String targetNamespace = XMLUtil.getAttributeValue(
+                node.getNode(),
+                XSDAttribute.TARGET_NAMESPACE,
+                false);
         String title = "Schema: ";
         if (targetNamespace != null) {
             title = title + targetNamespace;
         }
-        final XSDDisplayBox box = new XSDDisplayBox(resources.xsdTitleSchema(), title, midPanel, map, model, node, null,
+        final XSDDisplayBox box = new XSDDisplayBox(
+                resources.xsdTitleSchema(), title, midPanel, map, model, node, null,
                 null);
 
         return box;
@@ -133,7 +168,15 @@ public class XSDDisplay extends Composite {
         final VerticalPanel left = new VerticalPanel();
         final VerticalPanel right = new VerticalPanel();
 
-        left.add(new XSDDisplayBox(resources.xsdTitleElement(), node.getName(), null, map, model, node, null, null));
+        left.add(new XSDDisplayBox(
+                resources.xsdTitleElement(),
+                node.getName(),
+                null,
+                map,
+                model,
+                node,
+                null,
+                null));
 
         right.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         right.add(getTypeBox(right, map, typeNode));
@@ -173,7 +216,9 @@ public class XSDDisplay extends Composite {
         return layout;
     }
 
-    private XSDDisplayBox getTypeBox(final VerticalPanel layoutColumn, final SelectionMap map, final XSDNode node) {
+    private XSDDisplayBox getTypeBox(final VerticalPanel layoutColumn,
+                                     final SelectionMap map,
+                                     final XSDNode node) {
         if (node != null) {
             String title = node.getName();
             if (title == null) {
@@ -186,21 +231,48 @@ public class XSDDisplay extends Composite {
 
             if (title != null) {
                 if (node.getType() == XSDType.SIMPLE_TYPE) {
-                    return new XSDDisplayBox(resources.xsdTitleSimpleType(), title, null, map, model, node, null, null);
+                    return new XSDDisplayBox(
+                            resources.xsdTitleSimpleType(),
+                            title,
+                            null,
+                            map,
+                            model,
+                            node,
+                            null,
+                            null);
                 }
 
-                return new XSDDisplayBox(resources.xsdTitleComplexType(), title,
-                        getNodeListDisplay(layoutColumn, map, node, true, true, false, false, true), map, model, node,
-                        null, null);
+                return new XSDDisplayBox(
+                        resources.xsdTitleComplexType(),
+                        title,
+                        getNodeListDisplay(
+                                layoutColumn,
+                                map,
+                                node,
+                                true,
+                                true,
+                                false,
+                                false,
+                                true),
+                        map,
+                        model,
+                        node,
+                        null,
+                        null);
             }
         }
 
         return null;
     }
 
-    private Grid getNodeListDisplay(final VerticalPanel layoutColumn, final SelectionMap map, final XSDNode node,
-                                    final boolean showAttributes, final boolean showElements, final boolean showComplexTypes,
-                                    final boolean showSimpleTypes, final boolean showOccurance) {
+    private Grid getNodeListDisplay(final VerticalPanel layoutColumn,
+                                    final SelectionMap map,
+                                    final XSDNode node,
+                                    final boolean showAttributes,
+                                    final boolean showElements,
+                                    final boolean showComplexTypes,
+                                    final boolean showSimpleTypes,
+                                    final boolean showOccurance) {
         Grid layout = null;
 
         if (node != null) {
@@ -274,19 +346,25 @@ public class XSDDisplay extends Composite {
         int maxDepth = 0;
 
         // Add complex content structures.
-        final List<XSDNode> complexContentNodes = node.getChildNodes(XSDTypeFilter.COMPLEX_CONTENT_FILTER, true);
+        final List<XSDNode> complexContentNodes = node.getChildNodes(
+                XSDTypeFilter.COMPLEX_CONTENT_FILTER,
+                true);
         for (final XSDNode complexContentNode : complexContentNodes) {
             maxDepth += getMaxConstructDepth(complexContentNode);
         }
 
         // Add extension node structures.
-        final List<XSDNode> extensionNodes = node.getChildNodes(XSDTypeFilter.EXTENSION_FILTER, true);
+        final List<XSDNode> extensionNodes = node.getChildNodes(
+                XSDTypeFilter.EXTENSION_FILTER,
+                true);
         for (final XSDNode extensionNode : extensionNodes) {
             maxDepth += getMaxConstructDepth(extensionNode);
         }
 
         // Add structure nodes.
-        final List<XSDNode> structureNodes = node.getChildNodes(XSDTypeFilter.STRUCTURE_FILTER, true);
+        final List<XSDNode> structureNodes = node.getChildNodes(
+                XSDTypeFilter.STRUCTURE_FILTER,
+                true);
         for (final XSDNode child : structureNodes) {
             final XSDType type = child.getType();
 
@@ -303,8 +381,14 @@ public class XSDDisplay extends Composite {
         return maxDepth;
     }
 
-    private int addNode(final VerticalPanel layoutColumn, final Grid layout, final SelectionMap map, final XSDNode node,
-                        final boolean showOccurrence, final boolean addSeparator, final int initialRow, final int initialCol,
+    private int addNode(final VerticalPanel layoutColumn,
+                        final Grid layout,
+                        final SelectionMap map,
+                        final XSDNode node,
+                        final boolean showOccurrence,
+                        final boolean addSeparator,
+                        final int initialRow,
+                        final int initialCol,
                         final XSDTypeFilter typeFilter) {
         int row = initialRow;
         final int col = initialCol;
@@ -317,7 +401,8 @@ public class XSDDisplay extends Composite {
             if (typeFilter == XSDTypeFilter.COMPLEX_CONTENT_FILTER) {
                 // See if we have complex content.
                 for (final XSDNode child : childNodes) {
-                    final List<XSDNode> extensionNodes = child.getChildNodes(XSDTypeFilter.EXTENSION_FILTER, true);
+                    final List<XSDNode> extensionNodes = child.getChildNodes(
+                            XSDTypeFilter.EXTENSION_FILTER, true);
                     for (final XSDNode extensionNode : extensionNodes) {
                         // Add a type box for the super type above the extension
                         // type.
@@ -329,12 +414,31 @@ public class XSDDisplay extends Composite {
                             final Image superArrow = AbstractImagePrototype.create(resources.superArrowSelect())
                                     .createImage();
                             layoutColumn.add(superArrow);
-                            superArrow.getElement().getParentElement().setAttribute("textAlign", "center");
+                            superArrow.getElement().getParentElement().setAttribute(
+                                    "textAlign",
+                                    "center");
                         }
 
-                        row = addNode(layoutColumn, layout, map, extensionNode, showOccurrence, true, row, col,
+                        row = addNode(
+                                layoutColumn,
+                                layout,
+                                map,
+                                extensionNode,
+                                showOccurrence,
+                                true,
+                                row,
+                                col,
                                 XSDTypeFilter.ATTRIBUTE_FILTER);
-                        row = addNode(layoutColumn, layout, map, extensionNode, showOccurrence, addSeparator, row, col,
+
+                        row = addNode(
+                                layoutColumn,
+                                layout,
+                                map,
+                                extensionNode,
+                                showOccurrence,
+                                addSeparator,
+                                row,
+                                col,
                                 XSDTypeFilter.STRUCTURE_FILTER);
                     }
                 }
@@ -346,7 +450,16 @@ public class XSDDisplay extends Composite {
 
                     if (type == XSDType.SEQUENCE || type == XSDType.CHOICE || type == XSDType.ALL) {
                         addChild(layout, map, child, showOccurrence, row, col);
-                        row = addNode(layoutColumn, layout, map, child, true, false, row, col + 2, typeFilter);
+                        row = addNode(
+                                layoutColumn,
+                                layout,
+                                map,
+                                child,
+                                true,
+                                false,
+                                row,
+                                col + 2,
+                                typeFilter);
                     } else {
                         addChild(layout, map, child, showOccurrence, row, col);
 
@@ -363,7 +476,10 @@ public class XSDDisplay extends Composite {
         return row;
     }
 
-    private void addChild(final Grid layout, final SelectionMap map, final XSDNode node, final boolean showOccurance,
+    private void addChild(final Grid layout,
+                          final SelectionMap map,
+                          final XSDNode node,
+                          final boolean showOccurance,
                           final int row, final int col) {
         // Ensure layout size.
         if (layout.getRowCount() < row + 1) {
@@ -395,7 +511,10 @@ public class XSDDisplay extends Composite {
                 layout.setWidget(row, col, getImage(type));
             }
 
-            layout.setWidget(row, col + 1, AbstractImagePrototype.create(resources.xsdTree03()).createImage());
+            layout.setWidget(
+                    row,
+                    col + 1,
+                    AbstractImagePrototype.create(resources.xsdTree03()).createImage());
 
         } else {
             // Otherwise add the element.
@@ -569,6 +688,7 @@ public class XSDDisplay extends Composite {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource superArrow();
 
         ImageResource superArrowSelect();

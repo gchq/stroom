@@ -464,7 +464,7 @@ public class DS3Parser extends AbstractParser {
                            final Buffer buffer,
                            final Match parentMatch,
                            final int parentMatchCount) throws IOException, SAXException {
-        final int referencedGroups[] = node.getAllReferencedGroups();
+        final int[] referencedGroups = node.getAllReferencedGroups();
 
         // Store value for future use.
         if (referencedGroups != null && referencedGroups.length > 0) {

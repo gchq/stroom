@@ -17,18 +17,42 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.docref.DocRef;
+import stroom.docref.HasName;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.time.StroomDuration;
 
-import event.logging.BaseOutcome;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import event.logging.BaseObject;
+import event.logging.Criteria;
+import event.logging.Data;
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.EventAction;
 import event.logging.EventDetail;
 import event.logging.EventSource;
 import event.logging.EventTime;
+import event.logging.OtherObject;
 import event.logging.Purpose;
 import event.logging.SystemDetail;
 import event.logging.User;
@@ -37,22 +61,30 @@ import event.logging.util.DeviceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
+
     /**
      * Logger - should not be used for event logs
      */
@@ -69,17 +101,27 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
-    private final Map<Class<? extends EventAction>, Optional<Function<EventAction, BaseOutcome>>> outcomeFactoryMap = new ConcurrentHashMap<>();
+
+    private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
+
+    private final ObjectMapper objectMapper;
+
+    private final LoggingConfig loggingConfig;
 
     @Inject
-    StroomEventLoggingServiceImpl(final SecurityContext securityContext,
+    StroomEventLoggingServiceImpl(final LoggingConfig loggingConfig,
+                                  final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
+                                  final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider) {
+        this.loggingConfig = loggingConfig;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
+        this.objectInfoProviderMap = objectInfoProviderMap;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
+        this.objectMapper = createObjectMapper();
     }
 
     @Override
@@ -129,12 +171,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * Shallow merge of the two Purpose objects
      */
     private Purpose mergePurposes(final Purpose base, final Purpose override) {
-        if (base == null && override == null) {
-            return null;
-        } else if (base != null && override == null) {
-            return base;
-        } else if (override != null && base == null) {
-            return override;
+        if (base == null || override == null) {
+            if (base == null && override == null) {
+                return null;
+            }
+
+            return Objects.requireNonNullElse(override, base);
         } else {
             final Purpose purpose = base.newCopyBuilder().build();
             mergeValue(override::getAuthorisations, purpose::setAuthorisations);
@@ -159,52 +201,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
-
-//    public Event createSkeletonEvent(final String typeId, final String description) {
-//        return createSkeletonEvent(typeId, description, null);
-//    }
-//
-//    @Override
-//    public Event createSkeletonEvent(final String typeId,
-//                                     final String description,
-//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
-//                .withTypeId(typeId)
-//                .withDescription(description)
-//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
-//
-//        if (eventDetailBuilderConsumer != null) {
-//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
-//        }
-//
-//        return buildEvent()
-//                .withEventDetail(eventDetailBuilder.build())
-//                .build();
-//    }
-
-//    @Override
-//    public void log(final String typeId,
-//                    final String description,
-//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//
-//        super.log(typeId, description, eventDetailBuilderConsumer);
-//    }
-
-
-    private Device getDevice(final HttpServletRequest request) {
-        // Get stored device info.
-        final Device storedDevice = obtainStoredDevice(request);
-
-        // We need to copy the stored device as users may make changes to the
-        // returned object that might not be thread safe.
-        Device device = null;
-        if (storedDevice != null) {
-            device = copyDevice(storedDevice, new Device());
-        }
-
-        return device;
-    }
-
     private Device getClient(final HttpServletRequest request) {
         if (request != null) {
             try {
@@ -219,7 +215,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         LOGGER.warn("Problem getting client InetAddress", e);
                     }
 
-                    Device client = null;
+                    final Device client;
                     if (inetAddress != null) {
                         client = DeviceUtil.createDeviceFromInetAddress(inetAddress);
                     } else {
@@ -299,7 +295,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     }
                 }
             }
-
             obtainedDevice = true;
         }
 
@@ -318,6 +313,380 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return httpServletRequestProvider.get();
         }
         return null;
+    }
+
+    @Override
+    public BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders) {
+        if (objectSupplier != null) {
+            // Run as proc user in case we are logging a user trying to access a thing they
+            // don't have perms for
+            final Object object = securityContext.asProcessingUserResult(objectSupplier);
+            return convert(object, useInfoProviders);
+        } else {
+            return OtherObject.builder()
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
+                    .build();
+        }
+    }
+
+    @Override
+    public BaseObject convert(final Object object, final boolean useInfoProviders) {
+        if (object == null) {
+            return OtherObject.builder()
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
+                    .build();
+        }
+
+        final BaseObject baseObj;
+        final ObjectInfoProvider objectInfoAppender = useInfoProviders
+                ? getInfoAppender(object.getClass())
+                : null;
+        if (objectInfoAppender != null) {
+            baseObj = objectInfoAppender.createBaseObject(object);
+        } else {
+            final OtherObject.Builder<Void> builder = OtherObject.builder()
+                    .withType(getObjectType(object))
+                    .withId(getObjectId(object))
+                    .withName(getObjectName(object))
+                    .withDescription(describe(object));
+
+            builder.addData(getDataItems(object));
+
+            baseObj = builder.build();
+        }
+
+        return baseObj;
+    }
+
+    private String getObjectType(final Object object) {
+        if (object instanceof HasType) {
+            return String.valueOf(((HasType) object).getType());
+        }
+
+        final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
+        if (objectInfoProvider == null) {
+            if (object instanceof Collection) {
+                Collection<?> collection = (Collection<?>) object;
+                if (collection.isEmpty()) {
+                    return "Empty collection";
+                } else {
+                    return "Collection containing " + (long) collection.size() + " "
+                            + collection.stream().findFirst().get().getClass().getSimpleName() +
+                            " and possibly other objects";
+                }
+            }
+            return object.getClass().getSimpleName();
+        }
+        return objectInfoProvider.getObjectType(object);
+    }
+
+    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
+        if (type == null) {
+            return null;
+        }
+        ObjectInfoProvider appender = null;
+
+        if (String.class.equals(type)) {
+            appender = new ObjectInfoProvider() {
+                @Override
+                public BaseObject createBaseObject(final Object object) {
+                    return OtherObject.builder()
+                            .withType(object.toString())
+                            .build();
+                }
+
+                @Override
+                public String getObjectType(final Object object) {
+                    return object.toString();
+                }
+            };
+        } else {
+            // Some providers exist for superclasses and not subclass types so keep looking through the
+            // class hierarchy to find a provider.
+            Class<?> currentType = type;
+            Provider<ObjectInfoProvider> provider = null;
+            while (currentType != null && provider == null) {
+                provider = objectInfoProviderMap.get(new ObjectType(currentType));
+                currentType = currentType.getSuperclass();
+            }
+
+            if (provider != null) {
+                appender = provider.get();
+            }
+        }
+
+        if (appender == null) {
+            LOGGER.debug("No ObjectInfoProvider found for " + type.getName());
+        }
+
+        return appender;
+    }
+
+    @Override
+    public String describe(final Object object) {
+        if (object == null) {
+            return UNKNOWN_OBJECT_DESCRIPTION;
+        }
+        final StringBuilder desc = new StringBuilder();
+        final String objectType = getObjectType(object);
+        if (objectType != null) {
+            desc.append(objectType);
+        }
+
+        final String objectName = getObjectName(object);
+        if (objectName != null) {
+            desc.append(" \"");
+            desc.append(objectName);
+            desc.append("\"");
+        }
+
+        final String objectId = getObjectId(object);
+        if (objectId != null) {
+            desc.append(" id=");
+            desc.append(objectId);
+        }
+
+        return desc.toString();
+    }
+
+
+    private String getObjectName(final Object object) {
+        if (object instanceof HasName) {
+            return ((HasName) object).getName();
+        }
+
+        return null;
+    }
+
+    private String getObjectId(final Object object) {
+        if (object instanceof HasUuid) {
+            return ((HasUuid) object).getUuid();
+        }
+
+        if (object instanceof HasId) {
+            return String.valueOf(((HasId) object).getId());
+        }
+
+        if (object instanceof HasIntegerId) {
+            return String.valueOf(((HasIntegerId) object).getId());
+        }
+
+        return null;
+    }
+
+    @Override
+    public Criteria convertExpressionCriteria(final String type,
+                                              final ExpressionCriteria expressionCriteria) {
+        return Criteria.builder()
+                .withType(type)
+                .withQuery(StroomEventLoggingUtil.convertExpression(expressionCriteria.getExpression()))
+                .withData(Data.builder()
+                        .withName("pageRequest")
+                        .addData(getDataItems(expressionCriteria.getPageRequest()))
+                        .build())
+                .withData(Data.builder()
+                        .withName("sortList")
+                        .addData(getDataItems(expressionCriteria.getSortList()))
+                        .build())
+                .build();
+    }
+
+    /**
+     * Create {@link Data} items from properties of the supplied POJO
+     *
+     * @param obj POJO from which to extract properties
+     * @return List of {@link Data} items representing properties of the supplied POJO
+     */
+    public List<Data> getDataItems(Object obj) {
+        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
+            return null;
+        }
+        // Construct a Jackson JavaType for the class
+        final JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
+
+        // Introspect the given type
+        final BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
+
+        // Find properties
+        final List<BeanPropertyDefinition> properties = beanDescription.findProperties();
+
+        // Get class level ignored properties
+        final Set<String> ignoredProperties = new HashSet<>(objectMapper.getSerializationConfig()
+                .getAnnotationIntrospector()
+                .findPropertyIgnorals(beanDescription.getClassInfo())
+                .getIgnored()); // Filter properties removing the class level ignored ones
+
+        if (loggingConfig.isOmitRecordDetailsLoggingEnabled()) {
+            final Set<String> standardInterfaceProperties = ignorePropertiesFromStandardInterfaces(obj);
+            ignoredProperties.addAll(standardInterfaceProperties);
+        }
+
+        final List<BeanPropertyDefinition> availableProperties = properties.stream()
+                .filter(property -> !ignoredProperties.contains(property.getName()))
+                .collect(Collectors.toList());
+
+        return availableProperties.stream().map(
+                beanPropDef -> {
+                    final Data.Builder<?> builder = Data.builder().withName(beanPropDef.getName());
+                    final Object valObj = extractPropVal(beanPropDef, obj);
+                    if (valObj != null) {
+                        if (valObj instanceof Collection<?>) {
+                            Collection<?> collection = (Collection<?>) valObj;
+
+                            if (loggingConfig.getMaxListElements() >= 0
+                                    && collection.size() > loggingConfig.getMaxListElements()) {
+                                final String collectionValue = collection.stream()
+                                        .limit(loggingConfig.getMaxListElements())
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
+                                builder.withValue(collectionValue + "...(" + collection.size() +
+                                        " elements in total).");
+                            } else {
+                                final String collectionValue = collection.stream()
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
+                                builder.withValue(collectionValue);
+                            }
+                        } else if (HasName.class.isAssignableFrom(valObj.getClass())) {
+                            builder.withValue(((HasName) valObj).getName());
+                        } else if (isLeafPropertyType(valObj.getClass())) {
+                            final String value;
+                            if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
+                                value = "********";
+                            } else {
+                                if (loggingConfig.getMaxDataElementStringLength() > 0) {
+                                    final String stringVal = valObj.toString();
+                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()) {
+                                        value = stringVal.substring(0,
+                                                loggingConfig.getMaxDataElementStringLength() - 1)
+                                                + "...";
+                                    } else {
+                                        value = stringVal;
+                                    }
+                                } else {
+                                    value = valObj.toString();
+                                }
+                            }
+                            builder.withValue(value);
+                        } else {
+                            getDataItems(valObj).stream().forEach(d -> builder.addData(d));
+                        }
+                    }
+                    return builder.build();
+                }).collect(Collectors.toList());
+    }
+
+    private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {
+        final Set<String> ignore = new HashSet<>();
+        ignorePropertiesFromSuperType(obj, HasIntegerId.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasAuditInfo.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasId.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasName.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasUuid.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasType.class, ignore);
+
+        //No interface defined yet - but version has a reasonably standard meaning and can be ignored
+        ignore.add("version");
+        return ignore;
+    }
+
+    private static void ignorePropertiesFromSuperType(final Object obj, final Class potentialSuperType,
+                                                             final Set<String> ignoreProps) {
+        if (potentialSuperType.isAssignableFrom(obj.getClass())) {
+            ignoreProps.addAll(Arrays.stream(potentialSuperType.getMethods())
+                .flatMap(method -> {
+                    final String methodName = method.getName();
+                    if (methodName.startsWith("get")) {
+                        return Stream.of(methodName.substring(3, 4).toLowerCase() + methodName.substring(4));
+                    } else if (methodName.startsWith("is")) {
+                        return Stream.of(methodName.substring(2, 3).toLowerCase() + methodName.substring(3));
+                    } else {
+                        return Stream.empty();
+                    }
+                }).collect(Collectors.toList()));
+        }
+    }
+
+    private static boolean isLeafPropertyType(final Class<?> type) {
+
+        boolean isLeaf = type.equals(String.class) ||
+                type.equals(Byte.class) ||
+                type.equals(byte.class) ||
+                type.equals(Integer.class) ||
+                type.equals(int.class) ||
+                type.equals(Long.class) ||
+                type.equals(long.class) ||
+                type.equals(Short.class) ||
+                type.equals(short.class) ||
+                type.equals(Float.class) ||
+                type.equals(float.class) ||
+                type.equals(Double.class) ||
+                type.equals(double.class) ||
+                type.equals(Boolean.class) ||
+                type.equals(boolean.class) ||
+                type.equals(Character.class) ||
+                type.equals(char.class) ||
+
+                DocRef.class.isAssignableFrom(type) ||
+                Enum.class.isAssignableFrom(type) ||
+                Path.class.isAssignableFrom(type) ||
+                StroomDuration.class.isAssignableFrom(type) ||
+                ByteSize.class.isAssignableFrom(type) ||
+                Date.class.isAssignableFrom(type) ||
+                Instant.class.isAssignableFrom(type) ||
+                (type.isArray() &&
+                        (type.getComponentType().equals(Byte.class) ||
+                                type.getComponentType().equals(byte.class) ||
+                                type.getComponentType().equals(Character.class) ||
+                                type.getComponentType().equals(char.class)));
+
+        LOGGER.trace("isLeafPropertyType({}), returning: {}", type, isLeaf);
+        return isLeaf;
+    }
+
+    private static Object extractPropVal(final BeanPropertyDefinition beanPropDef, final Object obj) {
+        final AnnotatedMethod method = beanPropDef.getGetter();
+
+        if (method != null) {
+            try {
+                return method.callOn(obj);
+            } catch (Exception e) {
+                LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " +
+                        obj.getClass().getSimpleName(), e);
+            }
+        } else {
+            LOGGER.debug("No getter for property " + beanPropDef.getName() + " of class " +
+                    obj.getClass().getSimpleName());
+        }
+
+        return null;
+    }
+
+    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
+    //itself is logged, e.g. due to configuration settings
+    //Assess whether this field should be redacted
+    public boolean shouldRedact(String propNameLowercase, Class<?> type) {
+        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)) {
+            return false; //Don't redact boolean types
+        }
+
+        //TODO consider replacing or augmenting this hard coding
+        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
+        return propNameLowercase.endsWith("password") ||
+                propNameLowercase.endsWith("secret") ||
+                propNameLowercase.endsWith("token") ||
+                propNameLowercase.endsWith("nonce") ||
+                propNameLowercase.endsWith("key");
+    }
+
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
     }
 
 }

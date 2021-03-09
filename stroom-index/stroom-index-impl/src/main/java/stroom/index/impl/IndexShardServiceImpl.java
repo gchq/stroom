@@ -36,6 +36,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private final SecurityContext securityContext;
@@ -65,10 +66,15 @@ public class IndexShardServiceImpl implements IndexShardService {
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+            final IndexStructure indexStructure = indexStructureCache.get(
+                    new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexDoc index = indexStructure.getIndex();
 
-            return indexShardDao.create(indexShardKey, index.getVolumeGroupName(), ownerNodeName, LuceneVersionUtil.getCurrentVersion());
+            return indexShardDao.create(
+                    indexShardKey,
+                    index.getVolumeGroupName(),
+                    ownerNodeName,
+                    LuceneVersionUtil.getCurrentVersion());
         });
     }
 
@@ -76,7 +82,9 @@ public class IndexShardServiceImpl implements IndexShardService {
     public Boolean delete(final IndexShard indexShard) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(), DocumentPermissionNames.DELETE)) {
-                throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
+                throw new PermissionException(
+                        securityContext.getUserId(),
+                        "You do not have permission to delete index shard");
             }
 
             indexShardDao.delete(indexShard.getId());

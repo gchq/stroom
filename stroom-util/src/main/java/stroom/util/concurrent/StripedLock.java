@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * lock.
  */
 public class StripedLock {
+
     /**
      * We use a number here based on our typical concurrency profile. So 10
      * indexing threads and 2048 locks seems OK.

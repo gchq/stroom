@@ -19,6 +19,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Style.Unit;
 
 public class MaxScrollPanel extends ScrollPanel {
+
     public MaxScrollPanel() {
         setSize("100%", "100%");
         getContainerElement().getStyle().setWidth(100, Unit.PCT);

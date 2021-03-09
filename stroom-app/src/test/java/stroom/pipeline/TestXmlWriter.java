@@ -1,21 +1,23 @@
 package stroom.pipeline;
 
+import stroom.util.xml.FatalErrorListener;
+import stroom.util.xml.SAXParserFactoryFactory;
+import stroom.util.xml.XMLUtil;
+
 import net.sf.saxon.serialize.charcode.UTF16CharacterSet;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.util.xml.FatalErrorListener;
-import stroom.util.xml.SAXParserFactoryFactory;
-import stroom.util.xml.XMLUtil;
 
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 class TestXmlWriter {
+
     @Test
     void testUnicodeHandling() throws Exception {
         final StringBuilder sb = new StringBuilder();

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RemovePermissionEvent implements PermissionChangeEvent {
+
     @JsonProperty
     private final String userUuid;
     @JsonProperty
@@ -38,7 +39,10 @@ public class RemovePermissionEvent implements PermissionChangeEvent {
         this.permission = permission;
     }
 
-    public static void fire(final PermissionChangeEventBus eventBus, final String userUuid, final String documentUuid, final String permission) {
+    public static void fire(final PermissionChangeEventBus eventBus,
+                            final String userUuid,
+                            final String documentUuid,
+                            final String permission) {
         eventBus.fire(new RemovePermissionEvent(userUuid, documentUuid, permission));
     }
 

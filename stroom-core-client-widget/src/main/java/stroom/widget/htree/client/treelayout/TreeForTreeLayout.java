@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout;
 
 import java.util.List;
@@ -45,7 +46,8 @@ import java.util.List;
  * <p>
  * Also see <a href="package-summary.html">this overview</a>.
  */
-public interface TreeForTreeLayout<TreeNode> {
+public interface TreeForTreeLayout<T_TREE_NODE> {
+
     /**
      * Returns the the root of the tree.
      * <p>
@@ -53,7 +55,7 @@ public interface TreeForTreeLayout<TreeNode> {
      *
      * @return the root of the tree
      */
-    TreeNode getRoot();
+    T_TREE_NODE getRoot();
 
     /**
      * Tells if a node is a leaf in the tree.
@@ -63,7 +65,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param node
      * @return true iff node is a leaf in the tree, i.e. has no children.
      */
-    boolean isLeaf(TreeNode node);
+    boolean isLeaf(T_TREE_NODE node);
 
     /**
      * Tells if a node is a child of a given parentNode.
@@ -74,7 +76,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param parentNode
      * @return true iff the node is a child of the given parentNode
      */
-    boolean isChildOfParent(TreeNode node, TreeNode parentNode);
+    boolean isChildOfParent(T_TREE_NODE node, T_TREE_NODE parentNode);
 
     /**
      * Returns the children of a parent node.
@@ -84,7 +86,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param parentNode [!isLeaf(parentNode)]
      * @return the children of the given parentNode, from first to last
      */
-    List<TreeNode> getChildren(TreeNode parentNode);
+    List<T_TREE_NODE> getChildren(T_TREE_NODE parentNode);
 
     /**
      * Returns the children of a parent node, in reverse order.
@@ -94,7 +96,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param parentNode [!isLeaf(parentNode)]
      * @return the children of given parentNode, from last to first
      */
-    Iterable<TreeNode> getChildrenReverse(TreeNode parentNode);
+    Iterable<T_TREE_NODE> getChildrenReverse(T_TREE_NODE parentNode);
 
     /**
      * Returns the first child of a parent node.
@@ -104,7 +106,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param parentNode [!isLeaf(parentNode)]
      * @return the first child of the parentNode
      */
-    TreeNode getFirstChild(TreeNode parentNode);
+    T_TREE_NODE getFirstChild(T_TREE_NODE parentNode);
 
     /**
      * Returns the last child of a parent node.
@@ -115,5 +117,5 @@ public interface TreeForTreeLayout<TreeNode> {
      * @param parentNode [!isLeaf(parentNode)]
      * @return the last child of the parentNode
      */
-    TreeNode getLastChild(TreeNode parentNode);
+    T_TREE_NODE getLastChild(T_TREE_NODE parentNode);
 }

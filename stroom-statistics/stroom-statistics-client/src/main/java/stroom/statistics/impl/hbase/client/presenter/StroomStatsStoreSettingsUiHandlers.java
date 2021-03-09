@@ -19,5 +19,6 @@ package stroom.statistics.impl.hbase.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface StroomStatsStoreSettingsUiHandlers extends UiHandlers {
+
     void onChange();
 }

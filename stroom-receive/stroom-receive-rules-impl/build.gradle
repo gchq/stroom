@@ -2,27 +2,28 @@ ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
     compile project(':stroom-core-shared')
-    compile project(':stroom-dictionary:stroom-dictionary-api')
+//    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-proxy:stroom-proxy-remote-api')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.dropwizard_metrics_annotation
-    compile libs.guice4
-    compile libs.jackson_annotations
+//    compile libs.dropwizard_metrics_healthchecks
+//    compile libs.dropwizard_metrics_annotation
+//    compile libs.guice4
+//    compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     compile libs.slf4j_api
     compile project(':stroom-docref')
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+//    compile libs.swagger_annotations
+//    compile libs.ws_rs_api
     
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api

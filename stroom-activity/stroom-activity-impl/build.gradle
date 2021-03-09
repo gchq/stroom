@@ -4,14 +4,17 @@ dependencies {
     compile project(':stroom-activity:stroom-activity-api')
     compile project(':stroom-core-shared')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
+    compile project(':stroom-util')
     
     compile libs.eventLogging
+    compile libs.guava
     compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
+//    compile libs.jackson_annotations
+//    compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.slf4j_api

@@ -9,6 +9,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class SessionInfo {
+
     @JsonProperty
     private final String userName;
     @JsonProperty
@@ -37,10 +38,15 @@ public class SessionInfo {
         return buildInfo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SessionInfo that = (SessionInfo) o;
         return Objects.equals(userName, that.userName) &&
                 Objects.equals(nodeName, that.nodeName) &&

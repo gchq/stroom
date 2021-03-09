@@ -27,8 +27,6 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,8 +38,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.sql.DataSource;
 
 class DBTableService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableService.class);
 
     private final Set<DataSource> dataSources;
@@ -50,15 +51,15 @@ class DBTableService {
     // This ought to live in DBTableStatus but GWT won't allow it
     // Maps criteria field names to comparaotr for that field
     private static final Map<String, Comparator<DBTableStatus>> FIELD_COMPARATORS = Map.of(
-        DBTableStatus.FIELD_DATABASE, Comparator.comparing(
-            DBTableStatus::getDb,
-            String::compareToIgnoreCase),
-        DBTableStatus.FIELD_TABLE, Comparator.comparing(
-            DBTableStatus::getTable,
-            String::compareToIgnoreCase),
-        DBTableStatus.FIELD_ROW_COUNT, Comparator.comparing(DBTableStatus::getCount),
-        DBTableStatus.FIELD_DATA_SIZE, Comparator.comparing(DBTableStatus::getDataSize),
-        DBTableStatus.FIELD_INDEX_SIZE, Comparator.comparing(DBTableStatus::getIndexSize));
+            DBTableStatus.FIELD_DATABASE, Comparator.comparing(
+                    DBTableStatus::getDb,
+                    String::compareToIgnoreCase),
+            DBTableStatus.FIELD_TABLE, Comparator.comparing(
+                    DBTableStatus::getTable,
+                    String::compareToIgnoreCase),
+            DBTableStatus.FIELD_ROW_COUNT, Comparator.comparing(DBTableStatus::getCount),
+            DBTableStatus.FIELD_DATA_SIZE, Comparator.comparing(DBTableStatus::getDataSize),
+            DBTableStatus.FIELD_INDEX_SIZE, Comparator.comparing(DBTableStatus::getIndexSize));
 
     @Inject
     DBTableService(final Set<DataSource> dataSources,
@@ -85,9 +86,9 @@ class DBTableService {
             }
 
             final List<DBTableStatus> sortedList = rtnMap.values()
-                .stream()
-                .sorted(buildComparator(criteria))
-                .collect(Collectors.toList());
+                    .stream()
+                    .sorted(buildComparator(criteria))
+                    .collect(Collectors.toList());
 
             return ResultPage.createPageLimitedList(sortedList, criteria.getPageRequest());
         });
@@ -97,15 +98,15 @@ class DBTableService {
 
         final Comparator<DBTableStatus> comparator;
         if (criteria != null
-            && criteria.getSortList() != null
-            && !criteria.getSortList().isEmpty()) {
+                && criteria.getSortList() != null
+                && !criteria.getSortList().isEmpty()) {
 
             comparator = CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria);
         } else {
             // default sort of db then table name
             comparator = Comparator
-                .comparing(DBTableStatus::getDb, String::compareToIgnoreCase)
-                .thenComparing(DBTableStatus::getTable, String::compareToIgnoreCase);
+                    .comparing(DBTableStatus::getDb, String::compareToIgnoreCase)
+                    .thenComparing(DBTableStatus::getTable, String::compareToIgnoreCase);
         }
         return comparator;
     }
@@ -118,9 +119,9 @@ class DBTableService {
 
             // Filter out any legacy tables
             final String sql = "" +
-                "show table status " +
-                "where comment != 'VIEW' " +
-                "and Name not like 'OLD_%' ";
+                    "show table status " +
+                    "where comment != 'VIEW' " +
+                    "and Name not like 'OLD_%' ";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     sql,
                     ResultSet.TYPE_FORWARD_ONLY,
@@ -148,6 +149,7 @@ class DBTableService {
     }
 
     private static class TableKey {
+
         private final String dbName;
         private final String tableName;
 
@@ -156,13 +158,18 @@ class DBTableService {
             this.tableName = Objects.requireNonNull(tableName);
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final TableKey tableKey = (TableKey) o;
             return dbName.equals(tableKey.dbName) &&
-                tableName.equals(tableKey.tableName);
+                    tableName.equals(tableKey.tableName);
         }
 
         @Override

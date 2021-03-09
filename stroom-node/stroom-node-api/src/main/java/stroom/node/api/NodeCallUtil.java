@@ -1,10 +1,11 @@
 package stroom.node.api;
 
+import java.net.ConnectException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
-import java.net.ConnectException;
 
 public final class NodeCallUtil {
+
     private NodeCallUtil() {
     }
 
@@ -27,7 +28,9 @@ public final class NodeCallUtil {
      * @param nodeName The name of the node to get the base endpoint for
      * @return The base endpoint url for inter-node communications, e.g. http://some-fqdn:8080
      */
-    public static String getBaseEndpointUrl(final NodeInfo nodeInfo, final NodeService nodeService, final String nodeName) {
+    public static String getBaseEndpointUrl(final NodeInfo nodeInfo,
+                                            final NodeService nodeService,
+                                            final String nodeName) {
         // A normal url is something like "http://fqdn:8080"
         final String url = nodeService.getBaseEndpointUrl(nodeName);
 

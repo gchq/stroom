@@ -29,7 +29,7 @@ WHERE NOT EXISTS (
     WHERE UUID = USR_UUID)
 ORDER BY ID;
 
-\! echo 'Find orphaned DOC_PERM records, that will not be migrated';
+\! echo 'Find orphaned APP_PERM records, that will not be migrated';
 
 SELECT *
 FROM APP_PERM ap
@@ -60,14 +60,14 @@ SELECT
 FROM
   QUERY
 WHERE NAME IS NULL
-OR DASH_UUID IS NULL
+OR DASH_ID IS NULL
 OR QUERY_ID IS NULL;
 
 \! echo 'Find IDX_SHRD records incorrectly linked to PUBLIC volumes. Should be zero.';
 
 SELECT COUNT(*)
-FROM OLD_IDX_SHRD s
-JOIN OLD_VOL v ON s.FK_VOL_ID = v.ID
+FROM IDX_SHRD s
+JOIN VOL v ON s.FK_VOL_ID = v.ID
 WHERE v.VOL_TP = 0;
 
 \! echo 'Finished';

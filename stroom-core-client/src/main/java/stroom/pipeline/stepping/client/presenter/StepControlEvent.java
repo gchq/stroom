@@ -16,13 +16,15 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+
 public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandler> {
+
     private static final Type<StepControlHandler> TYPE = new Type<>();
     private final StepType stepType;
     private final StepLocation stepLocation;
@@ -65,6 +67,7 @@ public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandl
     }
 
     public interface StepControlHandler extends EventHandler {
+
         void onSelection(StepControlEvent event);
     }
 }

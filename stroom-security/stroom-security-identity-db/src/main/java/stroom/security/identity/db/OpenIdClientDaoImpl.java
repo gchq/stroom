@@ -1,15 +1,16 @@
 package stroom.security.identity.db;
 
-import stroom.security.identity.db.jooq.tables.OauthClient;
-import stroom.security.openid.api.OpenIdClient;
-import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.db.util.JooqUtil;
+import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.openid.OpenIdClientDao;
+import stroom.security.openid.api.OpenIdClient;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 public class OpenIdClientDaoImpl implements OpenIdClientDao {
-    private AuthDbConnProvider authDbConnProvider;
+
+    private final AuthDbConnProvider authDbConnProvider;
 
     @Inject
     OpenIdClientDaoImpl(final AuthDbConnProvider authDbConnProvider) {
@@ -34,7 +35,10 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
                 .selectFrom(OauthClient.OAUTH_CLIENT)
                 .where(OauthClient.OAUTH_CLIENT.CLIENT_ID.eq(clientId))
                 .fetchOptional()
-                .map(record -> new OpenIdClient(record.getName(), record.getClientId(), record.getClientSecret(), record.getUriPattern())));
+                .map(record -> new OpenIdClient(record.getName(),
+                        record.getClientId(),
+                        record.getClientSecret(),
+                        record.getUriPattern())));
     }
 
     @Override
@@ -43,6 +47,9 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
                 .selectFrom(OauthClient.OAUTH_CLIENT)
                 .where(OauthClient.OAUTH_CLIENT.NAME.eq(name))
                 .fetchOptional()
-                .map(record -> new OpenIdClient(record.getName(), record.getClientId(), record.getClientSecret(), record.getUriPattern())));
+                .map(record -> new OpenIdClient(record.getName(),
+                        record.getClientId(),
+                        record.getClientSecret(),
+                        record.getUriPattern())));
     }
 }

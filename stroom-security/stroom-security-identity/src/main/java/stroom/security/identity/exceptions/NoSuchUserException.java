@@ -21,6 +21,7 @@ package stroom.security.identity.exceptions;
 import javax.ws.rs.WebApplicationException;
 
 public class NoSuchUserException extends WebApplicationException {
+
     public NoSuchUserException(String message) {
         super(message);
     }

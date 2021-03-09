@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
+
     private final Set<String> roles;
 
     public SimplePipelineTreeBuilder() {
@@ -86,7 +87,8 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
     }
 
     private void getDescendentFilters(final PipelineElement parent,
-                                      final Map<PipelineElement, List<PipelineElement>> childMap, final List<PipelineElement> descendents) {
+                                      final Map<PipelineElement, List<PipelineElement>> childMap,
+                                      final List<PipelineElement> descendents) {
         final List<PipelineElement> children = childMap.get(parent);
         if (children != null && children.size() > 0) {
             for (final PipelineElement child : children) {

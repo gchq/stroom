@@ -17,6 +17,7 @@
 package stroom.util.scheduler;
 
 public interface Scheduler {
+
     /**
      * Should we execute.
      *

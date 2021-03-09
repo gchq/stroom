@@ -16,16 +16,18 @@
 
 package stroom.pipeline.xml.event.simple;
 
+import stroom.pipeline.xml.event.BaseEvent;
+import stroom.pipeline.xml.event.Event;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.xml.event.BaseEvent;
-import stroom.pipeline.xml.event.Event;
 
 /**
  * A class used to store a setDocumentLocator SAX event.
  */
 public final class SetDocumentLocator extends BaseEvent {
+
     private static final String SET_DOCUMENT_LOCATOR = "setDocumentLocator:";
 
     private final Locator locator;

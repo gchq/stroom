@@ -13,7 +13,6 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
@@ -43,20 +43,21 @@ public class UserDaoImpl implements UserDao {
         return user;
     };
 
-    private static final BiFunction<User, StroomUserRecord, StroomUserRecord> USER_TO_RECORD_MAPPER = (user, record) -> {
-        record.from(user);
-        record.set(STROOM_USER.ID, user.getId());
-        record.set(STROOM_USER.VERSION, user.getVersion());
-        record.set(STROOM_USER.CREATE_TIME_MS, user.getCreateTimeMs());
-        record.set(STROOM_USER.CREATE_USER, user.getCreateUser());
-        record.set(STROOM_USER.UPDATE_TIME_MS, user.getUpdateTimeMs());
-        record.set(STROOM_USER.UPDATE_USER, user.getUpdateUser());
-        record.set(STROOM_USER.NAME, user.getName());
-        record.set(STROOM_USER.UUID, user.getUuid());
-        record.set(STROOM_USER.IS_GROUP, user.isGroup());
-        record.set(STROOM_USER.ENABLED, user.isEnabled());
-        return record;
-    };
+    private static final BiFunction<User, StroomUserRecord, StroomUserRecord> USER_TO_RECORD_MAPPER =
+            (user, record) -> {
+                record.from(user);
+                record.set(STROOM_USER.ID, user.getId());
+                record.set(STROOM_USER.VERSION, user.getVersion());
+                record.set(STROOM_USER.CREATE_TIME_MS, user.getCreateTimeMs());
+                record.set(STROOM_USER.CREATE_USER, user.getCreateUser());
+                record.set(STROOM_USER.UPDATE_TIME_MS, user.getUpdateTimeMs());
+                record.set(STROOM_USER.UPDATE_USER, user.getUpdateUser());
+                record.set(STROOM_USER.NAME, user.getName());
+                record.set(STROOM_USER.UUID, user.getUuid());
+                record.set(STROOM_USER.IS_GROUP, user.isGroup());
+                record.set(STROOM_USER.ENABLED, user.isEnabled());
+                return record;
+            };
 
 
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;

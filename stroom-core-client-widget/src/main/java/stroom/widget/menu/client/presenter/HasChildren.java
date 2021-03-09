@@ -21,5 +21,6 @@ import stroom.widget.util.client.Future;
 import java.util.List;
 
 public interface HasChildren {
+
     Future<List<Item>> getChildren();
 }

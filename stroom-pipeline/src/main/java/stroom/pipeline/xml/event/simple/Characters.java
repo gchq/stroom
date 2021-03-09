@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xml.event.simple;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.event.BaseEvent;
 import stroom.pipeline.xml.event.Event;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 /**
  * A class used to store a characters SAX event.
  */
 public final class Characters extends BaseEvent {
+
     private final String chars;
 
     /**

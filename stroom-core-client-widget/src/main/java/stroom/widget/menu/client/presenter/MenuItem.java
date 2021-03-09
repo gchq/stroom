@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 public class MenuItem extends Item {
+
     private String text;
 
     public MenuItem(final int priority, final String text) {

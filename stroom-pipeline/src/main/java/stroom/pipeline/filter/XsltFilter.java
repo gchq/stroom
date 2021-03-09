@@ -41,9 +41,9 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
-import stroom.util.io.PathCreator;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.util.CharBuffer;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -55,6 +55,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
@@ -62,18 +65,17 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * An XML filter for performing inline XSLT transformation of XML.
  */
-@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
+
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
@@ -88,7 +90,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     private DocRef xsltRef;
     private String xsltNamePattern;
-    private boolean suppressXSLTNotFoundWarnings;
+    private boolean suppressXsltNotFoundWarnings;
 
     /**
      * We only need a single transformer factory here as it actually doesn't do
@@ -256,7 +258,11 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         } catch (final TransformerConfigurationException | RuntimeException e) {
             final Throwable throwable = unwrapException(e);
 
-            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
+            errorReceiverProxy.log(Severity.FATAL_ERROR,
+                    getLocation(throwable),
+                    getElementId(),
+                    throwable.toString(),
+                    throwable);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
                 throw new LoggedException(throwable.getMessage(), throwable);
@@ -278,7 +284,11 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 try {
                     final Throwable throwable = unwrapException(e);
 
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR,
+                            getLocation(throwable),
+                            getElementId(),
+                            throwable.toString(),
+                            throwable);
                     // If we aren't stepping then throw an exception to terminate early.
                     if (!pipelineContext.isStepping()) {
                         throw new LoggedException(throwable.getMessage(), throwable);
@@ -387,7 +397,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final String message = "" +
                         "Max element count of " +
                         maxElementCount +
-                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.";
+                        " has been exceeded. Please ensure a split filter is present and is configured " +
+                        "correctly for this pipeline.";
 
                 final ProcessException exception = new ProcessException(message);
                 if (pipelineContext.isStepping()) {
@@ -528,8 +539,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
             defaultValue = "false", displayPriority = 3)
-    public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
-        this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
+    public void setSuppressXsltNotFoundWarnings(final boolean suppressXsltNotFoundWarnings) {
+        this.suppressXsltNotFoundWarnings = suppressXsltNotFoundWarnings;
     }
 
     @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 5)
@@ -542,7 +553,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(
-            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.",
+            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve " +
+                    "performance.",
             defaultValue = "true",
             displayPriority = 4)
     public void setUsePool(final boolean usePool) {
@@ -605,6 +617,6 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 feedName,
                 pipelineName,
                 errorConsumer,
-                suppressXSLTNotFoundWarnings);
+                suppressXsltNotFoundWarnings);
     }
 }

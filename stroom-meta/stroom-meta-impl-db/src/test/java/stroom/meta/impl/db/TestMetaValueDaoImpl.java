@@ -47,6 +47,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaValueDaoImpl {
+
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -89,7 +90,9 @@ class TestMetaValueDaoImpl {
 
         ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
+                .addTerm(MetaFields.CREATE_TIME,
+                        Condition.EQUALS,
+                        DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
         FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
@@ -124,7 +127,9 @@ class TestMetaValueDaoImpl {
 
         ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
+                .addTerm(MetaFields.CREATE_TIME,
+                        Condition.EQUALS,
+                        DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
         FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);

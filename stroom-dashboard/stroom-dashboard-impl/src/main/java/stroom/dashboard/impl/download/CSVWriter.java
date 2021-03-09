@@ -19,6 +19,7 @@ package stroom.dashboard.impl.download;
 import java.io.Writer;
 
 public class CSVWriter extends DelimitedWriter {
+
     public CSVWriter(final Writer writer) {
         super(",", writer);
     }

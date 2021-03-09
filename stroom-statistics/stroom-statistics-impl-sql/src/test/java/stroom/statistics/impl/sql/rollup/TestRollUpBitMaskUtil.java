@@ -17,8 +17,9 @@
 package stroom.statistics.impl.sql.rollup;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.StatisticTag;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRollUpBitMaskUtil {
+
     @Test
     void testFromSortedTagList() {
         final List<StatisticTag> tagList = new ArrayList<>();

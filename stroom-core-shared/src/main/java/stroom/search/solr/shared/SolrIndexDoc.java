@@ -16,22 +16,39 @@
 
 package stroom.search.solr.shared;
 
+import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
-import stroom.query.api.v2.ExpressionOperator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state", "retentionExpression"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "collection",
+        "connection",
+        "indexBatchSize",
+        "fields",
+        "state",
+        "retentionExpression"})
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "SolrIndex";
 
     @JsonProperty
@@ -161,11 +178,18 @@ public class SolrIndexDoc extends Doc {
         return DOCUMENT_TYPE;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SolrIndexDoc)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SolrIndexDoc)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final SolrIndexDoc solrIndexDoc = (SolrIndexDoc) o;
         return Objects.equals(description, solrIndexDoc.description) &&
                 Objects.equals(collection, solrIndexDoc.collection) &&

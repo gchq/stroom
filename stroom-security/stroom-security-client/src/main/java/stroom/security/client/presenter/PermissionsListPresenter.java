@@ -16,13 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.table.client.CellTableView;
@@ -32,14 +25,20 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
-import javax.inject.Inject;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class PermissionsListPresenter
         extends MyPresenterWidget<CellTableView<String>> {
+
     private DocumentPermissions documentPermissions;
     private List<String> permissions;
     private Changes changes;
@@ -47,10 +46,13 @@ public class PermissionsListPresenter
 
     @Inject
     public PermissionsListPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(false, (CellTable.Resources) GWT.create(CellTableViewImpl.BasicResources.class)));
+        super(eventBus, new CellTableViewImpl<>(
+                false, GWT.create(CellTableViewImpl.BasicResources.class)));
 
         final boolean updateable = true;
-        final TickBoxCell.Appearance appearance = updateable ? new TickBoxCell.DefaultAppearance() : new TickBoxCell.NoBorderAppearance();
+        final TickBoxCell.Appearance appearance = updateable
+                ? new TickBoxCell.DefaultAppearance()
+                : new TickBoxCell.NoBorderAppearance();
 
         getView().addColumn(new Column<String, String>(new TextCell()) {
             @Override
@@ -74,7 +76,8 @@ public class PermissionsListPresenter
                             tickBoxState = TickBoxState.TICK;
 
                         } else {
-                            // If the user has a higher level of permission that is inferred by this level then indicate that with a half tick.
+                            // If the user has a higher level of permission that is inferred by this level
+                            // then indicate that with a half tick.
                             String higherPermission = DocumentPermissionNames.getHigherPermission(permission);
                             boolean inferred = false;
 
@@ -129,7 +132,9 @@ public class PermissionsListPresenter
         }
     }
 
-    public void setDocumentPermissions(final DocumentPermissions documentPermissions, final List<String> permissions, final Changes changes) {
+    public void setDocumentPermissions(final DocumentPermissions documentPermissions,
+                                       final List<String> permissions,
+                                       final Changes changes) {
         this.documentPermissions = documentPermissions;
         this.permissions = permissions;
         this.changes = changes;

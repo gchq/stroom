@@ -16,16 +16,18 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.Configuration;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 
-import javax.inject.Inject;
+import net.sf.saxon.Configuration;
+
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class StroomXsltFunctionLibrary {
+
     private final Set<StroomExtensionFunctionDefinition> functionDefinitions;
 
     @Inject

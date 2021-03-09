@@ -27,6 +27,7 @@ import stroom.util.guice.ServletBinder;
 import com.google.inject.AbstractModule;
 
 public class ScriptModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ScriptStore.class).to(ScriptStoreImpl.class);

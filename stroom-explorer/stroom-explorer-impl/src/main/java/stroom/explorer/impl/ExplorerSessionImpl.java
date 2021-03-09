@@ -3,13 +3,14 @@ package stroom.explorer.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.Optional;
 
 class ExplorerSessionImpl implements ExplorerSession {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerSessionImpl.class);
     private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME = "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
 

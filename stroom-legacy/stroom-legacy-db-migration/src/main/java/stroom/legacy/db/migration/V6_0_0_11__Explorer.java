@@ -40,9 +40,10 @@ import java.util.Set;
 
 @Deprecated
 public class V6_0_0_11__Explorer extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_21__Dictionary.class);
 
-    private Map<Long, List<Long>> folderIdToAncestorIDMap = new HashMap<>();
+    private final Map<Long, List<Long>> folderIdToAncestorIDMap = new HashMap<>();
 
     @Override
     public void migrate(final Context flywayContext) throws Exception {
@@ -56,7 +57,9 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
 
     private void createExplorerTree(final Connection connection) throws Exception {
         // Create a map of document references for all folders.
-        final Map<Long, Set<Ref>> docRefMap = createDocRefMap(connection, SQLNameConstants.FOLDER, ExplorerConstants.FOLDER);
+        final Map<Long, Set<Ref>> docRefMap = createDocRefMap(connection,
+                SQLNameConstants.FOLDER,
+                ExplorerConstants.FOLDER);
 
         // Insert System root node.
         final DocRef root = ExplorerConstants.ROOT_DOC_REF;
@@ -96,11 +99,15 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         addOtherNodes(connection, "XSLT", "XSLT");
     }
 
-    private void addOtherNodes(final Connection connection, final String tableName, final String type) throws SQLException {
+    private void addOtherNodes(final Connection connection, final String tableName, final String type)
+            throws SQLException {
         addOtherNodes(connection, tableName, type, null);
     }
 
-    private void addOtherNodes(final Connection connection, final String tableName, final String type, final String tags) throws SQLException {
+    private void addOtherNodes(final Connection connection,
+                               final String tableName,
+                               final String type,
+                               final String tags) throws SQLException {
         final Map<Long, Set<Ref>> feedMap = createDocRefMap(connection, tableName, type);
         for (final Map.Entry<Long, Set<Ref>> entry : feedMap.entrySet()) {
             final long folderId = entry.getKey();
@@ -138,7 +145,10 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         return tagString;
     }
 
-    private void addFolderNodes(final Connection connection, final Long parentId, final List<Long> parentAncestorIdList, final Map<Long, Set<Ref>> docRefMap) throws SQLException {
+    private void addFolderNodes(final Connection connection,
+                                final Long parentId,
+                                final List<Long> parentAncestorIdList,
+                                final Map<Long, Set<Ref>> docRefMap) throws SQLException {
         final Set<Ref> childNodes = docRefMap.get(parentId);
 
         if (childNodes != null && childNodes.size() > 0) {
@@ -168,7 +178,8 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         }
     }
 
-    private Map<Long, Set<Ref>> createDocRefMap(final Connection connection, final String tableName, final String type) throws SQLException {
+    private Map<Long, Set<Ref>> createDocRefMap(final Connection connection, final String tableName, final String type)
+            throws SQLException {
         final Map<Long, Set<Ref>> refMap = new HashMap<>();
 
         try (final Statement statement = connection.createStatement()) {
@@ -190,9 +201,11 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         return refMap;
     }
 
-    private void createExplorerTreeNode(final Connection connection, final DocRef docRef, final String tags) throws SQLException {
+    private void createExplorerTreeNode(final Connection connection, final DocRef docRef, final String tags)
+            throws SQLException {
         // Insert node entry.
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO explorerTreeNode (type, uuid, name, tags) VALUES (?, ?, ?, ?)")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "INSERT INTO explorerTreeNode (type, uuid, name, tags) VALUES (?, ?, ?, ?)")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
@@ -205,7 +218,8 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         Long nodeId = null;
 
         // Fetch id for newly inserted node entry.
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM explorerTreeNode WHERE type = ? AND uuid = ?;")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "SELECT id FROM explorerTreeNode WHERE type = ? AND uuid = ?;")) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
 
@@ -219,7 +233,8 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         return nodeId;
     }
 
-    private void insertPaths(final Connection connection, final Long id, final List<Long> ancestorIdList) throws SQLException {
+    private void insertPaths(final Connection connection, final Long id, final List<Long> ancestorIdList)
+            throws SQLException {
         // Insert ancestor references.
         for (int i = 0; i < ancestorIdList.size(); i++) {
             final Long ancestorId = ancestorIdList.get(i);
@@ -227,9 +242,13 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
         }
     }
 
-    private void insertReference(final Connection connection, final Long ancestor, final Long descendant, final Long depth) throws SQLException {
+    private void insertReference(final Connection connection,
+                                 final Long ancestor,
+                                 final Long descendant,
+                                 final Long depth) throws SQLException {
         // Insert self reference.
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO explorerTreePath (ancestor, descendant, depth, orderIndex) VALUES (?, ?, ?, ?)")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "INSERT INTO explorerTreePath (ancestor, descendant, depth, orderIndex) VALUES (?, ?, ?, ?)")) {
             preparedStatement.setLong(1, ancestor);
             preparedStatement.setLong(2, descendant);
             preparedStatement.setLong(3, depth);
@@ -239,6 +258,7 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
     }
 
     private static class Ref {
+
         private final long id;
         private final String type;
         private final String uuid;

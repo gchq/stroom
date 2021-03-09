@@ -18,6 +18,7 @@
 package stroom.config.global.impl;
 
 
+import stroom.config.app.AppConfig;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -42,8 +43,6 @@ import stroom.util.shared.PropertyPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,9 +51,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
@@ -72,15 +74,16 @@ public class GlobalConfigService {
                     GlobalConfigResource.FIELD_DEF_DESCRIPTION,
                     ConfigProperty::getDescription));
 
-    private static Comparator<ConfigProperty> com = Comparator.comparing(configProperty -> configProperty.getEffectiveValueMasked().orElse(""));
+//    private static final Comparator<ConfigProperty> com = Comparator.comparing(configProperty ->
+//    configProperty.getEffectiveValueMasked().orElse(""));
 
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
                     ConfigProperty::getNameAsString, String::compareToIgnoreCase),
             GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(), Comparator.comparing(
-                    (ConfigProperty prop) -> prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
-            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(
-                    ConfigProperty::getSource));
+                    (ConfigProperty prop) ->
+                            prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
+            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(ConfigProperty::getSource));
 
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
@@ -143,6 +146,11 @@ public class GlobalConfigService {
         updateConfigFromDb();
     }
 
+    void updateConfigObjects(final AppConfig newAppConfig) {
+        configMapper.refreshPropertyMap(newAppConfig);
+        updateConfigFromDb();
+    }
+
 //    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
 //        if (criteria.getName() != null) {
 //            return list(configProperty ->
@@ -161,8 +169,10 @@ public class GlobalConfigService {
             //   update the config props.
             updateConfigFromDb();
 
-            final Predicate<ConfigProperty> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    criteria.getQuickFilterInput(), FIELD_MAPPERS);
+            final Predicate<ConfigProperty> quickFilterPredicate =
+                    QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS);
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
@@ -201,9 +211,12 @@ public class GlobalConfigService {
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(propertyPath.toString())
-                    .map(configMapper::decorateDbConfigProperty)
-                    .or(() ->
-                            configMapper.getGlobalProperty(propertyPath));
+                    .map(configProp ->
+                            configMapper.decorateDbConfigProperty(configProp))
+                    .or(() -> {
+
+                        return configMapper.getGlobalProperty(propertyPath);
+                    });
         });
     }
 
@@ -316,7 +329,8 @@ public class GlobalConfigService {
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
                 .orElseThrow(() ->
-                        new RuntimeException(LogUtil.message("No prop object exists for {}", configProperty.getName())));
+                        new RuntimeException(LogUtil.message("No prop object exists for {}",
+                                configProperty.getName())));
 
         final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
         final String propertyName = propertyPath.getPropertyName();

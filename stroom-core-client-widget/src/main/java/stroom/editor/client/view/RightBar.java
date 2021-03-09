@@ -16,6 +16,8 @@
 
 package stroom.editor.client.view;
 
+import stroom.util.shared.Severity;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -26,9 +28,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
-import stroom.util.shared.Severity;
 
 public class RightBar extends Composite {
+
     private static final int SUMMARY_CONTAINER_HEIGHT = 13;
     private static final int OVERVIEW_WIDTH = 13;
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
@@ -36,6 +38,7 @@ public class RightBar extends Composite {
     private IndicatorLines indicators;
     private int width;
     private Editor editor;
+
     public RightBar() {
         sinkEvents(Event.ONMOUSEDOWN);
 
@@ -283,6 +286,7 @@ public class RightBar extends Composite {
     }
 
     public interface Style extends CssResource {
+
         String rightBar();
 
         String summaryContainer();
@@ -301,6 +305,7 @@ public class RightBar extends Composite {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("rightbar.css")
         Style style();
     }

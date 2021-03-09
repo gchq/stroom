@@ -20,14 +20,17 @@ import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.api.MetaService;
 
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged
 class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
+
     private final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider;
     private final Provider<MetaService> metaServiceProvider;
 
@@ -39,7 +42,7 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     }
 
     @Override
-    public DataRetentionRules read() {
+    public DataRetentionRules fetch() {
         return dataRetentionRulesServiceProvider.get().getOrCreate();
     }
 
@@ -50,7 +53,7 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
 
     @Override
     public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
-            @ApiParam("request") DataRetentionDeleteSummaryRequest request) {
+            @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request) {
 
         return new DataRetentionDeleteSummaryResponse(
                 metaServiceProvider.get()

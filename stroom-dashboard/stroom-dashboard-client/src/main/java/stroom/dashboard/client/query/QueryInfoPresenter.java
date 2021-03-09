@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.CurrentActivity;
 import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
@@ -30,9 +26,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.function.Consumer;
 
 public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.QueryInfoView> {
+
     private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
     private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
 
@@ -81,7 +83,8 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
                                 if (ok) {
                                     boolean valid = true;
-                                    if (queryInfoPopupValidationRegex != null && !queryInfoPopupValidationRegex.isEmpty()) {
+                                    if (queryInfoPopupValidationRegex != null
+                                            && !queryInfoPopupValidationRegex.isEmpty()) {
                                         valid = false;
                                         try {
                                             valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
@@ -91,13 +94,19 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                     }
 
                                     if (valid) {
-                                        HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                        HidePopupEvent.fire(
+                                                QueryInfoPresenter.this,
+                                                QueryInfoPresenter.this);
                                         consumer.accept(new State(getView().getQueryInfo(), true));
                                     } else {
-                                        AlertEvent.fireWarn(QueryInfoPresenter.this, "The text entered is not valid", null);
+                                        AlertEvent.fireWarn(QueryInfoPresenter.this,
+                                                "The text entered is not valid",
+                                                null);
                                     }
                                 } else {
-                                    HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                    HidePopupEvent.fire(
+                                            QueryInfoPresenter.this,
+                                            QueryInfoPresenter.this);
                                     consumer.accept(new State(getView().getQueryInfo(), false));
                                 }
                             }
@@ -113,6 +122,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     }
 
     public interface QueryInfoView extends View {
+
         String getQueryInfo();
 
         void setQueryInfo(String queryInfo);
@@ -121,6 +131,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     }
 
     public class State {
+
         private final String queryInfo;
         private final boolean ok;
 

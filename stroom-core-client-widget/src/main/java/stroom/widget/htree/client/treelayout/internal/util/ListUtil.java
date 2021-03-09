@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.internal.util;
 
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.List;
  * Util (general purpose) methods dealing with {@link List}.
  */
 public class ListUtil {
+
     /**
      * @param <T>
      * @param list [!list.isEmpty()]

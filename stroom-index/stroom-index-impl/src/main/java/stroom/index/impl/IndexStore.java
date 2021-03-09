@@ -24,5 +24,6 @@ import stroom.index.shared.IndexDoc;
 import java.util.List;
 
 public interface IndexStore extends DocumentStore<IndexDoc> {
+
     List<DocRef> list();
 }

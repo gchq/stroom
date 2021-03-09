@@ -25,6 +25,7 @@ import java.time.Duration;
  * Low level API to manage the stream store.
  */
 public interface DataStoreMaintenanceService {
+
     /**
      * Scan a directory deleting old stuff and building an index of what is
      * there. Return back a list of sub dir's to nest into.

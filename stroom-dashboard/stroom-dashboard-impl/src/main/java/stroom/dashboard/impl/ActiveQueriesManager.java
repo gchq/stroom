@@ -28,6 +28,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class ActiveQueriesManager implements Clearable {
+
     private static final String CACHE_NAME = "Active Queries";
 
     private final DataSourceProviderRegistry dataSourceProviderRegistry;

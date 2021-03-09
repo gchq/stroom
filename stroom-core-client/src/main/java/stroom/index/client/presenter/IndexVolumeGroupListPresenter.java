@@ -16,12 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -35,10 +29,19 @@ import stroom.util.client.BorderUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.function.Consumer;
 
 public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridView<IndexVolumeGroup>> {
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>> dataProvider;
 
@@ -52,11 +55,14 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
         initTableColumns();
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus,
+                criteria.obtainPageRequest()) {
             @Override
-            protected void exec(final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(criteria);
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(
+                        criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());

@@ -26,6 +26,7 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPathCreator {
+
     @Test
     void testReplaceFileName(@TempDir Path tempDir) {
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);

@@ -16,16 +16,19 @@
 
 package stroom.dashboard.impl.datasource;
 
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ExternalService;
 import stroom.servicediscovery.api.ServiceDiscoverer;
 
+import java.util.List;
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
-import java.util.Optional;
 
 public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourceProviderRegistry {
+
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
     private final Provider<Client> clientProvider;
@@ -75,5 +78,15 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
         return Optional.ofNullable(dataSourceRef)
                 .map(DocRef::getType)
                 .flatMap(this::getDataSourceProvider);
+    }
+
+    @Override
+    public List<AbstractField> getFieldsForDataSource(final DocRef dataSourceRef) {
+        // Elevate the users permissions for the duration of this task so they can read the index if
+        // they have 'use' permission.
+        return securityContext.useAsReadResult(
+                () -> getDataSourceProvider(dataSourceRef)
+                        .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                        .orElse(null));
     }
 }

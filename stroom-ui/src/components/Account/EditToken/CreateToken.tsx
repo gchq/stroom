@@ -15,19 +15,19 @@
  */
 
 import * as React from "react";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { OkCancelButtons, OkCancelProps } from "../../Dialog/OkCancelButtons";
 import { Formik, FormikProps } from "formik";
 import { Form, Modal } from "react-bootstrap";
 import { FormikHelpers } from "formik/dist/types";
 import { newTokenValidationSchema } from "./validation";
-import { CreateTokenRequest, TokenConfig } from "../api/types";
 import { FunctionComponent, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useTokenResource } from "../api";
 import { DatePickerFormField, UserFormField } from "components/FormField";
 import CustomLoader from "../../CustomLoader";
 import moment from "moment";
+import { CreateTokenRequest, TokenConfig } from "api/stroom";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 export interface CreateTokenFormValues {
   expiresOnMs: number;
@@ -122,14 +122,16 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
 export const CreateToken: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = ({ onClose }) => {
-  const { create, fetchTokenConfig } = useTokenResource();
-
+  const { exec } = useStroomApi();
   const [tokenConfig, setTokenConfig] = useState<TokenConfig>();
   useEffect(() => {
     if (tokenConfig === undefined) {
-      fetchTokenConfig().then((conf) => setTokenConfig(conf));
+      exec(
+        (api) => api.token.fetchTokenConfig(),
+        (response: TokenConfig) => setTokenConfig(response),
+      );
     }
-  }, [tokenConfig, setTokenConfig, fetchTokenConfig]);
+  }, [tokenConfig, setTokenConfig, exec]);
 
   const onSubmit = (
     values: CreateTokenFormValues,
@@ -156,7 +158,7 @@ export const CreateToken: React.FunctionComponent<{
       comments: undefined,
       enabled: true,
     };
-    create(request).then(handleResponse);
+    exec((api) => api.token.createToken(request), handleResponse);
   };
 
   if (tokenConfig === undefined) {
@@ -170,7 +172,13 @@ export const CreateToken: React.FunctionComponent<{
     .valueOf();
 
   return (
-    <Dialog>
+    <ResizableDialog
+      initWidth={348}
+      initHeight={319}
+      minWidth={348}
+      minHeight={319}
+      disableResize={true}
+    >
       <CreateTokenFormik
         initialValues={{
           expiresOnMs: expiresOnMs,
@@ -179,6 +187,6 @@ export const CreateToken: React.FunctionComponent<{
         onSubmit={onSubmit}
         onClose={onClose}
       />
-    </Dialog>
+    </ResizableDialog>
   );
 };

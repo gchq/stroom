@@ -17,11 +17,11 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -40,13 +40,14 @@ import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 
 public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RangeStoreDb.class);
 
     public static final String DB_NAME = "RangeStore";
@@ -79,7 +80,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         LOGGER.trace(() -> "get called for " + mapDefinitionUid + ", key " + key);
 
         try (final PooledByteBuffer startKeyPolledBuffer = getPooledKeyBuffer();
-             final PooledByteBuffer endKeyPolledBuffer = getPooledKeyBuffer()) {
+                final PooledByteBuffer endKeyPolledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> keyRange = buildKeyRange(
                     mapDefinitionUid,
@@ -125,8 +126,9 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                 "found the required value after " + cnt.get() + " iterations");
 
                         // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
-                        // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
-                        // buffer into the actual value bytebuffer from the valueStoreDb. This would save a buffer copy.
+                        //  Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the
+                        //  valueStoreKey buffer into the actual value bytebuffer from the valueStoreDb.
+                        //  This would save a buffer copy.
                         return Optional.of(keyVal.val());
                     }
                 }
@@ -200,7 +202,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                  final EntryConsumer entryConsumer) {
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-             PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
             // when both the start and end key are used in the keyRange
@@ -263,6 +265,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //    }
 
     public interface Factory {
+
         RangeStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

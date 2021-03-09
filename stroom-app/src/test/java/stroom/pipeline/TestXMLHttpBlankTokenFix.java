@@ -17,8 +17,6 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -43,10 +41,13 @@ import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.io.InputStream;
 import java.nio.file.Path;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -54,6 +55,7 @@ import static org.assertj.core.api.Assertions.fail;
 // FIXME : reinstate test
 @Disabled("Removed test data")
 class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
+
     private static final int EXPECTED_RESULTS = 4;
     private static final String PIPELINE = "XMLHttpBlankTokenFix/XMLHttpBlankTokenFix.Pipeline.data.xml";
     private static final String INPUT = "XMLHttpBlankTokenFix/HttpProblem.in";
@@ -134,7 +136,8 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//            metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input file to transform.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
@@ -143,14 +146,30 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             final String xml = StreamUtil.fileToString(outputFile);
             System.out.println(xml);
 
-            assertThat(recordCount.getRead() > 0).as(errorReceiver.toString()).isTrue();
-            assertThat(recordCount.getWritten() > 0).as(errorReceiver.toString()).isTrue();
-            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(recordCount.getRead());
-            assertThat(recordCount.getRead()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
-            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
-            assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiver.toString()).isEqualTo(0);
-            assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiver.toString()).isEqualTo(0);
-            assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiver.toString()).isEqualTo(0);
+            assertThat(recordCount.getRead() > 0)
+                    .as(errorReceiver.toString())
+                    .isTrue();
+            assertThat(recordCount.getWritten() > 0)
+                    .as(errorReceiver.toString())
+                    .isTrue();
+            assertThat(recordCount.getWritten())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(recordCount.getRead());
+            assertThat(recordCount.getRead())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(EXPECTED_RESULTS);
+            assertThat(recordCount.getWritten())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(EXPECTED_RESULTS);
+            assertThat(loggingErrorReceiver.getRecords(Severity.WARNING))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.ERROR))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
 
             if (!loggingErrorReceiver.isAllOk()) {
                 fail(errorReceiver.toString());

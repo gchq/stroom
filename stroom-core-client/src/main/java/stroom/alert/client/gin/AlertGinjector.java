@@ -16,11 +16,13 @@
 
 package stroom.alert.client.gin;
 
-import com.google.inject.Provider;
 import stroom.alert.client.AlertPlugin;
 import stroom.alert.client.presenter.PromptPresenter;
 
+import com.google.inject.Provider;
+
 public interface AlertGinjector {
+
     Provider<PromptPresenter> getAlertManager();
 
     Provider<AlertPlugin> getAlertPresenter();

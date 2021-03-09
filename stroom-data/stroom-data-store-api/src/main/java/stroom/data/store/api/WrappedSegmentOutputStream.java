@@ -19,6 +19,7 @@ package stroom.data.store.api;
 import java.io.IOException;
 
 public class WrappedSegmentOutputStream extends SegmentOutputStream {
+
     private final SegmentOutputStream segmentOutputStream;
 
     public WrappedSegmentOutputStream(final SegmentOutputStream segmentOutputStream) {

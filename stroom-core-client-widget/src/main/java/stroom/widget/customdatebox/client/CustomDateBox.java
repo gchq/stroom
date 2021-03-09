@@ -16,14 +16,16 @@
 
 package stroom.widget.customdatebox.client;
 
+import stroom.util.shared.HasLongValue;
+
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DatePicker;
-import stroom.util.shared.HasLongValue;
 
 import java.util.Date;
 
 public class CustomDateBox extends DateBox implements HasLongValue {
+
     /**
      * Create a date box with a new {@link DatePicker}.
      */
@@ -69,6 +71,7 @@ public class CustomDateBox extends DateBox implements HasLongValue {
     }
 
     public static class CustomDateBoxFormat implements Format {
+
         /**
          * Default style name added when the date box has a format error.
          */

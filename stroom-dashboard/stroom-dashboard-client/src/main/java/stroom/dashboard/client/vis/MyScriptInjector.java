@@ -25,11 +25,11 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 
-/**
- * Design note: This class intentionally does not use the GWT DOM wrappers so
- * that this code can pull in as few dependencies as possible and live in the
- * Core module.
- */
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Design note: This class intentionally does not use the GWT DOM wrappers so
+// that this code can pull in as few dependencies as possible and live in the
+// Core module.
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Dynamically create a script tag and attach it to the DOM.
@@ -47,17 +47,19 @@ import com.google.gwt.core.client.JavaScriptObject;
  * <p>
  * <pre>
  * ScriptInjector.fromUrl("http://example.com/foo.js").setCallback(new Callback<Void, Exception>() {
- * 	public void onFailure(RuntimeException e) {
- * 		Window.alert("Script load failed.");
- *    }
+ *   public void onFailure(RuntimeException e) {
+ *     Window.alert("Script load failed.");
+ *   }
  *
- * 	public void onSuccess(Void result) {
- * 		Window.alert("Script load success.");
- *    }
+ *   public void onSuccess(Void result) {
+ *     Window.alert("Script load success.");
+ *   }
  * }).inject();
  * </pre>
  */
+@SuppressWarnings("checkstyle:filetabcharacter")
 public class MyScriptInjector {
+
     /**
      * Returns the top level window object. Use this to inject a script so that
      * global variable references are available under <code>$wnd</code> in JSNI
@@ -122,7 +124,8 @@ public class MyScriptInjector {
     function clearCallbacks() {
         scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = null;
         if (removeTag) {
-            @com.google.gwt.core.client.ScriptInjector::nativeRemove(Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
+            @com.google.gwt.core.client.ScriptInjector::nativeRemove(
+                Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
         }
     }
     scriptElement.onload = $entry(function() {
@@ -196,6 +199,7 @@ public class MyScriptInjector {
      * Builder for directly injecting a script body into the DOM.
      */
     public static class FromString {
+
         private final String scriptBody;
         private boolean removeTag = true;
         private JavaScriptObject window;
@@ -218,7 +222,9 @@ public class MyScriptInjector {
          * may be removed from the DOM.
          */
         public JavaScriptObject inject() {
-            final JavaScriptObject wnd = (window == null) ? nativeDefaultWindow() : window;
+            final JavaScriptObject wnd = (window == null)
+                    ? nativeDefaultWindow()
+                    : window;
             assert wnd != null;
             final JavaScriptObject doc = nativeGetDocument(wnd);
             assert doc != null;
@@ -259,6 +265,7 @@ public class MyScriptInjector {
      * Build an injection call for adding a script by URL.
      */
     public static class FromUrl {
+
         private final String scriptUrl;
         private Callback<Void, Exception> callback;
         private boolean removeTag = false;
@@ -275,7 +282,9 @@ public class MyScriptInjector {
          * @return the script element created for the injection.
          */
         public JavaScriptObject inject() {
-            final JavaScriptObject wnd = (window == null) ? nativeDefaultWindow() : window;
+            final JavaScriptObject wnd = (window == null)
+                    ? nativeDefaultWindow()
+                    : window;
             assert wnd != null;
             final JavaScriptObject doc = nativeGetDocument(wnd);
             assert doc != null;

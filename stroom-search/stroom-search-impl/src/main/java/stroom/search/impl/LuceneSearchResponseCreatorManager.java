@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 @Singleton
 @SuppressWarnings("unused") //Used by DI
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchResponseCreatorManager.class);
 
     private static final String CACHE_NAME = "Lucene Search Result Creators";
@@ -34,7 +35,10 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
                                               final SearchResponseCreatorFactory searchResponseCreatorFactory) {
         this.storeFactory = storeFactory;
         this.searchResponseCreatorFactory = searchResponseCreatorFactory;
-        cache = cacheManager.create(CACHE_NAME, indexShardSearchConfig::getSearchResultCache, this::create, this::destroy);
+        cache = cacheManager.create(CACHE_NAME,
+                indexShardSearchConfig::getSearchResultCache,
+                this::create,
+                this::destroy);
     }
 
     private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {

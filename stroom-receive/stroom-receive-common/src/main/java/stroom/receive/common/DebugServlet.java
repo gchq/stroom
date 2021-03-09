@@ -20,15 +20,16 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
 import stroom.util.web.DebugServletUtil;
 
+import java.io.IOException;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Set;
 
 @Unauthenticated
 public class DebugServlet extends HttpServlet implements IsServlet {
+
     private static final long serialVersionUID = 5785836851738107760L;
 
     private static final Set<String> PATH_SPECS = Set.of("/debug");

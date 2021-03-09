@@ -24,6 +24,7 @@ import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.cache.StoredSchema;
 
 public class MockSchemaPool implements SchemaPool {
+
     private final SchemaLoaderImpl schemaLoader;
 
     public MockSchemaPool(final SchemaLoaderImpl schemaLoader) {
@@ -32,7 +33,9 @@ public class MockSchemaPool implements SchemaPool {
 
     @Override
     public PoolItem<StoredSchema> borrowObject(final SchemaKey key, final boolean usePool) {
-        return new PoolItem<>(new PoolKey<>(key), schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria()));
+        return new PoolItem<>(
+                new PoolKey<>(key),
+                schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria()));
     }
 
     @Override

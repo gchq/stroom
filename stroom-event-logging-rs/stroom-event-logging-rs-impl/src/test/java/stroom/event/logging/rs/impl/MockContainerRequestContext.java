@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
@@ -23,21 +31,14 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class MockContainerRequestContext implements ContainerRequestContext {
 
     private InputStream stream = null;
 
-    private MockURIInfo uriInfo = new MockURIInfo();
+    private final MockUriInfo uriInfo = new MockUriInfo();
 
-    public void reset (){
+    public void reset() {
         uriInfo.setId(null);
     }
 

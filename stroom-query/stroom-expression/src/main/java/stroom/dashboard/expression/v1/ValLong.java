@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.util.Objects;
 
 public final class ValLong implements ValNumber {
+
     public static final Type TYPE = Type.LONG;
     private final long value;
 
@@ -69,10 +70,15 @@ public final class ValLong implements ValNumber {
         return TYPE;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValLong valLong = (ValLong) o;
         return value == valLong.value;
     }
@@ -83,11 +89,13 @@ public final class ValLong implements ValNumber {
     }
 
     private static class ValLongCache {
-        static final ValLong cache[] = new ValLong[-(-128) + 127 + 1];
+
+        static final ValLong[] cache = new ValLong[-(-128) + 127 + 1];
 
         static {
-            for (int i = 0; i < cache.length; i++)
+            for (int i = 0; i < cache.length; i++) {
                 cache[i] = new ValLong(i - 128);
+            }
         }
 
         private ValLongCache() {

@@ -4,10 +4,11 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.query.api.v2.TableSettings;
 
-import javax.inject.Inject;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class LmdbDataStoreFactory implements DataStoreFactory {
+
     private final LmdbEnvironment lmdbEnvironment;
     private final ByteBufferPool byteBufferPool;
     private final LmdbConfig lmdbConfig;

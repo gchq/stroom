@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DependencyRemapper {
+
     private final Map<DocRef, DocRef> remappings;
     private final Set<DocRef> dependencies;
     private final AtomicBoolean changed;

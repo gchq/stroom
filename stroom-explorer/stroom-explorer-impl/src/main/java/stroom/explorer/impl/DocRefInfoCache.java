@@ -30,13 +30,14 @@ import stroom.util.shared.Clearable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(action = {EntityAction.CREATE, EntityAction.UPDATE})
 class DocRefInfoCache implements EntityEvent.Handler, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 

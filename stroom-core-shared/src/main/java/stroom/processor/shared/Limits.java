@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "limits")
 @JsonInclude(Include.NON_NULL)
 public class Limits {
+
     @XmlElement(name = "streamCount")
     @JsonProperty
     private Long streamCount;
@@ -90,6 +91,7 @@ public class Limits {
     }
 
     public static final class Builder {
+
         private Long streamCount;
         private Long eventCount;
         private Long durationMs;

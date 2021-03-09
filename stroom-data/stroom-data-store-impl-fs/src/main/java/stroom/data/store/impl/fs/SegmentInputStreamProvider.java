@@ -1,16 +1,18 @@
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.WrappedSegmentInputStream;
 import stroom.util.io.SeekableInputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 public class SegmentInputStreamProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SegmentInputStreamProvider.class);
 
     private final InternalSource source;
@@ -63,7 +65,8 @@ public class SegmentInputStreamProvider {
                 return new SingleSegmentInputStreamImpl(segmentInputStream, size);
             }
 
-            final SegmentInputStream inputStream = new RASegmentInputStream(getData(), segmentIndex, entryByteOffsetStart, entryByteOffsetEnd);
+            final SegmentInputStream inputStream = new RASegmentInputStream(
+                    getData(), segmentIndex, entryByteOffsetStart, entryByteOffsetEnd);
 
             return new WrappedSegmentInputStream(inputStream) {
                 @Override

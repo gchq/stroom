@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CSVFormatter {
+
     private static final String COMMA = ",";
     private static final String QUOTE = "\"";
     private static final String DOUBLE_QUOTE = "\"\"";

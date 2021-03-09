@@ -42,6 +42,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import javax.inject.Provider;
 
 public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
+
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
 
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");

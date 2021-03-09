@@ -18,24 +18,26 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
 

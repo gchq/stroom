@@ -17,10 +17,6 @@
 
 package stroom.script.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
+
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
 
     private final Provider<ScriptPresenter> editorProvider;
@@ -58,23 +60,28 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<ScriptDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<ScriptDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<ScriptDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
-    public void save(final DocRef docRef, final ScriptDoc document, final Consumer<ScriptDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final ScriptDoc document,
+                     final Consumer<ScriptDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<ScriptDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

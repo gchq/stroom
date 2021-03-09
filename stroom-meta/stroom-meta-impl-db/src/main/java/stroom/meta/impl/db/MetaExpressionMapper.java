@@ -10,22 +10,18 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
 
-import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.SelectJoinStep;
-import org.jooq.SelectOnConditionStep;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
+
     private final CommonExpressionMapper expressionMapper;
     private final MetaKeyDao metaKeyDao;
     private final String keyFieldName;
@@ -57,37 +53,45 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             int id = idOptional.get();
             Field valueField = createValueField(id);
 
-            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
+            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField,
+                    valueField,
+                    value -> List.of(Long.valueOf(value)),
+                    wordListProvider,
+                    collectionService);
 
             final MetaTermHandler handler = new MetaTermHandler(
-                        createKeyField(id),
-                        id,
-                        termHandler);
+                    createKeyField(id),
+                    id,
+                    termHandler);
             expressionMapper.addHandler(dataSourceField, handler);
         }
     }
 
-    public SelectJoinStep<?> addJoins(SelectJoinStep<?> query, final Field metaIdField,
-                                             final Set<Integer> usedValKeys){
-        for (Integer id : usedValKeys){
-            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id)).on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+    public SelectJoinStep<?> addJoins(
+            SelectJoinStep<?> query,
+            final Field metaIdField,
+            final Set<Integer> usedValKeys) {
+
+        for (Integer id : usedValKeys) {
+            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id))
+                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
     }
 
-    private String createTableName(final int valKeyId){
+    private String createTableName(final int valKeyId) {
         return "`v" + valKeyId + "`";
     }
 
-    private Field createValueField(final int valKeyId){
+    private Field createValueField(final int valKeyId) {
         return DSL.field(createTableName(valKeyId) + ".`" + valueFieldName + "`");
     }
 
-    private Field createKeyField(final int valKeyId){
+    private Field createKeyField(final int valKeyId) {
         return DSL.field(createTableName(valKeyId) + ".`" + keyFieldName + "`");
     }
 
-    private Field createMetaIdField(final int valKeyId){
+    private Field createMetaIdField(final int valKeyId) {
         return DSL.field(createTableName(valKeyId) + ".`" + metaIdFieldName + "`");
     }
 
@@ -97,6 +101,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     static class MetaTermHandler implements Function<ExpressionTerm, Condition> {
+
         private final Field<Integer> keyField;
         private final Integer id;
         private final TermHandler<Long> valueHandler;
@@ -109,7 +114,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
 
         @Override
         public Condition apply(final ExpressionTerm term) {
-             return keyField.equal(id).and(valueHandler.apply(term));
+            return keyField.equal(id).and(valueHandler.apply(term));
         }
     }
 }

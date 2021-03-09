@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestPartsPathUtil {
+
     @Test
     void test() throws IOException {
         Path uniqueTestDir = Files.createTempDirectory("stroom");
@@ -23,7 +24,9 @@ class TestPartsPathUtil {
         final Path part = PartsPathUtil.createPart(partsDir, zipFile, "001");
         assertThat(PartsPathUtil.isPart(part)).isTrue();
 
-        assertThatThrownBy(() -> PartsPathUtil.checkPath(partsDir.getFileName().toString())).isInstanceOf(IOException.class);
-        assertThatThrownBy(() -> PartsPathUtil.checkPath(part.getFileName().toString())).isInstanceOf(IOException.class);
+        assertThatThrownBy(() ->
+                PartsPathUtil.checkPath(partsDir.getFileName().toString())).isInstanceOf(IOException.class);
+        assertThatThrownBy(() ->
+                PartsPathUtil.checkPath(part.getFileName().toString())).isInstanceOf(IOException.class);
     }
 }

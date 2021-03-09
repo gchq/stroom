@@ -23,6 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestKVMapUtil {
+
     @Test
     void testSimpleParse() {
         final Map<String, String> map = KVMapUtil.parse("param1=value1");
@@ -33,11 +34,41 @@ class TestKVMapUtil {
     @Test
     void testComplexParse() {
         testKV("k1=v1", "k1", "v1");
-        testKV("k1=v1 key2=value\"\"2 key3=value\"\"3", "k1", "v1", "key2", "value\"2", "key3", "value\"3");
-        testKV("k1=v1 key2=\"quoted string\" key3=value\"\"3", "k1", "v1", "key2", "quoted string", "key3", "value\"3");
-        testKV("k1=v1 key2=\"quoted \"\" string\" key3=value\"\"3", "k1", "v1", "key2", "quoted \" string", "key3", "value\"3");
-        testKV("k1=v1 key2=\"quoted = string\" key3=value\"\"3", "k1", "v1", "key2", "quoted = string", "key3", "value\"3");
-        testKV("k1=v1 key2=escaped \\= string key3=value\"\"3", "k1", "v1", "key2", "escaped = string", "key3", "value\"3");
+        testKV("k1=v1 key2=value\"\"2 key3=value\"\"3",
+                "k1",
+                "v1",
+                "key2",
+                "value\"2",
+                "key3",
+                "value\"3");
+        testKV("k1=v1 key2=\"quoted string\" key3=value\"\"3",
+                "k1",
+                "v1",
+                "key2",
+                "quoted string",
+                "key3",
+                "value\"3");
+        testKV("k1=v1 key2=\"quoted \"\" string\" key3=value\"\"3",
+                "k1",
+                "v1",
+                "key2",
+                "quoted \" string",
+                "key3",
+                "value\"3");
+        testKV("k1=v1 key2=\"quoted = string\" key3=value\"\"3",
+                "k1",
+                "v1",
+                "key2",
+                "quoted = string",
+                "key3",
+                "value\"3");
+        testKV("k1=v1 key2=escaped \\= string key3=value\"\"3",
+                "k1",
+                "v1",
+                "key2",
+                "escaped = string",
+                "key3",
+                "value\"3");
     }
 
     @Test

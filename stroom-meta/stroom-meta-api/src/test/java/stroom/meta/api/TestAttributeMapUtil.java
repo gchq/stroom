@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMapUtil {
+
     @Test
     void testDataFormatter1() {
         final String inputDateStr = "Sep  9 16:16:45 2018 GMT";

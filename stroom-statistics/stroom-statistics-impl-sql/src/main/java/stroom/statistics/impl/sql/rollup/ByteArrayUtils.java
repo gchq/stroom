@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import javax.xml.bind.DatatypeConverter;
 
 public class ByteArrayUtils {
+
     /**
      * Private constructor to prevent instantiation
      */
@@ -64,7 +65,6 @@ public class ByteArrayUtils {
     }
 
     /**
-     * @param arr
      * @return The array represented in hex, decimal and 'hbase' forms. The
      * hbase form is mix of ascii and deciaml, so an ascii char if the
      * byte value exists in the ascii table

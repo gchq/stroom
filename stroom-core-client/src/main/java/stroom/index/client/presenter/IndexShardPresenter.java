@@ -66,6 +66,7 @@ import java.util.function.Consumer;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
         implements Refreshable, HasDocumentRead<IndexDoc>, ReadOnlyChangeHandler {
+
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
     private final TooltipPresenter tooltipPresenter;
@@ -174,7 +175,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
+                false,
+                false)) {
             @Override
             public TickBoxState getValue() {
                 if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
@@ -225,7 +228,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
+                        .addTwoColTable(tableBuilder -> {
                             if (index != null) {
                                 tableBuilder.addRow("Index UUID", String.valueOf(index.getUuid()));
                             }
@@ -397,11 +400,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             selectionCriteria.getIndexShardIdSet().clear();
 
             if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(), queryCriteria.obtainPageRequest()) {
+                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(),
+                        queryCriteria.obtainPageRequest()) {
                     @Override
-                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
                         final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(queryCriteria);
+                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(
+                                queryCriteria);
                     }
 
                     @Override
@@ -441,7 +447,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             ConfirmEvent.fire(this, "Are you sure you want to flush all index shards?", result -> {
                 if (result) {
                     ConfirmEvent.fire(IndexShardPresenter.this,
-                            "You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?",
+                            "You have selected to flush all filtered index shards! Are you absolutely " +
+                                    "sure you want to do this?",
                             result1 -> {
                                 if (result1) {
                                     doFlush();
@@ -450,14 +457,20 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
             });
         } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
-            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
-                if (result) {
-                    doFlush();
-                }
-            });
+            ConfirmEvent.fire(
+                    this,
+                    "Are you sure you want to flush the selected index shards?",
+                    result -> {
+                        if (result) {
+                            doFlush();
+                        }
+                    });
 
         } else {
-            AlertEvent.fireWarn(this, "No index shards have been selected for flushing!", null);
+            AlertEvent.fireWarn(
+                    this,
+                    "No index shards have been selected for flushing!",
+                    null);
         }
     }
 
@@ -467,7 +480,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     result -> {
                         if (result) {
                             ConfirmEvent.fire(IndexShardPresenter.this,
-                                    "You have selected to delete all filtered index shards! Are you absolutely sure you want to do this?",
+                                    "You have selected to delete all filtered index shards! Are you " +
+                                            "absolutely sure you want to do this?",
                                     result1 -> {
                                         if (result1) {
                                             doDelete();
@@ -484,7 +498,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     });
 
         } else {
-            AlertEvent.fireWarn(this, "No index shards have been selected for deletion!", null);
+            AlertEvent.fireWarn(
+                    this,
+                    "No index shards have been selected for deletion!",
+                    null);
         }
     }
 

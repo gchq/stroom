@@ -1,14 +1,14 @@
 package stroom.security.identity.token;
 
-import stroom.security.identity.account.Account;
-import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.account.AccountService;
-import stroom.security.identity.exceptions.NoSuchUserException;
-import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.identity.config.TokenConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.TokenException;
 import stroom.security.api.TokenVerifier;
+import stroom.security.identity.account.Account;
+import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.account.AccountService;
+import stroom.security.identity.config.TokenConfig;
+import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.PermissionException;
@@ -17,14 +17,15 @@ import stroom.util.shared.ResultPage;
 import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwk.JsonWebKey;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 
 public class TokenServiceImpl implements TokenService, HasHealthCheck {
+
     private final JwkCache jwkCache;
     private final TokenDao tokenDao;
     private final AccountDao accountDao;
@@ -56,14 +57,27 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         this.tokenVerifier = tokenVerifier;
     }
 
+    static Optional<TokenType> getParsedTokenType(final String tokenType) {
+
+        try {
+            if (tokenType == null) {
+                return Optional.empty();
+            } else {
+                return Optional.of(TokenType.fromText(tokenType));
+            }
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
     @Override
-    public ResultPage<Token> list() {
+    public TokenResultPage list() {
         checkPermission();
         return tokenDao.list();
     }
 
     @Override
-    public ResultPage<Token> search(final SearchTokenRequest request) {
+    public TokenResultPage search(final SearchTokenRequest request) {
         checkPermission();
         return tokenDao.search(request);
 
@@ -129,7 +143,6 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
         return tokenDao.create(accountId, token);
     }
-
 
     @Override
     public Token createResetEmailToken(final Account account, final String clientId) {
@@ -197,6 +210,15 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         return tokenDao.readById(tokenId);
     }
 
+//    @Override
+//    public Optional<String> verifyToken(String token) {
+////        Optional<Token> tokenRecord = dao.readByToken(token);
+////        if (!tokenRecord.isPresent()) {
+////            return Optional.empty();
+////        }
+//        return tokenVerifier.verifyToken(token);
+//    }
+
     @Override
     public int toggleEnabled(int tokenId, boolean isEnabled) {
         checkPermission();
@@ -209,15 +231,6 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
                 .orElse(0);
     }
 
-//    @Override
-//    public Optional<String> verifyToken(String token) {
-////        Optional<Token> tokenRecord = dao.readByToken(token);
-////        if (!tokenRecord.isPresent()) {
-////            return Optional.empty();
-////        }
-//        return tokenVerifier.verifyToken(token);
-//    }
-
     @Override
     public String getPublicKey() {
         return jwkCache.get()
@@ -228,19 +241,6 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
-        }
-    }
-
-    static Optional<TokenType> getParsedTokenType(final String tokenType) {
-
-        try {
-            if (tokenType == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of(TokenType.fromText(tokenType));
-            }
-        } catch (Exception e) {
-            return Optional.empty();
         }
     }
 

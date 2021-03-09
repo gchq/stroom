@@ -1,4 +1,5 @@
 package stroom.dashboard.expression.v1;
 
-interface ValNumber extends Val {
+public interface ValNumber extends Val {
+
 }

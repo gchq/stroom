@@ -2,6 +2,7 @@ package stroom.elastic.impl.http;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import stroom.docref.DocRef;
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.api.ElasticIndexWriterFactory;
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 @Singleton
 class HttpElasticIndexWriterFactory implements ElasticIndexWriterFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpElasticIndexWriterFactory.class);
 
     private final ElasticIndexConfigCache elasticIndexCache;

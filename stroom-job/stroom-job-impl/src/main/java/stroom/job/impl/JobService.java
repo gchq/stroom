@@ -23,21 +23,22 @@ import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class JobService {
+
     private final JobDao jobDao;
     private final SecurityContext securityContext;
 
@@ -64,7 +65,8 @@ class JobService {
 
         // Distributed Jobs done a different way
         distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
-            final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
+            final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(
+                    DistributedTaskFactoryDescription.class);
             jobDescriptionMap.put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
         });
     }
@@ -83,11 +85,12 @@ class JobService {
     }
 
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
-        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
+        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> jobDao.find(findJobCriteria));
         results.getValues().forEach(this::decorate);
 
         if (findJobCriteria.getSortList().size() > 0) {
-            final Sort sort = findJobCriteria.getSortList().get(0);
+            final CriteriaFieldSort sort = findJobCriteria.getSortList().get(0);
             if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }

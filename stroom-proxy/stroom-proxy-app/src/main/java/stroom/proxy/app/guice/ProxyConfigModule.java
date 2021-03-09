@@ -1,7 +1,5 @@
 package stroom.proxy.app.guice;
 
-import com.google.inject.AbstractModule;
-import io.dropwizard.client.JerseyClientConfiguration;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -11,7 +9,11 @@ import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
+import com.google.inject.AbstractModule;
+import io.dropwizard.client.JerseyClientConfiguration;
+
 public class ProxyConfigModule extends AbstractModule {
+
     private final ProxyConfig proxyConfig;
 
     public ProxyConfigModule(final ProxyConfig proxyConfig) {
@@ -20,7 +22,7 @@ public class ProxyConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        // Bind the application config.        
+        // Bind the application config.
         bind(ProxyConfig.class).toInstance(proxyConfig);
 
         // AppConfig will instantiate all of its child config objects so

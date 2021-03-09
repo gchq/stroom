@@ -29,18 +29,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class JobBootstrap {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
 
@@ -125,7 +126,9 @@ class JobBootstrap {
                     if (existingJobNode == null) {
                         LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                                 "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                                (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                                (newJobNode.isEnabled()
+                                        ? "ENABLED"
+                                        : "DISABLED") + ")");
 
                         AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                         jobNodeDao.create(newJobNode);
@@ -164,7 +167,9 @@ class JobBootstrap {
 
                     LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                             "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                            (newJobNode.isEnabled()
+                                    ? "ENABLED"
+                                    : "DISABLED") + ")");
 
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
@@ -334,7 +339,8 @@ class JobBootstrap {
 //        }
 //
 //        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
+//        protected void appendBasicCriteria(final HqlBuilder sql,
+//        final String alias, final FindJobNodeCriteria criteria) {
 //            super.appendBasicCriteria(sql, alias, criteria);
 //            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
 //            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());

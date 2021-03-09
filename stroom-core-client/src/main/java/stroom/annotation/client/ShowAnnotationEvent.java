@@ -1,14 +1,16 @@
 package stroom.annotation.client;
 
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.EventId;
 
 import java.util.List;
 
 public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
+
     private static Type<ShowAnnotationEvent.Handler> TYPE;
 
     private final Annotation annotation;
@@ -49,6 +51,7 @@ public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onShow(ShowAnnotationEvent event);
     }
 }

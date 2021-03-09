@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class SearchDebugUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
 
     private static Path dir;
@@ -84,7 +85,8 @@ public class SearchDebugUtil {
             final String expected = Files.readString(pathForExpectedOutput);
 
             if (!actual.equals(expected)) {
-                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath().toString() + " " + pathForExpectedOutput.toAbsolutePath().toString());
+                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath().toString() +
+                        " " + pathForExpectedOutput.toAbsolutePath().toString());
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -97,7 +99,8 @@ public class SearchDebugUtil {
             try {
                 final ObjectMapper mapper = new ObjectMapper();
                 mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("searchRequest" + suffix)))) {
+                try (final Writer writer = new OutputStreamWriter(
+                        Files.newOutputStream(dir.resolve("searchRequest" + suffix)))) {
                     mapper.writeValue(writer, searchRequest);
                 }
             } catch (final IOException | RuntimeException e) {
@@ -113,7 +116,8 @@ public class SearchDebugUtil {
                 final ObjectMapper mapper = new ObjectMapper();
                 mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
-                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("searchResponse" + suffix)))) {
+                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(
+                        dir.resolve("searchResponse" + suffix)))) {
                     mapper.writeValue(writer, searchResponse);
                 }
 

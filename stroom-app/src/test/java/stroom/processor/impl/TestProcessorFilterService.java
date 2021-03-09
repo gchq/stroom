@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorFilterService extends AbstractCoreIntegrationTest {
+
     @Inject
     private ProcessorService processorService;
     @Inject
@@ -117,8 +118,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTerm(MetaFields.TYPE_NAME,
+                                        ExpressionTerm.Condition.EQUALS,
+                                        StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFields.TYPE_NAME,
+                                        ExpressionTerm.Condition.EQUALS,
+                                        StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();

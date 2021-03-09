@@ -17,12 +17,11 @@
 package stroom.statistics.impl.sql;
 
 
+import stroom.test.common.util.db.DbTestUtil;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.config.common.ConnectionConfig;
-import stroom.db.util.DbUtil;
-import stroom.test.common.util.db.DbTestUtil;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -41,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Disabled
 class TestMySQLCharacterSets {
+
     @BeforeAll
     static void setup() throws SQLException {
         try (final Connection connection = getConnection()) {

@@ -2,11 +2,11 @@ ext.moduleName = 'stroom.data.retention.impl'
 
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-api')
-    compile project(':stroom-cluster:stroom-cluster-lock-mock')
     compile project(':stroom-core-shared')
     compile project(':stroom-data:stroom-data-retention-api')
-    compile project(':stroom-dictionary:stroom-dictionary-api')
+//    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-security:stroom-security-api')
@@ -17,14 +17,17 @@ dependencies {
     compile project(':stroom-docref')
     
     compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
+//    compile libs.jackson_annotations
+//    compile libs.jaxb_api
     compile libs.slf4j_api
+
+    testCompile project(':stroom-cluster:stroom-cluster-lock-mock')
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
+    testCompile libs.vavr
     
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

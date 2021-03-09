@@ -9,6 +9,7 @@ import stroom.query.api.v2.Format.Type;
 import java.util.Comparator;
 
 public class ComparatorFactory {
+
     private ComparatorFactory() {
     }
 

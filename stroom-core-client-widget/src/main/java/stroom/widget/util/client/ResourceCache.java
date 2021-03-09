@@ -30,8 +30,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class ResourceCache {
-    private static Map<String, String> cache = new HashMap<>();
-    private static Map<String, Set<Consumer<String>>> consumers = new HashMap<>();
+
+    private static final Map<String, String> cache = new HashMap<>();
+    private static final Map<String, Set<Consumer<String>>> consumers = new HashMap<>();
 
     public static void get(final String url, final Consumer<String> consumer) {
         if (cache.containsKey(url)) {

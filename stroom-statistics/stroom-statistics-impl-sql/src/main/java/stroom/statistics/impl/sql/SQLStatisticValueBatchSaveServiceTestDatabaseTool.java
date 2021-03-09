@@ -31,7 +31,9 @@ import java.util.List;
  * Utility that can be run as a main method to manually perform aggregation
  */
 public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseTool {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveServiceTestDatabaseTool.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            SQLStatisticValueBatchSaveServiceTestDatabaseTool.class);
 
     public static void main(final String[] args) {
         new SQLStatisticValueBatchSaveServiceTestDatabaseTool().doMain(args);
@@ -42,12 +44,13 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final SQLStatisticValueBatchSaveService statisticValueBatchSaveService = new SQLStatisticValueBatchSaveService(null) {
-                @Override
-                protected Connection getConnection() {
-                    return SQLStatisticValueBatchSaveServiceTestDatabaseTool.this.getConnection();
-                }
-            };
+            final SQLStatisticValueBatchSaveService statisticValueBatchSaveService =
+                    new SQLStatisticValueBatchSaveService(null) {
+                        @Override
+                        protected Connection getConnection() {
+                            return SQLStatisticValueBatchSaveServiceTestDatabaseTool.this.getConnection();
+                        }
+                    };
 
             for (int l = 0; l < 100; l++) {
                 final List<SQLStatValSourceDO> batch = new ArrayList<>();

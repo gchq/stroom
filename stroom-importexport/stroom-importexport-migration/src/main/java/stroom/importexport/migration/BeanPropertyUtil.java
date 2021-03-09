@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class BeanPropertyUtil {
+
     private static final Map<Key, List<Property>> propertyCache = new ConcurrentHashMap<>();
 
     private BeanPropertyUtil() {
@@ -99,7 +100,11 @@ public final class BeanPropertyUtil {
                                 }
                                 exportProperty = new Property(propertyName, true, instance, getMethod, setMethod);
                             } else {
-                                exportProperty = new Property(propertyName, true, new ExtensionProvider(externalFile.value()), getMethod, setMethod);
+                                exportProperty = new Property(propertyName,
+                                        true,
+                                        new ExtensionProvider(externalFile.value()),
+                                        getMethod,
+                                        setMethod);
                             }
                         } else {
                             exportProperty = new Property(propertyName, false, null, getMethod, setMethod);
@@ -167,6 +172,7 @@ public final class BeanPropertyUtil {
     }
 
     private static class Key {
+
         private final Class<?> clazz;
         private final boolean omitAuditFields;
 
@@ -177,8 +183,12 @@ public final class BeanPropertyUtil {
 
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return omitAuditFields == key.omitAuditFields &&
                     Objects.equals(clazz, key.clazz);

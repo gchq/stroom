@@ -17,13 +17,15 @@
 package stroom.task.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.security.api.UserIdentity;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class TestTaskContextImpl {
+
     @Test
     void test_toString() {
         final TaskContextImpl root = create();

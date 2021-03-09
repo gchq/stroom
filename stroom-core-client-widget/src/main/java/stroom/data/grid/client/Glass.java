@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 
 public class Glass {
+
     private final String className;
     private final String visibleClassName;
 

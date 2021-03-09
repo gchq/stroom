@@ -33,15 +33,18 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapFilterFactory.class);
 
     private final AttributeMapFilter attributeMapFilter;
 
     @Inject
-    public AttributeMapFilterFactory(final ProxyRequestConfig proxyRequestConfig,
-                                     final FeedStatusConfig feedStatusConfig,
-                                     final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
-                                     final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
+    public AttributeMapFilterFactory(
+            final ProxyRequestConfig proxyRequestConfig,
+            final FeedStatusConfig feedStatusConfig,
+            final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
+            final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
+
         if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
             LOGGER.info("Using data receipt policy to filter received data");
             attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(

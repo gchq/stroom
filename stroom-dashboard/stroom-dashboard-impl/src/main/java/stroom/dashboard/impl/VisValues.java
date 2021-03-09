@@ -20,16 +20,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Arrays;
 
 @JsonPropertyOrder({"fields", "limit"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "VisValues", propOrder = {"fields", "limit"})
 public class VisValues implements Serializable {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     private VisField[] fields;
@@ -62,22 +63,33 @@ public class VisValues implements Serializable {
         this.limit = limit;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof VisValues)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof VisValues)) {
+            return false;
+        }
 
         final VisValues visValues = (VisValues) o;
 
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(fields, visValues.fields)) return false;
-        return limit != null ? limit.equals(visValues.limit) : visValues.limit == null;
+        if (!Arrays.equals(fields, visValues.fields)) {
+            return false;
+        }
+        return limit != null
+                ? limit.equals(visValues.limit)
+                : visValues.limit == null;
     }
 
     @Override
     public int hashCode() {
         int result = Arrays.hashCode(fields);
-        result = 31 * result + (limit != null ? limit.hashCode() : 0);
+        result = 31 * result + (limit != null
+                ? limit.hashCode()
+                : 0);
         return result;
     }
 

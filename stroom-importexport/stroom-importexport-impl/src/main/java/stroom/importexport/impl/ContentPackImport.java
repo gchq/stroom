@@ -25,7 +25,6 @@ import stroom.util.io.PathCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -34,9 +33,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
+
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
@@ -120,7 +121,9 @@ public class ContentPackImport {
                     }
                 });
             } catch (final IOException e) {
-                LOGGER.error("Unable to read content pack files from {}", FileUtil.getCanonicalPath(contentPacksDir), e);
+                LOGGER.error("Unable to read content pack files from {}",
+                        FileUtil.getCanonicalPath(contentPacksDir),
+                        e);
             }
         }
         LOGGER.info("Content pack import counts - success: {}, failed: {}",

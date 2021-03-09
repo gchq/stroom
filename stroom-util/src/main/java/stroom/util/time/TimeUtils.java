@@ -23,6 +23,7 @@ public class TimeUtils {
     /**
      * Converts a duration, e.g. 30days into a point in time in the past, i.e.
      * current system time minus the duration.
+     *
      * @param now The instant used to represent the current time. Useful for testing purposes.
      */
     public static Instant durationToThreshold(final Instant now, final StroomDuration stroomDuration) {
@@ -32,6 +33,7 @@ public class TimeUtils {
     /**
      * Converts a duration, e.g. 30days into a point in time in the past, i.e.
      * current system time minus the duration.
+     *
      * @param now The instant used to represent the current time. Useful for testing purposes.
      */
     public static Instant durationToThreshold(final Instant now, final Duration duration) {

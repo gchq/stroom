@@ -19,6 +19,7 @@ package stroom.widget.menu.client.presenter;
 import com.google.gwt.user.client.Command;
 
 public abstract class CommandMenuItem extends MenuItem {
+
     private final String shortcut;
     private final Command command;
     private boolean enabled;

@@ -34,15 +34,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DocumentPermissionsTabPresenter
         extends MyPresenterWidget<DocumentPermissionsTabView> {
+
     private final DocumentUserListPresenter userListPresenter;
     private final PermissionsListPresenter permissionsListPresenter;
     private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
@@ -204,6 +205,7 @@ public class DocumentPermissionsTabPresenter
     }
 
     public interface DocumentPermissionsTabView extends View {
+
         void setUserView(View view);
 
         void setPermissionsView(View view);

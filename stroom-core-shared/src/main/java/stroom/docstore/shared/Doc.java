@@ -17,19 +17,22 @@
 
 package stroom.docstore.shared;
 
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
+import stroom.util.shared.HasAuditInfo;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc implements HasAuditInfo, HasUuid {
+public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
+
     @JsonProperty
     private String type;
     @JsonProperty
@@ -150,8 +153,12 @@ public abstract class Doc implements HasAuditInfo, HasUuid {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Doc)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Doc)) {
+            return false;
+        }
         final Doc doc = (Doc) o;
         return Objects.equals(type, doc.type) &&
                 Objects.equals(uuid, doc.uuid) &&

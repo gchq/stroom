@@ -27,7 +27,6 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import org.jooq.Condition;
 import org.jooq.Cursor;
@@ -38,7 +37,6 @@ import org.jooq.Result;
 import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -52,12 +50,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationEntry.ANNOTATION_ENTRY;
 
 class AnnotationDaoImpl implements AnnotationDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationDaoImpl.class);
 
     private static final Function<Record, Annotation> RECORD_TO_ANNOTATION_MAPPER = record -> {
@@ -113,9 +113,13 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
-        expressionMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationFields.CREATED_ON, value));
+        expressionMapper.map(AnnotationFields.CREATED_ON_FIELD,
+                ANNOTATION.CREATE_TIME_MS,
+                value -> getDate(AnnotationFields.CREATED_ON, value));
         expressionMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
-        expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationFields.UPDATED_ON, value));
+        expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD,
+                ANNOTATION.UPDATE_TIME_MS,
+                value -> getDate(AnnotationFields.UPDATED_ON, value));
         expressionMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
@@ -142,10 +146,15 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
+                    ZoneOffset.UTC.getId(),
+                    System.currentTimeMillis());
 
-            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+            return optional.orElseThrow(() ->
+                    new RuntimeException(
+                            "Expected a standard date value for field \"" + fieldName
+                                    + "\" but was given string \"" + value + "\""))
+                    .toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new RuntimeException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"", e);
@@ -276,7 +285,11 @@ class AnnotationDaoImpl implements AnnotationDao {
         return getDetail(annotation.getId());
     }
 
-    private void createEntry(final long annotationId, final String user, final long now, final String type, final String data) {
+    private void createEntry(final long annotationId,
+                             final String user,
+                             final long now,
+                             final String type,
+                             final String data) {
         // Create entry.
         final int count = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(ANNOTATION_ENTRY,

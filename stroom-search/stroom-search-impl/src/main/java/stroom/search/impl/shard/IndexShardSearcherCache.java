@@ -18,6 +18,7 @@
 package stroom.search.impl.shard;
 
 public interface IndexShardSearcherCache {
+
     IndexShardSearcher get(Long indexShardId);
 
     void refresh();

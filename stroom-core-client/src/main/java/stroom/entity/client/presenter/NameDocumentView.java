@@ -17,11 +17,13 @@
 
 package stroom.entity.client.presenter;
 
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 public interface NameDocumentView extends View, HasUiHandlers<PopupUiHandlers> {
+
     String getName();
 
     void setName(String name);

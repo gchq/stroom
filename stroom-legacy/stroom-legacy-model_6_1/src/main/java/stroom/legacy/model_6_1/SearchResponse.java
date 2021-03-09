@@ -17,9 +17,12 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -27,10 +30,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
@@ -39,7 +38,7 @@ import java.util.List;
 @XmlRootElement(name = "searchResponse")
 @XmlType(name = "SearchResponse", propOrder = {"highlights", "results", "errors", "complete"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The response to a search request, that may or may not contain results. The results " +
+@Schema(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
 @Deprecated
 public final class SearchResponse implements Serializable {
@@ -48,8 +47,7 @@ public final class SearchResponse implements Serializable {
 
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
-    @ApiModelProperty(
-            value = "A list of strings to highlight in the UI that should correlate with the search query.",
+    @Schema(description = "A list of strings to highlight in the UI that should correlate with the search query.",
             required = true)
     private List<String> highlights;
 
@@ -62,14 +60,12 @@ public final class SearchResponse implements Serializable {
 
     @XmlElementWrapper(name = "errors")
     @XmlElement(name = "error")
-    @ApiModelProperty(
-            value = "A list of errors that occurred in running the query",
+    @Schema(description = "A list of errors that occurred in running the query",
             required = false)
     private List<String> errors;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "True if the query has returned all known results",
+    @Schema(description = "True if the query has returned all known results",
             required = false)
     private Boolean complete;
 

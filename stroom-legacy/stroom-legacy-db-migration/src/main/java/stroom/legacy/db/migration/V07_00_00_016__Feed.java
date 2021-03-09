@@ -33,6 +33,7 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_016__Feed extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final FeedSerialiser serialiser = new FeedSerialiser(new Serialiser2FactoryImpl());

@@ -19,6 +19,7 @@ package stroom.job.api;
 import stroom.task.shared.ThreadPool;
 
 public class DistributedTask {
+
     private final String jobName;
     private final Runnable runnable;
     private final ThreadPool threadPool;

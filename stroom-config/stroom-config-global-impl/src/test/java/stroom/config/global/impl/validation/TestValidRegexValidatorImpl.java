@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ConstraintViolation;
 import java.util.Set;
+import javax.validation.ConstraintViolation;
 
 class TestValidRegexValidatorImpl extends AbstractValidatorTest {
 
@@ -42,6 +42,7 @@ class TestValidRegexValidatorImpl extends AbstractValidatorTest {
     }
 
     private static class Pojo {
+
         @ValidRegex
         private String regex;
     }

@@ -17,12 +17,14 @@
 package stroom.util.testshared;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.shared.PropertyMap;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPropertyMap {
+
     @Test
     void testSimple() {
         PropertyMap map = new PropertyMap();

@@ -21,6 +21,7 @@ import stroom.node.api.NodeInfo;
 import javax.inject.Inject;
 
 class NodeInfoImpl implements NodeInfo {
+
     private final NodeConfig nodeConfig;
 
     @Inject

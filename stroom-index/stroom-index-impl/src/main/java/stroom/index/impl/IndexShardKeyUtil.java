@@ -34,6 +34,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 public final class IndexShardKeyUtil {
+
     private static final String ALL = "all";
     private static final AtomicSequence SEQUENCE = new AtomicSequence();
 
@@ -49,7 +50,8 @@ public final class IndexShardKeyUtil {
 
 //    public static IndexShardKey createKey(final IndexShard indexShard) {
 //        final int shardNo = SEQUENCE.next(indexShard.getIndex().getShardsPerPartition());
-//        return new IndexShardKey(indexShard.getIndex(), indexShard.getPartition(), indexShard.getPartitionFromTime(), indexShard.getPartitionToTime(), shardNo);
+//        return new IndexShardKey(indexShard.getIndex(),
+//        indexShard.getPartition(), indexShard.getPartitionFromTime(), indexShard.getPartitionToTime(), shardNo);
 //    }
 
     public static IndexShardKey createTestKey(final IndexDoc index) {

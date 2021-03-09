@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class AtomicLoopedIntegerSequence {
+
     private final int startInc;
     private final int endExc;
     private final AtomicInteger lastVal = new AtomicInteger();
@@ -12,6 +13,7 @@ class AtomicLoopedIntegerSequence {
     public AtomicLoopedIntegerSequence(final int endExc) {
         this(0, endExc);
     }
+
     public AtomicLoopedIntegerSequence(final int startInc, final int endExc) {
         Preconditions.checkArgument(endExc > startInc);
 

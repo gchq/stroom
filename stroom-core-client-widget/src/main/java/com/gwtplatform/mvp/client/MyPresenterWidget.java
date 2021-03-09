@@ -24,6 +24,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implements Layer {
+
     private double opacity;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {

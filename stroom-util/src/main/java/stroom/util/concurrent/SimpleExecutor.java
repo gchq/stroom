@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * counts.
  */
 public class SimpleExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleExecutor.class);
 
     private static final int THREAD_SLEEP_MS = 100;

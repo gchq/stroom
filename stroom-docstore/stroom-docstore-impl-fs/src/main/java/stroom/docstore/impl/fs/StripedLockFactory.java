@@ -6,6 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 final class StripedLockFactory implements RWLockFactory {
+
     private final StripedLock stripedLock = new StripedLock();
 
     @Override

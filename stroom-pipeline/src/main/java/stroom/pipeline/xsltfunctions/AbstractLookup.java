@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
@@ -237,7 +238,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     sb.append(lazyMessage.getSeverity().getDisplayValue());
                     sb.append(": ");
                     sb.append(lazyMessage.getMessage().get());
-        });
+                });
 
         final String message = sb.toString();
         LOGGER.debug(message);
@@ -254,6 +255,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     static class SequenceMaker {
+
         private final XPathContext context;
         private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;

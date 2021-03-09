@@ -23,10 +23,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class DownloadSearchResultsRequest {
+
     @JsonProperty
     private final String applicationInstanceId;
     @JsonProperty
-    private final SearchRequest searchRequest;
+    private final DashboardSearchRequest searchRequest;
     @JsonProperty
     private final String componentId;
     @JsonProperty
@@ -40,7 +41,7 @@ public class DownloadSearchResultsRequest {
 
     @JsonCreator
     public DownloadSearchResultsRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
-                                        @JsonProperty("searchRequest") final SearchRequest searchRequest,
+                                        @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
                                         @JsonProperty("componentId") final String componentId,
                                         @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                                         @JsonProperty("sample") final boolean sample,
@@ -59,7 +60,7 @@ public class DownloadSearchResultsRequest {
         return applicationInstanceId;
     }
 
-    public SearchRequest getSearchRequest() {
+    public DashboardSearchRequest getSearchRequest() {
         return searchRequest;
     }
 

@@ -16,13 +16,14 @@
 
 package stroom.node.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "dbStatus - /v1")
+@Tag(name = "Database Status")
 @Path(DbStatusResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,10 +41,15 @@ public interface DbStatusResource extends RestResource, DirectRestService {
     String BASE_PATH = "/dbStatus" + ResourcePaths.V1;
 
     @GET
-    @ApiOperation(value = "Find status of the DB")
+    @Operation(
+            summary = "Find status of the DB",
+            operationId = "getDbSystemTableStatus")
     ResultPage<DBTableStatus> getSystemTableStatus();
 
     @POST
-    @ApiOperation(value = "Find status of the DB")
-    ResultPage<DBTableStatus> findSystemTableStatus(@ApiParam("criteria") FindDBTableCriteria criteria);
+    @Operation(
+            summary = "Find status of the DB",
+            operationId = "findDbSystemTableStatus")
+    ResultPage<DBTableStatus> findSystemTableStatus(
+            @Parameter(description = "criteria", required = true) FindDBTableCriteria criteria);
 }

@@ -22,11 +22,11 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import javax.inject.Inject;
 
 /**
  * Flags records that contain errors so that the RecordOutputFilter can exclude
@@ -34,6 +34,7 @@ import java.util.TreeMap;
  */
 @PipelineScoped
 public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
+
     private static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
 
     private Map<Severity, StoredErrorStats> statsMap = new TreeMap<>();

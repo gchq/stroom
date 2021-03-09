@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xml.event.simple;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.event.BaseEvent;
 import stroom.pipeline.xml.event.Event;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 /**
  * A class used to store an endElement SAX event.
  */
 public final class EndElement extends BaseEvent {
+
     private static final String COLON = ":";
     private static final String END_ELEMENT = "endElement:";
     private static final String DELIMITER = "|";
@@ -105,11 +107,7 @@ public final class EndElement extends BaseEvent {
 
     public void setPrefix(final String prefix) {
         if ((this.prefix != null && !this.prefix.equals(prefix)) || (prefix != null && !prefix.equals(this.prefix))) {
-            if (prefix != null) {
-                this.prefix = prefix;
-            } else {
-                this.prefix = null;
-            }
+            this.prefix = prefix;
 
             // Update the qName.
             qName = createQName();

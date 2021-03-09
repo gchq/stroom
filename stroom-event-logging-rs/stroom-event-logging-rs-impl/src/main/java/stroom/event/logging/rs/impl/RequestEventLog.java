@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import javax.annotation.Nullable;
 
 public interface RequestEventLog {
-    void log (final RequestInfo info, @Nullable final Object responseEntity);
 
-    void log (final RequestInfo info,  @Nullable final Object responseEntity, final Throwable error);
+    void log(final RequestInfo info, @Nullable final Object responseEntity);
+
+    void log(final RequestInfo info, @Nullable final Object responseEntity, final Throwable error);
 }

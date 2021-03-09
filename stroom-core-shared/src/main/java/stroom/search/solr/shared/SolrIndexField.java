@@ -60,6 +60,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
+
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
     private static final long serialVersionUID = 3100770758821157580L;
 
@@ -221,7 +222,10 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         return createTextField(fieldName, false, true, false);
     }
 
-    public static SolrIndexField createTextField(final String fieldName, final boolean stored, final boolean indexed, final boolean termPositions) {
+    public static SolrIndexField createTextField(final String fieldName,
+                                                 final boolean stored,
+                                                 final boolean indexed,
+                                                 final boolean termPositions) {
         return new SolrIndexField(SolrIndexFieldType.FIELD, fieldName, stored, indexed,
                 termPositions, null);
     }
@@ -416,10 +420,15 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         return fieldName;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SolrIndexField)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SolrIndexField)) {
+            return false;
+        }
         final SolrIndexField that = (SolrIndexField) o;
         return stored == that.stored &&
                 indexed == that.indexed &&
@@ -445,7 +454,26 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldUse, fieldName, fieldType, defaultValue, stored, indexed, uninvertible, docValues, multiValued, required, omitNorms, omitTermFreqAndPositions, omitPositions, termVectors, termPositions, termOffsets, termPayloads, sortMissingFirst, sortMissingLast, supportedConditions);
+        return Objects.hash(fieldUse,
+                fieldName,
+                fieldType,
+                defaultValue,
+                stored,
+                indexed,
+                uninvertible,
+                docValues,
+                multiValued,
+                required,
+                omitNorms,
+                omitTermFreqAndPositions,
+                omitPositions,
+                termVectors,
+                termPositions,
+                termOffsets,
+                termPayloads,
+                sortMissingFirst,
+                sortMissingLast,
+                supportedConditions);
     }
 
     @Override
@@ -512,6 +540,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     }
 
     public static final class Builder {
+
         private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
         private String fieldName;
         private String fieldType;

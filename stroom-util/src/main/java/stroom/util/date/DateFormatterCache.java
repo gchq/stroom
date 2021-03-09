@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class DateFormatterCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DateFormatterCache.class);
 
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
@@ -28,31 +29,39 @@ public final class DateFormatterCache {
     // Create cache
     private static final int MAX_ENTRIES = 1000;
 
-    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(MAX_ENTRIES + 1, .75F, true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
-    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(MAX_ENTRIES + 1, .75F, true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
     private DateFormatterCache() {
         // Utility
@@ -157,6 +166,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedFormatterKey {
+
         private final String pattern;
         private final ZonedDateTime defaultTime;
         private final int hashCode;
@@ -167,10 +177,15 @@ public final class DateFormatterCache {
             this.hashCode = Objects.hash(pattern, defaultTime);
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final CachedFormatterKey that = (CachedFormatterKey) o;
             return Objects.equals(pattern, that.pattern) &&
                     Objects.equals(defaultTime, that.defaultTime);
@@ -188,6 +203,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedFormatterValue {
+
         private final DateTimeFormatter formatter;
         private final RuntimeException exception;
 
@@ -203,6 +219,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedZoneIdValue {
+
         private final ZoneId zoneId;
         private final RuntimeException exception;
 

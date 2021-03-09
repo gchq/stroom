@@ -16,18 +16,21 @@
 
 package stroom.pipeline.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.item.client.ItemListBox;
+import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
-public class TextConverterSettingsViewImpl extends ViewImpl implements TextConverterSettingsView, ReadOnlyChangeHandler {
+public class TextConverterSettingsViewImpl extends ViewImpl
+        implements TextConverterSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -62,5 +65,6 @@ public class TextConverterSettingsViewImpl extends ViewImpl implements TextConve
     }
 
     public interface Binder extends UiBinder<Widget, TextConverterSettingsViewImpl> {
+
     }
 }

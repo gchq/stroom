@@ -102,7 +102,8 @@ class TestVisComponentResultCreator {
 ////        System.out.println(json);
 ////    }
 //
-//    private TableSettings visStructureToTableSettings(final TableSettings parentTableSettings, final VisStructure visStructure) {
+//    private TableSettings visStructureToTableSettings(
+//    final TableSettings parentTableSettings, final VisStructure visStructure) {
 //        final Field[] parentFields = parentTableSettings.getFields();
 //        final Map<String, Field> parentFieldMap = new HashMap<>();
 //        for (final Field field : parentFields) {

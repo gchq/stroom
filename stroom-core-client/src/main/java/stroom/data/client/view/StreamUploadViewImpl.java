@@ -16,6 +16,11 @@
 
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.DataTypeUiManager;
+import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.item.client.StringListBox;
+import stroom.widget.customdatebox.client.MyDateBox;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,12 +31,9 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.client.presenter.DataTypeUiManager;
-import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.item.client.StringListBox;
-import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
+
     private final Widget widget;
     @UiField
     Grid grid;
@@ -89,5 +91,6 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     public interface Binder extends UiBinder<Widget, StreamUploadViewImpl> {
+
     }
 }

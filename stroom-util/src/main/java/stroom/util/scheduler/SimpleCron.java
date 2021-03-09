@@ -29,6 +29,7 @@ import java.util.TimeZone;
  * E.g. 0 * * Every Hour 1,30 * * Every Half Hour
  */
 public class SimpleCron {
+
     /**
      * Token to mean ANY time matches.
      */
@@ -242,6 +243,7 @@ public class SimpleCron {
      * Internal Class to hold CRON per calendar type.
      */
     private static class CronPart {
+
         private final int calendarType;
         /**
          * CRON matches OR null if ANY match

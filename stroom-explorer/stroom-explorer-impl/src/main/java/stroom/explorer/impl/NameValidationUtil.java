@@ -24,7 +24,8 @@ public class NameValidationUtil {
 //        validate(providesNamePattern, null, entity);
 //    }
 //
-//    public static void validate(final ProvidesNamePattern providesNamePattern, final BaseEntity before, final BaseEntity after) {
+//    public static void validate(
+//    final ProvidesNamePattern providesNamePattern, final BaseEntity before, final BaseEntity after) {
 //        if (after != null && after instanceof HasName) {
 //            // Validate the entity name if it has been changed.
 //            if (before != null && before instanceof HasName) {

@@ -22,13 +22,14 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableStoreFactory implements StoreFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final String TASK_NAME = "DB Search";
@@ -65,8 +66,10 @@ class SearchableStoreFactory implements StoreFactory {
                             Preconditions.checkNotNull(searchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                    "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                    "searchRequest must have at least one resultRequest");
 
             final Searchable searchable = searchableProvider.get(docRef);
 
@@ -81,7 +84,11 @@ class SearchableStoreFactory implements StoreFactory {
             // Create a handler for search results.
             final Coprocessors coprocessors = coprocessorsFactory.create(updatedSearchRequest);
 
-            return buildStore(taskContext, updatedSearchRequest, searchable, coprocessors, updatedSearchRequest.getQuery().getExpression());
+            return buildStore(taskContext,
+                    updatedSearchRequest,
+                    searchable,
+                    coprocessors,
+                    updatedSearchRequest.getQuery().getExpression());
         }).get();
     }
 

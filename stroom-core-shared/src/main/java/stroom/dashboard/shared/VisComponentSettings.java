@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Search.Builder;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,6 +29,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"tableId", "visualisation", "json", "tableSettings"})
 @JsonInclude(Include.NON_NULL)
 public class VisComponentSettings implements ComponentSettings {
+
     @JsonProperty
     private final String tableId;
     @JsonProperty
@@ -66,10 +66,15 @@ public class VisComponentSettings implements ComponentSettings {
         return tableSettings;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final VisComponentSettings that = (VisComponentSettings) o;
         return Objects.equals(tableId, that.tableId) &&
                 Objects.equals(visualisation, that.visualisation) &&
@@ -101,6 +106,7 @@ public class VisComponentSettings implements ComponentSettings {
     }
 
     public static final class Builder {
+
         private String tableId;
         private DocRef visualisation;
         private String json;

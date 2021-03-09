@@ -22,10 +22,56 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Hash.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The hash string.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Generate a " + Hash.DEFAULT_ALGORITHM + " hash of the input string.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        description = "Value to hash.",
+                                        argType = ValString.class)
+                        }),
+                @FunctionSignature(
+                        description = "Generate a hash of the input string using the supplied hash algorithm.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        description = "Value to hash.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "algorithm",
+                                        description = "The name of the hash algorithm, e.g. 'SHA-256', 'SHA-512', " +
+                                                "'MD5' etc.",
+                                        argType = ValString.class)
+                        }),
+                @FunctionSignature(
+                        description = "Generate a hash of the input string using the supplied hash algorithm and salt.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        description = "Value to hash.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "algorithm",
+                                        description = "The name of the hash algorithm, e.g. 'SHA-256', 'SHA-512', " +
+                                                "'MD5' etc.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = "salt",
+                                        description = "The salt value to create the hash with.",
+                                        argType = ValString.class)})})
 class Hash extends AbstractFunction implements Serializable {
+
     static final String NAME = "hash";
     private static final long serialVersionUID = -305845496003936297L;
-    private static final String DEFAULT_ALGORITHM = "SHA-256";
+
+    static final String DEFAULT_ALGORITHM = "SHA-256";
 
     private String algorithm = DEFAULT_ALGORITHM;
     private String salt;
@@ -38,7 +84,9 @@ class Hash extends AbstractFunction implements Serializable {
         super(name, 1, 3);
     }
 
-    private static String hash(final String value, final String algorithm, final String salt) throws NoSuchAlgorithmException {
+    private static String hash(final String value,
+                               final String algorithm,
+                               final String salt) throws NoSuchAlgorithmException {
         // Create MessageDigest object.
         final MessageDigest digest = MessageDigest.getInstance(algorithm);
         if (salt != null) {
@@ -58,7 +106,7 @@ class Hash extends AbstractFunction implements Serializable {
             algorithm = ParamParseUtil.parseStringParam(params, 1, name);
         }
         if (params.length >= 3) {
-            salt =ParamParseUtil.parseStringParam(params,2, name);
+            salt = ParamParseUtil.parseStringParam(params, 2, name);
         }
 
         try {
@@ -73,7 +121,8 @@ class Hash extends AbstractFunction implements Serializable {
             } else {
                 final String string = param.toString();
                 if (string == null) {
-                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string", 0);
+                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string",
+                            0);
                 }
                 gen = new StaticValueFunction(ValString.create(hash(string, algorithm, salt))).createGenerator();
             }
@@ -98,6 +147,7 @@ class Hash extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String algorithm;

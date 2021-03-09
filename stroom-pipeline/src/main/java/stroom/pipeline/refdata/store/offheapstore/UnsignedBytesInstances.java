@@ -42,7 +42,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
     private final long maxVal;
     private final UnsignedLongSerde serde;
 
-    private final byte[] ZERO_BYTES = new byte[0];
+    private static final byte[] ZERO_BYTES = new byte[0];
     private static final UnsignedBytes[] INSTANCES = new UnsignedBytesInstances[9];
 
     static {

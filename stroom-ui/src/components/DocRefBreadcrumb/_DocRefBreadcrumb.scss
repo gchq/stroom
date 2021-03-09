@@ -1,5 +1,4 @@
 @import "themes.scss";
-@import "../../styles/themify.scss";
 
 .DocRefBreadcrumb__link {
   display: inline-block;
@@ -32,25 +31,17 @@
 // Breadcrumbs
 ////////////////////////////////////////////////////////////////////////////////
 .DocRefBreadcrumb__link {
-  @include themify($themes) {
-    color: themed("breadcrumb__text__color");
-  }
+  color: var(--breadcrumb__text__color);
 }
 
 .DocRefBreadcrumb__link:hover {
-  @include themify($themes) {
-    color: themed("breadcrumb__text__color--hover");
-  }
+  color: var(--breadcrumb__text__color--hover);
 }
 
 .DocRefBreadcrumb__divider {
-  @include themify($themes) {
-    color: themed("breadcrumb__divider__color");
-  }
+  color: var(--breadcrumb__divider__color);
 }
 
 .DocRefBreadcrumb__name {
-  @include themify($themes) {
-    color: themed("breadcrumb__text__color");
-  }
+  color: var(--breadcrumb__text__color);
 }

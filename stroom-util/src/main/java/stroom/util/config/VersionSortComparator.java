@@ -19,6 +19,7 @@ package stroom.util.config;
 import java.util.Comparator;
 
 public class VersionSortComparator implements Comparator<String> {
+
     public static String[] parts(String arg) {
         return arg.split("-|\\.");
     }

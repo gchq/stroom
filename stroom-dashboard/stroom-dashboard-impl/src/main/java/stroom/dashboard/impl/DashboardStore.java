@@ -24,5 +24,6 @@ import stroom.docstore.api.DocumentStore;
 import java.util.List;
 
 public interface DashboardStore extends DocumentStore<DashboardDoc> {
+
     List<DocRef> list();
 }

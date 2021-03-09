@@ -16,15 +16,17 @@
 
 package stroom.node.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public abstract class NodeToolsPlugin extends Plugin {
+
     private final ClientSecurityContext securityContext;
 
     @Inject
@@ -39,12 +41,12 @@ public abstract class NodeToolsPlugin extends Plugin {
         super.onReveal(event);
 
         event.getMenuItems().addMenuItem(
-            MenuKeys.MAIN_MENU,
-            new KeyedParentMenuItem(
-                2,
-                "Tools",
-                event.getMenuItems(),
-                MenuKeys.TOOLS_MENU));
+                MenuKeys.MAIN_MENU,
+                new KeyedParentMenuItem(
+                        2,
+                        "Tools",
+                        event.getMenuItems(),
+                        MenuKeys.TOOLS_MENU));
 
         addChildItems(event);
     }

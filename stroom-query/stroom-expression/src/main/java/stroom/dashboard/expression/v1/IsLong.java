@@ -18,7 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = IsLong.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if value is a long.",
+        signatures = @FunctionSignature(
+                description = "Checks if the passed value has a long data type.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
+                }))
 class IsLong extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isLong";
     private static final long serialVersionUID = -305145496413936297L;
     private static final LongTest TEST = new LongTest();
@@ -33,6 +48,7 @@ class IsLong extends AbstractIsFunction implements Serializable {
     }
 
     private static class LongTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValLong);

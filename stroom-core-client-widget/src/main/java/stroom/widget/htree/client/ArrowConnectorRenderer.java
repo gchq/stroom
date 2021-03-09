@@ -16,13 +16,15 @@
 
 package stroom.widget.htree.client;
 
-import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.canvas.dom.client.CssColor;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.CssColor;
+
 public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {
-    private static double HEAD_SIZE = 3;
-    private static double EXAGERATE_CURVE = 0;
+
+    private static final double HEAD_SIZE = 3;
+    private static final double EXAGERATE_CURVE = 0;
 
     private final CssColor lineColor;
     private final CssColor headColor;

@@ -16,12 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.index.mock.MockIndexShardService;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.IndexDoc;
@@ -31,6 +25,13 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.util.concurrent.SimpleExecutor;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardPoolImpl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
 
     private final AtomicInteger indexShardsCreated = new AtomicInteger(0);
@@ -104,7 +106,9 @@ class TestIndexShardPoolImpl {
         final Node defaultNode = new Node();
         defaultNode.setName("TEST");
 
-        final IndexShardService mockIndexShardService = new MockIndexShardService(indexShardsCreated, indexShardId, () -> tempDir);
+        final IndexShardService mockIndexShardService = new MockIndexShardService(indexShardsCreated,
+                indexShardId,
+                () -> tempDir);
 
 //        Mockito.when(nodeInfo.getThisNode()).thenReturn(defaultNode);
         final IndexShardWriterCache indexShardWriterCache =
@@ -141,6 +145,7 @@ class TestIndexShardPoolImpl {
     }
 
     class IndexThread extends Thread {
+
         private final Indexer indexer;
         private final IndexShardKey indexShardKey;
         private final IndexField indexField;

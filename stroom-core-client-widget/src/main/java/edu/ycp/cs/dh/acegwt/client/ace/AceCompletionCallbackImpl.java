@@ -30,7 +30,8 @@ import com.google.gwt.core.client.JsArray;
  * callback.
  */
 class AceCompletionCallbackImpl implements AceCompletionCallback {
-    private JavaScriptObject jsCallback;
+
+    private final JavaScriptObject jsCallback;
 
     public AceCompletionCallbackImpl(JavaScriptObject jsCallback) {
         this.jsCallback = jsCallback;

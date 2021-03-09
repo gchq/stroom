@@ -16,27 +16,29 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.meta.api.EffectiveMetaDataCriteria;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.Clearable;
 import stroom.util.Period;
+import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class EffectiveStreamCache implements Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
     private static final String CACHE_NAME = "Reference Data - Effective Stream Cache";

@@ -51,6 +51,7 @@ import java.util.Objects;
 
 public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVisSettingsPresenter.BasicVisSettingsView>
         implements BasicVisSettingsUiHandlers {
+
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     private final EntityDropDownPresenter visualisationPresenter;
@@ -127,7 +128,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         readSettings(settings, dynamicSettings);
                     })
                     .call(VISUALISATION_RESOURCE)
-                    .read(docRef);
+                    .fetch(docRef.getUuid());
         }
     }
 
@@ -259,6 +260,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     public interface BasicVisSettingsView
             extends BasicSettingsTabPresenter.SettingsView, HasUiHandlers<BasicVisSettingsUiHandlers> {
+
         void setTableList(List<Component> tableList);
 
         Component getTable();

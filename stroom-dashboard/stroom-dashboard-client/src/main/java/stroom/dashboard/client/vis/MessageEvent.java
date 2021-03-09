@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class MessageEvent extends JavaScriptObject {
+
     /**
      * Required constructor for GWT compiler to function.
      */

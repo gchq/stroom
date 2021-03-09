@@ -19,6 +19,7 @@ package stroom.util.scheduler;
 import stroom.util.date.DateUtil;
 
 public class SimpleCronScheduler implements Scheduler {
+
     private final SimpleCron simpleCron;
     private Long lastExecute;
     private Long nextExecute;

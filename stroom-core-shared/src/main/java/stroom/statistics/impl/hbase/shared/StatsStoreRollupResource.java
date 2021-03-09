@@ -16,22 +16,23 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
-@Api(value = "statsStore/rollUp - /v1")
+@Tag(name = "Stroom Stats RollUps")
 @Path("/statsStore/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -39,22 +40,25 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @ApiOperation(
-            value = "Create rollup bit mask",
-            response = List.class)
-    ResultPage<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
+    @Operation(
+            summary = "Create rollup bit mask",
+            operationId = "statsBitMaskPermGeneration")
+    ResultPage<CustomRollUpMask> bitMaskPermGeneration(
+            @Parameter(description = "fieldCount", required = true) Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @ApiOperation(
-            value = "Get rollup bit mask",
-            response = List.class)
-    ResultPage<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
+    @Operation(
+            summary = "Get rollup bit mask",
+            operationId = "statsBitMaskConversion")
+    ResultPage<CustomRollUpMaskFields> bitMaskConversion(
+            @Parameter(description = "maskValues", required = true) List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @ApiOperation(
-            value = "Change fields",
-            response = StroomStatsStoreEntityData.class)
-    StroomStatsStoreEntityData fieldChange(@ApiParam("request") StroomStatsStoreFieldChangeRequest request);
+    @Operation(
+            summary = "Change fields",
+            operationId = "statsFieldChange")
+    StroomStatsStoreEntityData fieldChange(
+            @Parameter(description = "request", required = true) StroomStatsStoreFieldChangeRequest request);
 }

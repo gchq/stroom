@@ -38,6 +38,7 @@ import java.util.Set;
         "openGroups"})
 @JsonInclude(Include.NON_NULL)
 public class TableResultRequest extends ComponentResultRequest {
+
     @JsonProperty
     private final TableSettings tableSettings;
     @JsonProperty
@@ -77,10 +78,15 @@ public class TableResultRequest extends ComponentResultRequest {
         return openGroups != null && openGroups.contains(group);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableResultRequest that = (TableResultRequest) o;
         return Objects.equals(tableSettings, that.tableSettings) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
@@ -106,6 +112,7 @@ public class TableResultRequest extends ComponentResultRequest {
     }
 
     public static final class Builder {
+
         private String componentId;
         private Fetch fetch;
         private TableSettings tableSettings;

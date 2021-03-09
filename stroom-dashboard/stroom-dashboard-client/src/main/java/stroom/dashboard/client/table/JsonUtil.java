@@ -3,6 +3,7 @@ package stroom.dashboard.client.table;
 import com.google.gwt.core.client.JsonUtils;
 
 public class JsonUtil {
+
     protected JsonUtil() {
     }
 

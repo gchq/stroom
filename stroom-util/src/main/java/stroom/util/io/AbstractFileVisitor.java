@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class AbstractFileVisitor implements FileVisitor<Path> {
+
     @Override
     public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
         return FileVisitResult.CONTINUE;

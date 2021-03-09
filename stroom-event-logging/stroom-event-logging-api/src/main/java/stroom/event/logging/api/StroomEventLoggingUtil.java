@@ -1,18 +1,22 @@
 package stroom.event.logging.api;
 
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 
 import event.logging.AdvancedQuery;
 import event.logging.AdvancedQueryItem;
 import event.logging.And;
 import event.logging.CopyMoveOutcome;
+import event.logging.Criteria;
+import event.logging.Data;
 import event.logging.MultiObject;
 import event.logging.Not;
 import event.logging.Or;
@@ -31,7 +35,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
+
     private StroomEventLoggingUtil() {
+    }
+
+    public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
+        return String.join(".",
+                restResource.getClass().getSimpleName(),
+                method);
     }
 
     public static OtherObject createOtherObject(final DocRef docRef) {
@@ -91,7 +102,8 @@ public class StroomEventLoggingUtil {
         return result;
     }
 
-    public static void appendSelection(final Query.Builder<Void> queryBuilder, final Selection<?> selection) {
+    public static void appendSelection(final Query.Builder<Void> queryBuilder,
+                                       final Selection<?> selection) {
         if (selection != null) {
             if (selection.isMatchAll()) {
                 queryBuilder
@@ -119,6 +131,7 @@ public class StroomEventLoggingUtil {
         return builder.build();
     }
 
+
     public static void appendExpression(final Query.Builder<Void> queryBuilder,
                                         final ExpressionItem expressionItem) {
         final AdvancedQueryItem advancedQueryItem = convertItem(expressionItem);
@@ -142,32 +155,32 @@ public class StroomEventLoggingUtil {
                 final AdvancedQueryItem operator;
                 if (expressionOperator.op().equals(Op.AND)) {
                     operator = And.builder()
-                            .withQueryItems(expressionOperator.getChildren()== null
+                            .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren().stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.OR)) {
                     operator = Or.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.NOT)) {
                     operator = Not.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else {
                     throw new RuntimeException("Unknown op " + expressionOperator.op());

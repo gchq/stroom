@@ -16,7 +16,17 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Err.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValErr.class,
+        commonReturnDescription = "An error.",
+        signatures = @FunctionSignature(
+                description = "Returns an error.",
+                args = {}))
 class Err extends AbstractStaticFunction {
+
     static final String NAME = "err";
 
     public Err(final String name) {

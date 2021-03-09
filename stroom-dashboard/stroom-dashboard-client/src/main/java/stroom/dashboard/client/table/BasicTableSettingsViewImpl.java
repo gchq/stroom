@@ -16,6 +16,11 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
+import stroom.item.client.ItemListBox;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,14 +32,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
-import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
 
 import java.util.List;
 
 public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSettingsView {
+
     private final Widget widget;
     @UiField
     Label id;
@@ -139,5 +141,6 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     }
 
     public interface Binder extends UiBinder<Widget, BasicTableSettingsViewImpl> {
+
     }
 }

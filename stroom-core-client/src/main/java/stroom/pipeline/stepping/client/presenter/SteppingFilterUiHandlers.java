@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface SteppingFilterUiHandlers extends UiHandlers {
+
     void addXPathFilter();
 
     void editXPathFilter();

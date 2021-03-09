@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
+
     private static Type<TaskStartHandler> TYPE;
     private final int taskCount;
     private final String message;
@@ -65,6 +66,7 @@ public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
     }
 
     public interface TaskStartHandler extends EventHandler {
+
         void onTaskStart(TaskStartEvent event);
     }
 }

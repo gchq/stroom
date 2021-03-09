@@ -19,6 +19,8 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -35,35 +37,40 @@ import stroom.util.shared.ResultPage;
 import event.logging.Query;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Singleton
+@AutoLogged
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
-    private final ProcessorTaskService processorTaskService;
-    private final DocumentEventLog documentEventLog;
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final ProcessorTaskManager processorTaskManager;
+    private final Provider<ProcessorTaskService> processorTaskServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<WebTargetFactory> webTargetFactoryProvider;
+    private final Provider<ProcessorTaskManager> processorTaskManagerProvider;
 
     @Inject
-    ProcessorTaskResourceImpl(final ProcessorTaskService processorTaskService,
-                              final DocumentEventLog documentEventLog,
-                              final NodeService nodeService,
-                              final NodeInfo nodeInfo,
-                              final WebTargetFactory webTargetFactory,
-                              final ProcessorTaskManager processorTaskManager) {
-        this.processorTaskService = processorTaskService;
-        this.documentEventLog = documentEventLog;
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
-        this.processorTaskManager = processorTaskManager;
+    ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
+                              final Provider<DocumentEventLog> documentEventLogProvider,
+                              final Provider<NodeService> nodeServiceProvider,
+                              final Provider<NodeInfo> nodeInfoProvider,
+                              final Provider<WebTargetFactory> webTargetFactoryProvider,
+                              final Provider<ProcessorTaskManager> processorTaskManagerProvider) {
+        this.processorTaskServiceProvider = processorTaskServiceProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.webTargetFactoryProvider = webTargetFactoryProvider;
+        this.processorTaskManagerProvider = processorTaskManagerProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTask> result;
 
@@ -72,15 +79,15 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         final Query query = queryBuilder.build();
 
         try {
-            result = processorTaskService.find(criteria);
-            documentEventLog.search(
+            result = processorTaskServiceProvider.get().find(criteria);
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTask.class.getSimpleName(),
                     result.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTask.class.getSimpleName(),
@@ -93,6 +100,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTaskSummary> result;
 
@@ -101,15 +109,15 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         final Query query = queryBuilder.build();
 
         try {
-            result = processorTaskService.findSummary(criteria);
-            documentEventLog.search(
+            result = processorTaskServiceProvider.get().findSummary(criteria);
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTaskSummary.class.getSimpleName(),
                     result.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(
+            documentEventLogProvider.get().search(
                     criteria.getClass().getSimpleName(),
                     query,
                     ProcessorTaskSummary.class.getSimpleName(),
@@ -122,20 +130,22 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return processorTaskManager.assignTasks(request.getNodeName(), request.getCount());
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            return processorTaskManagerProvider.get().assignTasks(request.getNodeName(), request.getCount());
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+            final String url =
+                    NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     ProcessorTaskResource.BASE_PATH,
                     ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
                     nodeName);
 
             try {
-                final Response response = webTargetFactory
+                final Response response = webTargetFactoryProvider.get()
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
                         .post(Entity.json(request));
@@ -150,20 +160,22 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return processorTaskManager.abandonTasks(request);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            return processorTaskManagerProvider.get().abandonTasks(request);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+            final String url =
+                    NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     ProcessorTaskResource.BASE_PATH,
                     ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
                     nodeName);
 
             try {
-                final Response response = webTargetFactory
+                final Response response = webTargetFactoryProvider.get()
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
                         .put(Entity.json(request));

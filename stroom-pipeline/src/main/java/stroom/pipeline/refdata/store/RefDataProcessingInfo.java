@@ -49,7 +49,8 @@ public class RefDataProcessingInfo {
         this.processingState = processingState;
     }
 
-    public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState, boolean touchLastAccessedTime) {
+    public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState,
+                                                   boolean touchLastAccessedTime) {
 
         long newLastAccessedTime;
         if (touchLastAccessedTime) {
@@ -103,10 +104,15 @@ public class RefDataProcessingInfo {
         return Instant.ofEpochMilli(effectiveTimeEpochMs);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final RefDataProcessingInfo that = (RefDataProcessingInfo) o;
         return createTimeEpochMs == that.createTimeEpochMs &&
                 effectiveTimeEpochMs == that.effectiveTimeEpochMs &&

@@ -16,8 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Automate.Builder;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -29,6 +27,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "id", "name", "settings"})
 @JsonInclude(Include.NON_NULL)
 public class ComponentConfig {
+
     @JsonProperty("type")
     private final String type;
     @JsonProperty("id")
@@ -65,10 +64,15 @@ public class ComponentConfig {
         return settings;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ComponentConfig that = (ComponentConfig) o;
         return Objects.equals(type, that.type) &&
                 Objects.equals(id, that.id) &&
@@ -100,6 +104,7 @@ public class ComponentConfig {
     }
 
     public static final class Builder {
+
         private String type;
         private String id;
         private String name;

@@ -28,6 +28,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class StatisticStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(StatisticStoreStore.class).to(StatisticStoreStoreImpl.class);

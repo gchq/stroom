@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.query.api.v2.Field;
 
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CompiledFields {
+
     private CompiledFields() {
     }
 
@@ -38,7 +38,7 @@ public class CompiledFields {
             return new CompiledField[0];
         }
 
-        final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
+        final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
         final CompiledField[] compiledFields = new CompiledField[fields.size()];
         int i = 0;
 

@@ -8,6 +8,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Optional;
 
 public interface IndexShardDao {
+
     /**
      * Retrieve a specific Shard by it's ID
      *

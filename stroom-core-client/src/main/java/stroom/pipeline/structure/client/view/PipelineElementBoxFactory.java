@@ -16,13 +16,15 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.client.SvgIcon;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 @Singleton
 public class PipelineElementBoxFactory {
+
     @Inject
     public PipelineElementBoxFactory() {
     }

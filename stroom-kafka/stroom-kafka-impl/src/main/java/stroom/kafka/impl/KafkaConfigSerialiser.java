@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.kafka.impl;
 
 import stroom.docstore.api.DocumentSerialiser2;
@@ -20,11 +21,12 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.kafka.shared.KafkaConfigDoc;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class KafkaConfigSerialiser implements DocumentSerialiser2<KafkaConfigDoc> {
+
     private final Serialiser2<KafkaConfigDoc> delegate;
 
     @Inject

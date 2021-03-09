@@ -29,6 +29,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
@@ -66,6 +67,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.SplitLayoutPanelExample} </p>
  */
 public class MySplitLayoutPanel extends DockLayoutPanel {
+
     private static final int SPLITTER_SIZE = 4;
     /**
      * The element that masks the screen so we can catch mouse events over
@@ -210,7 +212,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                 }
             }
 
-            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before
+            // layout/paint occurs, we'll only update once.
             if (doLayout) {
                 isResizing = true;
                 forceLayout();
@@ -270,7 +273,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     private Splitter getAssociatedSplitter(final Widget child) {
-        // If a widget has a next sibling, it must be a splitter, because the only widget that *isn't* followed by a splitter must be the CENTER, which has no associated splitter.
+        // If a widget has a next sibling, it must be a splitter, because the only widget that *isn't* followed
+        // by a splitter must be the CENTER, which has no associated splitter.
         final int idx = getWidgetIndex(child);
         if (idx > -1 && idx < getWidgetCount() - 1) {
             final Widget splitter = getWidget(idx + 1);
@@ -316,7 +320,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             glassElem.getStyle().setBorderWidth(0, Unit.PX);
             glassElem.getStyle().setZIndex(2);
 
-            // We need to set the background color or mouse events will go right through the glassElem. If the SplitPanel contains an iframe, the iframe will capture the event and the slider will stop moving.
+            // We need to set the background color or mouse events will go right through the glassElem. If the
+            // SplitPanel contains an iframe, the iframe will capture the event and the slider will stop moving.
             glassElem.getStyle().setBackgroundColor("white");
             glassElem.getStyle().setOpacity(0);
             glassElem.getStyle().setProperty("filter", "alpha(opacity=0)");
@@ -358,6 +363,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     class HSplitter extends Splitter {
+
         public HSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, false);
             getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
@@ -386,6 +392,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     abstract class Splitter extends Widget {
+
         protected final Widget target;
         private final boolean reverse;
         private final boolean vertical;
@@ -495,7 +502,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
             layout.size = size;
 
-            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint
+            // occurs, we'll only update once.
             if (layoutCommand == null) {
                 layoutCommand = () -> {
                     layoutCommand = null;
@@ -507,6 +515,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     class VSplitter extends Splitter {
+
         public VSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, true);
             getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);

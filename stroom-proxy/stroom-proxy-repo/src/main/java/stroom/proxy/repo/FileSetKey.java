@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import java.util.Objects;
 
 public class FileSetKey {
+
     private final String feedName;
     private final String typeName;
 
@@ -20,10 +21,15 @@ public class FileSetKey {
         return typeName;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FileSetKey that = (FileSetKey) o;
         return Objects.equals(feedName, that.feedName) &&
                 Objects.equals(typeName, that.typeName);

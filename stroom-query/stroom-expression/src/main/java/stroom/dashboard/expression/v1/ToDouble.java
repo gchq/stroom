@@ -18,7 +18,21 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ToDouble.NAME,
+        commonCategory = FunctionCategory.CAST,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The value as the double type.",
+        signatures = @FunctionSignature(
+                description = "Converts the supplied value to a double (if it can be). For example, converting " +
+                        "the text \"1.2\" to the number 1.2",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToDouble extends AbstractCast implements Serializable {
+
     static final String NAME = "toDouble";
     private static final long serialVersionUID = -305845496003936297L;
     private static final ValErr ERROR = ValErr.create("Unable to cast to a double");
@@ -34,6 +48,7 @@ class ToDouble extends AbstractCast implements Serializable {
     }
 
     private static class Cast extends AbstractCaster {
+
         @Override
         Val cast(final Val val) {
             if (!val.type().isValue()) {

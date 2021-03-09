@@ -17,8 +17,9 @@
 package stroom.util.testshared;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.shared.ModelStringUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestModelStringUtil {
+
     @Test
     void testCsv() {
         assertThat(ModelStringUtil.formatCsv((Integer) null)).isEqualTo("");
@@ -144,6 +146,7 @@ class TestModelStringUtil {
             ModelStringUtil.parseNumberStringAsInt("1T");
             fail("Expecting exception");
         } catch (final NumberFormatException nfex) {
+            // Ignore errors
         }
         assertThat(ModelStringUtil.parseNumberStringAsInt("2G").intValue()).isEqualTo(2000000000);
         assertThat(ModelStringUtil.formatCsv(ModelStringUtil.parseNumberStringAsInt("2G"))).isEqualTo("2,000,000,000");
@@ -164,10 +167,10 @@ class TestModelStringUtil {
 
     @Test
     void testParseStringQuotes() {
-        assertThat(ModelStringUtil.parseNumberString("\'\'")).isNull();
+        assertThat(ModelStringUtil.parseNumberString("''")).isNull();
         assertThat(ModelStringUtil.parseNumberString("\"")).isNull();
-        assertThat(ModelStringUtil.parseNumberString("\'1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("\'1.0\'").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("'1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("'1.0'").longValue()).isEqualTo(1);
         assertThat(ModelStringUtil.parseNumberString("\"1k\"").longValue()).isEqualTo(1000);
     }
 

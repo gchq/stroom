@@ -19,5 +19,6 @@ package stroom.test.common.util.test;
 import java.nio.file.Path;
 
 public interface StroomTest {
+
     Path getCurrentTestDir();
 }

@@ -16,13 +16,15 @@
 
 package stroom.index.impl.analyzer;
 
+import stroom.index.shared.AnalyzerType;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import stroom.index.shared.AnalyzerType;
 
 public final class AnalyzerFactory {
+
     private AnalyzerFactory() {
         // Factory so private constructor.
     }
@@ -44,8 +46,8 @@ public final class AnalyzerFactory {
                 return new StopAnalyzer();
             case STANDARD:
                 return new StandardAnalyzer();
+            default:
+                return new KeywordAnalyzer(true);
         }
-
-        return new KeywordAnalyzer(true);
     }
 }

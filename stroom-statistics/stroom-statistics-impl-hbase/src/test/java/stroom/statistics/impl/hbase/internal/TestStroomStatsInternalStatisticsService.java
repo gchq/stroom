@@ -1,6 +1,12 @@
 package stroom.statistics.impl.hbase.internal;
 
 
+import stroom.docref.DocRef;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.SharedKafkaProducer;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
@@ -12,11 +18,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.SharedKafkaProducer;
-import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.api.InternalStatisticKey;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
 
 @ExtendWith(MockitoExtension.class)
 class TestStroomStatsInternalStatisticsService {
+
     private static final String DOC_REF_TYPE_1 = "myDocRefType1";
     private static final String DOC_REF_TYPE_2 = "myDocRefType2";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);

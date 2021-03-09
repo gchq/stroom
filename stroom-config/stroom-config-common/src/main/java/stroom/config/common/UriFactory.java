@@ -3,6 +3,7 @@ package stroom.config.common;
 import java.net.URI;
 
 public interface UriFactory {
+
     /**
      * Creates a URI that can be used to connect to this application directly from another node or from this one.
      * It should not return localhost in a multi node environment but instead provide an FQDN.
@@ -16,7 +17,7 @@ public interface UriFactory {
     /**
      * If the application is served by a proxy, e.g. NGINX, then the public facing URI will be different from the
      * nodeUri. In this case the public URI needs to be configured.
-     *
+     * <p>
      * If not configured this will return the same thing as nodeUri.
      *
      * @param path The path of the URI.
@@ -27,7 +28,7 @@ public interface UriFactory {
     /**
      * If the UI is being served separately from the rest of the application, e.g. when developing React code
      * externally, then this URI must point to the URL serving the UI.
-     *
+     * <p>
      * If not configured this will return the same thing as publicUri.
      *
      * @param path The path of the URI.

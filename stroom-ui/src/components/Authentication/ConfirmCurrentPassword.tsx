@@ -2,14 +2,15 @@ import * as React from "react";
 
 import { Formik, FormikProps } from "formik";
 import { PasswordFormField } from "components/FormField";
-import { useAuthenticationResource } from "./api";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
-import { AuthState, ConfirmPasswordRequest } from "./api/types";
 import { Form, Modal } from "react-bootstrap";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
 import { LockFill } from "react-bootstrap-icons";
+import { useStroomApi } from "lib/useStroomApi";
+import { ConfirmPasswordRequest, ConfirmPasswordResponse } from "api/stroom";
+import { AuthState } from "./types";
 
 export interface FormValues {
   userId: string;
@@ -70,8 +71,8 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
   userId: string;
   onClose: (userId: string, password: string) => void;
 }> = ({ userId, onClose, children }) => {
-  const { confirmPassword } = useAuthenticationResource();
   const { showError } = usePrompt();
+  const { exec } = useStroomApi();
 
   const passwordSchema = Yup.string()
     .label("Password")
@@ -94,18 +95,21 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
           password: values.password,
         };
 
-        confirmPassword(request).then((response) => {
-          if (!response) {
-            actions.setSubmitting(false);
-          } else if (response.valid) {
-            onClose(values.userId, values.password);
-          } else {
-            actions.setSubmitting(false);
-            showError({
-              message: response.message,
-            });
-          }
-        });
+        exec(
+          (api) => api.authentication.confirmPassword(request),
+          (response: ConfirmPasswordResponse) => {
+            if (!response) {
+              actions.setSubmitting(false);
+            } else if (response.valid) {
+              onClose(values.userId, values.password);
+            } else {
+              actions.setSubmitting(false);
+              showError({
+                message: response.message,
+              });
+            }
+          },
+        );
       }}
     >
       {(formikProps) => (
@@ -125,8 +129,14 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = (props) => {
   return (
-    <Dialog>
+    <ResizableDialog
+      initWidth={400}
+      initHeight={224}
+      minWidth={400}
+      minHeight={224}
+      disableResize={true}
+    >
       <ConfirmCurrentPasswordFormik {...props} />
-    </Dialog>
+    </ResizableDialog>
   );
 };

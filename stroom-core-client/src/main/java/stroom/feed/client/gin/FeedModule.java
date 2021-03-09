@@ -27,6 +27,7 @@ import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.client.view.FeedSettingsViewImpl;
 
 public class FeedModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(FeedPlugin.class);

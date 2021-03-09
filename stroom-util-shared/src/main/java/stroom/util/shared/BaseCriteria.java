@@ -32,17 +32,18 @@ import java.util.Set;
  */
 @JsonInclude(Include.NON_NULL)
 public abstract class BaseCriteria {
+
     @JsonProperty
     private PageRequest pageRequest;
     @JsonProperty
-    private List<Sort> sortList;
+    private List<CriteriaFieldSort> sortList;
 
     public BaseCriteria() {
     }
 
     @JsonCreator
     public BaseCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                        @JsonProperty("sortList") final List<Sort> sortList) {
+                        @JsonProperty("sortList") final List<CriteriaFieldSort> sortList) {
         this.pageRequest = pageRequest;
         this.sortList = sortList;
     }
@@ -85,27 +86,27 @@ public abstract class BaseCriteria {
     }
 
     public void setSort(final String field) {
-        setSort(new Sort(field, false, false));
+        setSort(new CriteriaFieldSort(field, false, false));
     }
 
     public void setSort(final String field, final boolean desc, final boolean ignoreCase) {
-        setSort(new Sort(field, desc, ignoreCase));
+        setSort(new CriteriaFieldSort(field, desc, ignoreCase));
     }
 
-    public void setSort(final Sort sort) {
+    public void setSort(final CriteriaFieldSort sort) {
         sortList = null;
         addSort(sort);
     }
 
     public void addSort(final String field) {
-        addSort(new Sort(field, false, false));
+        addSort(new CriteriaFieldSort(field, false, false));
     }
 
     public void addSort(final String field, final boolean desc, final boolean ignoreCase) {
-        addSort(new Sort(field, desc, ignoreCase));
+        addSort(new CriteriaFieldSort(field, desc, ignoreCase));
     }
 
-    public void addSort(final Sort sort) {
+    public void addSort(final CriteriaFieldSort sort) {
         if (sortList == null) {
             sortList = new ArrayList<>();
         }
@@ -118,14 +119,19 @@ public abstract class BaseCriteria {
         }
     }
 
-    public List<Sort> getSortList() {
+    public List<CriteriaFieldSort> getSortList() {
         return sortList;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BaseCriteria)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BaseCriteria)) {
+            return false;
+        }
         final BaseCriteria that = (BaseCriteria) o;
         return Objects.equals(pageRequest, that.pageRequest) &&
                 Objects.equals(sortList, that.sortList);

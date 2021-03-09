@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public interface HasBooleanValue {
+
     Boolean getBooleanValue();
 
     void setBooleanValue(Boolean newValue);

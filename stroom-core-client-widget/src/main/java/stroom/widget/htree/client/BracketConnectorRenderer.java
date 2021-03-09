@@ -16,11 +16,13 @@
 
 package stroom.widget.htree.client;
 
-import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.canvas.dom.client.CssColor;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.CssColor;
+
 public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
+
     private static final double RADIUS = 4;
     private static final double HALF_PI = Math.PI * 0.5;
     private static final double ONE_AND_HALF_PI = Math.PI * 1.5;

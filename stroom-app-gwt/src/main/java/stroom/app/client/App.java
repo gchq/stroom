@@ -16,15 +16,17 @@
 
 package stroom.app.client;
 
+import stroom.app.client.gin.AppGinjector;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
-import stroom.app.client.gin.AppGinjector;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class App implements EntryPoint {
+
     public final AppGinjector ginjector = GWT.create(AppGinjector.class);
 
     /**

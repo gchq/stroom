@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.util.regex.Pattern;
 
 abstract class AbstractIncludeExclude extends AbstractManyChildFunction implements Serializable {
+
     private static final long serialVersionUID = -305845496003936297L;
 
     private Generator gen;
@@ -51,7 +52,8 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
             for (int i = 1; i < params.length && !found; i++) {
                 final String regex = params[i].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for argument of '" + name + "' function", 0);
+                    throw new ParseException(
+                            "An empty regex has been defined for argument of '" + name + "' function", 0);
                 }
 
                 final Pattern pattern = PatternCache.get(regex);
@@ -76,7 +78,8 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
                     // Test regex is valid.
                     final String regex = params[i].toString();
                     if (regex.length() == 0) {
-                        throw new ParseException("An empty regex has been defined for argument of '" + name + "' function", 0);
+                        throw new ParseException(
+                                "An empty regex has been defined for argument of '" + name + "' function", 0);
                     }
                     PatternCache.get(regex);
                 }
@@ -103,6 +106,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
     abstract boolean inverse();
 
     abstract static class AbstractGen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         AbstractGen(final Generator[] childGenerators) {

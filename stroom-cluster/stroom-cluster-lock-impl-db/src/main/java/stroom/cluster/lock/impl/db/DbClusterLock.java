@@ -16,24 +16,26 @@
 
 package stroom.cluster.lock.impl.db;
 
-import org.jooq.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.jooq.Record;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
 
 @Singleton
 class DbClusterLock implements Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DbClusterLock.class);
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -45,11 +47,11 @@ class DbClusterLock implements Clearable {
     }
 
     public void lock(final String lockName, final Runnable runnable) {
-            LOGGER.debug("lock({}) - >>>", lockName);
+        LOGGER.debug("lock({}) - >>>", lockName);
 
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            // This happens outside this transaction
+        // This happens outside this transaction
         checkLockCreated(lockName);
 
         JooqUtil.transaction(clusterLockDbConnProvider, context -> {

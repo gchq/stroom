@@ -18,7 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = IsString.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if value is a string.",
+        signatures = @FunctionSignature(
+                description = "Checks if the passed value has a string data type.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
+                }))
 class IsString extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isString";
     private static final long serialVersionUID = -305145496413936297L;
     private static final StringTest TEST = new StringTest();
@@ -33,6 +48,7 @@ class IsString extends AbstractIsFunction implements Serializable {
     }
 
     private static class StringTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValString);

@@ -35,6 +35,7 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_004__Dictionary extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final JsonSerialiser2<OldDictionaryDoc> oldSerialiser = new JsonSerialiser2<>(OldDictionaryDoc.class);

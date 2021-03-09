@@ -27,6 +27,7 @@ import javax.xml.bind.JAXBContext;
 
 @Deprecated
 public class ObjectMarshaller<E> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectMarshaller.class);
 
     private final Class<E> clazz;

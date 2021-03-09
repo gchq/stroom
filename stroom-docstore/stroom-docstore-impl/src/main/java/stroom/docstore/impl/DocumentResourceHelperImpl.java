@@ -26,6 +26,7 @@ import stroom.util.shared.PermissionException;
 import javax.inject.Inject;
 
 public class DocumentResourceHelperImpl implements DocumentResourceHelper {
+
     private final SecurityContext securityContext;
 
     @Inject

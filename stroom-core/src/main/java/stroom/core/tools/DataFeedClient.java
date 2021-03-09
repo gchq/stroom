@@ -18,7 +18,6 @@ package stroom.core.tools;
 
 import stroom.util.io.StreamUtil;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <p>
@@ -44,6 +44,7 @@ import java.util.zip.ZipOutputStream;
  * </p>
  */
 public final class DataFeedClient {
+
     private static final String ARG_URL = "url";
     private static final String ARG_INPUTFILE = "inputfile";
     private static final String ARG_COMPRESSION = "compression";
@@ -140,7 +141,7 @@ public final class DataFeedClient {
                 System.out.println(msg);
             }
 
-            System.out.println("");
+            System.out.println();
             System.out.println("RESPONSE HEADER");
             System.out.println("===============");
 
@@ -161,7 +162,7 @@ public final class DataFeedClient {
                 System.out.println(line);
             }
 
-            System.out.println("");
+            System.out.println();
             System.out.println("RESPONSE BODY");
             System.out.println("=============");
 

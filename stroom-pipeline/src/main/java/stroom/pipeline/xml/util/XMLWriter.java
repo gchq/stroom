@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 public class XMLWriter implements ContentHandler {
+
     public static final char SURROGATE1_MIN = 0xD800;
     public static final char SURROGATE1_MAX = 0xDBFF;
     // Lookup table for special characters in text
@@ -105,6 +106,7 @@ public class XMLWriter implements ContentHandler {
     // Line and column measure the number of lines and columns
     private int line = 0;
     private int column = 0; // .. in whitespace text nodes between tags
+
     public XMLWriter(final Writer writer) {
         this.writer = writer;
     }
@@ -359,7 +361,9 @@ public class XMLWriter implements ContentHandler {
     private void writeEscape(final Writer writer, final String chars, final boolean inAttribute)
             throws java.io.IOException, SAXException {
         int segstart = 0;
-        final boolean[] specialChars = (inAttribute ? specialInAtt : specialInText);
+        final boolean[] specialChars = (inAttribute
+                ? specialInAtt
+                : specialInText);
 
         final int clength = chars.length();
         while (segstart < clength) {
@@ -487,7 +491,9 @@ public class XMLWriter implements ContentHandler {
         growIndentChars(spaces + 2);
 
         // Output the initial newline character only if line==0
-        final int start = (line == 0 ? 0 : 1);
+        final int start = (line == 0
+                ? 0
+                : 1);
 
         writer.write(indentChars, start, spaces + 1);
         sameline = false;
@@ -523,7 +529,8 @@ public class XMLWriter implements ContentHandler {
     }
 
     public enum XMLVersion {
-        VERSION_1_0("1.0"), VERSION_1_1("1.1");
+        VERSION_1_0("1.0"),
+        VERSION_1_1("1.1");
 
         private final String output;
 
@@ -537,6 +544,7 @@ public class XMLWriter implements ContentHandler {
     }
 
     private static class AttributeNameComparator implements Comparator<String>, Serializable {
+
         private static final long serialVersionUID = -9219753718768871842L;
 
         @Override

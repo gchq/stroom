@@ -39,6 +39,7 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
+
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private Components components;
@@ -59,8 +60,6 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     /**
      * Called just after a component is created from the component registry.
-     *
-     * @param components
      */
     @Override
     public void setComponents(final Components components) {
@@ -191,9 +190,9 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         this.tabConfig = tabConfig;
     }
 
-    /***************
-     * Start TabData
-     ***************/
+    //###############
+    //# Start TabData
+    //###############
     @Override
     public Icon getIcon() {
         return null;
@@ -208,7 +207,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     public boolean isCloseable() {
         return true;
     }
-    /***************
-     * End TabData
-     ***************/
+    //###############
+    //# End TabData
+    //###############
 }

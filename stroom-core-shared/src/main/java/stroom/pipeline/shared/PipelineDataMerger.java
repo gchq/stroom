@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 
 public class PipelineDataMerger {
+
     private static final String SOURCE = "Source";
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
             new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
@@ -113,7 +114,8 @@ public class PipelineDataMerger {
                         if (element != null) {
                             final String elementType = element.getType();
                             if (elementType != null) {
-                                propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>()).put(property.getName(), property);
+                                propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>())
+                                        .put(property.getName(), property);
                             }
                         }
                     }
@@ -191,7 +193,8 @@ public class PipelineDataMerger {
                             final String toType = toElement.getType();
 
                             if (fromType != null && toType != null) {
-                                final List<PipelineLink> list = linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>());
+                                final List<PipelineLink> list = linkMap.computeIfAbsent(
+                                        link.getFrom(), k -> new ArrayList<>());
                                 if (!list.contains(link)) {
                                     list.add(link);
                                 }
@@ -215,7 +218,8 @@ public class PipelineDataMerger {
                 }
             }
 
-            // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
+            // If there is no source provided then we need to attach a parser to source as this is an old
+            // pipeline config.
             if (!sourceProvided && !linkMap.containsKey(SOURCE)) {
                 final Optional<String> optionalParserId = elementMap.entrySet()
                         .stream()

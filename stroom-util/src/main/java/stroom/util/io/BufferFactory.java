@@ -17,5 +17,6 @@
 package stroom.util.io;
 
 public interface BufferFactory {
+
     byte[] create();
 }

@@ -19,25 +19,24 @@ package stroom.search.impl;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(value = "remoteSearch - /v1")
+@Tag(name = "Remote Search")
 @Path(RemoteSearchResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface RemoteSearchResource extends RestResource {
+
     String BASE_PATH = "/remoteSearch" + ResourcePaths.V1;
     String START_PATH_PART = "/start";
     String POLL_PATH_PART = "/poll";
@@ -45,22 +44,23 @@ public interface RemoteSearchResource extends RestResource {
 
     @POST
     @Path(START_PATH_PART)
-    @Timed
-    @ApiOperation(
-            value = "Start a search",
-            response = Boolean.class)
+    @Operation(
+            summary = "Start a search",
+            operationId = "startRemoteSearch")
     Boolean start(ClusterSearchTask clusterSearchTask);
 
     @GET
     @Path(POLL_PATH_PART)
     @Produces("application/octet-stream")
+    @Operation(
+            summary = "Poll the server for search results for the supplied queryKey",
+            operationId = "pollRemoteSearch")
     StreamingOutput poll(@QueryParam("queryKey") String queryKey);
 
     @GET
     @Path(DESTROY_PATH_PART)
-    @Timed
-    @ApiOperation(
-            value = "Destroy search results",
-            response = Boolean.class)
+    @Operation(
+            summary = "Destroy search results",
+            operationId = "destroyRemoteSearch")
     Boolean destroy(@QueryParam("queryKey") String queryKey);
 }

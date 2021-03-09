@@ -22,7 +22,19 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = CountGroups.NAME,
+        commonCategory = FunctionCategory.AGGREGATE,
+        commonDescription = "This is used to count the number of unique group keys where there are multiple " +
+                "group levels. For example if records are grouped by Name then Type then for each Name, " +
+                "countGroups will give you the number of unique Type values for that Name.",
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "Number of unique child group keys within the current group.",
+        signatures = @FunctionSignature(
+                args = {}))
 class CountGroups extends AbstractFunction {
+
     static final String NAME = "countGroups";
 
     public CountGroups(final String name) {
@@ -45,6 +57,7 @@ class CountGroups extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = -9130548669643582369L;
 
         private final Set<GroupKey> childGroups = new HashSet<>();

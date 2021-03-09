@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ExplorerTreeUiHandlers extends UiHandlers {
+
     void newItem(Element element);
 
     void deleteItem();

@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class ExtractionTaskExecutor extends TaskExecutor {
+
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Extraction",
             5,
@@ -34,6 +35,6 @@ class ExtractionTaskExecutor extends TaskExecutor {
 
     @Inject
     ExtractionTaskExecutor(final ExecutorProvider executorProvider) {
-        super("Extraction Task Executor",  executorProvider, THREAD_POOL);
+        super("Extraction Task Executor", executorProvider, THREAD_POOL);
     }
 }

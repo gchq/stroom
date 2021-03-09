@@ -16,6 +16,11 @@
 
 package stroom.index.client.view;
 
+import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
+import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
@@ -23,14 +28,11 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
-import stroom.index.shared.IndexVolume.VolumeUseState;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 
 import java.util.List;
 
 public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEditView {
+
     private final Widget widget;
 
     @UiField
@@ -89,5 +91,6 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     }
 
     public interface Binder extends UiBinder<Widget, IndexVolumeEditViewImpl> {
+
     }
 }

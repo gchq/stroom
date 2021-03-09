@@ -1,5 +1,4 @@
 @import "themes.scss";
-@import "themify.scss";
 
 .ReactTable {
   width: 100%;
@@ -8,11 +7,9 @@
 }
 
 .ReactTable .rt-thead.-filters input {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-    border-color: themed("control__border-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border-color: var(--control__border-color);
 }
 
 .ReactTable .-pagination {
@@ -41,9 +38,7 @@
 //}
 //
 //.ReactTable .rt-tr.-odd {
-//  @include themify($themes) {
-//    background-color: themed("odd-row__background-color");
-//  }
+//    background-color: var(--odd-row__background-color);
 //}
 //
 //.ReactTable .rt-td {

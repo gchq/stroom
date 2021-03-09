@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 public class StreamProgressMonitor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamProgressMonitor.class);
 
     private static final long INTERVAL_MS = 1000;
@@ -54,7 +55,8 @@ public class StreamProgressMonitor {
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;
-            final Supplier<String> messageSupplier = () -> prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
+            final Supplier<String> messageSupplier = () -> prefix + " - " + ModelStringUtil.formatIECByteSizeString(
+                    totalBytes);
             if (taskContext != null) {
                 taskContext.info(messageSupplier);
 

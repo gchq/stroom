@@ -22,6 +22,7 @@ import stroom.query.api.v2.TableSettings;
 import java.util.Collections;
 
 class TestMapDataStore extends AbstractDataStoreTest {
+
     @Override
     DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
         final FieldIndex fieldIndex = new FieldIndex();

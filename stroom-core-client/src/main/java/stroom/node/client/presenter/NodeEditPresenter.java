@@ -22,6 +22,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeEditView> {
+
     @Inject
     public NodeEditPresenter(final EventBus eventBus, final NodeEditView view) {
         super(eventBus, view);
@@ -40,6 +41,7 @@ public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeE
     }
 
     public interface NodeEditView extends View {
+
         void setName(String name);
 
         String getClusterUrl();

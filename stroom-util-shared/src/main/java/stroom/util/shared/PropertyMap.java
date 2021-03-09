@@ -23,6 +23,7 @@ import java.util.HashMap;
  * stuff that is outside GWT (like data upload).
  */
 public class PropertyMap extends HashMap<String, String> {
+
     public static final String MAGIC_MARKER = "#PM#";
     public static final String SUCCESS = "success";
     private static final long serialVersionUID = -3738479589881496128L;

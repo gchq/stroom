@@ -2,7 +2,6 @@ package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-
 import java.util.Objects;
 
 /**
@@ -11,6 +10,7 @@ import java.util.Objects;
  * are expected to be (de)serialised from/to YAML configuration files.
  */
 public abstract class AbstractConfig {
+
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
     @JsonIgnore

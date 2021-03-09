@@ -16,11 +16,21 @@
 
 package stroom.util.xml;
 
+import stroom.util.io.StreamUtil;
+
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.util.io.StreamUtil;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -31,17 +41,9 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 
 public final class XMLUtil {
+
     public static final SAXParserFactory PARSER_FACTORY;
     private static final String XML = "xml";
     private static final String UTF_8 = "UTF-8";
@@ -111,7 +113,10 @@ public final class XMLUtil {
             xmlReader.setContentHandler(handler);
             xmlReader.parse(new InputSource(reader));
 
-        } catch (final ParserConfigurationException | TransformerConfigurationException | IOException | SAXException e) {
+        } catch (final ParserConfigurationException
+                | TransformerConfigurationException
+                | IOException
+                | SAXException e) {
             throw new RuntimeException(e);
         }
     }
@@ -122,7 +127,8 @@ public final class XMLUtil {
     }
 
     public static TransformerHandler createTransformerHandler(final ErrorListener errorListener,
-                                                              final boolean indentOutput) throws TransformerConfigurationException {
+                                                              final boolean indentOutput)
+            throws TransformerConfigurationException {
         final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
         if (errorListener != null) {
             stf.setErrorListener(errorListener);

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class TestAbstractCommandLineTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);
 
     @Test
@@ -32,6 +33,7 @@ class TestAbstractCommandLineTool {
     }
 
     public static class TestProgram extends AbstractCommandLineTool {
+
         int prop1;
         int prop2;
 

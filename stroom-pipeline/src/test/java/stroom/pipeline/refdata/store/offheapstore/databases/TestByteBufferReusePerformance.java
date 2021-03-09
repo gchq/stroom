@@ -45,8 +45,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 @Disabled
 class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferReusePerformance.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
+    private static final LambdaLogger LAMBDA_LOGGER =
+            LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(100);
     private static final int VALUE_BUFFER_SIZE = 1_000;

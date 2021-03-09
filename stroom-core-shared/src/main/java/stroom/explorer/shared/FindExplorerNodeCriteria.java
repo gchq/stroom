@@ -10,6 +10,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class FindExplorerNodeCriteria {
+
     @JsonProperty
     private final Set<String> openItems;
     @JsonProperty
@@ -54,10 +55,15 @@ public class FindExplorerNodeCriteria {
         return ensureVisible;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FindExplorerNodeCriteria criteria = (FindExplorerNodeCriteria) o;
         return Objects.equals(openItems, criteria.openItems) &&
                 Objects.equals(temporaryOpenedItems, criteria.temporaryOpenedItems) &&

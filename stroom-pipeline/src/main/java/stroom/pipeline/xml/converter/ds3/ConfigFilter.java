@@ -16,12 +16,13 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
+
+import org.apache.commons.text.StringEscapeUtils;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ConfigFilter extends AbstractXMLFilter {
+
     private static final String XML_ELEMENT_DATA_SPLITTER = "dataSplitter";
     private static final String XML_ELEMENT_SPLIT = "split";
     private static final String XML_ELEMENT_REGEX = "regex";

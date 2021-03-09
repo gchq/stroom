@@ -43,13 +43,14 @@ import org.apache.lucene.document.FieldType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -213,7 +214,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final Document document = new Document();
         document.add(field);
 
-        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010", commonTestScenarioCreator.createIndexFields(), 10);
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                10);
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 

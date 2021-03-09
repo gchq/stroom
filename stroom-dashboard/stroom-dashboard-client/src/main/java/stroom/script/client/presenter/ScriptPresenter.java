@@ -36,6 +36,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import javax.inject.Provider;
 
 public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScriptDoc> {
+
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
 

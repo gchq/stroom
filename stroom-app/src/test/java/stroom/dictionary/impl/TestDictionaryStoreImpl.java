@@ -18,19 +18,21 @@
 package stroom.dictionary.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject

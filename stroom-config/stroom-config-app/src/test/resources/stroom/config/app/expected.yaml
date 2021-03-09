@@ -459,8 +459,6 @@ appConfig:
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
-  requestLogging:
-    globalLoggingEnabled: false
   search:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
@@ -593,7 +591,6 @@ appConfig:
           transport: "plain"
           username: "username"
           password: "password"
-          transportStrategy: "SMTP_PLAIN"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
@@ -608,6 +605,9 @@ appConfig:
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
         passwordComplexityRegex: ".*"
+        passwordPolicyMessage: "To conform with our Strong Password policy, you are\
+          \ required to use a sufficiently strong password. Password must be more\
+          \ than 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
       token:
         algorithm: "RS256"
@@ -834,7 +834,7 @@ appConfig:
       tubeOpacity: "0.6"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
-      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
+      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
     url:
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"
@@ -857,3 +857,8 @@ appConfig:
     defaultIndexVolumeGroupNodes:
     - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
+  logging:
+    logEveryRestCallEnabled: false
+    omitRecordDetailsLoggingEnabled: true
+    maxListElements: 5
+    maxDataElementStringLength: 500

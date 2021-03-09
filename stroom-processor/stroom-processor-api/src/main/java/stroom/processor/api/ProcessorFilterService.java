@@ -31,6 +31,7 @@ import stroom.util.shared.ResultPage;
 import java.util.List;
 
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
+
     ProcessorFilter create(DocRef pipelineRef,
                            QueryData queryData,
                            int priority,

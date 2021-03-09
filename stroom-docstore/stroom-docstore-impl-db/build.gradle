@@ -7,6 +7,6 @@ dependencies {
     compile project(':stroom-docref')
     
     compile libs.guice4
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     compile libs.slf4j_api
 }

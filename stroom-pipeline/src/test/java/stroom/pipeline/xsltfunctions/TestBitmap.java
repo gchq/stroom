@@ -39,7 +39,7 @@ class TestBitmap extends StroomUnitTest {
         dumpBits(input);
 
         assertThat(Bitmap.getBits(input))
-                .containsExactly(0,12);
+                .containsExactly(0, 12);
     }
 
     @Test
@@ -90,7 +90,7 @@ class TestBitmap extends StroomUnitTest {
         final StringBuilder bitStrBuilder = new StringBuilder();
         final StringBuilder posStrBuilder = new StringBuilder();
 
-        for (int i = bitValues.size() - 1; i >= 0 ; i--) {
+        for (int i = bitValues.size() - 1; i >= 0; i--) {
             bitStrBuilder.append(bitValues.get(i));
             posStrBuilder.append(i % 10);
 

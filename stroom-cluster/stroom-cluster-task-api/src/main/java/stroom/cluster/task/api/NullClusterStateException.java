@@ -17,6 +17,7 @@
 package stroom.cluster.task.api;
 
 public class NullClusterStateException extends Exception {
+
     private static final long serialVersionUID = 6311001318501231499L;
 
     public NullClusterStateException() {

@@ -16,7 +16,7 @@ public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
 
     private final SourcePresenter sourcePresenter;
 
-    private Widget widget;
+    private final Widget widget;
 
     @UiField
     ResizeSimplePanel container;
@@ -60,5 +60,6 @@ public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
 //    }
 
     public interface Binder extends UiBinder<Widget, SourceTabViewImpl> {
+
     }
 }

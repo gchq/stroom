@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 class ExplorerEventLogImpl implements ExplorerEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -182,6 +183,8 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                     return " with destination permissions";
                 case COMBINED:
                     return " with combined permissions";
+                default:
+                    throw new RuntimeException("Unexpected permissionInheritance " + permissionInheritance);
             }
         }
         return "";

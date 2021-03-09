@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.Configuration;
@@ -39,14 +40,15 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  *
  * @author Udo Borkowski (ub@abego.org)
  */
-public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
+public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_NODE> {
+
     private final double gapBetweenLevels;
     private final double gapBetweenNodes;
     private final Location location;
 
     // -----------------------------------------------------------------------
     // gapBetweenLevels
-    private AlignmentInLevel alignmentInLevel;
+    private final AlignmentInLevel alignmentInLevel;
 
     /**
      * Specifies the constants to be used for this Configuration.
@@ -78,7 +80,11 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
      * Convenience constructor, using a default for the alignmentInLevel.
      * <p>
      * see
-     * {@link #DefaultConfiguration(double, double, stroom.widget.htree.client.treelayout.Configuration.Location, stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
+     * {@link #DefaultConfiguration(
+     *double,
+     * double,
+     * stroom.widget.htree.client.treelayout.Configuration.Location,
+     * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
     public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location) {
         this(gapBetweenLevels, gapBetweenNodes, location, AlignmentInLevel.Center);
@@ -89,7 +95,11 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
      * alignmentInLevel.
      * <p>
      * see
-     * {@link #DefaultConfiguration(double, double, stroom.widget.htree.client.treelayout.Configuration.Location, stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
+     * {@link #DefaultConfiguration(
+     *double,
+     * double,
+     * stroom.widget.htree.client.treelayout.Configuration.Location,
+     * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
     public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes) {
         this(gapBetweenLevels, gapBetweenNodes, Location.Top, AlignmentInLevel.Center);
@@ -104,7 +114,7 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
     }
 
     @Override
-    public double getGapBetweenNodes(TreeNode node1, TreeNode node2) {
+    public double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2) {
         return gapBetweenNodes;
     }
 

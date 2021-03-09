@@ -11,6 +11,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePresenter.ProcessChoiceView> {
+
     @Inject
     public ProcessChoicePresenter(final EventBus eventBus,
                                   final ProcessChoiceView view) {
@@ -43,6 +44,7 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
     }
 
     public interface ProcessChoiceView extends View {
+
         int getPriority();
 
         boolean isAutoPriority();

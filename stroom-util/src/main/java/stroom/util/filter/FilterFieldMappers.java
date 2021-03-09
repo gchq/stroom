@@ -55,7 +55,6 @@ public class FilterFieldMappers<T_ROW> {
     }
 
 
-
     public int size() {
         return map.size();
     }

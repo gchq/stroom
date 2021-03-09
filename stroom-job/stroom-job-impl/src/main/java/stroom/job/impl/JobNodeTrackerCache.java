@@ -17,8 +17,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
@@ -26,16 +24,20 @@ import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class JobNodeTrackerCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.
     private static final long DEFAULT_REFRESH_INTERVAL = 10000;
@@ -111,6 +113,7 @@ class JobNodeTrackerCache {
     }
 
     static class Trackers {
+
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();

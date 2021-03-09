@@ -16,6 +16,8 @@
 
 package stroom.about.client.view;
 
+import stroom.about.client.presenter.AboutPresenter;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
@@ -24,9 +26,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.about.client.presenter.AboutPresenter;
 
 public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView {
+
     private final Widget widget;
     @UiField
     SimplePanel html;
@@ -75,5 +77,6 @@ public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView 
     }
 
     public interface Binder extends UiBinder<Widget, AboutViewImpl> {
+
     }
 }

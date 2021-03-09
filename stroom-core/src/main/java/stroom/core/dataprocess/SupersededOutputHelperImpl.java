@@ -1,7 +1,5 @@
 package stroom.core.dataprocess;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Target;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -16,12 +14,13 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -30,9 +29,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class SupersededOutputHelperImpl implements SupersededOutputHelper {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SupersededOutputHelperImpl.class);
 
     private final MetaService dataMetaService;
@@ -100,7 +101,8 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                         .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                         .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, processorTask.getId())
                         .build();
-                final ResultPage<ProcessorTask> tasks = processorTaskService.find(new ExpressionCriteria(findTaskExpression));
+                final ResultPage<ProcessorTask> tasks = processorTaskService.find(
+                        new ExpressionCriteria(findTaskExpression));
                 final OptionalLong maxTaskId = tasks.getValues().stream().mapToLong(ProcessorTask::getId).max();
 
                 // Is our task old?
@@ -119,8 +121,12 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 final Set<Long> idSet = streamList.stream().map(Meta::getId).collect(Collectors.toSet());
                 if (idSet.size() > 0) {
                     // If we have found any to delete then delete them now.
-                    final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdSetExpression(idSet));
-                    final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, null, Status.DELETED);
+                    final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria(MetaExpressionUtil
+                            .createDataIdSetExpression(idSet));
+                    final long deleteCount = dataMetaService.updateStatus(
+                            findDeleteMetaCriteria,
+                            null,
+                            Status.DELETED);
                     LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
                 }
             }

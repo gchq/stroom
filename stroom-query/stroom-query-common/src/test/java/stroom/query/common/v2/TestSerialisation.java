@@ -51,14 +51,6 @@ import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,10 +59,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSerialisation {
+
     private static DataSource getDataSource() {
         return DataSource
                 .builder()
@@ -186,9 +187,9 @@ class TestSerialisation {
         ObjectMapper mapper = createMapper(true);
 
         final Path dir = TestFileUtil.getTestResourcesDir().resolve("SerialisationTest");
-        Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
-        Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
-        Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
+        final Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
+        final Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
+        final Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
 
         String serialisedIn = mapper.writeValueAsString(objIn);
 //        System.out.println(serialisedIn);
@@ -354,7 +355,9 @@ class TestSerialisation {
     }
 
 //    private VisResult getVisResult2() {
-//        Field[][] structure = new Field[]{new Field("key1", Type.GENERAL, new Field("key2", Type.GENERAL) , new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+//        Field[][] structure = new Field[]{new Field("key1", Type.GENERAL,
+//        new Field("key2", Type.GENERAL) , new Field("val1", Type.GENERAL),
+//        new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 //
 //        final NodeBuilder nodeBuilder = new NodeBuilder(4);
 //        nodeBuilder.addValue(new Object[]{"test0", 0.4, 234, "this0"});
@@ -391,7 +394,8 @@ class TestSerialisation {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for
+        // abstract classes
 //        mapper.enableDefaultTyping();
 
         return mapper;
@@ -406,7 +410,8 @@ class TestSerialisation {
             @JsonSubTypes.Type(value = Sub1.class, name = "sub1"),
             @JsonSubTypes.Type(value = Sub2.class, name = "sub2")
     })
-    public static abstract class Base {
+    public abstract static class Base {
+
         @XmlElement
         private int num;
 
@@ -421,10 +426,15 @@ class TestSerialisation {
             return num;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Base)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Base)) {
+                return false;
+            }
 
             final Base base = (Base) o;
 
@@ -440,6 +450,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub1", propOrder = {"num2"})
     public static class Sub1 extends Base {
+
         @XmlElement
         private int num2;
 
@@ -455,11 +466,18 @@ class TestSerialisation {
             return num2;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Sub1)) return false;
-            if (!super.equals(o)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Sub1)) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
 
             final Sub1 sub1 = (Sub1) o;
 
@@ -477,6 +495,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub2", propOrder = {"str"})
     public static class Sub2 extends Base {
+
         @XmlElement
         private String str;
 
@@ -492,21 +511,32 @@ class TestSerialisation {
             return str;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Sub2)) return false;
-            if (!super.equals(o)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Sub2)) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
 
             final Sub2 sub2 = (Sub2) o;
 
-            return str != null ? str.equals(sub2.str) : sub2.str == null;
+            return str != null
+                    ? str.equals(sub2.str)
+                    : sub2.str == null;
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
-            result = 31 * result + (str != null ? str.hashCode() : 0);
+            result = 31 * result + (str != null
+                    ? str.hashCode()
+                    : 0);
             return result;
         }
     }
@@ -514,8 +544,10 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "lst")
     public static class Lst {
+
         @XmlElementWrapper(name = "list")
-        @XmlElements({@XmlElement(name = "sub1", type = Sub1.class),
+        @XmlElements({
+                @XmlElement(name = "sub1", type = Sub1.class),
                 @XmlElement(name = "sub2", type = Sub2.class)})
         private List<Base> list;
 
@@ -530,27 +562,38 @@ class TestSerialisation {
             return list;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Lst)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Lst)) {
+                return false;
+            }
 
             final Lst lst = (Lst) o;
 
-            return list != null ? list.equals(lst.list) : lst.list == null;
+            return list != null
+                    ? list.equals(lst.list)
+                    : lst.list == null;
         }
 
         @Override
         public int hashCode() {
-            return list != null ? list.hashCode() : 0;
+            return list != null
+                    ? list.hashCode()
+                    : 0;
         }
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "multi")
     public static class Multi {
+
         @XmlElementWrapper(name = "list")
-        @XmlElements({@XmlElement(name = "double", type = Double.class),
+        @XmlElements({
+                @XmlElement(name = "double", type = Double.class),
                 @XmlElement(name = "int", type = Integer.class),
                 @XmlElement(name = "string", type = String.class)})
         private List<Object> list;
@@ -566,19 +609,28 @@ class TestSerialisation {
             return list;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Multi)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Multi)) {
+                return false;
+            }
 
             final Multi multi = (Multi) o;
 
-            return list != null ? list.equals(multi.list) : multi.list == null;
+            return list != null
+                    ? list.equals(multi.list)
+                    : multi.list == null;
         }
 
         @Override
         public int hashCode() {
-            return list != null ? list.hashCode() : 0;
+            return list != null
+                    ? list.hashCode()
+                    : 0;
         }
     }
 }

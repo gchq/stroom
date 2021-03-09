@@ -16,9 +16,9 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.Count;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.Count;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,7 @@ import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchMarkerResult extends AbstractFetchDataResult {
+
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
 
@@ -40,16 +41,17 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("classification") final String classification,
                              @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-//                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+//                             @JsonProperty("streamRange") final OffsetRange streamRange,
 //                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-//                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                                   @JsonProperty("pageRange") final OffsetRange pageRange,
 //                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
-                             @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+                             @JsonProperty("itemRange") final OffsetRange itemRange,
                              @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
                              @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
-//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+//        super(streamTypeName, classification, streamRange,
+//        streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(feedName,
                 streamTypeName,
                 classification,

@@ -19,7 +19,31 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = Bottom.NAME,
+        commonCategory = FunctionCategory.SELECTION,
+        commonReturnType = ValString.class,
+        signatures = @FunctionSignature(
+                description = "Selects the bottom N values and returns them as a delimited string in the order they " +
+                        "are read. E.g. for values [1, 2, 3, 4, 5], " + Bottom.NAME + "(${field}, ',', 2) returns " +
+                        "'4,5'.",
+                returnDescription = "The bottom N values as a delimited string.",
+                args = {
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "delimiter",
+                                description = "The delimiter string to use between each selected value, e.g. ', '.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "limit",
+                                description = "The maximum number of values to included in the selection.",
+                                argType = ValInteger.class)
+                }))
 public class Bottom extends AbstractSelectorFunction implements Serializable {
+
     static final String NAME = "bottom";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -47,6 +71,7 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
     }
 
     public static class BottomSelector extends Selector {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;
@@ -60,7 +85,7 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
 
         public Val select(final Selection<Val> selection) {
             final StringBuilder sb = new StringBuilder();
-            for (int i = Math.max(0, selection.size() - limit);  i < selection.size(); i++) {
+            for (int i = Math.max(0, selection.size() - limit); i < selection.size(); i++) {
                 final Val val = selection.get(i);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {

@@ -16,7 +16,26 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Subtract.NAME,
+        aliases = Subtract.ALIAS,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The result of subtracting each argument from the last argument or result of the " +
+                "last subtraction.",
+        commonDescription = "Subtracts arg2 from arg1. Minimum of two arguments. If more than two arguments are " +
+                "supplied then each argument is subtracted from the previous result, e.g. subtract(10, 5, 2) returns " +
+                "3. Can be expressed as '${field1}-${field2}'.",
+        signatures = @FunctionSignature(
+                args = @FunctionArg(
+                        name = "arg",
+                        description = "Field, the result of another function or a constant.",
+                        argType = ValNumber.class,
+                        isVarargs = true,
+                        minVarargsCount = 2)))
 class Subtract extends NumericFunction {
+
     static final String NAME = "-";
     static final String ALIAS = "subtract";
     private static final Calc CALC = new Calc();
@@ -31,6 +50,7 @@ class Subtract extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

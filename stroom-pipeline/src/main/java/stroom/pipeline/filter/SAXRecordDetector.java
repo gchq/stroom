@@ -16,12 +16,13 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.stepping.RecordDetector;
 import stroom.pipeline.stepping.SteppingController;
 
+import org.xml.sax.SAXException;
+
 public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetector {
+
     private SteppingController controller;
 
     private long currentStepNo;

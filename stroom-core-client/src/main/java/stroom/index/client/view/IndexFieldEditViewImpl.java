@@ -16,19 +16,21 @@
 
 package stroom.index.client.view;
 
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewImpl;
+
 public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditView {
+
     private final Widget widget;
     @UiField
     ItemListBox<IndexFieldType> type;
@@ -129,5 +131,6 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     }
 
     public interface Binder extends UiBinder<Widget, IndexFieldEditViewImpl> {
+
     }
 }

@@ -31,15 +31,16 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
+
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
 
@@ -170,7 +171,10 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         DocRef newDocRef = docRef;
 
         if (ImportState.State.NEW.equals(importState.getState())) {
@@ -182,7 +186,9 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

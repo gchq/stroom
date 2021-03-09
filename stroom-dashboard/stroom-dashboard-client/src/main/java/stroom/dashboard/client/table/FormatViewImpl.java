@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> implements FormatView {
+
     public static final List<String> STANDARD_FORMATS = Arrays
             .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
@@ -289,5 +290,6 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     }
 
     public interface Binder extends UiBinder<Widget, FormatViewImpl> {
+
     }
 }

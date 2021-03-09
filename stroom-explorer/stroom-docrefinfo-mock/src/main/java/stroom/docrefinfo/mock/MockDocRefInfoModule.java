@@ -10,6 +10,7 @@ import com.google.inject.Provides;
 import java.util.Optional;
 
 public class MockDocRefInfoModule extends AbstractModule {
+
     @Provides
     DocRefInfoService docRefInfoService() {
         return new DocRefInfoService() {

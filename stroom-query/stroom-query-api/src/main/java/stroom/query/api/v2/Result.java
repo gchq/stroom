@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -37,18 +36,19 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = VisResult.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
-@ApiModel(
+@Schema(
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class, VisResult.class})
 public abstract class Result {
+
     //TODO add an example value
-    @ApiModelProperty(
-            value = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
+    @Schema(description = "The ID of the component that this result set was requested for. See ResultRequest in " +
+            "SearchRequest",
             required = true)
     @JsonProperty
     private final String componentId;
 
-    @ApiModelProperty(value = "If an error has occurred producing this result set then this will have details " +
+    @Schema(description = "If an error has occurred producing this result set then this will have details " +
             "of the error")
     @JsonProperty
     private final String error;
@@ -68,10 +68,15 @@ public abstract class Result {
         return error;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
                 Objects.equals(error, result.error);
@@ -94,10 +99,11 @@ public abstract class Result {
      * Builder for constructing a {@link Result}. This class is abstract and must be overridden for
      * each known Result implementation class.
      *
-     * @param <T>           The result class type, either Flat or Table
-     * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
+     * @param <T>             The result class type, either Flat or Table
+     * @param <T_CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
-    public static abstract class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends Result, T_CHILD_CLASS extends Builder<T, ?>> {
+
         String componentId;
         String error;
 
@@ -110,10 +116,11 @@ public abstract class Result {
         }
 
         /**
-         * @param value The ID of the component that this result set was requested for. See ResultRequest in SearchRequest
+         * @param value The ID of the component that this result set was requested for. See ResultRequest in
+         *              SearchRequest
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS componentId(final String componentId) {
+        public T_CHILD_CLASS componentId(final String componentId) {
             this.componentId = componentId;
             return self();
         }
@@ -122,12 +129,12 @@ public abstract class Result {
          * @param value If an error has occurred producing this result set then this will have details
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS error(final String error) {
+        public T_CHILD_CLASS error(final String error) {
             this.error = error;
             return self();
         }
 
-        abstract CHILD_CLASS self();
+        abstract T_CHILD_CLASS self();
 
         public abstract T build();
     }

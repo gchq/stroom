@@ -29,6 +29,7 @@ import java.util.Objects;
  */
 @JsonInclude(Include.NON_NULL)
 public class ProcessorTask {
+
     // standard id and OCC fields
     @JsonProperty
     private long id;
@@ -202,10 +203,15 @@ public class ProcessorTask {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorTask that = (ProcessorTask) o;
         return id == that.id;
     }

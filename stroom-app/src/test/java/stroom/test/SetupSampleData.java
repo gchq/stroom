@@ -20,6 +20,7 @@ import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.PathCreator;
 
 import com.google.inject.Guice;
@@ -48,6 +49,7 @@ import java.nio.file.Paths;
  * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
+
     public static void main(final String[] args) {
         if (args.length != 1) {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");

@@ -16,12 +16,13 @@
 
 package stroom.pipeline.filter;
 
+import stroom.util.CharBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.util.CharBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,6 +34,7 @@ import java.util.regex.Pattern;
  * times to any MultiWayXMLFilters.
  */
 public class TestSAXEventFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSAXEventFilter.class);
 
     private static final String NEW_LINE = "\n";

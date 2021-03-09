@@ -11,6 +11,7 @@ import stroom.util.entityevent.EntityEventBus;
 import javax.inject.Inject;
 
 public class StoreFactoryImpl implements StoreFactory {
+
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
     private final ImportConverter importConverter;

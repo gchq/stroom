@@ -19,7 +19,23 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 import java.util.Map;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = QueryParam.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        signatures = @FunctionSignature(
+                description = "Fetches the value of named query parameter or " + Null.NAME + "() if the key " +
+                        "cannot be found.",
+                returnDescription = "The value associated with the supplied parameter key.",
+                args = {
+                        @FunctionArg(
+                                name = "paramKey",
+                                description = "The parameter key name to fetch the value for.",
+                                argType = Val.class)
+                }))
 class QueryParam extends AbstractFunction {
+
     static final String NAME = "param";
 
     private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();

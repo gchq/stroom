@@ -1,13 +1,14 @@
 package stroom.query.common.v2;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 public class Key implements Iterable<KeyPart> {
+
     private static final Key ROOT_KEY = new Key(Collections.emptyList());
 
     private final List<KeyPart> keyParts;
@@ -58,10 +59,15 @@ public class Key implements Iterable<KeyPart> {
         return last == null || last.isGrouped();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Key key = (Key) o;
         return keyParts.equals(key.keyParts);
     }

@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ChooserUiHandlers extends UiHandlers {
+
     void onFilterChange(String filter);
 
     void onClearSelection();

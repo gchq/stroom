@@ -29,11 +29,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
+
     private final RestFactory restFactory;
 
     private final ButtonView addEventButton;
@@ -207,6 +208,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     }
 
     public interface LinkedEventView extends View {
+
         ButtonView addButton(SvgPreset preset);
 
         void setEventListView(View view);

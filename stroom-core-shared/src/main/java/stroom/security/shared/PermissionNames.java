@@ -20,6 +20,7 @@ package stroom.security.shared;
  * Provide string constants for the permissions.
  */
 public final class PermissionNames {
+
     /**
      * Administrators have UNRESTRICTED permission on SYSTEM
      */

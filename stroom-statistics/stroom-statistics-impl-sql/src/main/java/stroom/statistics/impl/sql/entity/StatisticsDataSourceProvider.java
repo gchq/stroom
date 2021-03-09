@@ -20,5 +20,6 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 
 public interface StatisticsDataSourceProvider {
+
     DataSource getDataSource(DocRef docRef);
 }
