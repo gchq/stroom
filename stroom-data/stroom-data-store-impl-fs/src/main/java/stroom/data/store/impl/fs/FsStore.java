@@ -80,7 +80,10 @@ class FsStore implements Store, AttributeMapFactory {
 
         final FsVolume volume = volumeService.getVolume();
         if (volume == null) {
-            throw new DataException("Failed to get lock as no writable volumes");
+            throw new DataException("""
+                    Failed to get lock as no writable volumes. This may be because there are no active \
+                    volumes configured or the active volumes (or the filesystem(s) they sit on) are full \
+                    or near full.""");
         }
 
         // First time call (no file yet exists)

@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 import stroom.collection.api.CollectionService;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.util.entityevent.EntityEvent;
@@ -32,6 +33,7 @@ public class ExplorerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
+        bind(ExplorerNodePermissionsService.class).to(ExplorerNodePermissionsServiceImpl.class);
         bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
@@ -43,8 +45,7 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(SystemExplorerActionHandler.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ExplorerResourceImpl.class)
-                .bind(NewUIExplorerResource.class);
+                .bind(ExplorerResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(DocRefInfoCache.class);

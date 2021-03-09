@@ -16,16 +16,16 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -36,38 +36,51 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Filesystem Volumes")
+@Tag(name = "Filesystem Volumes")
 @Path("/fsVolume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface FsVolumeResource extends RestResource, DirectRestService {
+public interface FsVolumeResource extends RestResource, DirectRestService, FetchWithIntegerId<FsVolume> {
 
     @POST
     @Path("/find")
-    @ApiOperation(value = "Finds volumes")
-    ResultPage<FsVolume> find(@ApiParam("criteria") FindFsVolumeCriteria criteria);
+    @Operation(
+            summary = "Finds volumes",
+            operationId = "findFsVolumes")
+    ResultPage<FsVolume> find(@Parameter(description = "criteria", required = true) FindFsVolumeCriteria criteria);
 
     @POST
+    @Operation(
+            summary = "Create a volume",
+            operationId = "createFsVolume")
     FsVolume create(FsVolume volume);
 
     @GET
     @Path("/{id}")
-    @ApiOperation(value = "Get a volume")
-    FsVolume read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Get a volume",
+            operationId = "fetchFsVolume")
+    FsVolume fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(value = "Update a volume")
+    @Operation(
+            summary = "Update a volume",
+            operationId = "updateFsVolume")
     FsVolume update(@PathParam("id") Integer id,
-                    @ApiParam("volume") FsVolume volume);
+                    @Parameter(description = "volume", required = true) FsVolume volume);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(value = "Delete a volume")
+    @Operation(
+            summary = "Delete a volume",
+            operationId = "deleteFsVolume")
     Boolean delete(@PathParam("id") Integer id);
 
     @GET
     @Path("/rescan")
-    @ApiOperation(value = "Rescans volumes")
+    @Operation(
+            summary = "Rescans volumes",
+            operationId = "rescanFsVolumes")
     Boolean rescan();
 }

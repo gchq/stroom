@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
@@ -39,7 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
 
-//@AutoLogged  see
+@AutoLogged
 class TaskResourceImpl implements TaskResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
@@ -64,16 +65,14 @@ class TaskResourceImpl implements TaskResource {
 
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        final String path = ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                TaskResource.FIND_PATH_PART,
-                nodeName);
-
         return nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         TaskProgressResponse.class,
-                        path,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.FIND_PATH_PART,
+                                nodeName),
                         () -> {
                             final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
                                     .find(request.getCriteria());
@@ -86,6 +85,7 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
+    @AutoLogged(OperationType.SEARCH)
     public TaskProgressResponse userTasks(final String nodeName) {
         try {
             final String sessionId = sessionIdProvider.get().get();
@@ -104,48 +104,24 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
-    @AutoLogged(
-            value = OperationType.PROCESS,
-            verb = "Terminating")
+    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
+            decorator = TerminateDecorator.class)
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
-
-        final String path = ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                TaskResource.TERMINATE_PATH_PART,
-                nodeName);
-
-
-        // TODO @AT Add custom logging to set the Process.Action to TERMINATE
-//        Runnable work = () -> {
         nodeServiceProvider.get()
                 .remoteRestCall(
                         nodeName,
-                        path,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.TERMINATE_PATH_PART,
+                                nodeName),
                         () ->
                                 taskManagerProvider.get().terminate(
                                         request.getCriteria(),
                                         request.isKill()),
                         builder ->
                                 builder.post(Entity.json(request)));
-//        };
-
-//        stroomEventLoggingService.loggedAction(
-//                StroomEventLoggingUtil.buildTypeId(this, "terminate"),
-//                "just kill it",
-//                ProcessEventAction.builder()
-//                        .withAction(ProcessAction.TERMINATE)
-//                        .withInput(stroomEventLoggingService.convertToMulti(request))
-//                        .build(),
-//                () -> {
-//                    // do stuff
-//                });
 
         return true;
-    }
-
-    static interface EventActionDecorator<T extends EventAction> {
-
-        T decorate(final T eventAction);
     }
 
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {

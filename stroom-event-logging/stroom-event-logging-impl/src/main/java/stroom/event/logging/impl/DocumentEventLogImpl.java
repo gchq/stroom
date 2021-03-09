@@ -142,7 +142,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         final String objDesc = eventLoggingService.describe(object);
 
-        if (objDesc == null) {
+        if (objDesc == null || StroomEventLoggingService.UNKNOWN_OBJECT_DESCRIPTION.equals(objDesc)) {
             return description;
         }
         return description + " " + objDesc;
@@ -663,10 +663,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private Iterable<BaseObject> createBaseObject(final java.lang.Object object) {
-        if (object == null) {
-            return List.of();
-        }
-
         return List.of(eventLoggingService.convert(object));
     }
 

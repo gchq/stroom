@@ -4,8 +4,8 @@ import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import javax.validation.Valid;
@@ -20,7 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Reference Data")
+@Tag(name = "Reference Data")
 @Path(ReferenceDataResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -34,18 +34,24 @@ public interface ReferenceDataResource extends RestResource {
 
     @GET
     @Path(ENTRIES_SUB_PATH)
-    @ApiOperation("List entries from the reference data store on the node called. This is primarily intended " +
-            "for small scale debugging in non-production environments. If no limit is set a default limit is applied " +
-            "else the results will be limited to limit entries.")
+    @Operation(
+            summary = "List entries from the reference data store on the node called.",
+            description = "This is primarily intended  for small scale debugging in non-production environments. If " +
+                    "no limit is set a default limit is applied else the results will be limited to limit entries.",
+            operationId = "getReferenceStoreEntries")
     List<RefStoreEntry> entries(@QueryParam("limit") final Integer limit);
 
     @POST
     @Path(LOOKUP_SUB_PATH)
-    @ApiOperation("Perform a reference data lookup using the supplied lookup request.")
+    @Operation(
+            summary = "Perform a reference data lookup using the supplied lookup request.",
+            operationId = "lookupReferenceData")
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
     @DELETE
     @Path(PURGE_SUB_PATH + "/{purgeAge}")
-    @ApiOperation("Explicitly delete all entries that are older than purgeAge.")
+    @Operation(
+            summary = "Explicitly delete all entries that are older than purgeAge.",
+            operationId = "purgeReferenceData")
     void purge(@NotNull @PathParam("purgeAge") final String purgeAge);
 }

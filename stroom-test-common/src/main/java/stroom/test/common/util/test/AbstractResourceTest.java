@@ -48,6 +48,9 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         return resources.target(subPath);
     };
 
+    /**
+     * @return A mocked implementation of the resource
+     */
     public abstract R getRestResource();
 
     public abstract String getResourceBasePath();

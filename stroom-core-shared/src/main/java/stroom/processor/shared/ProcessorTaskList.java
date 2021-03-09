@@ -29,4 +29,12 @@ public class ProcessorTaskList {
     public List<ProcessorTask> getList() {
         return list;
     }
+
+    @Override
+    public String toString() {
+        return "ProcessorTaskList{" +
+                "nodeName='" + nodeName + '\'' +
+                ", list=" + list +
+                '}';
+    }
 }

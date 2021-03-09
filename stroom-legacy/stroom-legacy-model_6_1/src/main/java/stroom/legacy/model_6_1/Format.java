@@ -17,39 +17,35 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
 @XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "Describes the formatting that will be applied to values in a field")
+@Schema(description = "Describes the formatting that will be applied to values in a field")
 @Deprecated
 public final class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The formatting type to apply",
+    @Schema(description = "The formatting type to apply",
             example = "NUMBER",
             required = true)
     private Type type;
 
     @XmlElement
-    @ApiModelProperty(
-            required = false)
+    @Schema(            required = false)
     private NumberFormat numberFormat;
 
     @XmlElement
-    @ApiModelProperty(
-            required = false)
+    @Schema(required = false)
     private DateTimeFormat dateTimeFormat;
 
     public Format() {

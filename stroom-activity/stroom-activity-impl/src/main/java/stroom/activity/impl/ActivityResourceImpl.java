@@ -59,7 +59,7 @@ class ActivityResourceImpl implements ActivityResource {
     }
 
     @Override
-    public Activity read(final Integer id) {
+    public Activity fetch(final Integer id) {
         return activityServiceProvider.get().fetch(id);
     }
 

@@ -18,10 +18,13 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -35,22 +38,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-class SolrIndexResourceImpl implements SolrIndexResource {
+@AutoLogged
+class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrIndexDoc> {
 
-    private final SolrIndexStore solrIndexStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<SolrIndexStore> solrIndexStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    SolrIndexResourceImpl(final SolrIndexStore solrIndexStore,
-                          final DocumentResourceHelper documentResourceHelper) {
-        this.solrIndexStore = solrIndexStore;
-        this.documentResourceHelper = documentResourceHelper;
+    SolrIndexResourceImpl(final Provider<SolrIndexStore> solrIndexStoreProvider,
+                          final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.solrIndexStoreProvider = solrIndexStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public SolrIndexDoc fetch(final String uuid) {
-        return documentResourceHelper.read(solrIndexStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(solrIndexStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -58,7 +63,7 @@ class SolrIndexResourceImpl implements SolrIndexResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(solrIndexStore, doc);
+        return documentResourceHelperProvider.get().update(solrIndexStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {
@@ -90,6 +95,7 @@ class SolrIndexResourceImpl implements SolrIndexResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Testing Solr Connection")
     public SolrConnectionTestResponse solrConnectionTest(final SolrIndexDoc solrIndexDoc) {
         try {
             final SolrClient solrClient = new SolrClientFactory().create(

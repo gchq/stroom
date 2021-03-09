@@ -16,13 +16,14 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -33,40 +34,46 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Stored Queries")
+@Tag(name = "Stored Queries")
 @Path("/storedQuery" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface StoredQueryResource extends RestResource, DirectRestService {
+public interface StoredQueryResource extends RestResource, DirectRestService, FetchWithTemplate<StoredQuery> {
 
     @POST
     @Path("/find")
-    @ApiOperation(value = "Find stored queries")
-    ResultPage<StoredQuery> find(@ApiParam("criteria") FindStoredQueryCriteria criteria);
+    @Operation(
+            summary = "Find stored queries",
+            operationId = "findStoredQueries")
+    ResultPage<StoredQuery> find(
+            @Parameter(description = "criteria", required = true) FindStoredQueryCriteria criteria);
 
     @POST
     @Path("/create")
-    @ApiOperation(value = "Create a stored query")
-    StoredQuery create(@ApiParam("storedQuery") StoredQuery storedQuery);
+    @Operation(
+            summary = "Create a stored query",
+            operationId = "createStoredQuery")
+    StoredQuery create(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @POST
     @Path("/read")
-    @ApiOperation(value = "Get a stored query")
-    StoredQuery read(@ApiParam("storedQuery") StoredQuery storedQuery);
+    @Operation(
+            summary = "Fetch a stored query",
+            operationId = "fetchStoredQuery")
+    @Override
+    StoredQuery fetch(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @PUT
     @Path("/update")
-    @ApiOperation(value = "Update a stored query")
+    @Operation(
+            summary = "Update a stored query",
+            operationId = "updateStoredQuery")
     StoredQuery update(StoredQuery storedQuery);
 
     @DELETE
     @Path("/delete")
-    @ApiOperation(value = "Delete a stored query")
+    @Operation(
+            summary = "Delete a stored query",
+            operationId = "deleteStoredQuery")
     Boolean delete(StoredQuery storedQuery);
-
-//    @POST
-//    @Path("/fetch")
-//    @ApiOperation(
-//            value = "Fetch a stored query")
-//    StoredQuery fetchStoredQuery(StoredQuery storedQuery);
 }

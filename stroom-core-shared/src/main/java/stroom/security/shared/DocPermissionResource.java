@@ -3,9 +3,9 @@ package stroom.security.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Doc Permissions")
+@Tag(name = "Doc Permissions")
 @Path("/permission/doc" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -25,33 +25,49 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/changeDocumentPermissions")
-    @ApiOperation("Change document permissions")
-    Boolean changeDocumentPermissions(@ApiParam("request") ChangeDocumentPermissionsRequest request);
+    @Operation(
+            summary = "Change document permissions",
+            operationId = "changeDocumentPermissions")
+    Boolean changeDocumentPermissions(
+            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
 
     @POST
     @Path("/copyPermissionsFromParent")
-    @ApiOperation("Copy permissions from parent")
-    DocumentPermissions copyPermissionFromParent(@ApiParam("request") CopyPermissionsFromParentRequest request);
+    @Operation(
+            summary = "Copy permissions from parent",
+            operationId = "copyPermissionFromParent")
+    DocumentPermissions copyPermissionFromParent(
+            @Parameter(description = "request", required = true) CopyPermissionsFromParentRequest request);
 
 
     @POST
     @Path("/fetchAllDocumentPermissions")
-    @ApiOperation("Fetch document permissions")
-    DocumentPermissions fetchAllDocumentPermissions(@ApiParam("request") FetchAllDocumentPermissionsRequest request);
+    @Operation(
+            summary = "Fetch document permissions",
+            operationId = "fetchAllDocumentPermissions")
+    DocumentPermissions fetchAllDocumentPermissions(
+            @Parameter(description = "request", required = true) FetchAllDocumentPermissionsRequest request);
 
     @POST
     @Path("/checkDocumentPermission")
-    @ApiOperation("Check document permission")
-    Boolean checkDocumentPermission(@ApiParam("request") CheckDocumentPermissionRequest request);
+    @Operation(
+            summary = "Check document permission",
+            operationId = "checkDocumentPermission")
+    Boolean checkDocumentPermission(
+            @Parameter(description = "request", required = true) CheckDocumentPermissionRequest request);
 
     @GET
     @Path("/getPermissionForDocType/${docType}")
-    @ApiOperation("Get all permissions for a given document type")
+    @Operation(
+            summary = "Get all permissions for a given document type",
+            operationId = "getPermissionForDocType")
     List<String> getPermissionForDocType(@PathParam("docType") String docType);
 
     @POST
     @Path("/filterUsers")
-    @ApiOperation("Get all permissions for a given document type")
+    @Operation(
+            summary = "Get all permissions for a given document type",
+            operationId = "filterUsers")
     List<User> filterUsers(final FilterUsersRequest filterUsersRequest);
 
 }

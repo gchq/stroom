@@ -20,9 +20,9 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Solr Indices")
+@Tag(name = "Solr Indices")
 @Path("/solrIndex" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,21 +43,33 @@ public interface SolrIndexResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a solr index doc by its UUID")
+    @Operation(
+            summary = "Fetch a solr index doc by its UUID",
+            operationId = "fetchSolrIndex")
     SolrIndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a solr index doc")
-    SolrIndexDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") SolrIndexDoc doc);
+    @Operation(
+            summary = "Update a solr index doc",
+            operationId = "updateSolrIndex")
+    SolrIndexDoc update(
+            @PathParam("uuid") String uuid,
+            @Parameter(description = "doc", required = true) SolrIndexDoc doc);
 
     @POST
     @Path("/fetchSolrTypes")
-    @ApiOperation("Fetch Solr types")
-    List<String> fetchSolrTypes(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
+    @Operation(
+            summary = "Fetch Solr types",
+            operationId = "fetchSolrTypes")
+    List<String> fetchSolrTypes(
+            @Parameter(description = "solrIndexDoc", required = true) SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/solrConnectionTest")
-    @ApiOperation("Test connection to Solr")
-    SolrConnectionTestResponse solrConnectionTest(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
+    @Operation(
+            summary = "Test connection to Solr",
+            operationId = "solrConnectionTest")
+    SolrConnectionTestResponse solrConnectionTest(
+            @Parameter(description = "solrIndexDoc", required = true) SolrIndexDoc solrIndexDoc);
 }

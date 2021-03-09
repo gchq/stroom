@@ -17,34 +17,31 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "The definition of a format to apply to numeric data")
+@Schema(description = "The definition of a format to apply to numeric data")
 @Deprecated
 public final class NumberFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The number of decimal places",
+    @Schema(description = "The number of decimal places",
             example = "2",
             required = true)
     private Integer decimalPlaces;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Whether to use a thousands separator or not. Defaults to false",
+    @Schema(description = "Whether to use a thousands separator or not. Defaults to false",
             example = "true",
             required = false)
     private Boolean useSeparator;

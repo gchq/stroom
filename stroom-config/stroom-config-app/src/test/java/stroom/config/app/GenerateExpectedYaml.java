@@ -96,8 +96,8 @@ public class GenerateExpectedYaml {
 
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:
         // JsonSchemaConfig config = JsonSchemaConfig.create(...);

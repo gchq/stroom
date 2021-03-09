@@ -22,7 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.SolrSearchResponseCreatorManager;
-import stroom.search.solr.search.StroomSolrIndexQueryResource;
+import stroom.search.solr.search.StroomSolrIndexQueryResourceImpl;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -46,6 +46,7 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexCache.class).to(SolrIndexCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
+        bind(SolrIndexService.class).to(SolrIndexServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(SolrIndexCacheImpl.class);
@@ -65,8 +66,7 @@ public class SolrSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(SolrIndexResourceImpl.class)
-                .bind(NewUiSolrIndexResource.class)
-                .bind(StroomSolrIndexQueryResource.class);
+                .bind(StroomSolrIndexQueryResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder

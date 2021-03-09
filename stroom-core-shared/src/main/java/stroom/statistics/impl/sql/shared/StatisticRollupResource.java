@@ -19,9 +19,9 @@ package stroom.statistics.impl.sql.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -31,7 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "SQL Statistics RollUps")
+@Tag(name = "SQL Statistics RollUps")
 @Path("/statistic/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -39,16 +39,25 @@ public interface StatisticRollupResource extends RestResource, DirectRestService
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @ApiOperation("Create rollup bit mask")
-    List<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
+    @Operation(
+            summary = "Create rollup bit mask",
+            operationId = "statisticBitMaskPermGeneration")
+    List<CustomRollUpMask> bitMaskPermGeneration(
+            @Parameter(description = "fieldCount", required = true) Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @ApiOperation("Get rollup bit mask")
-    List<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
+    @Operation(
+            summary = "Get rollup bit mask",
+            operationId = "statisticBitMaskConversion")
+    List<CustomRollUpMaskFields> bitMaskConversion(
+            @Parameter(description = "maskValues", required = true) List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @ApiOperation("Change fields")
-    StatisticsDataSourceData fieldChange(@ApiParam("request") StatisticsDataSourceFieldChangeRequest request);
+    @Operation(
+            summary = "Change fields",
+            operationId = "statisticFieldChange")
+    StatisticsDataSourceData fieldChange(
+            @Parameter(description = "request", required = true) StatisticsDataSourceFieldChangeRequest request);
 }

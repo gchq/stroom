@@ -29,9 +29,22 @@ public class LoggingConfig extends AbstractConfig {
 
     private boolean logEveryRestCallEnabled = false;
 
+    private boolean omitRecordDetailsLoggingEnabled = true;
+
     private int maxListElements = 5;
 
     private int maxDataElementStringLength = 500;
+
+    @JsonProperty("omitRecordDetailsLoggingEnabled")
+    @JsonPropertyDescription("Suppress standard database record fields " +
+            "'createUser', 'updateUser', 'createTime', 'updateTime' and 'version' being reported within event log.")
+    public boolean isOmitRecordDetailsLoggingEnabled() {
+        return omitRecordDetailsLoggingEnabled;
+    }
+
+    public void setOmitRecordDetailsLoggingEnabled(final boolean omitRecordHistoryEnabled) {
+        this.omitRecordDetailsLoggingEnabled = omitRecordHistoryEnabled;
+    }
 
     @JsonProperty("maxListElements")
     @JsonPropertyDescription("Maximum number of elements in event log before truncation.")

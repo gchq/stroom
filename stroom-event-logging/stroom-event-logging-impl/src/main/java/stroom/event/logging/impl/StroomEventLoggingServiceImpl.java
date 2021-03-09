@@ -18,6 +18,9 @@ package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
 import stroom.docref.DocRef;
+import stroom.docref.HasName;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
@@ -27,10 +30,9 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasName;
-import stroom.util.shared.HasUuid;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -63,8 +65,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,6 +76,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -318,14 +323,18 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             final Object object = securityContext.asProcessingUserResult(objectSupplier);
             return convert(object, useInfoProviders);
         } else {
-            return null;
+            return OtherObject.builder()
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
+                    .build();
         }
     }
 
     @Override
     public BaseObject convert(final Object object, final boolean useInfoProviders) {
         if (object == null) {
-            return null;
+            return OtherObject.builder()
+                    .withDescription(UNKNOWN_OBJECT_DESCRIPTION)
+                    .build();
         }
 
         final BaseObject baseObj;
@@ -350,8 +359,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private String getObjectType(final Object object) {
-        if (object instanceof DocRef) {
-            return String.valueOf(((DocRef) object).getType());
+        if (object instanceof HasType) {
+            return String.valueOf(((HasType) object).getType());
         }
 
         final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
@@ -416,7 +425,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     @Override
     public String describe(final Object object) {
         if (object == null) {
-            return null;
+            return UNKNOWN_OBJECT_DESCRIPTION;
         }
         final StringBuilder desc = new StringBuilder();
         final String objectType = getObjectType(object);
@@ -442,9 +451,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
 
     private String getObjectName(final Object object) {
-        if (object instanceof DocRef) {
-            return ((DocRef) object).getName();
-        } else if (object instanceof HasName) {
+        if (object instanceof HasName) {
             return ((HasName) object).getName();
         }
 
@@ -462,10 +469,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         if (object instanceof HasIntegerId) {
             return String.valueOf(((HasIntegerId) object).getId());
-        }
-
-        if (object instanceof DocRef) {
-            return String.valueOf(((DocRef) object).getUuid());
         }
 
         return null;
@@ -508,10 +511,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final List<BeanPropertyDefinition> properties = beanDescription.findProperties();
 
         // Get class level ignored properties
-        final Set<String> ignoredProperties = objectMapper.getSerializationConfig()
+        final Set<String> ignoredProperties = new HashSet<>(objectMapper.getSerializationConfig()
                 .getAnnotationIntrospector()
                 .findPropertyIgnorals(beanDescription.getClassInfo())
-                .getIgnored(); // Filter properties removing the class level ignored ones
+                .getIgnored()); // Filter properties removing the class level ignored ones
+
+        if (loggingConfig.isOmitRecordDetailsLoggingEnabled()) {
+            final Set<String> standardInterfaceProperties = ignorePropertiesFromStandardInterfaces(obj);
+            ignoredProperties.addAll(standardInterfaceProperties);
+        }
 
         final List<BeanPropertyDefinition> availableProperties = properties.stream()
                 .filter(property -> !ignoredProperties.contains(property.getName()))
@@ -539,6 +547,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                         .collect(Collectors.joining(", "));
                                 builder.withValue(collectionValue);
                             }
+                        } else if (HasName.class.isAssignableFrom(valObj.getClass())) {
+                            builder.withValue(((HasName) valObj).getName());
                         } else if (isLeafPropertyType(valObj.getClass())) {
                             final String value;
                             if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
@@ -564,6 +574,37 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     }
                     return builder.build();
                 }).collect(Collectors.toList());
+    }
+
+    private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {
+        final Set<String> ignore = new HashSet<>();
+        ignorePropertiesFromSuperType(obj, HasIntegerId.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasAuditInfo.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasId.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasName.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasUuid.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasType.class, ignore);
+
+        //No interface defined yet - but version has a reasonably standard meaning and can be ignored
+        ignore.add("version");
+        return ignore;
+    }
+
+    private static void ignorePropertiesFromSuperType(final Object obj, final Class potentialSuperType,
+                                                             final Set<String> ignoreProps) {
+        if (potentialSuperType.isAssignableFrom(obj.getClass())) {
+            ignoreProps.addAll(Arrays.stream(potentialSuperType.getMethods())
+                .flatMap(method -> {
+                    final String methodName = method.getName();
+                    if (methodName.startsWith("get")) {
+                        return Stream.of(methodName.substring(3, 4).toLowerCase() + methodName.substring(4));
+                    } else if (methodName.startsWith("is")) {
+                        return Stream.of(methodName.substring(2, 3).toLowerCase() + methodName.substring(3));
+                    } else {
+                        return Stream.empty();
+                    }
+                }).collect(Collectors.toList()));
+        }
     }
 
     private static boolean isLeafPropertyType(final Class<?> type) {

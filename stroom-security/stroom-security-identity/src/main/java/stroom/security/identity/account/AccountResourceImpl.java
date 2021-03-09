@@ -20,7 +20,10 @@ package stroom.security.identity.account;
 
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
+import com.codahale.metrics.annotation.Timed;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.AuthenticateAction;
@@ -47,7 +50,7 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 
-// TODO : @66 Add audit logging
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class AccountResourceImpl implements AccountResource {
 
     private final Provider<AccountService> serviceProvider;
@@ -60,6 +63,7 @@ class AccountResourceImpl implements AccountResource {
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
+    @Timed
     @Override
     public AccountResultPage list(final HttpServletRequest httpServletRequest) {
         return stroomEventLoggingService.loggedResult(
@@ -87,6 +91,7 @@ class AccountResourceImpl implements AccountResource {
         );
     }
 
+    @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
         return stroomEventLoggingService.loggedResult(
@@ -120,6 +125,7 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
@@ -154,8 +160,9 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
-    public Account read(final Integer userId) {
+    public Account fetch(final Integer userId) {
         if (userId == null) {
             return null;
         }
@@ -184,6 +191,7 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    @Timed
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
                           final UpdateAccountRequest request,
@@ -239,6 +247,7 @@ class AccountResourceImpl implements AccountResource {
                         .build());
     }
 
+    @Timed
     @Override
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {

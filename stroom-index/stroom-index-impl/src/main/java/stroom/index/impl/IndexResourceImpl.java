@@ -2,6 +2,7 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
@@ -17,6 +18,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
@@ -27,31 +29,31 @@ import javax.ws.rs.core.Response.Status;
 @AutoLogged
 class IndexResourceImpl implements IndexResource {
 
-    private final IndexStore indexStore;
-    private final IndexShardService indexShardService;
-    private final IndexShardManager indexShardManager;
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
+    private final Provider<IndexStore> indexStoreProvider;
+    private final Provider<IndexShardService> indexShardServiceProvider;
+    private final Provider<IndexShardManager> indexShardManagerProvider;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<WebTargetFactory> webTargetFactoryProvider;
 
     @Inject
-    IndexResourceImpl(final IndexStore indexStore,
-                      final IndexShardService indexShardService,
-                      final IndexShardManager indexShardManager,
-                      final NodeService nodeService,
-                      final NodeInfo nodeInfo,
-                      final WebTargetFactory webTargetFactory) {
-        this.indexStore = indexStore;
-        this.indexShardService = indexShardService;
-        this.indexShardManager = indexShardManager;
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
+    IndexResourceImpl(final Provider<IndexStore> indexStoreProvider,
+                      final Provider<IndexShardService> indexShardServiceProvider,
+                      final Provider<IndexShardManager> indexShardManagerProvider,
+                      final Provider<NodeService> nodeServiceProvider,
+                      final Provider<NodeInfo> nodeInfoProvider,
+                      final Provider<WebTargetFactory> webTargetFactoryProvider) {
+        this.indexStoreProvider = indexStoreProvider;
+        this.indexShardServiceProvider = indexShardServiceProvider;
+        this.indexShardManagerProvider = indexShardManagerProvider;
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.webTargetFactoryProvider = webTargetFactoryProvider;
     }
 
     @Override
     public IndexDoc fetch(final String uuid) {
-        return indexStore.readDocument(getDocRef(uuid));
+        return indexStoreProvider.get().readDocument(getDocRef(uuid));
     }
 
     @Override
@@ -59,7 +61,7 @@ class IndexResourceImpl implements IndexResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return indexStore.writeDocument(doc);
+        return indexStoreProvider.get().writeDocument(doc);
     }
 
     private DocRef getDocRef(final String uuid) {
@@ -71,7 +73,7 @@ class IndexResourceImpl implements IndexResource {
 
     @Override
     public ResultPage<IndexShard> findIndexShards(final FindIndexShardCriteria criteria) {
-        return indexShardService.find(criteria);
+        return indexShardServiceProvider.get().find(criteria);
     }
 
     @Override
@@ -80,6 +82,7 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Flushing index shards to disk")
     public Long flushIndexShards(final String nodeName, final FindIndexShardCriteria criteria) {
         return performShardAction(nodeName, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
     }
@@ -91,16 +94,15 @@ class IndexResourceImpl implements IndexResource {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         // If this is the node that was contacted then just resolve it locally
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return indexShardManager.performAction(criteria, action);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            return indexShardManagerProvider.get().performAction(criteria, action);
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    IndexResource.BASE_PATH,
-                    subPath);
+            final String url = NodeCallUtil
+                    .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(IndexResource.BASE_PATH, subPath);
             try {
                 // A different node to make a rest call to the required node
-                final Response response = webTargetFactory
+                final Response response = webTargetFactoryProvider.get()
                         .create(url)
                         .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)

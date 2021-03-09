@@ -7,12 +7,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "List of config properties")
+@Schema(description = "List of config properties")
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
 
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values) {

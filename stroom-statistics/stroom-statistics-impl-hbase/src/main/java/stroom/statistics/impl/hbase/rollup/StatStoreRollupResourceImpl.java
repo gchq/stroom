@@ -16,6 +16,8 @@
 
 package stroom.statistics.impl.hbase.rollup;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.hbase.shared.StatisticField;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@AutoLogged(OperationType.UNLOGGED)
 class StatStoreRollupResourceImpl implements StatsStoreRollupResource {
 
     @Override

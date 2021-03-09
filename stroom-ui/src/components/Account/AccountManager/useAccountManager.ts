@@ -42,7 +42,7 @@ const useAccountManager = (): UseAccountManager => {
   const search = useCallback(
     (request: SearchAccountRequest) =>
       exec(
-        (api) => api.account.search(request),
+        (api) => api.account.searchAccounts(request),
         (response) => {
           if (response) {
             setResultPage(response);
@@ -59,7 +59,7 @@ const useAccountManager = (): UseAccountManager => {
   const remove = useCallback(
     (userId: number) =>
       exec(
-        (api) => api.account.delete(userId),
+        (api) => api.account.deleteAccount(userId),
         (response) => {
           search(request);
         },

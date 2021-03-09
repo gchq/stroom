@@ -228,7 +228,7 @@ public class ExplorerTreeModel {
                         }
                     })
                             .call(EXPLORER_RESOURCE)
-                            .fetch(criteria);
+                            .fetchExplorerNodes(criteria);
                 });
             }
         }

@@ -74,7 +74,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
-                ResourcePaths.buildAuthenticatedApiPath(
+                () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
                         nodeName),
@@ -88,17 +88,16 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public ConfigProperty getPropertyByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
-                PropertyPath.fromPathString(propertyPath));
+        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get()
+                .fetch(PropertyPath.fromPathString(propertyPath));
         return RestUtil.ensureNotEmptyResult(
                 optConfigProperty, "No property found for path {}", propertyPath);
     }
 
-    @Timed
-    public OverrideValue<String> getYamlValueByName(final String propertyPath) {
+    private OverrideValue<String> getYamlValueByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
-                PropertyPath.fromPathString(propertyPath));
+        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get()
+                .fetch(PropertyPath.fromPathString(propertyPath));
         return optConfigProperty
                 .map(ConfigProperty::getYamlOverrideValue)
                 .orElseThrow(() ->
@@ -114,17 +113,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
-                ResourcePaths.buildAuthenticatedApiPath(
-                        GlobalConfigResource.BASE_PATH,
-                        GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                        propertyName,
-                        GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                        nodeName),
+                () ->
+                        ResourcePaths.buildAuthenticatedApiPath(
+                                GlobalConfigResource.BASE_PATH,
+                                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                                propertyName,
+                                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                                nodeName),
                 () ->
                         getYamlValueByName(propertyName),
                 SyncInvoker::get,
-                response -> response.readEntity(new GenericType<OverrideValue<String>>() {
-                }));
+                response ->
+                        response.readEntity(new GenericType<OverrideValue<String>>() {
+                        }));
     }
 
     @Timed

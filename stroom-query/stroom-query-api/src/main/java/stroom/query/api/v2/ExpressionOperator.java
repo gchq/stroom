@@ -33,8 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,20 +52,17 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
-        value = "ExpressionOperator",
-        description = "A logical addOperator term in a query expression tree",
-        parent = ExpressionItem.class)
+@Schema(name = "ExpressionOperator",
+        description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
 
     private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")
-    @ApiModelProperty(
-            value = "The logical addOperator type",
+    @Schema(description = "The logical addOperator type",
             required = true)
     @JsonProperty
-    private Op op; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private Op op; // TODO : XML serialisation still requires no-arg constructor and mutable fields
 
     @XmlElementWrapper(name = "children")
     @XmlElements({
@@ -74,11 +70,11 @@ public final class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     @JsonProperty
-    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private List<ExpressionItem> children;
 
     public ExpressionOperator() {
-        // TODO : XML serilisation still requires no-arg constructor and mutable fields
+        // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator

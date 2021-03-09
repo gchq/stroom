@@ -88,7 +88,7 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
       };
 
       exec(
-        (api) => api.account.search(request),
+        (api) => api.account.searchAccounts(request),
         (result: AccountResultPage) => {
           const options = result.values.map((i) => ({
             id: i.id,

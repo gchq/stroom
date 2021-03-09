@@ -55,24 +55,33 @@ public class MockNodeService implements NodeService {
     }
 
     @Override
+    public List<String> getEnabledNodesByPriority() {
+        return Collections.singletonList(nodeInfo.getThisNodeName());
+    }
+
+    @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
         return Collections.singletonList(nodeInfo.getThisNodeName());
     }
 
     @Override
     public <T_RESP> T_RESP remoteRestResult(final String nodeName,
-                                            final String fullPath,
+                                            final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper) {
+        // Always return the value from the local supplier on this node
+        // TestNodeServiceImpl tests calling local vs remote
         return localSupplier.get();
     }
 
     @Override
     public void remoteRestCall(final String nodeName,
-                               final String fullPath,
+                               final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc) {
+        // Always run the local runnable on this node
+        // TestNodeServiceImpl tests calling local vs remote
         localRunnable.run();
     }
 }

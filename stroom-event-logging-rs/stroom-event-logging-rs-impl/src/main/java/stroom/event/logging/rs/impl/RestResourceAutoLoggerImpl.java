@@ -106,6 +106,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             if (object != null) {
                 RequestInfo requestInfo = (RequestInfo) object;
                 requestEventLog.log(requestInfo, null, exception);
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
             }
         } else {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);

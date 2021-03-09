@@ -19,37 +19,30 @@ package stroom.dashboard.impl.datasource;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.shared.MetaFields;
 import stroom.security.api.SecurityContext;
 
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class DataSourceResourceImpl implements DataSourceResource {
 
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
-    private final SecurityContext securityContext;
+    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
 
     @Inject
-    DataSourceResourceImpl(final DataSourceProviderRegistry dataSourceProviderRegistry,
-                           final SecurityContext securityContext) {
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.securityContext = securityContext;
+    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
+        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
     }
 
     @Override
     public List<AbstractField> fetchFields(final DocRef dataSourceRef) {
-        return securityContext.secureResult(() -> {
-            if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-                return MetaFields.getFields();
-            }
+        if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
+            return MetaFields.getFields();
+        }
 
-            // Elevate the users permissions for the duration of this task so they can read the index if
-            // they have 'use' permission.
-            return securityContext.useAsReadResult(
-                    () -> dataSourceProviderRegistry.getDataSourceProvider(dataSourceRef)
-                            .map(provider -> provider.getDataSource(dataSourceRef).getFields())
-                            .orElse(null));
-        });
+        return dataSourceProviderRegistryProvider.get().getFieldsForDataSource(dataSourceRef);
     }
 }

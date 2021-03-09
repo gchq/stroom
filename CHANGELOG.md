@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add index to cluster_lock table to fix whole table locking for single lock key.
+
+* Issue **#2059** : Add cluster lock protection to task creation. Stops duplicate task creation when master node changes.
+
+* Change task creation by master node to try to wait for search tasks to complete and to try to only create the configured number of tasks.
+
+* Refactor logic to determine master node into one place. Fixes discrepancies between UI and back-end.
+
+* Change node monitoring screen to return nodes in name order.
+
+* Issue **#2066** : Add data bars to node monitoring screen.
+
+* Issue **#2059** : Fix `Duplicate key` error in task assignment.
+
+* Issue **#2064** : Delete empty directories left by running unit test.
+  
+* Issue **#2056** : Fix error sending permission change events to other cluster nodes.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
+
+## [v7.0-beta.89] - 2021-02-26
+
+* Change stroom/proxy docker image base to `adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine`
+
+* Add authentication config to swagger spec.
+
+
+## [v7.0-beta.88] - 2021-02-26
+
+* Fix travis release artefacts.
+
+
+## [v7.0-beta.87] - 2021-02-25
+
+* No changes
+
+
+## [v7.0-beta.86] - 2021-02-25
+
+* Fix travis release artefacts.
+
+
+## [v7.0-beta.85] - 2021-02-24
+
+* Change dockerfile to use Open JDK 15
+
+* Change build to use Open JDK 15
+
+* Fix travis build failure.
+
+* Issue **#2028** : Don't autolog standard object fields by default
+
+
+## [v7.0-beta.84] - 2021-02-24
+
+* No changes, adding more release artefacts in Travis build.
+
+
+## [v7.0-beta.83] - 2021-02-23
+
+* Add -q flag to start/stop/migrate.sh to stop log tailing.
+
+* Change migrate.sh to run the migration in the background.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
+* Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
+
+
+## [v7.0-beta.82] - 2021-02-18
+
+* Issue **#2049** : Updated Swagger and moved to the OpenAPI 3.0 Specification.
+
 * Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading. 
 
 
@@ -3064,7 +3142,15 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.81...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.89...HEAD
+[v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89
+[v7.0-beta.88]: https://github.com/gchq/stroom/compare/v7.0-beta.87...v7.0-beta.88
+[v7.0-beta.87]: https://github.com/gchq/stroom/compare/v7.0-beta.86...v7.0-beta.87
+[v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
+[v7.0-beta.85]: https://github.com/gchq/stroom/compare/v7.0-beta.84...v7.0-beta.85
+[v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
+[v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
+[v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
 [v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
 [v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
 [v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79

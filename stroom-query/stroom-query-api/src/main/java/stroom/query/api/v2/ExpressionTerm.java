@@ -23,8 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -36,43 +35,39 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(
-        value = "ExpressionTerm",
-        description = "A predicate term in a query expression tree",
-        parent = ExpressionItem.class)
+@Schema(name = "ExpressionTerm",
+        description = "A predicate term in a query expression tree")
 public final class ExpressionTerm extends ExpressionItem {
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The name of the field that is being evaluated in this predicate term",
+    @Schema(description = "The name of the field that is being evaluated in this predicate term",
             required = true)
     @JsonProperty
     private String field; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The condition of the predicate term",
+    @Schema(description = "The condition of the predicate term",
             required = true)
     @JsonProperty
-    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private Condition condition;
 
     @XmlElement
-    @ApiModelProperty("The value that the field value is being evaluated against. Not required if a " +
+    @Schema(description = "The value that the field value is being evaluated against. Not required if a " +
             "dictionary is supplied")
     @JsonProperty
-    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private String value;
 
     @XmlElement
-    @ApiModelProperty("The DocRef that the field value is being evaluated against if the condition is " +
+    @Schema(description = "The DocRef that the field value is being evaluated against if the condition is " +
             "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
-    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private DocRef docRef;
 
     public ExpressionTerm() {
-        // TODO : XML serilisation still requires no-arg constructor and mutable fields
+        // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator

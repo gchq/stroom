@@ -23,10 +23,9 @@ import stroom.security.openid.api.OpenId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -43,16 +42,17 @@ import javax.ws.rs.core.MediaType;
 @Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(tags = "Authentication")
+@Tag(name = "Authentication")
 public interface AuthenticationResource extends RestResource {
 
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
     @GET
     @Path("/noauth/getAuthenticationState")
-    @Timed
     @NotNull
-    @ApiOperation("Get the current authentication state")
+    @Operation(
+            summary = "Get the current authentication state",
+            operationId = "getAuthenticationState")
     AuthenticationState getAuthenticationState(@Context @NotNull HttpServletRequest request);
 
     /**
@@ -62,70 +62,82 @@ public interface AuthenticationResource extends RestResource {
      */
     @POST
     @Path("/noauth/login")
-    @Timed
     @NotNull
-    @ApiOperation("Handle a login request made using username and password credentials.")
+    @Operation(
+            summary = "Handle a login request made using username and password credentials.",
+            operationId = "login")
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
-            @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
+            @Parameter(description = "Credentials", required = true)
+            @NotNull LoginRequest loginRequest);
 
     @GET
     @Path("/logout")
-    @Timed
     @NotNull
-    @ApiOperation("Log a user out of their session")
+    @Operation(
+            summary = "Log a user out of their session",
+            operationId = "logout")
     Boolean logout(
             @Context @NotNull HttpServletRequest request,
             @QueryParam(OpenId.REDIRECT_URI) @NotNull String redirectUri);
 
     @POST
     @Path("/noauth/confirmPassword")
-    @Timed
     @NotNull
-    @ApiOperation("Confirm an authenticated users current password.")
+    @Operation(
+            summary = "Confirm an authenticated users current password.",
+            operationId = "confirmPassword")
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
-            @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
+            @Parameter(description = "confirmPasswordRequest", required = true)
+            @NotNull ConfirmPasswordRequest confirmPasswordRequest);
 
 
     @POST
     @Path("/noauth/changePassword")
-    @Timed
     @NotNull
-    @ApiOperation("Change a user's password.")
+    @Operation(
+            summary = "Change a user's password.",
+            operationId = "changePassword")
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
-            @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
+            @Parameter(description = "changePasswordRequest", required = true)
+            @NotNull ChangePasswordRequest changePasswordRequest);
 
     @GET
     @Path("/noauth/reset/{email}")
-    @Timed
     @NotNull
-    @ApiOperation("Reset a user account using an email address.")
+    @Operation(
+            summary = "Reset a user account using an email address.",
+            operationId = "resetEmail")
     Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
             @PathParam("email") String emailAddress);
 
     @POST
     @Path("resetPassword")
-    @Timed
     @NotNull
-    @ApiOperation("Reset an authenticated user's password.")
+    @Operation(
+            summary = "Reset an authenticated user's password.",
+            operationId = "resetPassword")
     ChangePasswordResponse resetPassword(
             @Context @NotNull HttpServletRequest request,
-            @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
+            @Parameter(description = "changePasswordRequest", required = true)
+            @NotNull ResetPasswordRequest req);
 
     @GET
     @Path("needsPasswordChange")
-    @Timed
     @NotNull
-    @ApiOperation("Check if a user's password needs changing.")
+    @Operation(
+            summary = "Check if a user's password needs changing.",
+            operationId = "needsPasswordChange")
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")
-    @Timed
     @NotNull
-    @ApiOperation("Get the password policy")
+    @Operation(
+            summary = "Get the password policy",
+            operationId = "fetchPasswordPolicy")
     PasswordPolicyConfig fetchPasswordPolicy();
 }

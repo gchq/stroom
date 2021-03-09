@@ -24,9 +24,9 @@ import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -39,7 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Data")
+@Tag(name = "Data")
 @Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -47,27 +47,37 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("download")
-    @ApiOperation(value = "Download matching data")
-    ResourceGeneration download(@ApiParam("criteria") FindMetaCriteria criteria);
+    @Operation(
+            summary = "Download matching data",
+            operationId = "downloadData")
+    ResourceGeneration download(@Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
-    @ApiOperation(value = "Upload data")
-    ResourceKey upload(@ApiParam("request") UploadDataRequest request);
+    @Operation(
+            summary = "Upload data",
+            operationId = "uploadData")
+    ResourceKey upload(@Parameter(description = "request", required = true) UploadDataRequest request);
 
     @GET
     @Path("{id}/info")
-    @ApiOperation(value = "Find full info about a data item")
+    @Operation(
+            summary = "Find full info about a data item",
+            operationId = "viewDataInfo")
     List<DataInfoSection> viewInfo(@PathParam("id") long id);
 
     @POST
     @Path("fetch")
-    @ApiOperation("Fetch matching data")
-    AbstractFetchDataResult fetch(@ApiParam("request") FetchDataRequest request);
+    @Operation(
+            summary = "Fetch matching data",
+            operationId = "fetchData")
+    AbstractFetchDataResult fetch(@Parameter(description = "request", required = true) FetchDataRequest request);
 
     @GET
     @Path("{id}/parts/{partNo}/child-types")
-    @ApiOperation("List child types for a stream")
+    @Operation(
+            summary = "List child types for a stream",
+            operationId = "getChildStreamTypes")
     Set<String> getChildStreamTypes(@PathParam("id") final long id,
                                     @PathParam("partNo") final long partNo);
 }

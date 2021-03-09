@@ -244,7 +244,7 @@ public class ManageActivityPresenter extends
             rest
                     .onSuccess(this::onEdit)
                     .call(ACTIVITY_RESOURCE)
-                    .read(e.getId());
+                    .fetch(e.getId());
         }
     }
 

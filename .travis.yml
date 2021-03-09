@@ -2,7 +2,7 @@ language: java
 os: linux
 dist: trusty
 group: edge
-jdk: openjdk12
+jdk: openjdk15
 
 env:
   global:
@@ -77,20 +77,10 @@ deploy:
     api_key:
       # travis encrypt -r gchq/stroom <github personal access token>
       secure: "LC8wGnammcDZG444E/voqd7QYq25bSVoEVihhljTMyxAx0AhO53MSnjUo602ChH3Yxhp1U+rKL/rAa/wgof+bRx1Rka0YV5Rnu8NzPe6O8bVfQVRRVBUVcJxx2AJ9YlXCHpmEHl+nsMFS42QEt9bNdLhbCsOCmMJLvDeJ7PiquAemFQ6DT59i89IgL14QFvdZymyTf1IHJfBxfaXhlpUIBNCnRPwkU8wXA2Gzdkb90Ks9hmL1nfI/imdm5JNwsjIcJ91ItD2WijWbv2B35CEisn770EqnlDofHbROtTJbz3qBBwxl3sIGnRHcpL25zmTOZWbmqlgiMi6cQO3Dpt6bxmiSy4i6TQgna3LxQmCDeqQkSwAc8gJDw07y3Ktu6TeTad0KjrP/eOkyCqoNeRuqziI7Qzcpy7EHTQkPzhV+qkI0kUYBGA/VpYl579eA/Z0rNPBrBDVSiVPKNLB2B9cvVR3tk1V8VqWruzaauzBx1aGFp26bAAbyWHq/FzKMPV5ezKfGSG5ATqEx9hYVS4K66tljTSWT6pXMsl+Feu/S84s5KC5H8pKebq9j5j8w5HuyJSr2o6NUxNq8h1hyfTLZ3UOqXN/7EA1T02SQjwRJX27O9PHti7pXkOXAX8Q6qKlTinQnAOErngZj2ATPLlRqY7Bj/Vh1Ley0mmSLSBsXYo="
+    file_glob: true
     file:
-      # Stroom
-      - "stroom-app-config-${TRAVIS_TAG}.yml"
-      - "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip"
-      - "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip.sha256"
-      - "stroom-app/src/main/resources/ui/noauth/swagger/swagger.json"
-      - "stroom-app/src/main/resources/ui/noauth/swagger/swagger.yaml"
-      # Stroom-Proxy
-      - "stroom-proxy-app-config-${TRAVIS_TAG}.yml"
-      - "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip"
-      - "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip.sha256"
-      # Stroom (Headless)
-      - "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip"
-      - "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip.sha256"
+      # Put here by gather_release_artefacts()
+      - "${TRAVIS_BUILD_DIR}/release_artefacts/*"
     skip_cleanup: true
     on:
       tags: true

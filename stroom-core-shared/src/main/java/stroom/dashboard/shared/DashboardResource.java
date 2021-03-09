@@ -21,9 +21,9 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -37,7 +37,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Dashboards")
+@Tag(name = "Dashboards")
 @Path("/dashboard" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,41 +45,63 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
 
     @GET
     @Path("/{uuid}")
-    @ApiOperation("Fetch a dashboard doc by its UUID")
+    @Operation(
+            summary = "Fetch a dashboard doc by its UUID",
+            operationId = "fetchDashboard")
     DashboardDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
-    @ApiOperation("Update a dashboard doc")
-    DashboardDoc update(@PathParam("uuid") String uuid, @ApiParam("doc") DashboardDoc doc);
+    @Operation(
+            summary = "Update a dashboard doc",
+            operationId = "updateDashboard")
+    DashboardDoc update(
+            @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) DashboardDoc doc);
 
     @POST
     @Path("/validateExpression")
-    @ApiOperation(value = "Validate an expression")
-    ValidateExpressionResult validateExpression(@ApiParam("expression") String expression);
+    @Operation(
+            summary = "Validate an expression",
+            operationId = "validateDashboardExpression")
+    ValidateExpressionResult validateExpression(
+            @Parameter(description = "expression", required = true) String expression);
 
     @POST
     @Path("/downloadQuery")
-    @ApiOperation(value = "Download a query")
-    ResourceGeneration downloadQuery(@ApiParam("downloadQueryRequest") DownloadQueryRequest downloadQueryRequest);
+    @Operation(
+            summary = "Download a query",
+            operationId = "downloadDashboardQuery")
+    ResourceGeneration downloadQuery(
+            @Parameter(description = "downloadQueryRequest", required = true)
+                    DownloadQueryRequest downloadQueryRequest);
 
     @POST
     @Path("/downloadSearchResults")
-    @ApiOperation(value = "Download search results")
-    ResourceGeneration downloadSearchResults(@ApiParam("request") DownloadSearchResultsRequest request);
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadDashboardSearchResults")
+    ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
     @Path("/poll")
-    @ApiOperation("Poll for new search results")
-    Set<DashboardSearchResponse> poll(@ApiParam("request") SearchBusPollRequest request);
+    @Operation(
+            summary = "Poll for new search results",
+            operationId = "pollDashboardSearchResults")
+    Set<DashboardSearchResponse> poll(
+            @Parameter(description = "request", required = true) SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")
-    @ApiOperation(value = "Fetch time zone data from the server")
+    @Operation(
+            summary = "Fetch time zone data from the server",
+            operationId = "fetchTimeZones")
     List<String> fetchTimeZones();
 
     @GET
     @Path("/functions")
-    @ApiOperation(value = "Fetch all expression functions")
+    @Operation(
+            summary = "Fetch all expression functions",
+            operationId = "fetchDashboardFunctions")
     List<FunctionSignature> fetchFunctions();
 }

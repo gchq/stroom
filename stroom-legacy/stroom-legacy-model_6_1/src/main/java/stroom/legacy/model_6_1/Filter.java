@@ -17,35 +17,32 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
+@Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
         "both can be supplied")
 @Deprecated
 public final class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Only results matching this filter will be included",
+    @Schema(description = "Only results matching this filter will be included",
             example = "^[0-9]{3}$",
             required = false)
     private String includes;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "Only results NOT matching this filter will be included",
+    @Schema(description = "Only results NOT matching this filter will be included",
             example = "^[0-9]{3}$",
             required = false)
     private String excludes;

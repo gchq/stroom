@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasType;
+import stroom.docref.HasType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -69,7 +69,7 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
               onChange={() => {
                 exec(
                   (api) =>
-                    api.token.toggleEnabled(values.id, {
+                    api.token.toggleTokenEnabled(values.id, {
                       enabled: !values.enabled,
                     }),
                   () => {

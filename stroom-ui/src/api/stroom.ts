@@ -20,6 +20,7 @@ export interface AbstractFetchDataResult {
   streamTypeName?: string;
   totalCharacterCount?: CountLong;
   totalItemCount?: CountLong;
+  type: string;
 }
 
 export interface AbstractField {
@@ -84,6 +85,7 @@ export interface Account {
 }
 
 export interface AccountResultPage {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Account[];
 }
@@ -113,19 +115,10 @@ export interface Activity {
 }
 
 export interface ActivityConfig {
-  /** Set to true if users should be prompted to choose an activity on login. */
   chooseOnStartup?: boolean;
-
-  /** The HTML to display in the activity editor popup. */
   editorBody?: string;
-
-  /** The title of the activity editor popup. */
   editorTitle?: string;
-
-  /** If you would like users to be able to record some info about the activity they are performing set this property to true. */
   enabled?: boolean;
-
-  /** The title of the activity manager popup. */
   managerTitle?: string;
 }
 
@@ -190,6 +183,19 @@ export interface AnnotationEntry {
   version?: number;
 }
 
+export interface Arg {
+  allowedValues?: string[];
+  argType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+  defaultValue?: string;
+  description?: string;
+
+  /** @format int32 */
+  minVarargsCount?: number;
+  name?: string;
+  optional?: boolean;
+  varargs?: boolean;
+}
+
 export interface AssignTasksRequest {
   /** @format int32 */
   count?: number;
@@ -214,7 +220,7 @@ export interface Base64EncodedDocumentData {
   docRef?: DocRef;
 }
 
-export type BooleanField = AbstractField & object;
+export type BooleanField = AbstractField;
 
 export interface BuildInfo {
   buildDate?: string;
@@ -231,6 +237,12 @@ export interface CacheInfo {
   map?: Record<string, string>;
   name?: string;
   nodeName?: string;
+}
+
+export interface CacheInfoResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: CacheInfo[];
 }
 
 export interface ChangeDocumentPermissionsRequest {
@@ -252,11 +264,6 @@ export interface ChangePasswordResponse {
   changeSucceeded?: boolean;
   forceSignIn?: boolean;
   message?: string;
-}
-
-export interface ChangeSet {
-  addSet?: object[];
-  removeSet?: object[];
 }
 
 export interface ChangeSetString {
@@ -294,6 +301,42 @@ export interface ClusterLockKey {
   nodeName?: string;
 }
 
+export interface ClusterNodeInfo {
+  buildInfo?: BuildInfo;
+  discoverTime?: string;
+  endpointUrl?: string;
+  error?: string;
+  itemList?: ClusterNodeInfoItem[];
+  nodeName?: string;
+
+  /** @format int64 */
+  ping?: number;
+}
+
+export interface ClusterNodeInfoItem {
+  active?: boolean;
+  master?: boolean;
+  nodeName?: string;
+}
+
+export interface ClusterSearchTask {
+  dateTimeLocale?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  key?: QueryKey;
+
+  /** @format int64 */
+  now?: number;
+
+  /** The query terms for the search */
+  query?: Query;
+  settings?: CoprocessorSettings[];
+  shards?: number[];
+  sourceTaskId?: TaskId;
+  storedFields?: string[];
+  taskName?: string;
+}
+
 export interface ComponentConfig {
   id?: string;
   name?: string;
@@ -305,19 +348,11 @@ export interface ComponentResultRequest {
   /** The ID of the component that will receive the results corresponding to this ResultRequest */
   componentId: string;
   fetch?: "NONE" | "CHANGES" | "ALL";
+  type: string;
 }
 
-export type ComponentSettings = object;
-
-export interface ConditionalFormattingRule {
-  backgroundColor?: string;
-  enabled?: boolean;
-
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-  hide?: boolean;
-  id?: string;
-  textColor?: string;
+export interface ComponentSettings {
+  type: string;
 }
 
 export interface ConfigProperty {
@@ -355,21 +390,15 @@ export interface ConfirmPasswordResponse {
   valid?: boolean;
 }
 
-export interface CopyOp {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefs?: DocRef[];
-  permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
+export interface CoprocessorSettings {
+  /** @format int32 */
+  coprocessorId?: number;
+  type: string;
 }
 
 export interface CopyPermissionsFromParentRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-}
-
-export interface Count {
-  count?: Number;
-  exact?: boolean;
 }
 
 export interface CountLong {
@@ -395,14 +424,6 @@ export interface CreateEntryRequest {
   data?: string;
   linkedEvents?: EventId[];
   type?: string;
-}
-
-export interface CreateOp {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefName?: string;
-  docRefType?: string;
-  permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface CreateProcessFilterRequest {
@@ -446,6 +467,15 @@ export interface CriteriaFieldSort {
 
 export interface CustomRollUpMask {
   rolledUpTagPosition?: number[];
+}
+
+export interface CustomRollUpMaskFields {
+  /** @format int32 */
+  id?: number;
+
+  /** @format int32 */
+  maskValue?: number;
+  rolledUpFieldPositions?: number[];
 }
 
 export interface DBTableStatus {
@@ -502,6 +532,14 @@ export interface DashboardSearchRequest {
   search?: Search;
 }
 
+export interface DashboardSearchResponse {
+  complete?: boolean;
+  errors?: string;
+  highlights?: string[];
+  queryKey?: DashboardQueryKey;
+  results?: Result[];
+}
+
 export interface DataInfoSection {
   entries?: Entry[];
   title?: string;
@@ -541,6 +579,13 @@ export interface DataRetentionDeleteSummaryRequest {
   criteria?: FindDataRetentionImpactCriteria;
   dataRetentionRules?: DataRetentionRules;
   queryId?: string;
+}
+
+export interface DataRetentionDeleteSummaryResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  queryId?: string;
+  values?: DataRetentionDeleteSummary[];
 }
 
 export interface DataRetentionRule {
@@ -586,43 +631,29 @@ export interface DataSource {
   fields?: AbstractField[];
 }
 
-export type DateField = AbstractField & object;
+export type DateField = AbstractField;
 
-export type DateTimeFormatSettings = FormatSettings & { pattern: string; timeZone: TimeZone };
+/**
+ * The string formatting to apply to a date value
+ */
+export type DateTimeFormatSettings = FormatSettings & { pattern?: string; timeZone?: TimeZone };
 
-export type DefaultLocation = Location & { colNo?: number; lineNo?: number };
+export type DefaultLocation = Location;
+
+export interface Dependency {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  from?: DocRef;
+  ok?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  to?: DocRef;
+}
 
 export interface DependencyCriteria {
   pageRequest?: PageRequest;
   partialName?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
-}
-
-/**
- * A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.
- */
-export interface DictionaryDTO {
-  data?: string;
-  description?: string;
-  imports?: DocRef[];
-
-  /**
-   * The name for the data source
-   * @example MyStatistic
-   */
-  name: string;
-
-  /**
-   * The type of the 'document' that this DocRef refers to
-   * @example StroomStatsStore
-   */
-  type: string;
-
-  /**
-   * The unique identifier for this 'document'
-   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
-   */
-  uuid: string;
 }
 
 export interface DictionaryDoc {
@@ -635,26 +666,6 @@ export interface DictionaryDoc {
   data?: string;
   description?: string;
   imports?: DocRef[];
-  name?: string;
-  type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-}
-
-export interface Doc {
-  /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
   name?: string;
   type?: string;
 
@@ -732,7 +743,7 @@ export interface DocumentTypes {
   visibleTypes?: DocumentType[];
 }
 
-export type DoubleField = AbstractField & object;
+export type DoubleField = AbstractField;
 
 export interface DownloadQueryRequest {
   dashboardQueryKey?: DashboardQueryKey;
@@ -763,6 +774,14 @@ export interface Entry {
   value?: string;
 }
 
+export type EventCoprocessorSettings = CoprocessorSettings & {
+  maxEvent?: EventRef;
+  maxEvents?: number;
+  maxEventsPerStream?: number;
+  maxStreams?: number;
+  minEvent?: EventRef;
+};
+
 export interface EventId {
   /** @format int64 */
   eventId?: number;
@@ -775,6 +794,14 @@ export interface EventLink {
   /** @format int64 */
   annotationId?: number;
   eventId?: EventId;
+}
+
+export interface EventRef {
+  /** @format int64 */
+  eventId?: number;
+
+  /** @format int64 */
+  streamId?: number;
 }
 
 export interface Expander {
@@ -795,6 +822,13 @@ export interface ExplorerNode {
   tags?: string;
   type?: string;
   uuid?: string;
+}
+
+export interface ExplorerNodePermissions {
+  admin?: boolean;
+  createPermissions?: string[];
+  documentPermissions?: string[];
+  explorerNode?: ExplorerNode;
 }
 
 export interface ExplorerServiceCopyRequest {
@@ -842,6 +876,7 @@ export interface ExpressionCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -854,6 +889,7 @@ export interface ExpressionItem {
    * @example true
    */
   enabled?: boolean;
+  type: string;
 }
 
 /**
@@ -872,8 +908,11 @@ export interface ExpressionOperator {
   op: "AND" | "OR" | "NOT";
 }
 
+/**
+ * A predicate term in a query expression tree
+ */
 export type ExpressionTerm = ExpressionItem & {
-  condition:
+  condition?:
     | "CONTAINS"
     | "EQUALS"
     | "GREATER_THAN"
@@ -888,7 +927,7 @@ export type ExpressionTerm = ExpressionItem & {
     | "IS_NULL"
     | "IS_NOT_NULL";
   docRef?: DocRef;
-  field: string;
+  field?: string;
   value?: string;
 };
 
@@ -929,7 +968,7 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
-  expandedSeverities?: ("INFO" | "WARNING" | "ERROR" | "FATAL_ERROR")[];
+  expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
   markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -964,6 +1003,7 @@ export interface FetchLinkedScriptRequest {
 export type FetchMarkerResult = AbstractFetchDataResult & { markers?: Marker[] };
 
 export interface FetchNodeStatusResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: NodeStatusResult[];
 }
@@ -979,6 +1019,11 @@ export interface FetchProcessorRequest {
 
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
+}
+
+export interface FetchPropertyTypesResult {
+  pipelineElementType?: PipelineElementType;
+  propertyTypes?: Record<string, PipelinePropertyType>;
 }
 
 export interface FetchSuggestionsRequest {
@@ -1004,25 +1049,13 @@ export interface Field {
   /** Describes the formatting that will be applied to values in a field */
   format?: Format;
 
-  /**
-   * If this field is to be grouped then this defines the level of grouping, with 0 being the top level of grouping, 1 being the next level down, etc.
-   * @format int32
-   */
+  /** @format int32 */
   group?: number;
-
-  /** The internal id of the field for equality purposes */
   id?: string;
-
-  /** The name of the field for display purposes */
   name?: string;
 
   /** Describes the sorting applied to a field */
   sort?: Sort;
-  special?: boolean;
-  visible?: boolean;
-
-  /** @format int32 */
-  width?: number;
 }
 
 /**
@@ -1042,8 +1075,20 @@ export interface Filter {
   includes?: string;
 }
 
+export interface FilterFieldDefinition {
+  defaultField?: boolean;
+  displayName?: string;
+  filterQualifier?: string;
+}
+
+export interface FilterUsersRequest {
+  quickFilterInput?: string;
+  users?: User[];
+}
+
 export interface FindDBTableCriteria {
   pageRequest?: PageRequest;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -1051,7 +1096,15 @@ export interface FindDataRetentionImpactCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface FindElementDocRequest {
+  feedName?: string;
+  pipelineElement?: PipelineElement;
+  pipelineName?: string;
+  properties?: PipelineProperty[];
 }
 
 export interface FindExplorerNodeCriteria {
@@ -1067,6 +1120,7 @@ export interface FindExplorerNodeCriteria {
 export interface FindFsVolumeCriteria {
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -1078,6 +1132,7 @@ export interface FindIndexShardCriteria {
   nodeNameSet?: SelectionString;
   pageRequest?: PageRequest;
   partition?: StringCriteria;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
   volumeIdSet?: SelectionInteger;
 }
@@ -1087,6 +1142,7 @@ export interface FindMetaCriteria {
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
   pageRequest?: PageRequest;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -1097,6 +1153,7 @@ export interface FindStoredQueryCriteria {
   name?: StringCriteria;
   pageRequest?: PageRequest;
   requiredPermission?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
   userId?: string;
 }
@@ -1112,6 +1169,7 @@ export interface FindTaskProgressCriteria {
   nameFilter?: string;
   pageRequest?: PageRequest;
   sessionId?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -1124,12 +1182,16 @@ export interface FindUserCriteria {
   pageRequest?: PageRequest;
   quickFilterInput?: string;
   relatedUser?: User;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
+/**
+ * A result structure used primarily for visualisation data
+ */
 export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
 
-export type FloatField = AbstractField & object;
+export type FloatField = AbstractField;
 
 /**
  * Describes the formatting that will be applied to values in a field
@@ -1147,6 +1209,7 @@ export interface Format {
 
 export interface FormatSettings {
   default?: boolean;
+  type: string;
 }
 
 export interface FsVolume {
@@ -1191,6 +1254,16 @@ export interface FsVolumeState {
   version?: number;
 }
 
+export interface FunctionSignature {
+  aliases?: string[];
+  args?: Arg[];
+  categoryPath?: string[];
+  description?: string;
+  name?: string;
+  returnDescription?: string;
+  returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+}
+
 export interface GetFeedStatusRequest {
   feedName?: string;
   senderDn?: string;
@@ -1200,16 +1273,16 @@ export interface GetFeedStatusResponse {
   message?: string;
   status?: "Receive" | "Reject" | "Drop";
   stroomStatusCode?:
-    | "OK"
-    | "FEED_MUST_BE_SPECIFIED"
-    | "FEED_IS_NOT_DEFINED"
-    | "FEED_IS_NOT_SET_TO_RECEIVED_DATA"
-    | "UNEXPECTED_DATA_TYPE"
-    | "UNKNOWN_COMPRESSION"
-    | "CLIENT_CERTIFICATE_REQUIRED"
-    | "CLIENT_CERTIFICATE_NOT_AUTHORISED"
-    | "COMPRESSED_STREAM_INVALID"
-    | "UNKNOWN_ERROR";
+    | "200 - 0 - OK"
+    | "406 - 100 - Feed must be specified"
+    | "406 - 101 - Feed is not defined"
+    | "406 - 110 - Feed is not set to receive data"
+    | "406 - 120 - Unexpected data type"
+    | "406 - 200 - Unknown compression"
+    | "401 - 300 - Client Certificate Required"
+    | "403 - 310 - Client Certificate not authorised"
+    | "500 - 400 - Compressed stream invalid"
+    | "500 - 999 - Unknown error";
 }
 
 export interface GetPipelineForMetaRequest {
@@ -1234,10 +1307,11 @@ export interface GetScheduledTimesRequest {
 export interface GlobalConfigCriteria {
   pageRequest?: PageRequest;
   quickFilterInput?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
-export type IdField = AbstractField & object;
+export type IdField = AbstractField;
 
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
@@ -1315,6 +1389,38 @@ export interface IndexField {
   termPositions?: boolean;
 }
 
+export interface IndexShard {
+  /** @format int32 */
+  commitDocumentCount?: number;
+
+  /** @format int64 */
+  commitDurationMs?: number;
+
+  /** @format int64 */
+  commitMs?: number;
+
+  /** @format int32 */
+  documentCount?: number;
+
+  /** @format int64 */
+  fileSize?: number;
+
+  /** @format int64 */
+  id?: number;
+  indexUuid?: string;
+  indexVersion?: string;
+  nodeName?: string;
+  partition?: string;
+
+  /** @format int64 */
+  partitionFromTime?: number;
+
+  /** @format int64 */
+  partitionToTime?: number;
+  status?: "CLOSED" | "OPEN" | "CLOSING" | "OPENING" | "NEW" | "DELETED" | "CORRUPT";
+  volume?: IndexVolume;
+}
+
 export interface IndexVolume {
   /** @format int64 */
   bytesFree?: number;
@@ -1376,17 +1482,57 @@ export interface Indicators {
 }
 
 export interface InfoPopupConfig {
-  /** If you would like users to provide some query info when performing a query set this property to true. */
   enabled?: boolean;
-
-  /** The title of the query info popup. */
   title?: string;
-
-  /** A regex used to validate query info. */
   validationRegex?: string;
 }
 
-export type IntegerField = AbstractField & object;
+export type IntegerField = AbstractField;
+
+export interface Job {
+  advanced?: boolean;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  enabled?: boolean;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface JobNode {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** @format int32 */
+  id?: number;
+  job?: Job;
+  jobType?: "UNKNOWN" | "CRON" | "FREQUENCY" | "DISTRIBUTED";
+  nodeName?: string;
+  schedule?: string;
+
+  /** @format int32 */
+  taskLimit?: number;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
+}
 
 export interface JobNodeInfo {
   /** @format int32 */
@@ -1423,6 +1569,7 @@ export interface KafkaConfigDoc {
 
 export interface LayoutConfig {
   preferredSize?: Size;
+  type: string;
 }
 
 export interface Limits {
@@ -1436,7 +1583,11 @@ export interface Limits {
   streamCount?: number;
 }
 
+/**
+ * List of config properties
+ */
 export interface ListConfigResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ConfigProperty[];
 }
@@ -1447,6 +1598,7 @@ export interface Location {
 
   /** @format int32 */
   lineNo?: number;
+  type: string;
 }
 
 export interface LoginRequest {
@@ -1460,7 +1612,7 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
-export type LongField = AbstractField & object;
+export type LongField = AbstractField;
 
 export interface MapDefinition {
   mapName?: string;
@@ -1468,12 +1620,41 @@ export interface MapDefinition {
 }
 
 export interface Marker {
-  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+  type: string;
 }
 
 export interface Message {
   message?: string;
-  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
+export interface Meta {
+  /** @format int64 */
+  createMs?: number;
+
+  /** @format int64 */
+  effectiveMs?: number;
+  feedName?: string;
+
+  /** @format int64 */
+  id?: number;
+
+  /** @format int64 */
+  parentMetaId?: number;
+  pipelineUuid?: string;
+  processorUuid?: string;
+  status?: "UNLOCKED" | "LOCKED" | "DELETED";
+
+  /** @format int64 */
+  statusMs?: number;
+  typeName?: string;
+}
+
+export interface MetaRow {
+  attributes?: Record<string, string>;
+  meta?: Meta;
+  pipelineName?: string;
 }
 
 export interface Node {
@@ -1503,9 +1684,10 @@ export interface NodeStatusResult {
   node?: Node;
 }
 
-export type Number = object;
-
-export type NumberFormatSettings = FormatSettings & { decimalPlaces: number; useSeparator?: boolean };
+/**
+ * The definition of a format to apply to numeric data
+ */
+export type NumberFormatSettings = FormatSettings & { decimalPlaces?: number; useSeparator?: boolean };
 
 /**
  * The offset and length of a range of data in a sub-set of a query result set
@@ -1526,11 +1708,6 @@ export interface OffsetRange {
   offset: number;
 }
 
-export interface OverrideValue {
-  hasOverride?: boolean;
-  value?: object;
-}
-
 export interface OverrideValueString {
   hasOverride?: boolean;
   value?: string;
@@ -1544,6 +1721,9 @@ export interface PageRequest {
   offset?: number;
 }
 
+/**
+ * Details of the page of results being returned.
+ */
 export interface PageResponse {
   exact?: boolean;
 
@@ -1569,59 +1749,34 @@ export interface Param {
 }
 
 export interface PasswordPolicyConfig {
-  /** Will the UI allow password resets */
   allowPasswordResets?: boolean;
-
-  /** If true, on first login the user will be forced to change their password. */
   forcePasswordChangeOnFirstLogin?: boolean;
-
-  /** The age after which a password will have to be changed. The frequency of checks is controlled by the job 'Account Maintenance'. */
-  mandatoryPasswordChangeDuration: StroomDuration;
+  mandatoryPasswordChangeDuration: string;
 
   /**
-   * The minimum number of characters that new passwords need to contain.
    * @format int32
    * @min 0
    */
   minimumPasswordLength: number;
 
   /**
-   * The minimum strength password that is allowed.
    * @format int32
    * @min 0
    * @max 5
    */
   minimumPasswordStrength: number;
-
-  /** Unused user accounts with a duration since account creation greater than this value will be locked. The frequency of checks is controlled by the job 'Account Maintenance'. */
-  neverUsedAccountDeactivationThreshold: StroomDuration;
-
-  /** A regex pattern that new passwords must match */
+  neverUsedAccountDeactivationThreshold: string;
   passwordComplexityRegex?: string;
-
-  /** A message informing users of the password policy */
   passwordPolicyMessage?: string;
-
-  /** User accounts with a duration since last login greater than this value will be locked. The frequency of checks is controlled by the job 'Account Maintenance'. */
-  unusedAccountDeactivationThreshold: StroomDuration;
+  unusedAccountDeactivationThreshold: string;
 }
 
-export type PermissionChangeEvent = object;
+export interface PermissionChangeEvent {
+  type: string;
+}
 
 export interface PermissionChangeRequest {
   event?: PermissionChangeEvent;
-}
-
-export interface PipelineDTO {
-  configStack?: PipelineData[];
-  description?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  docRef?: DocRef;
-  merged?: PipelineData;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  parentPipeline?: DocRef;
 }
 
 export interface PipelineData {
@@ -1766,16 +1921,10 @@ export interface PipelineStepRequest {
 }
 
 export interface ProcessConfig {
-  /**
-   * The default number of records that batch search processing will be limited by.
-   * @format int64
-   */
+  /** @format int64 */
   defaultRecordLimit?: number;
 
-  /**
-   * The default number of minutes that batch search processing will be limited by.
-   * @format int64
-   */
+  /** @format int64 */
   defaultTimeLimit?: number;
 }
 
@@ -1871,9 +2020,16 @@ export interface ProcessorFilterTracker {
 
 export interface ProcessorListRow {
   expander?: Expander;
+  type: string;
 }
 
-export type ProcessorRow = ProcessorListRow & { expander?: Expander; processor?: Processor };
+export interface ProcessorListRowResultPage {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ProcessorListRow[];
+}
+
+export type ProcessorRow = ProcessorListRow & { processor?: Processor };
 
 export interface ProcessorTask {
   /** @format int64 */
@@ -1908,6 +2064,19 @@ export interface ProcessorTaskList {
   nodeName?: string;
 }
 
+export interface ProcessorTaskSummary {
+  /** @format int64 */
+  count?: number;
+  feed?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  pipeline?: DocRef;
+
+  /** @format int32 */
+  priority?: number;
+  status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+}
+
 export interface Prop {
   id?: string;
   name?: string;
@@ -1929,10 +2098,8 @@ export interface Query {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
 
-  /** The root logical operator in the query expression tree */
+  /** A logical addOperator term in a query expression tree */
   expression: ExpressionOperator;
-
-  /** A list of key/value pairs that provide additional information about the query */
   params?: Param[];
 }
 
@@ -1966,18 +2133,21 @@ export interface QueryKey {
   uuid: string;
 }
 
-export interface Range {
-  from?: Number;
-  matchNull?: boolean;
-  to?: Number;
-}
-
 export interface RangeInteger {
   /** @format int32 */
   from?: number;
   matchNull?: boolean;
 
   /** @format int32 */
+  to?: number;
+}
+
+export interface RangeLong {
+  /** @format int64 */
+  from?: number;
+  matchNull?: boolean;
+
+  /** @format int64 */
   to?: number;
 }
 
@@ -2026,6 +2196,13 @@ export interface ReceiveDataRules {
   version?: string;
 }
 
+export interface RefDataLookupRequest {
+  effectiveTime?: string;
+  key: string;
+  mapName: string;
+  referenceLoaders: ReferenceLoader[];
+}
+
 export interface RefDataProcessingInfo {
   /** @format int64 */
   createTimeEpochMs?: number;
@@ -2060,6 +2237,14 @@ export interface RefStreamDefinition {
   streamNo?: number;
 }
 
+export interface ReferenceLoader {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  loaderPipeline: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  referenceFeed: DocRef;
+}
+
 export type RemovePermissionEvent = PermissionChangeEvent & {
   documentUuid?: string;
   permission?: string;
@@ -2069,7 +2254,7 @@ export type RemovePermissionEvent = PermissionChangeEvent & {
 export interface ReprocessDataInfo {
   details?: string;
   message?: string;
-  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
 }
 
 export interface ResetPasswordRequest {
@@ -2096,19 +2281,149 @@ export interface Result {
 
   /** If an error has occurred producing this result set then this will have details of the error */
   error?: string;
+  type: string;
 }
 
-export interface ResultPage {
+/**
+ * A page of results.
+ */
+export interface ResultPageActivity {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: object[];
+  values?: Activity[];
 }
 
+/**
+ * A page of results.
+ */
+export interface ResultPageCustomRollUpMask {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: CustomRollUpMask[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageCustomRollUpMaskFields {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: CustomRollUpMaskFields[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageDBTableStatus {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: DBTableStatus[];
 }
 
+/**
+ * A page of results.
+ */
+export interface ResultPageDependency {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: Dependency[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageFsVolume {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FsVolume[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageIndexShard {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: IndexShard[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageIndexVolume {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: IndexVolume[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageIndexVolumeGroup {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: IndexVolumeGroup[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageJob {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: Job[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageJobNode {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: JobNode[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageMetaRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: MetaRow[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageProcessorTask {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ProcessorTask[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageProcessorTaskSummary {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ProcessorTaskSummary[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageStoredQuery {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: StoredQuery[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageUser {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: User[];
 }
@@ -2119,8 +2434,6 @@ export interface ResultPageUser {
 export interface ResultRequest {
   /** The ID of the component that will receive the results corresponding to this ResultRequest */
   componentId: string;
-
-  /** The fetch mode for the query. NONE means fetch no data, ALL means fetch all known results, CHANGES means fetch only those records not see in previous requests */
   fetch?: "NONE" | "CHANGES" | "ALL";
   mappings: TableSettings[];
 
@@ -2206,6 +2519,7 @@ export interface Search {
 export interface SearchAccountRequest {
   pageRequest?: PageRequest;
   quickFilter?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
 }
 
@@ -2242,10 +2556,7 @@ export interface SearchRequest {
  * The response to a search request, that may or may not contain results. The results may only be a partial set if an iterative screech was requested
  */
 export interface SearchResponse {
-  /** True if the query has returned all known results */
   complete?: boolean;
-
-  /** A list of errors that occurred in running the query */
   errors?: string[];
 
   /** A list of strings to highlight in the UI that should correlate with the search query. */
@@ -2256,12 +2567,8 @@ export interface SearchResponse {
 export interface SearchTokenRequest {
   pageRequest?: PageRequest;
   quickFilter?: string;
+  sort?: string;
   sortList?: CriteriaFieldSort[];
-}
-
-export interface Selection {
-  matchAll?: boolean;
-  set?: object[];
 }
 
 export interface SelectionIndexShardStatus {
@@ -2284,6 +2591,28 @@ export interface SelectionString {
   set?: string[];
 }
 
+export interface SelectionSummary {
+  ageRange?: RangeLong;
+
+  /** @format int64 */
+  feedCount?: number;
+
+  /** @format int64 */
+  itemCount?: number;
+
+  /** @format int64 */
+  pipelineCount?: number;
+
+  /** @format int64 */
+  processorCount?: number;
+
+  /** @format int64 */
+  statusCount?: number;
+
+  /** @format int64 */
+  typeCount?: number;
+}
+
 export interface SelectionVolumeUseStatus {
   matchAll?: boolean;
   set?: ("ACTIVE" | "INACTIVE" | "CLOSED")[];
@@ -2304,6 +2633,17 @@ export interface SessionInfo {
   buildInfo?: BuildInfo;
   nodeName?: string;
   userName?: string;
+}
+
+export interface SessionListResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: SessionDetails[];
+}
+
+export interface SessionLoginResponse {
+  authenticated?: boolean;
+  redirectUri?: string;
 }
 
 export interface SetAssignedToRequest {
@@ -2344,6 +2684,11 @@ export interface SolrConnectionConfig {
   useZk?: boolean;
   zkHosts?: string[];
   zkPath?: string;
+}
+
+export interface SolrConnectionTestResponse {
+  message?: string;
+  ok?: boolean;
 }
 
 export interface SolrIndexDoc {
@@ -2448,21 +2793,18 @@ export interface Sort {
 
 export interface SourceConfig {
   /**
-   * The maximum number of characters of data to display in the Data Preview pane.
    * @format int64
    * @min 1
    */
   maxCharactersInPreviewFetch?: number;
 
   /**
-   * The maximum number of characters of data to display in the Source View editor at at time.
    * @format int64
    * @min 1
    */
   maxCharactersPerFetch?: number;
 
   /**
-   * When displaying multi-line data in the Data Preview or Source views, the viewer will attempt to always show complete lines. It will go past the requested range by up to this many characters in order to complete the line.
    * @format int64
    * @min 0
    */
@@ -2486,20 +2828,13 @@ export interface SourceLocation {
 }
 
 export interface SplashConfig {
-  /** The HTML to display in the splash screen. */
   body?: string;
-
-  /** If you would like users to see a splash screen on login. */
   enabled?: boolean;
-
-  /** The title of the splash screen popup. */
   title?: string;
-
-  /** The version of the splash screen message. */
   version?: string;
 }
 
-export type SplitLayoutConfig = LayoutConfig & { children?: LayoutConfig[]; dimension?: number; preferredSize?: Size };
+export type SplitLayoutConfig = LayoutConfig & { children?: LayoutConfig[]; dimension?: number };
 
 export interface StatisticField {
   fieldName?: string;
@@ -2558,7 +2893,7 @@ export interface StepLocation {
 export interface SteppingFilterSettings {
   filters?: XPathFilter[];
   skipToOutput?: "NOT_EMPTY" | "EMPTY";
-  skipToSeverity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
+  skipToSeverity?: "INFO" | "WARN" | "ERROR" | "FATAL";
 }
 
 export interface SteppingResult {
@@ -2571,12 +2906,12 @@ export interface SteppingResult {
   stepLocation?: StepLocation;
 }
 
-export type StoredError = Marker & {
+export interface StoredError {
   elementId?: string;
   location?: Location;
   message?: string;
-  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-};
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
 
 export interface StoredQuery {
   componentId?: string;
@@ -2603,9 +2938,7 @@ export interface StoredQuery {
   version?: number;
 }
 
-export type StreamLocation = Location & { colNo?: number; lineNo?: number; streamNo?: number };
-
-export type StreamingOutput = object;
+export type StreamLocation = Location & { streamNo?: number };
 
 export interface StringCriteria {
   caseInsensitive?: boolean;
@@ -2614,8 +2947,6 @@ export interface StringCriteria {
   string?: string;
   stringUpper?: string;
 }
-
-export type StroomDuration = object;
 
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
@@ -2654,12 +2985,7 @@ export interface StroomStatsStoreFieldChangeRequest {
   oldEntityData?: StroomStatsStoreEntityData;
 }
 
-export type Summary = Marker & {
-  count?: number;
-  expander?: Expander;
-  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-  total?: number;
-};
+export type Summary = Marker & { count?: number; expander?: Expander; total?: number };
 
 export interface SystemInfoResult {
   description?: string;
@@ -2667,38 +2993,18 @@ export interface SystemInfoResult {
   name: string;
 }
 
+export interface SystemInfoResultList {
+  results?: SystemInfoResult[];
+}
+
 export interface TabConfig {
   id?: string;
   visible?: boolean;
 }
 
-export type TabLayoutConfig = LayoutConfig & { preferredSize?: Size; selected?: number; tabs?: TabConfig[] };
+export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
-export type TableComponentSettings = ComponentSettings & {
-  conditionalFormattingRules?: ConditionalFormattingRule[];
-  extractValues?: boolean;
-  extractionPipeline?: DocRef;
-  fields: Field[];
-  maxResults?: number[];
-  modelVersion?: string;
-  queryId: string;
-  showDetail?: boolean;
-};
-
-export type TableResult = Result & { fields: Field[]; resultRange: OffsetRange; rows: Row[]; totalResults?: number };
-
-export type TableResultRequest = ComponentResultRequest & {
-  openGroups?: string[];
-  requestedRange?: OffsetRange;
-  tableSettings?: TableSettings;
-};
-
-/**
- * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
- */
-export interface TableSettings {
-  conditionalFormattingRules?: ConditionalFormattingRule[];
-
+export interface TableComponentSettings {
   /** TODO */
   extractValues?: boolean;
 
@@ -2711,7 +3017,40 @@ export interface TableSettings {
    * @example 1000,10,1
    */
   maxResults?: number[];
-  modelVersion?: string;
+
+  /** TODO */
+  queryId: string;
+  showDetail?: boolean;
+}
+
+export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: string[]; tableSettings?: TableSettings };
+
+/**
+ * Object for describing a set of results in a table form that supports grouped data
+ */
+export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange; rows?: Row[]; totalResults?: number };
+
+export type TableResultRequest = ComponentResultRequest & {
+  openGroups?: string[];
+  requestedRange?: OffsetRange;
+  tableSettings?: TableSettings;
+};
+
+/**
+ * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
+ */
+export interface TableSettings {
+  extractValues?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  extractionPipeline?: DocRef;
+  fields: Field[];
+
+  /**
+   * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
+   * @example 1000,10,1
+   */
+  maxResults?: number[];
 
   /** TODO */
   queryId: string;
@@ -2743,6 +3082,7 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
 }
@@ -2791,7 +3131,7 @@ export interface TextConverterDoc {
   version?: string;
 }
 
-export type TextField = AbstractField & object;
+export type TextField = AbstractField;
 
 export interface TextRange {
   from?: Location;
@@ -2799,31 +3139,14 @@ export interface TextRange {
 }
 
 export interface ThemeConfig {
-  /** GUI */
   backgroundAttachment?: string;
-
-  /** GUI */
   backgroundColor?: string;
-
-  /** GUI */
   backgroundImage?: string;
-
-  /** GUI */
   backgroundOpacity?: string;
-
-  /** GUI */
   backgroundPosition?: string;
-
-  /** GUI */
   backgroundRepeat?: string;
-
-  /** A comma separated list of KV pairs to provide colours for labels. */
   labelColours?: string;
-
-  /** GUI */
   tubeOpacity?: string;
-
-  /** GUI */
   tubeVisible?: string;
 }
 
@@ -2852,7 +3175,7 @@ export interface TimeZone {
   offsetMinutes?: number;
 
   /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
-  use: "LOCAL" | "UTC" | "ID" | "OFFSET";
+  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface Token {
@@ -2882,23 +3205,13 @@ export interface Token {
 }
 
 export interface TokenConfig {
-  /** The cryptographic algorithm used in the Json Web Signatures. Valid values can be found at https://openid.net/specs/draft-jones-json-web-signature-04.html#Signing */
   algorithm: string;
 
-  /**
-   * The default API key expiry time
-   * @format int64
-   */
+  /** @format int64 */
   defaultApiKeyExpiryInMinutes?: number;
-
-  /** The Issuer value used in Json Web Tokens. */
   jwsIssuer: string;
-
-  /** The time before an email reset token will expire. */
-  timeUntilExpirationForEmailResetToken: StroomDuration;
-
-  /** The time before a user token will expire. */
-  timeUntilExpirationForUserToken: StroomDuration;
+  timeUntilExpirationForEmailResetToken: string;
+  timeUntilExpirationForUserToken: string;
 }
 
 export interface TokenRequest {
@@ -2909,35 +3222,32 @@ export interface TokenRequest {
   redirect_uri?: string;
 }
 
+export interface TokenResponse {
+  access_token?: string;
+
+  /** @format int32 */
+  expires_in?: number;
+  id_token?: string;
+  refresh_token?: string;
+  token_type?: string;
+}
+
 export interface TokenResultPage {
+  /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Token[];
 }
 
 export interface UiConfig {
-  /** The about message that is displayed when selecting Help -> About. The about message is in HTML format. */
   aboutHtml?: string;
   activity?: ActivityConfig;
-
-  /** The default maximum number of search results to return to the dashboard, unless the user requests lower values. */
   defaultMaxResults?: string;
-
-  /** The URL of hosted help files. */
   helpUrl?: string;
-
-  /** The title to use for the application in the browser. */
   htmlTitle?: string;
-
-  /** Provide a warning message to users about an outage or other significant event. */
   maintenanceMessage?: string;
-
-  /** The regex pattern for entity names. */
   namePattern?: string;
 
-  /**
-   * Determines the behaviour of the browser built-in context menu. This property is for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard browser menu.
-   * @pattern ^return (true|false);$
-   */
+  /** @pattern ^return (true|false);$ */
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
@@ -2946,13 +3256,10 @@ export interface UiConfig {
   theme?: ThemeConfig;
   uiPreferences?: UiPreferences;
   url?: UrlConfig;
-
-  /** The welcome message that is displayed in the welcome tab when logging in to Stroom. The welcome message is in HTML format. */
   welcomeHtml?: string;
 }
 
 export interface UiPreferences {
-  /** The date format to use in the UI */
   dateFormat?: string;
 }
 
@@ -2960,6 +3267,12 @@ export interface UpdateAccountRequest {
   account?: Account;
   confirmPassword?: string;
   password?: string;
+}
+
+export interface UpdateStatusRequest {
+  criteria?: FindMetaCriteria;
+  currentStatus?: "UNLOCKED" | "LOCKED" | "DELETED";
+  newStatus?: "UNLOCKED" | "LOCKED" | "DELETED";
 }
 
 export interface UploadDataRequest {
@@ -2973,13 +3286,8 @@ export interface UploadDataRequest {
 }
 
 export interface UrlConfig {
-  /** The path to the API Keys screen. */
   apiKeys?: string;
-
-  /** The path to the Change Password screen. */
   changepassword?: string;
-
-  /** The path to the Users screen. */
   users?: string;
 }
 
@@ -3059,6 +3367,10 @@ export interface VisualisationDoc {
   version?: string;
 }
 
+export interface Welcome {
+  html?: string;
+}
+
 export interface XPathFilter {
   ignoreCase?: boolean;
   matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "UNIQUE";
@@ -3091,32 +3403,6 @@ export interface XmlSchemaDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
-}
-
-/**
- * A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.
- */
-export interface XsltDTO {
-  data?: string;
-  description?: string;
-
-  /**
-   * The name for the data source
-   * @example MyStatistic
-   */
-  name: string;
-
-  /**
-   * The type of the 'document' that this DocRef refers to
-   * @example StroomStatsStore
-   */
-  type: string;
-
-  /**
-   * The unique identifier for this 'document'
-   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
-   */
-  uuid: string;
 }
 
 export interface XsltDoc {
@@ -3154,7 +3440,7 @@ export interface FullRequestParams extends Omit<RequestInit, "body"> {
   /** query params */
   query?: QueryParamsType;
   /** format of response (i.e. response.json() -> format: "json") */
-  format?: keyof Omit<Body, "body" | "bodyUsed">;
+  format?: ResponseFormat;
   /** request body */
   body?: unknown;
   /** base url */
@@ -3168,7 +3454,7 @@ export type RequestParams = Omit<FullRequestParams, "body" | "method" | "query" 
 export interface ApiConfig<SecurityDataType = unknown> {
   baseUrl?: string;
   baseApiParams?: Omit<RequestParams, "baseUrl" | "cancelToken" | "signal">;
-  securityWorker?: (securityData: SecurityDataType) => RequestParams | void;
+  securityWorker?: (securityData: SecurityDataType | null) => Promise<RequestParams | void> | RequestParams | void;
 }
 
 export interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
@@ -3186,8 +3472,8 @@ export enum ContentType {
 
 export class HttpClient<SecurityDataType = unknown> {
   public baseUrl: string = "/api";
-  private securityData: SecurityDataType = null as any;
-  private securityWorker: null | ApiConfig<SecurityDataType>["securityWorker"] = null;
+  private securityData: SecurityDataType | null = null;
+  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
   private abortControllers = new Map<CancelToken, AbortController>();
 
   private baseApiParams: RequestParams = {
@@ -3201,7 +3487,7 @@ export class HttpClient<SecurityDataType = unknown> {
     Object.assign(this, apiConfig);
   }
 
-  public setSecurityData = (data: SecurityDataType) => {
+  public setSecurityData = (data: SecurityDataType | null) => {
     this.securityData = data;
   };
 
@@ -3233,7 +3519,8 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   private contentFormatters: Record<ContentType, (input: any) => any> = {
-    [ContentType.Json]: (input: any) => (input !== null && typeof input === "object" ? JSON.stringify(input) : input),
+    [ContentType.Json]: (input: any) =>
+      input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
     [ContentType.FormData]: (input: any) =>
       Object.keys(input || {}).reduce((data, key) => {
         data.append(key, input[key]);
@@ -3278,7 +3565,7 @@ export class HttpClient<SecurityDataType = unknown> {
     }
   };
 
-  public request = <T = any, E = any>({
+  public request = async <T = any, E = any>({
     body,
     secure,
     path,
@@ -3289,7 +3576,7 @@ export class HttpClient<SecurityDataType = unknown> {
     cancelToken,
     ...params
   }: FullRequestParams): Promise<HttpResponse<T, E>> => {
-    const secureParams = (secure && this.securityWorker && this.securityWorker(this.securityData)) || {};
+    const secureParams = (secure && this.securityWorker && (await this.securityWorker(this.securityData))) || {};
     const requestParams = this.mergeRequestParams(params, secureParams);
     const queryString = query && this.toQueryString(query);
     const payloadFormatter = this.contentFormatters[type || ContentType.Json];
@@ -3297,7 +3584,7 @@ export class HttpClient<SecurityDataType = unknown> {
     return fetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
       ...requestParams,
       headers: {
-        ...(type ? { "Content-Type": type } : {}),
+        ...(type && type !== ContentType.FormData ? { "Content-Type": type } : {}),
         ...(requestParams.headers || {}),
       },
       signal: cancelToken ? this.createAbortSignal(cancelToken) : void 0,
@@ -3343,18 +3630,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Account
-     * @name List
+     * @name ListAccounts
      * @summary Get all accounts.
      * @request GET:/account/v1
      * @secure
      */
-    list: (params: RequestParams = {}) =>
-      this.request<AccountResultPage, any>({
+    listAccounts: (params: RequestParams = {}) =>
+      this.request<any, AccountResultPage>({
         path: `/account/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3362,19 +3647,18 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Account
-     * @name Create
+     * @name CreateAccount
      * @summary Create an account.
      * @request POST:/account/v1
      * @secure
      */
-    create: (body: CreateAccountRequest, params: RequestParams = {}) =>
-      this.request<number, any>({
+    createAccount: (data: CreateAccountRequest, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/account/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3382,19 +3666,18 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Account
-     * @name Search
+     * @name SearchAccounts
      * @summary Search for an account by email.
      * @request POST:/account/v1/search
      * @secure
      */
-    search: (body: SearchAccountRequest, params: RequestParams = {}) =>
-      this.request<AccountResultPage, any>({
+    searchAccounts: (data: SearchAccountRequest, params: RequestParams = {}) =>
+      this.request<any, AccountResultPage>({
         path: `/account/v1/search`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3402,57 +3685,52 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Account
-     * @name Read
-     * @summary Get an account by ID.
-     * @request GET:/account/v1/{id}
-     * @secure
-     */
-    read: (id: number, params: RequestParams = {}) =>
-      this.request<Account, any>({
-        path: `/account/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Account
-     * @name Update
-     * @summary Update an account.
-     * @request PUT:/account/v1/{id}
-     * @secure
-     */
-    update: (id: number, body: UpdateAccountRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
-        path: `/account/v1/${id}`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Account
-     * @name Delete
+     * @name DeleteAccount
      * @summary Delete an account by ID.
      * @request DELETE:/account/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    deleteAccount: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/account/v1/${id}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Account
+     * @name FetchAccount
+     * @summary Get an account by ID.
+     * @request GET:/account/v1/{id}
+     * @secure
+     */
+    fetchAccount: (id: number, params: RequestParams = {}) =>
+      this.request<any, Account>({
+        path: `/account/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Account
+     * @name UpdateAccount
+     * @summary Update an account.
+     * @request PUT:/account/v1/{id}
+     * @secure
+     */
+    updateAccount: (id: number, data: UpdateAccountRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/account/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -3460,193 +3738,179 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags activity - v1
-     * @name List
+     * @tags Activities
+     * @name ListActivities
      * @summary Lists activities
      * @request GET:/activity/v1
      * @secure
      */
-    list: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    listActivities: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, ResultPageActivity>({
         path: `/activity/v1`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
-     * @name Create
+     * @tags Activities
+     * @name CreateActivity
      * @summary Create an Activity
      * @request POST:/activity/v1
      * @secure
      */
-    create: (params: RequestParams = {}) =>
-      this.request<Activity, any>({
+    createActivity: (params: RequestParams = {}) =>
+      this.request<any, Activity>({
         path: `/activity/v1`,
         method: "POST",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
+     * @tags Activities
      * @name AcknowledgeSplash
      * @summary Acknowledge the slash screen
      * @request POST:/activity/v1/acknowledge
      * @secure
      */
-    acknowledgeSplash: (body: AcknowledgeSplashRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    acknowledgeSplash: (data: AcknowledgeSplashRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/activity/v1/acknowledge`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
+     * @tags Activities
      * @name GetCurrentActivity
      * @summary Gets the current activity
      * @request GET:/activity/v1/current
      * @secure
      */
     getCurrentActivity: (params: RequestParams = {}) =>
-      this.request<Activity, any>({
+      this.request<any, Activity>({
         path: `/activity/v1/current`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
+     * @tags Activities
      * @name SetCurrentActivity
      * @summary Gets the current activity
      * @request PUT:/activity/v1/current
      * @secure
      */
-    setCurrentActivity: (params: RequestParams = {}) =>
-      this.request<Activity, any>({
+    setCurrentActivity: (data: Activity, params: RequestParams = {}) =>
+      this.request<any, Activity>({
         path: `/activity/v1/current`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
-     * @name ListFieldDefinitions
+     * @tags Activities
+     * @name ListActivityFieldDefinitions
      * @summary Lists activity field definitions
      * @request GET:/activity/v1/fields
      * @secure
      */
-    listFieldDefinitions: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    listActivityFieldDefinitions: (params: RequestParams = {}) =>
+      this.request<any, FilterFieldDefinition[]>({
         path: `/activity/v1/fields`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
-     * @name Validate
+     * @tags Activities
+     * @name ValidateActivity
      * @summary Create an Activity
      * @request POST:/activity/v1/validate
      * @secure
      */
-    validate: (body: Activity, params: RequestParams = {}) =>
-      this.request<ActivityValidationResult, any>({
+    validateActivity: (data: Activity, params: RequestParams = {}) =>
+      this.request<any, ActivityValidationResult>({
         path: `/activity/v1/validate`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags activity - v1
-     * @name Read
-     * @summary Get an Activity
-     * @request GET:/activity/v1/{id}
-     * @secure
-     */
-    read: (id: number, params: RequestParams = {}) =>
-      this.request<Activity, any>({
-        path: `/activity/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags activity - v1
-     * @name Update
-     * @summary Update an Activity
-     * @request PUT:/activity/v1/{id}
-     * @secure
-     */
-    update: (id: number, params: RequestParams = {}) =>
-      this.request<Activity, any>({
-        path: `/activity/v1/${id}`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags activity - v1
-     * @name Delete
+     * @tags Activities
+     * @name DeleteActivity
      * @summary Delete an activity
      * @request DELETE:/activity/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    deleteActivity: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/activity/v1/${id}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Activities
+     * @name FetchActivity
+     * @summary Fetch an Activity
+     * @request GET:/activity/v1/{id}
+     * @secure
+     */
+    fetchActivity: (id: number, params: RequestParams = {}) =>
+      this.request<any, Activity>({
+        path: `/activity/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Activities
+     * @name UpdateActivity
+     * @summary Update an Activity
+     * @request PUT:/activity/v1/{id}
+     * @secure
+     */
+    updateActivity: (id: number, data: Activity, params: RequestParams = {}) =>
+      this.request<any, Activity>({
+        path: `/activity/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -3654,74 +3918,72 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name Get
+     * @tags Annotations
+     * @name GetAnnotationDetail
      * @summary Gets an annotation
      * @request GET:/annotation/v1
      * @secure
      */
-    get: (query?: { annotationId?: number }, params: RequestParams = {}) =>
-      this.request<any, void>({
+    getAnnotationDetail: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+      this.request<any, AnnotationDetail>({
         path: `/annotation/v1`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name CreateEntry
+     * @tags Annotations
+     * @name CreateAnnotationEntry
+     * @summary Gets an annotation
      * @request POST:/annotation/v1
      * @secure
      */
-    createEntry: (body: CreateEntryRequest, params: RequestParams = {}) =>
-      this.request<AnnotationDetail, any>({
+    createAnnotationEntry: (data: CreateEntryRequest, params: RequestParams = {}) =>
+      this.request<any, AnnotationDetail>({
         path: `/annotation/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name GetComment
+     * @tags Annotations
+     * @name GetAnnotationComments
      * @summary Gets a list of predefined comments
      * @request GET:/annotation/v1/comment
      * @secure
      */
-    getComment: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
+    getAnnotationComments: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/annotation/v1/comment`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name Link
+     * @tags Annotations
+     * @name LinkAnnotationEvents
      * @summary Links an annotation to an event
      * @request POST:/annotation/v1/link
      * @secure
      */
-    link: (body: EventLink, params: RequestParams = {}) =>
-      this.request<any, void>({
+    linkAnnotationEvents: (data: EventLink, params: RequestParams = {}) =>
+      this.request<any, EventId[]>({
         path: `/annotation/v1/link`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -3730,36 +3992,35 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name GetLinkedEvents
+     * @tags Annotations
+     * @name GetAnnotationLinkedEvents
      * @summary Gets a list of events linked to this annotation
      * @request GET:/annotation/v1/linkedEvents
      * @secure
      */
-    getLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
-      this.request<any, void>({
+    getAnnotationLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+      this.request<any, EventId[]>({
         path: `/annotation/v1/linkedEvents`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name SetAssignedTo
+     * @tags Annotations
+     * @name SetAnnotationAssignedTo
      * @summary Bulk action to set the assignment for several annotations
      * @request POST:/annotation/v1/setAssignedTo
      * @secure
      */
-    setAssignedTo: (body: SetAssignedToRequest, params: RequestParams = {}) =>
-      this.request<any, void>({
+    setAnnotationAssignedTo: (data: SetAssignedToRequest, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/annotation/v1/setAssignedTo`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -3768,17 +4029,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name SetStatus
+     * @tags Annotations
+     * @name SetAnnotationStatus
      * @summary Bulk action to set the status for several annotations
      * @request POST:/annotation/v1/setStatus
      * @secure
      */
-    setStatus: (body: SetStatusRequest, params: RequestParams = {}) =>
-      this.request<any, void>({
+    setAnnotationStatus: (data: SetStatusRequest, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/annotation/v1/setStatus`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -3787,122 +4048,35 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name GetStatus
+     * @tags Annotations
+     * @name GetAnnotationDStatus
      * @summary Gets a list of allowed statuses
      * @request GET:/annotation/v1/status
      * @secure
      */
-    getStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
+    getAnnotationDStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/annotation/v1/status`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags annotations - v1
-     * @name Unlink
+     * @tags Annotations
+     * @name UnlinkAnnotationEvents
      * @summary Unlinks an annotation from an event
      * @request POST:/annotation/v1/unlink
      * @secure
      */
-    unlink: (body: EventLink, params: RequestParams = {}) =>
-      this.request<any, void>({
+    unlinkAnnotationEvents: (data: EventLink, params: RequestParams = {}) =>
+      this.request<any, EventId[]>({
         path: `/annotation/v1/unlink`,
         method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  appPermissions = {
-    /**
-     * @description Stroom Application Permissions API
-     *
-     * @tags application permissions - v1
-     * @name GetAllPermissionNames
-     * @request GET:/appPermissions/v1
-     * @secure
-     */
-    getAllPermissionNames: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/appPermissions/v1`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Application Permissions API
-     *
-     * @tags application permissions - v1
-     * @name GetPermissionNamesForUserName
-     * @request GET:/appPermissions/v1/byName/{userName}
-     * @secure
-     */
-    getPermissionNamesForUserName: (userName: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/appPermissions/v1/byName/${userName}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Application Permissions API
-     *
-     * @tags application permissions - v1
-     * @name GetPermissionNamesForUser
-     * @request GET:/appPermissions/v1/{userUuid}
-     * @secure
-     */
-    getPermissionNamesForUser: (userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/appPermissions/v1/${userUuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Application Permissions API
-     *
-     * @tags application permissions - v1
-     * @name AddPermission
-     * @request POST:/appPermissions/v1/{userUuid}/{permission}
-     * @secure
-     */
-    addPermission: (permission: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/appPermissions/v1/${userUuid}/${permission}`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Application Permissions API
-     *
-     * @tags application permissions - v1
-     * @name RemovePermission
-     * @request DELETE:/appPermissions/v1/{userUuid}/{permission}
-     * @secure
-     */
-    removePermission: (permission: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/appPermissions/v1/${userUuid}/${permission}`,
-        method: "DELETE",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -3919,13 +4093,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+      this.request<any, boolean>({
         path: `/authentication/v1/logout`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3939,13 +4111,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     needsPasswordChange: (query?: { email?: string }, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+      this.request<any, boolean>({
         path: `/authentication/v1/needsPasswordChange`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3958,14 +4128,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/authentication/v1/noauth/changePassword
      * @secure
      */
-    changePassword: (body: ChangePasswordRequest, params: RequestParams = {}) =>
-      this.request<ChangePasswordResponse, any>({
+    changePassword: (data: ChangePasswordRequest, params: RequestParams = {}) =>
+      this.request<any, ChangePasswordResponse>({
         path: `/authentication/v1/noauth/changePassword`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3978,14 +4147,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/authentication/v1/noauth/confirmPassword
      * @secure
      */
-    confirmPassword: (body: ConfirmPasswordRequest, params: RequestParams = {}) =>
-      this.request<ConfirmPasswordResponse, any>({
+    confirmPassword: (data: ConfirmPasswordRequest, params: RequestParams = {}) =>
+      this.request<any, ConfirmPasswordResponse>({
         path: `/authentication/v1/noauth/confirmPassword`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -3999,12 +4167,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchPasswordPolicy: (params: RequestParams = {}) =>
-      this.request<PasswordPolicyConfig, any>({
+      this.request<any, PasswordPolicyConfig>({
         path: `/authentication/v1/noauth/fetchPasswordPolicy`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -4018,12 +4184,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getAuthenticationState: (params: RequestParams = {}) =>
-      this.request<AuthenticationState, any>({
+      this.request<any, AuthenticationState>({
         path: `/authentication/v1/noauth/getAuthenticationState`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -4036,14 +4200,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/authentication/v1/noauth/login
      * @secure
      */
-    login: (body: LoginRequest, params: RequestParams = {}) =>
-      this.request<LoginResponse, any>({
+    login: (data: LoginRequest, params: RequestParams = {}) =>
+      this.request<any, LoginResponse>({
         path: `/authentication/v1/noauth/login`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -4057,12 +4220,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     resetEmail: (email: string, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+      this.request<any, boolean>({
         path: `/authentication/v1/noauth/reset/${email}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -4075,85 +4236,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/authentication/v1/resetPassword
      * @secure
      */
-    resetPassword: (body: ResetPasswordRequest, params: RequestParams = {}) =>
-      this.request<ChangePasswordResponse, any>({
+    resetPassword: (data: ResetPasswordRequest, params: RequestParams = {}) =>
+      this.request<any, ChangePasswordResponse>({
         path: `/authentication/v1/resetPassword`,
         method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  authorisation = {
-    /**
-     * @description Stroom Authorisation API
-     *
-     * @tags authorisation - v1
-     * @name CreateUser
-     * @request POST:/authorisation/v1/createUser
-     * @secure
-     */
-    createUser: (query?: { id?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/authorisation/v1/createUser`,
-        method: "POST",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Authorisation API
-     *
-     * @tags authorisation - v1
-     * @name HasPermission
-     * @request POST:/authorisation/v1/hasPermission
-     * @secure
-     */
-    hasPermission: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/authorisation/v1/hasPermission`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Authorisation API
-     *
-     * @tags authorisation - v1
-     * @name IsAuthorised
-     * @summary Submit a request to verify if the user has the requested permission on a 'document'
-     * @request POST:/authorisation/v1/isAuthorised
-     * @secure
-     */
-    isAuthorised: (body: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/authorisation/v1/isAuthorised`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Authorisation API
-     *
-     * @tags authorisation - v1
-     * @name SetUserStatus
-     * @request GET:/authorisation/v1/setUserStatus
-     * @secure
-     */
-    setUserStatus: (query?: { status?: string; userId?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/authorisation/v1/setUserStatus`,
-        method: "GET",
-        query: query,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -4163,59 +4250,53 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags cache - v1
-     * @name List
-     * @summary Lists caches
-     * @request GET:/cache/v1
-     * @secure
-     */
-    list: (params: RequestParams = {}) =>
-      this.request<object[], any>({
-        path: `/cache/v1`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags cache - v1
-     * @name Clear
+     * @tags Caches
+     * @name ClearCache
      * @summary Clears a cache
      * @request DELETE:/cache/v1
      * @secure
      */
-    clear: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
-      this.request<number, any>({
+    clearCache: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/cache/v1`,
         method: "DELETE",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags cache - v1
-     * @name Info
+     * @tags Caches
+     * @name ListCaches
+     * @summary Lists caches
+     * @request GET:/cache/v1
+     * @secure
+     */
+    listCaches: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/cache/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Caches
+     * @name GetCacheInfo
      * @summary Gets cache info
      * @request GET:/cache/v1/info
      * @secure
      */
-    info: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
-      this.request<CacheInfo, any>({
+    getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4223,60 +4304,57 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags clusterlock - v1
-     * @name KeepLockAlive
+     * @tags Cluster lock
+     * @name KeepClusterLockAlive
      * @summary Keep a lock alive
      * @request PUT:/cluster/lock/v1/keepALive/{nodeName}
      * @secure
      */
-    keepLockAlive: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    keepClusterLockAlive: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/cluster/lock/v1/keepALive/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags clusterlock - v1
-     * @name ReleaseLock
+     * @tags Cluster lock
+     * @name ReleaseClusterLock
      * @summary Release a lock
      * @request PUT:/cluster/lock/v1/release/{nodeName}
      * @secure
      */
-    releaseLock: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    releaseClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/cluster/lock/v1/release/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags clusterlock - v1
-     * @name TryLock
+     * @tags Cluster lock
+     * @name TryClusterLock
      * @summary Try to lock
      * @request PUT:/cluster/lock/v1/try/{nodeName}
      * @secure
      */
-    tryLock: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    tryClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/cluster/lock/v1/try/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4284,134 +4362,127 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags config - v1
-     * @name Create
-     * @summary Update a ConfigProperty
+     * @tags Global Config
+     * @name CreateConfigProperty
+     * @summary Create a configuration property
      * @request POST:/config/v1
      * @secure
      */
-    create: (body: ConfigProperty, params: RequestParams = {}) =>
-      this.request<ConfigProperty, any>({
+    createConfigProperty: (data: ConfigProperty, params: RequestParams = {}) =>
+      this.request<any, ConfigProperty>({
         path: `/config/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
-     * @name Update
-     * @summary Update a ConfigProperty
-     * @request PUT:/config/v1/clusterProperties/{propertyName}/dbOverrideValue
+     * @tags Global Config
+     * @name UpdateConfigProperty
+     * @summary Update a configuration property
+     * @request PUT:/config/v1/clusterProperties/{propertyName}
      * @secure
      */
-    update: (propertyName: string, body: ConfigProperty, params: RequestParams = {}) =>
-      this.request<ConfigProperty, any>({
-        path: `/config/v1/clusterProperties/${propertyName}/dbOverrideValue`,
+    updateConfigProperty: (propertyName: string, data: ConfigProperty, params: RequestParams = {}) =>
+      this.request<any, ConfigProperty>({
+        path: `/config/v1/clusterProperties/${propertyName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
-     * @name GetYamlValueByNodeAndName
+     * @tags Global Config
+     * @name GetConfigYamlValueByNodeAndName
+     * @summary Get the property value from the YAML configuration in the specified node.
      * @request GET:/config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}
      * @secure
      */
-    getYamlValueByNodeAndName: (nodeName: string, propertyName: string, params: RequestParams = {}) =>
-      this.request<OverrideValueString, any>({
+    getConfigYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
+      this.request<any, OverrideValueString>({
         path: `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
+     * @tags Global Config
      * @name FetchUiConfig
-     * @summary Get config property
+     * @summary Fetch the UI configuration
      * @request GET:/config/v1/noauth/fetchUiConfig
      * @secure
      */
     fetchUiConfig: (params: RequestParams = {}) =>
-      this.request<UiConfig, any>({
+      this.request<any, UiConfig>({
         path: `/config/v1/noauth/fetchUiConfig`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
-     * @name ListByNode
+     * @tags Global Config
+     * @name ListConfigPropertiesByNode
+     * @summary List all properties matching the criteria on the requested node.
      * @request POST:/config/v1/nodeProperties/{nodeName}
      * @secure
      */
-    listByNode: (nodeName: string, body: GlobalConfigCriteria, params: RequestParams = {}) =>
-      this.request<ListConfigResponse, any>({
+    listConfigPropertiesByNode: (nodeName: string, data: GlobalConfigCriteria, params: RequestParams = {}) =>
+      this.request<any, ListConfigResponse>({
         path: `/config/v1/nodeProperties/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
-     * @name List
-     * @summary TODO
+     * @tags Global Config
+     * @name ListConfigProperties
+     * @summary List all properties matching the criteria on the current node.
      * @request POST:/config/v1/properties
      * @secure
      */
-    list: (body: GlobalConfigCriteria, params: RequestParams = {}) =>
-      this.request<ListConfigResponse, any>({
+    listConfigProperties: (data: GlobalConfigCriteria, params: RequestParams = {}) =>
+      this.request<any, ListConfigResponse>({
         path: `/config/v1/properties`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags config - v1
-     * @name GetPropertyByName
+     * @tags Global Config
+     * @name GetConfigPropertyByName
+     * @summary Fetch a property by its name, e.g. 'stroom.path.home'
      * @request GET:/config/v1/properties/{propertyName}
      * @secure
      */
-    getPropertyByName: (propertyName: string, params: RequestParams = {}) =>
-      this.request<ConfigProperty, any>({
+    getConfigPropertyByName: (propertyName: string, params: RequestParams = {}) =>
+      this.request<any, ConfigProperty>({
         path: `/config/v1/properties/${propertyName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4419,80 +4490,76 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags content - v1
-     * @name ConfirmImport
+     * @tags Content
+     * @name ConfirmContentImport
      * @summary Get import confirmation state
      * @request POST:/content/v1/confirmImport
      * @secure
      */
-    confirmImport: (body: ResourceKey, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    confirmContentImport: (data: ResourceKey, params: RequestParams = {}) =>
+      this.request<any, ImportState[]>({
         path: `/content/v1/confirmImport`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags content - v1
+     * @tags Content
      * @name ExportContent
      * @summary Export content
      * @request POST:/content/v1/export
      * @secure
      */
-    exportContent: (body: DocRefs, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    exportContent: (data: DocRefs, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/content/v1/export`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags content - v1
-     * @name FetchDependencies
+     * @tags Content
+     * @name FetchContentDependencies
      * @summary Fetch content dependencies
      * @request POST:/content/v1/fetchDependencies
      * @secure
      */
-    fetchDependencies: (body: DependencyCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    fetchContentDependencies: (data: DependencyCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageDependency>({
         path: `/content/v1/fetchDependencies`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags content - v1
+     * @tags Content
      * @name ImportContent
      * @summary Import content
      * @request POST:/content/v1/import
      * @secure
      */
-    importContent: (body: ImportConfigRequest, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    importContent: (data: ImportConfigRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceKey>({
         path: `/content/v1/import`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4500,157 +4567,146 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags dashboard - v1
-     * @name DownloadQuery
+     * @tags Dashboards
+     * @name DownloadDashboardQuery
      * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
      * @secure
      */
-    downloadQuery: (body: DownloadQueryRequest, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    downloadDashboardQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadQuery`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dashboard - v1
-     * @name DownloadSearchResults
+     * @tags Dashboards
+     * @name DownloadDashboardSearchResults
      * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults
      * @secure
      */
-    downloadSearchResults: (body: DownloadSearchResultsRequest, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    downloadDashboardSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadSearchResults`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dashboard - v1
+     * @tags Dashboards
      * @name FetchTimeZones
      * @summary Fetch time zone data from the server
      * @request GET:/dashboard/v1/fetchTimeZones
      * @secure
      */
     fetchTimeZones: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/dashboard/v1/fetchTimeZones`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dashboard - v1
-     * @name FetchFunctions
+     * @tags Dashboards
+     * @name FetchDashboardFunctions
      * @summary Fetch all expression functions
      * @request GET:/dashboard/v1/functions
      * @secure
      */
-    fetchFunctions: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchDashboardFunctions: (params: RequestParams = {}) =>
+      this.request<any, FunctionSignature[]>({
         path: `/dashboard/v1/functions`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dashboard - v1
-     * @name Poll
+     * @tags Dashboards
+     * @name PollDashboardSearchResults
      * @summary Poll for new search results
      * @request POST:/dashboard/v1/poll
      * @secure
      */
-    poll: (body: SearchBusPollRequest, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    pollDashboardSearchResults: (data: SearchBusPollRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse[]>({
         path: `/dashboard/v1/poll`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dashboard - v1
-     * @name Read
-     * @summary Get a dashboard doc
-     * @request POST:/dashboard/v1/read
-     * @secure
-     */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DashboardDoc, any>({
-        path: `/dashboard/v1/read`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dashboard - v1
-     * @name Update
-     * @summary Update a dashboard doc
-     * @request PUT:/dashboard/v1/update
-     * @secure
-     */
-    update: (params: RequestParams = {}) =>
-      this.request<DashboardDoc, any>({
-        path: `/dashboard/v1/update`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dashboard - v1
-     * @name ValidateExpression
+     * @tags Dashboards
+     * @name ValidateDashboardExpression
      * @summary Validate an expression
      * @request POST:/dashboard/v1/validateExpression
      * @secure
      */
-    validateExpression: (body: string, params: RequestParams = {}) =>
-      this.request<ValidateExpressionResult, any>({
+    validateDashboardExpression: (data: string, params: RequestParams = {}) =>
+      this.request<any, ValidateExpressionResult>({
         path: `/dashboard/v1/validateExpression`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name FetchDashboard
+     * @summary Fetch a dashboard doc by its UUID
+     * @request GET:/dashboard/v1/{uuid}
+     * @secure
+     */
+    fetchDashboard: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, DashboardDoc>({
+        path: `/dashboard/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name UpdateDashboard
+     * @summary Update a dashboard doc
+     * @request PUT:/dashboard/v1/{uuid}
+     * @secure
+     */
+    updateDashboard: (uuid: string, data: DashboardDoc, params: RequestParams = {}) =>
+      this.request<any, DashboardDoc>({
+        path: `/dashboard/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
@@ -4658,59 +4714,91 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags data - v1
-     * @name Download
+     * @tags Data
+     * @name DownloadData
      * @summary Download matching data
      * @request POST:/data/v1/download
      * @secure
      */
-    download: (body: FindMetaCriteria, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    downloadData: (data: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/data/v1/download`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags data - v1
-     * @name Info
-     * @summary Find full info about a data item
-     * @request GET:/data/v1/info/{id}
+     * @tags Data
+     * @name FetchData
+     * @summary Fetch matching data
+     * @request POST:/data/v1/fetch
      * @secure
      */
-    info: (id: number, params: RequestParams = {}) =>
-      this.request<DataInfoSection, any>({
-        path: `/data/v1/info/${id}`,
-        method: "GET",
+    fetchData: (data: FetchDataRequest, params: RequestParams = {}) =>
+      this.request<any, AbstractFetchDataResult>({
+        path: `/data/v1/fetch`,
+        method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags data - v1
-     * @name Upload
+     * @tags Data
+     * @name UploadData
      * @summary Upload data
      * @request POST:/data/v1/upload
      * @secure
      */
-    upload: (body: UploadDataRequest, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    uploadData: (data: UploadDataRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceKey>({
         path: `/data/v1/upload`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data
+     * @name ViewDataInfo
+     * @summary Find full info about a data item
+     * @request GET:/data/v1/{id}/info
+     * @secure
+     */
+    viewDataInfo: (id: number, params: RequestParams = {}) =>
+      this.request<any, DataInfoSection[]>({
+        path: `/data/v1/${id}/info`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data
+     * @name GetChildStreamTypes
+     * @summary List child types for a stream
+     * @request GET:/data/v1/{id}/parts/{partNo}/child-types
+     * @secure
+     */
+    getChildStreamTypes: (id: number, partNo: number, params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/data/v1/${id}/parts/${partNo}/child-types`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };
@@ -4718,78 +4806,72 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags dataRetentionRules - v1
-     * @name GetRetentionDeletionSummary
+     * @tags Data Retention Rules
+     * @name FetchDataRetentionRules
+     * @summary Get data retention rules
+     * @request GET:/dataRetentionRules/v1
+     * @secure
+     */
+    fetchDataRetentionRules: (params: RequestParams = {}) =>
+      this.request<any, DataRetentionRules>({
+        path: `/dataRetentionRules/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Retention Rules
+     * @name UpdateDataRetentionRules
+     * @summary Update data retention rules
+     * @request PUT:/dataRetentionRules/v1
+     * @secure
+     */
+    updateDataRetentionRules: (data: DataRetentionRules, params: RequestParams = {}) =>
+      this.request<any, DataRetentionRules>({
+        path: `/dataRetentionRules/v1`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Retention Rules
+     * @name GetDataRetentionImpactSummary
      * @summary Get a summary of meta deletions with the passed data retention rules
      * @request POST:/dataRetentionRules/v1/impactSummary
      * @secure
      */
-    getRetentionDeletionSummary: (body: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
-      this.request<DataRetentionDeleteSummary, any>({
+    getDataRetentionImpactSummary: (data: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
+      this.request<any, DataRetentionDeleteSummaryResponse>({
         path: `/dataRetentionRules/v1/impactSummary`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dataRetentionRules - v1
-     * @name CancelQuery
-     * @summary Delete a running query
+     * @tags Data Retention Rules
+     * @name StopDataRetentionImpactSummary
+     * @summary Stop a running query
      * @request DELETE:/dataRetentionRules/v1/impactSummary/{queryId}
      * @secure
      */
-    cancelQuery: (queryId: string, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    stopDataRetentionImpactSummary: (queryId: string, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/dataRetentionRules/v1/impactSummary/${queryId}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dataRetentionRules - v1
-     * @name Read
-     * @summary Get data retention rules
-     * @request POST:/dataRetentionRules/v1/read
-     * @secure
-     */
-    read: (params: RequestParams = {}) =>
-      this.request<DataRetentionRules, any>({
-        path: `/dataRetentionRules/v1/read`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dataRetentionRules - v1
-     * @name Update
-     * @summary Update data retention rules
-     * @request PUT:/dataRetentionRules/v1/update
-     * @secure
-     */
-    update: (body: DataRetentionRules, params: RequestParams = {}) =>
-      this.request<DataRetentionRules, any>({
-        path: `/dataRetentionRules/v1/update`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4797,20 +4879,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags dataSource - v1
-     * @name FetchFields
+     * @tags Data Sources
+     * @name FetchDataSourceFields
      * @summary Fetch data source fields
      * @request POST:/dataSource/v1/fetchFields
      * @secure
      */
-    fetchFields: (body: DocRef, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, AbstractField[]>({
         path: `/dataSource/v1/fetchFields`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4818,39 +4899,36 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags dbStatus - v1
-     * @name GetSystemTableStatus
+     * @tags Database Status
+     * @name GetDbSystemTableStatus
      * @summary Find status of the DB
      * @request GET:/dbStatus/v1
      * @secure
      */
-    getSystemTableStatus: (params: RequestParams = {}) =>
-      this.request<ResultPageDBTableStatus, any>({
+    getDbSystemTableStatus: (params: RequestParams = {}) =>
+      this.request<any, ResultPageDBTableStatus>({
         path: `/dbStatus/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dbStatus - v1
-     * @name FindSystemTableStatus
+     * @tags Database Status
+     * @name FindDbSystemTableStatus
      * @summary Find status of the DB
      * @request POST:/dbStatus/v1
      * @secure
      */
-    findSystemTableStatus: (body: FindDBTableCriteria, params: RequestParams = {}) =>
-      this.request<ResultPageDBTableStatus, any>({
+    findDbSystemTableStatus: (data: FindDBTableCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageDBTableStatus>({
         path: `/dbStatus/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -4858,369 +4936,53 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags dictionary - v1
-     * @name Download
+     * @tags Dictionaries (v1)
+     * @name DownloadDictionary
      * @summary Download a dictionary doc
      * @request POST:/dictionary/v1/download
      * @secure
      */
-    download: (params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    downloadDictionary: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/dictionary/v1/download`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dictionary - v1
-     * @name ExportDocument
-     * @summary Submit an export request
-     * @request POST:/dictionary/v1/export
+     * @tags Dictionaries (v1)
+     * @name FetchDictionary
+     * @summary Fetch a dictionary doc by its UUID
+     * @request GET:/dictionary/v1/{uuid}
      * @secure
      */
-    exportDocument: (body: DocRef, params: RequestParams = {}) =>
-      this.request<Base64EncodedDocumentData, any>({
-        path: `/dictionary/v1/export`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v1
-     * @name ImportDocument
-     * @summary Submit an import request
-     * @request POST:/dictionary/v1/import
-     * @secure
-     */
-    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
-        path: `/dictionary/v1/import`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v1
-     * @name ListDocuments
-     * @summary Submit a request for a list of doc refs held by this service
-     * @request GET:/dictionary/v1/list
-     * @secure
-     */
-    listDocuments: (params: RequestParams = {}) =>
-      this.request<object[], any>({
-        path: `/dictionary/v1/list`,
+    fetchDictionary: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, DictionaryDoc>({
+        path: `/dictionary/v1/${uuid}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags dictionary - v1
-     * @name Read
-     * @summary Get a dictionary doc
-     * @request POST:/dictionary/v1/read
-     * @secure
-     */
-    read: (params: RequestParams = {}) =>
-      this.request<DictionaryDoc, any>({
-        path: `/dictionary/v1/read`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v1
-     * @name Update
+     * @tags Dictionaries (v1)
+     * @name UpdateDictionary
      * @summary Update a dictionary doc
-     * @request PUT:/dictionary/v1/update
+     * @request PUT:/dictionary/v1/{uuid}
      * @secure
      */
-    update: (params: RequestParams = {}) =>
-      this.request<DictionaryDoc, any>({
-        path: `/dictionary/v1/update`,
+    updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
+      this.request<any, DictionaryDoc>({
+        path: `/dictionary/v1/${uuid}`,
         method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v1
-     * @name Fetch
-     * @request GET:/dictionary/v1/{dictionaryUuid}
-     * @secure
-     */
-    fetch: (dictionaryUuid: string, params: RequestParams = {}) =>
-      this.request<DictionaryDTO, any>({
-        path: `/dictionary/v1/${dictionaryUuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v1
-     * @name Save
-     * @request POST:/dictionary/v1/{dictionaryUuid}
-     * @secure
-     */
-    save: (dictionaryUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/dictionary/v1/${dictionaryUuid}`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v2
-     * @name ExportDocument2
-     * @summary Submit an export request
-     * @request POST:/dictionary/v2/export
-     * @originalName exportDocument
-     * @duplicate
-     * @secure
-     */
-    exportDocument2: (body: DocRef, params: RequestParams = {}) =>
-      this.request<Base64EncodedDocumentData, any>({
-        path: `/dictionary/v2/export`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v2
-     * @name ImportDocument2
-     * @summary Submit an import request
-     * @request POST:/dictionary/v2/import
-     * @originalName importDocument
-     * @duplicate
-     * @secure
-     */
-    importDocument2: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
-        path: `/dictionary/v2/import`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags dictionary - v2
-     * @name ListDocuments2
-     * @summary Submit a request for a list of doc refs held by this service
-     * @request GET:/dictionary/v2/list
-     * @originalName listDocuments
-     * @duplicate
-     * @secure
-     */
-    listDocuments2: (params: RequestParams = {}) =>
-      this.request<object[], any>({
-        path: `/dictionary/v2/list`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  docPermissions = {
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name GetPermissionsForDocument
-     * @request GET:/docPermissions/v1/forDoc/{docUuid}
-     * @secure
-     */
-    getPermissionsForDocument: (docUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDoc/${docUuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name ClearDocumentPermissions
-     * @request DELETE:/docPermissions/v1/forDoc/{docUuid}
-     * @secure
-     */
-    clearDocumentPermissions: (docUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDoc/${docUuid}`,
-        method: "DELETE",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name GetPermissionsForDocumentForUser
-     * @request GET:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}
-     * @secure
-     */
-    getPermissionsForDocumentForUser: (docUuid: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name RemovePermissionForDocumentForUser
-     * @request DELETE:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}
-     * @secure
-     */
-    removePermissionForDocumentForUser: (docUuid: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
-        method: "DELETE",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name AddPermission
-     * @request POST:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}/{permissionName}
-     * @secure
-     */
-    addPermission: (docUuid: string, permissionName: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name RemovePermission
-     * @request DELETE:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}/{permissionName}
-     * @secure
-     */
-    removePermission: (docUuid: string, permissionName: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
-        method: "DELETE",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Document Permissions API
-     *
-     * @tags document permissions - v1
-     * @name GetPermissionForDocType
-     * @request GET:/docPermissions/v1/forDocType/{docType}
-     * @secure
-     */
-    getPermissionForDocType: (docType: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docPermissions/v1/forDocType/${docType}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  elements = {
-    /**
-     * No description
-     *
-     * @tags elements - v1
-     * @name GetElementProperties
-     * @request GET:/elements/v1/elementProperties
-     * @secure
-     */
-    getElementProperties: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/elements/v1/elementProperties`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags elements - v1
-     * @name GetElements
-     * @request GET:/elements/v1/elements
-     * @secure
-     */
-    getElements: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/elements/v1/elements`,
-        method: "GET",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -5230,20 +4992,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags entityEvent - v1
-     * @name FireEvent
+     * @tags Entity Events
+     * @name FireEntityEvent
      * @summary Sends an entity event
      * @request PUT:/entityEvent/v1/{nodeName}
      * @secure
      */
-    fireEvent: (nodeName: string, body: EntityEvent, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    fireEntityEvent: (nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -5251,356 +5012,188 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags explorer - v1
-     * @name GetExplorerTree
-     * @request GET:/explorer/v1/all
-     * @secure
-     */
-    getExplorerTree: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/all`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name CopyDocument
-     * @request POST:/explorer/v1/copy
-     * @secure
-     */
-    copyDocument: (body: CopyOp, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/copy`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name CreateDocument
-     * @request POST:/explorer/v1/create
-     * @secure
-     */
-    createDocument: (body: CreateOp, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/create`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name DeleteDocument
-     * @request DELETE:/explorer/v1/delete
-     * @secure
-     */
-    deleteDocument: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/delete`,
-        method: "DELETE",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name GetDocRefTypes
-     * @request GET:/explorer/v1/docRefTypes
-     * @secure
-     */
-    getDocRefTypes: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/docRefTypes`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name GetDocInfo
-     * @request GET:/explorer/v1/info/{type}/{uuid}
-     * @secure
-     */
-    getDocInfo: (type: string, uuid: string, params: RequestParams = {}) =>
-      this.request<DocRefInfo, any>({
-        path: `/explorer/v1/info/${type}/${uuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name MoveDocument
-     * @request PUT:/explorer/v1/move
-     * @secure
-     */
-    moveDocument: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/move`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name RenameDocument
-     * @request PUT:/explorer/v1/rename
-     * @secure
-     */
-    renameDocument: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/rename`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v1
-     * @name Search
-     * @request GET:/explorer/v1/search
-     * @secure
-     */
-    search: (query?: { pageOffset?: number; pageSize?: number; searchTerm?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/explorer/v1/search`,
-        method: "GET",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags explorer - v2
-     * @name Copy
+     * @tags Explorer (v2)
+     * @name CopyExplorerItems
      * @summary Copy explorer items
      * @request POST:/explorer/v2/copy
      * @secure
      */
-    copy: (body: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
-      this.request<BulkActionResult, any>({
+    copyExplorerItems: (data: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
+      this.request<any, BulkActionResult>({
         path: `/explorer/v2/copy`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Create
+     * @tags Explorer (v2)
+     * @name CreateExplorerItem
      * @summary Create explorer item
      * @request POST:/explorer/v2/create
      * @secure
      */
-    create: (body: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
+    createExplorerItem: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
         path: `/explorer/v2/create`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Delete
+     * @tags Explorer (v2)
+     * @name DeleteExplorerItems
      * @summary Delete explorer items
      * @request DELETE:/explorer/v2/delete
      * @secure
      */
-    delete: (body: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
-      this.request<BulkActionResult, any>({
+    deleteExplorerItems: (data: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
+      this.request<any, BulkActionResult>({
         path: `/explorer/v2/delete`,
         method: "DELETE",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name FetchDocRefs
+     * @tags Explorer (v2)
+     * @name FetchExplorerDocRefs
      * @summary Fetch document references
      * @request POST:/explorer/v2/fetchDocRefs
      * @secure
      */
-    fetchDocRefs: (body: DocRef[], params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchExplorerDocRefs: (data: DocRef[], params: RequestParams = {}) =>
+      this.request<any, DocRef[]>({
         path: `/explorer/v2/fetchDocRefs`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name FetchDocumentTypes
+     * @tags Explorer (v2)
+     * @name FetchExplorerDocumentTypes
      * @summary Fetch document types
      * @request GET:/explorer/v2/fetchDocumentTypes
      * @secure
      */
-    fetchDocumentTypes: (params: RequestParams = {}) =>
-      this.request<DocumentTypes, any>({
+    fetchExplorerDocumentTypes: (params: RequestParams = {}) =>
+      this.request<any, DocumentTypes>({
         path: `/explorer/v2/fetchDocumentTypes`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Fetch
+     * @tags Explorer (v2)
+     * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
      * @secure
      */
-    fetch: (body: FindExplorerNodeCriteria, params: RequestParams = {}) =>
-      this.request<FetchExplorerNodeResult, any>({
+    fetchExplorerNodes: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
+      this.request<any, FetchExplorerNodeResult>({
         path: `/explorer/v2/fetchExplorerNodes`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
+     * @tags Explorer (v2)
      * @name FetchExplorerPermissions
      * @summary Fetch permissions for explorer items
      * @request POST:/explorer/v2/fetchExplorerPermissions
      * @secure
      */
-    fetchExplorerPermissions: (body: ExplorerNode[], params: RequestParams = {}) =>
-      this.request<Record<string, object>, any>({
+    fetchExplorerPermissions: (data: ExplorerNode[], params: RequestParams = {}) =>
+      this.request<any, ExplorerNodePermissions[]>({
         path: `/explorer/v2/fetchExplorerPermissions`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Info
+     * @tags Explorer (v2)
+     * @name FetchExplorerItemInfo
      * @summary Get document info
      * @request POST:/explorer/v2/info
      * @secure
      */
-    info: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DocRefInfo, any>({
+    fetchExplorerItemInfo: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DocRefInfo>({
         path: `/explorer/v2/info`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Move
+     * @tags Explorer (v2)
+     * @name MoveExplorerItems
      * @summary Move explorer items
      * @request PUT:/explorer/v2/move
      * @secure
      */
-    move: (body: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
-      this.request<BulkActionResult, any>({
+    moveExplorerItems: (data: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
+      this.request<any, BulkActionResult>({
         path: `/explorer/v2/move`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags explorer - v2
-     * @name Rename
+     * @tags Explorer (v2)
+     * @name RenameExplorerItems
      * @summary Rename explorer items
      * @request PUT:/explorer/v2/rename
      * @secure
      */
-    rename: (body: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
+    renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
         path: `/explorer/v2/rename`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -5608,12 +5201,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags export - v1
-     * @name Export
+     * @tags Export
+     * @name ExportAllContent
+     * @summary Exports all configuration to a file.
      * @request GET:/export/v1
      * @secure
      */
-    export: (params: RequestParams = {}) =>
+    exportAllContent: (params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/export/v1`,
         method: "GET",
@@ -5625,59 +5219,53 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags feed - v1
+     * @tags Feeds
      * @name FetchSupportedEncodings
      * @summary Fetch supported encodings
      * @request GET:/feed/v1/fetchSupportedEncodings
      * @secure
      */
     fetchSupportedEncodings: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/feed/v1/fetchSupportedEncodings`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags feed - v1
-     * @name Read
-     * @summary Get a feed doc
-     * @request POST:/feed/v1/read
+     * @tags Feeds
+     * @name FetchFeed
+     * @summary Fetch a feed doc by its UUID
+     * @request GET:/feed/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<FeedDoc, any>({
-        path: `/feed/v1/read`,
-        method: "POST",
-        body: body,
+    fetchFeed: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, FeedDoc>({
+        path: `/feed/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags feed - v1
-     * @name Update
+     * @tags Feeds
+     * @name UpdateFeed
      * @summary Update a feed doc
-     * @request PUT:/feed/v1/update
+     * @request PUT:/feed/v1/{uuid}
      * @secure
      */
-    update: (body: FeedDoc, params: RequestParams = {}) =>
-      this.request<FeedDoc, any>({
-        path: `/feed/v1/update`,
+    updateFeed: (uuid: string, data: FeedDoc, params: RequestParams = {}) =>
+      this.request<any, FeedDoc>({
+        path: `/feed/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -5685,20 +5273,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags feedStatus - v1
+     * @tags Feed Status
      * @name GetFeedStatus
      * @summary Submit a request to get the status of a feed
      * @request POST:/feedStatus/v1/getFeedStatus
      * @secure
      */
-    getFeedStatus: (body: GetFeedStatusRequest, params: RequestParams = {}) =>
-      this.request<GetFeedStatusResponse, any>({
+    getFeedStatus: (data: GetFeedStatusRequest, params: RequestParams = {}) =>
+      this.request<any, GetFeedStatusResponse>({
         path: `/feedStatus/v1/getFeedStatus`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -5706,115 +5293,126 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags fsVolume - v1
-     * @name Create
+     * @tags Filesystem Volumes
+     * @name CreateFsVolume
+     * @summary Create a volume
      * @request POST:/fsVolume/v1
      * @secure
      */
-    create: (params: RequestParams = {}) =>
-      this.request<FsVolume, any>({
+    createFsVolume: (data: FsVolume, params: RequestParams = {}) =>
+      this.request<any, FsVolume>({
         path: `/fsVolume/v1`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags fsVolume - v1
-     * @name Find
+     * @tags Filesystem Volumes
+     * @name FindFsVolumes
      * @summary Finds volumes
      * @request POST:/fsVolume/v1/find
      * @secure
      */
-    find: (body: FindFsVolumeCriteria, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    findFsVolumes: (data: FindFsVolumeCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFsVolume>({
         path: `/fsVolume/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags fsVolume - v1
-     * @name Rescan
+     * @tags Filesystem Volumes
+     * @name RescanFsVolumes
      * @summary Rescans volumes
      * @request GET:/fsVolume/v1/rescan
      * @secure
      */
-    rescan: (params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    rescanFsVolumes: (params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/fsVolume/v1/rescan`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags fsVolume - v1
-     * @name Read
-     * @summary Get a volume
-     * @request GET:/fsVolume/v1/{id}
-     * @secure
-     */
-    read: (id: number, params: RequestParams = {}) =>
-      this.request<FsVolume, any>({
-        path: `/fsVolume/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags fsVolume - v1
-     * @name Update
-     * @summary Update a volume
-     * @request PUT:/fsVolume/v1/{id}
-     * @secure
-     */
-    update: (id: number, body: FsVolume, params: RequestParams = {}) =>
-      this.request<FsVolume, any>({
-        path: `/fsVolume/v1/${id}`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags fsVolume - v1
-     * @name Delete
+     * @tags Filesystem Volumes
+     * @name DeleteFsVolume
      * @summary Delete a volume
      * @request DELETE:/fsVolume/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    deleteFsVolume: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/fsVolume/v1/${id}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Filesystem Volumes
+     * @name FetchFsVolume
+     * @summary Get a volume
+     * @request GET:/fsVolume/v1/{id}
+     * @secure
+     */
+    fetchFsVolume: (id: number, params: RequestParams = {}) =>
+      this.request<any, FsVolume>({
+        path: `/fsVolume/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Filesystem Volumes
+     * @name UpdateFsVolume
+     * @summary Update a volume
+     * @request PUT:/fsVolume/v1/{id}
+     * @secure
+     */
+    updateFsVolume: (id: number, data: FsVolume, params: RequestParams = {}) =>
+      this.request<any, FsVolume>({
+        path: `/fsVolume/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
         type: ContentType.Json,
-        format: "json",
+        ...params,
+      }),
+  };
+  gwtStroomSession = {
+    /**
+     * No description
+     *
+     * @tags Stroom Sessions
+     * @name GwtInvalidateStroomSession
+     * @summary Invalidate the current session
+     * @request GET:/gwtStroomSession/v1/invalidate
+     * @secure
+     */
+    gwtInvalidateStroomSession: (params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/gwtStroomSession/v1/invalidate`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };
@@ -5822,423 +5420,295 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags index - v1
-     * @name ExportDocument
-     * @summary Submit an export request
-     * @request POST:/index/v1/export
-     * @secure
-     */
-    exportDocument: (body: DocRef, params: RequestParams = {}) =>
-      this.request<Base64EncodedDocumentData, any>({
-        path: `/index/v1/export`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v1
-     * @name ImportDocument
-     * @summary Submit an import request
-     * @request POST:/index/v1/import
-     * @secure
-     */
-    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
-        path: `/index/v1/import`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v1
-     * @name ListDocuments
-     * @summary Submit a request for a list of doc refs held by this service
-     * @request GET:/index/v1/list
-     * @secure
-     */
-    listDocuments: (params: RequestParams = {}) =>
-      this.request<object[], any>({
-        path: `/index/v1/list`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v1
-     * @name Fetch
-     * @request GET:/index/v1/{indexUuid}
-     * @secure
-     */
-    fetch: (indexUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/index/v1/${indexUuid}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v1
-     * @name Save
-     * @request POST:/index/v1/{indexUuid}
-     * @secure
-     */
-    save: (indexUuid: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/index/v1/${indexUuid}`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v2
-     * @name Read
-     * @summary Get an index doc
-     * @request POST:/index/v2/read
-     * @secure
-     */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<IndexDoc, any>({
-        path: `/index/v2/read`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index - v2
+     * @tags Indexes (v2)
      * @name DeleteIndexShards
      * @summary Delete matching index shards
      * @request POST:/index/v2/shard/delete
      * @secure
      */
-    deleteIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
-      this.request<number, any>({
+    deleteIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/index/v2/shard/delete`,
         method: "POST",
         query: query,
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index - v2
+     * @tags Indexes (v2)
      * @name FindIndexShards
      * @summary Find matching index shards
      * @request POST:/index/v2/shard/find
      * @secure
      */
-    findIndexShards: (body: FindIndexShardCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findIndexShards: (data: FindIndexShardCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageIndexShard>({
         path: `/index/v2/shard/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index - v2
+     * @tags Indexes (v2)
      * @name FlushIndexShards
      * @summary Flush matching index shards
      * @request POST:/index/v2/shard/flush
      * @secure
      */
-    flushIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
-      this.request<number, any>({
+    flushIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/index/v2/shard/flush`,
         method: "POST",
         query: query,
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index - v2
-     * @name Update
-     * @summary Update an index doc
-     * @request PUT:/index/v2/update
+     * @tags Indexes (v2)
+     * @name FetchIndex
+     * @summary Fetch a index doc by its UUID
+     * @request GET:/index/v2/{uuid}
      * @secure
      */
-    update: (params: RequestParams = {}) =>
-      this.request<IndexDoc, any>({
-        path: `/index/v2/update`,
-        method: "PUT",
+    fetchIndex: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, IndexDoc>({
+        path: `/index/v2/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volume - v2
-     * @name Create
+     * @tags Indexes (v2)
+     * @name UpdateIndex
+     * @summary Update an index doc
+     * @request PUT:/index/v2/{uuid}
+     * @secure
+     */
+    updateIndex: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
+      this.request<any, IndexDoc>({
+        path: `/index/v2/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volumes
+     * @name CreateIndexVolume
      * @summary Creates an index volume
      * @request POST:/index/volume/v2
      * @secure
      */
-    create: (body: IndexVolume, params: RequestParams = {}) =>
-      this.request<IndexVolume, any>({
+    createIndexVolume: (data: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, IndexVolume>({
         path: `/index/volume/v2`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volume - v2
-     * @name Find
+     * @tags Index Volumes
+     * @name FindIndexVolumes
      * @summary Finds index volumes matching request
      * @request POST:/index/volume/v2/find
      * @secure
      */
-    find: (body: ExpressionCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findIndexVolumes: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageIndexVolume>({
         path: `/index/volume/v2/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volume - v2
-     * @name Rescan
+     * @tags Index Volumes
+     * @name RescanIndexVolumes
      * @summary Rescans index volumes
      * @request DELETE:/index/volume/v2/rescan
      * @secure
      */
-    rescan: (query?: { nodeName?: string }, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    rescanIndexVolumes: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/index/volume/v2/rescan`,
         method: "DELETE",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volume - v2
-     * @name Read2
-     * @summary Gets an index volume
-     * @request GET:/index/volume/v2/{id}
-     * @originalName read
-     * @duplicate
-     * @secure
-     */
-    read2: (id: number, params: RequestParams = {}) =>
-      this.request<IndexVolume, any>({
-        path: `/index/volume/v2/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index volume - v2
-     * @name Update2
-     * @summary Updates an index volume
-     * @request PUT:/index/volume/v2/{id}
-     * @originalName update
-     * @duplicate
-     * @secure
-     */
-    update2: (id: number, body: IndexVolume, params: RequestParams = {}) =>
-      this.request<IndexVolume, any>({
-        path: `/index/volume/v2/${id}`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index volume - v2
-     * @name Delete
+     * @tags Index Volumes
+     * @name DeleteIndexVolume
      * @summary Deletes an index volume
      * @request DELETE:/index/volume/v2/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    deleteIndexVolume: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/index/volume/v2/${id}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volumeGroup - v2
-     * @name Create2
-     * @summary Creates an index volume group
-     * @request POST:/index/volumeGroup/v2
-     * @originalName create
-     * @duplicate
+     * @tags Index Volumes
+     * @name FetchIndexVolume
+     * @summary Fetch an index volume
+     * @request GET:/index/volume/v2/{id}
      * @secure
      */
-    create2: (body: string, params: RequestParams = {}) =>
-      this.request<IndexVolumeGroup, any>({
-        path: `/index/volumeGroup/v2`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index volumeGroup - v2
-     * @name Find2
-     * @summary Finds index volume groups matching request
-     * @request POST:/index/volumeGroup/v2/find
-     * @originalName find
-     * @duplicate
-     * @secure
-     */
-    find2: (body: ExpressionCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
-        path: `/index/volumeGroup/v2/find`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags index volumeGroup - v2
-     * @name Read3
-     * @summary Gets an index volume group
-     * @request GET:/index/volumeGroup/v2/{id}
-     * @originalName read
-     * @duplicate
-     * @secure
-     */
-    read3: (id: number, params: RequestParams = {}) =>
-      this.request<IndexVolumeGroup, any>({
-        path: `/index/volumeGroup/v2/${id}`,
+    fetchIndexVolume: (id: number, params: RequestParams = {}) =>
+      this.request<any, IndexVolume>({
+        path: `/index/volume/v2/${id}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volumeGroup - v2
-     * @name Update3
-     * @summary Updates an index volume group
-     * @request PUT:/index/volumeGroup/v2/{id}
-     * @originalName update
-     * @duplicate
+     * @tags Index Volumes
+     * @name UpdateIndexVolume
+     * @summary Updates an index volume
+     * @request PUT:/index/volume/v2/{id}
      * @secure
      */
-    update3: (id: number, params: RequestParams = {}) =>
-      this.request<IndexVolumeGroup, any>({
-        path: `/index/volumeGroup/v2/${id}`,
+    updateIndexVolume: (id: number, data: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, IndexVolume>({
+        path: `/index/volume/v2/${id}`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags index volumeGroup - v2
-     * @name Delete2
-     * @summary Deletes an index volume group
-     * @request DELETE:/index/volumeGroup/v2/{id}
-     * @originalName delete
-     * @duplicate
+     * @tags Index Volume Groups
+     * @name CreateIndexVolumeGroup
+     * @summary Creates an index volume group
+     * @request POST:/index/volumeGroup/v2
      * @secure
      */
-    delete2: (id: number, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    createIndexVolumeGroup: (data: string, params: RequestParams = {}) =>
+      this.request<any, IndexVolumeGroup>({
+        path: `/index/volumeGroup/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name FindIndexVolumeGroups
+     * @summary Finds index volume groups matching request
+     * @request POST:/index/volumeGroup/v2/find
+     * @secure
+     */
+    findIndexVolumeGroups: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageIndexVolumeGroup>({
+        path: `/index/volumeGroup/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name DeleteIndexVolumeGroup
+     * @summary Deletes an index volume group
+     * @request DELETE:/index/volumeGroup/v2/{id}
+     * @secure
+     */
+    deleteIndexVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/index/volumeGroup/v2/${id}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name FetchIndexVolumeGroup
+     * @summary Gets an index volume group
+     * @request GET:/index/volumeGroup/v2/{id}
+     * @secure
+     */
+    fetchIndexVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, IndexVolumeGroup>({
+        path: `/index/volumeGroup/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name UpdateIndexVolumeGroup
+     * @summary Updates an index volume group
+     * @request PUT:/index/volumeGroup/v2/{id}
+     * @secure
+     */
+    updateIndexVolumeGroup: (id: number, data: IndexVolumeGroup, params: RequestParams = {}) =>
+      this.request<any, IndexVolumeGroup>({
+        path: `/index/volumeGroup/v2/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -6246,36 +5716,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags job - v1
-     * @name List
+     * @tags Jobs
+     * @name ListJobs
      * @summary Lists jobs
      * @request GET:/job/v1
      * @secure
      */
-    list: (params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    listJobs: (params: RequestParams = {}) =>
+      this.request<any, ResultPageJob>({
         path: `/job/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags job - v1
-     * @name SetEnabled
+     * @tags Jobs
+     * @name SetJobEnabled
      * @summary Sets the enabled status of the job
      * @request PUT:/job/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+    setJobEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/job/v1/${id}/enabled`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6285,57 +5753,53 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags jobNode - v1
-     * @name List
+     * @tags Jobs (Node)
+     * @name ListJobsNodes
      * @summary Lists job nodes
      * @request GET:/jobNode/v1
      * @secure
      */
-    list: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    listJobsNodes: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, ResultPageJobNode>({
         path: `/jobNode/v1`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags jobNode - v1
-     * @name Info
+     * @tags Jobs (Node)
+     * @name FetchJobNodeInfo
      * @summary Gets current info for a job node
      * @request GET:/jobNode/v1/info
      * @secure
      */
-    info: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
-      this.request<JobNodeInfo, any>({
+    fetchJobNodeInfo: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, JobNodeInfo>({
         path: `/jobNode/v1/info`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags jobNode - v1
-     * @name SetEnabled
+     * @tags Jobs (Node)
+     * @name SetJobNodeEnabled
      * @summary Sets the enabled status of the job node
      * @request PUT:/jobNode/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+    setJobNodeEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/enabled`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6344,17 +5808,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags jobNode - v1
-     * @name SetSchedule
+     * @tags Jobs (Node)
+     * @name SetJobNodeSchedule
      * @summary Sets the schedule job node
      * @request PUT:/jobNode/v1/{id}/schedule
      * @secure
      */
-    setSchedule: (id: number, body: string, params: RequestParams = {}) =>
+    setJobNodeSchedule: (id: number, data: string, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/schedule`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6363,17 +5827,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags jobNode - v1
-     * @name SetTaskLimit
+     * @tags Jobs (Node)
+     * @name SetJobNodeTaskLimit
      * @summary Sets the task limit for the job node
      * @request PUT:/jobNode/v1/{id}/taskLimit
      * @secure
      */
-    setTaskLimit: (id: number, body: number, params: RequestParams = {}) =>
+    setJobNodeTaskLimit: (id: number, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/taskLimit`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6383,60 +5847,55 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags kafkaConfig - v1
-     * @name Download
+     * @tags Kafka Config
+     * @name DownloadKafkaConfig
      * @summary Download a kafkaConfig doc
      * @request POST:/kafkaConfig/v1/download
      * @secure
      */
-    download: (body: DocRef, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    downloadKafkaConfig: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
         path: `/kafkaConfig/v1/download`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags kafkaConfig - v1
-     * @name Read
-     * @summary Get a kafkaConfig doc
-     * @request POST:/kafkaConfig/v1/read
+     * @tags Kafka Config
+     * @name FetchKafkaConfig
+     * @summary Fetch a kafkaConfig doc by its UUID
+     * @request GET:/kafkaConfig/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<KafkaConfigDoc, any>({
-        path: `/kafkaConfig/v1/read`,
-        method: "POST",
-        body: body,
+    fetchKafkaConfig: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, KafkaConfigDoc>({
+        path: `/kafkaConfig/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags kafkaConfig - v1
-     * @name Update
+     * @tags Kafka Config
+     * @name UpdateKafkaConfig
      * @summary Update a kafkaConfig doc
-     * @request PUT:/kafkaConfig/v1/update
+     * @request PUT:/kafkaConfig/v1/{uuid}
      * @secure
      */
-    update: (body: KafkaConfigDoc, params: RequestParams = {}) =>
-      this.request<KafkaConfigDoc, any>({
-        path: `/kafkaConfig/v1/update`,
+    updateKafkaConfig: (uuid: string, data: KafkaConfigDoc, params: RequestParams = {}) =>
+      this.request<any, KafkaConfigDoc>({
+        path: `/kafkaConfig/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -6444,98 +5903,93 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags meta - v1
+     * @tags Meta
      * @name FindMetaRow
      * @summary Find matching meta data
      * @request POST:/meta/v1/find
      * @secure
      */
-    findMetaRow: (body: FindMetaCriteria, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    findMetaRow: (data: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageMetaRow>({
         path: `/meta/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags meta - v1
-     * @name GetReprocessSelectionSummary
+     * @tags Meta
+     * @name GetMetaReprocessSelectionSummary
      * @summary Get a summary of the parent items of the selected meta data
      * @request POST:/meta/v1/getReprocessSelectionSummary
      * @secure
      */
-    getReprocessSelectionSummary: (body: FindMetaCriteria, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    getMetaReprocessSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<any, SelectionSummary>({
         path: `/meta/v1/getReprocessSelectionSummary`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags meta - v1
-     * @name GetSelectionSummary
+     * @tags Meta
+     * @name GetMetaSelectionSummary
      * @summary Get a summary of the selected meta data
      * @request POST:/meta/v1/getSelectionSummary
      * @secure
      */
-    getSelectionSummary: (body: FindMetaCriteria, params: RequestParams = {}) =>
-      this.request<ResourceGeneration, any>({
+    getMetaSelectionSummary: (data: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<any, SelectionSummary>({
         path: `/meta/v1/getSelectionSummary`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags meta - v1
-     * @name GetTypes
+     * @tags Meta
+     * @name GetStreamTypes
      * @summary Get a list of possible stream types
      * @request GET:/meta/v1/getTypes
      * @secure
      */
-    getTypes: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    getStreamTypes: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/meta/v1/getTypes`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags meta - v1
-     * @name UpdateStatus
+     * @tags Meta
+     * @name UpdateMetaStatus
      * @summary Update status on matching meta data
      * @request PUT:/meta/v1/update/status
      * @secure
      */
-    updateStatus: (params: RequestParams = {}) =>
-      this.request<number, any>({
+    updateMetaStatus: (data: UpdateStatusRequest, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/meta/v1/update/status`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -6543,74 +5997,68 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags node - v1
-     * @name Find
+     * @tags Nodes
+     * @name FindNodes
      * @summary Lists nodes
      * @request GET:/node/v1
      * @secure
      */
-    find: (params: RequestParams = {}) =>
-      this.request<FetchNodeStatusResponse, any>({
+    findNodes: (params: RequestParams = {}) =>
+      this.request<any, FetchNodeStatusResponse>({
         path: `/node/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags node - v1
+     * @tags Nodes
      * @name ListAllNodes
      * @summary Lists all nodes
      * @request GET:/node/v1/all
      * @secure
      */
     listAllNodes: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/node/v1/all`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags node - v1
+     * @tags Nodes
      * @name ListEnabledNodes
      * @summary Lists enabled nodes
      * @request GET:/node/v1/enabled
      * @secure
      */
     listEnabledNodes: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/node/v1/enabled`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags node - v1
-     * @name SetEnabled
+     * @tags Nodes
+     * @name SetNodeEnabled
      * @summary Sets whether a node is enabled
      * @request PUT:/node/v1/enabled/{nodeName}
      * @secure
      */
-    setEnabled: (nodeName: string, body: boolean, params: RequestParams = {}) =>
+    setNodeEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6619,55 +6067,51 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags node - v1
-     * @name Info
+     * @tags Nodes
+     * @name FetchNodeInfo
      * @summary Gets detailed information about a node
      * @request GET:/node/v1/info/{nodeName}
      * @secure
      */
-    info: (nodeName: string, params: RequestParams = {}) =>
-      this.request<number, any>({
+    fetchNodeInfo: (nodeName: string, params: RequestParams = {}) =>
+      this.request<any, ClusterNodeInfo>({
         path: `/node/v1/info/${nodeName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags node - v1
-     * @name Ping
+     * @tags Nodes
+     * @name PingNode
      * @summary Gets a ping time for a node
      * @request GET:/node/v1/ping/{nodeName}
      * @secure
      */
-    ping: (nodeName: string, params: RequestParams = {}) =>
-      this.request<number, any>({
+    pingNode: (nodeName: string, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/node/v1/ping/${nodeName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags node - v1
-     * @name SetPriority
+     * @tags Nodes
+     * @name SetNodePriority
      * @summary Sets the priority of a node
      * @request PUT:/node/v1/priority/{nodeName}
      * @secure
      */
-    setPriority: (nodeName: string, body: number, params: RequestParams = {}) =>
+    setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/node/v1/priority/${nodeName}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -6677,19 +6121,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags ApiKey
+     * @tags API Keys, Authentication
      * @name OpenIdConfiguration
      * @summary Provides discovery for openid configuration
      * @request GET:/oauth2/v1/noauth/.well-known/openid-configuration
      * @secure
      */
     openIdConfiguration: (params: RequestParams = {}) =>
-      this.request<string, any>({
+      this.request<any, string>({
         path: `/oauth2/v1/noauth/.well-known/openid-configuration`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -6697,49 +6139,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Auth
+     * @name OpenIdAuth
      * @summary Submit an OpenId AuthenticationRequest.
      * @request GET:/oauth2/v1/noauth/auth
      * @secure
      */
-    auth: (
+    openIdAuth: (
       query: {
-        client_id: string;
-        nonce?: string;
-        prompt?: string;
-        redirect_uri: string;
-        response_type: string;
         scope: string;
+        response_type: string;
+        client_id: string;
+        redirect_uri: string;
+        nonce?: string;
         state?: string;
+        prompt?: string;
       },
       params: RequestParams = {},
     ) =>
-      this.request<string, any>({
+      this.request<any, void>({
         path: `/oauth2/v1/noauth/auth`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name Certs
+     * @tags API Keys, Authentication
+     * @name OpenIdCerts
      * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
      * @request GET:/oauth2/v1/noauth/certs
      * @secure
      */
-    certs: (params: RequestParams = {}) =>
-      this.request<string, any>({
+    openIdCerts: (params: RequestParams = {}) =>
+      this.request<any, Record<string, Record<string, object>[]>>({
         path: `/oauth2/v1/noauth/certs`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
@@ -6747,19 +6185,18 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Token
+     * @name OpenIdToken
      * @summary Get a token from an access code
      * @request POST:/oauth2/v1/noauth/token
      * @secure
      */
-    token: (body: TokenRequest, params: RequestParams = {}) =>
-      this.request<string, any>({
+    openIdToken: (data: TokenRequest, params: RequestParams = {}) =>
+      this.request<any, TokenResponse>({
         path: `/oauth2/v1/noauth/token`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -6767,216 +6204,203 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Application Permissions
      * @name GetUserAndPermissions
      * @summary User and app permissions for the current session
      * @request GET:/permission/app/v1
      * @secure
      */
     getUserAndPermissions: (params: RequestParams = {}) =>
-      this.request<UserAndPermissions, any>({
+      this.request<any, UserAndPermissions>({
         path: `/permission/app/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
-     * @name ChangeUser
+     * @tags Application Permissions
+     * @name ChangeUserPermissions
      * @summary User and app permissions for the current session
      * @request POST:/permission/app/v1/changeUser
      * @secure
      */
-    changeUser: (body: ChangeUserRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    changeUserPermissions: (data: ChangeUserRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/permission/app/v1/changeUser`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Application Permissions
      * @name FetchAllPermissions
      * @summary Get all possible permissions
      * @request GET:/permission/app/v1/fetchAllPermissions
      * @secure
      */
     fetchAllPermissions: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/permission/app/v1/fetchAllPermissions`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Application Permissions
      * @name FetchUserAppPermissions
      * @summary User and app permissions for the specified user
      * @request POST:/permission/app/v1/fetchUserAppPermissions
      * @secure
      */
-    fetchUserAppPermissions: (body: User, params: RequestParams = {}) =>
-      this.request<UserAndPermissions, any>({
+    fetchUserAppPermissions: (data: User, params: RequestParams = {}) =>
+      this.request<any, UserAndPermissions>({
         path: `/permission/app/v1/fetchUserAppPermissions`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
-     * @name FireChange
+     * @tags Application Permissions
+     * @name FirePermissionChangeEvent
      * @summary Fires a permission change event
      * @request POST:/permission/changeEvent/v1/fireChange/{nodeName}
      * @secure
      */
-    fireChange: (nodeName: string, body: PermissionChangeRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    firePermissionChangeEvent: (nodeName: string, data: PermissionChangeRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/permission/changeEvent/v1/fireChange/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name ChangeDocumentPermissions
      * @summary Change document permissions
      * @request POST:/permission/doc/v1/changeDocumentPermissions
      * @secure
      */
-    changeDocumentPermissions: (body: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    changeDocumentPermissions: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/permission/doc/v1/changeDocumentPermissions`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name CheckDocumentPermission
      * @summary Check document permission
      * @request POST:/permission/doc/v1/checkDocumentPermission
      * @secure
      */
-    checkDocumentPermission: (body: CheckDocumentPermissionRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    checkDocumentPermission: (data: CheckDocumentPermissionRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/permission/doc/v1/checkDocumentPermission`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name CopyPermissionFromParent
      * @summary Copy permissions from parent
      * @request POST:/permission/doc/v1/copyPermissionsFromParent
      * @secure
      */
-    copyPermissionFromParent: (body: CopyPermissionsFromParentRequest, params: RequestParams = {}) =>
-      this.request<DocumentPermissions, any>({
+    copyPermissionFromParent: (data: CopyPermissionsFromParentRequest, params: RequestParams = {}) =>
+      this.request<any, DocumentPermissions>({
         path: `/permission/doc/v1/copyPermissionsFromParent`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name FetchAllDocumentPermissions
      * @summary Fetch document permissions
      * @request POST:/permission/doc/v1/fetchAllDocumentPermissions
      * @secure
      */
-    fetchAllDocumentPermissions: (body: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
-      this.request<DocumentPermissions, any>({
+    fetchAllDocumentPermissions: (data: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, DocumentPermissions>({
         path: `/permission/doc/v1/fetchAllDocumentPermissions`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name FilterUsers
      * @summary Get all permissions for a given document type
      * @request POST:/permission/doc/v1/filterUsers
      * @secure
      */
-    filterUsers: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
+      this.request<any, User[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags application permissions - v1
+     * @tags Doc Permissions
      * @name GetPermissionForDocType
      * @summary Get all permissions for a given document type
      * @request GET:/permission/doc/v1/getPermissionForDocType/${docType}
      * @secure
      */
     getPermissionForDocType: (docType: string, params: RequestParams = {}) =>
-      this.request<object[], any>({
+      this.request<any, string[]>({
         path: `/permission/doc/v1/getPermissionForDocType/$${docType}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -6984,189 +6408,108 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags pipeline - v1
+     * @tags Pipelines
      * @name FetchPipelineData
      * @summary Fetch data for a pipeline
      * @request POST:/pipeline/v1/fetchPipelineData
      * @secure
      */
-    fetchPipelineData: (body: DocRef, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchPipelineData: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, PipelineData[]>({
         path: `/pipeline/v1/fetchPipelineData`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags pipeline - v1
+     * @tags Pipelines
      * @name FetchPipelineXml
      * @summary Fetch the XML for a pipeline
      * @request POST:/pipeline/v1/fetchPipelineXml
      * @secure
      */
-    fetchPipelineXml: (body: DocRef, params: RequestParams = {}) =>
-      this.request<FetchPipelineXmlResponse, any>({
+    fetchPipelineXml: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, FetchPipelineXmlResponse>({
         path: `/pipeline/v1/fetchPipelineXml`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags pipeline - v1
-     * @name GetPropertyTypes
+     * @tags Pipelines
+     * @name GetPipelinePropertyTypes
      * @summary Get pipeline property types
      * @request GET:/pipeline/v1/propertyTypes
      * @secure
      */
-    getPropertyTypes: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    getPipelinePropertyTypes: (params: RequestParams = {}) =>
+      this.request<any, FetchPropertyTypesResult[]>({
         path: `/pipeline/v1/propertyTypes`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags pipeline - v1
-     * @name Read
-     * @summary Get a pipeline doc
-     * @request POST:/pipeline/v1/read
-     * @secure
-     */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<PipelineDoc, any>({
-        path: `/pipeline/v1/read`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags pipeline - v1
+     * @tags Pipelines
      * @name SavePipelineXml
      * @summary Update a pipeline doc with XML directly
      * @request PUT:/pipeline/v1/savePipelineXml
      * @secure
      */
-    savePipelineXml: (body: SavePipelineXmlRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    savePipelineXml: (data: SavePipelineXmlRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/pipeline/v1/savePipelineXml`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags pipeline - v1
-     * @name Update
+     * @tags Pipelines
+     * @name FetchPipeline
+     * @summary Fetch a pipeline doc by its UUID
+     * @request GET:/pipeline/v1/{uuid}
+     * @secure
+     */
+    fetchPipeline: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, PipelineDoc>({
+        path: `/pipeline/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Pipelines
+     * @name UpdatePipeline
      * @summary Update a pipeline doc
-     * @request PUT:/pipeline/v1/update
+     * @request PUT:/pipeline/v1/{uuid}
      * @secure
      */
-    update: (body: PipelineDoc, params: RequestParams = {}) =>
-      this.request<PipelineDoc, any>({
-        path: `/pipeline/v1/update`,
+    updatePipeline: (uuid: string, data: PipelineDoc, params: RequestParams = {}) =>
+      this.request<any, PipelineDoc>({
+        path: `/pipeline/v1/${uuid}`,
         method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  pipelines = {
-    /**
-     * No description
-     *
-     * @tags pipeline - v1
-     * @name Search
-     * @request GET:/pipelines/v1
-     * @secure
-     */
-    search: (query?: { filter?: string; offset?: number; pageSize?: number }, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/pipelines/v1`,
-        method: "GET",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags pipeline - v1
-     * @name CreateInherited
-     * @request POST:/pipelines/v1/{parentPipelineId}/inherit
-     * @secure
-     */
-    createInherited: (parentPipelineId: string, body: DocRef, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/pipelines/v1/${parentPipelineId}/inherit`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags pipeline - v1
-     * @name Fetch
-     * @request GET:/pipelines/v1/{pipelineId}
-     * @secure
-     */
-    fetch: (pipelineId: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/pipelines/v1/${pipelineId}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags pipeline - v1
-     * @name Save
-     * @request POST:/pipelines/v1/{pipelineId}
-     * @secure
-     */
-    save: (pipelineId: string, body: PipelineDTO, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/pipelines/v1/${pipelineId}`,
-        method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -7176,36 +6519,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags processor - v1
-     * @name Delete
+     * @tags Processors
+     * @name DeleteProcessor
      * @summary Deletes a processor
      * @request DELETE:/processor/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<Processor, any>({
+    deleteProcessor: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processor - v1
-     * @name SetEnabled
+     * @tags Processors
+     * @name SetProcessorEnabled
      * @summary Sets the enabled/disabled state for a processor
      * @request PUT:/processor/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+    setProcessorEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processor/v1/${id}/enabled`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -7215,133 +6556,127 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name Create
+     * @tags Processor Filters
+     * @name CreateProcessorFilter
      * @summary Creates a filter
      * @request POST:/processorFilter/v1
      * @secure
      */
-    create: (body: CreateProcessFilterRequest, params: RequestParams = {}) =>
-      this.request<ProcessorFilter, any>({
+    createProcessorFilter: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
+      this.request<any, ProcessorFilter>({
         path: `/processorFilter/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name Find
+     * @tags Processor Filters
+     * @name FindProcessorFilters
      * @summary Finds processors and filters matching request
      * @request POST:/processorFilter/v1/find
      * @secure
      */
-    find: (body: FetchProcessorRequest, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findProcessorFilters: (data: FetchProcessorRequest, params: RequestParams = {}) =>
+      this.request<any, ProcessorListRowResultPage>({
         path: `/processorFilter/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name Reprocess
+     * @tags Processor Filters
+     * @name ReprocessData
      * @summary Create filters to reprocess data
      * @request POST:/processorFilter/v1/reprocess
      * @secure
      */
-    reprocess: (body: CreateReprocessFilterRequest, params: RequestParams = {}) =>
-      this.request<ReprocessDataInfo[], any>({
+    reprocessData: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+      this.request<any, ReprocessDataInfo[]>({
         path: `/processorFilter/v1/reprocess`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name Read
-     * @summary Gets a filter
-     * @request GET:/processorFilter/v1/{id}
-     * @secure
-     */
-    read: (id: number, params: RequestParams = {}) =>
-      this.request<ProcessorFilter, any>({
-        path: `/processorFilter/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags processorFilter - v1
-     * @name Update
-     * @summary Updates a filter
-     * @request PUT:/processorFilter/v1/{id}
-     * @secure
-     */
-    update: (id: number, params: RequestParams = {}) =>
-      this.request<ProcessorFilter, any>({
-        path: `/processorFilter/v1/${id}`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags processorFilter - v1
-     * @name Delete
+     * @tags Processor Filters
+     * @name DeleteProcessorFilter
      * @summary Deletes a filter
      * @request DELETE:/processorFilter/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<ProcessorFilter, any>({
+    deleteProcessorFilter: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
         path: `/processorFilter/v1/${id}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name SetEnabled
+     * @tags Processor Filters
+     * @name FetchProcessorFilter
+     * @summary Fetch a filter
+     * @request GET:/processorFilter/v1/{id}
+     * @secure
+     */
+    fetchProcessorFilter: (id: number, params: RequestParams = {}) =>
+      this.request<any, ProcessorFilter>({
+        path: `/processorFilter/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processor Filters
+     * @name UpdateProcessorFilter
+     * @summary Updates a filter
+     * @request PUT:/processorFilter/v1/{id}
+     * @secure
+     */
+    updateProcessorFilter: (id: number, data: ProcessorFilter, params: RequestParams = {}) =>
+      this.request<any, ProcessorFilter>({
+        path: `/processorFilter/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processor Filters
+     * @name SetProcessorFilterEnabled
      * @summary Sets the enabled/disabled state for a filter
      * @request PUT:/processorFilter/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, params: RequestParams = {}) =>
+    setProcessorFilterEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processorFilter/v1/${id}/enabled`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -7350,16 +6685,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags processorFilter - v1
-     * @name SetPriority
+     * @tags Processor Filters
+     * @name SetProcessorFilterPriority
      * @summary Sets the priority for a filter
      * @request PUT:/processorFilter/v1/{id}/priority
      * @secure
      */
-    setPriority: (id: number, params: RequestParams = {}) =>
+    setProcessorFilterPriority: (id: number, data: number, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/processorFilter/v1/${id}/priority`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -7369,135 +6705,131 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags processorTask - v1
-     * @name AbandonTasks
+     * @tags Processor Tasks
+     * @name AbandonProcessorTasks
      * @summary Abandon some tasks
      * @request POST:/processorTask/v1/abandon/{nodeName}
      * @secure
      */
-    abandonTasks: (nodeName: string, body: ProcessorTaskList, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    abandonProcessorTasks: (nodeName: string, data: ProcessorTaskList, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/processorTask/v1/abandon/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorTask - v1
-     * @name AssignTasks
+     * @tags Processor Tasks
+     * @name AssignProcessorTasks
      * @summary Assign some tasks
      * @request POST:/processorTask/v1/assign/{nodeName}
      * @secure
      */
-    assignTasks: (nodeName: string, body: AssignTasksRequest, params: RequestParams = {}) =>
-      this.request<ProcessorTaskList, any>({
+    assignProcessorTasks: (nodeName: string, data: AssignTasksRequest, params: RequestParams = {}) =>
+      this.request<any, ProcessorTaskList>({
         path: `/processorTask/v1/assign/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorTask - v1
-     * @name Find
+     * @tags Processor Tasks
+     * @name FindProcessorTasks
      * @summary Finds processors tasks
      * @request POST:/processorTask/v1/find
      * @secure
      */
-    find: (body: ExpressionCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findProcessorTasks: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageProcessorTask>({
         path: `/processorTask/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags processorTask - v1
-     * @name FindSummary
+     * @tags Processor Tasks
+     * @name FindProcessorTaskSummary
      * @summary Finds processor task summaries
      * @request POST:/processorTask/v1/summary
      * @secure
      */
-    findSummary: (body: ExpressionCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findProcessorTaskSummary: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageProcessorTaskSummary>({
         path: `/processorTask/v1/summary`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
   refData = {
     /**
-     * No description
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *
-     * @tags reference data - v1
-     * @name Entries
+     * @tags Reference Data
+     * @name GetReferenceStoreEntries
+     * @summary List entries from the reference data store on the node called.
      * @request GET:/refData/v1/entries
      * @secure
      */
-    entries: (query?: { limit?: number }, params: RequestParams = {}) =>
-      this.request<RefStoreEntry[], any>({
+    getReferenceStoreEntries: (query?: { limit?: number }, params: RequestParams = {}) =>
+      this.request<any, RefStoreEntry[]>({
         path: `/refData/v1/entries`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags reference data - v1
-     * @name Lookup
+     * @tags Reference Data
+     * @name LookupReferenceData
+     * @summary Perform a reference data lookup using the supplied lookup request.
      * @request POST:/refData/v1/lookup
      * @secure
      */
-    lookup: (params: RequestParams = {}) =>
-      this.request<string, any>({
+    lookupReferenceData: (data: RefDataLookupRequest, params: RequestParams = {}) =>
+      this.request<any, string>({
         path: `/refData/v1/lookup`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags reference data - v1
-     * @name Purge
+     * @tags Reference Data
+     * @name PurgeReferenceData
+     * @summary Explicitly delete all entries that are older than purgeAge.
      * @request DELETE:/refData/v1/purge/{purgeAge}
      * @secure
      */
-    purge: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/refData/v1/purge/${purgeAge}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };
@@ -7505,57 +6837,55 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags remoteSearch - v1
-     * @name Destroy
+     * @tags Remote Search
+     * @name DestroyRemoteSearch
      * @summary Destroy search results
      * @request GET:/remoteSearch/v1/destroy
      * @secure
      */
-    destroy: (query?: { queryKey?: string }, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    destroyRemoteSearch: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/remoteSearch/v1/destroy`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags remoteSearch - v1
-     * @name Poll
+     * @tags Remote Search
+     * @name PollRemoteSearch
+     * @summary Poll the server for search results for the supplied queryKey
      * @request GET:/remoteSearch/v1/poll
      * @secure
      */
-    poll: (query?: { queryKey?: string }, params: RequestParams = {}) =>
-      this.request<StreamingOutput, any>({
+    pollRemoteSearch: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
         path: `/remoteSearch/v1/poll`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags remoteSearch - v1
-     * @name Start
+     * @tags Remote Search
+     * @name StartRemoteSearch
      * @summary Start a search
      * @request POST:/remoteSearch/v1/start
      * @secure
      */
-    start: (params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7563,99 +6893,91 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags ruleset - v2
-     * @name ExportDocument
+     * @tags Rule Set
+     * @name ExportReceiveDataRules
      * @summary Submit an export request
      * @request POST:/ruleset/v2/export
      * @secure
      */
-    exportDocument: (body: DocRef, params: RequestParams = {}) =>
-      this.request<Base64EncodedDocumentData, any>({
+    exportReceiveDataRules: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, Base64EncodedDocumentData>({
         path: `/ruleset/v2/export`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ruleset - v2
-     * @name ImportDocument
+     * @tags Rule Set
+     * @name ImportReceiveDataRules
      * @summary Submit an import request
      * @request POST:/ruleset/v2/import
      * @secure
      */
-    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
+    importReceiveDataRules: (data: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
         path: `/ruleset/v2/import`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ruleset - v2
-     * @name ListDocuments
+     * @tags Rule Set
+     * @name ListReceiveDataRules
      * @summary Submit a request for a list of doc refs held by this service
      * @request GET:/ruleset/v2/list
      * @secure
      */
-    listDocuments: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    listReceiveDataRules: (params: RequestParams = {}) =>
+      this.request<any, DocRef[]>({
         path: `/ruleset/v2/list`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ruleset - v2
-     * @name Read
-     * @summary Get a rules doc
-     * @request POST:/ruleset/v2/read
+     * @tags Rule Set
+     * @name FetchReceiveDataRules
+     * @summary Fetch a rules doc by its UUID
+     * @request GET:/ruleset/v2/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<ReceiveDataRules, any>({
-        path: `/ruleset/v2/read`,
-        method: "POST",
-        body: body,
+    fetchReceiveDataRules: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ReceiveDataRules>({
+        path: `/ruleset/v2/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ruleset - v2
-     * @name Update
+     * @tags Rule Set
+     * @name UpdateReceiveDataRules
      * @summary Update a rules doc
-     * @request PUT:/ruleset/v2/update
+     * @request PUT:/ruleset/v2/{uuid}
      * @secure
      */
-    update: (body: ReceiveDataRules, params: RequestParams = {}) =>
-      this.request<ReceiveDataRules, any>({
-        path: `/ruleset/v2/update`,
+    updateReceiveDataRules: (uuid: string, data: ReceiveDataRules, params: RequestParams = {}) =>
+      this.request<any, ReceiveDataRules>({
+        path: `/ruleset/v2/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7663,20 +6985,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags scheduledTime - v1
-     * @name Get
+     * @tags Scheduled Time
+     * @name GetScheduledTimes
      * @summary Gets scheduled time info
      * @request POST:/scheduledTime/v1
      * @secure
      */
-    get: (body: GetScheduledTimesRequest, params: RequestParams = {}) =>
-      this.request<ScheduledTimes, any>({
+    getScheduledTimes: (data: GetScheduledTimesRequest, params: RequestParams = {}) =>
+      this.request<any, ScheduledTimes>({
         path: `/scheduledTime/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7684,60 +7005,55 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags script - v1
+     * @tags Scripts
      * @name FetchLinkedScripts
      * @summary Fetch related scripts
      * @request POST:/script/v1/fetchLinkedScripts
      * @secure
      */
-    fetchLinkedScripts: (body: FetchLinkedScriptRequest, params: RequestParams = {}) =>
-      this.request<ScriptDoc, any>({
+    fetchLinkedScripts: (data: FetchLinkedScriptRequest, params: RequestParams = {}) =>
+      this.request<any, ScriptDoc[]>({
         path: `/script/v1/fetchLinkedScripts`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags script - v1
-     * @name Read
-     * @summary Get a script doc
-     * @request POST:/script/v1/read
+     * @tags Scripts
+     * @name FetchScript
+     * @summary Fetch a script doc by its UUID
+     * @request GET:/script/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<ScriptDoc, any>({
-        path: `/script/v1/read`,
-        method: "POST",
-        body: body,
+    fetchScript: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ScriptDoc>({
+        path: `/script/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags script - v1
-     * @name Update
+     * @tags Scripts
+     * @name UpdateScript
      * @summary Update a script doc
-     * @request PUT:/script/v1/update
+     * @request PUT:/script/v1/{uuid}
      * @secure
      */
-    update: (body: ScriptDoc, params: RequestParams = {}) =>
-      this.request<ScriptDoc, any>({
-        path: `/script/v1/update`,
+    updateScript: (uuid: string, data: ScriptDoc, params: RequestParams = {}) =>
+      this.request<any, ScriptDoc>({
+        path: `/script/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7745,60 +7061,57 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags searchable - v2
-     * @name GetDataSource
+     * @tags Searchable
+     * @name GetSearchableDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/searchable/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DataSource, any>({
+    getSearchableDataSource: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
         path: `/searchable/v2/dataSource`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags searchable - v2
-     * @name Destroy
+     * @tags Searchable
+     * @name DestroySearchableQuery
      * @summary Destroy a running query
      * @request POST:/searchable/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    destroySearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/searchable/v2/destroy`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags searchable - v2
-     * @name Search
+     * @tags Searchable
+     * @name StartSearchableQuery
      * @summary Submit a search request
      * @request POST:/searchable/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params: RequestParams = {}) =>
-      this.request<SearchResponse, any>({
+    startSearchableQuery: (data: SearchRequest, params: RequestParams = {}) =>
+      this.request<any, SearchResponse>({
         path: `/searchable/v2/search`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7806,59 +7119,53 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags session - v1
-     * @name List
+     * @tags Sessions
+     * @name ListSessions
      * @summary Lists user sessions for a node, or all nodes in the cluster if nodeName is null
      * @request GET:/session/v1/list
      * @secure
      */
-    list: (query?: { nodeName?: string }, params: RequestParams = {}) =>
-      this.request<SessionDetails, any>({
+    listSessions: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, SessionListResponse>({
         path: `/session/v1/list`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags session - v1
-     * @name Logout
+     * @tags Sessions
+     * @name LogoutSession
      * @summary Logs the specified session out of Stroom
      * @request GET:/session/v1/logout/{sessionId}
      * @secure
      */
-    logout: (sessionId: string, params: RequestParams = {}) =>
-      this.request<string, any>({
+    logoutSession: (sessionId: string, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/session/v1/logout/${sessionId}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags session - v1
-     * @name Login
+     * @tags Sessions
+     * @name LoginSession
      * @summary Checks if the current session is authenticated and redirects to an auth flow if it is not
      * @request GET:/session/v1/noauth/login
      * @secure
      */
-    login: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
-      this.request<string, any>({
+    loginSession: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
+      this.request<any, SessionLoginResponse>({
         path: `/session/v1/noauth/login`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7866,78 +7173,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags sessionInfo - v1
-     * @name Get
+     * @tags Session Info
+     * @name GetSessionInfo
+     * @summary Get information for the current session
      * @request GET:/sessionInfo/v1
      * @secure
      */
-    get: (params: RequestParams = {}) =>
-      this.request<SessionInfo, any>({
+    getSessionInfo: (params: RequestParams = {}) =>
+      this.request<any, SessionInfo>({
         path: `/sessionInfo/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  solr = {
-    /**
-     * @description Solr Index API
-     *
-     * @tags solr index - v1
-     * @name ExportDocument
-     * @summary Submit an export request
-     * @request POST:/solr/index/v1/export
-     * @secure
-     */
-    exportDocument: (body: DocRef, params: RequestParams = {}) =>
-      this.request<Base64EncodedDocumentData, any>({
-        path: `/solr/index/v1/export`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Solr Index API
-     *
-     * @tags solr index - v1
-     * @name ImportDocument
-     * @summary Submit an import request
-     * @request POST:/solr/index/v1/import
-     * @secure
-     */
-    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
-        path: `/solr/index/v1/import`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Solr Index API
-     *
-     * @tags solr index - v1
-     * @name ListDocuments
-     * @summary Submit a request for a list of doc refs held by this service
-     * @request GET:/solr/index/v1/list
-     * @secure
-     */
-    listDocuments: (params: RequestParams = {}) =>
-      this.request<object[], any>({
-        path: `/solr/index/v1/list`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -7945,80 +7191,74 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags solrIndex - v1
+     * @tags Solr Indices
      * @name FetchSolrTypes
      * @summary Fetch Solr types
      * @request POST:/solrIndex/v1/fetchSolrTypes
      * @secure
      */
-    fetchSolrTypes: (body: SolrIndexDoc, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchSolrTypes: (data: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/solrIndex/v1/fetchSolrTypes`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags solrIndex - v1
-     * @name Read
-     * @summary Get a solr index doc
-     * @request POST:/solrIndex/v1/read
-     * @secure
-     */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<SolrIndexDoc, any>({
-        path: `/solrIndex/v1/read`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags solrIndex - v1
+     * @tags Solr Indices
      * @name SolrConnectionTest
      * @summary Test connection to Solr
      * @request POST:/solrIndex/v1/solrConnectionTest
      * @secure
      */
-    solrConnectionTest: (body: SolrIndexDoc, params: RequestParams = {}) =>
-      this.request<string, any>({
+    solrConnectionTest: (data: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<any, SolrConnectionTestResponse>({
         path: `/solrIndex/v1/solrConnectionTest`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags solrIndex - v1
-     * @name Update
-     * @summary Update a solr index doc
-     * @request PUT:/solrIndex/v1/update
+     * @tags Solr Indices
+     * @name FetchSolrIndex
+     * @summary Fetch a solr index doc by its UUID
+     * @request GET:/solrIndex/v1/{uuid}
      * @secure
      */
-    update: (body: SolrIndexDoc, params: RequestParams = {}) =>
-      this.request<SolrIndexDoc, any>({
-        path: `/solrIndex/v1/update`,
+    fetchSolrIndex: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, SolrIndexDoc>({
+        path: `/solrIndex/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Solr Indices
+     * @name UpdateSolrIndex
+     * @summary Update a solr index doc
+     * @request PUT:/solrIndex/v1/{uuid}
+     * @secure
+     */
+    updateSolrIndex: (uuid: string, data: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<any, SolrIndexDoc>({
+        path: `/solrIndex/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8026,60 +7266,57 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags sqlstatistics query - v2
-     * @name GetDataSource
+     * @tags Sql Statistics Query
+     * @name GetSqlStatisticsDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/sqlstatistics/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DataSource, any>({
+    getSqlStatisticsDataSource: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
         path: `/sqlstatistics/v2/dataSource`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags sqlstatistics query - v2
-     * @name Destroy
+     * @tags Sql Statistics Query
+     * @name DestroySqlStatisticsSearch
      * @summary Destroy a running query
      * @request POST:/sqlstatistics/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    destroySqlStatisticsSearch: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/sqlstatistics/v2/destroy`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags sqlstatistics query - v2
-     * @name Search
+     * @tags Sql Statistics Query
+     * @name SearchSqlStatistics
      * @summary Submit a search request
      * @request POST:/sqlstatistics/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params: RequestParams = {}) =>
-      this.request<SearchResponse, any>({
+    searchSqlStatistics: (data: SearchRequest, params: RequestParams = {}) =>
+      this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8087,100 +7324,93 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags statisticrollUp - v1
-     * @name BitMaskConversion
+     * @tags SQL Statistics RollUps
+     * @name StatisticBitMaskConversion
      * @summary Get rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskConversion
      * @secure
      */
-    bitMaskConversion: (body: number[], params: RequestParams = {}) =>
-      this.request<object[], any>({
+    statisticBitMaskConversion: (data: number[], params: RequestParams = {}) =>
+      this.request<any, CustomRollUpMaskFields[]>({
         path: `/statistic/rollUp/v1/bitMaskConversion`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statisticrollUp - v1
-     * @name BitMaskPermGeneration
+     * @tags SQL Statistics RollUps
+     * @name StatisticBitMaskPermGeneration
      * @summary Create rollup bit mask
      * @request POST:/statistic/rollUp/v1/bitMaskPermGeneration
      * @secure
      */
-    bitMaskPermGeneration: (body: number, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    statisticBitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
+      this.request<any, CustomRollUpMask[]>({
         path: `/statistic/rollUp/v1/bitMaskPermGeneration`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statisticrollUp - v1
-     * @name FieldChange
+     * @tags SQL Statistics RollUps
+     * @name StatisticFieldChange
      * @summary Change fields
      * @request POST:/statistic/rollUp/v1/dataSourceFieldChange
      * @secure
      */
-    fieldChange: (body: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
-      this.request<StatisticsDataSourceData, any>({
+    statisticFieldChange: (data: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
+      this.request<any, StatisticsDataSourceData>({
         path: `/statistic/rollUp/v1/dataSourceFieldChange`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statistic - v1
-     * @name Read
-     * @summary Get a statistic doc
-     * @request POST:/statistic/v1/read
+     * @tags SQL Statistics Stores
+     * @name FetchStatisticStore
+     * @summary Fetch a statistic doc by its UUID
+     * @request GET:/statistic/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<XsltDoc, any>({
-        path: `/statistic/v1/read`,
-        method: "POST",
-        body: body,
+    fetchStatisticStore: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, StatisticStoreDoc>({
+        path: `/statistic/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statistic - v1
-     * @name Update
+     * @tags SQL Statistics Stores
+     * @name UpdateStatisticStore
      * @summary Update a statistic doc
-     * @request PUT:/statistic/v1/update
+     * @request PUT:/statistic/v1/{uuid}
      * @secure
      */
-    update: (body: StatisticStoreDoc, params: RequestParams = {}) =>
-      this.request<StatisticStoreDoc, any>({
-        path: `/statistic/v1/update`,
+    updateStatisticStore: (uuid: string, data: StatisticStoreDoc, params: RequestParams = {}) =>
+      this.request<any, StatisticStoreDoc>({
+        path: `/statistic/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8188,100 +7418,93 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags statsStorerollUp - v1
-     * @name BitMaskConversion
+     * @tags Stroom Stats RollUps
+     * @name StatsBitMaskConversion
      * @summary Get rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskConversion
      * @secure
      */
-    bitMaskConversion: (body: number[], params: RequestParams = {}) =>
-      this.request<object[], any>({
+    statsBitMaskConversion: (data: number[], params: RequestParams = {}) =>
+      this.request<any, ResultPageCustomRollUpMaskFields>({
         path: `/statsStore/rollUp/v1/bitMaskConversion`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statsStorerollUp - v1
-     * @name BitMaskPermGeneration
+     * @tags Stroom Stats RollUps
+     * @name StatsBitMaskPermGeneration
      * @summary Create rollup bit mask
      * @request POST:/statsStore/rollUp/v1/bitMaskPermGeneration
      * @secure
      */
-    bitMaskPermGeneration: (body: number, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    statsBitMaskPermGeneration: (data: number, params: RequestParams = {}) =>
+      this.request<any, ResultPageCustomRollUpMask>({
         path: `/statsStore/rollUp/v1/bitMaskPermGeneration`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statsStorerollUp - v1
-     * @name FieldChange
+     * @tags Stroom Stats RollUps
+     * @name StatsFieldChange
      * @summary Change fields
      * @request POST:/statsStore/rollUp/v1/dataSourceFieldChange
      * @secure
      */
-    fieldChange: (body: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
-      this.request<StroomStatsStoreEntityData, any>({
+    statsFieldChange: (data: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
+      this.request<any, StroomStatsStoreEntityData>({
         path: `/statsStore/rollUp/v1/dataSourceFieldChange`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statsStore - v1
-     * @name Read
-     * @summary Get a stats store doc
-     * @request POST:/statsStore/v1/read
+     * @tags Stroom Stats Stores
+     * @name FetchStroomStatsStore
+     * @summary Fetch a store doc doc by its UUID
+     * @request GET:/statsStore/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DictionaryDoc, any>({
-        path: `/statsStore/v1/read`,
-        method: "POST",
-        body: body,
+    fetchStroomStatsStore: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, StroomStatsStoreDoc>({
+        path: `/statsStore/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags statsStore - v1
-     * @name Update
+     * @tags Stroom Stats Stores
+     * @name UpdateStroomStatsStore
      * @summary Update a stats store doc
-     * @request PUT:/statsStore/v1/update
+     * @request PUT:/statsStore/v1/{uuid}
      * @secure
      */
-    update: (body: StroomStatsStoreDoc, params: RequestParams = {}) =>
-      this.request<StroomStatsStoreDoc, any>({
-        path: `/statsStore/v1/update`,
+    updateStroomStatsStore: (uuid: string, data: StroomStatsStoreDoc, params: RequestParams = {}) =>
+      this.request<any, StroomStatsStoreDoc>({
+        path: `/statsStore/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8289,59 +7512,57 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags stepping - v1
+     * @tags Stepping
      * @name FindElementDoc
      * @summary Load the document for an element
      * @request POST:/stepping/v1/findElementDoc
      * @secure
      */
-    findElementDoc: (params: RequestParams = {}) =>
-      this.request<Doc, any>({
+    findElementDoc: (data: FindElementDocRequest, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
         path: `/stepping/v1/findElementDoc`,
         method: "POST",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags stepping - v1
+     * @tags Stepping
      * @name GetPipelineForStepping
      * @summary Get a pipeline for stepping
      * @request POST:/stepping/v1/getPipelineForStepping
      * @secure
      */
-    getPipelineForStepping: (body: GetPipelineForMetaRequest, params: RequestParams = {}) =>
-      this.request<DocRef, any>({
+    getPipelineForStepping: (data: GetPipelineForMetaRequest, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
         path: `/stepping/v1/getPipelineForStepping`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags stepping - v1
+     * @tags Stepping
      * @name Step
      * @summary Step a pipeline
      * @request POST:/stepping/v1/step
      * @secure
      */
-    step: (body: PipelineStepRequest, params: RequestParams = {}) =>
-      this.request<SteppingResult, any>({
+    step: (data: PipelineStepRequest, params: RequestParams = {}) =>
+      this.request<any, SteppingResult>({
         path: `/stepping/v1/step`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8349,230 +7570,93 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags storedQuery - v1
-     * @name Create
+     * @tags Stored Queries
+     * @name CreateStoredQuery
      * @summary Create a stored query
      * @request POST:/storedQuery/v1/create
      * @secure
      */
-    create: (body: StoredQuery, params: RequestParams = {}) =>
-      this.request<StoredQuery, any>({
+    createStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
+      this.request<any, StoredQuery>({
         path: `/storedQuery/v1/create`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags storedQuery - v1
-     * @name Delete
+     * @tags Stored Queries
+     * @name DeleteStoredQuery
      * @summary Delete a stored query
      * @request DELETE:/storedQuery/v1/delete
      * @secure
      */
-    delete: (params: RequestParams = {}) =>
-      this.request<StoredQuery, any>({
+    deleteStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/storedQuery/v1/delete`,
         method: "DELETE",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags storedQuery - v1
-     * @name Find
+     * @tags Stored Queries
+     * @name FindStoredQueries
      * @summary Find stored queries
      * @request POST:/storedQuery/v1/find
      * @secure
      */
-    find: (body: FindStoredQueryCriteria, params: RequestParams = {}) =>
-      this.request<ResultPage, any>({
+    findStoredQueries: (data: FindStoredQueryCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageStoredQuery>({
         path: `/storedQuery/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags storedQuery - v1
-     * @name Read
-     * @summary Get a stored query
+     * @tags Stored Queries
+     * @name FetchStoredQuery
+     * @summary Fetch a stored query
      * @request POST:/storedQuery/v1/read
      * @secure
      */
-    read: (body: StoredQuery, params: RequestParams = {}) =>
-      this.request<StoredQuery, any>({
+    fetchStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
+      this.request<any, StoredQuery>({
         path: `/storedQuery/v1/read`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags storedQuery - v1
-     * @name Update
+     * @tags Stored Queries
+     * @name UpdateStoredQuery
      * @summary Update a stored query
      * @request PUT:/storedQuery/v1/update
      * @secure
      */
-    update: (params: RequestParams = {}) =>
-      this.request<StoredQuery, any>({
+    updateStoredQuery: (data: StoredQuery, params: RequestParams = {}) =>
+      this.request<any, StoredQuery>({
         path: `/storedQuery/v1/update`,
         method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  streamattributemap = {
-    /**
-     * No description
-     *
-     * @tags stream attribute map - v1
-     * @name Page
-     * @request GET:/streamattributemap/v1
-     * @secure
-     */
-    page: (query?: { pageOffset?: number; pageSize?: number }, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/streamattributemap/v1`,
-        method: "GET",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stream attribute map - v1
-     * @name Search
-     * @request POST:/streamattributemap/v1
-     * @secure
-     */
-    search: (
-      body: ExpressionOperator,
-      query?: { pageOffset?: number; pageSize?: number },
-      params: RequestParams = {},
-    ) =>
-      this.request<any, void>({
-        path: `/streamattributemap/v1`,
-        method: "POST",
-        query: query,
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stream attribute map - v1
-     * @name DataSource
-     * @request GET:/streamattributemap/v1/dataSource
-     * @secure
-     */
-    dataSource: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/streamattributemap/v1/dataSource`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stream attribute map - v1
-     * @name Search2
-     * @request GET:/streamattributemap/v1/{id}
-     * @originalName search
-     * @duplicate
-     * @secure
-     */
-    search2: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/streamattributemap/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stream attribute map - v1
-     * @name GetRelations
-     * @request GET:/streamattributemap/v1/{id}/{anyStatus}/relations
-     * @secure
-     */
-    getRelations: (anyStatus: boolean, id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/streamattributemap/v1/${id}/${anyStatus}/relations`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  streamtasks = {
-    /**
-     * No description
-     *
-     * @tags stream task - v1
-     * @name Fetch
-     * @request GET:/streamtasks/v1
-     * @secure
-     */
-    fetch: (
-      query?: { desc?: boolean; filter?: string; offset?: number; pageSize?: number; sortBy?: string },
-      params: RequestParams = {},
-    ) =>
-      this.request<any, void>({
-        path: `/streamtasks/v1`,
-        method: "GET",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stream task - v1
-     * @name Enable
-     * @request PATCH:/streamtasks/v1/{filterId}
-     * @secure
-     */
-    enable: (filterId: number, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/streamtasks/v1/${filterId}`,
-        method: "PATCH",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -8582,251 +7666,55 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags stroom-index query - v2
-     * @name GetDataSource
+     * @tags Stroom-Index Queries
+     * @name GetStroomIndexDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-index/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DataSource, any>({
+    getStroomIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
         path: `/stroom-index/v2/dataSource`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags stroom-index query - v2
-     * @name Destroy
+     * @tags Stroom-Index Queries
+     * @name DestroyStroomIndex
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    destroyStroomIndex: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/stroom-index/v2/destroy`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags stroom-index query - v2
-     * @name Search
+     * @tags Stroom-Index Queries
+     * @name SearchStroomIndex
      * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params: RequestParams = {}) =>
-      this.request<SearchResponse, any>({
+    searchStroomIndex: (data: SearchRequest, params: RequestParams = {}) =>
+      this.request<any, SearchResponse>({
         path: `/stroom-index/v2/search`,
         method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumes - v1
-     * @name GetAll
-     * @request GET:/stroom-index/volume/v1
-     * @secure
-     */
-    getAll: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volume/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumes - v1
-     * @name Create
-     * @request POST:/stroom-index/volume/v1
-     * @secure
-     */
-    create: (body: IndexVolume, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volume/v1`,
-        method: "POST",
-        body: body,
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumes - v1
-     * @name Update
-     * @request PUT:/stroom-index/volume/v1
-     * @secure
-     */
-    update: (body: IndexVolume, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volume/v1`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumes - v1
-     * @name GetById
-     * @request GET:/stroom-index/volume/v1/{id}
-     * @secure
-     */
-    getById: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volume/v1/${id}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumes - v1
-     * @name Delete
-     * @request DELETE:/stroom-index/volume/v1/{id}
-     * @secure
-     */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volume/v1/${id}`,
-        method: "DELETE",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name GetAll2
-     * @request GET:/stroom-index/volumeGroup/v1
-     * @originalName getAll
-     * @duplicate
-     * @secure
-     */
-    getAll2: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name Create2
-     * @request POST:/stroom-index/volumeGroup/v1
-     * @originalName create
-     * @duplicate
-     * @secure
-     */
-    create2: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1`,
-        method: "POST",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name Update2
-     * @request PUT:/stroom-index/volumeGroup/v1
-     * @originalName update
-     * @duplicate
-     * @secure
-     */
-    update2: (body: IndexVolumeGroup, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1`,
-        method: "PUT",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name GetNames
-     * @request GET:/stroom-index/volumeGroup/v1/names
-     * @secure
-     */
-    getNames: (params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1/names`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name Get
-     * @request GET:/stroom-index/volumeGroup/v1/{id}
-     * @secure
-     */
-    get: (id: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags stroom-index volumeGroup - v1
-     * @name Delete2
-     * @request DELETE:/stroom-index/volumeGroup/v1/{id}
-     * @originalName delete
-     * @duplicate
-     * @secure
-     */
-    delete2: (id: string, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/stroom-index/volumeGroup/v1/${id}`,
-        method: "DELETE",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,
@@ -8834,62 +7722,59 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   };
   stroomSolrIndex = {
     /**
-     * @description Stroom Solr Index Query API
+     * No description
      *
-     * @tags stroom-solr-index query - v2
-     * @name GetDataSource
+     * @tags Solr Queries
+     * @name GetSolrIndexDataSource
      * @summary Submit a request for a data source definition, supplying the DocRef for the data source
      * @request POST:/stroom-solr-index/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params: RequestParams = {}) =>
-      this.request<DataSource, any>({
+    getSolrIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
         path: `/stroom-solr-index/v2/dataSource`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Solr Index Query API
+     * No description
      *
-     * @tags stroom-solr-index query - v2
-     * @name Destroy
+     * @tags Solr Queries
+     * @name DestroySolrIndexSearch
      * @summary Destroy a running query
      * @request POST:/stroom-solr-index/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    destroySolrIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/stroom-solr-index/v2/destroy`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Solr Index Query API
+     * No description
      *
-     * @tags stroom-solr-index query - v2
-     * @name Search
+     * @tags Solr Queries
+     * @name SearchSolrIndex
      * @summary Submit a search request
      * @request POST:/stroom-solr-index/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params: RequestParams = {}) =>
-      this.request<SearchResponse, any>({
+    searchSolrIndex: (data: SearchRequest, params: RequestParams = {}) =>
+      this.request<any, SearchResponse>({
         path: `/stroom-solr-index/v2/search`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8897,39 +7782,35 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags stroomSession - v1
-     * @name Invalidate
+     * @tags Stroom Sessions
+     * @name InvalidateStroomSession
      * @summary Invalidate the current session
-     * @request GET:/stroomSession/v1/invalidate
+     * @request GET:/stroomSession/v1/invalidateStroomSession
      * @secure
      */
-    invalidate: (params: RequestParams = {}) =>
-      this.request<boolean, any>({
-        path: `/stroomSession/v1/invalidate`,
+    invalidateStroomSession: (params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroomSession/v1/invalidateStroomSession`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags stroomSession - v1
-     * @name ValidateSession
+     * @tags Stroom Sessions
+     * @name ValidateStroomSession
      * @summary Validate the current session, return a redirect Uri if invalid.
      * @request GET:/stroomSession/v1/noauth/validateSession
      * @secure
      */
-    validateSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
-      this.request<ValidateSessionResponse, any>({
+    validateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, ValidateSessionResponse>({
         path: `/stroomSession/v1/noauth/validateSession`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8937,20 +7818,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags suggest - v1
-     * @name Fetch
+     * @tags Suggestions
+     * @name FetchSuggestions
      * @summary Fetch some suggestions
      * @request POST:/suggest/v1
      * @secure
      */
-    fetch: (body: FetchSuggestionsRequest, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    fetchSuggestions: (data: FetchSuggestionsRequest, params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/suggest/v1`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -8958,57 +7838,51 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags system info - v1
-     * @name GetAll
+     * @tags System Info
+     * @name GetAllSystemInfo
      * @summary Get all system info results
      * @request GET:/systemInfo/v1
      * @secure
      */
-    getAll: (params: RequestParams = {}) =>
-      this.request<SystemInfoResult, any>({
+    getAllSystemInfo: (params: RequestParams = {}) =>
+      this.request<any, SystemInfoResultList>({
         path: `/systemInfo/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags system info - v1
-     * @name GetNames
+     * @tags System Info
+     * @name GetSystemInfoNames
      * @summary Get all system info result names
      * @request GET:/systemInfo/v1/names
      * @secure
      */
-    getNames: (params: RequestParams = {}) =>
-      this.request<object[], any>({
+    getSystemInfoNames: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/systemInfo/v1/names`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags system info - v1
-     * @name Get
+     * @tags System Info
+     * @name GetSystemInfoByName
      * @summary Get a system info result by name
      * @request GET:/systemInfo/v1/{name}
      * @secure
      */
-    get: (name: string, params: RequestParams = {}) =>
-      this.request<object[], any>({
+    getSystemInfoByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, SystemInfoResult>({
         path: `/systemInfo/v1/${name}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9016,78 +7890,72 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags task - v1
-     * @name Find
+     * @tags Tasks
+     * @name FindTasks
      * @summary Finds tasks for a node
      * @request POST:/task/v1/find/{nodeName}
      * @secure
      */
-    find: (nodeName: string, body: FindTaskProgressRequest, params: RequestParams = {}) =>
-      this.request<TaskProgressResponse, any>({
+    findTasks: (nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
+      this.request<any, TaskProgressResponse>({
         path: `/task/v1/find/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags task - v1
-     * @name List
+     * @tags Tasks
+     * @name ListTasks
      * @summary Lists tasks for a node
      * @request GET:/task/v1/list/{nodeName}
      * @secure
      */
-    list: (nodeName: string, params: RequestParams = {}) =>
-      this.request<TaskProgressResponse, any>({
+    listTasks: (nodeName: string, params: RequestParams = {}) =>
+      this.request<any, TaskProgressResponse>({
         path: `/task/v1/list/${nodeName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags task - v1
-     * @name Terminate
+     * @tags Tasks
+     * @name TerminateTasks
      * @summary Terminates tasks for a node
      * @request POST:/task/v1/terminate/{nodeName}
      * @secure
      */
-    terminate: (nodeName: string, body: TerminateTaskProgressRequest, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    terminateTasks: (nodeName: string, data: TerminateTaskProgressRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/task/v1/terminate/${nodeName}`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags task - v1
-     * @name UserTasks
+     * @tags Tasks
+     * @name ListUserTasks
      * @summary Lists tasks for a node
      * @request GET:/task/v1/user/{nodeName}
      * @secure
      */
-    userTasks: (nodeName: string, params: RequestParams = {}) =>
-      this.request<TaskProgressResponse, any>({
+    listUserTasks: (nodeName: string, params: RequestParams = {}) =>
+      this.request<any, TaskProgressResponse>({
         path: `/task/v1/user/${nodeName}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9095,40 +7963,36 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags textConverter - v1
-     * @name Read
-     * @summary Get a text converter doc
-     * @request POST:/textConverter/v1/read
+     * @tags Text Converters
+     * @name FetchTextConverter
+     * @summary Fetch a text converter doc by its UUID
+     * @request GET:/textConverter/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<TextConverterDoc, any>({
-        path: `/textConverter/v1/read`,
-        method: "POST",
-        body: body,
+    fetchTextConverter: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, TextConverterDoc>({
+        path: `/textConverter/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags textConverter - v1
-     * @name Update
+     * @tags Text Converters
+     * @name UpdateTextConverter
      * @summary Update a text converter doc
-     * @request PUT:/textConverter/v1/update
+     * @request PUT:/textConverter/v1/{uuid}
      * @secure
      */
-    update: (body: TextConverterDoc, params: RequestParams = {}) =>
-      this.request<TextConverterDoc, any>({
-        path: `/textConverter/v1/update`,
+    updateTextConverter: (uuid: string, data: TextConverterDoc, params: RequestParams = {}) =>
+      this.request<any, TextConverterDoc>({
+        path: `/textConverter/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9136,424 +8000,351 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name List
-     * @summary Get all tokens.
-     * @request GET:/token/v1
-     * @secure
-     */
-    list: (params: RequestParams = {}) =>
-      this.request<TokenResultPage, any>({
-        path: `/token/v1`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags ApiKey
-     * @name Create
-     * @summary Create a new token.
-     * @request POST:/token/v1
-     * @secure
-     */
-    create: (body: CreateTokenRequest, params: RequestParams = {}) =>
-      this.request<Token, any>({
-        path: `/token/v1`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags ApiKey
-     * @name DeleteAll
+     * @tags Api Keys
+     * @name DeleteAllTokens
      * @summary Delete all tokens.
      * @request DELETE:/token/v1
      * @secure
      */
-    deleteAll: (params: RequestParams = {}) =>
-      this.request<number, any>({
+    deleteAllTokens: (params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/token/v1`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name Read
-     * @summary Read a token by the token string itself.
-     * @request GET:/token/v1/byToken/{token}
+     * @tags Api Keys
+     * @name ListTokens
+     * @summary Get all tokens.
+     * @request GET:/token/v1
      * @secure
      */
-    read: (token: string, params: RequestParams = {}) =>
-      this.request<Token, any>({
-        path: `/token/v1/byToken/${token}`,
+    listTokens: (params: RequestParams = {}) =>
+      this.request<any, TokenResultPage>({
+        path: `/token/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name DeleteByToken
+     * @tags Api Keys
+     * @name CreateToken
+     * @summary Create a new token.
+     * @request POST:/token/v1
+     * @secure
+     */
+    createToken: (data: CreateTokenRequest, params: RequestParams = {}) =>
+      this.request<any, Token>({
+        path: `/token/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name DeleteTokenByContent
      * @summary Delete a token by the token string itself.
      * @request DELETE:/token/v1/byToken/{token}
      * @secure
      */
-    deleteByToken: (token: string, params: RequestParams = {}) =>
-      this.request<number, any>({
+    deleteTokenByContent: (token: string, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/token/v1/byToken/${token}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
+     * @tags Api Keys
+     * @name FetchTokenByContent
+     * @summary Read a token by the token string itself.
+     * @request GET:/token/v1/byToken/{token}
+     * @secure
+     */
+    fetchTokenByContent: (token: string, params: RequestParams = {}) =>
+      this.request<any, Token>({
+        path: `/token/v1/byToken/${token}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
      * @name FetchTokenConfig
      * @summary Get the token configuration
      * @request GET:/token/v1/noauth/fetchTokenConfig
      * @secure
      */
     fetchTokenConfig: (params: RequestParams = {}) =>
-      this.request<TokenConfig, any>({
+      this.request<any, TokenConfig>({
         path: `/token/v1/noauth/fetchTokenConfig`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
+     * @tags Api Keys
      * @name GetPublicKey
      * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
      * @request GET:/token/v1/publickey
      * @secure
      */
     getPublicKey: (params: RequestParams = {}) =>
-      this.request<string, any>({
+      this.request<any, string>({
         path: `/token/v1/publickey`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name Search
+     * @tags Api Keys
+     * @name SearchTokens
      * @summary Submit a search request for tokens
      * @request POST:/token/v1/search
      * @secure
      */
-    search: (body: SearchTokenRequest, params: RequestParams = {}) =>
-      this.request<TokenResultPage, any>({
+    searchTokens: (data: SearchTokenRequest, params: RequestParams = {}) =>
+      this.request<any, TokenResultPage>({
         path: `/token/v1/search`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name Read2
-     * @summary Read a token by ID.
-     * @request GET:/token/v1/{id}
-     * @originalName read
-     * @duplicate
-     * @secure
-     */
-    read2: (id: number, params: RequestParams = {}) =>
-      this.request<Token, any>({
-        path: `/token/v1/${id}`,
-        method: "GET",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags ApiKey
-     * @name Delete
+     * @tags Api Keys
+     * @name DeleteToken
      * @summary Delete a token by ID.
      * @request DELETE:/token/v1/{id}
      * @secure
      */
-    delete: (id: number, params: RequestParams = {}) =>
-      this.request<number, any>({
+    deleteToken: (id: number, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/token/v1/${id}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags ApiKey
-     * @name ToggleEnabled
+     * @tags Api Keys
+     * @name FetchToken
+     * @summary Read a token by ID.
+     * @request GET:/token/v1/{id}
+     * @secure
+     */
+    fetchToken: (id: number, params: RequestParams = {}) =>
+      this.request<any, Token>({
+        path: `/token/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name ToggleTokenEnabled
      * @summary Enable or disable the state of a token.
      * @request GET:/token/v1/{id}/enabled
      * @secure
      */
-    toggleEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
-      this.request<number, any>({
+    toggleTokenEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
+      this.request<any, number>({
         path: `/token/v1/${id}/enabled`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
   users = {
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name Get
+     * @tags Authorisation
+     * @name FindUsers
+     * @summary Find the users matching the supplied criteria
      * @request GET:/users/v1
      * @secure
      */
-    get: (query?: { isGroup?: boolean; name?: string; uuid?: string }, params: RequestParams = {}) =>
-      this.request<User[], any>({
+    findUsers: (query?: { name?: string; isGroup?: boolean; uuid?: string }, params: RequestParams = {}) =>
+      this.request<any, User[]>({
         path: `/users/v1`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name GetAssociates
+     * @tags Authorisation
+     * @name GetAssociatedUsers
      * @summary Gets a list of associated users
      * @request GET:/users/v1/associates
      * @secure
      */
-    getAssociates: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<any, void>({
+    getAssociatedUsers: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, string[]>({
         path: `/users/v1/associates`,
         method: "GET",
         query: query,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name Create
+     * @tags Authorisation
+     * @name CreateUser
+     * @summary Creates a user or group with the supplied name
      * @request POST:/users/v1/create/{name}/{isGroup}
      * @secure
      */
-    create: (isGroup: boolean, name: string, params: RequestParams = {}) =>
-      this.request<User, any>({
+    createUser: (name: string, isGroup: boolean, params: RequestParams = {}) =>
+      this.request<any, User>({
         path: `/users/v1/create/${name}/${isGroup}`,
         method: "POST",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name Find
+     * @tags Authorisation
+     * @name FindUsersByCriteria
+     * @summary Find the users matching the supplied criteria
      * @request POST:/users/v1/find
      * @secure
      */
-    find: (body: FindUserCriteria, params: RequestParams = {}) =>
-      this.request<ResultPageUser, any>({
+    findUsersByCriteria: (data: FindUserCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageUser>({
         path: `/users/v1/find`,
         method: "POST",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name SetStatus
+     * @tags Authorisation
+     * @name SetUserStatus
+     * @summary Enables/disables the Stroom user with the supplied username
      * @request PUT:/users/v1/{userName}/status
      * @secure
      */
-    setStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/users/v1/${userName}/status`,
         method: "PUT",
         query: query,
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name Get2
+     * @tags Authorisation
+     * @name FetchUser
+     * @summary Fetches the user with the supplied UUID
      * @request GET:/users/v1/{userUuid}
-     * @originalName get
-     * @duplicate
      * @secure
      */
-    get2: (userUuid: string, params: RequestParams = {}) =>
-      this.request<User, any>({
+    fetchUser: (userUuid: string, params: RequestParams = {}) =>
+      this.request<any, User>({
         path: `/users/v1/${userUuid}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
-     * @name AddUserToGroup
-     * @request PUT:/users/v1/{userUuid}/{groupUuid}
-     * @secure
-     */
-    addUserToGroup: (groupUuid: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<boolean, any>({
-        path: `/users/v1/${userUuid}/${groupUuid}`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Stroom Authorisation API
-     *
-     * @tags authorisation - v1
+     * @tags Authorisation
      * @name RemoveUserFromGroup
+     * @summary Removes user with UUID userUuid from the group with UUID groupUuid
      * @request DELETE:/users/v1/{userUuid}/{groupUuid}
      * @secure
      */
-    removeUserFromGroup: (groupUuid: string, userUuid: string, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+    removeUserFromGroup: (userUuid: string, groupUuid: string, params: RequestParams = {}) =>
+      this.request<any, boolean>({
         path: `/users/v1/${userUuid}/${groupUuid}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
-     * @description Stroom Authorisation API
+     * No description
      *
-     * @tags authorisation - v1
+     * @tags Authorisation
+     * @name AddUserToGroup
+     * @summary Adds user with UUID userUuid to the group with UUID groupUuid
+     * @request PUT:/users/v1/{userUuid}/{groupUuid}
+     * @secure
+     */
+    addUserToGroup: (userUuid: string, groupUuid: string, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/users/v1/${userUuid}/${groupUuid}`,
+        method: "PUT",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
      * @name DeleteUser
+     * @summary Deletes the user with the supplied UUID
      * @request DELETE:/users/v1/{uuid}
      * @secure
      */
     deleteUser: (uuid: string, params: RequestParams = {}) =>
-      this.request<boolean, any>({
+      this.request<any, boolean>({
         path: `/users/v1/${uuid}`,
         method: "DELETE",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  viewData = {
-    /**
-     * No description
-     *
-     * @tags viewData - v1
-     * @name Fetch
-     * @summary Fetch matching data
-     * @request POST:/viewData/v1/fetch
-     * @secure
-     */
-    fetch: (body: FetchDataRequest, params: RequestParams = {}) =>
-      this.request<AbstractFetchDataResult, any>({
-        path: `/viewData/v1/fetch`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags viewData - v1
-     * @name GetChildStreamTypes
-     * @summary List child types for a stream
-     * @request GET:/viewData/v1/listChildTypes
-     * @secure
-     */
-    getChildStreamTypes: (query?: { id?: number; partNo?: number }, params: RequestParams = {}) =>
-      this.request<AbstractFetchDataResult, any>({
-        path: `/viewData/v1/listChildTypes`,
-        method: "GET",
-        query: query,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9561,40 +8352,36 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags visualisation - v1
-     * @name Read
-     * @summary Get a visualisation doc
-     * @request POST:/visualisation/v1/read
+     * @tags Visualisations
+     * @name FetchVisualisation
+     * @summary Fetch a visualisation doc by its UUID
+     * @request GET:/visualisation/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<VisualisationDoc, any>({
-        path: `/visualisation/v1/read`,
-        method: "POST",
-        body: body,
+    fetchVisualisation: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, VisualisationDoc>({
+        path: `/visualisation/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags visualisation - v1
-     * @name Update
+     * @tags Visualisations
+     * @name UpdateVisualisation
      * @summary Update a visualisation doc
-     * @request PUT:/visualisation/v1/update
+     * @request PUT:/visualisation/v1/{uuid}
      * @secure
      */
-    update: (body: VisualisationDoc, params: RequestParams = {}) =>
-      this.request<VisualisationDoc, any>({
-        path: `/visualisation/v1/update`,
+    updateVisualisation: (uuid: string, data: VisualisationDoc, params: RequestParams = {}) =>
+      this.request<any, VisualisationDoc>({
+        path: `/visualisation/v1/${uuid}`,
         method: "PUT",
-        body: body,
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9602,17 +8389,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags welcome - v1
-     * @name Welcome
+     * @tags Welcome
+     * @name FetchWelcome
+     * @summary Get the configured HTML welcome message
      * @request GET:/welcome/v1
      * @secure
      */
-    welcome: (params: RequestParams = {}) =>
-      this.request<any, void>({
+    fetchWelcome: (params: RequestParams = {}) =>
+      this.request<any, Welcome>({
         path: `/welcome/v1`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };
@@ -9620,39 +8407,36 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags xmlSchema - v1
-     * @name Read
-     * @summary Get an xml schema doc
-     * @request POST:/xmlSchema/v1/read
+     * @tags XML Schemas
+     * @name FetchXmlSchema
+     * @summary Fetch a xml schema doc by its UUID
+     * @request GET:/xmlSchema/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<XmlSchemaDoc, any>({
-        path: `/xmlSchema/v1/read`,
-        method: "POST",
-        body: body,
+    fetchXmlSchema: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, XmlSchemaDoc>({
+        path: `/xmlSchema/v1/${uuid}`,
+        method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags xmlSchema - v1
-     * @name Update
-     * @summary Update an xml schema doc
-     * @request PUT:/xmlSchema/v1/update
+     * @tags XML Schemas
+     * @name UpdateXmlSchema
+     * @summary Update a xml schema doc
+     * @request PUT:/xmlSchema/v1/{uuid}
      * @secure
      */
-    update: (params: RequestParams = {}) =>
-      this.request<XmlSchemaDoc, any>({
-        path: `/xmlSchema/v1/update`,
+    updateXmlSchema: (uuid: string, data: XmlSchemaDoc, params: RequestParams = {}) =>
+      this.request<any, XmlSchemaDoc>({
+        path: `/xmlSchema/v1/${uuid}`,
         method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
         ...params,
       }),
   };
@@ -9660,73 +8444,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags xslt - v1
-     * @name Read
-     * @summary Get an xslt doc
-     * @request POST:/xslt/v1/read
+     * @tags XSLTs
+     * @name FetchXslt
+     * @summary Fetch an xslt doc by its UUID
+     * @request GET:/xslt/v1/{uuid}
      * @secure
      */
-    read: (body: DocRef, params: RequestParams = {}) =>
-      this.request<XsltDoc, any>({
-        path: `/xslt/v1/read`,
-        method: "POST",
-        body: body,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags xslt - v1
-     * @name Update
-     * @summary Update an xslt doc
-     * @request PUT:/xslt/v1/update
-     * @secure
-     */
-    update: (params: RequestParams = {}) =>
-      this.request<XsltDoc, any>({
-        path: `/xslt/v1/update`,
-        method: "PUT",
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags xslt - v1
-     * @name Fetch
-     * @request GET:/xslt/v1/{xsltId}
-     * @secure
-     */
-    fetch: (xsltId: string, params: RequestParams = {}) =>
-      this.request<XsltDoc, any>({
-        path: `/xslt/v1/${xsltId}`,
+    fetchXslt: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, XsltDoc>({
+        path: `/xslt/v1/${uuid}`,
         method: "GET",
         secure: true,
-        type: ContentType.Json,
-        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @tags xslt - v1
-     * @name Save
-     * @request POST:/xslt/v1/{xsltId}
+     * @tags XSLTs
+     * @name UpdateXslt
+     * @summary Update a an xslt doc
+     * @request PUT:/xslt/v1/{uuid}
      * @secure
      */
-    save: (xsltId: string, body: XsltDTO, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/xslt/v1/${xsltId}`,
-        method: "POST",
-        body: body,
+    updateXslt: (uuid: string, data: XsltDoc, params: RequestParams = {}) =>
+      this.request<any, XsltDoc>({
+        path: `/xslt/v1/${uuid}`,
+        method: "PUT",
+        body: data,
         secure: true,
         type: ContentType.Json,
         ...params,

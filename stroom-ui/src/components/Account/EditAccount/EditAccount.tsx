@@ -253,7 +253,7 @@ export const EditAccount: React.FunctionComponent<{
         neverExpires: values.neverExpires,
       };
 
-      exec((api) => api.account.create(request), handleResponse);
+      exec((api) => api.account.createAccount(request), handleResponse);
     } else {
       const request: UpdateAccountRequest = {
         account: {
@@ -273,7 +273,7 @@ export const EditAccount: React.FunctionComponent<{
         confirmPassword: passwordState && passwordState.confirmPassword,
       };
 
-      exec((api) => api.account.update(account.id, request), handleResponse);
+      exec((api) => api.account.updateAccount(account.id, request), handleResponse);
     }
   };
 

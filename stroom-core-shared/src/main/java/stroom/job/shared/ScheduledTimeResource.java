@@ -19,9 +19,9 @@ package stroom.job.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -30,13 +30,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Scheduled Time")
+@Tag(name = "Scheduled Time")
 @Path("/scheduledTime" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ScheduledTimeResource extends RestResource, DirectRestService {
 
     @POST
-    @ApiOperation("Gets scheduled time info")
-    ScheduledTimes get(@ApiParam("request") GetScheduledTimesRequest request);
+    @Operation(
+            summary = "Gets scheduled time info",
+            operationId = "getScheduledTimes")
+    ScheduledTimes get(@Parameter(description = "request", required = true) GetScheduledTimesRequest request);
 }

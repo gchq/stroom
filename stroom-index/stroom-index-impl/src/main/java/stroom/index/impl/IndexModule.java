@@ -63,9 +63,6 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUIIndexResourceImpl.class)
-                .bind(NewUIIndexVolumeGroupResourceImpl.class)
-                .bind(NewUIIndexVolumeResourceImpl.class)
                 .bind(IndexResourceImpl.class)
                 .bind(IndexVolumeGroupResourceImpl.class)
                 .bind(IndexVolumeResourceImpl.class);

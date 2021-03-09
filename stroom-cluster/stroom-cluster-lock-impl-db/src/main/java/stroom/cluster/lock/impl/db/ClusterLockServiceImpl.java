@@ -61,7 +61,9 @@ class ClusterLockServiceImpl implements ClusterLockService {
         // Don't bother the master node if we already hold the lock.
         ClusterLockKey clusterLockKey = lockMap.get(lockName);
         if (clusterLockKey == null) {
-            clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
+            clusterLockKey = new ClusterLockKey(
+                    lockName,
+                    nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
             final Boolean didLock = clusterLockHandler.tryLock(clusterLockKey);
             if (didLock != null) {

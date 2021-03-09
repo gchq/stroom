@@ -177,10 +177,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
-        return securityContext.insecureResult(() -> {
-            ensureDefaultVolumes();
-            return doFind(criteria);
-        });
+        ensureDefaultVolumes();
+        return doFind(criteria);
     }
 
     private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
@@ -434,7 +432,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private void ensureDefaultVolumes() {
         if (!createdDefaultVolumes) {
-            createDefaultVolumes();
+            securityContext.asProcessingUser(() -> createDefaultVolumes());
         }
     }
 

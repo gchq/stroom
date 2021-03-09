@@ -71,17 +71,12 @@ public class SecurityModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
                 .addBinding(UserDocumentPermissionsCache.class);
 
-//        HasHealthCheckBinder.create(binder())
-//                .bind(StandardJwtContextFactory.class);
-
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)
                 .bind(StroomSessionResourceImpl.class)
-                .bind(AuthorisationResource.class)
+                .bind(GwtStroomSessionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
-                .bind(DocumentPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
-                .bind(UserAppPermissionResourceImpl.class)
                 .bind(UserResourceImpl.class);
     }
 }

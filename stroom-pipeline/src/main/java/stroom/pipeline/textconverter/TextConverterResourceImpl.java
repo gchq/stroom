@@ -18,27 +18,30 @@ package stroom.pipeline.textconverter;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class TextConverterResourceImpl implements TextConverterResource {
 
-    private final TextConverterStore textConverterStore;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<TextConverterStore> textConverterStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    TextConverterResourceImpl(final TextConverterStore textConverterStore,
-                              final DocumentResourceHelper documentResourceHelper) {
-        this.textConverterStore = textConverterStore;
-        this.documentResourceHelper = documentResourceHelper;
+    TextConverterResourceImpl(final Provider<TextConverterStore> textConverterStoreProvider,
+                              final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.textConverterStoreProvider = textConverterStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public TextConverterDoc fetch(final String uuid) {
-        return documentResourceHelper.read(textConverterStore, getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(textConverterStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -46,7 +49,7 @@ class TextConverterResourceImpl implements TextConverterResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelper.update(textConverterStore, doc);
+        return documentResourceHelperProvider.get().update(textConverterStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {

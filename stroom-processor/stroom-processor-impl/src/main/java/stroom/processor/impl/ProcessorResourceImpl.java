@@ -16,35 +16,33 @@
 
 package stroom.processor.impl;
 
-import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-// TODO : @66 add event logging
+@AutoLogged
 class ProcessorResourceImpl implements ProcessorResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorResourceImpl.class);
 
-    private final ProcessorService processorService;
-    private final DocumentEventLog documentEventLog;
+    private final Provider<ProcessorService> processorServiceProvider;
 
     @Inject
-    ProcessorResourceImpl(final ProcessorService processorService,
-                          final DocumentEventLog documentEventLog) {
-        this.processorService = processorService;
-        this.documentEventLog = documentEventLog;
+    ProcessorResourceImpl(final Provider<ProcessorService> processorServiceProvider) {
+        this.processorServiceProvider = processorServiceProvider;
     }
 
     @Override
     public void delete(final Integer id) {
-        processorService.delete(id);
+        processorServiceProvider.get().delete(id);
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        processorService.setEnabled(id, enabled);
+        processorServiceProvider.get().setEnabled(id, enabled);
     }
 }

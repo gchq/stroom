@@ -19,6 +19,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.slf4j_api
 
+    testCompile project(':stroom-node:stroom-node-mock')
     testCompile project(':stroom-test-common')
     testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile libs.assertj_core

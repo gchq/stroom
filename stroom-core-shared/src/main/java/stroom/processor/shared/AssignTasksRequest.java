@@ -27,4 +27,12 @@ public class AssignTasksRequest {
     public int getCount() {
         return count;
     }
+
+    @Override
+    public String toString() {
+        return "AssignTasksRequest{" +
+                "nodeName='" + nodeName + '\'' +
+                ", count=" + count +
+                '}';
+    }
 }

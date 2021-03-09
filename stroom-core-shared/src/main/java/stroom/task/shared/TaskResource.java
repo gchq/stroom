@@ -19,9 +19,9 @@ package stroom.task.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -32,7 +32,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Tasks")
+@Tag(name = "Tasks")
 @Path(TaskResource.BASE_PATH)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -47,23 +47,31 @@ public interface TaskResource extends RestResource, DirectRestService {
 
     @GET
     @Path(LIST_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Lists tasks for a node")
+    @Operation(
+            summary = "Lists tasks for a node",
+            operationId = "listTasks")
     TaskProgressResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
     @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Finds tasks for a node")
+    @Operation(
+            summary = "Finds tasks for a node",
+            operationId = "findTasks")
     TaskProgressResponse find(@PathParam("nodeName") String nodeName,
-                              @ApiParam("request") FindTaskProgressRequest request);
+                              @Parameter(description = "request", required = true) FindTaskProgressRequest request);
 
     @GET
     @Path(USER_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Lists tasks for a node")
+    @Operation(
+            summary = "Lists tasks for a node",
+            operationId = "listUserTasks")
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation("Terminates tasks for a node")
+    @Operation(
+            summary = "Terminates tasks for a node",
+            operationId = "terminateTasks")
     Boolean terminate(@PathParam("nodeName") String nodeName,
-                      @ApiParam("request") TerminateTaskProgressRequest request);
+                      @Parameter(description = "request", required = true) TerminateTaskProgressRequest request);
 }

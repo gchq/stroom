@@ -20,9 +20,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -33,19 +33,23 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(tags = "Jobs")
+@Tag(name = "Jobs")
 @Path("/job" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
 
     @GET
-    @ApiOperation("Lists jobs")
+    @Operation(
+            summary = "Lists jobs",
+            operationId = "listJobs")
     ResultPage<Job> list();
 
     @PUT
     @Path("/{id}/enabled")
-    @ApiOperation(value = "Sets the enabled status of the job")
+    @Operation(
+            summary = "Sets the enabled status of the job",
+            operationId = "setJobEnabled")
     void setEnabled(@PathParam("id") Integer id,
-                    @ApiParam("enabled") Boolean enabled);
+                    @Parameter(description = "enabled", required = true) Boolean enabled);
 }

@@ -5,10 +5,9 @@ import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.shared.RestResource;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import java.util.Map;
@@ -25,8 +24,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Api
 @Singleton
+@Tag(name = OpenIdResource.AUTHENTICATION_TAG)
 @Path("/oauth2/v1/noauth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -35,12 +34,11 @@ public interface OpenIdResource extends RestResource {
     String API_KEYS_TAG = "API Keys";
     String AUTHENTICATION_TAG = "Authentication";
 
+    @Operation(
+            summary = "Submit an OpenId AuthenticationRequest.",
+            operationId = "openIdAuth")
     @GET
     @Path("auth")
-    @Timed
-    @ApiOperation(
-            value = "Submit an OpenId AuthenticationRequest.",
-            tags = AUTHENTICATION_TAG)
     void auth(
             @Context HttpServletRequest request,
             @QueryParam(OpenId.SCOPE) @NotNull String scope,
@@ -51,28 +49,27 @@ public interface OpenIdResource extends RestResource {
             @QueryParam(OpenId.STATE) @Nullable String state,
             @QueryParam(OpenId.PROMPT) @Nullable String prompt);
 
+    @Operation(
+            summary = "Get a token from an access code",
+            operationId = "openIdToken")
     @POST
     @Path("token")
-    @Timed
-    @ApiOperation(
-            value = "Get a token from an access code",
-            tags = AUTHENTICATION_TAG)
-    TokenResponse token(@ApiParam("tokenRequest") TokenRequest tokenRequest);
+    TokenResponse token(@Parameter(description = "tokenRequest", required = true) TokenRequest tokenRequest);
 
-    @ApiOperation(
-            value = "Provides access to this service's current public key. " +
+    @Operation(
+            summary = "Provides access to this service's current public key. " +
                     "A client may use these keys to verify JWTs issued by this service.",
-            tags = API_KEYS_TAG)
+            tags = API_KEYS_TAG,
+            operationId = "openIdCerts")
     @GET
     @Path("certs")
-    @Timed
     Map<String, List<Map<String, Object>>> certs(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @ApiOperation(
-            value = "Provides discovery for openid configuration",
-            tags = API_KEYS_TAG)
+    @Operation(
+            summary = "Provides discovery for openid configuration",
+            tags = API_KEYS_TAG,
+            operationId = "openIdConfiguration")
     @GET
     @Path(".well-known/openid-configuration")
-    @Timed
     String openIdConfiguration();
 }

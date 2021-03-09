@@ -17,19 +17,18 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * {@value #CLASS_DESC}
@@ -38,7 +37,7 @@ import java.util.List;
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
 @XmlRootElement(name = "query")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = Query.CLASS_DESC)
+@Schema(description = Query.CLASS_DESC)
 @Deprecated
 public final class Query implements Serializable {
 
@@ -47,20 +46,17 @@ public final class Query implements Serializable {
     public static final String CLASS_DESC = "The query terms for the search";
 
     @XmlElement
-    @ApiModelProperty(
-            required = true)
+    @Schema(required = true)
     private DocRef dataSource;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The root logical operator in the query expression tree",
+    @Schema(description = "The root logical operator in the query expression tree",
             required = true)
     private ExpressionOperator expression;
 
     @XmlElementWrapper(name = "params")
     @XmlElement(name = "param")
-    @ApiModelProperty(
-            value = "A list of key/value pairs that provide additional information about the query",
+    @Schema(description = "A list of key/value pairs that provide additional information about the query",
             required = false)
     private List<Param> params;
 

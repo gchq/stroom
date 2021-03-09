@@ -16,30 +16,40 @@
 
 package stroom.search.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+
+import com.codahale.metrics.annotation.Timed;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.core.StreamingOutput;
 
+@AutoLogged(OperationType.UNLOGGED)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
 
-    private final RemoteSearchService remoteSearchService;
+    private final Provider<RemoteSearchService> remoteSearchServiceProvider;
 
     @Inject
-    public RemoteSearchResourceImpl(final RemoteSearchService remoteSearchService) {
-        this.remoteSearchService = remoteSearchService;
+    public RemoteSearchResourceImpl(final Provider<RemoteSearchService> remoteSearchServiceProvider) {
+        this.remoteSearchServiceProvider = remoteSearchServiceProvider;
     }
 
+    @Timed
     @Override
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
-        return remoteSearchService.start(clusterSearchTask);
+        return remoteSearchServiceProvider.get().start(clusterSearchTask);
     }
 
+    @Timed
     @Override
     public StreamingOutput poll(final String queryKey) {
-        return outputStream -> remoteSearchService.poll(queryKey, outputStream);
+        return outputStream -> remoteSearchServiceProvider.get().poll(queryKey, outputStream);
     }
 
+    @Timed
     @Override
     public Boolean destroy(final String queryKey) {
-        return remoteSearchService.destroy(queryKey);
+        return remoteSearchServiceProvider.get().destroy(queryKey);
     }
 }

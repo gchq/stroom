@@ -23,8 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"type", "settings", "wrap"})
 @JsonInclude(Include.NON_NULL)
-@ApiModel(description = "Describes the formatting that will be applied to values in a field")
+@Schema(description = "Describes the formatting that will be applied to values in a field")
 public class Format {
 
     public static final List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
@@ -41,8 +40,7 @@ public class Format {
     public static final Format DATE_TIME = new Builder().type(Type.DATE_TIME).build();
     public static final Format TEXT = new Builder().type(Type.TEXT).build();
 
-    @ApiModelProperty(
-            value = "The formatting type to apply",
+    @Schema(description = "The formatting type to apply",
             example = "NUMBER",
             required = true)
     @JsonProperty

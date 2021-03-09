@@ -16,59 +16,45 @@
 
 package stroom.security.impl.event;
 
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.ws.rs.client.Entity;
 
+@Singleton
+@AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl
 class PermissionChangeResourceImpl implements PermissionChangeResource {
 
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final PermissionChangeEventHandlers permissionChangeEventHandlers;
-    private final WebTargetFactory webTargetFactory;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<PermissionChangeEventHandlers> permissionChangeEventHandlersProvider;
 
     @Inject
-    PermissionChangeResourceImpl(final NodeService nodeService,
-                                 final NodeInfo nodeInfo,
-                                 final PermissionChangeEventHandlers permissionChangeEventHandlers,
-                                 final WebTargetFactory webTargetFactory) {
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.permissionChangeEventHandlers = permissionChangeEventHandlers;
-        this.webTargetFactory = webTargetFactory;
+    PermissionChangeResourceImpl(final Provider<NodeService> nodeServiceProvider,
+                                 final Provider<PermissionChangeEventHandlers> permissionChangeEventHandlersProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.permissionChangeEventHandlersProvider = permissionChangeEventHandlersProvider;
     }
 
     @Override
     public Boolean fireChange(final String nodeName, final PermissionChangeRequest request) {
-        Boolean result;
-
-        // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            permissionChangeEventHandlers.fireLocally(request.getEvent());
-            result = true;
-
-        } else {
-            String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    PermissionChangeResource.BASE_PATH,
-                    PermissionChangeResource.FIRE_CHANGE_PATH_PART,
-                    nodeName);
-            final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
-            if (response.getStatus() != 200) {
-                throw new WebApplicationException(response);
-            }
-            result = response.readEntity(Boolean.class);
-        }
+        final Boolean result = nodeServiceProvider.get().remoteRestResult(
+                nodeName,
+                Boolean.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        PermissionChangeResource.BASE_PATH,
+                        PermissionChangeResource.FIRE_CHANGE_PATH_PART,
+                        nodeName),
+                () -> {
+                    permissionChangeEventHandlersProvider.get().fireLocally(request.getEvent());
+                    return true;
+                },
+                builder ->
+                        builder.post(Entity.json(request)));
 
         return result;
     }

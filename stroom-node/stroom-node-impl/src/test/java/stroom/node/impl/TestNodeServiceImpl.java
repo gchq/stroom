@@ -69,7 +69,7 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         final String response = nodeService.remoteRestResult(
                 thisNodeName,
                 String.class,
-                "/" + name,
+                () -> "/" + name,
                 () -> "Hello " + name + " this is local calling",
                 SyncInvoker::get);
 
@@ -134,7 +134,7 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         final String response = nodeService.remoteRestResult(
                 otherNodeName,
                 String.class,
-                "/" + name,
+                () -> "/" + name,
                 () -> "Hello " + name + " this is local calling",
                 SyncInvoker::get);
 
@@ -176,7 +176,7 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
         nodeService.remoteRestCall(
                 thisNodeName,
-                "/",
+                () -> "/",
                 () -> {
                     wasLocalRunnableCalled.set(true);
                     System.out.println("Doing local stuff");
@@ -243,7 +243,7 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
         nodeService.remoteRestCall(
                 otherNodeName,
-                "/",
+                () -> "/",
                 () -> {
                     wasLocalRunnableCalled.set(true);
                     System.out.println("Doing local stuff");
