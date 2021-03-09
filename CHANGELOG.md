@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2064** : Delete empty directories left by running unit test.
+* Add index to cluster_lock table to fix whole table locking for single lock key.
 
+* Issue **#2059** : Add cluster lock protection to task creation. Stops duplicate task creation when master node changes.
+
+* Change task creation by master node to try to wait for search tasks to complete and to try to only create the configured number of tasks.
+
+* Refactor logic to determine master node into one place. Fixes discrepancies between UI and back-end.
+
+* Change node monitoring screen to return nodes in name order.
+
+* Issue **#2066** : Add data bars to node monitoring screen.
+
+* Issue **#2059** : Fix `Duplicate key` error in task assignment.
+
+* Issue **#2064** : Delete empty directories left by running unit test.
+  
 * Issue **#2056** : Fix error sending permission change events to other cluster nodes.
 
 * Add JVM OOM args to zip distribution scripts.

@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class BasicExceptionMapper implements ExceptionMapper<Throwable> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicExceptionMapper.class);
 
     @Override
@@ -22,8 +23,9 @@ public class BasicExceptionMapper implements ExceptionMapper<Throwable> {
                 exception.getClass().getName().contains("TokenException") ||
                 exception.getClass().getName().contains("PermissionException")) {
             return createExceptionResponse(Status.FORBIDDEN, exception);
+        } else {
+            return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
         }
-        return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
     }
 
     private Response createExceptionResponse(final Response.Status status,

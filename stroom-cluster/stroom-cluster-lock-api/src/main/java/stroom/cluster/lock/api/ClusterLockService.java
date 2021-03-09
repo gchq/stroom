@@ -26,5 +26,9 @@ public interface ClusterLockService {
 
     void tryLock(String lockName, Runnable runnable);
 
+    /**
+     * Will block until the database backed lock for lockName is obtained, then will run
+     * runnable under that lock
+     */
     void lock(String lockName, Runnable runnable);
 }

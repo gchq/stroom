@@ -69,6 +69,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         try {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 final String masterNode = targetNodeSetFactory.getMasterNode();
+                LOGGER.debug("masterNode: {}", masterNode);
                 final ProcessorTaskList processorTaskList = processorTaskResource
                         .assignTasks(masterNode, new AssignTasksRequest(nodeName, count));
 

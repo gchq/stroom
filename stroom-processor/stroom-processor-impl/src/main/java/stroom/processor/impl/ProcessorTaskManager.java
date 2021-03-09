@@ -21,6 +21,7 @@ import stroom.processor.shared.ProcessorTaskList;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface ProcessorTaskManager {
+
     ProcessorTaskList assignTasks(String nodeName, int count);
 
     Boolean abandonTasks(ProcessorTaskList processorTaskList);
