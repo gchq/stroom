@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1871** : Invalidate the users and user groups cache when the _manage_users_ command is run.
+
+* Issue **#2064** : Delete empty directories left by running unit test.
+
 * Add index to cluster_lock table to fix whole table locking for single lock key.
 
 * Issue **#2059** : Add cluster lock protection to task creation. Stops duplicate task creation when master node changes.
@@ -21,8 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2059** : Fix `Duplicate key` error in task assignment.
 
-* Issue **#2064** : Delete empty directories left by running unit test.
-  
 * Issue **#2056** : Fix error sending permission change events to other cluster nodes.
 
 * Add JVM OOM args to zip distribution scripts.

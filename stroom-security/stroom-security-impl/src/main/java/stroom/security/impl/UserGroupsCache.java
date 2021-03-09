@@ -45,7 +45,8 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
                     final Provider<EntityEventBus> eventBusProvider,
                     final AuthorisationConfig authorisationConfig) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME,
+        cache = cacheManager.create(
+                CACHE_NAME,
                 authorisationConfig::getUserGroupsCache,
                 userService::findGroupUuidsForUser);
     }
@@ -57,7 +58,10 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     void remove(final String userUuid) {
         cache.invalidate(userUuid);
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userUuid), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(
+                entityEventBus,
+                UserDocRefUtil.createDocRef(userUuid),
+                EntityAction.CLEAR_CACHE);
     }
 
     @Override

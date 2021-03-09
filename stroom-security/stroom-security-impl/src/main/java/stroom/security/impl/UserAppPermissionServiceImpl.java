@@ -16,7 +16,11 @@
 
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +36,13 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
     private static final Set<String> ALL_PERMISSIONS = Set.of(PermissionNames.PERMISSIONS);
     private final AppPermissionDao appPermissionDao;
+    private final EntityEventBus entityEventBus;
 
     @Inject
-    UserAppPermissionServiceImpl(final AppPermissionDao appPermissionDao) {
+    UserAppPermissionServiceImpl(final AppPermissionDao appPermissionDao,
+                                 final EntityEventBus entityEventBus) {
         this.appPermissionDao = appPermissionDao;
+        this.entityEventBus = entityEventBus;
     }
 
     @Override
@@ -58,6 +65,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         validatePermissionName(permission);
         try {
             appPermissionDao.addPermission(userUuid, permission);
+            fireEntityChangeEvent(userUuid);
         } catch (final RuntimeException e) {
             LOGGER.error("addPermission()", e);
             throw e;
@@ -69,6 +77,7 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         validatePermissionName(permission);
         try {
             appPermissionDao.removePermission(userUuid, permission);
+            fireEntityChangeEvent(userUuid);
         } catch (final RuntimeException e) {
             LOGGER.error("removePermission()", e);
             throw e;
@@ -79,5 +88,15 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
         if (!ALL_PERMISSIONS.contains(permission)) {
             throw new RuntimeException(permission + " is not a valid permission name");
         }
+    }
+
+    private void fireEntityChangeEvent(final String userUuid) {
+        EntityEvent.fire(
+                entityEventBus,
+                DocRef.builder()
+                        .uuid(userUuid)
+                        .type(UserDocRefUtil.USER)
+                        .build(),
+                EntityAction.UPDATE);
     }
 }
