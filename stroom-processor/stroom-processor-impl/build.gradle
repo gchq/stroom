@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.processor.impl'
 dependencies {
     // Stroom modules
     compile project(':stroom-cache:stroom-cache-api')
-//    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')

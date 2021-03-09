@@ -11,8 +11,10 @@ public class CreatedTasks {
     private final int totalTasksCreated;
     private final long eventCount;
 
-    public CreatedTasks(final List<ProcessorTask> availableTaskList, final int availableTasksCreated,
-                        final int totalTasksCreated, final long eventCount) {
+    public CreatedTasks(final List<ProcessorTask> availableTaskList,
+                        final int availableTasksCreated,
+                        final int totalTasksCreated,
+                        final long eventCount) {
         this.availableTaskList = availableTaskList;
         this.availableTasksCreated = availableTasksCreated;
         this.totalTasksCreated = totalTasksCreated;

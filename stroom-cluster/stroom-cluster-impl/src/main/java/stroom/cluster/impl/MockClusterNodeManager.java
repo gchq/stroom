@@ -41,7 +41,7 @@ public class MockClusterNodeManager implements ClusterNodeManager {
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(nodeNames);
         clusterState.setEnabledNodes(nodeNames);
-        clusterState.setEnabledActiveNodes(nodeNames);
+        clusterState.addEnabledActiveNode(nodeName);
         clusterState.setMasterNodeName(nodeName);
         return clusterState;
     }

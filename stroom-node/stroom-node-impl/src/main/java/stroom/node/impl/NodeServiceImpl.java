@@ -31,14 +31,15 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -57,7 +58,7 @@ import javax.ws.rs.core.Response.Status;
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeServiceImpl.class);
 
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
@@ -81,6 +82,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.entityEventBus = entityEventBus;
         this.webTargetFactory = webTargetFactory;
 
+        // Ensure the node record for this node is in the DB
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
@@ -101,7 +103,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     ResultPage<Node> find(final FindNodeCriteria criteria) {
         return securityContext.secureResult(() -> {
-            ensureNodeCreated();
             return nodeDao.find(criteria);
         });
 
@@ -112,6 +113,22 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return find(criteria)
                 .getValues()
                 .stream()
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getEnabledNodesByPriority() {
+
+        final FindNodeCriteria findNodeCriteria = new FindNodeCriteria();
+        findNodeCriteria.setEnabled(true);
+
+        return find(findNodeCriteria)
+                .getValues()
+                .stream()
+                .sorted(Comparator.comparingInt(Node::getPriority)
+                        .reversed()
+                        .thenComparing(Node::getName))
                 .map(Node::getName)
                 .collect(Collectors.toList());
     }
@@ -156,7 +173,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // If this is the node that was contacted then just resolve it locally
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
-            LOGGER.debug("Executing locally");
+            LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
             resp = localSupplier.get();
 
         } else {
@@ -173,7 +190,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
                 final Response response = responseBuilderFunc.apply(builder);
 
-                LOGGER.debug("Response status {}", response.getStatus());
+                LOGGER.debug(() -> "Response status " + response.getStatus());
                 if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
                 }
@@ -198,7 +215,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // If this is the node that was contacted then just resolve it locally
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
-            LOGGER.debug("Executing locally");
+            LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
             localRunnable.run();
         } else {
             // A different node to make a rest call to the required node
@@ -214,7 +231,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
                 final Response response = responseBuilderFunc.apply(builder);
 
-                LOGGER.debug("Response status {}", response.getStatus());
+                LOGGER.debug(() -> "Response status " + response.getStatus());
                 if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
                 }
@@ -226,7 +243,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     Node getNode(final String nodeName) {
         return securityContext.secureResult(() -> {
-            ensureNodeCreated();
             return nodeDao.getNode(nodeName);
         });
     }
