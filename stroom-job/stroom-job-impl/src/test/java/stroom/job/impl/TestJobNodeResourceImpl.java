@@ -368,8 +368,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         return new JobNodeResourceImpl(
                 () -> jobNodeService,
                 () -> nodeService,
-                () -> nodeInfo,
-                () -> webTargetFactory(),
                 () -> documentEventLog);
     }
 }

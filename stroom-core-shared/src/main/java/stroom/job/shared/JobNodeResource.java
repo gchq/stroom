@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -55,12 +56,12 @@ public interface JobNodeResource extends RestResource, DirectRestService {
                              @QueryParam("nodeName") String nodeName);
 
     @GET
-    @Path(INFO_PATH_PART)
+    @Path(INFO_PATH_PART + "/{nodeName}/{jobName}")
     @Operation(
             summary = "Gets current info for a job node",
             operationId = "fetchJobNodeInfo")
-    JobNodeInfo info(@QueryParam("jobName") String jobName,
-                     @QueryParam("nodeName") String nodeName);
+    JobNodeInfo info(@NotNull @PathParam("jobName") String jobName,
+                     @NotNull @PathParam("nodeName") String nodeName);
 
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
