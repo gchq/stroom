@@ -50,8 +50,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache {
     @Inject
     @SuppressWarnings("unchecked")
     ElasticClientCacheImpl(
-        final CacheManager cacheManager,
-        @Value("#{propertyConfigurer.getProperty('stroom.pki.caCert')}") final String caCertPath
+        final CacheManager cacheManager
     ) {
         final CacheLoader<ElasticConnectionConfig, RestHighLevelClient> cacheLoader = CacheLoader.from(k -> {
             if (k == null) {
