@@ -64,6 +64,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -397,8 +398,11 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             aggregate(10);
 
             assertThat(Files.isRegularFile(testFile1))
-                    .as("Expecting bad file to go")
+                    .as("Expecting task to rename bad zip file")
                     .isFalse();
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")))
+                    .as("Expecting task to rename bad zip file")
+                    .isTrue();
             assertThat(Files.isRegularFile(testFile2))
                     .as("Expecting good file to go")
                     .isFalse();
@@ -406,11 +410,11 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             // run again and it should clear down the one
             aggregate(10);
 
-            assertThat(Files.isRegularFile(testFile1))
-                    .as("Expecting bad file to go")
-                    .isFalse();
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")))
+                    .as("Expecting bad zip file to still be there")
+                    .isTrue();
             assertThat(Files.isRegularFile(testFile2))
-                    .as("Expecting good file to go")
+                    .as("Expecting task to just write the one file and leave the bad one")
                     .isFalse();
         }
     }

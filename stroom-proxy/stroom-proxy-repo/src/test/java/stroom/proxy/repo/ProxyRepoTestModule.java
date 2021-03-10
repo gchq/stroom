@@ -19,9 +19,7 @@ public class ProxyRepoTestModule extends AbstractModule {
         final Path dbDir = FileUtil.createTempDirectory("stroom-proxy-db");
         bind(RepoDirProvider.class).toInstance(() -> repoDir);
         bind(RepoDbDirProvider.class).toInstance(() -> dbDir);
-        bind(ErrorReceiver.class).toInstance((path, message) -> {
-            throw new RuntimeException(path + " " + message);
-        });
+        bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
 
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {

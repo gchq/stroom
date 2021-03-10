@@ -10,6 +10,8 @@ import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -17,8 +19,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jooq.Record2;
 import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,7 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 @Singleton
 public class ProxyRepoSourceEntries {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepoSourceEntries.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRepoSourceEntries.class);
 
     private static final int BATCH_SIZE = 1000000;
 
@@ -150,9 +150,7 @@ public class ProxyRepoSourceEntries {
         if (!shutdown) {
             final Path fullPath = repoDir.resolve(sourcePath);
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Storing zip info for  '" + FileUtil.getCanonicalPath(fullPath) + "'");
-            }
+            LOGGER.debug(() -> "Examining zip  '" + FileUtil.getCanonicalPath(fullPath) + "'");
 
             final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
             final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
@@ -178,7 +176,7 @@ public class ProxyRepoSourceEntries {
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
                                 if (metaStream == null) {
-                                    LOGGER.error(fullPath + ": unable to find meta");
+                                    LOGGER.error(() -> fullPath + ": unable to find meta");
                                 } else {
                                     final AttributeMap attributeMap = new AttributeMap();
                                     AttributeMapUtil.read(metaStream, attributeMap);
@@ -186,8 +184,9 @@ public class ProxyRepoSourceEntries {
                                     typeName = attributeMap.get(StandardHeaderArguments.TYPE);
                                 }
                             } catch (final RuntimeException e) {
-                                LOGGER.error(fullPath + " " + e.getMessage());
-                                LOGGER.debug(e.getMessage(), e);
+                                errorReceiver.error(fullPath, e.getMessage());
+                                LOGGER.error(() -> fullPath + " " + e.getMessage());
+                                LOGGER.debug(e::getMessage, e);
                             }
                         }
 
@@ -230,13 +229,13 @@ public class ProxyRepoSourceEntries {
                 }
 
                 if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
-                    errorReceiver.onError(fullPath, "Unable to find any entries?");
+                    errorReceiver.error(fullPath, "Unable to find any entries?");
                 }
 
             } catch (final IOException e) {
                 // Unable to open file ... must be bad.
-                errorReceiver.onError(fullPath, e.getMessage());
-                LOGGER.debug(e.getMessage(), e);
+                errorReceiver.fatal(fullPath, e.getMessage());
+                LOGGER.debug(e::getMessage, e);
             }
 
             // We now have a map of all source entries so add them to the DB.
@@ -256,7 +255,7 @@ public class ProxyRepoSourceEntries {
             final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
             for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
                 if (sourceItemRecord.getFeedName() == null) {
-                    LOGGER.error("Source item has no feed name: " + fullPath + " - " + sourceItemRecord.getName());
+                    LOGGER.error(() -> "Source item has no feed name: " + fullPath + " - " + sourceItemRecord.getName());
                 } else {
                     sourceItemRecords.add(sourceItemRecord);
                     final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
@@ -281,7 +280,7 @@ public class ProxyRepoSourceEntries {
         executor.shutdown();
         try {
             while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                LOGGER.debug("Shutting down");
+                LOGGER.debug(() -> "Shutting down");
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();

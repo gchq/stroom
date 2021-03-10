@@ -15,9 +15,10 @@ public class ErrorReceiverImpl implements ErrorReceiver {
 
     private static final String ZIP_EXTENSION = ".zip";
     private static final String ERROR_EXTENSION = ".err";
+    private static final String BAD_EXTENSION = ".bad";
 
     @Override
-    public void onError(final Path zipFile, final String message) {
+    public void error(final Path zipFile, final String message) {
         try {
             if (!Files.isRegularFile(zipFile)) {
                 return;
@@ -33,6 +34,20 @@ public class ErrorReceiverImpl implements ErrorReceiver {
 
         } catch (final IOException ex) {
             LOGGER.warn("Failed to write to file " + zipFile + " message " + message);
+        }
+    }
+
+    @Override
+    public void fatal(final Path zipFile, final String message) {
+        // Write to error file first.
+        error(zipFile, message);
+
+        // Now move the source zip so we know it was bad.
+        final Path renamedFile = zipFile.getParent().resolve(zipFile.getFileName().toString() + BAD_EXTENSION);
+        try {
+            Files.move(zipFile, renamedFile);
+        } catch (final Exception e) {
+            LOGGER.warn("Failed to rename zip file to " + renamedFile);
         }
     }
 
