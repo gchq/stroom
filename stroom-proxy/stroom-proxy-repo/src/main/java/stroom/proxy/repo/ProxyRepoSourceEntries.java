@@ -175,11 +175,7 @@ public class ProxyRepoSourceEntries {
                         String feedName = null;
                         String typeName = null;
 
-                        int extensionType = -1;
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
-                            // We need to be able to sort by extension so we can get meta data first.
-                            extensionType = 1;
-
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
                                 if (metaStream == null) {
                                     LOGGER.error(fullPath + ": unable to find meta");
@@ -193,53 +189,44 @@ public class ProxyRepoSourceEntries {
                                 LOGGER.error(fullPath + " " + e.getMessage());
                                 LOGGER.debug(e.getMessage(), e);
                             }
-                        } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
-                            extensionType = 2;
-                        } else if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
-                            extensionType = 3;
                         }
 
-                        // Don't add unknown types.
-                        if (extensionType != -1) {
-                            long sourceItemId;
-                            SourceItemRecord sourceItemRecord = itemNameMap.get(baseName);
+                        long sourceItemId;
+                        SourceItemRecord sourceItemRecord = itemNameMap.get(baseName);
 
-                            if (sourceItemRecord != null) {
-                                sourceItemId = sourceItemRecord.getId();
+                        if (sourceItemRecord != null) {
+                            sourceItemId = sourceItemRecord.getId();
 
-                                // If we have an existing source item then update the feed and type names if we have
-                                // some.
-                                if (feedName != null && sourceItemRecord.getFeedName() == null) {
-                                    sourceItemRecord.setFeedName(feedName);
-                                }
-                                if (typeName != null && sourceItemRecord.getTypeName() == null) {
-                                    sourceItemRecord.setTypeName(typeName);
-                                }
-
-                            } else {
-                                sourceItemId = this.sourceItemRecordId.incrementAndGet();
-                                sourceItemRecord = new SourceItemRecord(
-                                        sourceItemId,
-                                        baseName,
-                                        feedName,
-                                        typeName,
-                                        sourceId,
-                                        false);
-                                itemNameMap.put(baseName, sourceItemRecord);
+                            // If we have an existing source item then update the feed and type names if we have
+                            // some.
+                            if (feedName != null && sourceItemRecord.getFeedName() == null) {
+                                sourceItemRecord.setFeedName(feedName);
+                            }
+                            if (typeName != null && sourceItemRecord.getTypeName() == null) {
+                                sourceItemRecord.setTypeName(typeName);
                             }
 
-                            entryMap
-                                    .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
-                                    .add(new SourceEntryRecord(
-                                            sourceEntryRecordId.incrementAndGet(),
-                                            extension,
-                                            extensionType,
-                                            entry.getSize(),
-                                            sourceItemId));
+                        } else {
+                            sourceItemId = this.sourceItemRecordId.incrementAndGet();
+                            sourceItemRecord = new SourceItemRecord(
+                                    sourceItemId,
+                                    baseName,
+                                    feedName,
+                                    typeName,
+                                    sourceId,
+                                    false);
+                            itemNameMap.put(baseName, sourceItemRecord);
                         }
 
+                        entryMap
+                                .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
+                                .add(new SourceEntryRecord(
+                                        sourceEntryRecordId.incrementAndGet(),
+                                        extension,
+                                        stroomZipFileType.getId(),
+                                        entry.getSize(),
+                                        sourceItemId));
                     }
-
                 }
 
                 if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
