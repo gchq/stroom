@@ -30,11 +30,15 @@ public class NodeCache {
                              final Consumer<Throwable> throwableConsumer) {
         if (nodeNames == null) {
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(nodeNames -> {
-                // Store node list for future queries.
-                this.nodeNames = nodeNames;
-                nodeListConsumer.accept(nodeNames);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).listAllNodes();
+            rest
+                    .onSuccess(nodeNames -> {
+                        // Store node list for future queries.
+                        this.nodeNames = nodeNames;
+                        nodeListConsumer.accept(nodeNames);
+                    })
+                    .onFailure(throwableConsumer)
+                    .call(NODE_RESOURCE)
+                    .listAllNodes();
         } else {
             nodeListConsumer.accept(nodeNames);
         }
@@ -44,11 +48,15 @@ public class NodeCache {
                                  final Consumer<Throwable> throwableConsumer) {
         if (enabledNodeNames == null) {
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(nodeNames -> {
-                // Store node list for future queries.
-                this.enabledNodeNames = nodeNames;
-                nodeListConsumer.accept(nodeNames);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).listEnabledNodes();
+            rest
+                    .onSuccess(nodeNames -> {
+                        // Store node list for future queries.
+                        this.enabledNodeNames = nodeNames;
+                        nodeListConsumer.accept(nodeNames);
+                    })
+                    .onFailure(throwableConsumer)
+                    .call(NODE_RESOURCE)
+                    .listEnabledNodes();
         } else {
             nodeListConsumer.accept(enabledNodeNames);
         }

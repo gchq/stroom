@@ -36,6 +36,13 @@ public interface NodeService {
 
     int getPriority(String nodeName);
 
+    /**
+     * @return A list of node names sorted by descending priority (i.e. 3, 2, 1)
+     * then by node name to ensure a deterministic result when nodes have the same
+     * priority
+     */
+    List<String> getEnabledNodesByPriority();
+
     List<String> findNodeNames(FindNodeCriteria criteria);
 
     /**

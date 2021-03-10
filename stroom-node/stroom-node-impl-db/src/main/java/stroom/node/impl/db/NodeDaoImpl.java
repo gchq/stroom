@@ -74,7 +74,8 @@ public class NodeDaoImpl implements NodeDao {
     @Override
     public ResultPage<Node> find(final FindNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
+                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()),
+                JooqUtil.getBooleanCondition(NODE.ENABLED, criteria.isEnabled()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 

@@ -98,7 +98,7 @@ public class SolrSearchTaskHandler {
                                 error(task, e.getMessage(), e);
                             }
                         },
-                        () -> "exec()"))
+                        "exec()"))
                 .run();
     }
 

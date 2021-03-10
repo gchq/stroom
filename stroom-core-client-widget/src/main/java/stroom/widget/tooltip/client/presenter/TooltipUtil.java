@@ -40,6 +40,7 @@ public final class TooltipUtil {
     private static final SafeHtml CODE_CLOSE = SafeHtmlUtils.fromSafeConstant("</code>");
     private static final SafeHtml PARA_OPEN = SafeHtmlUtils.fromSafeConstant("<p>");
     private static final SafeHtml PARA_CLOSE = SafeHtmlUtils.fromSafeConstant("</p>");
+    private static final SafeHtml DIV_OPEN = SafeHtmlUtils.fromSafeConstant("<div>");
     private static final SafeHtml DIV_CLOSE = SafeHtmlUtils.fromSafeConstant("</div>");
     private static final SafeHtml SPAN_CLOSE = SafeHtmlUtils.fromSafeConstant("</span>");
     private static final SafeHtml BLANK = SafeHtmlUtils.fromString("");

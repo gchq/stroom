@@ -21,8 +21,6 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.AssignTasksRequest;
@@ -30,42 +28,37 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Singleton
 @AutoLogged
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskResourceImpl.class);
+
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
     private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
-    private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<ProcessorTaskManager> processorTaskManagerProvider;
 
     @Inject
     ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
                               final Provider<DocumentEventLog> documentEventLogProvider,
                               final Provider<NodeService> nodeServiceProvider,
-                              final Provider<NodeInfo> nodeInfoProvider,
-                              final Provider<WebTargetFactory> webTargetFactoryProvider,
                               final Provider<ProcessorTaskManager> processorTaskManagerProvider) {
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.documentEventLogProvider = documentEventLogProvider;
         this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
-        this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.processorTaskManagerProvider = processorTaskManagerProvider;
     }
 
@@ -132,60 +125,38 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
-            return processorTaskManagerProvider.get().assignTasks(request.getNodeName(), request.getCount());
-
-        } else {
-            final String url =
-                    NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    ProcessorTaskResource.BASE_PATH,
-                    ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                return response.readEntity(ProcessorTaskList.class);
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        ProcessorTaskList.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
+                                nodeName),
+                        () ->
+                                processorTaskManagerProvider.get()
+                                        .assignTasks(request.getNodeName(), request.getCount()),
+                        builder ->
+                                builder.post(Entity.json(request)));
+        return processorTaskList;
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
-        // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
-            return processorTaskManagerProvider.get().abandonTasks(request);
-
-        } else {
-            final String url =
-                    NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    ProcessorTaskResource.BASE_PATH,
-                    ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .put(Entity.json(request));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                return response.readEntity(Boolean.class);
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        final Boolean result = nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        Boolean.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
+                                nodeName),
+                        () ->
+                                processorTaskManagerProvider.get()
+                                        .abandonTasks(request),
+                        builder ->
+                                builder.put(Entity.json(request)));
+        return result;
     }
 }
