@@ -31,6 +31,8 @@ import org.glassfish.jersey.message.MessageUtils;
 
 import java.io.IOException;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -40,18 +42,21 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.WriterInterceptorContext;
 
+@Singleton
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
-    private final RequestEventLog requestEventLog;
-    private final ObjectMapper objectMapper;
-    private final LoggingConfig config;
-    private final SecurityContext securityContext;
+    //Accessed via Provider<T> in line with code standards for injected fields that are expected to be stateless
+    private final Provider<LoggingConfig> loggingConfigProvider;
+    private final Provider<RequestEventLog> requestEventLogProvider;
+    private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<DelegatingExceptionMapper> delegatingExceptionMapperProvider;
 
-    private final DelegatingExceptionMapper delegatingExceptionMapper;
+    //Stateful fields
+    private final ObjectMapper objectMapper;
 
     @Context
     private HttpServletRequest request;
@@ -64,30 +69,31 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
 
     @Inject
-    RestResourceAutoLoggerImpl(final SecurityContext securityContext,
-                               final RequestEventLog requestEventLog,
-                               final LoggingConfig config,
-                               final DelegatingExceptionMapper delegatingExceptionMapper) {
-        this.securityContext = securityContext;
-        this.requestEventLog = requestEventLog;
-        this.config = config;
+    RestResourceAutoLoggerImpl(final Provider<SecurityContext> securityContextProvider,
+                               final Provider<RequestEventLog> requestEventLogProvider,
+                               final Provider<LoggingConfig> loggingConfigProvider,
+                               final Provider<DelegatingExceptionMapper> delegatingExceptionMapperProvider) {
+        this.securityContextProvider = securityContextProvider;
+        this.requestEventLogProvider = requestEventLogProvider;
+        this.loggingConfigProvider = loggingConfigProvider;
         this.objectMapper = createObjectMapper();
-        this.delegatingExceptionMapper = delegatingExceptionMapper;
+        this.delegatingExceptionMapperProvider = delegatingExceptionMapperProvider;
     }
 
     //For unit test use
-    RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
-                               final LoggingConfig config,
+    RestResourceAutoLoggerImpl(final Provider<SecurityContext> securityContextProvider,
+                               final Provider<RequestEventLog> requestEventLogProvider,
+                               final Provider<LoggingConfig> loggingConfigProvider,
                                final ResourceInfo resourceInfo,
                                final HttpServletRequest request,
-                               final DelegatingExceptionMapper delegatingExceptionMapper) {
-        this.securityContext = securityContext;
-        this.requestEventLog = requestEventLog;
-        this.config = config;
+                               final Provider<DelegatingExceptionMapper> delegatingExceptionMapperProvider) {
+        this.securityContextProvider = securityContextProvider;
+        this.requestEventLogProvider = requestEventLogProvider;
+        this.loggingConfigProvider = loggingConfigProvider;
         this.resourceInfo = resourceInfo;
         this.request = request;
         this.objectMapper = createObjectMapper();
-        this.delegatingExceptionMapper = delegatingExceptionMapper;
+        this.delegatingExceptionMapperProvider = delegatingExceptionMapperProvider;
     }
 
     private static ObjectMapper createObjectMapper() {
@@ -105,7 +111,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (object != null) {
                 RequestInfo requestInfo = (RequestInfo) object;
-                requestEventLog.log(requestInfo, null, exception);
+                requestEventLogProvider.get().log(requestInfo, null, exception);
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
             }
         } else {
@@ -116,7 +122,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             WebApplicationException wae = (WebApplicationException) exception;
             return wae.getResponse();
         } else {
-            return delegatingExceptionMapper.toResponse(exception);
+            return delegatingExceptionMapperProvider.get().toResponse(exception);
         }
     }
 
@@ -133,7 +139,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
         if (object != null) {
             RequestInfo requestInfo = (RequestInfo) object;
-            requestEventLog.log(requestInfo, writerInterceptorContext.getEntity());
+            requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());
         }
     }
 
@@ -141,7 +147,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     public void filter(final ContainerRequestContext context) throws IOException {
         ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
-        if (containerResourceInfo.shouldLog(config)) {
+        if (containerResourceInfo.shouldLog(loggingConfigProvider.get())) {
             if (context.hasEntity()) {
                 final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo,
                         context.getEntityStream(),
@@ -150,10 +156,12 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 context.setEntityStream(stream);
 
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
-                        new RequestInfo(securityContext, containerResourceInfo, stream.getRequestEntity()));
+                        new RequestInfo(securityContextProvider.get(),
+                                containerResourceInfo,
+                                stream.getRequestEntity()));
             } else {
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
-                        new RequestInfo(securityContext, containerResourceInfo));
+                        new RequestInfo(securityContextProvider.get(), containerResourceInfo));
             }
         }
     }
