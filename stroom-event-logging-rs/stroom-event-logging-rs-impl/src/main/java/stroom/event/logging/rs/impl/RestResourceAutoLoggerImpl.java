@@ -47,6 +47,8 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = createObjectMapper();
+
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
     //Accessed via Provider<T> in line with code standards for injected fields that are expected to be stateless
@@ -54,9 +56,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     private final Provider<RequestEventLog> requestEventLogProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<DelegatingExceptionMapper> delegatingExceptionMapperProvider;
-
-    //Stateful fields
-    private final ObjectMapper objectMapper;
 
     @Context
     private HttpServletRequest request;
@@ -76,7 +75,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.securityContextProvider = securityContextProvider;
         this.requestEventLogProvider = requestEventLogProvider;
         this.loggingConfigProvider = loggingConfigProvider;
-        this.objectMapper = createObjectMapper();
         this.delegatingExceptionMapperProvider = delegatingExceptionMapperProvider;
     }
 
@@ -92,7 +90,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.loggingConfigProvider = loggingConfigProvider;
         this.resourceInfo = resourceInfo;
         this.request = request;
-        this.objectMapper = createObjectMapper();
         this.delegatingExceptionMapperProvider = delegatingExceptionMapperProvider;
     }
 
@@ -151,7 +148,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             if (context.hasEntity()) {
                 final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo,
                         context.getEntityStream(),
-                        objectMapper,
+                        OBJECT_MAPPER,
                         MessageUtils.getCharset(context.getMediaType()));
                 context.setEntityStream(stream);
 
