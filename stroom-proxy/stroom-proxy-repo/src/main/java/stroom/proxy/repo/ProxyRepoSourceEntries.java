@@ -176,6 +176,7 @@ public class ProxyRepoSourceEntries {
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
                                 if (metaStream == null) {
+                                    errorReceiver.error(fullPath, "Unable to find meta");
                                     LOGGER.error(() -> fullPath + ": unable to find meta");
                                 } else {
                                     final AttributeMap attributeMap = new AttributeMap();

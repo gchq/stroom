@@ -323,7 +323,7 @@ public class ProxyRepo {
 
     public void deleteRepoFile(final String sourcePath) throws IOException {
         final Path sourceFile = repoDir.resolve(sourcePath);
-        LOGGER.debug("Deleting: " + sourceFile.toAbsolutePath().toString());
+        LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
         Files.deleteIfExists(sourceFile);
     }
 
@@ -359,16 +359,7 @@ public class ProxyRepo {
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
                                 if (file.toString().endsWith(".zip.lock")) {
-                                    final FileTime lastModified = attrs.lastModifiedTime();
-                                    if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
-                                        try {
-                                            Files.delete(file);
-                                            LOGGER.info("Removed old lock file due to age " + file.toString());
-                                        } catch (final IOException e) {
-                                            LOGGER.error("Unable to remove old lock file due to age " +
-                                                    file.toString());
-                                        }
-                                    }
+                                    deleteLockFile(file, attrs, oldestLockFileMs);
                                 }
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
@@ -388,6 +379,21 @@ public class ProxyRepo {
                     });
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
+        }
+    }
+
+    private void deleteLockFile(final Path file,
+                                final BasicFileAttributes attrs,
+                                final long oldestLockFileMs) {
+        final FileTime lastModified = attrs.lastModifiedTime();
+        if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
+            try {
+                Files.delete(file);
+                LOGGER.info("Removed old lock file due to age " + file.toString());
+            } catch (final IOException e) {
+                LOGGER.error("Unable to remove old lock file due to age " +
+                        file.toString());
+            }
         }
     }
 
