@@ -171,7 +171,7 @@ public class Forwarder {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             // Stop forwarding if the last query did not return a result as big as the batch size.
-            if (count.get() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
@@ -377,6 +377,8 @@ public class Forwarder {
     }
 
     void deleteAggregate(final long aggregateId) {
+        LOGGER.debug(() -> "deleteAggregate: " + aggregateId);
+
         jooq.transaction(context -> {
             context
                     .deleteFrom(FORWARD_AGGREGATE)

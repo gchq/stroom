@@ -59,7 +59,7 @@ public class Cleanup {
                     .andNotExists(DSL
                             .select(SOURCE_ITEM.ID)
                             .from(SOURCE_ITEM)
-                            .where(SOURCE_ITEM.ID.eq(SOURCE.ID)));
+                            .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID)));
 
     private final SqliteJooqHelper jooq;
     private final ProxyRepo proxyRepo;
@@ -71,32 +71,35 @@ public class Cleanup {
         this.proxyRepo = proxyRepo;
     }
 
-    public synchronized void cleanup() {
-        deleteSourceEntries();
-        deleteSource();
+    public synchronized int cleanup() {
+        int total = 0;
+        total += deleteSourceEntries();
+        total += deleteSource();
+        return total;
     }
 
-    void deleteSourceEntries() {
+    int deleteSourceEntries() {
         // Start a transaction for all of the database changes.
-        jooq.transaction(context -> {
-            context
+        return jooq.transactionResult(context -> {
+            int count = context
                     .deleteFrom(SOURCE_ENTRY)
                     .where(DELETE_SOURCE_ENTRY_CONDITION)
                     .execute();
 
-            context
+            count += context
                     .deleteFrom(SOURCE_ITEM)
                     .where(DELETE_SOURCE_ITEM_CONDITION)
                     .execute();
+
+            return count;
         });
     }
 
-    private void deleteSource() {
+    int deleteSource() {
+        final AtomicInteger total = new AtomicInteger();
+
         boolean run = true;
         while (run) {
-
-            final AtomicInteger count = new AtomicInteger();
-
             final Result<Record2<Long, String>> result = getDeletableSources(BATCH_SIZE);
 
             result.forEach(record -> {
@@ -105,23 +108,24 @@ public class Cleanup {
 
                 try {
                     proxyRepo.deleteRepoFile(sourcePath);
-                    jooq.context(context -> context
+                    final int count = jooq.contextResult(context -> context
                             .deleteFrom(SOURCE)
                             .where(SOURCE.ID.eq(sourceId))
                             .execute());
+                    total.addAndGet(count);
 
                 } catch (final IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
-
-                count.incrementAndGet();
             });
 
             // Stop deleting if the last query did not return a result as big as the batch size.
-            if (count.get() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
+
+        return total.get();
     }
 
     Result<Record1<Long>> getDeletableSourceItems() {

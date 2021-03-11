@@ -30,7 +30,7 @@ public class CloseableUtil {
         try {
             close(closeableList);
         } catch (final IOException e) {
-            // Already Logged
+            LOGGER.trace(e.getMessage(), e);
         }
     }
 
