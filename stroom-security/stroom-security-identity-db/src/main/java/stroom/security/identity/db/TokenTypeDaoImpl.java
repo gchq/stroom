@@ -9,11 +9,11 @@ import javax.inject.Inject;
 
 class TokenTypeDaoImpl implements TokenTypeDao {
 
-    private final AuthDbConnProvider authDbConnProvider;
+    private final IdentityDbConnProvider identityDbConnProvider;
 
     @Inject
-    TokenTypeDaoImpl(final AuthDbConnProvider authDbConnProvider) {
-        this.authDbConnProvider = authDbConnProvider;
+    TokenTypeDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
+        this.identityDbConnProvider = identityDbConnProvider;
     }
 
     @Override
@@ -28,7 +28,7 @@ class TokenTypeDaoImpl implements TokenTypeDao {
     }
 
     private void create(final String type) {
-        JooqUtil.context(authDbConnProvider, context -> context
+        JooqUtil.context(identityDbConnProvider, context -> context
                 .insertInto(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.TYPE)
                 .values(type)
                 .onDuplicateKeyIgnore()
@@ -36,7 +36,7 @@ class TokenTypeDaoImpl implements TokenTypeDao {
     }
 
     private Optional<Integer> get(final String type) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(TokenType.TOKEN_TYPE.ID)
                 .from(TokenType.TOKEN_TYPE)
                 .where(TokenType.TOKEN_TYPE.TYPE.eq(type))

@@ -367,7 +367,7 @@ public class AccountDaoIT extends DatabaseIT {
     private AccountDao getUserDao(Connection conn) {
         // We don't care about most config for this test, so we'll pass in null
         AccountDao accountDao = new AccountDaoImpl(null,
-                new AuthDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
+                new IdentityDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
         // We're doing tests against elapsed time so we need to be able to move the clock.
         final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
 
