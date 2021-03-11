@@ -214,14 +214,6 @@ class TestAppConfigModule {
                     }
                 });
 
-        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
-                .collect(Collectors.toMap(
-                        clazz -> clazz,
-                        clazz -> {
-                            Object object = injector.getInstance(clazz);
-                            return System.identityHashCode(object);
-                        }));
-
         // Make sure all config classes extend AbstractConfig and all AbstractConfig classes are in
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
         // being public in the config class, else the config class may not be a property in the
@@ -236,7 +228,13 @@ class TestAppConfigModule {
 
         // Now we know the appConfig tree contains all the concrete AbstractConfig classes
         // check that guice will give us the right instance. This ensures
-
+        final Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+                .collect(Collectors.toMap(
+                        clazz -> clazz,
+                        clazz -> {
+                            Object object = injector.getInstance(clazz);
+                            return System.identityHashCode(object);
+                        }));
         List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
                 .stream()
                 .filter(entry -> {
