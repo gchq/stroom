@@ -6,7 +6,6 @@ import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
-import stroom.util.db.ForceCoreMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,10 +31,6 @@ public class ProxyRepoDbModule extends AbstractModule {
         super.configure();
     }
 
-    /**
-     * We inject {@link ForceCoreMigration} to ensure that the the core DB migration has happened before all
-     * other migrations
-     */
     @Provides
     @Singleton
     public ProxyRepoDbConnProvider getConnectionProvider(

@@ -256,7 +256,11 @@ public class ProxyRepoSourceEntries {
             final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
             for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
                 if (sourceItemRecord.getFeedName() == null) {
-                    LOGGER.error(() -> "Source item has no feed name: " + fullPath + " - " + sourceItemRecord.getName());
+                    LOGGER.error(() ->
+                            "Source item has no feed name: " +
+                                    fullPath +
+                                    " - " +
+                                    sourceItemRecord.getName());
                 } else {
                     sourceItemRecords.add(sourceItemRecord);
                     final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());

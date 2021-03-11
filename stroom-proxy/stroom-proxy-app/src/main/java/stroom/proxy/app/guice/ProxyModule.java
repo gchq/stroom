@@ -50,7 +50,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
-import stroom.util.db.ForceCoreMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -164,10 +163,6 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetService.class)
                 .addBinding(DictionaryStore.class);
-
-        // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
-        });
     }
 
     @Provides
