@@ -55,13 +55,16 @@ public class ProxyLifecycle implements Managed {
                     proxyRepoConfig.getCleanupFrequency().toMillis());
             services.add(cleanupRepoExecutor);
 
-            // Add executor to open source files and scan entries
-            final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
-                    ProxyRepoSourceEntries.class.getSimpleName(),
-                    proxyRepoSourceEntries::examine,
-                    100);
-            proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
-            services.add(proxyRepoSourceEntriesExecutor);
+            // Only examine source files if we are aggregating.
+            if (aggregatorConfig.isEnabled()) {
+                // Add executor to open source files and scan entries
+                final ChangeListenerExecutor proxyRepoSourceEntriesExecutor = new ChangeListenerExecutor(
+                        ProxyRepoSourceEntries.class.getSimpleName(),
+                        proxyRepoSourceEntries::examine,
+                        100);
+                proxyRepoSources.addChangeListener((sourceId, sourcePath) -> proxyRepoSourceEntriesExecutor.onChange());
+                services.add(proxyRepoSourceEntriesExecutor);
+            }
 
             if (proxyRepoFileScannerConfig.isScanningEnabled()) {
                 // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.

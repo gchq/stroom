@@ -14,6 +14,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({
+        "enabled",
         "maxItemsPerAggregate",
         "maxUncompressedByteSize",
         "maxAggregateAge",
@@ -21,10 +22,22 @@ import javax.inject.Singleton;
 })
 public class AggregatorConfig extends AbstractConfig {
 
+    private boolean enabled = true;
     private int maxItemsPerAggregate = 1000;
     private long maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString("1G");
     private StroomDuration maxAggregateAge = StroomDuration.of(Duration.ofMinutes(10));
     private StroomDuration aggregationFrequency = StroomDuration.of(Duration.ofMinutes(1));
+
+    @JsonPropertyDescription("If we are actually going to aggregate stored data or use it as is")
+    @JsonProperty
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @JsonProperty
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @JsonPropertyDescription("Maximum number of data items to add to an aggregate before a new one is created")
     @JsonProperty

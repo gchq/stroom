@@ -18,6 +18,7 @@
 package stroom.core.receive;
 
 import stroom.proxy.repo.Aggregator;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.Cleanup;
 import stroom.proxy.repo.Forwarder;
 import stroom.proxy.repo.ProxyRepoFileScanner;
@@ -47,15 +48,20 @@ public class ProxyAggregationExecutor {
     public ProxyAggregationExecutor(final ProxyRepoFileScanner proxyRepoFileScanner,
                                     final ProxyRepoSources proxyRepoSources,
                                     final ProxyRepoSourceEntries proxyRepoSourceEntries,
+                                    final AggregatorConfig aggregatorConfig,
                                     final Aggregator aggregator,
                                     final Forwarder forwarder,
                                     final Cleanup cleanup) {
         this.proxyRepoFileScanner = proxyRepoFileScanner;
         this.aggregator = aggregator;
 
-        proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
-        proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
-        aggregator.addChangeListener(count -> forwarder.forward());
+        if (aggregatorConfig.isEnabled()) {
+            proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
+            proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
+            aggregator.addChangeListener(count -> forwarder.forward());
+        } else {
+            proxyRepoSources.addChangeListener((sourceId, path) -> forwarder.forward());
+        }
         forwarder.addChangeListener(cleanup::cleanup);
     }
 
