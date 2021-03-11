@@ -18,6 +18,8 @@ package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -26,10 +28,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.solr.SolrIndexStore;
-import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
-import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.security.api.SecurityContext;
+import stroom.search.solr.SolrIndexService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -39,30 +38,25 @@ import com.codahale.metrics.annotation.Timed;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
+@AutoLogged
 public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResourceImpl.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final SolrIndexStore solrIndexStore;
-    private final SecurityContext securityContext;
+    private final SolrIndexService solrIndexService;
 
     @Inject
     StroomSolrIndexQueryResourceImpl(final SolrSearchResponseCreatorManager searchResponseCreatorManager,
-                                     final SolrIndexStore solrIndexStore,
-                                     final SecurityContext securityContext) {
+                                     final SolrIndexService solrIndexService) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.solrIndexStore = solrIndexStore;
-        this.securityContext = securityContext;
+        this.solrIndexService = solrIndexService;
     }
 
     @Timed
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            return new DataSource(SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
-        });
+        return solrIndexService.getDataSource(docRef);
     }
 
     @Timed
@@ -125,6 +119,7 @@ public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryRes
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;

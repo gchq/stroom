@@ -55,6 +55,11 @@ public class MockNodeService implements NodeService {
     }
 
     @Override
+    public List<String> getEnabledNodesByPriority() {
+        return Collections.singletonList(nodeInfo.getThisNodeName());
+    }
+
+    @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
         return Collections.singletonList(nodeInfo.getThisNodeName());
     }

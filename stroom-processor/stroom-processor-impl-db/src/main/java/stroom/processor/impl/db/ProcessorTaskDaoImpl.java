@@ -83,9 +83,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskDaoImpl.class);
 
-    private static final int RECENT_STREAM_ID_LIMIT = 10000;
+    private static final Object TASK_CREATION_MONITOR = new Object();
 
-    private static final String LOCK_NAME = "ProcessorTaskManager";
+    private static final int RECENT_STREAM_ID_LIMIT = 10000;
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
@@ -234,39 +234,35 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     /**
-     * Anything that we owned release
+     * Anything that we owned release. Should be done under cluster lock
      */
     @Override
     public void releaseOwnedTasks() {
-        LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeInfo.getThisNodeName());
+        LOGGER.info(() -> "Releasing owned tasks for node " + nodeInfo.getThisNodeName());
 
-        // Lock the cluster so that only this node is able to release owned tasks at this time.
-        clusterLockService.lock(LOCK_NAME, () -> {
-            LOGGER.debug(() -> "Locked cluster");
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
 
-            final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
+        final Set<Byte> statusSet = Set.of(
+                TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                TaskStatus.ASSIGNED.getPrimitiveValue(),
+                TaskStatus.PROCESSING.getPrimitiveValue());
+        final Selection<Byte> selection = Selection.selectNone();
+        selection.setSet(statusSet);
 
-            final Set<Byte> statusSet = Set.of(
-                    TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                    TaskStatus.ASSIGNED.getPrimitiveValue(),
-                    TaskStatus.PROCESSING.getPrimitiveValue());
-            final Selection<Byte> selection = Selection.selectNone();
-            selection.setSet(statusSet);
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
+                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection));
 
-            final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
-                    JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection));
+        final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR_TASK)
+                .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
+                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+                .where(conditions)
+                .execute());
 
-            final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                    .update(PROCESSOR_TASK)
-                    .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
-                    .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
-                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
-                    .where(conditions)
-                    .execute());
-
-            LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED (Reprocess), NULL that were " +
-                    "UNPROCESSED, ASSIGNED, PROCESSING for node " + nodeInfo.getThisNodeName());
+        LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED (Reprocess), NULL that were " +
+                "UNPROCESSED, ASSIGNED, PROCESSING for node " + nodeInfo.getThisNodeName());
 
 //        final SqlBuilder sql = new SqlBuilder();
 //        sql.append("UPDATE ");
@@ -291,7 +287,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were
 //                UNPROCESSED, ASSIGNED, PROCESSING for node {}",
 //                results, nodeInfo.getThisNodeName());
-        });
     }
 
 
@@ -344,6 +339,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
+     * <p>
+     * This must only be done on one node at a time, i.e. under a cluster lock.
      *
      * @param filter          The fitter to create tasks for
      * @param tracker         The tracker that tracks the task creation progress for the
@@ -359,19 +356,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      *                        creation running forever.
      */
     @Override
-    public void createNewTasks(final ProcessorFilter filter,
-                               final ProcessorFilterTracker tracker,
-                               final long streamQueryTime,
-                               final Map<Meta, InclusiveRanges> streams,
-                               final String thisNodeName,
-                               final Long maxMetaId,
-                               final boolean reachedLimit,
-                               final Consumer<CreatedTasks> consumer) {
-        final Integer nodeId = processorNodeCache.getOrCreate(thisNodeName);
+    public synchronized void createNewTasks(final ProcessorFilter filter,
+                                            final ProcessorFilterTracker tracker,
+                                            final long streamQueryTime,
+                                            final Map<Meta, InclusiveRanges> streams,
+                                            final String thisNodeName,
+                                            final Long maxMetaId,
+                                            final boolean reachedLimit,
+                                            final Consumer<CreatedTasks> consumer) {
 
-        // Lock the cluster so that only this node can create tasks for this
-        // filter at this time.
-        clusterLockService.lock(LOCK_NAME, () -> {
+        // Synchronised to avoid the risk of any table locking when being called concurrently
+        // by multiple threads on the master node
+        synchronized (TASK_CREATION_MONITOR) {
+            final Integer nodeId = processorNodeCache.getOrCreate(thisNodeName);
+
             // Do everything within a single transaction.
             JooqUtil.transaction(processorDbConnProvider, context -> {
                 List<ProcessorTask> availableTaskList = Collections.emptyList();
@@ -587,7 +585,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             //            } catch (final RuntimeException e) {
             //                LOGGER.error("createNewTasks", e);
             //            }
-        });
+
+        }
     }
 
     private void executeInsert(final BatchBindStep batchBindStep, final int rowCount) {

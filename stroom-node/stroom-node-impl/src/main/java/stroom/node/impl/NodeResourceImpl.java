@@ -17,7 +17,10 @@
 package stroom.node.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -35,7 +38,7 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -45,7 +48,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.SyncInvoker;
 
-// TODO : @66 add event logging
+@AutoLogged
 class NodeResourceImpl implements NodeResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
@@ -53,7 +56,6 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
-    private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
@@ -65,7 +67,6 @@ class NodeResourceImpl implements NodeResource {
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.clusterNodeManagerProvider = clusterNodeManagerProvider;
-        this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
     }
 
@@ -104,20 +105,18 @@ class NodeResourceImpl implements NodeResource {
                 .build();
 
         try {
-            final List<Node> nodes = nodeServiceProvider.get().find(new FindNodeCriteria()).getValues();
-            Node master = null;
-            for (final Node node : nodes) {
-                if (node.isEnabled()) {
-                    if (master == null || master.getPriority() < node.getPriority()) {
-                        master = node;
-                    }
-                }
-            }
+            final List<Node> nodes = nodeServiceProvider.get()
+                    .find(new FindNodeCriteria())
+                    .getValues();
 
-            final List<NodeStatusResult> resultList = new ArrayList<>();
-            for (final Node node : nodes) {
-                resultList.add(new NodeStatusResult(node, node.equals(master)));
-            }
+            final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
+            final String masterNodeName = clusterState.getMasterNodeName();
+
+            final List<NodeStatusResult> resultList = nodes.stream()
+                    .sorted(Comparator.comparing(Node::getName))
+                    .map(node ->
+                            new NodeStatusResult(node, node.getName().equals(masterNodeName)))
+                    .collect(Collectors.toList());
             response = new FetchNodeStatusResponse(resultList);
 
             documentEventLogProvider.get().search(
@@ -140,6 +139,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
@@ -185,6 +185,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 

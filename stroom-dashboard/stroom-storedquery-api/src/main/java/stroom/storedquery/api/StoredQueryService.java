@@ -17,9 +17,18 @@
 
 package stroom.storedquery.api;
 
+import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
+import stroom.util.shared.ResultPage;
 
 public interface StoredQueryService {
+    StoredQuery fetch(int id);
 
     StoredQuery create(StoredQuery storedQuery);
+
+    StoredQuery update(final StoredQuery storedQuery);
+
+    boolean delete(int id);
+
+    ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria);
 }

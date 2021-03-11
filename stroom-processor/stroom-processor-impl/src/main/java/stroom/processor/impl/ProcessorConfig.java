@@ -40,6 +40,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
+    @Override
     @JsonProperty("db")
     public DbConfig getDbConfig() {
         return dbConfig;
@@ -86,7 +87,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.fillTaskQueue = fillTaskQueue;
     }
 
-    @JsonPropertyDescription("Maximum number of tasks to cache ready for processing per processor filter")
+    @JsonPropertyDescription("Maximum number of tasks to cache ready for processing, in total and per filter.")
     public int getQueueSize() {
         return queueSize;
     }

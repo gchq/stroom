@@ -16,32 +16,30 @@
 
 package stroom.job.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
-import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
 
-    private final ScheduleService scheduleService;
-    private final SecurityContext securityContext;
+    private final Provider<ScheduleService> scheduleServiceProvider;
 
     @Inject
-    ScheduledTimeResourceImpl(final ScheduleService scheduleService,
-                              final SecurityContext securityContext) {
-        this.scheduleService = scheduleService;
-        this.securityContext = securityContext;
+    ScheduledTimeResourceImpl(final Provider<ScheduleService> scheduleServiceProvider) {
+        this.scheduleServiceProvider = scheduleServiceProvider;
     }
 
     @Override
     public ScheduledTimes get(final GetScheduledTimesRequest request) {
-        return securityContext.secureResult(() ->
-                scheduleService.getScheduledTimes(
-                        request.getJobType(),
-                        request.getScheduleReferenceTime(),
-                        request.getLastExecutedTime(),
-                        request.getSchedule()));
+        return scheduleServiceProvider.get().getScheduledTimes(
+                request.getJobType(),
+                request.getScheduleReferenceTime(),
+                request.getLastExecutedTime(),
+                request.getSchedule());
     }
 }

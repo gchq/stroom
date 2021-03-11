@@ -17,6 +17,8 @@
 package stroom.processor.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.CreateReprocessFilterRequest;
@@ -32,25 +34,24 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-// TODO : @66 add event logging
+@AutoLogged
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
-    private final ProcessorFilterService processorFilterService;
-    private final DocumentEventLog documentEventLog;
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
     @Inject
-    ProcessorFilterResourceImpl(final ProcessorFilterService processorFilterService,
+    ProcessorFilterResourceImpl(final Provider<ProcessorFilterService> processorFilterServiceProvider,
                                 final DocumentEventLog documentEventLog) {
-        this.processorFilterService = processorFilterService;
-        this.documentEventLog = documentEventLog;
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
-        ProcessorFilter filter = processorFilterService.create(
+        ProcessorFilter filter = processorFilterServiceProvider.get().create(
                 request.getPipeline(),
                 request.getQueryData(),
                 request.getPriority(),
@@ -59,9 +60,10 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
         return filter;
     }
 
+    @AutoLogged(value = OperationType.PROCESS, verb = "Reprocessing")
     @Override
     public List<ReprocessDataInfo> reprocess(final CreateReprocessFilterRequest request) {
-        return processorFilterService.reprocess(
+        return processorFilterServiceProvider.get().reprocess(
                 request.getQueryData(),
                 request.getPriority(),
                 request.isAutoPriority(),
@@ -70,32 +72,32 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
 
     @Override
     public ProcessorFilter fetch(final Integer id) {
-        return processorFilterService.fetch(id).orElse(null);
+        return processorFilterServiceProvider.get().fetch(id).orElse(null);
     }
 
     @Override
     public ProcessorFilter update(final Integer id, final ProcessorFilter processorFilter) {
-        return processorFilterService.update(processorFilter);
+        return processorFilterServiceProvider.get().update(processorFilter);
     }
 
     @Override
     public void delete(final Integer id) {
-        processorFilterService.delete(id);
+        processorFilterServiceProvider.get().delete(id);
     }
 
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        processorFilterService.setPriority(id, priority);
+        processorFilterServiceProvider.get().setPriority(id, priority);
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        processorFilterService.setEnabled(id, enabled);
+        processorFilterServiceProvider.get().setEnabled(id, enabled);
     }
 
     @Override
     public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
-        final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
+        final ResultPage<ProcessorListRow> resultPage = processorFilterServiceProvider.get().find(request);
         return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
     }
 }

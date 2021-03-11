@@ -142,7 +142,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         final String objDesc = eventLoggingService.describe(object);
 
-        if (objDesc == null) {
+        if (objDesc == null || StroomEventLoggingService.UNKNOWN_OBJECT_DESCRIPTION.equals(objDesc)) {
             return description;
         }
         return description + " " + objDesc;

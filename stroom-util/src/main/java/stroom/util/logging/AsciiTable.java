@@ -5,6 +5,8 @@ import stroom.util.logging.AsciiTable.Column.ColumnBuilder;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,6 +35,27 @@ import java.util.stream.Collectors;
  * Supports left/right/center alignment.
  */
 public class AsciiTable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsciiTable.class);
+
+    private static final String BLOCK_8_8THS_WIDE = "█";
+    private static final String BLOCK_7_8THS_WIDE = "▉";
+    private static final String BLOCK_6_8THS_WIDE = "▊";
+    private static final String BLOCK_5_8THS_WIDE = "▋";
+    private static final String BLOCK_4_8THS_WIDE = "▌";
+    private static final String BLOCK_3_8THS_WIDE = "▍";
+    private static final String BLOCK_2_8THS_WIDE = "▎";
+    private static final String BLOCK_1_8THS_WIDE = "▏";
+
+    private static final String[] BLOCKS_ARR = {
+            BLOCK_1_8THS_WIDE,
+            BLOCK_2_8THS_WIDE,
+            BLOCK_3_8THS_WIDE,
+            BLOCK_4_8THS_WIDE,
+            BLOCK_5_8THS_WIDE,
+            BLOCK_6_8THS_WIDE,
+            BLOCK_7_8THS_WIDE,
+            BLOCK_8_8THS_WIDE};
 
     private AsciiTable() {
     }
@@ -93,6 +116,37 @@ public class AsciiTable {
         String result = methodName.replaceAll("^(get|is)", "");
         result = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, result);
         return result.replaceAll("(?<!^)([A-Z])", " $1");
+    }
+
+
+    public static String asciiBar(final long value,
+                                  final long minValueInc,
+                                  final long maxValueInc,
+                                  final int maxChars) {
+
+        final long range = maxValueInc - minValueInc;
+        final int barRange = maxChars * 8;
+        final double scaleFactor = barRange / (double) range;
+
+        final long scaledValue = (long) ((value - minValueInc) * scaleFactor);
+
+        final String bar;
+        if (scaledValue > barRange) {
+            bar = Strings.repeat(BLOCK_8_8THS_WIDE, maxChars);
+        } else {
+            final int fullBlockCount = (int) (scaledValue / 8);
+            final int remainder = (int) (scaledValue % 8);
+
+            LOGGER.trace("value {}, scaleFactor {}, scaledValue {}, fullBlockCount {}, remainder {}",
+                    value, scaleFactor, scaledValue, fullBlockCount, remainder);
+
+            if (remainder == 0) {
+                bar = Strings.repeat(BLOCK_8_8THS_WIDE, fullBlockCount);
+            } else {
+                bar = Strings.repeat(BLOCK_8_8THS_WIDE, fullBlockCount) + BLOCKS_ARR[remainder - 1];
+            }
+        }
+        return bar;
     }
 
 

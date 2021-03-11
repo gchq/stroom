@@ -1,6 +1,7 @@
 package stroom.index.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -24,7 +25,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/index/volumeGroup" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexVolumeGroupResource extends RestResource, DirectRestService {
+public interface IndexVolumeGroupResource extends RestResource, DirectRestService,
+        FetchWithIntegerId<IndexVolumeGroup> {
 
     @POST
     @Path("find")

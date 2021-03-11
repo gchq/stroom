@@ -351,6 +351,15 @@ public final class JooqUtil {
         return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
     }
 
+    public static Optional<Condition> getBooleanCondition(final Field<Boolean> field,
+                                                          final Boolean value) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(field.eq(value));
+        }
+    }
+
     private static Optional<Condition> convertMatchNull(final Field<?> field,
                                                         final Boolean matchNull,
                                                         final Optional<Condition> condition) {

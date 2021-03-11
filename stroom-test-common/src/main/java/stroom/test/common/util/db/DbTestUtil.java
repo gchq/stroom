@@ -183,8 +183,8 @@ public class DbTestUtil {
         // This system prop allows a dev to use their own stroom-resources DB instead of test containers.
         // This is useful when debugging a test that needs to access the DB as the embedded DB has to
         // migrate the DB from scratch on each run which is very time consuming
-        boolean useEmbeddedDb = (useTestContainersEnvVarVal == null
-                || !useTestContainersEnvVarVal.equalsIgnoreCase("false"));
+        boolean useEmbeddedDb = (useTestContainersEnvVarVal != null
+                && useTestContainersEnvVarVal.equalsIgnoreCase("true"));
 
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {

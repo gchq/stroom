@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -37,7 +38,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/storedQuery" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface StoredQueryResource extends RestResource, DirectRestService {
+public interface StoredQueryResource extends RestResource, DirectRestService, FetchWithTemplate<StoredQuery> {
 
     @POST
     @Path("/find")
@@ -59,6 +60,7 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Fetch a stored query",
             operationId = "fetchStoredQuery")
+    @Override
     StoredQuery fetch(@Parameter(description = "storedQuery", required = true) StoredQuery storedQuery);
 
     @PUT

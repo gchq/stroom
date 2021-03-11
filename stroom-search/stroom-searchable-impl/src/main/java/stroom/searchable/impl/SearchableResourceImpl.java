@@ -18,6 +18,8 @@ package stroom.searchable.impl;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -28,16 +30,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 public class SearchableResourceImpl implements SearchableResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableResourceImpl.class);
 
-    private final SearchableService searchableService;
+    private final Provider<SearchableService> searchableServiceProvider;
 
     @Inject
-    public SearchableResourceImpl(final SearchableService searchableService) {
-        this.searchableService = searchableService;
+    public SearchableResourceImpl(final Provider<SearchableService> searchableServiceProvider) {
+        this.searchableServiceProvider = searchableServiceProvider;
     }
 
     @Timed
@@ -47,7 +51,7 @@ public class SearchableResourceImpl implements SearchableResource {
             String json = JsonUtil.writeValueAsString(docRef);
             LOGGER.debug("/dataSource called with docRef:\n{}", json);
         }
-        return searchableService.getDataSource(docRef);
+        return searchableServiceProvider.get().getDataSource(docRef);
     }
 
     @Timed
@@ -58,16 +62,17 @@ public class SearchableResourceImpl implements SearchableResource {
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
 
-        return searchableService.search(request);
+        return searchableServiceProvider.get().search(request);
     }
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
-        return searchableService.destroy(queryKey);
+        return searchableServiceProvider.get().destroy(queryKey);
     }
 }
