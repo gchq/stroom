@@ -347,11 +347,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addFieldToDocument(final String fieldName, final String value) {
         if (!document.containsKey(fieldName)) {
             LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                    indexRef.getName() +
-                    " name=" +
-                    fieldName +
-                    " value=" +
-                    value);
+                indexRef.getName() +
+                " name=" +
+                fieldName +
+                " value=" +
+                value
+            );
 
             document.put(fieldName, value);
             fieldsIndexed++;
