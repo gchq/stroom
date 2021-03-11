@@ -91,7 +91,7 @@ public class Aggregator {
             });
 
             // Stop aggregating if the last query did not return a result as big as the batch size.
-            if (count.get() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
