@@ -43,6 +43,10 @@
                     </g:row>
                     <g:row>
                         <g:cell></g:cell>
+                        <g:cell></g:cell>
+                    </g:row>
+                    <g:row>
+                        <g:cell></g:cell>
                         <g:customCell>
                             <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
                         </g:customCell>
