@@ -28,6 +28,8 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResourceTest.class);
 
+//    private final MyHttpServletRequestHolder httpServletRequestHolder = new MyHttpServletRequestHolder();
+
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
     @Rule
     private final ResourceExtension resources = ResourceExtension.builder()
@@ -35,7 +37,10 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                 LOGGER.info("Calling getRestResource()");
                 return getRestResource();
             })
-            .setClientConfigurator(clientConfig -> clientConfig.register(LoggingFeature.class))
+//            .addResource((ContainerRequestFilter) httpServletRequestHolder)
+            .setClientConfigurator(clientConfig ->
+                    clientConfig
+                            .register(LoggingFeature.class))
             .build();
 
     private final WebTargetFactory webTargetFactory = url -> {
@@ -62,6 +67,10 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     public WebTargetFactory webTargetFactory() {
         return webTargetFactory;
     }
+
+//    public Provider<HttpServletRequest> getHttpServletRequestProvider() {
+//        return httpServletRequestHolder;
+//    }
 
     public URI getServerBaseUri() {
         return resources.getJerseyTest().target().getUri();
@@ -249,4 +258,29 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     private boolean isSuccessful(final int statusCode) {
         return statusCode >= 200 && statusCode < 300;
     }
+
+//    private static class MyHttpServletRequestHolder
+//            implements DynamicFeature, ContainerRequestFilter, Provider<HttpServletRequest> {
+//
+//        private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
+//
+//        @Override
+//        public HttpServletRequest get() {
+//            return threadLocal.get();
+//        }
+//
+//        @Override
+//        public void filter(final ContainerRequestContext requestContext) throws IOException {
+//
+//            final Request request = requestContext.getRequest();
+//            if (request instanceof HttpServletRequest) {
+//                threadLocal.set((HttpServletRequest) request);
+//            }
+//        }
+//
+//        @Override
+//        public void configure(final ResourceInfo resourceInfo, final FeatureContext context) {
+//            context.register(this);
+//        }
+//    }
 }

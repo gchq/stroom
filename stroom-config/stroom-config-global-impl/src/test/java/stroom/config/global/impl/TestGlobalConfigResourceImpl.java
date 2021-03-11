@@ -23,6 +23,7 @@ import org.mockito.Mockito;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.UriInfo;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -320,7 +321,14 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 () -> globalConfigService,
                 () -> nodeService,
                 UiConfig::new,
-                () -> uriFactory);
+                () -> uriFactory,
+                // TODO @AT fix me
+                new RequestInfoHolder() {
+                    @Override
+                    public UriInfo getUriInfo() {
+                        return null;
+                    }
+                });
     }
 
 //    @Override

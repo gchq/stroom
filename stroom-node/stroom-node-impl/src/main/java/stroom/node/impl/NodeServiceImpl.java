@@ -46,7 +46,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
@@ -67,6 +69,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private volatile Node thisNode;
     private final EntityEventBus entityEventBus;
     private final WebTargetFactory webTargetFactory;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
@@ -74,13 +77,15 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     final NodeInfo nodeInfo,
                     final UriFactory uriFactory,
                     final EntityEventBus entityEventBus,
-                    final WebTargetFactory webTargetFactory) {
+                    final WebTargetFactory webTargetFactory,
+                    final Provider<HttpServletRequest> httpServletRequestProvider) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
         this.uriFactory = uriFactory;
         this.entityEventBus = entityEventBus;
         this.webTargetFactory = webTargetFactory;
+        this.httpServletRequestProvider = httpServletRequestProvider;
 
         // Ensure the node record for this node is in the DB
         securityContext.asProcessingUser(this::ensureNodeCreated);
@@ -173,15 +178,24 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // If this is the node that was contacted then just resolve it locally
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
-            LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
+            LOGGER.debug(() -> LogUtil.message("Executing {} locally",
+                    httpServletRequestProvider.get().getRequestURI()));
             resp = localSupplier.get();
 
         } else {
             // A different node to make a rest call to the required node
+            // TODO @AT In an ideal world we would just get the resource to aquire UriInfo
+            //  via @Context injection by jersey then use that to craft the uri on the remote
+            //  node, but because the resources are used by GWT this rules out using @Context method
+            //  args, and as our resources are
+            final String fullPath = httpServletRequestProvider.get().getRequestURI();
+            LOGGER.debug("fullPath: {}", fullPath);
+
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPathSupplier.get();
+                    nodeName) + fullPath;
+
             LOGGER.debug("Fetching value from remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory

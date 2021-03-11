@@ -28,7 +28,6 @@ import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.impl.validation.ValidationModule;
-import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -226,7 +225,6 @@ public class App extends Application<Config> {
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
         //register a DelegatingExceptionMapper directly instead.
         environment.jersey().register(resourceAutoLogger);
-
 
         // Add health checks
         healthChecks.register();

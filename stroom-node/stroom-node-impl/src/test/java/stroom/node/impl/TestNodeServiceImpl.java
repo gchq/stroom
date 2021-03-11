@@ -57,13 +57,17 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         Mockito.when(nodeDao.update(Mockito.any()))
                 .thenReturn(node);
 
+        // TODO @AT Refactor this test to base off AbstractMultiNodeTest after that is changed
+        //  to add in a filter that captures the HttpServletRequest
+
         final NodeService nodeService = new NodeServiceImpl(
                 new MockSecurityContext(),
                 nodeDao,
                 nodeInfo,
                 uriFactory,
                 null,
-                webTargetFactory());
+                webTargetFactory(),
+                getHttpServletRequestProvider());
 
         final String name = "jimbob";
         final String response = nodeService.remoteRestResult(
@@ -128,7 +132,8 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
                 nodeInfo,
                 uriFactory,
                 null,
-                webTargetFactory());
+                webTargetFactory(),
+                getHttpServletRequestProvider());
 
         final String name = "jimbob";
         final String response = nodeService.remoteRestResult(
@@ -171,7 +176,8 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
                 nodeInfo,
                 uriFactory,
                 null,
-                webTargetFactory());
+                webTargetFactory(),
+                getHttpServletRequestProvider());
 
         final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
         nodeService.remoteRestCall(
@@ -238,7 +244,8 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
                 nodeInfo,
                 uriFactory,
                 null,
-                webTargetFactory());
+                webTargetFactory(),
+                getHttpServletRequestProvider());
 
         final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
         nodeService.remoteRestCall(
