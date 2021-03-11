@@ -26,6 +26,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -53,6 +54,8 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     PasswordTextBox apiKeySecret;
     @UiField
+    IntegerBox socketTimeoutMillis;
+    @UiField
     Button testConnection;
 
     @Inject
@@ -65,6 +68,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         useAuthentication.addValueChangeHandler(e -> fireChange());
         apiKeyId.addKeyDownHandler(e -> fireChange());
         apiKeySecret.addKeyDownHandler(e -> fireChange());
+        socketTimeoutMillis.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -123,6 +127,12 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public void setApiKeySecret(final String apiKeySecret) { this.apiKeySecret.setText(apiKeySecret); }
 
     @Override
+    public int getSocketTimeoutMillis() { return socketTimeoutMillis.getValue(); }
+
+    @Override
+    public void setSocketTimeoutMillis(final int socketTimeoutMillis) { this.socketTimeoutMillis.setValue(socketTimeoutMillis); }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         connectionUrls.setEnabled(!readOnly);
@@ -130,6 +140,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         useAuthentication.setEnabled(!readOnly);
         apiKeyId.setEnabled(!readOnly);
         apiKeySecret.setEnabled(!readOnly);
+        socketTimeoutMillis.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

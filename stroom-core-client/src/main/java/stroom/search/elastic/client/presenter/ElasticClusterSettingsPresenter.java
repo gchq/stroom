@@ -80,6 +80,7 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
             getView().setUseAuthentication(connectionConfig.getUseAuthentication());
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
+            getView().setSocketTimeoutMillis(connectionConfig.getSocketTimeoutMillis());
         }
 
         getView().setDescription(cluster.getDescription());
@@ -93,8 +94,9 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
         connectionConfig.setUseAuthentication(getView().getUseAuthentication());
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
-        cluster.setConnectionConfig(connectionConfig);
+        connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
 
+        cluster.setConnectionConfig(connectionConfig);
         cluster.setDescription(getView().getDescription().trim());
     }
 
@@ -122,5 +124,9 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
         String getApiKeySecret();
 
         void setApiKeySecret(String apiKeySecret);
+
+        int getSocketTimeoutMillis();
+
+        void setSocketTimeoutMillis(int socketTimeoutMillis);
     }
 }

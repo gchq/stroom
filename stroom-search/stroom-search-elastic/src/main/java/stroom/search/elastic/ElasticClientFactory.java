@@ -4,6 +4,7 @@ import stroom.search.elastic.shared.ElasticConnectionConfig;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -11,6 +12,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
+import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,13 @@ public class ElasticClientFactory {
         }
 
         final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+
+        restClientBuilder.setRequestConfigCallback(new RequestConfigCallback() {
+            @Override
+            public Builder customizeRequestConfig(final Builder requestConfigBuilder) {
+                return requestConfigBuilder.setSocketTimeout(config.getSocketTimeoutMillis());
+            }
+        });
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
         if (useHttps) {
