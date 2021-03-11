@@ -43,6 +43,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
+import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -264,8 +265,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         // For each document, create an indexing request and append to the bulk request
                         documents.forEach(document -> {
-                            final IndexRequest indexRequest = new IndexRequest(indexName);
-                            indexRequest.source(document);
+                            final IndexRequest indexRequest = new IndexRequest(indexName)
+                                .opType(OpType.CREATE)
+                                .source(document);
+
                             bulkRequest.add(indexRequest);
                         });
 
