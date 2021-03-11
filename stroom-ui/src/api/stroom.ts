@@ -3621,7 +3621,10 @@ export class HttpClient<SecurityDataType = unknown> {
 /**
  * @title Stroom API
  * @version v1/v2
+ * @license Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
  * @baseUrl /api
+ * @contact stroom (https://github.com/gchq/stroom)
+ *
  * Various APIs for interacting with Stroom and its data
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
