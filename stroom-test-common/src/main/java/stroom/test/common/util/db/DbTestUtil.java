@@ -140,9 +140,9 @@ public class DbTestUtil {
                     int result = 0;
                     result = statement.executeUpdate("CREATE DATABASE `" + dbName +
                             "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-//                        connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
-//                        connectionConfig.getJdbcDriverUsername() + "';");
+                    result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+                            connectionConfig.getUser() + "'@'%' IDENTIFIED BY '" +
+                            connectionConfig.getPassword() + "';");
                     result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
                             connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
                 }
