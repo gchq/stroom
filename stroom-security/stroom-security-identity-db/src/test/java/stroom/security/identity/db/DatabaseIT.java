@@ -24,7 +24,7 @@ public abstract class DatabaseIT {
     public static final String JDBC_USER = "authuser";
     public static final String JDBC_PASSWORD = "stroompassword1";
 
-    private static final String MYSQL_DOCKER_IMAGE = "mysql:5.6.43";
+    private static final String MYSQL_DOCKER_IMAGE = "mysql:8.0.23";
 
 //    protected AuthDbConnProvider authDbConnProvider;
 

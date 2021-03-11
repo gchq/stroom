@@ -18,7 +18,7 @@ env:
     #where ***** is '<github username>:<github personal access token>'
     #Required for curling the gh api to get the latest release sha
     - secure: "S2NzvX3h+8F9Dti/hWPWfQaKaSHAvq5YxGI0CpeO702MWXHHu4rBQ/u8mUYKx36hztP80Wt9zvIPbSX1WPYhC3oAlAS7TADZG5YN3nwePnWdn6ZwNphEI3xxHs7YiSVxbb9ejNheJN1mNzg7zy9L81ofl+iZCWtlngtNt7M7/leBYLug75bQ/Hmc26X/orqv/C/dPbngB1eT9Th0AcfYiLpBlRfCEF01H8+Chaf4cuB9E2DDU1KBXOLC5t/Z1kMO329guCBp0MUonNJrvvI4e7cxUs1pB8EQKuWMpjyPoNaB8ikJli7eUPqEyfgYllZ7B3z4p3yKM50yNcbQ6tmhCwUa2AIhRB3Q3hS0fvoi4KISKPXwmA8LcdhgT9SpuUMbLntARgFyTXvJsJbHFKyHQSqd9gUAoDaNr5+HkuKXPRYinaeO0eL1AKX2RAXU/onYVABtODXt6k3uPzYZQ1dENyH5p6AdPUBZkAzTbkA2+0aNUCYRRObV457ilJ74vKrZQG3JQGltDzQWH7riTOLR2ERGnC0T6jVJxepivyTJz+ucULGaFs3f+X/WhhrTH/8xwS7fJPW9dtosISdrnk/2HWrUuMDK2j26xoiVphUu9CfOZmSWDV9bX5WPtbwT/DT+S0Pyyh+p/0yuJ7HyJB1gyhx2kBtoPEZCYXTCwXZuoP8="
-    - STROOM_RESOURCES_GIT_REF=cfb0fc812c196b98b43db7f7612b21c49d64c7f8
+    - STROOM_RESOURCES_GIT_REF=adf84d1a4392b632ab4196387af657bdde27de83
 
 before_install:
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
