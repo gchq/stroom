@@ -278,7 +278,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         }
                         else {
                             // Only refresh after all batches have been indexed
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.WAIT_UNTIL);
+                            bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
                         }
 
                         BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
