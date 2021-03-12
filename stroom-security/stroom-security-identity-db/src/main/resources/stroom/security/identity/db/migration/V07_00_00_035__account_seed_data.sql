@@ -39,7 +39,7 @@ BEGIN
             "admin",
             "$2a$10$THzPVeDX70fBaFPjZoY1fOXnCCAezhhYV/LO09w.3JKIybPgRMSiW",
             UNIX_TIMESTAMP() * 1000,
-            false,
+            true,
             true,
             true,
             false,
