@@ -54,19 +54,19 @@ import javax.ws.rs.NotFoundException;
 class AccountResourceImpl implements AccountResource {
 
     private final Provider<AccountService> serviceProvider;
-    private final StroomEventLoggingService stroomEventLoggingService;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
     public AccountResourceImpl(final Provider<AccountService> serviceProvider,
-                               final StroomEventLoggingService stroomEventLoggingService) {
+                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.serviceProvider = serviceProvider;
-        this.stroomEventLoggingService = stroomEventLoggingService;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Timed
     @Override
     public AccountResultPage list(final HttpServletRequest httpServletRequest) {
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "ListAccounts",
                 "List all accounts",
                 SearchEventAction.builder()
@@ -94,7 +94,7 @@ class AccountResourceImpl implements AccountResource {
     @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "SearchAccounts",
                 "Search for accounts by email",
                 SearchEventAction.builder()
@@ -130,7 +130,7 @@ class AccountResourceImpl implements AccountResource {
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "CreateAccount",
                 "Create an account",
                 CreateEventAction.builder()
@@ -166,7 +166,7 @@ class AccountResourceImpl implements AccountResource {
         if (userId == null) {
             return null;
         }
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "GetAccountById",
                 "Get a user by ID",
                 ViewEventAction.builder()
@@ -207,7 +207,7 @@ class AccountResourceImpl implements AccountResource {
 
         final Boolean result;
         try {
-            result = stroomEventLoggingService.loggedResult(
+            result = stroomEventLoggingServiceProvider.get().loggedResult(
                     "UpdateAccount",
                     "Update account for user " + accountId,
                     UpdateEventAction.builder()
@@ -237,7 +237,7 @@ class AccountResourceImpl implements AccountResource {
     private void logChangePassword(final int accountId,
                                    final User user,
                                    final Throwable e) {
-        stroomEventLoggingService.log(
+        stroomEventLoggingServiceProvider.get().log(
                 "ChangePassword",
                 "Change password for user " + accountId,
                 AuthenticateEventAction.builder()
@@ -252,7 +252,7 @@ class AccountResourceImpl implements AccountResource {
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "DeleteAccount",
                 "Deleting user account " + userId,
                 DeleteEventAction.builder()

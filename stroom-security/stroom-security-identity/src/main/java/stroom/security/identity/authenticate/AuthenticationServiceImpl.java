@@ -306,12 +306,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //        });
 //    }
 
-    public String logout(final HttpServletRequest request, final String redirectUri) {
+    public String logout(final HttpServletRequest request) {
         final HttpSession httpSession = request.getSession(false);
         if (httpSession != null) {
             clearSession(request);
+            return request.getUserPrincipal().getName();
         }
-        return redirectUri;
+
+        throw new IllegalStateException("No open session found");
     }
 
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
@@ -333,6 +335,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         return new ConfirmPasswordResponse(false, message);
+    }
+
+    public String getUserIdFromRequest(final HttpServletRequest request) {
+        if (request == null || getAuthState(request) == null) {
+            return null;
+        }
+        return getAuthState(request).getSubject();
     }
 
     public ChangePasswordResponse changePassword(final HttpServletRequest request,

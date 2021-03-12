@@ -510,8 +510,8 @@ public class TestRestResourceAutoLogger {
                 securityContext,
                 eventLoggingService);
         Mockito.when(resourceContext.getResource(Mockito.any())).thenReturn(testResource);
-        filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog,
-                config, resourceInfo, request, delegatingExceptionMapper);
+        filter = new RestResourceAutoLoggerImpl(() -> securityContext, () -> requestEventLog,
+                () -> config, resourceInfo, request, () -> delegatingExceptionMapper);
         filter.setResourceContext(resourceContext);
     }
 

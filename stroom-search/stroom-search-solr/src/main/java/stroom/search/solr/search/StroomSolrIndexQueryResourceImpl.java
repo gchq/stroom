@@ -27,7 +27,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.solr.SolrIndexService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,26 +36,30 @@ import com.codahale.metrics.annotation.Timed;
 
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
 @AutoLogged
 public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResourceImpl.class);
 
-    private final SearchResponseCreatorManager searchResponseCreatorManager;
-    private final SolrIndexService solrIndexService;
+    private final Provider<SolrSearchResponseCreatorManager> searchResponseCreatorManagerProvider;
+    private final Provider<SolrIndexService> solrIndexServiceProvider;
 
     @Inject
-    StroomSolrIndexQueryResourceImpl(final SolrSearchResponseCreatorManager searchResponseCreatorManager,
-                                     final SolrIndexService solrIndexService) {
-        this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.solrIndexService = solrIndexService;
+    StroomSolrIndexQueryResourceImpl(final Provider<SolrSearchResponseCreatorManager>
+                                             searchResponseCreatorManagerProvider,
+                                     final Provider<SolrIndexService> solrIndexServiceProvider) {
+        this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
+        this.solrIndexServiceProvider = solrIndexServiceProvider;
     }
 
     @Timed
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        return solrIndexService.getDataSource(docRef);
+        return solrIndexServiceProvider.get().getDataSource(docRef);
     }
 
     @Timed
@@ -66,8 +69,8 @@ public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryRes
         //a lifespan beyond the scope of this request and then begin the search for the data
         //If it is not the first call for this query key then it will return the existing searchResponseCreator with
         //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
-                new SearchResponseCreatorCache.Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManagerProvider.get()
+                .get(new SearchResponseCreatorCache.Key(request));
 
         //create a response from the data found so far, this could be complete/incomplete
         SearchResponse searchResponse = searchResponseCreator.create(request);
@@ -121,7 +124,7 @@ public class StroomSolrIndexQueryResourceImpl implements StroomSolrIndexQueryRes
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
-        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
+        searchResponseCreatorManagerProvider.get().remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
     }
 }
