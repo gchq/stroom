@@ -7,6 +7,8 @@ DROP PROCEDURE IF EXISTS identity_insert_admin_account_if_absent $$
 
 CREATE PROCEDURE identity_insert_admin_account_if_absent ()
 BEGIN
+    DECLARE object_count integer;
+
     SELECT COUNT(*)
     INTO object_count
     FROM account
@@ -35,15 +37,14 @@ BEGIN
             UNIX_TIMESTAMP() * 1000,
             "Flyway migration",
             "admin",
-            "$2a$10$THzPVeDX70fBaFPjZoY1fOXnCCAezhhYV/LO09w.3JKIybPgRMSiW", -- admin
+            "$2a$10$THzPVeDX70fBaFPjZoY1fOXnCCAezhhYV/LO09w.3JKIybPgRMSiW",
             UNIX_TIMESTAMP() * 1000,
-            false, -- force_password_change
-            true, -- never_expires
-            true, -- enabled
-            false, --inactive
-            false, --locked
-            false -- processing_account
-        );
+            false,
+            true,
+            true,
+            false,
+            false,
+            false);
     END IF;
 END $$
 
@@ -52,7 +53,7 @@ DELIMITER ;
 -- idempotent
 CALL identity_insert_admin_account_if_absent();
 
-DROP PROCEDURE IF EXISTS identity_insert_admin_account_if_absent $$
+DROP PROCEDURE IF EXISTS identity_insert_admin_account_if_absent;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

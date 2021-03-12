@@ -9,6 +9,8 @@ CREATE PROCEDURE identity_insert_type_if_absent (
     p_type_name varchar(1000)
 )
 BEGIN
+    DECLARE object_count integer;
+
     SELECT COUNT(*)
     INTO object_count
     FROM token_type
@@ -29,7 +31,7 @@ CALL identity_insert_type_if_absent("user");
 CALL identity_insert_type_if_absent("api");
 CALL identity_insert_type_if_absent("email_reset");
 
-DROP PROCEDURE IF EXISTS identity_insert_type_if_absent $$
+DROP PROCEDURE IF EXISTS identity_insert_type_if_absent;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
