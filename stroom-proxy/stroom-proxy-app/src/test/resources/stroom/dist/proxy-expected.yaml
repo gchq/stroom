@@ -14,6 +14,7 @@ proxyConfig:
     scanningEnabled: false
     scanFrequency: "PT10S"
   aggregator:
+    enabled: true
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
     maxAggregateAge: "PT10M"
