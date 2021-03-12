@@ -85,7 +85,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/confirmPassword")
     @NotNull
     @Operation(
-            summary = "Confirm an authenticated users current password.",
+            summary = "Confirm an authenticated user's current password.",
             operationId = "confirmPassword")
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
