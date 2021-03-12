@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS account (
     processing_account        tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     UNIQUE KEY user_id (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS identity_copy_auth_old_users;
 
