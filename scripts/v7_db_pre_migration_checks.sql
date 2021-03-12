@@ -2,7 +2,7 @@
 -- 
 -- Run with the mysql --table arg to get formatted output
 -- e.g.
--- docker exec -i stroom-all-dbs mysql --table -h"localhost" -P"3307" -u"stroomuser" -p"stroompassword1" stroom < v7_db_pre_migration_checks.sql > v7_db_pre_migration_checks.out
+-- docker exec -i stroom-all-dbs mysql --force --table -h"localhost" -P"3307" -u"stroomuser" -p"stroompassword1" stroom < v7_db_pre_migration_checks.sql > v7_db_pre_migration_checks.out 2>&1
 
 
 \! echo 'Find orphaned USR_GRP_USR records, that will not be migrated';
