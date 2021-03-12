@@ -11,7 +11,7 @@ dependencies {
 
 //    compile libs.flyway_core
     compile libs.google_findbugs
-    compile libs.guice4
+    compile libs.guice5
 //    compile libs.hikari
 //    compile libs.jackson_annotations
     compile libs.javax_inject

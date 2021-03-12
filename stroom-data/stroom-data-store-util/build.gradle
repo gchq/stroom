@@ -25,7 +25,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jaxb_api
     compile libs.slf4j_api
