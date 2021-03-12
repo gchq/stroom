@@ -63,7 +63,6 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
     private final Provider<AuthenticationServiceImpl> serviceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
-//    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     AuthenticationResourceImpl(final Provider<AuthenticationServiceImpl> serviceProvider,
@@ -71,7 +70,6 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                                final Provider<SecurityContext> securityContextProvider) {
         this.serviceProvider = serviceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
-//        this.securityContextProvider = securityContextProvider;
     }
 
     @Timed
@@ -282,22 +280,10 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                     .build());
             throw e;
         } finally {
-            final String userId = getUserId(request);
-
-            //Need to set the user id explictly as this method runs as INTERNAL_PROCESSING_USER
-            final Event event = stroomEventLoggingServiceProvider.get().createEvent(
-                    "AuthenticationResourceImpl.resetEmail",
-                    "User requested a password email to be sent to a user.",
-                    eventBuilder.build());
             stroomEventLoggingServiceProvider.get().log(
-                    userId == null ? event //Unauthenticated case
-                    : Event.builder().copyOf(event)
-                            .withEventSource(EventSource.builder().copyOf(event.getEventSource())
-                                    .withUser(User.builder()
-                                            .withId(userId).build())
-                                    .build())
-                            .build()
-            );
+                    "AuthenticationResourceImpl.resetEmail",
+                    "User requested a password email to be sent.",
+                    eventBuilder.build());
         }
     }
 
