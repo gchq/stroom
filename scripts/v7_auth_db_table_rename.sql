@@ -8,7 +8,7 @@
 -- 
 -- Run with the mysql --table arg to get formatted output
 -- e.g.
--- docker exec -i stroom-all-dbs mysql --table -h"localhost" -P"3307" -u"authuser" -p"stroompassword1" auth < v7_auth_db_table_rename.sql > v7_auth_db_table_rename.out
+-- docker exec -i stroom-all-dbs mysql --table -h"localhost" -P"3307" -u"authuser" -p"stroompassword1" auth < v7_auth_db_table_rename.sql > v7_auth_db_table_rename.out
 
 -- stop note level warnings about objects (not)? existing
 SET @old_sql_notes=@@sql_notes, sql_notes=0;
@@ -36,7 +36,7 @@ DELIMITER ;
 
 \! echo 'Creating temporary stored procedure old_auth_rename_table_if_exists';
 
-DROP PROCEDURE IF EXISTS old_auth_rename_table_if_exists$$
+DROP PROCEDURE IF EXISTS old_auth_rename_table_if_exists;
 
 DELIMITER $$
 
@@ -48,7 +48,7 @@ BEGIN
     DECLARE old_object_count integer;
     DECLARE new_object_count integer;
 
-    new_table_name = CONCAT('OLD_AUTH_', p_old_table_name);
+    SET new_table_name = CONCAT('OLD_AUTH_', p_old_table_name);
 
     SELECT COUNT(1)
     INTO old_object_count
@@ -60,12 +60,12 @@ BEGIN
     INTO new_object_count
     FROM information_schema.tables
     WHERE table_schema = database()
-    AND UPPER(table_name) = UPPER(p_new_table_name);
+    AND UPPER(table_name) = UPPER(new_table_name);
 
     IF (old_object_count = 1 AND new_object_count = 0) THEN
         CALL old_auth_run_sql(CONCAT(
             'rename table ', database(), '.', p_old_table_name,
-            ' to ', p_new_table_name));
+            ' to ', new_table_name));
     ELSE
         IF (old_object_count = 0) THEN
             SELECT CONCAT(
@@ -81,7 +81,7 @@ BEGIN
                 'Destination table ',
                 database(),
                 '.',
-                p_new_table_name,
+                new_table_name,
                 ' already exists');
         END IF;
     END IF;
@@ -103,5 +103,7 @@ DROP PROCEDURE IF EXISTS old_auth_run_sql;
 \! echo 'Dropping temporary stored procedure old_auth_rename_table_if_exists';
 
 DROP PROCEDURE IF EXISTS old_auth_rename_table_if_exists;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;
 
 -- vim: set shiftwidth=4 tabstop=4 expandtab:
