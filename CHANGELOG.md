@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift guice to v5.0.1.
+
 * Issue **#1871** : Invalidate the users and user groups cache when the _manage_users_ command is run.
 
 * Issue **#2064** : Delete empty directories left by running unit test.

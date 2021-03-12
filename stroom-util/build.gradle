@@ -12,7 +12,7 @@ dependencies {
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind

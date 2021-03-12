@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-config:stroom-config-global-impl-db-jooq')
 
     compile libs.flyway_core
-    compile libs.guice4
+    compile libs.guice5
     compile libs.hikari
 
     testCompile libs.assertj_core

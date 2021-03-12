@@ -15,7 +15,7 @@ dependencies {
 
     compile libs.caffeine
 //    compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.slf4j_api

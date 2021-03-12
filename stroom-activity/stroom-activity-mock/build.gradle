@@ -4,5 +4,5 @@ dependencies {
     compile project(':stroom-activity:stroom-activity-api')
     compile project(':stroom-core-shared')
     
-    compile libs.guice4
+    compile libs.guice5
 }

@@ -10,7 +10,7 @@ dependencies {
     compile libs.dropwizard_testing
     compile libs.google_findbugs
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.junit_jupiter_api
     compile libs.mockito_core
     compile libs.mockito_junit_jupiter

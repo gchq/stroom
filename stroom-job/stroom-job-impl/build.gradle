@@ -18,7 +18,7 @@ dependencies {
 //    compile project(':stroom-docref')
     
     compile libs.eventLogging
-    compile libs.guice4
+    compile libs.guice5
 //    compile libs.dropwizard_lifecycle
     compile libs.jackson_annotations
     compile libs.javax_inject
