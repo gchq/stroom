@@ -198,26 +198,6 @@ public final class ExpressionOperator extends ExpressionItem {
             this.op = expressionOperator.op;
         }
 
-//
-//        /**
-//         * @param op Set the logical operator to apply to all the children items
-//         */
-//        private Builder(final Op op) {
-//            this.op = op;
-//        }
-//
-//        /**
-//         * Construct a builder setting enabled and op
-//         *
-//         * @param enabled Is this Expression Operator enabled
-//         * @param op      The op
-//         */
-//        private Builder(final Boolean enabled, final Op op) {
-//            super(enabled);
-//            this.op = op;
-//        }
-
-
         /**
          * Changes the operator of this builder
          *
@@ -230,7 +210,10 @@ public final class ExpressionOperator extends ExpressionItem {
         }
 
         public Builder children(final List<ExpressionItem> children) {
-            this.children = children;
+            this.children.clear();
+            if (children != null) {
+                this.children.addAll(children);
+            }
             return this;
         }
 
