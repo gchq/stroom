@@ -46,7 +46,7 @@ dependencies {
     compile libs.eventLogging
     compile libs.flyway_core
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.gwt_servlet
     compile libs.hikari
     compile libs.jackson_annotations

@@ -27,7 +27,7 @@ dependencies {
 
     compile libs.commons_fileupload
     compile libs.jackson_annotations
-    compile libs.guice4
+    compile libs.guice5
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 
