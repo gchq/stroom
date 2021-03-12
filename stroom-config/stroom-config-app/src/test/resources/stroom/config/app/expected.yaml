@@ -445,6 +445,7 @@ appConfig:
     repoDir: "${stroom.home}/proxy_repo"
     dbDir: "${stroom.home}/proxy_repo_db"
     aggregator:
+      enabled: true
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
       maxAggregateAge: "PT10M"
