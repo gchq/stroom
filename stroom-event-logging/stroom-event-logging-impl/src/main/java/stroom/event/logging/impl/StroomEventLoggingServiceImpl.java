@@ -90,6 +90,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
+    private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
+
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
     private static final String GENERATOR = "StroomEventLoggingService";
@@ -157,6 +159,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         .withDevice(getClient(request))
                         .withClient(getClient(request))
                         .withUser(getUser())
+                        .withRunAs(getRunAsUser())
                         .build())
                 .withEventDetail(EventDetail.builder()
                         .withTypeId(typeId)
@@ -233,27 +236,30 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private User getUser() {
+    private User getRunAsUser() {
         try {
-            final String userId;
             if (securityContext.isProcessingUser()) {
                 // We are running as proc user so try and get the OS user,
                 // though that may just be a shared account.
                 // This is useful where a CLI command is being used
                 final String osUser = System.getProperty("user.name");
 
-                userId = osUser != null
-                        ? osUser
-                        : securityContext.getUserId();
-            } else {
-                userId = securityContext.getUserId();
-            }
-
-            if (userId != null) {
                 return User.builder()
-                        .withId(userId)
+                        .withId(osUser != null ? osUser : PROCESSING_USER_ID)
                         .build();
             }
+        } catch (final RuntimeException e) {
+            LOGGER.warn("Problem getting current user", e);
+        }
+
+        return null;
+    }
+
+    private User getUser() {
+        try {
+            return User.builder()
+                    .withId(securityContext.getUserIdentity().getId())
+                    .build();
         } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);
         }
