@@ -56,12 +56,21 @@ public class ProxyAggregationExecutor {
         this.aggregator = aggregator;
 
         if (aggregatorConfig.isEnabled()) {
+            // If we are aggregating then we need to tell the source entry service to examine new sources when they are
+            // added.
             proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
+            // When new source entries have been added tell teh aggregator that they are ready to be added to
+            // aggregates.
             proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
+            // When new aggregates are complete tell the forwarder that it can forward them.
             aggregator.addChangeListener(count -> forwarder.forward());
         } else {
-            proxyRepoSources.addChangeListener((sourceId, path) -> forwarder.forward());
+            // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
+            proxyRepoSources.addChangeListener((sourceId, sourcePath) -> forwarder.forward());
         }
+
+        // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files that
+        // are no longer needed.
         forwarder.addChangeListener(cleanup::cleanup);
     }
 

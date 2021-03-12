@@ -66,7 +66,7 @@ import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class Forwarder {
+public class Forwarder implements HasShutdown {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Forwarder.class);
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
@@ -407,6 +407,7 @@ public class Forwarder {
         return hostName;
     }
 
+    @Override
     public void shutdown() {
         shutdown = true;
         executor.shutdown();

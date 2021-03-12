@@ -44,7 +44,7 @@ import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class ProxyRepoSourceEntries {
+public class ProxyRepoSourceEntries implements HasShutdown {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRepoSourceEntries.class);
 
@@ -280,6 +280,7 @@ public class ProxyRepoSourceEntries {
         });
     }
 
+    @Override
     public void shutdown() {
         shutdown = true;
         executor.shutdown();
