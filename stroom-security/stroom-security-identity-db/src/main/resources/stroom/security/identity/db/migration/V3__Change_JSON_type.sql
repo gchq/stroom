@@ -1,1 +1,0 @@
-ALTER TABLE json_web_key MODIFY json TEXT NOT NULL;
