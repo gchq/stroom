@@ -24,8 +24,8 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- SELECT FOR UPDATE on name and if there is no index on name it will
 -- lock the whole table, thus locking all other lock keys.
 CREATE TABLE IF NOT EXISTS cluster_lock (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  version               int(11) NOT NULL,
+  id                    int NOT NULL AUTO_INCREMENT,
+  version               int NOT NULL,
   name                  varchar(255) NOT NULL,
   PRIMARY KEY           (id),
   UNIQUE KEY            name (name)

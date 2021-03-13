@@ -18,11 +18,11 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 CREATE TABLE IF NOT EXISTS index_volume_group (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  version               int(11) NOT NULL,
-  create_time_ms        bigint(20) NOT NULL,
+  id                    int NOT NULL AUTO_INCREMENT,
+  version               int NOT NULL,
+  create_time_ms        bigint NOT NULL,
   create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint(20) NOT NULL,
+  update_time_ms        bigint NOT NULL,
   update_user           varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
   -- 'name' needs to be unique because it is used as a reference by IndexDoc.
@@ -35,21 +35,21 @@ CREATE TABLE IF NOT EXISTS index_volume_group (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS index_volume (
-  id                        int(11) NOT NULL AUTO_INCREMENT,
-  version                   int(11) NOT NULL,
-  create_time_ms            bigint(20) NOT NULL,
+  id                        int NOT NULL AUTO_INCREMENT,
+  version                   int NOT NULL,
+  create_time_ms            bigint NOT NULL,
   create_user               varchar(255) NOT NULL,
-  update_time_ms            bigint(20) NOT NULL,
+  update_time_ms            bigint NOT NULL,
   update_user               varchar(255) NOT NULL,
   node_name                 varchar(255) DEFAULT NULL,
   path                      varchar(255) DEFAULT NULL,
-  fk_index_volume_group_id  int(11) NOT NULL,
+  fk_index_volume_group_id  int NOT NULL,
   state                     tinyint(4) DEFAULT NULL,
-  bytes_limit               bigint(20) DEFAULT NULL,
-  bytes_used                bigint(20) DEFAULT NULL,
-  bytes_free                bigint(20) DEFAULT NULL,
-  bytes_total               bigint(20) DEFAULT NULL,
-  status_ms                 bigint(20) DEFAULT NULL,
+  bytes_limit               bigint DEFAULT NULL,
+  bytes_used                bigint DEFAULT NULL,
+  bytes_free                bigint DEFAULT NULL,
+  bytes_total               bigint DEFAULT NULL,
+  status_ms                 bigint DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY node_name_path (
       fk_index_volume_group_id,

@@ -19,11 +19,11 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `create_time_ms` bigint(20) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `version` int NOT NULL,
+  `create_time_ms` bigint NOT NULL,
   `create_user` varchar(255) NOT NULL,
-  `update_time_ms` bigint(20) NOT NULL,
+  `update_time_ms` bigint NOT NULL,
   `update_user` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `task_type` varchar(255) DEFAULT NULL,

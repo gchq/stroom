@@ -18,7 +18,7 @@
 set @old_sql_notes=@@sql_notes, sql_notes=0;
 
 CREATE TABLE IF NOT EXISTS `doc` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
