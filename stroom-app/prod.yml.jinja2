@@ -196,5 +196,12 @@ appConfig:
       kafkaConfigUuid:
     internal:
       enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
+    sql:
+      db:
+        connection:
+          jdbcDriverClassName: "{{ 'com.mysql.cj.jdbc.Driver' | envVar('STROOM_STATISTICS_JDBC_DRIVER_CLASS_NAME') }}"
+          jdbcDriverUrl: "{{ 'jdbc:mysql://localhost:3307/stats?useUnicode=yes&characterEncoding=UTF-8' | envVar('STROOM_STATISTICS_JDBC_DRIVER_URL') }}"
+          jdbcDriverUsername: "{{ 'statsuser' | envVar('STROOM_STATISTICS_JDBC_DRIVER_USERNAME') }}"
+          jdbcDriverPassword: "{{ 'stroompassword1' | envVar('STROOM_STATISTICS_JDBC_DRIVER_PASSWORD') }}"
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:
