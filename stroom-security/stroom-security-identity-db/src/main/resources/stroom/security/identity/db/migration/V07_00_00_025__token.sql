@@ -21,16 +21,16 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the token table
 --
 CREATE TABLE IF NOT EXISTS token (
-    id                int(11) NOT NULL AUTO_INCREMENT,
-    version           int(11) NOT NULL,
-    create_time_ms    bigint(20) NOT NULL,
+    id                int NOT NULL AUTO_INCREMENT,
+    version           int NOT NULL,
+    create_time_ms    bigint NOT NULL,
     create_user       varchar(255) NOT NULL,
-    update_time_ms    bigint(20) NOT NULL,
+    update_time_ms    bigint NOT NULL,
     update_user       varchar(255) NOT NULL,
-    fk_account_id     int(11) NOT NULL,
-    fk_token_type_id  int(11) NOT NULL,
+    fk_account_id     int NOT NULL,
+    fk_token_type_id  int NOT NULL,
     data              longtext,
-    expires_on_ms     bigint(20) DEFAULT NULL,
+    expires_on_ms     bigint DEFAULT NULL,
     comments          longtext,
     enabled           tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY (id),

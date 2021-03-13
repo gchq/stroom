@@ -21,7 +21,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the token_type table
 --
 CREATE TABLE IF NOT EXISTS token_type (
-  id    int(11) NOT NULL AUTO_INCREMENT,
+  id    int NOT NULL AUTO_INCREMENT,
   type  varchar(255) NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
