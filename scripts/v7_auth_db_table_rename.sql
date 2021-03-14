@@ -92,6 +92,7 @@ DELIMITER ;
 \! echo 'Renaming legacy auth tables';
 
 CALL old_auth_rename_table_if_exists('json_web_key');
+CALL old_auth_rename_table_if_exists('schema_version');
 CALL old_auth_rename_table_if_exists('token_types');
 CALL old_auth_rename_table_if_exists('tokens');
 CALL old_auth_rename_table_if_exists('users');
