@@ -23,7 +23,7 @@ import stroom.security.identity.token.TokenModule;
 
 import com.google.inject.AbstractModule;
 
-public final class AuthModule extends AbstractModule {
+public final class IdentityModule extends AbstractModule {
 
     @Override
     protected void configure() {

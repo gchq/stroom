@@ -21,7 +21,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_feed_path table
 --
 CREATE TABLE IF NOT EXISTS fs_feed_path (
-    id                int(11) NOT NULL AUTO_INCREMENT,
+    id                int NOT NULL AUTO_INCREMENT,
     name              varchar(255) NOT NULL,
     path              varchar(255) NOT NULL,
     PRIMARY KEY       (id),

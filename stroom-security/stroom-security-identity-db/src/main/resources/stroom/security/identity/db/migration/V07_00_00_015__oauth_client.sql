@@ -1,5 +1,5 @@
 -- ------------------------------------------------------------------------
--- Copyright 2020 Crown Copyright
+-- Copyright 2021 Crown Copyright
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,13 +18,22 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the processor_feed table
+-- Create the oauth_client table
 --
-CREATE TABLE IF NOT EXISTS `processor_feed` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `processor_feed_name` (`name`)
+CREATE TABLE IF NOT EXISTS oauth_client (
+    id              int NOT NULL AUTO_INCREMENT,
+    version         int NOT NULL,
+    create_time_ms  bigint NOT NULL,
+    create_user     varchar(255) NOT NULL,
+    update_time_ms  bigint NOT NULL,
+    update_user     varchar(255) NOT NULL,
+    name            varchar(255) NOT NULL,
+    client_id       varchar(255) NOT NULL,
+    client_secret   varchar(255) NOT NULL,
+    uri_pattern     longtext,
+    PRIMARY KEY (id),
+    UNIQUE KEY client_id (client_id),
+    UNIQUE KEY name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

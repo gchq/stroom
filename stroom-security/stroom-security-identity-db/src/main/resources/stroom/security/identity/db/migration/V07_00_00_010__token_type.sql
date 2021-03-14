@@ -18,61 +18,61 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the meta_type table
+-- Create the token_type table
 --
-CREATE TABLE IF NOT EXISTS meta_type (
-  id            int NOT NULL AUTO_INCREMENT,
-  name          varchar(255) NOT NULL,
-  PRIMARY KEY   (id),
-  UNIQUE KEY    name (name)
+CREATE TABLE IF NOT EXISTS token_type (
+  id    int NOT NULL AUTO_INCREMENT,
+  type  varchar(255) NOT NULL,
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Copy meta into the meta_type table
---
-DROP PROCEDURE IF EXISTS copy_meta_type;
+DROP PROCEDURE IF EXISTS identity_copy_old_auth_token_types;
+
 DELIMITER //
-CREATE PROCEDURE copy_meta_type ()
+
+--
+-- Copy data into the token_type table
+-- This relies on a pre-migration script renaming v6 auth tbls
+-- to OLD_AUTH_
+--
+CREATE PROCEDURE identity_copy_old_auth_token_types ()
 BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_SCHEMA = database()
-            AND TABLE_NAME = 'STRM_TP') THEN
+            AND TABLE_NAME = 'OLD_AUTH_token_types') THEN
 
-        RENAME TABLE STRM_TP TO OLD_STRM_TP;
-    END IF;
-
-    IF EXISTS (
-            SELECT NULL 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = database()
-            AND TABLE_NAME = 'OLD_STRM_TP') THEN
-
-        INSERT INTO meta_type (
-            id, 
-            name)
-        SELECT 
-            ID, 
-            NAME
-        FROM OLD_STRM_TP
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_type)
-        AND PURP IN (10, 11, 50)
-        ORDER BY ID;
+        INSERT INTO token_type (
+            id,
+            type)
+        SELECT
+            id,
+            token_type
+        FROM OLD_AUTH_token_types
+        WHERE id > (SELECT COALESCE(MAX(id), 0) FROM token_type)
+        ORDER BY id;
 
         -- Work out what to set our auto_increment start value to
-        SELECT CONCAT('ALTER TABLE meta_type AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        SELECT
+        CONCAT(
+            'ALTER TABLE token_type AUTO_INCREMENT = ',
+            COALESCE(MAX(id) + 1, 1))
         INTO @alter_table_sql
-        FROM meta_type;
+        FROM token_type;
 
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
 END//
+
 DELIMITER ;
-CALL copy_meta_type();
-DROP PROCEDURE copy_meta_type;
+
+-- idempotent
+CALL identity_copy_old_auth_token_types();
+
+DROP PROCEDURE IF EXISTS identity_copy_old_auth_token_types;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
--- vim: set tabstop=4 shiftwidth=4 expandtab:
+-- vim: set shiftwidth=2 tabstop=2 expandtab:

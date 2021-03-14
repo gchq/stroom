@@ -27,15 +27,15 @@ class JwkDaoImpl implements JwkDao {
     private static final int MIN_KEY_AGE_MS = 1000 * 60 * 60 * 24;
     private static final int MAX_KEY_AGE_MS = 1000 * 60 * 60 * 24 * 2;
 
-    private final AuthDbConnProvider authDbConnProvider;
+    private final IdentityDbConnProvider identityDbConnProvider;
     private final JsonWebKeyFactory jsonWebKeyFactory;
     private final TokenTypeDao tokenTypeDao;
 
     @Inject
-    JwkDaoImpl(final AuthDbConnProvider authDbConnProvider,
+    JwkDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
                final TokenTypeDao tokenTypeDao,
                final JsonWebKeyFactory jsonWebKeyFactory) {
-        this.authDbConnProvider = authDbConnProvider;
+        this.identityDbConnProvider = identityDbConnProvider;
         this.tokenTypeDao = tokenTypeDao;
         this.jsonWebKeyFactory = jsonWebKeyFactory;
     }
@@ -90,7 +90,7 @@ class JwkDaoImpl implements JwkDao {
         addRecords();
 
         // Fetch back all records.
-        final List<JsonWebKeyRecord> list = JooqUtil.contextResult(authDbConnProvider, context ->
+        final List<JsonWebKeyRecord> list = JooqUtil.contextResult(identityDbConnProvider, context ->
                 context
                         .selectFrom(JSON_WEB_KEY)
                         .fetch());
@@ -101,7 +101,7 @@ class JwkDaoImpl implements JwkDao {
 
     private void addRecords() {
         // FOr the time being just make sure there is a record.
-        final List<JsonWebKeyRecord> list = JooqUtil.contextResult(authDbConnProvider, context ->
+        final List<JsonWebKeyRecord> list = JooqUtil.contextResult(identityDbConnProvider, context ->
                 context.selectFrom(JSON_WEB_KEY).fetch());
         if (list.size() < 1) {
             addRecord();
@@ -131,7 +131,7 @@ class JwkDaoImpl implements JwkDao {
         final PublicJsonWebKey publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
         final int tokenTypeId = tokenTypeDao.getTokenTypeId(TokenType.API.getText().toLowerCase());
 
-        JooqUtil.context(authDbConnProvider, context -> {
+        JooqUtil.context(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));
             final JsonWebKeyRecord record = context.newRecord(JSON_WEB_KEY);
             record.setKeyId(uuid);
@@ -147,7 +147,7 @@ class JwkDaoImpl implements JwkDao {
     }
 
     private void deleteOldJwkRecords() {
-        JooqUtil.context(authDbConnProvider, context -> {
+        JooqUtil.context(identityDbConnProvider, context -> {
             final long oldest = System.currentTimeMillis() - MAX_KEY_AGE_MS;
 
             final List<JsonWebKeyRecord> list = context.selectFrom(JSON_WEB_KEY).fetch();

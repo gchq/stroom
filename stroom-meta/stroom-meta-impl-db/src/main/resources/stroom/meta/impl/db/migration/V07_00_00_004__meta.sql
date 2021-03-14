@@ -21,15 +21,15 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta table
 --
 CREATE TABLE IF NOT EXISTS `meta` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `create_time` bigint(20) NOT NULL,
-  `effective_time` bigint(20) DEFAULT NULL,
-  `parent_id` bigint(20) DEFAULT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `create_time` bigint NOT NULL,
+  `effective_time` bigint DEFAULT NULL,
+  `parent_id` bigint DEFAULT NULL,
   `status` tinyint(4) NOT NULL,
-  `status_time` bigint(20) DEFAULT NULL,
-  `feed_id` int(11) NOT NULL,
-  `type_id` int(11) NOT NULL,
-  `processor_id` int(11) DEFAULT NULL,
+  `status_time` bigint DEFAULT NULL,
+  `feed_id` int NOT NULL,
+  `type_id` int NOT NULL,
+  `processor_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `meta_create_time` (`create_time`),
   KEY `meta_feed_id_create_time` (`feed_id`,`create_time`),
