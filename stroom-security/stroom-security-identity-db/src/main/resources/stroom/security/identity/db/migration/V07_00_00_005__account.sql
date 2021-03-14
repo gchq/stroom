@@ -77,10 +77,14 @@ BEGIN
         SELECT
             id,
             1,
-            UNIX_TIMESTAMP(created_on) * 1000,
-            created_by_user,
-            IFNULL(UNIX_TIMESTAMP(updated_on) * 1000, UNIX_TIMESTAMP(created_on) * 1000),
-            IFNULL(updated_by_user, created_by_user),
+            CASE WHEN created_on IS NULL
+                THEN UNIX_TIMESTAMP() * 1000
+                ELSE UNIX_TIMESTAMP(created_on) * 1000 END,
+            IFNULL(created_by_user, "Flyway Migration"),
+            CASE WHEN COALESCE(updated_on, created_on) IS NULL
+                THEN UNIX_TIMESTAMP() * 1000
+                ELSE IFNULL(UNIX_TIMESTAMP(updated_on) * 1000, UNIX_TIMESTAMP(created_on) * 1000) END,
+            IFNULL(updated_by_user, IFNULL(created_by_user, "Flyway Migration")),
             email,
             email,
             password_hash,

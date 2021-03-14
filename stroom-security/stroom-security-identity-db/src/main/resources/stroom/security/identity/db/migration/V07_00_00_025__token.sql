@@ -75,14 +75,18 @@ BEGIN
         SELECT
             id,
             1,
-            UNIX_TIMESTAMP(issued_on) * 1000,
-            issued_by_user,
+            CASE WHEN issued_on IS NULL
+                THEN UNIX_TIMESTAMP() * 1000
+                ELSE UNIX_TIMESTAMP(issued_on) * 1000 END,
+            IFNULL(issued_by_user, "Flyway migration"),
             IFNULL(UNIX_TIMESTAMP(updated_on) * 1000, UNIX_TIMESTAMP(issued_on) * 1000),
-            IFNULL(updated_by_user, issued_by_user),
+            IFNULL(updated_by_user, IFNULL(issued_by_user, "Flyway migration")),
             user_id,
             token_type_id,
             token,
-            UNIX_TIMESTAMP(expires_on) * 1000,
+            CASE WHEN expires_on IS NULL
+                THEN UNIX_TIMESTAMP() * 1000
+                ELSE UNIX_TIMESTAMP(expires_on) * 1000 END,
             comments,
             enabled
         FROM OLD_AUTH_tokens
