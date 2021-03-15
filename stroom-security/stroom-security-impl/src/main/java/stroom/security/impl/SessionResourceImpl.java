@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
@@ -16,7 +17,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-@AutoLogged
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
@@ -83,6 +84,7 @@ public class SessionResourceImpl implements SessionResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public SessionListResponse list(final String nodeName) {
         LOGGER.debug("list({}) called", nodeName);
         if (nodeName != null) {
