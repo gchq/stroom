@@ -2,6 +2,7 @@ package stroom.test.common.util.test;
 
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -14,8 +15,12 @@ import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.glassfish.jersey.test.TestProperties;
+import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,12 +41,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -63,9 +73,15 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     private static final String CONTAINER_FACTORY = "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory";
 
+    public static final String NODE1 = "node1";
+    public static final String NODE2 = "node2";
+    public static final String NODE3 = "node3";
+
     private final List<TestNode> testNodes;
+    private final Map<String, TestNode> nodeNameToNodeMap;
     private final Map<String, JerseyTest> nodeToJerseyTestMap = new HashMap<>();
     private final Map<String, RequestListener> nodeToListenerMap = new HashMap<>();
+    private final HttpServletRequestHolder httpServletRequestHolder = new HttpServletRequestHolder();
 
     public static List<TestNode> createNodeList(final int base) {
         return List.of(
@@ -95,6 +111,8 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         }
 
         this.testNodes = testNodes;
+        this.nodeNameToNodeMap = testNodes.stream()
+                .collect(Collectors.toMap(TestNode::getNodeName, Function.identity()));
     }
 
     /**
@@ -112,11 +130,16 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                                       final Map<String, String> baseEndPointUrls);
 
     private String getFullResourcePath() {
-        return ResourcePaths.buildAuthenticatedApiPath(getResourceBasePath());
+//        return ResourcePaths.buildAuthenticatedApiPath(getResourceBasePath());
+        return getResourceBasePath();
     }
 
     public String getBaseEndPointUrl(final TestNode node) {
         return "http://localhost:" + node.getPort();
+    }
+
+    public String getBaseEndPointUrl(final String nodeName) {
+        return getBaseEndPointUrl(nodeNameToNodeMap.get(nodeName));
     }
 
     private Map<String, String> getBaseEndPointUrls() {
@@ -172,9 +195,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                     nodeToListenerMap.put(node.getNodeName(), requestListener);
 
                     final JerseyTest jerseyTest = new JerseyTestBuilder<>(
-                            () -> getRestResource(node, testNodes, getBaseEndPointUrls()),
+                            () ->
+                                    getRestResource(node, testNodes, getBaseEndPointUrls()),
                             node.getPort(),
-                            requestListener)
+                            requestListener,
+                            httpServletRequestHolder)
                             .build();
 
                     nodeToJerseyTestMap.put(node.getNodeName(), jerseyTest);
@@ -205,7 +230,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     /**
      * @return The JerseyTest instance for the first node
      */
-    public JerseyTest getJerseyTest() {
+    public JerseyTest getFirstNodeJerseyTest() {
         return nodeToJerseyTestMap.get(testNodes.get(0).getNodeName());
     }
 
@@ -218,6 +243,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     public static WebTargetFactory webTargetFactory() {
         return WEB_TARGET_FACTORY;
+    }
+
+    public HttpServletRequest getHttpServletRequest() {
+        return httpServletRequestHolder.get();
     }
 
     public <T_RESP> T_RESP doGetTest(final String subPath,
@@ -256,7 +285,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         LOGGER.info("Calling POST on {}{}, passing {}",
                 getResourceBasePath(), subPath, requestEntity);
 
-        WebTarget webTarget = getJerseyTest()
+        WebTarget webTarget = getFirstNodeJerseyTest()
                 .target(getResourceBasePath())
                 .path(subPath);
 
@@ -296,7 +325,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         LOGGER.info("Calling PUT on {}{}, passing {}",
                 getResourceBasePath(), subPath, requestEntity);
 
-        WebTarget webTarget = getJerseyTest()
+        WebTarget webTarget = getFirstNodeJerseyTest()
                 .target(getResourceBasePath())
                 .path(subPath);
 
@@ -333,7 +362,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                                    final Class<T_RESP> responseType,
                                    final T_RESP expectedResponse,
                                    final Function<WebTarget, WebTarget>... builderMethods) {
-        WebTarget webTarget = getJerseyTest()
+        WebTarget webTarget = getFirstNodeJerseyTest()
                 .target(getResourceBasePath())
                 .path(subPath);
 
@@ -370,7 +399,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
-        WebTarget webTarget = getJerseyTest()
+        WebTarget webTarget = getFirstNodeJerseyTest()
                 .target(getResourceBasePath())
                 .path(subPath);
 
@@ -394,9 +423,14 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
 
-    public WebTarget getWebTarget(final String subPath) {
+    /**
+     * Get the {@link WebTarget} for the first node
+     *
+     * @param subPath The path not including the base path for the resource
+     */
+    public WebTarget getFirstNodeWebTarget(final String subPath) {
 
-        return getJerseyTest()
+        return getFirstNodeJerseyTest()
                 .target(getFullResourcePath())
                 .path(subPath);
     }
@@ -414,13 +448,16 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         private final Supplier<R> resourceSupplier;
         private final int port;
         private final ApplicationEventListener listener;
+        private final HttpServletRequestHolder httpServletRequestHolder;
 
         public JerseyTestBuilder(final Supplier<R> resourceSupplier,
                                  final int port,
-                                 final ApplicationEventListener listener) {
+                                 final ApplicationEventListener listener,
+                                 final HttpServletRequestHolder httpServletRequestHolder) {
             this.resourceSupplier = resourceSupplier;
             this.port = port;
             this.listener = listener;
+            this.httpServletRequestHolder = httpServletRequestHolder;
         }
 
         public JerseyTest build() {
@@ -428,8 +465,20 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
                 @Override
                 protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
-                    return super.getTestContainerFactory();
+//                    return super.getTestContainerFactory();
+                    return new GrizzlyWebTestContainerFactory();
+                }
 
+                @Override
+                protected DeploymentContext configureDeployment() {
+//                    ResourceConfig config = (ResourceConfig) configure();
+                    return ServletDeploymentContext.forServlet(
+                            new ServletContainer((ResourceConfig) configure()))
+                            .servletPath(ResourcePaths.API_ROOT_PATH)
+                            .build();
+//                    return ServletDeploymentContext.builder(configure())
+//                            .servletPath("/api")
+//                            .build();
                 }
 
                 @Override
@@ -440,9 +489,12 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                             LoggingFeature.Verbosity.PAYLOAD_ANY,
                             LoggingFeature.DEFAULT_MAX_ENTITY_SIZE);
 
+                    final MyRequestFilter requestFilter = new MyRequestFilter(httpServletRequestHolder);
+
                     return new ResourceConfig()
                             .register(resourceSupplier.get())
                             .register(listener)
+                            .register(requestFilter)
                             .register(new MyExceptionMapper()) // So we can get details of server side exceptions
                             .register(loggingFeature);
                 }
@@ -452,7 +504,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                     return UriBuilder
                             .fromUri("http://localhost")
                             .port(port)
-                            .path(ResourcePaths.API_ROOT_PATH)
+//                            .path(ResourcePaths.API_ROOT_PATH)
                             .build();
                 }
             };
@@ -566,6 +618,35 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                             throwable.getMessage(),
                             throwable.toString()))
                     .build();
+        }
+    }
+
+    public static class MyRequestFilter implements ContainerRequestFilter {
+
+        @Context
+        private HttpServletRequest httpServletRequest;
+//        @Context
+//        UriInfo uriInfo;
+
+        final HttpServletRequestHolder httpServletRequestHolder;
+
+        public MyRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
+            this.httpServletRequestHolder = httpServletRequestHolder;
+        }
+
+        @Override
+        public void filter(final ContainerRequestContext requestContext) throws IOException {
+            LOGGER.info("Received request {}", requestContext);
+
+            LOGGER.info("httpServletRequest2 {}", httpServletRequest);
+//            LOGGER.info("uriInfo {}", uriInfo);
+            LOGGER.info("requestUri {}", httpServletRequest.getRequestURI());
+            LOGGER.info("servletPath {}", httpServletRequest.getServletPath());
+
+            // The request in ContainerRequestContext is a ContainerRequest so we
+            // need to get Jersey/Grizzly to inject HttpServletRequest via @Context
+            // then set it in the threadlocal holder for later use
+            httpServletRequestHolder.set(httpServletRequest);
         }
     }
 

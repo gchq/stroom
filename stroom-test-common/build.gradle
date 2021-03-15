@@ -11,6 +11,7 @@ dependencies {
     compile libs.google_findbugs
     compile libs.guava
     compile libs.guice5
+    compile libs.jersey_test_framework_grizzly2
     compile libs.junit_jupiter_api
     compile libs.mockito_core
     compile libs.mockito_junit_jupiter
@@ -25,5 +26,4 @@ dependencies {
     runtimeOnly libs.logback_core
 
     runtimeOnly libs.junit_jupiter_engine
-    runtimeOnly libs.jersey_test_framework_grizzly2
 }

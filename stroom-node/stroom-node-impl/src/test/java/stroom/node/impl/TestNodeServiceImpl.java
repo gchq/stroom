@@ -6,265 +6,174 @@ import stroom.node.api.NodeService;
 import stroom.node.impl.TestNodeServiceImpl.NoddyRestResource;
 import stroom.node.shared.Node;
 import stroom.security.mock.MockSecurityContext;
-import stroom.test.common.util.test.AbstractResourceTest;
+import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import org.assertj.core.api.Assertions;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.client.SyncInvoker;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
+class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNodeServiceImpl.class);
+    private static final int BASE_PORT = 7040;
 
-    @Mock
-    NodeInfo nodeInfo;
-    @Mock
-    UriFactory uriFactory;
-    @Mock
-    NodeDao nodeDao;
+    private final Map<String, NoddyRestResource> resourceMap = new HashMap<>();
+    private final Map<String, NodeService> nodeServiceMap = new HashMap<>();
+
+    protected TestNodeServiceImpl() {
+        super(createNodeList(BASE_PORT));
+    }
 
     @Test
     void remoteRestResult_thisNode() {
+        initNodes();
 
-        final String thisNodeName = "node1";
+        final String name = "bill";
+        final String targetNode = AbstractMultiNodeResourceTest.NODE1;
 
-        Mockito.when(nodeInfo.getThisNodeName())
-                .thenReturn(thisNodeName);
+        final WebTarget webTarget = getFirstNodeWebTarget(ResourcePaths.buildPath(targetNode, name));
 
-        Mockito.when(uriFactory.nodeUri(Mockito.anyString()))
-                .thenReturn(URI.create(""));
+        LOGGER.info("webTarget uri: {}", webTarget.getUri());
 
-        final Node node = new Node();
-        node.setId(1);
-        node.setUrl("");
-        node.setName(thisNodeName);
+        final Response response = webTarget
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .get();
 
-        Mockito.when(nodeDao.getNode(Mockito.eq(thisNodeName)))
-                .thenReturn(new Node());
+        final String responseStr = response.readEntity(String.class);
+        LOGGER.info("responseStr {}", responseStr);
 
-        Mockito.when(nodeDao.update(Mockito.any()))
-                .thenReturn(node);
+        Assertions.assertThat(responseStr)
+                .isEqualTo(targetNode + " says " + name);
 
-        // TODO @AT Refactor this test to base off AbstractMultiNodeTest after that is changed
-        //  to add in a filter that captures the HttpServletRequest
-
-        final NodeService nodeService = new NodeServiceImpl(
-                new MockSecurityContext(),
-                nodeDao,
-                nodeInfo,
-                uriFactory,
-                null,
-                webTargetFactory(),
-                getHttpServletRequestProvider());
-
-        final String name = "jimbob";
-        final String response = nodeService.remoteRestResult(
-                thisNodeName,
-                String.class,
-                () -> "/" + name,
-                () -> "Hello " + name + " this is local calling",
-                SyncInvoker::get);
-
-        Assertions.assertThat(response)
-                .contains("local");
+        // Only rest calls to node 1 as it is the target so can run locally
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE1))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE2))
+                .hasSize(0);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE3))
+                .hasSize(0);
     }
 
     @Test
     void remoteRestResult_otherNode() {
+        initNodes();
 
-        final String thisNodeName = "node1";
-        final String otherNodeName = "node2";
-        final String thisUrl = "http://localhost:1";
-        final String otherUrl = getServerBaseUri().toString();
+        final String name = "bill";
+        final String targetNode = AbstractMultiNodeResourceTest.NODE2;
 
-        System.out.println("otherUrl: " + otherUrl);
+        final WebTarget webTarget = getFirstNodeWebTarget(ResourcePaths.buildPath(targetNode, name));
 
-        Mockito.when(nodeInfo.getThisNodeName())
-                .thenReturn(thisNodeName);
+        LOGGER.info("webTarget uri: {}", webTarget.getUri());
 
-        final Node thisNode = new Node();
-        thisNode.setId(1);
-        thisNode.setUrl(thisUrl);
-        thisNode.setName(thisNodeName);
+        final Response response = webTarget
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .get();
 
-        final Node otherNode = new Node();
-        otherNode.setId(2);
-        otherNode.setUrl(otherUrl);
-        otherNode.setName(otherNodeName);
+        final String responseStr = response.readEntity(String.class);
+        LOGGER.info("responseStr {}", responseStr);
 
-        // This is called to get the uri of this node
-        Mockito
-                .doAnswer(invocation ->
-                        new URI(thisNode.getUrl()))
-                .when(uriFactory)
-                .nodeUri(Mockito.any());
+        Assertions.assertThat(responseStr)
+                .isEqualTo(targetNode + " says " + name);
 
-        // Return the appropriate node obj depending on name
-        Mockito
-                .doAnswer(invocation -> {
-                    final String nodeName = invocation.getArgument(0);
-                    if (thisNodeName.equals(nodeName)) {
-                        return thisNode;
-                    } else if (otherNodeName.equals(nodeName)) {
-                        return otherNode;
-                    } else {
-                        throw new RuntimeException("Should not get here");
-                    }
-                })
-                .when(nodeDao)
-                .getNode(Mockito.any());
+        // Rest call to node1 which passes it on to node2 to answer
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE1))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE2))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE3))
+                .hasSize(0);
 
-        final NodeService nodeService = new NodeServiceImpl(
-                new MockSecurityContext(),
-                nodeDao,
-                nodeInfo,
-                uriFactory,
-                null,
-                webTargetFactory(),
-                getHttpServletRequestProvider());
+        ContainerRequest containerRequest = getRequestEvents(AbstractMultiNodeResourceTest.NODE2)
+                .get(0)
+                .getContainerRequest();
 
-        final String name = "jimbob";
-        final String response = nodeService.remoteRestResult(
-                otherNodeName,
-                String.class,
-                () -> "/" + name,
-                () -> "Hello " + name + " this is local calling",
-                SyncInvoker::get);
+        Assertions.assertThat(containerRequest.getMethod())
+                .isEqualTo("GET");
 
-        // Passed in otherNode's name so it should call out to otherNode via rest.
-        Assertions.assertThat(response)
-                .contains("remote");
+        Assertions.assertThat(containerRequest.getRequestUri().toString())
+                .contains(AbstractMultiNodeResourceTest.NODE2);
     }
 
     @Test
     void remoteRestCall_thisNode() {
 
-        final String thisNodeName = "node1";
+        initNodes();
 
-        Mockito.when(nodeInfo.getThisNodeName())
-                .thenReturn(thisNodeName);
+        final String targetNode = AbstractMultiNodeResourceTest.NODE1;
 
-        Mockito.when(uriFactory.nodeUri(Mockito.anyString()))
-                .thenReturn(URI.create(""));
+        final WebTarget webTarget = getFirstNodeWebTarget(ResourcePaths.buildPath(targetNode));
 
-        final Node node = new Node();
-        node.setId(1);
-        node.setUrl("");
-        node.setName(thisNodeName);
+        LOGGER.info("webTarget uri: {}", webTarget.getUri());
 
-        Mockito.when(nodeDao.getNode(Mockito.eq(thisNodeName)))
-                .thenReturn(new Node());
+        final Response response = webTarget
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .delete();
 
-        Mockito.when(nodeDao.update(Mockito.any()))
-                .thenReturn(node);
+        final String responseStr = response.readEntity(String.class);
+        LOGGER.info("responseStr {}", responseStr);
 
-        final NodeService nodeService = new NodeServiceImpl(
-                new MockSecurityContext(),
-                nodeDao,
-                nodeInfo,
-                uriFactory,
-                null,
-                webTargetFactory(),
-                getHttpServletRequestProvider());
-
-        final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
-        nodeService.remoteRestCall(
-                thisNodeName,
-                () -> "/",
-                () -> {
-                    wasLocalRunnableCalled.set(true);
-                    System.out.println("Doing local stuff");
-                },
-                SyncInvoker::delete);
-
-        Assertions.assertThat(wasLocalRunnableCalled)
-                .isTrue();
+        // Only rest calls to node 1 as it is the target so can run locally
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE1))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE2))
+                .hasSize(0);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE3))
+                .hasSize(0);
     }
 
     @Test
     void remoteRestCall_otherNode() {
 
-        final String thisNodeName = "node1";
-        final String otherNodeName = "node2";
-        final String thisUrl = "http://localhost:1";
-        final String otherUrl = getServerBaseUri().toString();
+        initNodes();
 
-        System.out.println("otherUrl: " + otherUrl);
+        final String targetNode = AbstractMultiNodeResourceTest.NODE2;
 
-        Mockito.when(nodeInfo.getThisNodeName())
-                .thenReturn(thisNodeName);
+        final WebTarget webTarget = getFirstNodeWebTarget(ResourcePaths.buildPath(targetNode));
 
-        final Node thisNode = new Node();
-        thisNode.setId(1);
-        thisNode.setUrl(thisUrl);
-        thisNode.setName(thisNodeName);
+        LOGGER.info("webTarget uri: {}", webTarget.getUri());
 
-        final Node otherNode = new Node();
-        otherNode.setId(2);
-        otherNode.setUrl(otherUrl);
-        otherNode.setName(otherNodeName);
+        final Response response = webTarget
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .delete();
 
-        // This is called to get the uri of this node
-        Mockito
-                .doAnswer(invocation ->
-                        new URI(thisNode.getUrl()))
-                .when(uriFactory)
-                .nodeUri(Mockito.any());
+        final String responseStr = response.readEntity(String.class);
+        LOGGER.info("responseStr {}", responseStr);
 
-        // Return the appropriate node obj depending on name
-        Mockito
-                .doAnswer(invocation -> {
-                    final String nodeName = invocation.getArgument(0);
-                    if (thisNodeName.equals(nodeName)) {
-                        return thisNode;
-                    } else if (otherNodeName.equals(nodeName)) {
-                        return otherNode;
-                    } else {
-                        throw new RuntimeException("Should not get here");
-                    }
-                })
-                .when(nodeDao)
-                .getNode(Mockito.any());
+        // Only rest calls to node 1 as it is the target so can run locally
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE1))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE2))
+                .hasSize(1);
+        Assertions.assertThat(getRequestEvents(AbstractMultiNodeResourceTest.NODE3))
+                .hasSize(0);
 
-        final NodeService nodeService = new NodeServiceImpl(
-                new MockSecurityContext(),
-                nodeDao,
-                nodeInfo,
-                uriFactory,
-                null,
-                webTargetFactory(),
-                getHttpServletRequestProvider());
+        ContainerRequest containerRequest = getRequestEvents(AbstractMultiNodeResourceTest.NODE2)
+                .get(0)
+                .getContainerRequest();
 
-        final AtomicBoolean wasLocalRunnableCalled = new AtomicBoolean(false);
-        nodeService.remoteRestCall(
-                otherNodeName,
-                () -> "/",
-                () -> {
-                    wasLocalRunnableCalled.set(true);
-                    System.out.println("Doing local stuff");
-                },
-                SyncInvoker::delete);
+        Assertions.assertThat(containerRequest.getMethod())
+                .isEqualTo("DELETE");
 
-        // Passed in otherNode's name so it should call out to otherNode via rest.
-        Assertions.assertThat(wasLocalRunnableCalled)
-                .isFalse();
-    }
-
-    @Override
-    public NoddyRestResource getRestResource() {
-        return new NoddyRestResource();
+        Assertions.assertThat(containerRequest.getRequestUri().toString())
+                .contains(AbstractMultiNodeResourceTest.NODE2);
     }
 
     @Override
@@ -272,21 +181,104 @@ class TestNodeServiceImpl extends AbstractResourceTest<NoddyRestResource> {
         return NoddyRestResource.BASE_PATH;
     }
 
+    @Override
+    public NoddyRestResource getRestResource(final TestNode node,
+                                             final List<TestNode> allNodes,
+                                             final Map<String, String> baseEndPointUrls) {
+        LOGGER.info("Setting up node {}", node.getNodeName());
+        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
+
+        Mockito.when(nodeInfo.getThisNodeName())
+                .thenReturn(node.getNodeName());
+
+        final NodeDao nodeDao = createNamedMock(NodeDao.class, node);
+
+        final String baseEndpointUrl = getBaseEndPointUrl(node);
+        LOGGER.info("baseEndpointUrl {}", baseEndpointUrl);
+
+        // We don't need the node that comes back
+
+        Mockito.when(nodeDao.getNode(Mockito.anyString()))
+                .thenAnswer(invocation -> {
+                    final String nodeName = invocation.getArgument(0);
+
+                    return new Node(
+                            1,
+                            1,
+                            0L,
+                            "admin",
+                            0L,
+                            "admin",
+                            nodeName,
+                            baseEndPointUrls.get(nodeName),
+                            10,
+                            true);
+                });
+
+        final MockSecurityContext mockSecurityContext = new MockSecurityContext();
+
+        UriFactory uriFactory = createNamedMock(UriFactory.class, node);
+        Mockito.when(uriFactory.nodeUri(Mockito.anyString()))
+                .thenAnswer(invocation ->
+                        URI.create(baseEndpointUrl + invocation.getArgument(0)));
+
+        final NodeService nodeService = new NodeServiceImpl(
+                mockSecurityContext,
+                nodeDao,
+                nodeInfo,
+                uriFactory,
+                null,
+                AbstractMultiNodeResourceTest.webTargetFactory(),
+                this::getHttpServletRequest);
+
+        final NoddyRestResource noddyRestResource = new NoddyRestResource(nodeService, nodeInfo);
+
+        nodeServiceMap.put(node.getNodeName(), nodeService);
+        resourceMap.put(node.getNodeName(), noddyRestResource);
+
+        return noddyRestResource;
+    }
+
     @Path(NoddyRestResource.BASE_PATH)
     public static class NoddyRestResource implements RestResource {
 
-        public static final String BASE_PATH = "";
+        private final NodeService nodeService;
+        private final NodeInfo nodeInfo;
+
+        public static final String BASE_PATH = "/nodes";
+
+        public NoddyRestResource(final NodeService nodeService,
+                                 final NodeInfo nodeInfo) {
+            this.nodeService = nodeService;
+            this.nodeInfo = nodeInfo;
+        }
 
         @GET
-        @Path("/{name}")
-        public String hello(@PathParam("name") final String name) {
-            return "hello " + name + " this is remote calling.";
+        @Path("/{nodeName}/{name}")
+        public String hello(@PathParam("nodeName") final String nodeName,
+                            @PathParam("name") final String name) {
+            LOGGER.info("hello called on node {}", nodeName);
+
+            return nodeService.remoteRestResult(
+                    nodeName,
+                    String.class,
+                    () -> "full path not used",
+                    () -> nodeInfo.getThisNodeName() + " says " + name,
+                    SyncInvoker::get);
         }
 
         @DELETE
-        @Path("/")
-        public void doStuff() {
-            System.out.println("Doing remote stuff");
+        @Path("/{nodeName}")
+        public void doStuff(@PathParam("nodeName") final String nodeName) {
+            LOGGER.info("doStuff called on node {}", nodeName);
+
+            nodeService.remoteRestCall(
+                    nodeName,
+                    () -> "full path not used",
+                    () -> {
+                        LOGGER.info("Doing stuff locally on node {}", nodeInfo.getThisNodeName());
+                    },
+                    SyncInvoker::delete);
         }
     }
 }

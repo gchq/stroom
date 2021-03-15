@@ -42,6 +42,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -179,15 +180,13 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
             LOGGER.debug(() -> LogUtil.message("Executing {} locally",
-                    httpServletRequestProvider.get().getRequestURI()));
+                    Optional.ofNullable(httpServletRequestProvider)
+                            .map(Provider::get)
+                            .map(HttpServletRequest::getRequestURI)));
             resp = localSupplier.get();
 
         } else {
             // A different node to make a rest call to the required node
-            // TODO @AT In an ideal world we would just get the resource to aquire UriInfo
-            //  via @Context injection by jersey then use that to craft the uri on the remote
-            //  node, but because the resources are used by GWT this rules out using @Context method
-            //  args, and as our resources are
             final String fullPath = httpServletRequestProvider.get().getRequestURI();
             LOGGER.debug("fullPath: {}", fullPath);
 
@@ -233,10 +232,14 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             localRunnable.run();
         } else {
             // A different node to make a rest call to the required node
+            final String fullPath = httpServletRequestProvider.get().getRequestURI();
+            LOGGER.debug("fullPath: {}", fullPath);
+
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPathSupplier.get();
+                    nodeName) + fullPath;
+
             LOGGER.debug("Calling remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory
