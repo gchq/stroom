@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `meta` (
   `create_time` bigint NOT NULL,
   `effective_time` bigint DEFAULT NULL,
   `parent_id` bigint DEFAULT NULL,
-  `status` tinyint(4) NOT NULL,
+  `status` tinyint NOT NULL,
   `status_time` bigint DEFAULT NULL,
   `feed_id` int NOT NULL,
   `type_id` int NOT NULL,

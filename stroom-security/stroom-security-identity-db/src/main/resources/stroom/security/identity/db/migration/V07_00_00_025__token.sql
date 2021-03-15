@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS token (
     data              longtext,
     expires_on_ms     bigint DEFAULT NULL,
     comments          longtext,
-    enabled           tinyint(1) NOT NULL DEFAULT '0',
+    enabled           tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     KEY token_fk_account_id (fk_account_id),
     KEY token_fk_token_type_id (fk_token_type_id),

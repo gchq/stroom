@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS fs_volume (
     update_time_ms            bigint NOT NULL,
     update_user               varchar(255) NOT NULL,
     path                      varchar(255) NOT NULL,
-    status                    tinyint(4) NOT NULL,
+    status                    tinyint NOT NULL,
     byte_limit                bigint DEFAULT NULL,
     fk_fs_volume_state_id     int NOT NULL,
     PRIMARY KEY (id),

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS index_shard (
     commit_ms             bigint DEFAULT NULL,
     document_count        int DEFAULT 0,
     file_size             bigint DEFAULT 0,
-    status                tinyint(4) NOT NULL,
+    status                tinyint NOT NULL,
     index_version         varchar(255) DEFAULT NULL,
     partition_name        varchar(255) NOT NULL,
     partition_from_ms     bigint DEFAULT NULL,

@@ -23,7 +23,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS `meta_key` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `field_type` tinyint(4) NOT NULL,
+  `field_type` tinyint NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `meta_key_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

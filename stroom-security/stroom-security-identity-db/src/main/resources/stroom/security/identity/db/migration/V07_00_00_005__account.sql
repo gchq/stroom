@@ -23,12 +23,12 @@ CREATE TABLE IF NOT EXISTS account (
     login_failures            int NOT NULL DEFAULT '0',
     last_login_ms             bigint DEFAULT NULL,
     reactivated_ms            bigint DEFAULT NULL,
-    force_password_change     tinyint(1) NOT NULL DEFAULT '0',
-    never_expires             tinyint(1) NOT NULL DEFAULT '0',
-    enabled                   tinyint(1) NOT NULL DEFAULT '0',
-    inactive                  tinyint(1) NOT NULL DEFAULT '0',
-    locked                    tinyint(1) NOT NULL DEFAULT '0',
-    processing_account        tinyint(1) NOT NULL DEFAULT '0',
+    force_password_change     tinyint NOT NULL DEFAULT '0',
+    never_expires             tinyint NOT NULL DEFAULT '0',
+    enabled                   tinyint NOT NULL DEFAULT '0',
+    inactive                  tinyint NOT NULL DEFAULT '0',
+    locked                    tinyint NOT NULL DEFAULT '0',
+    processing_account        tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY (id),
     UNIQUE KEY user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

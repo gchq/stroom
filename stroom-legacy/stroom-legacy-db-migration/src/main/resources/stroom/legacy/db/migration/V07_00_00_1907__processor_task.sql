@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `processor_task` (
   `create_time_ms` bigint DEFAULT NULL,
   `start_time_ms` bigint DEFAULT NULL,
   `end_time_ms` bigint DEFAULT NULL,
-  `status` tinyint(4) NOT NULL,
+  `status` tinyint NOT NULL,
   `status_time_ms` bigint DEFAULT NULL,
   `meta_id` bigint NOT NULL,
   `data` longtext,

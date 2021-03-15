@@ -31,7 +31,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
   ID 				bigint   auto_increment PRIMARY KEY,
-  VER 				tinyint(4)   NOT NULL,
+  VER 				tinyint   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   UNIQUE 			(NAME)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   TIME_MS               bigint NOT NULL,
-  PRES                  tinyint(4) NOT NULL,
-  VAL_TP                tinyint(4) NOT NULL,
+  PRES                  tinyint NOT NULL,
+  VAL_TP                tinyint NOT NULL,
   VAL                   double     NOT NULL,
   CT                    bigint NOT NULL,
   FK_SQL_STAT_KEY_ID    bigint NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   ID 				bigint   auto_increment,
   TIME_MS			bigint   NOT NULL,
   NAME 				varchar(766) NOT NULL,
-  VAL_TP 			tinyint(4)   NOT NULL,
+  VAL_TP 			tinyint   NOT NULL,
   VAL				double       NOT NULL,
   CT				bigint   NOT NULL,
   PROCESSING        bit(1)       NOT NULL DEFAULT 0,
@@ -88,7 +88,11 @@ CALL statistics_create_non_unique_index_v1(
 ALTER TABLE SQL_STAT_VAL_SRC
 MODIFY COLUMN VAL double ;
 
-ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint(1) NOT NULL DEFAULT '0';
+-- Change table encoding.
+ALTER TABLE SQL_STAT_KEY              CONVERT TO CHARACTER SET utf8mb4;
+ALTER TABLE SQL_STAT_VAL              CONVERT TO CHARACTER SET utf8mb4;
+
+ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint NOT NULL DEFAULT '0';
 
 --
 -- Copy data into the job node table
@@ -141,7 +145,7 @@ BEGIN
           ID bigint auto_increment,
           TIME_MS bigint NOT NULL,
           NAME varchar(766) NOT NULL,
-          VAL_TP tinyint(4) NOT NULL,
+          VAL_TP tinyint NOT NULL,
           VAL double NOT NULL,
           CT bigint NOT NULL,
           PROCESSING bit(1) NOT NULL DEFAULT 0,

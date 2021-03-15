@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS node (
     update_user           varchar(255) NOT NULL,
     url                   varchar(255) DEFAULT NULL,
     name                  varchar(255) NOT NULL,
-    priority              smallint(6) NOT NULL,
-    enabled               tinyint(1) NOT NULL DEFAULT '0',
+    priority              smallint NOT NULL,
+    enabled               tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

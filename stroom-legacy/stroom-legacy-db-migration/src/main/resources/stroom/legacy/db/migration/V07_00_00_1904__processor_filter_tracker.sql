@@ -19,7 +19,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --Create Table: CREATE TABLE `STRM_PROC_FILT_TRAC` (
 --  `ID` int NOT NULL AUTO_INCREMENT,
---  `VER` tinyint(4) NOT NULL,
+--  `VER` tinyint NOT NULL,
 --  `MIN_STRM_ID` bigint NOT NULL,
 --  `MIN_EVT_ID` bigint NOT NULL,
 --  `MIN_STRM_CRT_MS` bigint DEFAULT NULL,

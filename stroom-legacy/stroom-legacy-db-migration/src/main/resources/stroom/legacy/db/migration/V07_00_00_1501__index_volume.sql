@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS index_volume (
   node_name                 varchar(255) DEFAULT NULL,
   path                      varchar(255) DEFAULT NULL,
   fk_index_volume_group_id  int NOT NULL,
-  state                     tinyint(4) DEFAULT NULL,
+  state                     tinyint DEFAULT NULL,
   bytes_limit               bigint DEFAULT NULL,
   bytes_used                bigint DEFAULT NULL,
   bytes_free                bigint DEFAULT NULL,

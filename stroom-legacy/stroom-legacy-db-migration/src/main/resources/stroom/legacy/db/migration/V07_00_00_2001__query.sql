@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS query (
     component_id          varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     data                  longtext,
-    favourite             tinyint(1) NOT NULL DEFAULT '0',
+    favourite             tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
