@@ -10,16 +10,16 @@ import javax.inject.Inject;
 
 public class OpenIdClientDaoImpl implements OpenIdClientDao {
 
-    private final AuthDbConnProvider authDbConnProvider;
+    private final IdentityDbConnProvider identityDbConnProvider;
 
     @Inject
-    OpenIdClientDaoImpl(final AuthDbConnProvider authDbConnProvider) {
-        this.authDbConnProvider = authDbConnProvider;
+    OpenIdClientDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
+        this.identityDbConnProvider = identityDbConnProvider;
     }
 
     @Override
     public void create(final OpenIdClient client) {
-        JooqUtil.context(authDbConnProvider, context -> context
+        JooqUtil.context(identityDbConnProvider, context -> context
                 .insertInto(OauthClient.OAUTH_CLIENT)
                 .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())
                 .set(OauthClient.OAUTH_CLIENT.CLIENT_ID, client.getClientId())
@@ -31,7 +31,7 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
 
     @Override
     public Optional<OpenIdClient> getClientForClientId(final String clientId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(OauthClient.OAUTH_CLIENT)
                 .where(OauthClient.OAUTH_CLIENT.CLIENT_ID.eq(clientId))
                 .fetchOptional()
@@ -43,7 +43,7 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
 
     @Override
     public Optional<OpenIdClient> getClientByName(final String name) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(OauthClient.OAUTH_CLIENT)
                 .where(OauthClient.OAUTH_CLIENT.NAME.eq(name))
                 .fetchOptional()

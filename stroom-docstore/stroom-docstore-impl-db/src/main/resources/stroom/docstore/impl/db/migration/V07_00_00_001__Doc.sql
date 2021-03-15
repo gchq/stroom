@@ -18,7 +18,7 @@
 set @old_sql_notes=@@sql_notes, sql_notes=0;
 
 CREATE TABLE IF NOT EXISTS `doc` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `doc` (
   UNIQUE KEY `doc_type_uuid_ext_idx` (`type`,`uuid`,`ext`),
   KEY `doc_type_uuid_idx` (`type`,`uuid`),
   KEY `doc_uuid_idx` (`uuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=446 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=446 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

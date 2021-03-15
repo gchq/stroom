@@ -61,7 +61,7 @@ public class DbUtil {
     public static void waitForConnection(ConnectionConfig connectionConfig) {
         final String jdbcUrl = connectionConfig.getUrl();
         final String username = connectionConfig.getUser();
-        LOGGER.info("Ensuring database connection to {} with username {} and driver class {}",
+        LOGGER.info("Ensuring database connection to [{}] with username [{}] and driver class [{}]",
                 jdbcUrl, username, connectionConfig.getClassName());
 
         long sleepMs = 500;

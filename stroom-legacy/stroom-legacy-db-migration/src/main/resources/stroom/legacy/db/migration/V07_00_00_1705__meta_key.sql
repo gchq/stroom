@@ -21,12 +21,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta_key table
 --
 CREATE TABLE IF NOT EXISTS `meta_key` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `field_type` tinyint(4) NOT NULL,
+  `field_type` tinyint NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `meta_key_name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the meta_key table

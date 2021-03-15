@@ -21,23 +21,23 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_volume table
 --
 CREATE TABLE IF NOT EXISTS fs_volume (
-    id                        int(11) NOT NULL AUTO_INCREMENT,
-    version                   int(11) NOT NULL,
-    create_time_ms            bigint(20) NOT NULL,
+    id                        int NOT NULL AUTO_INCREMENT,
+    version                   int NOT NULL,
+    create_time_ms            bigint NOT NULL,
     create_user               varchar(255) NOT NULL,
-    update_time_ms            bigint(20) NOT NULL,
+    update_time_ms            bigint NOT NULL,
     update_user               varchar(255) NOT NULL,
     path                      varchar(255) NOT NULL,
-    status                    tinyint(4) NOT NULL,
-    byte_limit                bigint(20) DEFAULT NULL,
-    fk_fs_volume_state_id     int(11) NOT NULL,
+    status                    tinyint NOT NULL,
+    byte_limit                bigint DEFAULT NULL,
+    fk_fs_volume_state_id     int NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY  path (path),
     KEY fs_volume_fk_fs_volume_state_id (fk_fs_volume_state_id),
     CONSTRAINT fs_volume_fk_fs_volume_state_id
     FOREIGN KEY (fk_fs_volume_state_id)
         REFERENCES fs_volume_state (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

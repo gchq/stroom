@@ -10,7 +10,7 @@ dependencies {
     compile project(':stroom-docref')
 //    //compile libs.eventLogging
 ////    compile libs.flyway_core
-//    //compile libs.guice4
+//    //compile libs.guice5
 //    //compile libs.javax_inject
 //
     compile libs.jaxb_api

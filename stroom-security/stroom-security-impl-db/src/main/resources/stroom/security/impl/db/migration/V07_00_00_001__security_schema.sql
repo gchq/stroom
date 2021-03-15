@@ -21,23 +21,23 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the permission tables
 --
 CREATE TABLE IF NOT EXISTS `stroom_user` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `create_time_ms` bigint(20) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `version` int NOT NULL,
+  `create_time_ms` bigint NOT NULL,
   `create_user` varchar(255) NOT NULL,
-  `update_time_ms` bigint(20) NOT NULL,
+  `update_time_ms` bigint NOT NULL,
   `update_user` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
-  `is_group` tinyint(1) NOT NULL DEFAULT '0',
-  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `is_group` tinyint NOT NULL DEFAULT '0',
+  `enabled` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `stroom_user_name_is_group_idx` (`name`,`is_group`),
   UNIQUE KEY `stroom_user_uuid_idx` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS `stroom_user_group` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `user_uuid` varchar(255) NOT NULL,
   `group_uuid` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
@@ -45,19 +45,19 @@ CREATE TABLE IF NOT EXISTS `stroom_user_group` (
   UNIQUE KEY `stroom_user_group_group_uuid_user_uuid_IDX` (`group_uuid`,`user_uuid`),
   CONSTRAINT `stroom_user_group_fk_group_uuid` FOREIGN KEY (`group_uuid`) REFERENCES `stroom_user` (`uuid`),
   CONSTRAINT `stroom_user_group_fk_user_uuid` FOREIGN KEY (`user_uuid`) REFERENCES `stroom_user` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS `app_permission` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `user_uuid` varchar(255) NOT NULL,
   `permission` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `app_permission_user_uuid_permission_idx` (`user_uuid`,`permission`),
   CONSTRAINT `app_permission_user_uuid` FOREIGN KEY (`user_uuid`) REFERENCES `stroom_user` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS `doc_permission` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `user_uuid` varchar(255) NOT NULL,
   `doc_uuid` varchar(255) NOT NULL,
   `permission` varchar(255) NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `doc_permission` (
   KEY `doc_permission_doc_uuid` (`doc_uuid`),
   UNIQUE KEY `doc_permission_fk_user_uuid_doc_uuid_permission_idx` (`user_uuid`,`doc_uuid`,`permission`),
   CONSTRAINT `doc_permission_fk_user_uuid` FOREIGN KEY (`user_uuid`) REFERENCES `stroom_user` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -21,15 +21,15 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta_val table
 --
 CREATE TABLE IF NOT EXISTS `meta_val` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `create_time` bigint(20) NOT NULL,
-  `meta_id` bigint(20) NOT NULL,
-  `meta_key_id` int(11) NOT NULL,
-  `val` bigint(20) NOT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `create_time` bigint NOT NULL,
+  `meta_id` bigint NOT NULL,
+  `meta_key_id` int NOT NULL,
+  `val` bigint NOT NULL,
   PRIMARY KEY (`id`),
   KEY `meta_val_create_time` (`create_time`),
   KEY `meta_val_meta_id` (`meta_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the meta_val table

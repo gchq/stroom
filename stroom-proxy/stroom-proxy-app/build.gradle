@@ -49,7 +49,7 @@ dependencies {
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_configuration
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind

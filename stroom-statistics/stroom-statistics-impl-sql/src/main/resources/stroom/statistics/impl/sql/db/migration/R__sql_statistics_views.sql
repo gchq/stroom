@@ -6,25 +6,25 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- SQL_STAT_VAL_SRC
 CREATE OR REPLACE VIEW v_stat_val_src AS
 SELECT
-	ssvs.NAME,
-	FROM_UNIXTIME(ssvs.TIME_MS / 1000) TIME,
-	ssvs.CT STAT_COUNT,
-	ssvs.VAL STAT_VALUE_SUM,
+    ssvs.NAME,
+    FROM_UNIXTIME(ssvs.TIME_MS / 1000) TIME,
+    ssvs.CT STAT_COUNT,
+    ssvs.VAL STAT_VALUE_SUM,
     if(
         ssvs.VAL_TP = 2,
         ssvs.VAL / ssvs.CT,
         null) STAT_VALUE_AVG,
-	if(
-		ssvs.VAL_TP = 1,
-		"COUNT",
-		if(
-			ssvs.VAL_TP = 2,
-			"VALUE",
-			null)) STAT_TYPE,
-	if(
-		ssvs.PROCESSING = 1,
-		"YES",
-		"NO") IS_PROCESSING_NOW
+    if(
+        ssvs.VAL_TP = 1,
+        "COUNT",
+        if(
+            ssvs.VAL_TP = 2,
+            "VALUE",
+            null)) STAT_TYPE,
+    if(
+        ssvs.PROCESSING = 1,
+        "YES",
+        "NO") IS_PROCESSING_NOW
 FROM SQL_STAT_VAL_SRC ssvs
 ORDER BY
     ssvs.NAME,
@@ -33,8 +33,8 @@ ORDER BY
 -- SQL_STAT_VAL & SQL_STAT_KEY
 CREATE OR REPLACE VIEW v_stat_val AS
 SELECT
-	ssk.NAME,
-	if(
+    ssk.NAME,
+    if(
         ssv.VAL_TP = 1,
         "COUNT",
         if(

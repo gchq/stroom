@@ -8,7 +8,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -75,7 +75,7 @@ public class DbTestUtil {
         return dbModule.getConnectionProvider(
                 () -> config,
                 new TestDataSourceFactory(new CommonDbConfig()),
-                new ForceCoreMigration() {
+                new ForceLegacyMigration() {
                 });
     }
 

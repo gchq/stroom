@@ -19,20 +19,20 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `min_meta_id` bigint(20) NOT NULL,
-  `min_event_id` bigint(20) NOT NULL,
-  `min_meta_create_ms` bigint(20) DEFAULT NULL,
-  `max_meta_create_ms` bigint(20) DEFAULT NULL,
-  `meta_create_ms` bigint(20) DEFAULT NULL,
-  `last_poll_ms` bigint(20) DEFAULT NULL,
-  `last_poll_task_count` int(11) DEFAULT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `version` int NOT NULL,
+  `min_meta_id` bigint NOT NULL,
+  `min_event_id` bigint NOT NULL,
+  `min_meta_create_ms` bigint DEFAULT NULL,
+  `max_meta_create_ms` bigint DEFAULT NULL,
+  `meta_create_ms` bigint DEFAULT NULL,
+  `last_poll_ms` bigint DEFAULT NULL,
+  `last_poll_task_count` int DEFAULT NULL,
   `status` varchar(255) DEFAULT NULL,
-  `meta_count` bigint(20) DEFAULT NULL,
-  `event_count` bigint(20) DEFAULT NULL,
+  `meta_count` bigint DEFAULT NULL,
+  `event_count` bigint DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

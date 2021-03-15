@@ -1,7 +1,7 @@
 package stroom.db.util;
 
 import stroom.config.common.HasDbConfig;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,7 +40,7 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
     }
 
     /**
-     * We inject {@link ForceCoreMigration} to ensure that the the core DB migration has happened before all
+     * We inject {@link ForceLegacyMigration} to ensure that the the core DB migration has happened before all
      * other migrations
      */
     @Provides
@@ -48,7 +48,7 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
     public T_CONN_PROV getConnectionProvider(
             final Provider<T_CONFIG> configProvider,
             final DataSourceFactory dataSourceFactory,
-            @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
+            @SuppressWarnings("unused") final ForceLegacyMigration forceLegacyMigration) {
 
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 

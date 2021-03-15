@@ -8,5 +8,5 @@ dependencies {
     
 //    compile project(':stroom-docref')
 //    compile libs.slf4j_api
-//    compile libs.guice4
+//    compile libs.guice5
 }

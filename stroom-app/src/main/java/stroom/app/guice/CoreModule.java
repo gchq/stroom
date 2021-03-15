@@ -1,7 +1,5 @@
 package stroom.app.guice;
 
-import stroom.security.identity.AuthModule;
-import stroom.security.identity.db.AuthDbModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
@@ -16,8 +14,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
-        install(new AuthModule());
-        install(new AuthDbModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
@@ -48,6 +44,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
+        install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());
         install(new stroom.explorer.impl.db.ExplorerDbModule());
         install(new stroom.feed.impl.FeedModule());
@@ -82,12 +79,13 @@ public class CoreModule extends AbstractModule {
         install(new stroom.proxy.repo.ProxyRepoDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
-        install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());
+        install(new stroom.security.identity.IdentityModule());
+        install(new stroom.security.identity.db.IdentityDbModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.session.SessionSecurityModule());

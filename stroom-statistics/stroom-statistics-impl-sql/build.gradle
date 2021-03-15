@@ -29,7 +29,7 @@ dependencies {
     compile libs.dropwizard_metrics_annotation
     compile libs.google_findbugs
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api

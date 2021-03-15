@@ -19,7 +19,7 @@ package stroom.legacy.db;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.logging.LambdaLogger;
@@ -56,8 +56,8 @@ import javax.sql.DataSource;
  * entity manager factory, data sources.
  * <p>
  * This does not extend {@link stroom.db.util.AbstractDataSourceProviderModule} as the core migrations
- * are special and need to happen first before all the other migrations. {@link ForceCoreMigration} is
- * used to achieve this by making all other datasource providers depend on {@link ForceCoreMigration}.
+ * are special and need to happen first before all the other migrations. {@link ForceLegacyMigration} is
+ * used to achieve this by making all other datasource providers depend on {@link ForceLegacyMigration}.
  */
 @Deprecated
 public class LegacyDbModule extends AbstractModule {
@@ -77,9 +77,10 @@ public class LegacyDbModule extends AbstractModule {
         // Force creation of connection provider so that legacy migration code executes.
         bind(ForceMigrationImpl.class).asEagerSingleton();
 
-        // Allows other db modules to inject CoreMigration to ensure the core db migration
+        // Allows other db modules to inject ForceLegacyMigration to ensure the legacy db migration
         // has run before they do
-        bind(ForceCoreMigration.class).to(ForceMigrationImpl.class);
+        // The legacy migration renames all the old tables, creates the new ones and copies old into new
+        bind(ForceLegacyMigration.class).to(ForceMigrationImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
@@ -339,7 +340,7 @@ public class LegacyDbModule extends AbstractModule {
         }
     }
 
-    private static class ForceMigrationImpl implements ForceCoreMigration {
+    private static class ForceMigrationImpl implements ForceLegacyMigration {
 
         @Inject
         ForceMigrationImpl(@SuppressWarnings("unused") final LegacyDbConnProvider dataSource) {

@@ -23,7 +23,7 @@ import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
@@ -55,7 +55,7 @@ public class ToolModule extends AbstractModule {
         install(new MockTaskModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
+        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
 
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);

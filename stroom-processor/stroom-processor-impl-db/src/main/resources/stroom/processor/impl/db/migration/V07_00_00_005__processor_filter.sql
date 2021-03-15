@@ -21,27 +21,27 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the table
 --
 CREATE TABLE IF NOT EXISTS `processor_filter` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `create_time_ms` bigint(20) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `version` int NOT NULL,
+  `create_time_ms` bigint NOT NULL,
   `create_user` varchar(255) NOT NULL,
-  `update_time_ms` bigint(20) NOT NULL,
+  `update_time_ms` bigint NOT NULL,
   `update_user` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
-  `fk_processor_id` int(11) NOT NULL,
-  `fk_processor_filter_tracker_id` int(11) NOT NULL,
+  `fk_processor_id` int NOT NULL,
+  `fk_processor_filter_tracker_id` int NOT NULL,
   `data` longtext NOT NULL,
-  `priority` int(11) NOT NULL,
-  `reprocess` tinyint(1) NOT NULL DEFAULT '0',
-  `enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `priority` int NOT NULL,
+  `reprocess` tinyint NOT NULL DEFAULT '0',
+  `enabled` tinyint NOT NULL DEFAULT '0',
+  `deleted` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uuid` (`uuid`),
   KEY `processor_filter_fk_processor_id` (`fk_processor_id`),
   KEY `processor_filter_fk_processor_filter_tracker_id` (`fk_processor_filter_tracker_id`),
   CONSTRAINT `processor_filter_fk_processor_filter_tracker_id` FOREIGN KEY (`fk_processor_filter_tracker_id`) REFERENCES `processor_filter_tracker` (`id`),
   CONSTRAINT `processor_filter_fk_processor_id` FOREIGN KEY (`fk_processor_id`) REFERENCES `processor` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

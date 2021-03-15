@@ -50,19 +50,19 @@ DROP PROCEDURE rename_query;
 -- MUST BE DONE HERE DUE TO NAME CLASH
 --
 CREATE TABLE IF NOT EXISTS query (
-    id                    int(11) NOT NULL AUTO_INCREMENT,
-    version               int(11) NOT NULL,
-    create_time_ms        bigint(20) NOT NULL,
+    id                    int NOT NULL AUTO_INCREMENT,
+    version               int NOT NULL,
+    create_time_ms        bigint NOT NULL,
     create_user           varchar(255) NOT NULL,
-    update_time_ms        bigint(20) NOT NULL,
+    update_time_ms        bigint NOT NULL,
     update_user           varchar(255) NOT NULL,
     dashboard_uuid        varchar(255) NOT NULL,
     component_id          varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     data                  longtext,
-    favourite             tinyint(1) NOT NULL DEFAULT '0',
+    favourite             tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the query table

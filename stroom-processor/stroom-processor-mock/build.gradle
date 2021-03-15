@@ -30,7 +30,7 @@ dependencies {
 //    // 3rd party libs
 //    compile libs.dropwizard_metrics_healthchecks
 //    compile libs.flyway_core
-    compile libs.guice4
+    compile libs.guice5
 //    compile libs.hikari
 //    compile libs.jackson_databind
     compile libs.javax_inject

@@ -12,7 +12,7 @@ dependencies {
     compile project(':stroom-docref')
 
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
