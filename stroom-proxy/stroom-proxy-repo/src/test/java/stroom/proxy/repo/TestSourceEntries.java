@@ -7,7 +7,7 @@ import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.jooq.Record2;
+import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,13 +52,15 @@ public class TestSourceEntries {
 
     @Test
     void testUnique() {
-        proxyRepoSources.addSource("path", System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
 
         // Check that we have a new source.
-        final Result<Record2<Long, String>> result = proxyRepoSourceEntries.getNewSources();
+        final Result<Record4<Long, String, String, String>> result = proxyRepoSourceEntries.getNewSources();
         assertThat(result.size()).isOne();
         final long sourceId = result.get(0).value1();
         final String path = result.get(0).value2();
+        final String feedName = result.get(0).value3();
+        final String typeName = result.get(0).value4();
 
         addEntriesToSource(sourceId, path, 1, 1);
 
@@ -72,13 +74,15 @@ public class TestSourceEntries {
 
 
     long addEntries() {
-        proxyRepoSources.addSource("path", System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
 
         // Check that we have a new source.
-        final Result<Record2<Long, String>> result = proxyRepoSourceEntries.getNewSources();
+        final Result<Record4<Long, String, String, String>> result = proxyRepoSourceEntries.getNewSources();
         assertThat(result.size()).isOne();
         final long sourceId = result.get(0).value1();
         final String path = result.get(0).value2();
+        final String feedName = result.get(0).value3();
+        final String typeName = result.get(0).value4();
 
         addEntriesToSource(sourceId, path, 100, 10);
 
@@ -87,7 +91,7 @@ public class TestSourceEntries {
         assertThat(proxyRepoSourceEntries.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
-        final Result<Record2<Long, String>> result2 = proxyRepoSourceEntries.getNewSources();
+        final Result<Record4<Long, String, String, String>> result2 = proxyRepoSourceEntries.getNewSources();
         assertThat(result2.size()).isZero();
 
         return sourceId;

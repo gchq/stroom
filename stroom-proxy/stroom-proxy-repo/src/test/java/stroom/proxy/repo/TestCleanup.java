@@ -36,7 +36,7 @@ public class TestCleanup {
     @Inject
     private Aggregator aggregator;
     @Inject
-    private Forwarder forwarder;
+    private AggregateForwarder aggregateForwarder;
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -46,7 +46,7 @@ public class TestCleanup {
 
     @BeforeEach
     void beforeEach() {
-        forwarder.clear();
+        aggregateForwarder.clear();
         aggregator.clear();
         proxyRepoSourceEntries.clear();
         proxyRepoSources.clear();

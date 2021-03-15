@@ -185,14 +185,14 @@ public class DataDownloadTaskHandler {
     }
 
     private long downloadStream(final TaskContext taskContext,
-                                final long streamId,
+                                final long metaId,
                                 final StroomZipOutputStream stroomZipOutputStream,
                                 final long startId,
                                 final Long maxParts) throws IOException {
         long id = startId;
 
         // Export Source
-        try (final Source source = streamStore.openSource(streamId)) {
+        try (final Source source = streamStore.openSource(metaId)) {
             id++;
 
             final long count = source.count();
@@ -270,8 +270,8 @@ public class DataDownloadTaskHandler {
                                                            final String format,
                                                            final AttributeMap attributeMap)
             throws IOException {
-        final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
-                attributeMap, ZIP_EXTENSION);
+        final String filename = StroomFileNameUtil
+                .constructFilename(null, fileCount.incrementAndGet(), format, attributeMap, ZIP_EXTENSION);
         final Path file = outputDir.resolve(filename);
 
         taskContext.info(() -> FileUtil.getCanonicalPath(file));

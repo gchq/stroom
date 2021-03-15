@@ -38,7 +38,7 @@ public class TestAggregator {
     @Inject
     private Aggregator aggregator;
     @Inject
-    private Forwarder forwarder;
+    private AggregateForwarder aggregateForwarder;
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -48,7 +48,7 @@ public class TestAggregator {
 
     @BeforeEach
     void beforeEach() {
-        forwarder.clear();
+        aggregateForwarder.clear();
         aggregator.clear();
         proxyRepoSourceEntries.clear();
         proxyRepoSources.clear();
@@ -87,20 +87,20 @@ public class TestAggregator {
         ensureNonDeletable();
 
         // Check that the new aggregates are not yet completed.
-        assertThat(forwarder.getCompletedAggregates(Integer.MAX_VALUE).size()).isZero();
+        assertThat(aggregateForwarder.getCompletedAggregates(Integer.MAX_VALUE).size()).isZero();
         // Close all aggregates.
         aggregator.closeOldAggregates(System.currentTimeMillis());
         // Check that we now have some aggregates.
         final Result<Record3<Long, String, String>> completedAggregates =
-                forwarder.getCompletedAggregates(Integer.MAX_VALUE);
+                aggregateForwarder.getCompletedAggregates(Integer.MAX_VALUE);
         assertThat(completedAggregates.size()).isEqualTo(10);
         ensureNonDeletable();
 
         // Now forward the completed aggregates.
         final String forwardUrl = "http://test-url.com";
-        final int forwardUrlId = forwarder.getForwardUrlId(forwardUrl);
+        final int forwardUrlId = aggregateForwarder.getForwardUrlId(forwardUrl);
         for (final Record3<Long, String, String> aggregate : completedAggregates) {
-            forwarder.forwardAggregateData(
+            aggregateForwarder.forwardAggregateData(
                     aggregate.value1(),
                     aggregate.value2(),
                     aggregate.value3(),
@@ -113,7 +113,7 @@ public class TestAggregator {
 
         // Now delete forward records and aggregates.
         for (final Record3<Long, String, String> aggregate : completedAggregates) {
-            forwarder.deleteAggregate(aggregate.value1());
+            aggregateForwarder.deleteAggregate(aggregate.value1());
         }
 
         // Now we should be able to delete sources.
@@ -172,15 +172,15 @@ public class TestAggregator {
 
         final AtomicInteger total = new AtomicInteger();
 
-        proxyRepoSources.addChangeListener((sourceId, sourcePath) ->
-                proxyRepoSourceEntries.examineSource(sourceId, sourcePath));
+        proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
+                proxyRepoSourceEntries.examineSource(sourceId, sourcePath, feedName, typeName));
 
         proxyRepoSourceEntries.addChangeListener(sourceId ->
                 aggregator.aggregate(sourceId));
 
         aggregator.addChangeListener(total::addAndGet);
 
-        aggregator.addChangeListener(count -> forwarder.forward());
+        aggregator.addChangeListener(count -> aggregateForwarder.forward());
 
 //            services.add(proxyRepoSourceEntriesExecutor);
 
@@ -227,7 +227,7 @@ public class TestAggregator {
             attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
             try (final StroomZipOutputStreamImpl outputStream =
-                    (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream()) {
+                    (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
 
                 try (final OutputStream entryOutputStream = outputStream.addEntry("001" +
                         StroomZipFileType.META.getExtension())) {
@@ -250,7 +250,7 @@ public class TestAggregator {
 
         // Force all final work to be done.
         proxyRepoSourceEntries.shutdown();
-        forwarder.shutdown();
+        aggregateForwarder.shutdown();
 
         assertThat(mockForwardDestinations.getForwardCount()).isEqualTo(10);
     }

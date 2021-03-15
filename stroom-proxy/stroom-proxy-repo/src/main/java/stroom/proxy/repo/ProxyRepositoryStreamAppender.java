@@ -51,8 +51,6 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
         try {
             if (stroomZipOutputStream != null) {
                 if (doneOne) {
-                    final AttributeMap attributeMap = metaDataHolder.getMetaData();
-                    stroomZipOutputStream.addMissingAttributeMap(attributeMap);
                     stroomZipOutputStream.close();
                 } else {
                     stroomZipOutputStream.closeDelete();

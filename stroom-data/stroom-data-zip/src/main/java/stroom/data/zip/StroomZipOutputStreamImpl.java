@@ -1,7 +1,5 @@
 package stroom.data.zip;
 
-import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
 
@@ -102,21 +100,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
     public long getEntryCount() {
         return entryCount;
-    }
-
-    @Override
-    public void addMissingAttributeMap(final AttributeMap attributeMap) throws IOException {
-        if (stroomZipNameSet == null) {
-            throw new RuntimeException("You can only add missing meta data if you are monitoring entries");
-
-        }
-        for (final String baseName : stroomZipNameSet.getBaseNameList()) {
-            if (stroomZipNameSet.getName(baseName, StroomZipFileType.META) == null) {
-                zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.META.getExtension()));
-                AttributeMapUtil.write(attributeMap, zipOutputStream);
-                zipOutputStream.closeEntry();
-            }
-        }
     }
 
     @Override

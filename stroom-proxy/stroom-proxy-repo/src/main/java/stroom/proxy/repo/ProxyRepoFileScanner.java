@@ -16,6 +16,9 @@
 
 package stroom.proxy.repo;
 
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.AbstractFileVisitor;
@@ -26,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -130,7 +135,11 @@ public final class ProxyRepoFileScanner {
                             }
 
                             // Add file.
-                            addFile(file);
+                            try {
+                                addFile(file);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
 
                             return FileVisitResult.CONTINUE;
                         }
@@ -143,8 +152,7 @@ public final class ProxyRepoFileScanner {
     private void addFile(final Path file) {
         // Only process zip repo files
         final String fileName = file.getFileName().toString();
-        if (fileName.endsWith(ProxyRepo.ZIP_EXTENSION)) {
-
+        if (fileName.endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
             // Don't try to add files that are older than the last time we scanned.
             boolean add = true;
             long lastModified = -1;
@@ -171,8 +179,26 @@ public final class ProxyRepoFileScanner {
                 final Optional<Long> optionalSourceId =
                         proxyRepoSources.getSourceId(relativePathString);
                 if (optionalSourceId.isEmpty()) {
-                    // This is an unrecorded source so add it.
-                    proxyRepoSources.addSource(relativePathString, lastModified);
+                    // Read meta.
+                    final String metaFileName = ProxyRepoFileNames.getMeta(file.getFileName().toString());
+                    final Path metaFile = file.getParent().resolve(metaFileName);
+                    if (!Files.isRegularFile(metaFile)) {
+                        throw new RuntimeException("Unable to find proxy repo meta file: " + metaFileName);
+                    }
+
+                    final AttributeMap attributeMap = new AttributeMap();
+                    try (final InputStream inputStream = Files.newInputStream(metaFile)) {
+                        AttributeMapUtil.read(inputStream, attributeMap);
+
+                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+
+                        // This is an unrecorded source so add it.
+                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified);
+
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
                 }
             }
         }

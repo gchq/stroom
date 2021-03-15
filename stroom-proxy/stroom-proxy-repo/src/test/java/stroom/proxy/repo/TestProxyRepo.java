@@ -6,6 +6,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.util.io.FileUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -49,7 +50,9 @@ class TestProxyRepo {
         final ProxyRepo proxyRepo =
                 new ProxyRepo(() -> repoDir, null, proxyRepoSources, 100, 0);
 
-        try (final StroomZipOutputStream out1 = proxyRepo.getStroomZipOutputStream()) {
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
+        try (final StroomZipOutputStream out1 = proxyRepo.getStroomZipOutputStream(attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out1,
                     StroomZipEntry.create("file", StroomZipFileType.DATA),
@@ -58,7 +61,7 @@ class TestProxyRepo {
 
         proxyRepo.setCount(10000000000L);
 
-        try (final StroomZipOutputStream out2 = proxyRepo.getStroomZipOutputStream()) {
+        try (final StroomZipOutputStream out2 = proxyRepo.getStroomZipOutputStream(attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out2,
                     StroomZipEntry.create("file", StroomZipFileType.DATA),
@@ -100,9 +103,11 @@ class TestProxyRepo {
         ProxyRepo proxyRepo = new ProxyRepo(
                 () -> repoDir, null, proxyRepoSources, 10000, 0);
 
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
         StroomZipOutputStreamImpl out1;
         try (final StroomZipOutputStreamImpl out =
-                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream()) {
+                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
 
             StroomZipOutputStreamUtil.addSimpleEntry(
                     out,
@@ -116,7 +121,7 @@ class TestProxyRepo {
                 .isTrue();
 
         final StroomZipOutputStreamImpl out2 =
-                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream();
+                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap);
 
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out2,
@@ -139,7 +144,7 @@ class TestProxyRepo {
                 .isTrue();
 
         final StroomZipOutputStreamImpl out3 =
-                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream();
+                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap);
         StroomZipOutputStreamUtil.addSimpleEntry(
                 out3,
                 StroomZipEntry.create("file", StroomZipFileType.DATA),

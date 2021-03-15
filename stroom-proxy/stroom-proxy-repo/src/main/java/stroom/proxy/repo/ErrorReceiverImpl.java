@@ -13,10 +13,6 @@ public class ErrorReceiverImpl implements ErrorReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorReceiverImpl.class);
 
-    private static final String ZIP_EXTENSION = ".zip";
-    private static final String ERROR_EXTENSION = ".err";
-    private static final String BAD_EXTENSION = ".bad";
-
     @Override
     public void error(final Path zipFile, final String message) {
         try {
@@ -43,7 +39,9 @@ public class ErrorReceiverImpl implements ErrorReceiver {
         error(zipFile, message);
 
         // Now move the source zip so we know it was bad.
-        final Path renamedFile = zipFile.getParent().resolve(zipFile.getFileName().toString() + BAD_EXTENSION);
+        final Path renamedFile = zipFile
+                .getParent()
+                .resolve(ProxyRepoFileNames.getBad(zipFile.getFileName().toString()));
         try {
             Files.move(zipFile, renamedFile);
         } catch (final Exception e) {
@@ -52,19 +50,23 @@ public class ErrorReceiverImpl implements ErrorReceiver {
     }
 
     public static Path getErrorFile(final Path zipFile) {
-        final String fileName = zipFile.getFileName().toString();
-        return zipFile.getParent()
-                .resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);
+        String fileName = zipFile.getFileName().toString();
+        fileName = ProxyRepoFileNames.getError(fileName);
+        return zipFile.getParent().resolve(fileName);
     }
 
     public static void deleteFileAndErrors(final Path zipFile) {
         try {
             // Delete the file.
-            final Path errorFile = getErrorFile(zipFile);
-            Files.delete(zipFile);
-            if (Files.isRegularFile(errorFile)) {
-                Files.delete(errorFile);
-            }
+            final Path dir = zipFile.getParent();
+            final String zipFileName = zipFile.getFileName().toString();
+            final String metaFileName = ProxyRepoFileNames.getMeta(zipFileName);
+            final String errorFileName = ProxyRepoFileNames.getError(zipFileName);
+            final String badFileName = ProxyRepoFileNames.getBad(zipFileName);
+            Files.deleteIfExists(dir.resolve(zipFileName));
+            Files.deleteIfExists(dir.resolve(metaFileName));
+            Files.deleteIfExists(dir.resolve(errorFileName));
+            Files.deleteIfExists(dir.resolve(badFileName));
         } catch (final IOException ioEx) {
             LOGGER.error("delete() - Unable to delete zip file " + zipFile, ioEx);
         }

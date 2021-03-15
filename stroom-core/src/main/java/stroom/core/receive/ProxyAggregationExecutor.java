@@ -17,13 +17,14 @@
 
 package stroom.core.receive;
 
+import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.Cleanup;
-import stroom.proxy.repo.Forwarder;
 import stroom.proxy.repo.ProxyRepoFileScanner;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.SourceForwarder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class ProxyAggregationExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
+    private final AggregatorConfig aggregatorConfig;
     private final ProxyRepoFileScanner proxyRepoFileScanner;
     private final Aggregator aggregator;
 
@@ -50,8 +52,10 @@ public class ProxyAggregationExecutor {
                                     final ProxyRepoSourceEntries proxyRepoSourceEntries,
                                     final AggregatorConfig aggregatorConfig,
                                     final Aggregator aggregator,
-                                    final Forwarder forwarder,
+                                    final AggregateForwarder aggregateForwarder,
+                                    final SourceForwarder sourceForwarder,
                                     final Cleanup cleanup) {
+        this.aggregatorConfig = aggregatorConfig;
         this.proxyRepoFileScanner = proxyRepoFileScanner;
         this.aggregator = aggregator;
 
@@ -63,15 +67,18 @@ public class ProxyAggregationExecutor {
             // aggregates.
             proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
             // When new aggregates are complete tell the forwarder that it can forward them.
-            aggregator.addChangeListener(count -> forwarder.forward());
+            aggregator.addChangeListener(count -> aggregateForwarder.forward());
+            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
+            // that are no longer needed.
+            aggregateForwarder.addChangeListener(cleanup::cleanup);
+
         } else {
             // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
-            proxyRepoSources.addChangeListener((sourceId, sourcePath) -> forwarder.forward());
+            proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) -> sourceForwarder.forward());
+            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
+            // that are no longer needed.
+            sourceForwarder.addChangeListener(cleanup::cleanup);
         }
-
-        // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files that
-        // are no longer needed.
-        forwarder.addChangeListener(cleanup::cleanup);
     }
 
     public void exec() {
@@ -82,15 +89,21 @@ public class ProxyAggregationExecutor {
                      final boolean scanSorted) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
-                // Try aggregating again.
-                aggregator.aggregate();
+                if (aggregatorConfig.isEnabled()) {
+                    // Try aggregating again.
+                    aggregator.aggregate();
 
-                // Scan the proxy repo to find new files to aggregate.
-                proxyRepoFileScanner.scan(scanSorted);
+                    // Scan the proxy repo to find new files to aggregate.
+                    proxyRepoFileScanner.scan(scanSorted);
 
-                if (forceAggregation) {
-                    // Force close of old aggregates.
-                    aggregator.closeOldAggregates(System.currentTimeMillis());
+                    if (forceAggregation) {
+                        // Force close of old aggregates.
+                        aggregator.closeOldAggregates(System.currentTimeMillis());
+                    }
+
+                } else {
+                    // Scan the proxy repo to find new files to aggregate.
+                    proxyRepoFileScanner.scan(scanSorted);
                 }
 
             } catch (final Exception e) {

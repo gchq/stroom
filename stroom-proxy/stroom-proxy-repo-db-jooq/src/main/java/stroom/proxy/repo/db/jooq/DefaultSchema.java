@@ -14,6 +14,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
 import stroom.proxy.repo.db.jooq.tables.AggregateItem;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
+import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
 import stroom.proxy.repo.db.jooq.tables.Source;
 import stroom.proxy.repo.db.jooq.tables.SourceEntry;
@@ -47,6 +48,11 @@ public class DefaultSchema extends SchemaImpl {
      * The table <code>forward_aggregate</code>.
      */
     public final ForwardAggregate FORWARD_AGGREGATE = ForwardAggregate.FORWARD_AGGREGATE;
+
+    /**
+     * The table <code>forward_source</code>.
+     */
+    public final ForwardSource FORWARD_SOURCE = ForwardSource.FORWARD_SOURCE;
 
     /**
      * The table <code>forward_url</code>.
@@ -87,6 +93,7 @@ public class DefaultSchema extends SchemaImpl {
             Aggregate.AGGREGATE,
             AggregateItem.AGGREGATE_ITEM,
             ForwardAggregate.FORWARD_AGGREGATE,
+            ForwardSource.FORWARD_SOURCE,
             ForwardUrl.FORWARD_URL,
             Source.SOURCE,
             SourceEntry.SOURCE_ENTRY,

@@ -20,6 +20,8 @@ import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 
@@ -27,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitOption;
@@ -53,8 +56,6 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class ProxyRepo {
-
-    public static final String ZIP_EXTENSION = ".zip";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepo.class);
 
@@ -197,7 +198,7 @@ public class ProxyRepo {
                         @Override
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
-                                if (file.toString().endsWith(ZIP_EXTENSION)) {
+                                if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
                                     LOGGER.debug("Examining " + file.toString());
 
                                     final String idString = getIdPart(file);
@@ -268,63 +269,68 @@ public class ProxyRepo {
         return repoDir;
     }
 
-    public StroomZipOutputStream getStroomZipOutputStream() throws IOException {
-        return getStroomZipOutputStream(null);
-    }
-
-    public StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
+    public synchronized StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
             throws IOException {
-        final String filename = StroomFileNameUtil.constructFilename(executionUuid,
-                fileCount.incrementAndGet(),
-                repositoryFormat,
-                attributeMap,
-                ZIP_EXTENSION);
-        final Path file = repoDir.resolve(filename);
-
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.
-        return createStroomZipOutputStream(file);
-    }
+        final String fileName = StroomFileNameUtil.constructFilename(executionUuid,
+                fileCount.incrementAndGet(),
+                repositoryFormat,
+                attributeMap);
 
-    private synchronized StroomZipOutputStreamImpl createStroomZipOutputStream(final Path file) throws IOException {
+        final String zipFileName = ProxyRepoFileNames.getZip(fileName);
+        final String metaFileName = ProxyRepoFileNames.getMeta(fileName);
+
+        final Path zipFile = repoDir.resolve(zipFileName);
+        final Path metaFile = repoDir.resolve(metaFileName);
+
         StroomZipOutputStreamImpl outputStream;
 
-        final Path dir = file.getParent();
         // Ensure parent dir's exist
+        final Path dir = zipFile.getParent();
         Files.createDirectories(dir);
 
-        outputStream = new StroomZipOutputStreamImpl(file) {
+        outputStream = new StroomZipOutputStreamImpl(zipFile) {
             private boolean closed = false;
 
             @Override
             public void close() throws IOException {
+                // Don't try and close more than once.
                 if (!closed) {
                     closed = true;
-                    super.close();
 
-                    // If we have added a new source to the repo then add a DB record for it.
-                    final Path relative = dir.relativize(file);
-                    final long lastModifiedTime = System.currentTimeMillis();
-                    proxyRepoSources.addSource(relative.toString(), lastModifiedTime);
+                    // Write the meta data.
+                    try (final OutputStream metaOutputStream = Files.newOutputStream(metaFile)) {
+                        AttributeMapUtil.write(attributeMap, metaOutputStream);
+
+                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+
+                        super.close();
+
+                        // If we have added a new source to the repo then add a DB record for it.
+                        final long lastModifiedTime = System.currentTimeMillis();
+                        proxyRepoSources.addSource(zipFileName, feedName, typeName, lastModifiedTime);
+
+                    } catch (final IOException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        super.closeDelete();
+                    }
                 }
             }
 
             @Override
             public void closeDelete() throws IOException {
+                // Don't try and close more than once.
                 if (!closed) {
                     closed = true;
+
                     super.closeDelete();
                 }
             }
         };
 
         return outputStream;
-    }
-
-    public void deleteRepoFile(final String sourcePath) throws IOException {
-        final Path sourceFile = repoDir.resolve(sourcePath);
-        LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
-        Files.deleteIfExists(sourceFile);
     }
 
     public void clean(final boolean deleteRootDirectory) {
@@ -498,7 +504,7 @@ public class ProxyRepo {
                         @Override
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
-                                if (file.toString().endsWith(ProxyRepo.ZIP_EXTENSION)) {
+                                if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
                                     list.add(file);
                                 }
                             } catch (final RuntimeException e) {

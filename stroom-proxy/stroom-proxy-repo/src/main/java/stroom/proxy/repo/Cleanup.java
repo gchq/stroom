@@ -16,6 +16,8 @@
 
 package stroom.proxy.repo;
 
+import stroom.util.io.FileUtil;
+
 import org.jooq.Condition;
 import org.jooq.Record1;
 import org.jooq.Record2;
@@ -26,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,13 +66,13 @@ public class Cleanup {
                             .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID)));
 
     private final SqliteJooqHelper jooq;
-    private final ProxyRepo proxyRepo;
+    private final Path repoDir;
 
     @Inject
     Cleanup(final ProxyRepoDbConnProvider connProvider,
-            final ProxyRepo proxyRepo) {
+            final RepoDirProvider repoDirProvider) {
         this.jooq = new SqliteJooqHelper(connProvider);
-        this.proxyRepo = proxyRepo;
+        this.repoDir = repoDirProvider.get();
     }
 
     public synchronized int cleanup() {
@@ -107,7 +111,15 @@ public class Cleanup {
                 final String sourcePath = record.get(SOURCE.PATH);
 
                 try {
-                    proxyRepo.deleteRepoFile(sourcePath);
+                    // Source path is the zip.
+                    final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(sourcePath));
+                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
+                    Files.deleteIfExists(sourceFile);
+
+                    final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(sourcePath));
+                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
+                    Files.deleteIfExists(metaFile);
+
                     final int count = jooq.contextResult(context -> context
                             .deleteFrom(SOURCE)
                             .where(SOURCE.ID.eq(sourceId))

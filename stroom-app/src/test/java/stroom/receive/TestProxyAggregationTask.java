@@ -29,13 +29,17 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
+import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.Forwarder;
+import stroom.proxy.repo.ProxyRepoFileNames;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.RepoDirProvider;
@@ -99,7 +103,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private RepoDirProvider repoDirProvider;
     @Inject
-    private Forwarder forwarder;
+    private AggregateForwarder aggregateForwarder;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -131,7 +135,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @BeforeEach
     void beforeEach() {
         proxyDir = repoDirProvider.get();
-        forwarder.clear();
+        aggregateForwarder.clear();
         aggregator.clear();
         proxyRepoSourceEntries.clear();
         proxyRepoSources.clear();
@@ -572,12 +576,16 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
         printWriter.flush();
 
+        writeMeta(testFile, eventFeed);
+
         return zipOutputStream;
     }
 
     private void writeTestFileWithContext(final Path testFile, final String eventFeed, final String content,
                                           final String context) throws IOException {
-        Files.createDirectories(testFile.getParent());
+        final Path dir = testFile.getParent();
+        Files.createDirectories(dir);
+
         final OutputStream fileOutputStream = Files.newOutputStream(testFile);
         final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
         zipOutputStream.putNextEntry(new ZipEntry("file1.meta"));
@@ -598,6 +606,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         zipOutputStream.close();
         fileOutputStream.close();
 
+        writeMeta(testFile, eventFeed);
     }
 
     private void writeTestFile(final Path testFile, final String eventFeed, final String data)
@@ -617,6 +626,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.close();
+
+        writeMeta(testFile, eventFeed);
     }
 
     private void writeTestFileWithManyEntries(final Path testFile, final String eventFeed, final int count)
@@ -647,6 +658,18 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             zipOutputStream.closeEntry();
         }
         zipOutputStream.close();
+
+        writeMeta(testFile, eventFeed);
+    }
+
+    private void writeMeta(final Path zipFile, final String feedName) throws IOException {
+        final Path dir = zipFile.getParent();
+        final Path metaFile = dir.resolve(ProxyRepoFileNames.getMeta(zipFile.getFileName().toString()));
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StandardHeaderArguments.FEED, feedName);
+        try (final OutputStream outputStream = Files.newOutputStream(metaFile)) {
+            AttributeMapUtil.write(attributeMap, outputStream);
+        }
     }
 
     @Test

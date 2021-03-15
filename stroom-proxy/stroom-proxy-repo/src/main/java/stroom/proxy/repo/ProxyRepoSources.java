@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
 import stroom.util.shared.Clearable;
 
 import java.util.List;
@@ -39,14 +41,34 @@ public class ProxyRepoSources implements Clearable {
                 .fetchOptional(SOURCE.ID));
     }
 
-    public long addSource(final String path, final long lastModifiedTimeMs) {
+    public long addSource(final String path,
+                          final String feedName,
+                          final String typeName,
+                          final long lastModifiedTimeMs) {
+        if (feedName.isEmpty()) {
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+        }
+
         final long sourceId = sourceRecordId.incrementAndGet();
         jooq.context(context -> context
-                .insertInto(SOURCE, SOURCE.ID, SOURCE.PATH, SOURCE.LAST_MODIFIED_TIME_MS)
-                .values(sourceId, path, lastModifiedTimeMs)
+                .insertInto(
+                        SOURCE,
+                        SOURCE.ID,
+                        SOURCE.PATH,
+                        SOURCE.FEED_NAME,
+                        SOURCE.TYPE_NAME,
+                        SOURCE.LAST_MODIFIED_TIME_MS
+                )
+                .values(
+                        sourceId,
+                        path,
+                        feedName,
+                        typeName,
+                        lastModifiedTimeMs
+                )
                 .execute());
 
-        changeListeners.forEach(listener -> listener.onChange(sourceId, path));
+        changeListeners.forEach(listener -> listener.onChange(sourceId, path, feedName, typeName));
 
         return sourceId;
     }
@@ -70,6 +92,6 @@ public class ProxyRepoSources implements Clearable {
 
     public interface ChangeListener {
 
-        void onChange(long sourceId, String sourcePath);
+        void onChange(long sourceId, String sourcePath, String feedName, String typeName);
     }
 }

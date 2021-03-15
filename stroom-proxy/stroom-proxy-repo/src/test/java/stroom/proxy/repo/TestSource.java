@@ -32,7 +32,7 @@ public class TestSource {
     @Test
     void testAddSource() {
         for (int i = 0; i < 10; i++) {
-            proxyRepoSources.addSource("path_" + i, System.currentTimeMillis());
+            proxyRepoSources.addSource("path_" + i, "test", null, System.currentTimeMillis());
         }
     }
 
@@ -40,16 +40,16 @@ public class TestSource {
     void testUniquePath() {
         assertThatThrownBy(() -> {
             for (int i = 0; i < 10; i++) {
-                proxyRepoSources.addSource("path", System.currentTimeMillis());
+                proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
             }
         }, "Expected error");
         proxyRepoSources.clear();
-        proxyRepoSources.addSource("path", System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
     }
 
     @Test
     void testGetSourceId() {
-        proxyRepoSources.addSource("path", System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
         final Optional<Long> sourceId = proxyRepoSources.getSourceId("path");
         assertThat(sourceId.isPresent()).isTrue();
     }

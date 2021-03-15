@@ -18,6 +18,7 @@ import stroom.util.thread.StroomThreadGroup;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jooq.Record2;
+import org.jooq.Record4;
 import org.jooq.Result;
 
 import java.io.IOException;
@@ -98,17 +99,19 @@ public class ProxyRepoSourceEntries implements HasShutdown {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record2<Long, String>> result = getNewSources();
+            final Result<Record4<Long, String, String, String>> result = getNewSources();
 
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             result.forEach(record -> {
                 if (!shutdown) {
                     final long id = record.get(SOURCE.ID);
                     final String path = record.get(SOURCE.PATH);
+                    final String feedName = record.get(SOURCE.FEED_NAME);
+                    final String typeName = record.get(SOURCE.TYPE_NAME);
 
                     count.incrementAndGet();
                     final CompletableFuture<Void> completableFuture =
-                            CompletableFuture.runAsync(() -> examineSource(id, path), executor);
+                            CompletableFuture.runAsync(() -> examineSource(id, path, feedName, typeName), executor);
                     futures.add(completableFuture);
                 }
             });
@@ -123,9 +126,9 @@ public class ProxyRepoSourceEntries implements HasShutdown {
         }
     }
 
-    Result<Record2<Long, String>> getNewSources() {
+    Result<Record4<Long, String, String, String>> getNewSources() {
         return jooq.contextResult(context -> context
-                .select(SOURCE.ID, SOURCE.PATH)
+                .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
                 .from(SOURCE)
                 .where(SOURCE.EXAMINED.isFalse())
                 .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
@@ -146,7 +149,9 @@ public class ProxyRepoSourceEntries implements HasShutdown {
     }
 
     public void examineSource(final long sourceId,
-                              final String sourcePath) {
+                              final String sourcePath,
+                              final String sourceFeedName,
+                              final String sourceTypeName) {
         if (!shutdown) {
             final Path fullPath = repoDir.resolve(sourcePath);
 
@@ -170,8 +175,8 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                         final StroomZipFileType stroomZipFileType = stroomZipEntry.getStroomZipFileType();
 
                         // If this is a meta entry then get the feed name.
-                        String feedName = null;
-                        String typeName = null;
+                        String feedName = sourceFeedName;
+                        String typeName = sourceTypeName;
 
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
@@ -181,8 +186,12 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                                 } else {
                                     final AttributeMap attributeMap = new AttributeMap();
                                     AttributeMapUtil.read(metaStream, attributeMap);
-                                    feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                                    typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                                    if (attributeMap.get(StandardHeaderArguments.FEED) != null) {
+                                        feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                                    }
+                                    if (attributeMap.get(StandardHeaderArguments.TYPE) != null) {
+                                        typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                                    }
                                 }
                             } catch (final RuntimeException e) {
                                 errorReceiver.error(fullPath, e.getMessage());

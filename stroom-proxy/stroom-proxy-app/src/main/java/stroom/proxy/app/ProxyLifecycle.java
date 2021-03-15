@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ChangeListenerExecutor;
@@ -14,6 +15,7 @@ import stroom.proxy.repo.ProxyRepoFileScanner;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.SourceForwarder;
 
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -41,7 +43,8 @@ public class ProxyLifecycle implements Managed {
                           final Provider<ProxyRepoSources> proxyRepoSourcesProvider,
                           final Provider<ProxyRepoSourceEntries> proxyRepoSourceEntriesProvider,
                           final Provider<Aggregator> aggregatorProvider,
-                          final Provider<Forwarder> forwarderProvider,
+                          final Provider<AggregateForwarder> aggregatorForwarderProvider,
+                          final Provider<SourceForwarder> sourceForwarderProvider,
                           final Provider<Cleanup> cleanupProvider) {
         services = new ArrayList<>();
         requireShutdown = new ArrayList<>();
@@ -62,7 +65,9 @@ public class ProxyLifecycle implements Managed {
 
             // If we aren't forwarding then don't do anything else other than running repo cleanups.
             if (forwardingEnabled) {
-                final Forwarder forwarder = forwarderProvider.get();
+                final Forwarder forwarder = aggregatorConfig.isEnabled()
+                        ? aggregatorForwarderProvider.get()
+                        : sourceForwarderProvider.get();
                 final ChangeListenerExecutor forwarderExecutor = new ChangeListenerExecutor(
                         Forwarder.class.getSimpleName(),
                         forwarder::forward,
@@ -91,7 +96,7 @@ public class ProxyLifecycle implements Managed {
                             proxyRepoSourceEntries::examine,
                             100);
                     // Aggregate whenever we have new source entries.
-                    proxyRepoSources.addChangeListener((sourceId, sourcePath) ->
+                    proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
                             proxyRepoSourceEntriesExecutor.onChange());
                     services.add(proxyRepoSourceEntriesExecutor);
 
@@ -110,7 +115,8 @@ public class ProxyLifecycle implements Managed {
                 } else {
                     // Forward when we have a new source to forward.
                     final ProxyRepoSources proxyRepoSources = proxyRepoSourcesProvider.get();
-                    proxyRepoSources.addChangeListener((sourceId, sourcePath) -> forwarderExecutor.onChange());
+                    proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
+                            forwarderExecutor.onChange());
                 }
 
                 final Cleanup cleanup = cleanupProvider.get();

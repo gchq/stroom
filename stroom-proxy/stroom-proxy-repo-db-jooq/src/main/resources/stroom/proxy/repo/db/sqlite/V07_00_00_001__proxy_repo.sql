@@ -17,8 +17,11 @@
 CREATE TABLE IF NOT EXISTS source (
   id                        BIGINT PRIMARY KEY,
   path                      VARCHAR(255) NOT NULL UNIQUE,
+  feed_name                 VARCHAR(255) DEFAULT NULL,
+  type_name                 VARCHAR(255) DEFAULT NULL,
   last_modified_time_ms     BIGINT NOT NULL,
-  examined                  BOOLEAN DEFAULT FALSE
+  examined                  BOOLEAN DEFAULT FALSE,
+  forward_error             BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS source_item (
@@ -64,6 +67,16 @@ CREATE TABLE IF NOT EXISTS forward_url (
   id                        INTEGER PRIMARY KEY,
   url                       VARCHAR(255) NOT NULL,
   UNIQUE                    (url)
+);
+
+CREATE TABLE IF NOT EXISTS forward_source (
+  id                        BIGINT PRIMARY KEY,
+  fk_forward_url_id         INTEGER NOT NULL,
+  fk_source_id              BIGINT NOT NULL,
+  success                   BOOLEAN NOT NULL,
+  error                     VARCHAR(255),
+  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
+  FOREIGN KEY               (fk_source_id) REFERENCES source (id)
 );
 
 CREATE TABLE IF NOT EXISTS forward_aggregate (

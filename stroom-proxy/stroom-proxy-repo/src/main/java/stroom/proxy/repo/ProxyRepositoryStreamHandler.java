@@ -20,7 +20,6 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
 
-    private final AttributeMap attributeMap;
     private final StroomZipOutputStream stroomZipOutputStream;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     private final Consumer<Long> progressHandler = (totalBytes) -> {
@@ -30,7 +29,6 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     public ProxyRepositoryStreamHandler(final ProxyRepo proxyRepo,
                                         final AttributeMap attributeMap) throws IOException {
-        this.attributeMap = attributeMap;
         stroomZipOutputStream = proxyRepo.getStroomZipOutputStream(attributeMap);
     }
 
@@ -55,7 +53,6 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     void close() throws IOException {
         if (doneOne) {
-            stroomZipOutputStream.addMissingAttributeMap(attributeMap);
             stroomZipOutputStream.close();
         } else {
             LOGGER.info("Removing part written file {}", stroomZipOutputStream);

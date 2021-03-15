@@ -22,7 +22,7 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.pipeline.filter.SafeXMLFilter;
-import stroom.proxy.repo.ProxyRepo;
+import stroom.proxy.repo.ProxyRepoFileNames;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
@@ -252,7 +252,7 @@ public class Headless extends AbstractCommandLineTool {
                             @Override
                             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                                 try {
-                                    if (file.toString().endsWith(ProxyRepo.ZIP_EXTENSION)) {
+                                    if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
                                         process(headlessFilter, file);
                                     }
                                 } catch (final RuntimeException e) {

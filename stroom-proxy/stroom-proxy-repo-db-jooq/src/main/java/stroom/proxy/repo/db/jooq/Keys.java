@@ -13,6 +13,7 @@ import org.jooq.impl.Internal;
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
 import stroom.proxy.repo.db.jooq.tables.AggregateItem;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
+import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
 import stroom.proxy.repo.db.jooq.tables.Source;
 import stroom.proxy.repo.db.jooq.tables.SourceEntry;
@@ -20,6 +21,7 @@ import stroom.proxy.repo.db.jooq.tables.SourceItem;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateItemRecord;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
+import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardUrlRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
@@ -40,6 +42,7 @@ public class Keys {
     public static final UniqueKey<AggregateRecord> PK_AGGREGATE = Internal.createUniqueKey(Aggregate.AGGREGATE, DSL.name("pk_aggregate"), new TableField[] { Aggregate.AGGREGATE.ID }, true);
     public static final UniqueKey<AggregateItemRecord> PK_AGGREGATE_ITEM = Internal.createUniqueKey(AggregateItem.AGGREGATE_ITEM, DSL.name("pk_aggregate_item"), new TableField[] { AggregateItem.AGGREGATE_ITEM.ID }, true);
     public static final UniqueKey<ForwardAggregateRecord> PK_FORWARD_AGGREGATE = Internal.createUniqueKey(ForwardAggregate.FORWARD_AGGREGATE, DSL.name("pk_forward_aggregate"), new TableField[] { ForwardAggregate.FORWARD_AGGREGATE.ID }, true);
+    public static final UniqueKey<ForwardSourceRecord> PK_FORWARD_SOURCE = Internal.createUniqueKey(ForwardSource.FORWARD_SOURCE, DSL.name("pk_forward_source"), new TableField[] { ForwardSource.FORWARD_SOURCE.ID }, true);
     public static final UniqueKey<ForwardUrlRecord> PK_FORWARD_URL = Internal.createUniqueKey(ForwardUrl.FORWARD_URL, DSL.name("pk_forward_url"), new TableField[] { ForwardUrl.FORWARD_URL.ID }, true);
     public static final UniqueKey<ForwardUrlRecord> SQLITE_AUTOINDEX_FORWARD_URL_1 = Internal.createUniqueKey(ForwardUrl.FORWARD_URL, DSL.name("sqlite_autoindex_forward_url_1"), new TableField[] { ForwardUrl.FORWARD_URL.URL }, true);
     public static final UniqueKey<SourceRecord> PK_SOURCE = Internal.createUniqueKey(Source.SOURCE, DSL.name("pk_source"), new TableField[] { Source.SOURCE.ID }, true);
@@ -56,6 +59,8 @@ public class Keys {
     public static final ForeignKey<AggregateItemRecord, SourceItemRecord> FK_AGGREGATE_ITEM_SOURCE_ITEM_1 = Internal.createForeignKey(AggregateItem.AGGREGATE_ITEM, DSL.name("fk_aggregate_item_source_item_1"), new TableField[] { AggregateItem.AGGREGATE_ITEM.FK_SOURCE_ITEM_ID }, Keys.PK_SOURCE_ITEM, new TableField[] { SourceItem.SOURCE_ITEM.ID }, true);
     public static final ForeignKey<ForwardAggregateRecord, AggregateRecord> FK_FORWARD_AGGREGATE_AGGREGATE_1 = Internal.createForeignKey(ForwardAggregate.FORWARD_AGGREGATE, DSL.name("fk_forward_aggregate_aggregate_1"), new TableField[] { ForwardAggregate.FORWARD_AGGREGATE.FK_AGGREGATE_ID }, Keys.PK_AGGREGATE, new TableField[] { Aggregate.AGGREGATE.ID }, true);
     public static final ForeignKey<ForwardAggregateRecord, ForwardUrlRecord> FK_FORWARD_AGGREGATE_FORWARD_URL_1 = Internal.createForeignKey(ForwardAggregate.FORWARD_AGGREGATE, DSL.name("fk_forward_aggregate_forward_url_1"), new TableField[] { ForwardAggregate.FORWARD_AGGREGATE.FK_FORWARD_URL_ID }, Keys.PK_FORWARD_URL, new TableField[] { ForwardUrl.FORWARD_URL.ID }, true);
+    public static final ForeignKey<ForwardSourceRecord, ForwardUrlRecord> FK_FORWARD_SOURCE_FORWARD_URL_1 = Internal.createForeignKey(ForwardSource.FORWARD_SOURCE, DSL.name("fk_forward_source_forward_url_1"), new TableField[] { ForwardSource.FORWARD_SOURCE.FK_FORWARD_URL_ID }, Keys.PK_FORWARD_URL, new TableField[] { ForwardUrl.FORWARD_URL.ID }, true);
+    public static final ForeignKey<ForwardSourceRecord, SourceRecord> FK_FORWARD_SOURCE_SOURCE_1 = Internal.createForeignKey(ForwardSource.FORWARD_SOURCE, DSL.name("fk_forward_source_source_1"), new TableField[] { ForwardSource.FORWARD_SOURCE.FK_SOURCE_ID }, Keys.PK_SOURCE, new TableField[] { Source.SOURCE.ID }, true);
     public static final ForeignKey<SourceEntryRecord, SourceItemRecord> FK_SOURCE_ENTRY_SOURCE_ITEM_1 = Internal.createForeignKey(SourceEntry.SOURCE_ENTRY, DSL.name("fk_source_entry_source_item_1"), new TableField[] { SourceEntry.SOURCE_ENTRY.FK_SOURCE_ITEM_ID }, Keys.PK_SOURCE_ITEM, new TableField[] { SourceItem.SOURCE_ITEM.ID }, true);
     public static final ForeignKey<SourceItemRecord, SourceRecord> FK_SOURCE_ITEM_SOURCE_1 = Internal.createForeignKey(SourceItem.SOURCE_ITEM, DSL.name("fk_source_item_source_1"), new TableField[] { SourceItem.SOURCE_ITEM.FK_SOURCE_ID }, Keys.PK_SOURCE, new TableField[] { Source.SOURCE.ID }, true);
 }
