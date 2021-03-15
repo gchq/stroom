@@ -89,7 +89,7 @@ CALL core_rename_column_v1(
     'OLD_IDX_SHRD',
     'FK_IDX_ID',
     'OLD_IDX_ID',
-    'int(11) default NULL');
+    'int default NULL');
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

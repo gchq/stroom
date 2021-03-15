@@ -28,12 +28,12 @@ CREATE TABLE IF NOT EXISTS `processor` (
   `uuid` varchar(255) NOT NULL,
   `task_type` varchar(255) DEFAULT NULL,
   `pipeline_uuid` varchar(255) NOT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `enabled` tinyint NOT NULL DEFAULT '0',
+  `deleted` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `processor_uuid` (`uuid`),
   UNIQUE KEY `processor_pipeline_uuid` (`pipeline_uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS copy_processor;
 DELIMITER //

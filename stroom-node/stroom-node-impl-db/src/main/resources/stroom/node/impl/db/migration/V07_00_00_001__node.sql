@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS node (
     update_user           varchar(255) NOT NULL,
     url                   varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
-    priority              smallint(6) NOT NULL,
-    enabled               tinyint(1) NOT NULL DEFAULT '0',
+    priority              smallint NOT NULL,
+    enabled               tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name),
     UNIQUE KEY            url (url)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

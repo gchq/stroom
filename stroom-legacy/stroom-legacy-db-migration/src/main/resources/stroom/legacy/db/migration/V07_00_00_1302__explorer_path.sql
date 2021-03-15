@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `explorer_path` (
   KEY `explorer_path_descendant_depth` (`descendant`,`depth`),
   KEY `explorer_path_ancestor_depth_order_index` (`ancestor`,`depth`,`order_index`),
   KEY `explorer_path_depth` (`depth`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the explorer table
