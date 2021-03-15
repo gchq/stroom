@@ -166,20 +166,20 @@ class AccountDaoImpl implements AccountDao {
                     Account::getLastName));
 
     private final IdentityConfig config;
-    private final AuthDbConnProvider authDbConnProvider;
+    private final IdentityDbConnProvider identityDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
 
     @Inject
     public AccountDaoImpl(final IdentityConfig config,
-                          final AuthDbConnProvider authDbConnProvider) {
+                          final IdentityDbConnProvider identityDbConnProvider) {
         this.config = config;
-        this.authDbConnProvider = authDbConnProvider;
+        this.identityDbConnProvider = identityDbConnProvider;
 
         genericDao = new GenericDao<>(
                 stroom.security.identity.db.jooq.tables.Account.ACCOUNT,
                 stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID,
                 Account.class,
-                authDbConnProvider);
+                identityDbConnProvider);
         genericDao.setObjectToRecordMapper(ACCOUNT_TO_RECORD_MAPPER);
         genericDao.setRecordToObjectMapper(RECORD_TO_ACCOUNT_MAPPER);
     }
@@ -188,7 +188,7 @@ class AccountDaoImpl implements AccountDao {
     public AccountResultPage list() {
         final TableField<AccountRecord, String> orderByUserIdField =
                 stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID;
-        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final List<Account> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PROCESSING_ACCOUNT.isFalse())
                 .orderBy(orderByUserIdField)
@@ -203,7 +203,7 @@ class AccountDaoImpl implements AccountDao {
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
                 final List<Account> list = context
                         .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
@@ -248,7 +248,7 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Account create(final Account account, final String password) {
         final String passwordHash = hashPassword(password);
-        return JooqUtil.contextResult(authDbConnProvider, context -> {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}",
                     stroom.security.identity.db.jooq.tables.Account.ACCOUNT.getName()));
             final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
@@ -262,7 +262,7 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public void recordSuccessfulLogin(final String userId) {
         // We reset the failed login count if we have a successful login
-        JooqUtil.context(authDbConnProvider, context -> context
+        JooqUtil.context(identityDbConnProvider, context -> context
                 .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES, 0)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS, (Long) null)
@@ -280,7 +280,7 @@ class AccountDaoImpl implements AccountDao {
             return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
-        Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+        Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional());
@@ -299,7 +299,7 @@ class AccountDaoImpl implements AccountDao {
             account.setEnabled(true);
             create(account, User.ADMIN_USER_NAME);
 
-            optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+            optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
                     .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                     .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
                     .fetchOptional());
@@ -332,7 +332,7 @@ class AccountDaoImpl implements AccountDao {
         boolean locked = false;
 
         if (config.getFailedLoginLockThreshold() != null) {
-            JooqUtil.context(authDbConnProvider, context -> context
+            JooqUtil.context(identityDbConnProvider, context -> context
                     .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
 //                    .set(DSL.row(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
 //                            DSL.row(DSL.select(ACCOUNT.LOGIN_FAILURES.plus(1),
@@ -354,7 +354,7 @@ class AccountDaoImpl implements AccountDao {
                     .execute());
 
             // Query the field back to find out if we locked.
-            locked = JooqUtil.contextResult(authDbConnProvider, context -> context
+            locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
                     .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOCKED)
                     .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                     .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
@@ -362,7 +362,7 @@ class AccountDaoImpl implements AccountDao {
                     .map(Record1::value1)
                     .orElse(false));
         } else {
-            JooqUtil.context(authDbConnProvider, context -> context
+            JooqUtil.context(identityDbConnProvider, context -> context
                     .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                     .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES,
                             stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES.plus(1))
@@ -401,7 +401,7 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public Optional<Account> get(final String userId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional()
@@ -410,7 +410,7 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public Optional<Integer> getId(final String userId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
                 .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
@@ -463,7 +463,7 @@ class AccountDaoImpl implements AccountDao {
     public void changePassword(final String userId, final String newPassword) {
         final String newPasswordHash = PasswordHashUtil.hash(newPassword);
 
-        final int count = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PASSWORD_HASH, newPasswordHash)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PASSWORD_LAST_CHANGED_MS,
@@ -483,7 +483,7 @@ class AccountDaoImpl implements AccountDao {
                                        final boolean forcePasswordChangeOnFirstLogin) {
         Objects.requireNonNull(userId, "userId must not be null");
 
-        final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final AccountRecord user = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
                 .fetchOne());
@@ -522,7 +522,7 @@ class AccountDaoImpl implements AccountDao {
                 .minus(neverUsedAccountDeactivationThreshold)
                 .toEpochMilli();
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE, true)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS
@@ -546,7 +546,7 @@ class AccountDaoImpl implements AccountDao {
                 .minus(unusedAccountDeactivationThreshold)
                 .toEpochMilli();
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE, true)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS

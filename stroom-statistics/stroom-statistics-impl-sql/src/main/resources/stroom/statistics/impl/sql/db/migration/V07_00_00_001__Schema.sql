@@ -30,7 +30,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Table structure for table sql_stat_key (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
-  ID 				bigint(20)   auto_increment PRIMARY KEY,
+  ID 				bigint   auto_increment PRIMARY KEY,
   VER 				tinyint(4)   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   UNIQUE 			(NAME)
@@ -40,12 +40,12 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
 -- Table structure for table sql_stat_val (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
-  TIME_MS               bigint(20) NOT NULL,
+  TIME_MS               bigint NOT NULL,
   PRES                  tinyint(4) NOT NULL,
   VAL_TP                tinyint(4) NOT NULL,
   VAL                   double     NOT NULL,
-  CT                    bigint(20) NOT NULL,
-  FK_SQL_STAT_KEY_ID    bigint(20) NOT NULL,
+  CT                    bigint NOT NULL,
+  FK_SQL_STAT_KEY_ID    bigint NOT NULL,
   PRIMARY KEY (FK_SQL_STAT_KEY_ID, TIME_MS, VAL_TP, PRES),
   CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
       FOREIGN KEY (FK_SQL_STAT_KEY_ID)
@@ -67,12 +67,12 @@ MODIFY COLUMN VAL double;
 -- Table structure for table sql_stat_val_src (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
-  ID 				bigint(20)   auto_increment,
-  TIME_MS			bigint(20)   NOT NULL,
+  ID 				bigint   auto_increment,
+  TIME_MS			bigint   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   VAL_TP 			tinyint(4)   NOT NULL,
   VAL				double       NOT NULL,
-  CT				bigint(20)   NOT NULL,
+  CT				bigint   NOT NULL,
   PROCESSING        bit(1)       NOT NULL DEFAULT 0,
   PRIMARY KEY (ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -107,7 +107,7 @@ BEGIN
 
         -- We are missing the CT col so add it
         ALTER TABLE SQL_STAT_VAL_SRC
-        ADD COLUMN CT BIGINT(20) AFTER VAL;
+        ADD COLUMN CT bigint AFTER VAL;
 
     END IF;
 
@@ -117,7 +117,7 @@ BEGIN
 
     -- Now make it not null (idempotent)
     ALTER TABLE SQL_STAT_VAL_SRC
-    MODIFY COLUMN CT BIGINT(20) NOT NULL;
+    MODIFY COLUMN CT bigint NOT NULL;
 
 END//
 CREATE PROCEDURE add_id_to_stat_val_src ()
@@ -138,12 +138,12 @@ BEGIN
 
         -- Create the table with the new structure
         CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
-          ID bigint(20) auto_increment,
-          TIME_MS bigint(20) NOT NULL,
+          ID bigint auto_increment,
+          TIME_MS bigint NOT NULL,
           NAME varchar(766) NOT NULL,
           VAL_TP tinyint(4) NOT NULL,
           VAL double NOT NULL,
-          CT bigint(20) NOT NULL,
+          CT bigint NOT NULL,
           PROCESSING bit(1) NOT NULL DEFAULT 0,
           PRIMARY KEY (ID)
         ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

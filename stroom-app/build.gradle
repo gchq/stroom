@@ -145,7 +145,7 @@ dependencies {
     compile libs.dropwizard_validation
     compile libs.flyway_core
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
@@ -213,7 +213,7 @@ dependencies {
 
     testCompile libs.commons_io
     testCompile libs.classgraph
-    testCompile libs.guice4
+    testCompile libs.guice5
     testCompile libs.guice_extension
     testCompile libs.hikari
     testCompile libs.jinjava

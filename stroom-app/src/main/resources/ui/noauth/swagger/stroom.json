@@ -828,7 +828,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Confirm an authenticated users current password.",
+        "summary" : "Confirm an authenticated user's current password.",
         "tags" : [ "Authentication" ]
       }
     },

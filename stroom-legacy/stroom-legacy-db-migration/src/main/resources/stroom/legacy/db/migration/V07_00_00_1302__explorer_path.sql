@@ -21,10 +21,10 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the explorer_path table
 --
 CREATE TABLE IF NOT EXISTS `explorer_path` (
-  `ancestor` int(11) NOT NULL,
-  `descendant` int(11) NOT NULL,
-  `depth` int(11) NOT NULL,
-  `order_index` int(11) NOT NULL,
+  `ancestor` int NOT NULL,
+  `descendant` int NOT NULL,
+  `depth` int NOT NULL,
+  `order_index` int NOT NULL,
   PRIMARY KEY (`ancestor`,`descendant`),
   KEY `explorer_path_descendant` (`descendant`),
   KEY `explorer_path_descendant_depth` (`descendant`,`depth`),

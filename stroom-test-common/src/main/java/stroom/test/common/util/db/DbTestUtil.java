@@ -8,7 +8,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -75,7 +75,7 @@ public class DbTestUtil {
         return dbModule.getConnectionProvider(
                 () -> config,
                 new TestDataSourceFactory(new CommonDbConfig()),
-                new ForceCoreMigration() {
+                new ForceLegacyMigration() {
                 });
     }
 
@@ -140,9 +140,9 @@ public class DbTestUtil {
                     int result = 0;
                     result = statement.executeUpdate("CREATE DATABASE `" + dbName +
                             "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-//                        connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
-//                        connectionConfig.getJdbcDriverUsername() + "';");
+                    result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+                            connectionConfig.getUser() + "'@'%' IDENTIFIED BY '" +
+                            connectionConfig.getPassword() + "';");
                     result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
                             connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
                 }
@@ -178,8 +178,8 @@ public class DbTestUtil {
         // This system prop allows a dev to use their own stroom-resources DB instead of test containers.
         // This is useful when debugging a test that needs to access the DB as the embedded DB has to
         // migrate the DB from scratch on each run which is very time consuming
-        boolean useEmbeddedDb = (useTestContainersEnvVarVal == null
-                || !useTestContainersEnvVarVal.equalsIgnoreCase("false"));
+        boolean useEmbeddedDb = (useTestContainersEnvVarVal != null
+                && useTestContainersEnvVarVal.equalsIgnoreCase("true"));
 
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {

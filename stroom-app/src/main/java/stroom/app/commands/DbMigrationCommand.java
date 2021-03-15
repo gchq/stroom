@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 /**
@@ -56,7 +58,15 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module
             // Relies on all db modules adding an entry to the multibinder
-            injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+            final Set<DataSource> dataSources = injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+            LOGGER.info("Used {} data sources:\n{}",
+                    dataSources.size(),
+                    dataSources.stream()
+                            .map(dataSource -> dataSource.getClass().getName())
+                            .map(name -> "  " + name)
+                            .sorted()
+                            .collect(Collectors.joining("\n")));
+
         } catch (Exception e) {
             LOGGER.error("Error running DB migrations", e);
             System.exit(1);

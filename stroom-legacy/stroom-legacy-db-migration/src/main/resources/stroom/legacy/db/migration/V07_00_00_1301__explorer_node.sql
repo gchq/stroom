@@ -21,7 +21,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the explorer_node table
 --
 CREATE TABLE IF NOT EXISTS `explorer_node` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,

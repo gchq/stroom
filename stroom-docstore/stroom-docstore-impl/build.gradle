@@ -14,7 +14,7 @@ dependencies {
     compile project(':stroom-docref')
 
     // 3rd party libs
-//    compile libs.guice4
+//    compile libs.guice5
 //    compile libs.guice_assistedinject
 //    compile libs.jackson_annotations
 //    compile libs.jackson_databind

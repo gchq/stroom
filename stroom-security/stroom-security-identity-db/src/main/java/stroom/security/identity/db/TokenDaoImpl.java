@@ -139,19 +139,19 @@ class TokenDaoImpl implements TokenDao {
                     TokenResource.FIELD_DEF_COMMENTS,
                     Token::getComments));
 
-    private final AuthDbConnProvider authDbConnProvider;
+    private final IdentityDbConnProvider identityDbConnProvider;
     private final TokenTypeDao tokenTypeDao;
 
     @Inject
-    TokenDaoImpl(final AuthDbConnProvider authDbConnProvider,
+    TokenDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
                  final TokenTypeDao tokenTypeDao) {
-        this.authDbConnProvider = authDbConnProvider;
+        this.identityDbConnProvider = identityDbConnProvider;
         this.tokenTypeDao = tokenTypeDao;
     }
 
     @Override
     public TokenResultPage list() {
-        final List<Token> list = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final List<Token> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
                         .eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
@@ -167,7 +167,7 @@ class TokenDaoImpl implements TokenDao {
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
                 final List<Token> list = context
                         .select(
@@ -259,7 +259,7 @@ class TokenDaoImpl implements TokenDao {
         final String tokenType = token.getTokenType().toLowerCase();
         final int tokenTypeId = tokenTypeDao.getTokenTypeId(tokenType);
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}",
                     stroom.security.identity.db.jooq.tables.Token.TOKEN.getName()));
             final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(token,
@@ -366,7 +366,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public int deleteAllTokensExceptAdmins() {
-        final Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final Integer adminUserId = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
                 .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
                 .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID
@@ -374,7 +374,7 @@ class TokenDaoImpl implements TokenDao {
                 .fetchOne()
                 .map(r -> r.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)));
 
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.ne(adminUserId))
                 .execute());
@@ -382,7 +382,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public int deleteTokenById(int tokenId) {
-        return JooqUtil.contextResult(authDbConnProvider,
+        return JooqUtil.contextResult(identityDbConnProvider,
                 context ->
                         context
                                 .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
@@ -392,7 +392,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public int deleteTokenByTokenString(String token) {
-        return JooqUtil.contextResult(authDbConnProvider,
+        return JooqUtil.contextResult(identityDbConnProvider,
                 context ->
                         context
                                 .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
@@ -402,7 +402,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public List<Token> getTokensForAccount(final int accountId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
@@ -431,7 +431,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public Optional<Token> readById(int tokenId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
@@ -461,7 +461,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public Optional<Token> readByToken(String token) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
@@ -491,7 +491,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .update(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .set(stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED, enabled)
                 .set(stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS, System.currentTimeMillis())

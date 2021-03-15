@@ -21,12 +21,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_volume_state table
 --
 CREATE TABLE IF NOT EXISTS fs_volume_state (
-  id                        int(11) NOT NULL AUTO_INCREMENT,
-  version                   int(11) NOT NULL,
-  bytes_used                bigint(20) DEFAULT NULL,
-  bytes_free                bigint(20) DEFAULT NULL,
-  bytes_total               bigint(20) DEFAULT NULL,
-  update_time_ms            bigint(20) DEFAULT NULL,
+  id                        int NOT NULL AUTO_INCREMENT,
+  version                   int NOT NULL,
+  bytes_used                bigint DEFAULT NULL,
+  bytes_free                bigint DEFAULT NULL,
+  bytes_total               bigint DEFAULT NULL,
+  update_time_ms            bigint DEFAULT NULL,
   PRIMARY KEY       (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

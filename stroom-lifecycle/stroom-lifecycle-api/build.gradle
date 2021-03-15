@@ -1,5 +1,5 @@
 ext.moduleName = 'stroom.lifecycle.api'
 
 dependencies {
-    compile libs.guice4
+    compile libs.guice5
 }

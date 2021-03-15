@@ -12,7 +12,7 @@ dependencies {
 
     compile project(':stroom-docref')
     
-    compile libs.guice4
+    compile libs.guice5
     compile libs.javax_inject
     compile libs.slf4j_api
     

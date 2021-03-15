@@ -35,7 +35,7 @@ dependencies {
     compile libs.fast_infoset
     compile libs.google_findbugs
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.guice_assistedinject
     compile libs.hadoopCommonShaded
     compile libs.hadoopHdfsShaded

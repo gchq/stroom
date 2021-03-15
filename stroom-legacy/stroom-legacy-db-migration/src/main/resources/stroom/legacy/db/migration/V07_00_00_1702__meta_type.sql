@@ -21,7 +21,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta_type table
 --
 CREATE TABLE IF NOT EXISTS meta_type (
-  id            int(11) NOT NULL AUTO_INCREMENT,
+  id            int NOT NULL AUTO_INCREMENT,
   name          varchar(255) NOT NULL,
   PRIMARY KEY   (id),
   UNIQUE KEY    name (name)

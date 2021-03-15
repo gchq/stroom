@@ -20,7 +20,7 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
 
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.slf4j_api
