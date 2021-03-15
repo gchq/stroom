@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS query (
     component_id          varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     data                  longtext,
-    favourite             tinyint(1) NOT NULL DEFAULT '0',
+    favourite             tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

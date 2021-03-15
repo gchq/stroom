@@ -31,18 +31,18 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
   ID 				bigint   auto_increment PRIMARY KEY,
-  VER 				tinyint(4)   NOT NULL,
+  VER 				tinyint   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   UNIQUE 			(NAME)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table sql_stat_val (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   TIME_MS               bigint NOT NULL,
-  PRES                  tinyint(4) NOT NULL,
-  VAL_TP                tinyint(4) NOT NULL,
+  PRES                  tinyint NOT NULL,
+  VAL_TP                tinyint NOT NULL,
   VAL                   double     NOT NULL,
   CT                    bigint NOT NULL,
   FK_SQL_STAT_KEY_ID    bigint NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
       FOREIGN KEY (FK_SQL_STAT_KEY_ID)
       REFERENCES SQL_STAT_KEY (ID)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- 'f' == false, obvs
 CALL statistics_create_non_unique_index_v1(
@@ -70,12 +70,12 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   ID 				bigint   auto_increment,
   TIME_MS			bigint   NOT NULL,
   NAME 				varchar(766) NOT NULL,
-  VAL_TP 			tinyint(4)   NOT NULL,
+  VAL_TP 			tinyint   NOT NULL,
   VAL				double       NOT NULL,
   CT				bigint   NOT NULL,
   PROCESSING        bit(1)       NOT NULL DEFAULT 0,
   PRIMARY KEY (ID)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- used for deletions of old data where the FK is not involved
 CALL statistics_create_non_unique_index_v1(
@@ -88,7 +88,11 @@ CALL statistics_create_non_unique_index_v1(
 ALTER TABLE SQL_STAT_VAL_SRC
 MODIFY COLUMN VAL double ;
 
-ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint(1) NOT NULL DEFAULT '0';
+-- Change table encoding.
+ALTER TABLE SQL_STAT_KEY              CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE SQL_STAT_VAL              CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint NOT NULL DEFAULT '0';
 
 --
 -- Copy data into the job node table
@@ -141,12 +145,12 @@ BEGIN
           ID bigint auto_increment,
           TIME_MS bigint NOT NULL,
           NAME varchar(766) NOT NULL,
-          VAL_TP tinyint(4) NOT NULL,
+          VAL_TP tinyint NOT NULL,
           VAL double NOT NULL,
           CT bigint NOT NULL,
           PROCESSING bit(1) NOT NULL DEFAULT 0,
           PRIMARY KEY (ID)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+        ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
         -- Copy the data over
         INSERT INTO SQL_STAT_VAL_SRC (

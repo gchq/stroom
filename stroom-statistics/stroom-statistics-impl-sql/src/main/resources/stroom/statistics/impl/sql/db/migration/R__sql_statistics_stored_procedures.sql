@@ -6,10 +6,10 @@ DELIMITER //
 DROP PROCEDURE IF EXISTS `stage1Upsert` //
 
 CREATE PROCEDURE `stage1Upsert` (
-    IN p_sqlPrecision tinyint(4),
-    IN p_precision tinyint(4),
-    IN p_valueType tinyint(4),
-    IN p_aggregateToMs bigint(20),
+    IN p_sqlPrecision tinyint,
+    IN p_precision tinyint,
+    IN p_valueType tinyint,
+    IN p_aggregateToMs bigint,
     OUT p_rowCount int)
 BEGIN
     DECLARE change_count INT DEFAULT 0;
@@ -118,11 +118,11 @@ END //
 DROP PROCEDURE IF EXISTS `stage2Upsert` //
 
 CREATE PROCEDURE `stage2Upsert` (
-    IN p_targetPrecision tinyint(4),
-    IN p_targetSqlPrecision tinyint(4),
-    IN p_lastPrecision tinyint(4),
-    IN p_valueType tinyint(4),
-    IN p_aggregateToMs bigint(20),
+    IN p_targetPrecision tinyint,
+    IN p_targetSqlPrecision tinyint,
+    IN p_lastPrecision tinyint,
+    IN p_valueType tinyint,
+    IN p_aggregateToMs bigint,
     OUT p_rowCount int)
 BEGIN
     CREATE TEMPORARY TABLE TEMP_AGG AS (

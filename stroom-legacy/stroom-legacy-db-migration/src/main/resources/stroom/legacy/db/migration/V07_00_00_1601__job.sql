@@ -28,10 +28,10 @@ CREATE TABLE IF NOT EXISTS job (
     update_time_ms        bigint NOT NULL,
     update_user           varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
-    enabled               tinyint(1) NOT NULL DEFAULT '0',
+    enabled               tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     UNIQUE KEY name       (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the job table

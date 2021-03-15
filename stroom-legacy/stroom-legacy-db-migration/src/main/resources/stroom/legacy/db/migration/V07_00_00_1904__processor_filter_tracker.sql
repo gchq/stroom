@@ -19,7 +19,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --Create Table: CREATE TABLE `STRM_PROC_FILT_TRAC` (
 --  `ID` int NOT NULL AUTO_INCREMENT,
---  `VER` tinyint(4) NOT NULL,
+--  `VER` tinyint NOT NULL,
 --  `MIN_STRM_ID` bigint NOT NULL,
 --  `MIN_EVT_ID` bigint NOT NULL,
 --  `MIN_STRM_CRT_MS` bigint DEFAULT NULL,
@@ -31,7 +31,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --  `STRM_CT` bigint DEFAULT NULL,
 --  `EVT_CT` bigint DEFAULT NULL,
 --  PRIMARY KEY (`ID`)
---) ENGINE=InnoDB DEFAULT CHARSET=latin1
+--) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
   `meta_count` bigint DEFAULT NULL,
   `event_count` bigint DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter_tracker;
 DELIMITER //

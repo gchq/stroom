@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
 
+
+## [v7.0-beta.92] - 2021-03-15
+
+* Issue **#2096** : Remove deprecated int display lengths when creating tables
+
+* Issue **#2095** : Tidy upo statistics migration.
+
+* Issue **#2094** : Corrected DB table creation to state the charset as `utf8mb4` and not `utf8` which is ambiguous in MySQL.
+
+
 ## [v7.0-beta.91] - 2021-03-14
 
 * Refactor auth/identity DB migration scripts.

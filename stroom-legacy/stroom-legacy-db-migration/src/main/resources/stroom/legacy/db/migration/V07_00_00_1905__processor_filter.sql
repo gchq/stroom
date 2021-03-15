@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS`processor_filter` (
   `fk_processor_filter_tracker_id` int NOT NULL,
   `data` longtext NOT NULL,
   `priority` int NOT NULL,
-  `reprocess` tinyint(1) NOT NULL DEFAULT '0',
-  `enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `reprocess` tinyint NOT NULL DEFAULT '0',
+  `enabled` tinyint NOT NULL DEFAULT '0',
+  `deleted` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uuid` (`uuid`),
   KEY `processor_filter_fk_processor_id` (`fk_processor_id`),
   KEY `processor_filter_fk_processor_filter_tracker_id` (`fk_processor_filter_tracker_id`),
   CONSTRAINT `processor_filter_fk_processor_filter_tracker_id` FOREIGN KEY (`fk_processor_filter_tracker_id`) REFERENCES `processor_filter_tracker` (`id`),
   CONSTRAINT `processor_filter_fk_processor_id` FOREIGN KEY (`fk_processor_id`) REFERENCES `processor` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter;
 DELIMITER //
