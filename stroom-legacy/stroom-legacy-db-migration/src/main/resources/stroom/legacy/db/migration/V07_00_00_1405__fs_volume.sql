@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS fs_volume (
     CONSTRAINT fs_volume_fk_fs_volume_state_id
     FOREIGN KEY (fk_fs_volume_state_id)
         REFERENCES fs_volume_state (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the fs_volume table

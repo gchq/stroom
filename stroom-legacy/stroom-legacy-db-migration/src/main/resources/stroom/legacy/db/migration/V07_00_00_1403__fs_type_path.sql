@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS fs_type_path (
     path              varchar(255) NOT NULL,
     PRIMARY KEY       (id),
     UNIQUE KEY        name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the fs_type_path table

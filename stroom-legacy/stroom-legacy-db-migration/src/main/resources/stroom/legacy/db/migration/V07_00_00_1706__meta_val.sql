@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `meta_val` (
   PRIMARY KEY (`id`),
   KEY `meta_val_create_time` (`create_time`),
   KEY `meta_val_meta_id` (`meta_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the meta_val table

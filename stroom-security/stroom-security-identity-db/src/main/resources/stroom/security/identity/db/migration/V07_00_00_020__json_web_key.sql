@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS json_web_key (
     CONSTRAINT json_web_key_fk_token_type_id
         FOREIGN KEY (fk_token_type_id)
         REFERENCES token_type (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS identity_copy_old_auth_json_web_key;
 

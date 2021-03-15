@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `processor` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `processor_uuid` (`uuid`),
   UNIQUE KEY `processor_pipeline_uuid` (`pipeline_uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS copy_processor;
 DELIMITER //

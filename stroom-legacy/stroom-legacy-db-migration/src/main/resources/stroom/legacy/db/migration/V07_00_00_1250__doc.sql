@@ -17,6 +17,6 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-ALTER TABLE doc CONVERT TO CHARACTER SET utf8mb4;
+ALTER TABLE doc CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
