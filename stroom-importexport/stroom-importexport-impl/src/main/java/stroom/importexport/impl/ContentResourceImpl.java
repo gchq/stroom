@@ -47,7 +47,7 @@ public class ContentResourceImpl implements ContentResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceKey importContent(final ImportConfigRequest request) {
-        if (request.getConfirmList() == null || request.getConfirmList().isEmpty()) {
+        if (request.getConfirmList() == null) {
             throw new BadRequestException("Missing confirm list");
         }
 
