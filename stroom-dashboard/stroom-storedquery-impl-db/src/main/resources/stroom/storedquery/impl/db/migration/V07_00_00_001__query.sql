@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS query (
     data                  longtext,
     favourite             tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

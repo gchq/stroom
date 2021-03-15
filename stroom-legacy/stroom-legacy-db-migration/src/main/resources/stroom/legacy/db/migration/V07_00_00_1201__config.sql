@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS config (
     val                   longtext NOT NULL,
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Copy data into the config table

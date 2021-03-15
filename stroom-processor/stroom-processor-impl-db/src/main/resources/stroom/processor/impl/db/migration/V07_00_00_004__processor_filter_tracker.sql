@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
   `meta_count` bigint DEFAULT NULL,
   `event_count` bigint DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

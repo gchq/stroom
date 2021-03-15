@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `explorer_node` (
   `tags` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `explorer_node_type_uuid` (`type`,`uuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 
 --
 -- Copy data into the explorer table

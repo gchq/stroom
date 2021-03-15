@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS meta_processor (
     pipeline_uuid   varchar(255) DEFAULT NULL,
     PRIMARY KEY     (id),
     UNIQUE KEY      processor_uuid (processor_uuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

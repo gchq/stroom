@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS node (
     enabled               tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Copy data into the node table

@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS oauth_client (
     PRIMARY KEY (id),
     UNIQUE KEY client_id (client_id),
     UNIQUE KEY name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

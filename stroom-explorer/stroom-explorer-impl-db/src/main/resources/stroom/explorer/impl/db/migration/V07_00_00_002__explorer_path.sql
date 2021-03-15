@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `explorer_path` (
   KEY `explorer_path_descendant_depth` (`descendant`,`depth`),
   KEY `explorer_path_ancestor_depth_order_index` (`ancestor`,`depth`,`order_index`),
   KEY `explorer_path_depth` (`depth`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

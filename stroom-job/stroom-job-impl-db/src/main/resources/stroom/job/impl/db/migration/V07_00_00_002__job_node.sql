@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS job_node (
     enabled               tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     CONSTRAINT job_id FOREIGN KEY (job_id) REFERENCES job (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

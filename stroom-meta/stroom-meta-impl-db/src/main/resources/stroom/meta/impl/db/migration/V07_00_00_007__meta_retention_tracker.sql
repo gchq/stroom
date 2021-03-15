@@ -23,7 +23,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS `meta_retention_tracker` (
     `last_run_time`            bigint   NOT NULL,
     `retention_rules_version`  varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

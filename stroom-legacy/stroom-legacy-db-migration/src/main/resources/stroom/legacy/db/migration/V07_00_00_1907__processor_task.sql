@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `processor_task` (
   CONSTRAINT `processor_task_fk_processor_feed_id` FOREIGN KEY (`fk_processor_feed_id`) REFERENCES `processor_feed` (`id`),
   CONSTRAINT `processor_task_fk_processor_filter_id` FOREIGN KEY (`fk_processor_filter_id`) REFERENCES `processor_filter` (`id`),
   CONSTRAINT `processor_task_fk_processor_node_id` FOREIGN KEY (`fk_processor_node_id`) REFERENCES `processor_node` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP PROCEDURE IF EXISTS copy_processor_task;
 DELIMITER //

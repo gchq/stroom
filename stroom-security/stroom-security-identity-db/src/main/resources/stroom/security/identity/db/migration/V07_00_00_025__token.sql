@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS token (
     CONSTRAINT token_fk_token_type_id
         FOREIGN KEY (fk_token_type_id)
         REFERENCES token_type (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Copy data into the token table

@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS index_shard (
     CONSTRAINT index_shard_fk_volume_id
         FOREIGN KEY (fk_volume_id)
         REFERENCES index_volume (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

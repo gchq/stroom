@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS node (
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name),
     UNIQUE KEY            url (url)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

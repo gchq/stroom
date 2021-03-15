@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `doc` (
   UNIQUE KEY `doc_type_uuid_ext_idx` (`type`,`uuid`,`ext`),
   KEY `doc_type_uuid_idx` (`type`,`uuid`),
   KEY `doc_uuid_idx` (`uuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=446 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=446 DEFAULT CHARSET=utf8mb4;
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

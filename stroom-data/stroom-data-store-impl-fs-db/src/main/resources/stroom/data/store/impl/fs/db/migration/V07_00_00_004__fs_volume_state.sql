@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS fs_volume_state (
   bytes_total               bigint DEFAULT NULL,
   update_time_ms            bigint DEFAULT NULL,
   PRIMARY KEY       (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

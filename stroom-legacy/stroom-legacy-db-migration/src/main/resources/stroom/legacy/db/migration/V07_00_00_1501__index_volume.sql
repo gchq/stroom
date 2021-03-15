@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS index_volume_group (
   -- reference was a database generated ID or a uuid.
   UNIQUE (name),
   PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS index_volume (
   id                        int NOT NULL AUTO_INCREMENT,
@@ -58,6 +58,6 @@ CREATE TABLE IF NOT EXISTS index_volume (
   CONSTRAINT index_volume_group_link_fk_group_name
       FOREIGN KEY (fk_index_volume_group_id)
       REFERENCES index_volume_group (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

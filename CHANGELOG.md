@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+* Issue **#2094** : Corrected DB table creation to state the charset as `utf8mb4` and not `utf8` which is ambiguous in MySQL.
+
+
 ## [v7.0-beta.91] - 2021-03-14
 
 * Refactor auth/identity DB migration scripts.

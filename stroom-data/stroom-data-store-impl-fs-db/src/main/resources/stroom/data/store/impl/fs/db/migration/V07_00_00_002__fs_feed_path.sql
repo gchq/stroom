@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS fs_feed_path (
     path              varchar(255) NOT NULL,
     PRIMARY KEY       (id),
     UNIQUE KEY        name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

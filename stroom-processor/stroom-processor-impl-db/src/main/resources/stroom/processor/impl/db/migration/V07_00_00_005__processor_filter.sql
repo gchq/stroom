@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `processor_filter` (
   KEY `processor_filter_fk_processor_filter_tracker_id` (`fk_processor_filter_tracker_id`),
   CONSTRAINT `processor_filter_fk_processor_filter_tracker_id` FOREIGN KEY (`fk_processor_filter_tracker_id`) REFERENCES `processor_filter_tracker` (`id`),
   CONSTRAINT `processor_filter_fk_processor_id` FOREIGN KEY (`fk_processor_id`) REFERENCES `processor` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

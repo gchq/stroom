@@ -31,7 +31,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --  `STRM_CT` bigint DEFAULT NULL,
 --  `EVT_CT` bigint DEFAULT NULL,
 --  PRIMARY KEY (`ID`)
---) ENGINE=InnoDB DEFAULT CHARSET=latin1
+--) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
   `meta_count` bigint DEFAULT NULL,
   `event_count` bigint DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter_tracker;
 DELIMITER //

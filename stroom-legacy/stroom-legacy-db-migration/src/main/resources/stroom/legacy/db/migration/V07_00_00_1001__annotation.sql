@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS annotation (
   comment               longtext,
   history               longtext,
   PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS annotation_entry (
   id                    bigint NOT NULL AUTO_INCREMENT,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS annotation_entry (
   data                  longtext,
   PRIMARY KEY           (id),
   CONSTRAINT            annotation_entry_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS annotation_data_link (
   id                    bigint NOT NULL AUTO_INCREMENT,
@@ -42,6 +42,6 @@ CREATE TABLE IF NOT EXISTS annotation_data_link (
   PRIMARY KEY           (id),
   UNIQUE KEY            fk_annotation_id_stream_id_event_id (fk_annotation_id, stream_id, event_id),
   CONSTRAINT            annotation_data_link_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

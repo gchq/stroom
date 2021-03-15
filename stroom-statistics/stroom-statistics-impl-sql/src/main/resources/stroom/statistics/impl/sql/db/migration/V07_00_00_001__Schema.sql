@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
   VER 				tinyint(4)   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   UNIQUE 			(NAME)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Table structure for table sql_stat_val (idempotent)
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
       FOREIGN KEY (FK_SQL_STAT_KEY_ID)
       REFERENCES SQL_STAT_KEY (ID)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 'f' == false, obvs
 CALL statistics_create_non_unique_index_v1(
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   CT				bigint   NOT NULL,
   PROCESSING        bit(1)       NOT NULL DEFAULT 0,
   PRIMARY KEY (ID)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- used for deletions of old data where the FK is not involved
 CALL statistics_create_non_unique_index_v1(
@@ -146,7 +146,7 @@ BEGIN
           CT bigint NOT NULL,
           PROCESSING bit(1) NOT NULL DEFAULT 0,
           PRIMARY KEY (ID)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
         -- Copy the data over
         INSERT INTO SQL_STAT_VAL_SRC (

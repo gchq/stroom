@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS activity (
   user_id               varchar(255) NOT NULL,
   json                  longtext,
   PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
