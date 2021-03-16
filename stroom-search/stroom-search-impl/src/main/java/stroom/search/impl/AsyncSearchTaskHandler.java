@@ -172,7 +172,6 @@ class AsyncSearchTaskHandler {
                                                     shards,
                                                     task,
                                                     query,
-                                                    storedFields,
                                                     taskContext));
                             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
                                     executor);
@@ -216,7 +215,6 @@ class AsyncSearchTaskHandler {
                             final List<Long> shards,
                             final AsyncSearchTask task,
                             final Query query,
-                            final String[] storedFields,
                             final TaskContext taskContext) {
         LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
         taskContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
@@ -230,7 +228,6 @@ class AsyncSearchTaskHandler {
                 task.getKey(),
                 query,
                 shards,
-                storedFields,
                 task.getSettings(),
                 task.getDateTimeLocale(),
                 task.getNow());

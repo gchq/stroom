@@ -333,7 +333,6 @@ export interface ClusterSearchTask {
   settings?: CoprocessorSettings[];
   shards?: number[];
   sourceTaskId?: TaskId;
-  storedFields?: string[];
   taskName?: string;
 }
 

@@ -46,7 +46,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
                                  final Receiver receiver,
                                  final List<Long> shards,
                                  final IndexShardQueryFactory queryFactory,
-                                 final String[] fieldNames,
+                                 final String[] storedFieldNames,
                                  final int maxThreadsPerTask,
                                  final TaskContextFactory taskContextFactory,
                                  final TaskContext parentContext,
@@ -58,7 +58,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
         for (final Long shard : shards) {
             final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory,
                     shard,
-                    fieldNames,
+                    storedFieldNames,
                     receiver,
                     tracker.getHitCount());
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider, tracker);

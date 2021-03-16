@@ -27,7 +27,7 @@ class IndexShardSearchTask {
 
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
-    private final String[] fieldNames;
+    private final String[] storedFieldNames;
     private final Receiver receiver;
     private final AtomicLong hitCount;
     private int shardNumber;
@@ -35,12 +35,12 @@ class IndexShardSearchTask {
 
     IndexShardSearchTask(final IndexShardQueryFactory queryFactory,
                          final long indexShardId,
-                         final String[] fieldNames,
+                         final String[] storedFieldNames,
                          final Receiver receiver,
                          final AtomicLong hitCount) {
         this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
-        this.fieldNames = fieldNames;
+        this.storedFieldNames = storedFieldNames;
         this.receiver = receiver;
         this.hitCount = hitCount;
     }
@@ -53,8 +53,8 @@ class IndexShardSearchTask {
         return indexShardId;
     }
 
-    String[] getFieldNames() {
-        return fieldNames;
+    String[] getStoredFieldNames() {
+        return storedFieldNames;
     }
 
     Receiver getReceiver() {

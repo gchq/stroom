@@ -23,6 +23,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
+import stroom.query.common.v2.Receiver;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -96,7 +97,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e::getMessage, e);
-                        error(task, e.getMessage(), e);
+                        error(task.getReceiver(), e.getMessage(), e);
 
                     } finally {
                         taskContext.info(() -> "Closing searcher for index shard " + indexShardId);
@@ -141,6 +142,9 @@ public class IndexShardSearchTaskHandler {
                     docIdStore,
                     task.getHitCount());
 
+            // Get the receiver.
+            final Receiver receiver = task.getReceiver();
+
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
@@ -153,13 +157,13 @@ public class IndexShardSearchTaskHandler {
                                                 try {
                                                     searcher.search(query, collector);
                                                 } catch (final IOException e) {
-                                                    error(task, e.getMessage(), e);
+                                                    error(receiver, e.getMessage(), e);
                                                 }
 
                                                 try {
                                                     docIdStore.put(OptionalInt.empty());
                                                 } catch (final InterruptedException e) {
-                                                    error(task, e.getMessage(), e);
+                                                    error(receiver, e.getMessage(), e);
 
                                                     // Continue to interrupt this thread.
                                                     Thread.currentThread().interrupt();
@@ -168,6 +172,9 @@ public class IndexShardSearchTaskHandler {
                                             () -> "searcher.search()"));
                     CompletableFuture.runAsync(runnable, executor);
 
+                    // Get an array of field names.
+                    final String[] storedFieldNames = task.getStoredFieldNames();
+
                     // Start converting found docIds into stored data values
                     boolean complete = false;
                     while (!complete) {
@@ -175,23 +182,23 @@ public class IndexShardSearchTaskHandler {
                         final OptionalInt optDocId = docIdStore.take();
                         if (optDocId.isPresent()) {
                             // If we have a doc id then retrieve the stored data for it.
-                            getStoredData(task, searcher, optDocId.getAsInt());
+                            getStoredData(storedFieldNames, receiver, searcher, optDocId.getAsInt());
                         } else {
                             complete = true;
                         }
                     }
                 } catch (final RuntimeException e) {
-                    error(task, e.getMessage(), e);
+                    error(receiver, e.getMessage(), e);
                 } finally {
                     searcherManager.release(searcher);
                 }
             } catch (final InterruptedException e) {
-                error(task, e.getMessage(), e);
+                error(receiver, e.getMessage(), e);
 
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } catch (final RuntimeException | IOException e) {
-                error(task, e.getMessage(), e);
+                error(receiver, e.getMessage(), e);
             }
         }
     }
@@ -202,39 +209,47 @@ public class IndexShardSearchTaskHandler {
      * only want to get stream and event ids, in these cases no values are
      * retrieved, only stream and event ids.
      */
-    private void getStoredData(final IndexShardSearchTask task, final IndexSearcher searcher, final int docId) {
+    private void getStoredData(final String[] storedFieldNames,
+                               final Receiver receiver,
+                               final IndexSearcher searcher,
+                               final int docId) {
         try {
-            final String[] fieldNames = task.getFieldNames();
-            final Val[] values = new Val[fieldNames.length];
+            final Val[] values = new Val[storedFieldNames.length];
             final Document document = searcher.doc(docId);
 
-            for (int i = 0; i < fieldNames.length; i++) {
-                final String storedField = fieldNames[i];
-                final IndexableField indexableField = document.getField(storedField);
+            for (int i = 0; i < storedFieldNames.length; i++) {
+                final String storedField = storedFieldNames[i];
 
-                // If the field is not in fact stored then it will be null here.
-                if (indexableField != null) {
-                    final String value = indexableField.stringValue();
-                    if (value != null) {
-                        final String trimmed = value.trim();
-                        if (trimmed.length() > 0) {
-                            values[i] = ValString.create(trimmed);
+                // If the field is null then it isn't stored.
+                if (storedField != null) {
+                    final IndexableField indexableField = document.getField(storedField);
+
+                    // If the field is not in fact stored then it will be null here.
+                    if (indexableField != null) {
+                        final String value = indexableField.stringValue();
+                        if (value != null) {
+                            final String trimmed = value.trim();
+                            if (trimmed.length() > 0) {
+                                values[i] = ValString.create(trimmed);
+                            }
                         }
                     }
                 }
             }
 
-            task.getReceiver().getValuesConsumer().accept(values);
+            receiver.getValuesConsumer().accept(values);
         } catch (final IOException | RuntimeException e) {
-            error(task, e.getMessage(), e);
+            error(receiver, e.getMessage(), e);
         }
     }
 
-    private void error(final IndexShardSearchTask task, final String message, final Throwable t) {
-        if (task == null) {
+    private void error(final Receiver receiver,
+                       final String message,
+                       final Throwable t) {
+        if (receiver == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getReceiver().getErrorConsumer().accept(new Error(message, t));
+            receiver.getErrorConsumer().accept(new Error(message, t));
         }
     }
 }

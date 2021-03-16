@@ -1,8 +1,10 @@
 package stroom.search.impl.shard;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
@@ -62,6 +64,7 @@ public class IndexShardSearchFactory {
 
     public void search(final ClusterSearchTask task,
                        final ExpressionOperator expression,
+                       final FieldIndex fieldIndex,
                        final Receiver receiver,
                        final TaskContext taskContext,
                        final AtomicLong hitCount) {
@@ -75,6 +78,17 @@ public class IndexShardSearchFactory {
 
         // Create a map of index fields keyed by name.
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
+
+        final String[] storedFieldNames = new String[fieldIndex.size()];
+        for (int i = 0; i < storedFieldNames.length; i++) {
+            final String fieldName = fieldIndex.getField(i);
+            if (fieldName != null) {
+                final IndexField indexField = indexFieldsMap.get(fieldName);
+                if (indexField != null && indexField.isStored()) {
+                    storedFieldNames[i] = fieldName;
+                }
+            }
+        }
 
         final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(
                 hitCount,
@@ -92,7 +106,7 @@ public class IndexShardSearchFactory {
                     receiver,
                     task.getShards(),
                     queryFactory,
-                    task.getStoredFields(),
+                    storedFieldNames,
                     indexShardSearchConfig.getMaxThreadsPerTask(),
                     taskContextFactory,
                     taskContext,
