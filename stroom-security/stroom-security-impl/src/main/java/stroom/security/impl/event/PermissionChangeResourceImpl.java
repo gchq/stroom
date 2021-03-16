@@ -19,7 +19,6 @@ package stroom.security.impl.event;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -27,7 +26,8 @@ import javax.inject.Singleton;
 import javax.ws.rs.client.Entity;
 
 @Singleton
-@AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl
+@AutoLogged(OperationType.UNLOGGED)
+        //Perm changes logged by DocPermissionResourceImpl
 class PermissionChangeResourceImpl implements PermissionChangeResource {
 
     private final Provider<NodeService> nodeServiceProvider;
@@ -45,10 +45,6 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
         final Boolean result = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Boolean.class,
-                () -> ResourcePaths.buildAuthenticatedApiPath(
-                        PermissionChangeResource.BASE_PATH,
-                        PermissionChangeResource.FIRE_CHANGE_PATH_PART,
-                        nodeName),
                 () -> {
                     permissionChangeEventHandlersProvider.get().fireLocally(request.getEvent());
                     return true;

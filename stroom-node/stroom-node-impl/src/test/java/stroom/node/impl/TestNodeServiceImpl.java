@@ -262,7 +262,6 @@ class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResourc
             return nodeService.remoteRestResult(
                     nodeName,
                     String.class,
-                    () -> "full path not used",
                     () -> nodeInfo.getThisNodeName() + " says " + name,
                     SyncInvoker::get);
         }
@@ -274,7 +273,6 @@ class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResourc
 
             nodeService.remoteRestCall(
                     nodeName,
-                    () -> "full path not used",
                     () -> {
                         LOGGER.info("Doing stuff locally on node {}", nodeInfo.getThisNodeName());
                     },

@@ -29,7 +29,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-//@MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigResource> {
 
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
@@ -42,7 +41,6 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
     private StroomEventLoggingService stroomEventLoggingService;
     @Mock
     private GlobalConfigService globalConfigService;
-    //    @Mock
     private NodeService nodeService = new MockNodeService();
     @Mock
     private UriFactory uriFactory;

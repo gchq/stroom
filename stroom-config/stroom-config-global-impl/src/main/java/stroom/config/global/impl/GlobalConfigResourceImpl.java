@@ -18,7 +18,6 @@ import stroom.ui.config.shared.UrlConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
-import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.ComplexLoggedOutcome;
@@ -74,10 +73,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
-                () -> ResourcePaths.buildAuthenticatedApiPath(
-                        GlobalConfigResource.BASE_PATH,
-                        GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
-                        nodeName),
                 () ->
                         list(criteria),
                 builder ->
@@ -113,13 +108,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
-                () ->
-                        ResourcePaths.buildAuthenticatedApiPath(
-                                GlobalConfigResource.BASE_PATH,
-                                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                                propertyName,
-                                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                                nodeName),
                 () ->
                         getYamlValueByName(propertyName),
                 SyncInvoker::get,

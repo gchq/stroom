@@ -66,7 +66,6 @@ public class MockNodeService implements NodeService {
 
     @Override
     public <T_RESP> T_RESP remoteRestResult(final String nodeName,
-                                            final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper) {
@@ -77,7 +76,6 @@ public class MockNodeService implements NodeService {
 
     @Override
     public void remoteRestCall(final String nodeName,
-                               final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc) {
         // Always run the local runnable on this node

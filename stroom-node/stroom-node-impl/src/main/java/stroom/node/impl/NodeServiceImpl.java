@@ -168,7 +168,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public <T_RESP> T_RESP remoteRestResult(final String nodeName,
-                                            final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Invocation.Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper) {
@@ -219,7 +218,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public void remoteRestCall(final String nodeName,
-                               final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc) {
 
@@ -228,7 +226,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // If this is the node that was contacted then just resolve it locally
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
-            LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
+            LOGGER.debug(() -> LogUtil.message("Executing {} locally",
+                    httpServletRequestProvider.get().getRequestURI()));
             localRunnable.run();
         } else {
             // A different node to make a rest call to the required node

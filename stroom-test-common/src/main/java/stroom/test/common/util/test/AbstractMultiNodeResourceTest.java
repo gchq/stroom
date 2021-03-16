@@ -623,12 +623,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     public static class MyRequestFilter implements ContainerRequestFilter {
 
+        // Injected by grizzly/jersey
         @Context
         private HttpServletRequest httpServletRequest;
-//        @Context
-//        UriInfo uriInfo;
 
-        final HttpServletRequestHolder httpServletRequestHolder;
+        private final HttpServletRequestHolder httpServletRequestHolder;
 
         public MyRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
             this.httpServletRequestHolder = httpServletRequestHolder;
@@ -636,12 +635,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
         @Override
         public void filter(final ContainerRequestContext requestContext) throws IOException {
-            LOGGER.info("Received request {}", requestContext);
+            LOGGER.debug("Received request {}", requestContext);
 
-            LOGGER.info("httpServletRequest2 {}", httpServletRequest);
-//            LOGGER.info("uriInfo {}", uriInfo);
-            LOGGER.info("requestUri {}", httpServletRequest.getRequestURI());
-            LOGGER.info("servletPath {}", httpServletRequest.getServletPath());
+            LOGGER.debug("requestUri {}, servletPath {}",
+                    httpServletRequest.getRequestURI(),
+                    httpServletRequest.getServletPath());
 
             // The request in ContainerRequestContext is a ContainerRequest so we
             // need to get Jersey/Grizzly to inject HttpServletRequest via @Context
@@ -649,5 +647,4 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             httpServletRequestHolder.set(httpServletRequest);
         }
     }
-
 }
