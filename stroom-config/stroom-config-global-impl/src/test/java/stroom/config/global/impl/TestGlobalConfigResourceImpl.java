@@ -15,24 +15,20 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
-import org.junit.jupiter.api.Disabled;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.util.HashMap;
+import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-//@MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigResource> {
-
-    private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
     public static final ConfigProperty CONFIG_PROPERTY_2;
@@ -42,7 +38,6 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
     private StroomEventLoggingService stroomEventLoggingService;
     @Mock
     private GlobalConfigService globalConfigService;
-    //    @Mock
     private NodeService nodeService = new MockNodeService();
     @Mock
     private UriFactory uriFactory;
@@ -145,13 +140,6 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 criteria,
                 ListConfigResponse.class,
                 expectedResponse);
-
-//        verify().
-//                Mockito.eq(nodeName),
-//                Mockito.eq(ListConfigResponse.class),
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any());
     }
 
     @Test
@@ -175,33 +163,6 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 ConfigProperty.class,
                 expectedResponse);
     }
-
-    @Test
-    void getYamlValueByName() {
-        final String subPath = ResourcePaths.buildPath(
-                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                "some.other.property",
-                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
-
-        final OverrideValue<String> expectedResponse = OverrideValue.with("node1");
-
-        when(globalConfigService.fetch(Mockito.any()))
-                .thenAnswer(invocation -> {
-                    PropertyPath propertyPath = invocation.getArgument(0);
-                    return FULL_PROP_LIST.stream()
-                            .filter(configProperty -> configProperty.getName().equals(propertyPath))
-                            .peek(configProperty -> {
-                                configProperty.setYamlOverrideValue(expectedResponse.getValue());
-                            })
-                            .findFirst();
-                });
-
-        final OverrideValue<String> listConfigResponse = doGetTest(
-                subPath,
-                OverrideValue.class,
-                expectedResponse);
-    }
-
 
     @Test
     void getYamlValueByNodeAndName() {
@@ -229,40 +190,19 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 expectedResponse);
     }
 
-    @Disabled // TODO @AT Need to rework this after the remote rest stuff was moved to NodeService
-    @Test
-    void getYamlValueByNodeAndName_otherNode() {
-        final String subPath = ResourcePaths.buildPath(
-                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                "some.other.property",
-                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                "node2");
-
-        final OverrideValue<String> expectedResponse = OverrideValue.with("node2");
-
-        final OverrideValue<String> listConfigResponse = doGetTest(
-                subPath,
-                OverrideValue.class,
-                expectedResponse);
-
-//        Assertions.assertThat(getRequestEvents("node1"))
-//                .hasSize(1);
-//        Assertions.assertThat(getRequestEvents("node2"))
-//                .hasSize(1);
-//        Assertions.assertThat(getRequestEvents("node3"))
-//                .hasSize(0);
-    }
-
     @Test
     void create() {
 
         final String subPath = "";
 
-        ConfigProperty newConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
-
-        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty newConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString(
+                "a.new.config.prop"));
         expectedConfigProperty.setId(1);
         expectedConfigProperty.setVersion(1);
+
+        Mockito.when(globalConfigService.update(Mockito.any()))
+                .thenReturn(expectedConfigProperty);
 
         final ConfigProperty createdConfigProperty = doPostTest(
                 subPath,
@@ -271,7 +211,6 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 expectedConfigProperty);
     }
 
-    @Disabled // TODO @AT Need to rework this after the remote rest stuff was moved to NodeService
     @Test
     void update() {
 
@@ -285,8 +224,10 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
 
         final String subPath = ResourcePaths.buildPath(
                 GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                existingConfigProperty.getNameAsString(),
-                GlobalConfigResource.DB_OVERRIDE_VALUE_SUB_PATH);
+                existingConfigProperty.getNameAsString());
+
+        Mockito.when(globalConfigService.update(Mockito.any()))
+                .thenReturn(expectedConfigProperty);
 
         final ConfigProperty createdConfigProperty = doPutTest(
                 subPath,
@@ -300,10 +241,17 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
         String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
         UiConfig expectedResponse = new UiConfig();
 
+        // Just return the same value out as this is just a test
+        Mockito.when(uriFactory.uiUri(Mockito.anyString()))
+                .thenAnswer(invocation -> new URI(invocation.getArgument(0)));
+
         final UiConfig listConfigResponse = doGetTest(
                 subPath,
                 UiConfig.class,
-                expectedResponse);
+                null);
+
+        Assertions.assertThat(listConfigResponse)
+                .isNotNull();
 
     }
 
@@ -319,7 +267,7 @@ class TestGlobalConfigResourceImpl extends AbstractResourceTest<GlobalConfigReso
                 MockStroomEventLoggingService::new,
                 () -> globalConfigService,
                 () -> nodeService,
-                UiConfig::new,
+                new UiConfig(),
                 () -> uriFactory);
     }
 

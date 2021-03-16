@@ -42,14 +42,11 @@ import stroom.util.shared.ResultPage;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
@@ -70,7 +67,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private volatile Node thisNode;
     private final EntityEventBus entityEventBus;
     private final WebTargetFactory webTargetFactory;
-    private final Provider<HttpServletRequest> httpServletRequestProvider;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
@@ -78,15 +74,13 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     final NodeInfo nodeInfo,
                     final UriFactory uriFactory,
                     final EntityEventBus entityEventBus,
-                    final WebTargetFactory webTargetFactory,
-                    final Provider<HttpServletRequest> httpServletRequestProvider) {
+                    final WebTargetFactory webTargetFactory) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
         this.uriFactory = uriFactory;
         this.entityEventBus = entityEventBus;
         this.webTargetFactory = webTargetFactory;
-        this.httpServletRequestProvider = httpServletRequestProvider;
 
         // Ensure the node record for this node is in the DB
         securityContext.asProcessingUser(this::ensureNodeCreated);
@@ -179,22 +173,15 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // If this is the node that was contacted then just resolve it locally
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
 
-            LOGGER.debug(() -> LogUtil.message("Executing {} locally",
-                    Optional.ofNullable(httpServletRequestProvider)
-                            .map(Provider::get)
-                            .map(HttpServletRequest::getRequestURI)));
+            LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
             resp = localSupplier.get();
 
         } else {
             // A different node to make a rest call to the required node
-            final String fullPath = httpServletRequestProvider.get().getRequestURI();
-            LOGGER.debug("fullPath: {}", fullPath);
-
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPath;
-
+                    nodeName) + fullPathSupplier.get();
             LOGGER.debug("Fetching value from remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory
@@ -232,14 +219,10 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             localRunnable.run();
         } else {
             // A different node to make a rest call to the required node
-            final String fullPath = httpServletRequestProvider.get().getRequestURI();
-            LOGGER.debug("fullPath: {}", fullPath);
-
             final String url = NodeCallUtil.getBaseEndpointUrl(
                     nodeInfo,
                     this,
-                    nodeName) + fullPath;
-
+                    nodeName) + fullPathSupplier.get();
             LOGGER.debug("Calling remote node at {}", url);
             try {
                 final Builder builder = webTargetFactory
@@ -249,8 +232,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 final Response response = responseBuilderFunc.apply(builder);
 
                 LOGGER.debug(() -> "Response status " + response.getStatus());
-                if (response.getStatus() != Status.OK.getStatusCode()
-                        && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+                if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
                 }
             } catch (final Throwable e) {

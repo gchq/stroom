@@ -228,8 +228,7 @@ class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResourc
                 nodeInfo,
                 uriFactory,
                 null,
-                AbstractMultiNodeResourceTest.webTargetFactory(),
-                this::getHttpServletRequest);
+                AbstractMultiNodeResourceTest.webTargetFactory());
 
         final NoddyRestResource noddyRestResource = new NoddyRestResource(nodeService, nodeInfo);
 
@@ -262,8 +261,10 @@ class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResourc
             return nodeService.remoteRestResult(
                     nodeName,
                     String.class,
-                    () -> "full path not used",
-                    () -> nodeInfo.getThisNodeName() + " says " + name,
+                    () ->
+                            ResourcePaths.buildPath(BASE_PATH, nodeName, name),
+                    () ->
+                            nodeInfo.getThisNodeName() + " says " + name,
                     SyncInvoker::get);
         }
 
@@ -274,10 +275,10 @@ class TestNodeServiceImpl extends AbstractMultiNodeResourceTest<NoddyRestResourc
 
             nodeService.remoteRestCall(
                     nodeName,
-                    () -> "full path not used",
-                    () -> {
-                        LOGGER.info("Doing stuff locally on node {}", nodeInfo.getThisNodeName());
-                    },
+                    () ->
+                            ResourcePaths.buildPath(BASE_PATH, nodeName),
+                    () ->
+                            LOGGER.info("Doing stuff locally on node {}", nodeInfo.getThisNodeName()),
                     SyncInvoker::delete);
         }
     }

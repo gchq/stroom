@@ -4146,7 +4146,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Authentication
      * @name ConfirmPassword
-     * @summary Confirm an authenticated users current password.
+     * @summary Confirm an authenticated user's current password.
      * @request POST:/authentication/v1/noauth/confirmPassword
      * @secure
      */

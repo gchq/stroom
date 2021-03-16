@@ -114,4 +114,10 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
-
+    sql:
+      db:
+        connection:
+          jdbcDriverClassName: "${STROOM_STATISTICS_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}"
+          jdbcDriverUrl: "${STROOM_STATISTICS_JDBC_DRIVER_URL:-jdbc:mysql://localhost:3307/stats?useUnicode=yes&characterEncoding=UTF-8}"
+          jdbcDriverUsername: "${STROOM_STATISTICS_JDBC_DRIVER_USERNAME:-statsuser}"
+          jdbcDriverPassword: "${STROOM_STATISTICS_JDBC_DRIVER_PASSWORD:-stroompassword1}"

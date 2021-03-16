@@ -44,21 +44,21 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<UiConfig> uiConfig;
-    private final Provider<UriFactory> uriFactory;
+    private final UiConfig uiConfig;
+    private final Provider<UriFactory> uriFactoryProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
-                             final Provider<UiConfig> uiConfig,
-                             final Provider<UriFactory> uriFactory) {
+                             final UiConfig uiConfig,
+                             final Provider<UriFactory> uriFactoryProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
-        this.uriFactory = uriFactory;
+        this.uriFactoryProvider = uriFactoryProvider;
     }
 
     @Timed
@@ -185,14 +185,18 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public UiConfig fetchUiConfig() {
         // Temporary code to fix url paths.
-        if (this.uriFactory != null) {
+        // TODO @AT This is a bit sub-prime. Guice holds a singleton instance of UrlConfig which is set on
+        //  uiConfig singleton, but we are changing that here so the getter will return something different
+        //  to what guice would provide. Also mutating config props like this just seems wrong, we should
+        //  be mutating a copy.
+        if (this.uriFactoryProvider != null) {
             final UrlConfig urlConfig = new UrlConfig(
-                    this.uriFactory.get().uiUri(AuthenticationService.USERS_URL_PATH).toString(),
-                    this.uriFactory.get().uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
-                    this.uriFactory.get().uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
-            uiConfig.get().setUrl(urlConfig);
+                    this.uriFactoryProvider.get().uiUri(AuthenticationService.USERS_URL_PATH).toString(),
+                    this.uriFactoryProvider.get().uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
+                    this.uriFactoryProvider.get().uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
+            uiConfig.setUrl(urlConfig);
         }
 
-        return uiConfig.get();
+        return uiConfig;
     }
 }
