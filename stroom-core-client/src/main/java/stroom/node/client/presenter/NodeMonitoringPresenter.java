@@ -60,6 +60,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>>
@@ -175,6 +176,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 // Bar widths are all relative to the longest ping.
                 final long unHealthyThresholdPing = 250;
                 final long highestPing = latestPing.values().stream()
+                        .filter(result -> result.getPing() != null)
                         .mapToLong(PingResult::getPing)
                         .max()
                         .orElse(unHealthyThresholdPing);

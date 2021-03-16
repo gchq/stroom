@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2088** : Fixed NullPointerException caused when stepping.
+
 * Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
 
 

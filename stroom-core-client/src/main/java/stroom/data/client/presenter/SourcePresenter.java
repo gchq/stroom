@@ -275,7 +275,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     private boolean isCurrentSourceSuitable(final SourceLocation sourceLocation) {
         final boolean result;
-        if (receivedSourceLocation == null) {
+        if (receivedSourceLocation == null || receivedSourceLocation.getDataRange() == null) {
             result = false;
         } else {
             result = receivedSourceLocation.isSameSource(sourceLocation)
