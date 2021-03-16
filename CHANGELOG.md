@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.93] - 2021-03-16
+
 * Issue **#2088** : Fixed retrieval of stored search results when not using extraction.
 
 * Issue **#2088** : Fixed NullPointerException caused when stepping.
@@ -3173,7 +3176,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.91...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.93...HEAD
+[v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
+[v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
 [v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
 [v7.0-beta.90]: https://github.com/gchq/stroom/compare/v7.0-beta.89...v7.0-beta.90
 [v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89
