@@ -22,6 +22,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -31,6 +32,7 @@ import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
@@ -40,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -140,18 +143,29 @@ class NodeResourceImpl implements NodeResource {
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
+        final Supplier<String> pathSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
+                NodeResource.BASE_PATH,
+                NodeResource.INFO_PATH_PART,
+                nodeName);
+
+
         try {
             final long now = System.currentTimeMillis();
 
             clusterNodeInfo = nodeServiceProvider.get().remoteRestResult(
                     nodeName,
                     ClusterNodeInfo.class,
+                    pathSupplier,
                     () ->
                             clusterNodeManagerProvider.get().getClusterNodeInfo(),
                     SyncInvoker::get);
 
             if (clusterNodeInfo == null) {
-                throw new RuntimeException("Unable to contact node \"" + nodeName);
+                final String url = NodeCallUtil.getBaseEndpointUrl(
+                        nodeInfoProvider.get(),
+                        nodeServiceProvider.get(),
+                        nodeName) + pathSupplier.get();
+                throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
@@ -178,6 +192,10 @@ class NodeResourceImpl implements NodeResource {
         final Long ping = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Long.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        NodeResource.BASE_PATH,
+                        NodeResource.PING_PATH_PART,
+                        nodeName),
                 () ->
                         // If this is the node that was contacted then just return the latency
                         // we have incurred within this method.

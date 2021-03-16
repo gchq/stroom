@@ -29,8 +29,10 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
+import event.logging.EventAction;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 
@@ -67,6 +69,10 @@ class TaskResourceImpl implements TaskResource {
                 .remoteRestResult(
                         nodeName,
                         TaskProgressResponse.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.FIND_PATH_PART,
+                                nodeName),
                         () -> {
                             final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
                                     .find(request.getCriteria());
@@ -104,6 +110,10 @@ class TaskResourceImpl implements TaskResource {
         nodeServiceProvider.get()
                 .remoteRestCall(
                         nodeName,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.TERMINATE_PATH_PART,
+                                nodeName),
                         () ->
                                 taskManagerProvider.get().terminate(
                                         request.getCriteria(),

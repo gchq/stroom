@@ -28,6 +28,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
@@ -128,6 +129,10 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                 .remoteRestResult(
                         nodeName,
                         ProcessorTaskList.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
+                                nodeName),
                         () ->
                                 processorTaskManagerProvider.get()
                                         .assignTasks(request.getNodeName(), request.getCount()),
@@ -143,6 +148,10 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                 .remoteRestResult(
                         nodeName,
                         Boolean.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
+                                nodeName),
                         () ->
                                 processorTaskManagerProvider.get()
                                         .abandonTasks(request),
