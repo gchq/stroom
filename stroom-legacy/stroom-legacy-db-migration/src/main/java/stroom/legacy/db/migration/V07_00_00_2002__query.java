@@ -18,7 +18,6 @@ package stroom.legacy.db.migration;
 
 import stroom.dashboard.shared.StoredQuery;
 import stroom.legacy.impex_6_1.MappingUtil;
-import stroom.query.api.v2.Query;
 import stroom.storedquery.impl.db.StoredQuerySerialiser;
 import stroom.util.xml.XMLMarshallerUtil;
 
@@ -39,7 +38,7 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {
-        final JAXBContext jaxbContext = JAXBContext.newInstance(Query.class);
+        final JAXBContext jaxbContext = JAXBContext.newInstance(stroom.legacy.model_6_1.Query.class);
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
                 "SELECT " +

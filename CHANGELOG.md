@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2102** : Fixed query migration script.
+
 * Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
 
 * Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
