@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2104** : Fixed issue where the index creation stored procedure was trying to delete a procedure with the wrong name before creating a new one. 
+
 * Issue **#2103** : Fixed statistics migration script to correctly check for empty tables.
 
 * Issue **#2102** : Fixed query migration script.
