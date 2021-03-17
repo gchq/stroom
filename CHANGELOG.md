@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
 
+* Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
+
 
 ## [v7.0-beta.93] - 2021-03-16
 
