@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
+
 
 ## [v7.0-beta.93] - 2021-03-16
 
