@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.94] - 2021-03-17
+
 * Issue **#2104** : Fixed issue where the index creation stored procedure was trying to delete a procedure with the wrong name before creating a new one. 
 
 * Issue **#2103** : Fixed statistics migration script to correctly check for empty tables.
@@ -3186,7 +3189,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.93...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.94...HEAD
+[v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
 [v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
 [v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
 [v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
