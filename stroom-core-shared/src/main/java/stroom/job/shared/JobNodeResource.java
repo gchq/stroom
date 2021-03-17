@@ -55,12 +55,12 @@ public interface JobNodeResource extends RestResource, DirectRestService {
                              @QueryParam("nodeName") String nodeName);
 
     @GET
-    @Path(INFO_PATH_PART)
+    @Path(INFO_PATH_PART + "/{jobName}/{nodeName}")
     @Operation(
             summary = "Gets current info for a job node",
             operationId = "fetchJobNodeInfo")
-    JobNodeInfo info(@QueryParam("jobName") String jobName,
-                     @QueryParam("nodeName") String nodeName);
+    JobNodeInfo info(@PathParam("jobName") String jobName,
+                     @PathParam("nodeName") String nodeName);
 
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)

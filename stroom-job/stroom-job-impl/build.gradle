@@ -26,6 +26,7 @@ dependencies {
     compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
+    testCompile project(':stroom-node:stroom-node-mock')
     testCompile libs.assertj_core
     testCompile libs.dropwizard_testing
     testCompile libs.junit_jupiter_api

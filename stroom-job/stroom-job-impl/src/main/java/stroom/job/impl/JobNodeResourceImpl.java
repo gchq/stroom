@@ -23,10 +23,7 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
@@ -38,29 +35,21 @@ import event.logging.TermCondition;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobNodeResourceImpl implements JobNodeResource {
 
     private final Provider<JobNodeService> jobNodeServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
-    private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
     JobNodeResourceImpl(final Provider<JobNodeService> jobNodeServiceProvider,
                         final Provider<NodeService> nodeServiceProvider,
-                        final Provider<NodeInfo> nodeInfoProvider,
-                        final Provider<WebTargetFactory> webTargetFactoryProvider,
                         final Provider<DocumentEventLog> documentEventLogProvider) {
         this.jobNodeServiceProvider = jobNodeServiceProvider;
         this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
-        this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
     }
 
@@ -96,6 +85,7 @@ class JobNodeResourceImpl implements JobNodeResource {
         try {
 
             response = jobNodeServiceProvider.get().find(findJobNodeCriteria);
+
             documentEventLogProvider.get().search(
                     "ListJobNodes",
                     query,
@@ -116,33 +106,17 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
-        JobNodeInfo jobNodeInfo;
-        // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
-            jobNodeInfo = jobNodeServiceProvider.get().getInfo(jobName);
-
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
-                    nodeServiceProvider.get(), nodeName) +
-                    ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
-            try {
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .queryParam("jobName", jobName)
-                        .queryParam("nodeName", nodeName)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                jobNodeInfo = response.readEntity(JobNodeInfo.class);
-                if (jobNodeInfo == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
-                }
-            } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        final JobNodeInfo jobNodeInfo = nodeServiceProvider.get().remoteRestResult(
+                nodeName,
+                JobNodeInfo.class,
+                () ->
+                        ResourcePaths.buildAuthenticatedApiPath(
+                                JobNodeResource.INFO_PATH_PART,
+                                jobName,
+                                nodeName),
+                () ->
+                        jobNodeServiceProvider.get().getInfo(jobName),
+                SyncInvoker::get);
 
         return jobNodeInfo;
     }

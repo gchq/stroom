@@ -7,17 +7,18 @@ import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.node.mock.MockNodeService;
+import stroom.test.common.util.test.AbstractMultiNodeResourceTest.TestNode;
+import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.shared.ResourcePaths;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
-class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResource> {
+class TestJobNodeResourceImpl extends AbstractResourceTest<JobNodeResource> {
 
     private static final JobNode JOB_NODE_1 = buildJobNode(1, 1, "node1");
     private static final JobNode JOB_NODE_2 = buildJobNode(2, 1, "node2");
@@ -39,8 +40,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
             JOB_NODE_1,
             JOB_NODE_2));
 
-    private final Map<String, JobNodeService> jobNodeServiceMap = new HashMap<>();
-    private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
+//    private final Map<String, JobNodeService> jobNodeServiceMap = new HashMap<>();
+//    private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     private static JobNode buildJobNode(final int id, final int version, final String node) {
         JobNode jobNode = new JobNode();
@@ -52,23 +53,29 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
     private static final int BASE_PORT = 7020;
 
-    public TestJobNodeResourceImpl() {
-        super(createNodeList(BASE_PORT));
-    }
+    @Mock
+    private JobNodeService jobNodeService;
+    @Mock
+    private DocumentEventLog documentEventLog;
 
-    @BeforeEach
-    void beforeEach() {
-        jobNodeServiceMap.clear();
-    }
+//    public TestJobNodeResourceImpl() {
+//        super(createNodeList(BASE_PORT));
+//    }
+
+//    @BeforeEach
+//    void beforeEach() {
+//        jobNodeServiceMap.clear();
+//    }
 
     @Test
     void list1() {
 
-        initSingleNode();
-
         final String subPath = "";
 
         ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
+
+        Mockito.when(jobNodeService.find(Mockito.any()))
+                .thenReturn(JOB_NODES);
 
         final JobNodeListResponse response = doGetTest(
                 subPath,
@@ -78,7 +85,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 webTarget -> webTarget.queryParam("nodeName", "node1")
         );
 
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
+        verify(jobNodeService, Mockito.only())
                 .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().getString())
@@ -91,8 +98,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     @Test
     void list2() {
 
-        initSingleNode();
-
         final String subPath = "";
 
         ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
@@ -102,7 +107,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 JobNodeListResponse.class,
                 JOB_NODES);
 
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
+        verify(jobNodeService, Mockito.only())
                 .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
@@ -113,8 +118,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
     @Test
     void list3() {
-
-        initSingleNode();
 
         final String subPath = "";
 
@@ -127,7 +130,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 webTarget -> webTarget.queryParam("nodeName", "node1")
         );
 
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
+        verify(jobNodeService, Mockito.only())
                 .find(criteriaCaptor.capture());
 
         assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
@@ -138,51 +141,20 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
     @Test
     void info_sameNode() {
-        initNodes();
-
-        final String subPath = JobNodeResource.INFO_PATH_PART;
+        final String subPath = ResourcePaths.buildPath(
+                JobNodeResource.INFO_PATH_PART,
+                "myJob",
+                "node1");
 
         final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT, 2L, 3L);
 
         final JobNodeInfo response = doGetTest(
                 subPath,
                 JobNodeInfo.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("jobName", "myJob"),
-                webTarget -> webTarget.queryParam("nodeName", "node1")
-        );
+                expectedResponse);
 
-        assertThat(getRequestEvents("node1"))
-                .hasSize(1);
-        assertThat(getRequestEvents("node2"))
-                .hasSize(0);
-        assertThat(getRequestEvents("node3"))
-                .hasSize(0);
     }
 
-    @Test
-    void info_otherNode() {
-        initNodes();
-
-        final String subPath = JobNodeResource.INFO_PATH_PART;
-
-        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT + 1, 2L, 3L);
-
-        final JobNodeInfo response = doGetTest(
-                subPath,
-                JobNodeInfo.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("jobName", "myJob"),
-                webTarget -> webTarget.queryParam("nodeName", "node2")
-        );
-
-        assertThat(getRequestEvents("node1"))
-                .hasSize(1);
-        assertThat(getRequestEvents("node2"))
-                .hasSize(1);
-        assertThat(getRequestEvents("node3"))
-                .hasSize(0);
-    }
 
     @Test
     void setTaskLimit() {
@@ -312,6 +284,14 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     }
 
     @Override
+    public JobNodeResource getRestResource() {
+        return new JobNodeResourceImpl(
+                () -> jobNodeService,
+                MockNodeService::new,
+                () -> documentEventLog);
+    }
+
+    @Override
     public JobNodeResource getRestResource(final TestNode node,
                                            final List<TestNode> allNodes,
                                            final Map<String, String> baseEndPointUrls) {
@@ -343,12 +323,14 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         jobNodeServiceMap.put(node.getNodeName(), jobNodeService);
 
         // Set up the NodeService mock
+        final NodeService nodeService = new MockNode(NodeService.class, node);
         final NodeService nodeService = createNamedMock(NodeService.class, node);
 
         when(nodeService.isEnabled(Mockito.anyString()))
                 .then(invocation ->
                         allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .filter(testNode ->
+                                        testNode.getNodeName().equals(invocation.getArgument(0)))
                                 .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
@@ -368,8 +350,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         return new JobNodeResourceImpl(
                 () -> jobNodeService,
                 () -> nodeService,
-                () -> nodeInfo,
-                () -> webTargetFactory(),
                 () -> documentEventLog);
     }
 }
