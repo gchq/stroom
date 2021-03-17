@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Joins text instances into a single text instance.
@@ -48,6 +49,7 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
+    private boolean useCompression;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -97,7 +99,13 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile)));
+            if (useCompression) {
+                byteCountOutputStream = new ByteCountOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile))));
+            }
+            else {
+                byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile)));
+            }
+
             return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
@@ -122,6 +130,9 @@ public class FileAppender extends AbstractAppender {
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
+
+    @PipelineProperty(description = "Apply GZIP compression to output files", defaultValue = "false")
+    public void setUseCompression(final boolean useCompression) { this.useCompression = useCompression; }
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.")
