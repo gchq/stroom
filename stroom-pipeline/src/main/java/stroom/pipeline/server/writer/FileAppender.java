@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -27,7 +25,12 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.io.GZipByteCountOutputStream;
+import stroom.util.io.GZipOutputStream;
 import stroom.util.spring.StroomScope;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -36,7 +39,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Joins text instances into a single text instance.
@@ -109,7 +111,7 @@ public class FileAppender extends AbstractAppender {
 
             // Get a writer for the new lock file.
             if (useCompression) {
-                byteCountOutputStream = new ByteCountOutputStream(new GZIPOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile))));
+                byteCountOutputStream = new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
             }
             else {
                 byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
