@@ -16,16 +16,20 @@
 
 package stroom.pipeline.destination;
 
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.io.GZipByteCountOutputStream;
+import stroom.util.io.GZipOutputStream;
 import stroom.util.scheduler.SimpleCron;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -42,16 +46,23 @@ public class RollingFileDestination extends RollingDestination {
     private final Path dir;
     private final Path file;
 
-    public RollingFileDestination(final String key,
-                                  final Long frequency,
-                                  final SimpleCron schedule,
-                                  final long rollSize,
-                                  final long creationTime,
-                                  final String fileName,
-                                  final String rolledFileName,
-                                  final Path dir,
-                                  final Path file)
-            throws IOException {
+    /**
+     * Whether to apply GZIP compression to output files
+     */
+    private final boolean useCompression;
+
+    public RollingFileDestination(
+            final String key,
+            final Long frequency,
+            final SimpleCron schedule,
+            final long rollSize,
+            final long creationTime,
+            final String fileName,
+            final String rolledFileName,
+            final Path dir,
+            final Path file,
+            final boolean useCompression
+    ) throws IOException {
         super(key, frequency, schedule, rollSize, creationTime);
 
         this.fileName = fileName;
@@ -59,6 +70,8 @@ public class RollingFileDestination extends RollingDestination {
 
         this.dir = dir;
         this.file = file;
+
+        this.useCompression = useCompression;
 
         // Make sure we can create this path.
         try {
@@ -68,13 +81,13 @@ public class RollingFileDestination extends RollingDestination {
                 // I have a feeling that the OS might sometimes report that a
                 // file exists that has actually just been rolled.
                 LOGGER.warn("File exists for key={} so rolling immediately", key);
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
+                setOutputStream(createOutputStream(file));
 
                 // Roll the file.
                 roll();
 
             } else {
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
+                setOutputStream(createOutputStream(file));
             }
         } catch (final IOException e) {
             try {
@@ -83,6 +96,16 @@ public class RollingFileDestination extends RollingDestination {
                 LOGGER.error("Unable to close the output stream.");
             }
             throw e;
+        }
+    }
+
+    private ByteCountOutputStream createOutputStream(final Path file) throws IOException {
+        OutputStream fileOutputStream = Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+
+        if (useCompression) {
+            return new GZipByteCountOutputStream(new GZipOutputStream(fileOutputStream));
+        } else {
+            return new ByteCountOutputStream(new BufferedOutputStream(fileOutputStream));
         }
     }
 
