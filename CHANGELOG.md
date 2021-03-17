@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
-* Issue **#759** : Provide `FileAppender` pipeline element option to compress output.
+* Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
 
 ## [v6.1.32] - 2021-01-28
