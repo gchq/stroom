@@ -22,13 +22,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
-import event.logging.AddGroups;
-import event.logging.AuthorisationActionType;
-import event.logging.AuthoriseEventAction;
-import event.logging.BaseObject;
-import event.logging.Document;
 import event.logging.Event;
-import event.logging.EventLoggingService;
 import event.logging.Group;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
@@ -36,12 +30,10 @@ import event.logging.Outcome;
 import event.logging.Permission;
 import event.logging.PermissionAttribute;
 import event.logging.Permissions;
-import event.logging.RemoveGroups;
 import event.logging.UpdateEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,41 +43,46 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class DocPermissionResourceImpl implements DocPermissionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
-    private final UserService userService;
-    private final DocumentPermissionServiceImpl documentPermissionService;
-    private final DocumentTypePermissions documentTypePermissions;
-    private final ExplorerNodeService explorerNodeService;
-    private final SecurityContext securityContext;
-    private final StroomEventLoggingService eventLoggingService;
+    private final Provider<UserService> userServiceProvider;
+    private final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider;
+    private final Provider<DocumentTypePermissions> documentTypePermissionsProvider;
+    private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    //Todo
+    // Permission checking should be responsibility of underlying service rather than REST resource impl
+    private final Provider<SecurityContext> securityContextProvider;
+
 
     @Inject
-    DocPermissionResourceImpl(final UserService userService,
-                              final DocumentPermissionServiceImpl documentPermissionService,
-                              final DocumentTypePermissions documentTypePermissions,
-                              final ExplorerNodeService explorerNodeService,
-                              final SecurityContext securityContext,
-                              final StroomEventLoggingService eventLoggingService) {
-        this.userService = userService;
-        this.documentPermissionService = documentPermissionService;
-        this.documentTypePermissions = documentTypePermissions;
-        this.explorerNodeService = explorerNodeService;
-        this.securityContext = securityContext;
-        this.eventLoggingService = eventLoggingService;
+    DocPermissionResourceImpl(final Provider<UserService> userServiceProvider,
+                              final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider,
+                              final Provider<DocumentTypePermissions> documentTypePermissionsProvider,
+                              final Provider<ExplorerNodeService> explorerNodeServiceProvider,
+                              final Provider<SecurityContext> securityContextProvider,
+                              final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+        this.userServiceProvider = userServiceProvider;
+        this.documentPermissionServiceProvider = documentPermissionServiceProvider;
+        this.documentTypePermissionsProvider = documentTypePermissionsProvider;
+        this.explorerNodeServiceProvider = explorerNodeServiceProvider;
+        this.securityContextProvider = securityContextProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean changeDocumentPermissions(final ChangeDocumentPermissionsRequest request) {
         final DocRef docRef = request.getDocRef();
 
         // Check that the current user has permission to change the permissions of the document.
-        if (securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.OWNER)) {
+        if (securityContextProvider.get().hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.OWNER)) {
             // Record what documents and what users are affected by these changes
             // so we can clear the relevant caches.
             final Set<DocRef> affectedDocRefs = new HashSet<>();
@@ -114,10 +111,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.VIEW, verb = "Finding permissions of parent")
     public DocumentPermissions copyPermissionFromParent(final CopyPermissionsFromParentRequest request) {
         final DocRef docRef = request.getDocRef();
 
-        boolean isUserAllowedToChangePermissions = securityContext.hasDocumentPermission(
+        boolean isUserAllowedToChangePermissions = securityContextProvider.get().hasDocumentPermission(
                 docRef.getUuid(), DocumentPermissionNames.OWNER);
         if (!isUserAllowedToChangePermissions) {
             final String errorMessage = "Insufficient privileges to change permissions for this document";
@@ -127,19 +125,20 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             throw new PermissionException(getCurrentUserId(), errorMessage);
         }
 
-        Optional<ExplorerNode> parent = explorerNodeService.getParent(docRef);
+        Optional<ExplorerNode> parent = explorerNodeServiceProvider.get().getParent(docRef);
         if (parent.isEmpty()) {
             throw new EntityServiceException("This node does not have a parent to copy permissions from!");
         }
 
-        return documentPermissionService.getPermissionsForDocument(parent.get().getDocRef().getUuid());
+        return documentPermissionServiceProvider.get().getPermissionsForDocument(parent.get().getDocRef().getUuid());
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
     public DocumentPermissions fetchAllDocumentPermissions(final FetchAllDocumentPermissionsRequest request) {
-        if (securityContext.hasDocumentPermission(request.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
-            return documentPermissionService.getPermissionsForDocument(request.getDocRef().getUuid());
+        if (securityContextProvider.get().hasDocumentPermission(request.getDocRef().getUuid(),
+                DocumentPermissionNames.OWNER)) {
+            return documentPermissionServiceProvider.get().getPermissionsForDocument(request.getDocRef().getUuid());
         }
 
         throw new PermissionException(getCurrentUserId(), "Insufficient privileges to fetch " +
@@ -149,13 +148,13 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public Boolean checkDocumentPermission(final CheckDocumentPermissionRequest request) {
-        return securityContext.hasDocumentPermission(request.getDocumentUuid(), request.getPermission());
+        return securityContextProvider.get().hasDocumentPermission(request.getDocumentUuid(), request.getPermission());
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
     public List<String> getPermissionForDocType(final String docType) {
-        return documentTypePermissions.getPermissions(docType);
+        return documentTypePermissionsProvider.get().getPermissions(docType);
     }
 
     @Override
@@ -182,13 +181,14 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                       final boolean clear) {
         if (clear) {
             // If we are asked to clear all permissions then get them for this document and then remove them.
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(
-                    docRef.getUuid());
+            final DocumentPermissions documentPermissions = documentPermissionServiceProvider.get()
+                    .getPermissionsForDocument(docRef.getUuid());
             for (final Map.Entry<String, Set<String>> entry : documentPermissions.getPermissions().entrySet()) {
                 final String userUUid = entry.getKey();
                 for (final String permission : entry.getValue()) {
                     try {
-                        documentPermissionService.removePermission(docRef.getUuid(), userUUid, permission);
+                        documentPermissionServiceProvider.get()
+                                .removePermission(docRef.getUuid(), userUUid, permission);
                         logPermissionChange(eventTypeId, userUUid, docRef, permission, false);
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
@@ -206,7 +206,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 final String userUuid = entry.getKey();
                 for (final String permission : entry.getValue()) {
                     try {
-                        documentPermissionService.removePermission(docRef.getUuid(), userUuid, permission);
+                        documentPermissionServiceProvider.get()
+                                .removePermission(docRef.getUuid(), userUuid, permission);
                         logPermissionChange(eventTypeId, userUuid, docRef, permission, false);
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
@@ -227,7 +228,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 if (DocumentTypes.isFolder(docRef.getType())
                         || !permission.startsWith(DocumentPermissionNames.CREATE)) {
                     try {
-                        documentPermissionService.addPermission(docRef.getUuid(), userUuid, permission);
+                        documentPermissionServiceProvider.get()
+                                .addPermission(docRef.getUuid(), userUuid, permission);
                         logPermissionChange(eventTypeId, userUuid, docRef, permission, true);
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
@@ -323,8 +325,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 case ALL:
                     // We are replicating the permissions of the parent folder on all children so create a change
                     // set from the parent folder.
-                    final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(
-                            docRef.getUuid());
+                    final DocumentPermissions parentPermissions = documentPermissionServiceProvider
+                            .get().getPermissionsForDocument(docRef.getUuid());
                     final Map<String, Set<String>> add = new HashMap<>();
                     for (final Entry<String, Set<String>> entry : parentPermissions.getPermissions().entrySet()) {
                         final String userUuid = entry.getKey();
@@ -357,11 +359,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                              final Set<DocRef> affectedDocRefs,
                                              final Set<String> affectedUserUuids,
                                              final boolean clear) {
-        final List<ExplorerNode> descendants = explorerNodeService.getDescendants(folder);
+        final List<ExplorerNode> descendants = explorerNodeServiceProvider.get().getDescendants(folder);
         if (descendants != null && descendants.size() > 0) {
             for (final ExplorerNode descendant : descendants) {
                 // Ensure that the user has permission to change the permissions of this child.
-                if (securityContext.hasDocumentPermission(descendant.getUuid(), DocumentPermissionNames.OWNER)) {
+                if (securityContextProvider.get().hasDocumentPermission(descendant.getUuid(), DocumentPermissionNames.OWNER)) {
                     changeDocPermissions(eventTypeId, descendant.getDocRef(),
                             changes, affectedDocRefs, affectedUserUuids, clear);
                 } else {
@@ -372,7 +374,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private String getCurrentUserId() {
-        return securityContext.getUserId();
+        return securityContextProvider.get().getUserId();
     }
 
     private void logPermissionChange(final String typeId,
@@ -381,7 +383,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                      final String permission,
                                      final boolean add) {
         try {
-            final Optional<User> user = securityContext.asProcessingUserResult(() -> userService.loadByUuid(userUuid));
+            final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
+                    userServiceProvider.get().loadByUuid(userUuid));
 
             final Permission.Builder<Void> permissionBuilder = Permission.builder()
                     .addAllowAttributes(mapChangeItemToPermission(permission));
@@ -414,7 +417,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 actionBuilder.withBefore(MultiObject.builder().addObject(object).build());
             }
 
-            final Event event = eventLoggingService.createEvent(
+            final Event event = stroomEventLoggingServiceProvider.get().createEvent(
                     typeId,
                     (add
                             ? "Adding"
@@ -426,7 +429,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                             docRefModified.getType(),
                     actionBuilder.build());
 
-            eventLoggingService.log(event);
+            stroomEventLoggingServiceProvider.get().log(event);
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to create authorisation event!", e);
         }
@@ -435,7 +438,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     private void logPermissionChangeError(final String typeId,
                                           final DocRef docRefModified,
                                           final String outcomeDescription) {
-        final Event event = eventLoggingService.createEvent(
+        final Event event = stroomEventLoggingServiceProvider.get().createEvent(
                 typeId,
                 "Modify permission attempt failed",
                 UpdateEventAction.builder().withBefore(
@@ -456,7 +459,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                         .build())
                         .build());
 
-        eventLoggingService.log(event);
+        stroomEventLoggingServiceProvider.get().log(event);
     }
 
     private PermissionAttribute mapChangeItemToPermission(final String perm) {
