@@ -28,7 +28,6 @@ import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.impl.validation.ValidationModule;
-import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -66,11 +65,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
+import javax.sql.DataSource;
 import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
@@ -103,6 +105,8 @@ public class App extends Application<Config> {
     private TempDirProvider tempDirProvider;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
+    @Inject
+    private Provider<Set<DataSource>> dataSourcesProvider;
 
     private final Path configFile;
 
@@ -227,6 +231,8 @@ public class App extends Application<Config> {
         //register a DelegatingExceptionMapper directly instead.
         environment.jersey().register(resourceAutoLogger);
 
+        // Force all datasources to be created so we can force migrations to run.
+        dataSourcesProvider.get();
 
         // Add health checks
         healthChecks.register();

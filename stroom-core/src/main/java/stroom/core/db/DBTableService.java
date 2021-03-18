@@ -49,7 +49,7 @@ class DBTableService {
     private final SecurityContext securityContext;
 
     // This ought to live in DBTableStatus but GWT won't allow it
-    // Maps criteria field names to comparaotr for that field
+    // Maps criteria field names to comparator for that field
     private static final Map<String, Comparator<DBTableStatus>> FIELD_COMPARATORS = Map.of(
             DBTableStatus.FIELD_DATABASE, Comparator.comparing(
                     DBTableStatus::getDb,

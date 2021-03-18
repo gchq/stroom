@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2105** : Fixed migration of annotations DB.
+
 
 ## [v7.0-beta.94] - 2021-03-17
 
