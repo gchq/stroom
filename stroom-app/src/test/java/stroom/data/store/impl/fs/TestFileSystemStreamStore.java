@@ -113,7 +113,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         // Make sure stream attributes get flushed straight away.
         metaValueConfig.setAddAsync(false);
-        volumeConfig.setResilientReplicationCount(2);
 
         final Optional<ExplorerNode> system = explorerNodeService.getRoot();
         final DocRef root = system.get().getDocRef();
@@ -131,7 +130,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         metaValueConfig.setAddAsync(true);
-        volumeConfig.setResilientReplicationCount(1);
     }
 
     /**

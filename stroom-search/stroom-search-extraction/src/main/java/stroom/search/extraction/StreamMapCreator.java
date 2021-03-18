@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
@@ -36,30 +37,28 @@ class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private Map<Long, Optional<Object>> fiteredStreamCache;
+    private Map<Long, Optional<Object>> filteredStreamCache;
     private ExtractionException error;
 
-    StreamMapCreator(final String[] storedFields,
+    StreamMapCreator(final FieldIndex fieldIndex,
                      final MetaService metaService) {
         this.metaService = metaService;
 
         // First get the index in the stored data of the stream and event id fields.
-        streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID);
-        eventIdIndex = getFieldIndex(storedFields, IndexConstants.EVENT_ID);
+        streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
+        eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
     }
 
-    private int getFieldIndex(final String[] storedFields, final String fieldName) {
+    private int getFieldIndex(final FieldIndex fieldIndex, final String fieldName) {
         int index = -1;
 
-        for (int i = 0; i < storedFields.length && index == -1; i++) {
-            final String storedField = storedFields[i];
-            if (storedField.equals(fieldName)) {
-                index = i;
+        final Integer pos = fieldIndex.getPos(fieldName);
+        if (pos == null) {
+            if (error == null) {
+                error = new ExtractionException("The " + fieldName + " has not been stored in this index");
             }
-        }
-
-        if (index == -1 && error == null) {
-            error = new ExtractionException("The " + fieldName + " has not been stored in this index");
+        } else {
+            index = pos;
         }
 
         return index;
@@ -86,11 +85,11 @@ class StreamMapCreator {
         if (longStreamId != -1 && longEventId != -1) {
             // Create a map to cache stream lookups. If we have cached more than a million streams then
             // discard the map and start again to avoid using too much memory.
-            if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
-                fiteredStreamCache = new HashMap<>();
+            if (filteredStreamCache == null || filteredStreamCache.size() > 1000000) {
+                filteredStreamCache = new HashMap<>();
             }
 
-            final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
+            final Optional<Object> optional = filteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
                     // See if we can load the stream. We might get a StreamPermissionException if we aren't
                     // allowed to read from this stream.

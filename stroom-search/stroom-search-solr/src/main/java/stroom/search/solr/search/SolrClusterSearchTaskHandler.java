@@ -108,8 +108,8 @@ class SolrClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext,
-                    storedFields,
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(
+                    taskContext,
                     coprocessors,
                     query);
 

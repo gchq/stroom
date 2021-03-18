@@ -5828,10 +5828,6 @@ components:
             format: int64
         sourceTaskId:
           $ref: '#/components/schemas/TaskId'
-        storedFields:
-          type: array
-          items:
-            type: string
         taskName:
           type: string
     ComponentConfig:
