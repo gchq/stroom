@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Provide audit log record for permission changes to explorer items (documents)
 
 ## [v7.0-beta.95] - 2021-03-18
 
