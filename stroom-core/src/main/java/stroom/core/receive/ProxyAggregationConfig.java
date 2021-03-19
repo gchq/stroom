@@ -18,8 +18,8 @@ import javax.inject.Singleton;
 })
 public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig {
 
-    private String repoDir = "${stroom.home}/proxy_repo";
-    private String dbDir = "${stroom.home}/proxy_repo_db";
+    private String repoDir = "proxy_repo";
+    private String dbDir = "proxy_repo_db";
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
 
     @Override

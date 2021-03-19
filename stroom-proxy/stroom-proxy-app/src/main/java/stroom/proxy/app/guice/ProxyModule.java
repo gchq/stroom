@@ -59,6 +59,7 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
@@ -167,8 +168,10 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Persistence providePersistence() {
-        return new FSPersistence(Paths.get(configuration.getProxyConfig().getContentDir()));
+    Persistence providePersistence(PathCreator pathCreator) {
+        String path = configuration.getProxyConfig().getContentDir();
+        path = pathCreator.replaceSystemProperties(path);
+        return new FSPersistence(Paths.get(path));
     }
 
     @Provides

@@ -7,6 +7,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
+import stroom.util.io.PathConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.client.JerseyClientConfiguration;
 
 @JsonPropertyOrder({
+        "path",
         "receiptPolicy",
         "repository",
         "scanner",
@@ -28,6 +30,7 @@ import io.dropwizard.client.JerseyClientConfiguration;
 })
 public class ProxyConfig {
 
+    private PathConfig pathConfig = new PathConfig();
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
@@ -39,6 +42,15 @@ public class ProxyConfig {
     private boolean useDefaultOpenIdCredentials = true;
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
     private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
+
+    @JsonProperty("path")
+    public PathConfig getPathConfig() {
+        return pathConfig;
+    }
+
+    public void setPathConfig(final PathConfig pathConfig) {
+        this.pathConfig = pathConfig;
+    }
 
     @JsonProperty("receiptPolicy")
     public ReceiptPolicyConfig getReceiptPolicyConfig() {

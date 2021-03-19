@@ -39,12 +39,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -54,12 +52,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
@@ -87,63 +87,73 @@ public class AggregateForwarder implements Forwarder {
     private final SqliteJooqHelper jooq;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
+    private final ForwardUrlService forwardUrlService;
     private final Path repoDir;
 
-    private final Map<Integer, String> forwardIdUrlMap = new HashMap<>();
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
     private volatile String hostName = null;
     private volatile boolean shutdown;
 
-    private final AtomicInteger forwardUrlRecordId = new AtomicInteger();
     private final AtomicLong forwardAggregateId = new AtomicLong();
 
     @Inject
     AggregateForwarder(final ProxyRepoDbConnProvider connProvider,
                        final ForwarderDestinations forwarderDestinations,
+                       final ForwardUrlService forwardUrlService,
                        final RepoDirProvider repoDirProvider) {
         this.jooq = new SqliteJooqHelper(connProvider);
         this.forwarderDestinations = forwarderDestinations;
+        this.forwardUrlService = forwardUrlService;
         this.repoDir = repoDirProvider.get();
 
         init();
     }
 
     private void init() {
-        final int maxForwardUrlRecordId = jooq.getMaxId(FORWARD_URL, FORWARD_URL.ID).orElse(0);
-        forwardUrlRecordId.set(maxForwardUrlRecordId);
-
         final long maxForwardAggregateRecordId = jooq
                 .getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
         forwardAggregateId.set(maxForwardAggregateRecordId);
-
-        if (forwarderDestinations.getDestinationNames().size() > 0) {
-            // Create a map of forward URLs to DB ids.
-            for (final String destinationName : forwarderDestinations.getDestinationNames()) {
-                final int id = getForwardUrlId(destinationName);
-                forwardIdUrlMap.put(id, destinationName);
-            }
-        }
     }
 
-    int getForwardUrlId(final String forwardUrl) {
-        return jooq.contextResult(context -> {
-            final Optional<Integer> optionalId = context
-                    .select(FORWARD_URL.ID)
-                    .from(FORWARD_URL)
-                    .where(FORWARD_URL.URL.equal(forwardUrl))
-                    .fetchOptional()
-                    .map(r -> r.get(FORWARD_URL.ID));
+    @Override
+    public synchronized int cleanup() {
+        return jooq.transactionResult(context -> {
+            int total = 0;
 
-            return optionalId.orElseGet(() -> {
-                final int newId = forwardUrlRecordId.incrementAndGet();
-                context
-                        .insertInto(FORWARD_URL, FORWARD_URL.ID, FORWARD_URL.URL)
-                        .values(newId, forwardUrl)
-                        .execute();
-                return newId;
-            });
+            // Delete any source forward attempts as we are no longer forwarding source directly.
+            total += context
+                    .deleteFrom(FORWARD_SOURCE)
+                    .execute();
+
+            // Update sources to ensure they aren't marked as having had forwarding errors.
+            total += context
+                    .update(SOURCE)
+                    .set(SOURCE.FORWARD_ERROR, false)
+                    .execute();
+
+            return total;
         });
+    }
+
+    @Override
+    public int retryFailures() {
+        int count = 0;
+
+        // Allow the system to retry all failed destinations.
+        count += jooq.contextResult(context -> context
+                .deleteFrom(FORWARD_AGGREGATE)
+                .where(FORWARD_AGGREGATE.SUCCESS.isFalse())
+                .execute());
+
+        // Reconsider failed aggregates for forwarding.
+        count += jooq.contextResult(context -> context
+                .update(AGGREGATE)
+                .set(AGGREGATE.FORWARD_ERROR, false)
+                .where(AGGREGATE.FORWARD_ERROR.isTrue())
+                .execute());
+
+        return count;
     }
 
     @Override
@@ -193,38 +203,42 @@ public class AggregateForwarder implements Forwarder {
     private CompletableFuture<Void> forwardAggregate(final long aggregateId,
                                                      final String feedName,
                                                      final String typeName) {
-        final Map<Integer, String> remainingForwardUrl = new HashMap<>(forwardIdUrlMap);
-        final AtomicBoolean previousFailure = new AtomicBoolean();
-
         // See if this data has been sent to all forward URLs.
-        jooq.context(context -> context
+        final Map<Integer, Boolean> successMap = jooq.contextResult(context -> context
                 .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
                 .from(FORWARD_AGGREGATE)
                 .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
                 .fetch()
-                .forEach(r -> {
-                    final int forwardUrlId = r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID);
-                    final boolean success = r.get(FORWARD_AGGREGATE.SUCCESS);
-
-                    remainingForwardUrl.remove(forwardUrlId);
-                    if (!success) {
-                        previousFailure.set(true);
-                    }
-                }));
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                r -> r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID),
+                                r -> r.get(FORWARD_AGGREGATE.SUCCESS))));
 
         // Forward to all remaining places.
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
-        final AtomicInteger successCount = new AtomicInteger();
-        for (final Entry<Integer, String> entry : remainingForwardUrl.entrySet()) {
+        final AtomicInteger failureCount = new AtomicInteger();
+        for (final Entry<Integer, String> entry : forwardUrlService.getForwardIdUrlMap().entrySet()) {
             final int forwardId = entry.getKey();
-            final String forwardUrl = entry.getValue();
-            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-                final boolean success = forwardAggregateData(aggregateId, feedName, typeName, forwardId, forwardUrl);
-                if (success) {
-                    successCount.incrementAndGet();
-                }
-            }, executor);
-            futures.add(completableFuture);
+
+            final Boolean previousSuccess = successMap.get(forwardId);
+            if (previousSuccess == Boolean.FALSE) {
+                failureCount.incrementAndGet();
+
+            } else if (previousSuccess == null) {
+                final String forwardUrl = entry.getValue();
+                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
+                    final boolean success = forwardAggregateData(aggregateId,
+                            feedName,
+                            typeName,
+                            forwardId,
+                            forwardUrl);
+                    if (!success) {
+                        failureCount.incrementAndGet();
+                    }
+                }, executor);
+                futures.add(completableFuture);
+            }
         }
 
         // When all futures complete we want to try and delete the aggregate.
@@ -232,8 +246,7 @@ public class AggregateForwarder implements Forwarder {
                 .allOf(futures.toArray(new CompletableFuture[0]))
                 .thenRunAsync(() -> {
                     // Delete the aggregate if we have successfully forwarded to all destinations.
-                    if (!previousFailure.get() &&
-                            successCount.get() == remainingForwardUrl.size()) {
+                    if (failureCount.get() == 0) {
                         deleteAggregate(aggregateId);
                     } else {
                         // Mark the aggregate as having errors so we don't keep endlessly trying to send it.

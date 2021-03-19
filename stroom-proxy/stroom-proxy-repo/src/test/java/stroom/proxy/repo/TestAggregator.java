@@ -40,6 +40,8 @@ public class TestAggregator {
     @Inject
     private AggregateForwarder aggregateForwarder;
     @Inject
+    private ForwardUrlService forwardUrlService;
+    @Inject
     private Cleanup cleanup;
     @Inject
     private MockForwardDestinations mockForwardDestinations;
@@ -98,7 +100,7 @@ public class TestAggregator {
 
         // Now forward the completed aggregates.
         final String forwardUrl = "http://test-url.com";
-        final int forwardUrlId = aggregateForwarder.getForwardUrlId(forwardUrl);
+        final int forwardUrlId = forwardUrlService.getForwardUrlId(forwardUrl);
         for (final Record3<Long, String, String> aggregate : completedAggregates) {
             aggregateForwarder.forwardAggregateData(
                     aggregate.value1(),

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="281px" preserveAspectRatio="none" style="width:552px;height:281px;" version="1.1" viewBox="0 0 552 281" width="552px" zoomAndPan="magnify"><defs><filter height="300%" id="f12p73lt1zcn8i" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="136" x="201.5" y="16.708">Data Reception</text><!--MD5=[334049d3a1ffeab5811ce8957a01f1ef]
+cluster repo--><rect fill="#FFFFFF" filter="url(#f12p73lt1zcn8i)" height="170" rx="35" ry="35" style="stroke:#000000;stroke-width:1.5;" width="235" x="164" y="99.9531"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="37" x="263" y="119.9482">repo</text><!--MD5=[5dfe1150c87218a9f0b25c58295c84f7]
+cluster folder--><polygon fill="#FFFFFF" filter="url(#f12p73lt1zcn8i)" points="204,150.9531,257,150.9531,264,173.25,367,173.25,367,237.9531,204,237.9531,204,150.9531" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="204" x2="264" y1="173.25" y2="173.25"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="47" x="208" y="165.9482">folder</text><!--MD5=[815249f79c2c08157ac02b3106e03757]
+cluster Database--><path d="M431,139.9531 C431,129.9531 488,129.9531 488,129.9531 C488,129.9531 545,129.9531 545,139.9531 L545,233.9531 C545,243.9531 488,243.9531 488,243.9531 C488,243.9531 431,243.9531 431,233.9531 L431,139.9531 " fill="#FFFFFF" filter="url(#f12p73lt1zcn8i)" style="stroke:#000000;stroke-width:1.5;"/><path d="M431,139.9531 C431,149.9531 488,149.9531 488,149.9531 C488,149.9531 545,149.9531 545,139.9531 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="73" x="451.5" y="164.9482">Database</text><!--MD5=[bf3ce7a256daaaf5dbab58753aeb22ee]
+entity zip--><polygon fill="#FFFFFF" filter="url(#f12p73lt1zcn8i)" points="311,185.9531,311,222.25,351,222.25,351,195.9531,341,185.9531,311,185.9531" style="stroke:#000000;stroke-width:1.5;"/><path d="M341,185.9531 L341,195.9531 L351,195.9531 " fill="#FFFFFF" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="20" x="321" y="208.9482">zip</text><!--MD5=[c12a1600b6b75d8e137ee7341d68ba4c]
+entity meta--><polygon fill="#FFFFFF" filter="url(#f12p73lt1zcn8i)" points="220.5,185.9531,220.5,222.25,275.5,222.25,275.5,195.9531,265.5,185.9531,220.5,185.9531" style="stroke:#000000;stroke-width:1.5;"/><path d="M265.5,185.9531 L265.5,195.9531 L275.5,195.9531 " fill="#FFFFFF" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="35" x="230.5" y="208.9482">meta</text><!--MD5=[23b040da7204fd07ca5426bfc499883a]
+class SOURCE--><rect codeLine="19" fill="#FEFECE" filter="url(#f12p73lt1zcn8i)" height="48" id="SOURCE" style="stroke:#A80036;stroke-width:1.5;" width="82" x="447" y="179.9531"/><ellipse cx="462" cy="195.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M466.1094,201.9531 L458.3906,201.9531 L458.3906,189.5625 L466.1094,189.5625 L466.1094,191.7188 L460.8438,191.7188 L460.8438,194.3906 L465.6094,194.3906 L465.6094,196.5469 L460.8438,196.5469 L460.8438,199.7969 L466.1094,199.7969 L466.1094,201.9531 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="50" x="476" y="200.1074">SOURCE</text><line style="stroke:#A80036;stroke-width:1.5;" x1="448" x2="528" y1="211.9531" y2="211.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="448" x2="528" y1="219.9531" y2="219.9531"/><!--MD5=[c46f8df8ab0cba546e1007341bdebd8d]
+class ProxyServlet--><rect codeLine="4" fill="#FEFECE" filter="url(#f12p73lt1zcn8i)" height="48" id="ProxyServlet" style="stroke:#A80036;stroke-width:1.5;" width="108" x="118" y="27.9531"/><ellipse cx="133" cy="43.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M135.9688,49.5938 Q135.3906,49.8906 134.75,50.0313 Q134.1094,50.1875 133.4063,50.1875 Q130.9063,50.1875 129.5781,48.5469 Q128.2656,46.8906 128.2656,43.7656 Q128.2656,40.6406 129.5781,38.9844 Q130.9063,37.3281 133.4063,37.3281 Q134.1094,37.3281 134.75,37.4844 Q135.4063,37.6406 135.9688,37.9375 L135.9688,40.6563 Q135.3438,40.0781 134.75,39.8125 Q134.1563,39.5313 133.5313,39.5313 Q132.1875,39.5313 131.5,40.6094 Q130.8125,41.6719 130.8125,43.7656 Q130.8125,45.8594 131.5,46.9375 Q132.1875,48 133.5313,48 Q134.1563,48 134.75,47.7344 Q135.3438,47.4531 135.9688,46.875 L135.9688,49.5938 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="76" x="147" y="48.1074">ProxyServlet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="119" x2="225" y1="59.9531" y2="59.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="119" x2="225" y1="67.9531" y2="67.9531"/><!--MD5=[a94ef3b8c8e4fd23532822afff4ed5f3]
+class ChangeListener--><rect codeLine="24" fill="#FEFECE" filter="url(#f12p73lt1zcn8i)" height="48" id="ChangeListener" style="stroke:#A80036;stroke-width:1.5;" width="130" x="7" y="179.9531"/><ellipse cx="22" cy="195.9531" fill="#B4A7E5" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M17.9219,191.7188 L17.9219,189.5625 L25.3125,189.5625 L25.3125,191.7188 L22.8438,191.7188 L22.8438,199.7969 L25.3125,199.7969 L25.3125,201.9531 L17.9219,201.9531 L17.9219,199.7969 L20.3906,199.7969 L20.3906,191.7188 L17.9219,191.7188 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacing" textLength="98" x="36" y="200.1074">ChangeListener</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="136" y1="211.9531" y2="211.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="136" y1="219.9531" y2="219.9531"/><!--MD5=[8507a3a30ad96f2f4362cfa2c9768e30]
+link ProxyServlet to repo--><path codeLine="27" d="M172,76.0631 C172,81.2406 172,87.0652 172,93.2991 C172,94.8576 172,96.4417 172,98.0476 C172,98.4491 172,98.852 172,99.2561 C172,99.4582 172,99.6606 172,99.8633 " fill="none" id="ProxyServlet-to-repo" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#FFFFFF" points="172,99.8633,179,80.8633,165,80.8633,172,99.8633" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[4c0f53bbb1a0874f54129389ae292d86]
+link ProxyServlet to SOURCE--><path codeLine="28" d="M226.01,52.7931 C266.74,54.6831 322.93,61.7131 367,83.9531 C404.07,102.6631 437,136.8431 459.11,163.7831 " fill="none" id="ProxyServlet-to-SOURCE" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="464.86,159.7631,471.72,179.8131,453.85,168.4231,464.86,159.7631" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[4ca352e6ac7e6ecfa0445b1b08bb2e03]
+link ProxyServlet to ChangeListener--><path codeLine="29" d="M156.59,76.0631 C138.81,102.7431 109.57,146.6031 90.55,175.1331 " fill="none" id="ProxyServlet-to-ChangeListener" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="87.59,179.5731,95.9105,174.3035,90.3635,175.4129,89.2541,169.8659,87.59,179.5731" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[9598a745c5cd917e4da7376abd085a54]
+@startuml
+
+title Data Reception
+
+class ProxyServlet {
+}
+
+storage repo {
+    folder folder {
+        file zip {
+        }
+        file meta {
+        }
+    }
+}
+
+
+
+package Database <<Database>> {
+entity SOURCE
+}
+
+
+
+interface ChangeListener {
+}
+
+ProxyServlet - -|> repo
+ProxyServlet - -|> SOURCE
+ProxyServlet ..> ChangeListener
+
+@enduml
+
+PlantUML version 1.2021.00(Sun Jan 10 10:25:05 GMT 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>

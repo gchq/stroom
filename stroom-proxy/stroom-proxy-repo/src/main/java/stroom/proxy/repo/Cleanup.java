@@ -59,11 +59,12 @@ public class Cleanup {
     private static final Condition DELETE_SOURCE_ITEM_CONDITION =
             SOURCE_ITEM.ID.in(SELECT_SOURCE_ITEM_ID);
     private static final Condition DELETE_SOURCE_CONDITION =
-            SOURCE.EXAMINED.isTrue()
-                    .andNotExists(DSL
-                            .select(SOURCE_ITEM.ID)
-                            .from(SOURCE_ITEM)
-                            .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID)));
+            SOURCE.FORWARDED.isTrue().or(
+                    SOURCE.EXAMINED.isTrue()
+                            .andNotExists(DSL
+                                    .select(SOURCE_ITEM.ID)
+                                    .from(SOURCE_ITEM)
+                                    .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))));
 
     private final SqliteJooqHelper jooq;
     private final Path repoDir;

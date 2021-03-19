@@ -11,7 +11,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row7;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -76,6 +76,11 @@ public class Source extends TableImpl<SourceRecord> {
      * The column <code>source.examined</code>.
      */
     public final TableField<SourceRecord, Boolean> EXAMINED = createField(DSL.name("examined"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>source.forwarded</code>.
+     */
+    public final TableField<SourceRecord, Boolean> FORWARDED = createField(DSL.name("forwarded"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>source.forward_error</code>.
@@ -157,11 +162,11 @@ public class Source extends TableImpl<SourceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, String, String, String, Long, Boolean, Boolean> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row8<Long, String, String, String, Long, Boolean, Boolean, Boolean> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 }

@@ -11,12 +11,12 @@ server:
   requestLog:
     appenders:
     - type: file
-      currentLogFilename: ${HOME}/.stroom-proxy/logs/access/access.log
+      currentLogFilename: logs/access/access.log
       threshold: ALL
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
 
@@ -33,12 +33,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: ${HOME}/.stroom-proxy/logs/receive/receive.log
+        currentLogFilename: logs/receive/receive.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -47,12 +47,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: ${HOME}/.stroom-proxy/logs/send/send.log
+        currentLogFilename: logs/send/send.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -62,17 +62,21 @@ logging:
     logFormat: "%highlight(%-5level) %d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC} %yellow(%thread) %cyan(%-30logger{25}) %msg %n"
     timeZone: UTC
   - type: file
-    currentLogFilename: ${HOME}/.stroom-proxy/logs/app/app.log
+    currentLogFilename: logs/app/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
     archivedFileCount: 100
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 proxyConfig:
+
+  path:
+    home: "~/.stroom-proxy"
+    temp: "/tmp/stroom-proxy"
 
   # If you want to use a receipt policy then the RuleSet must exist
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
@@ -81,8 +85,8 @@ proxyConfig:
 
   repository:
     storingEnabled: true
-    repoDir: "${stroom.home}/repo"
-    dbDir: "${stroom.home}/repo"
+#    repoDir: "repo"
+#    dbDir: "repo"
     format: "${pathId}/${id}"
     cleanupFrequency: 1h
     lockDeleteAge: 1h
@@ -117,7 +121,7 @@ proxyConfig:
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
 
-  contentDir: "/tmp/stroom-proxy/config"
+  contentDir: "content"
 #  contentSync:
 #    contentSyncEnabled: false
 #    upstreamUrl:

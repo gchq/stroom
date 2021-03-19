@@ -1,0 +1,12 @@
+@startuml
+
+title Receive Data
+
+Supplier --> ProxyServlet: HTTP POST
+ProxyServlet -> Repo: Write data to the repository
+ProxyServlet -> Repo: Unlock repository files
+Repo ->> Database: Add SOURCE record
+ProxyServlet --> Supplier: 200 Response
+ProxyServlet --// ChangeListener: onChange
+
+@enduml

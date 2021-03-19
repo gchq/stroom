@@ -10,6 +10,7 @@ import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.util.io.PathConfig;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -29,6 +30,7 @@ public class ProxyConfigModule extends AbstractModule {
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
+        bind(PathConfig.class).toInstance(proxyConfig.getPathConfig());
         bind(ReceiptPolicyConfig.class).toInstance(proxyConfig.getReceiptPolicyConfig());
         bind(RepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());
         bind(ProxyRepoConfig.class).toInstance(proxyConfig.getProxyRepositoryConfig());

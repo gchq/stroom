@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.ForwardRetryExecutor;
 import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
@@ -16,6 +17,8 @@ import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.SourceForwarder;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -23,6 +26,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -49,10 +56,6 @@ public class ProxyLifecycle implements Managed {
         services = new ArrayList<>();
         requireShutdown = new ArrayList<>();
 
-        final boolean forwardingEnabled = forwarderConfig.isForwardingEnabled() &&
-                forwarderConfig.getForwardDestinations() != null &&
-                forwarderConfig.getForwardDestinations().size() > 0;
-
         // If storing isn't enabled then no lifecycle startup is needed.
         if (proxyRepoConfig.isStoringEnabled()) {
             // Create a service to cleanup the repo to remove empty dirs and stale lock files.
@@ -64,15 +67,26 @@ public class ProxyLifecycle implements Managed {
             services.add(cleanupRepoExecutor);
 
             // If we aren't forwarding then don't do anything else other than running repo cleanups.
-            if (forwardingEnabled) {
+            if (forwarderConfig.isForwardingEnabled() &&
+                    forwarderConfig.getForwardDestinations() != null &&
+                    forwarderConfig.getForwardDestinations().size() > 0) {
                 final Forwarder forwarder = aggregatorConfig.isEnabled()
                         ? aggregatorForwarderProvider.get()
                         : sourceForwarderProvider.get();
+                forwarder.cleanup();
+
                 final ChangeListenerExecutor forwarderExecutor = new ChangeListenerExecutor(
                         Forwarder.class.getSimpleName(),
                         forwarder::forward,
                         100);
                 services.add(forwarderExecutor);
+
+                // Setup forwarding retries.
+                final ForwardRetryExecutor forwardRetryExecutor = new ForwardRetryExecutor(
+                        forwarderConfig.getRetryFrequency(),
+                        forwarder,
+                        forwarderExecutor);
+                services.add(forwardRetryExecutor);
 
                 if (proxyRepoFileScannerConfig.isScanningEnabled()) {
                     // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.

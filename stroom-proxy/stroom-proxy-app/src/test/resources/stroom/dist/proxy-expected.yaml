@@ -23,6 +23,7 @@ proxyConfig:
     forwardingEnabled: false
     userAgent: null
     forwardDestinations: []
+    retryFrequency: "PT1M"
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
   contentDir: null

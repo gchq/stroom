@@ -1,4 +1,4 @@
-package stroom.config.app;
+package stroom.dropwizard.common;
 
 import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
@@ -16,9 +16,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,10 +26,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomConfigurationSourceProvider.class);
 
     private static final String SOURCE_DEFAULTS = "defaults";
     private static final String SOURCE_YAML = "YAML";
@@ -146,7 +142,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         }
     }
 
-    @NotNull
+    @Nonnull
     private PathCreator getPathCreator(final JsonNode rootNode) {
         Objects.requireNonNull(rootNode);
 

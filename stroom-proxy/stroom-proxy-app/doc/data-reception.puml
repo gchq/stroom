@@ -1,0 +1,32 @@
+@startuml
+
+title Data Reception
+
+class ProxyServlet {
+}
+
+storage repo {
+    folder folder {
+        file zip {
+        }
+        file meta {
+        }
+    }
+}
+
+
+
+package Database <<Database>> {
+entity SOURCE
+}
+
+
+
+interface ChangeListener {
+}
+
+ProxyServlet --|> repo
+ProxyServlet --|> SOURCE
+ProxyServlet ..> ChangeListener
+
+@enduml

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -42,9 +43,7 @@ public class ProxyAggregationExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
-    private final AggregatorConfig aggregatorConfig;
-    private final ProxyRepoFileScanner proxyRepoFileScanner;
-    private final Aggregator aggregator;
+    private final Exec exec;
 
     @Inject
     public ProxyAggregationExecutor(final ProxyRepoFileScanner proxyRepoFileScanner,
@@ -52,14 +51,15 @@ public class ProxyAggregationExecutor {
                                     final ProxyRepoSourceEntries proxyRepoSourceEntries,
                                     final AggregatorConfig aggregatorConfig,
                                     final Aggregator aggregator,
-                                    final AggregateForwarder aggregateForwarder,
-                                    final SourceForwarder sourceForwarder,
+                                    final Provider<AggregateForwarder> aggregateForwarderProvider,
+                                    final Provider<SourceForwarder> sourceForwarderProvider,
                                     final Cleanup cleanup) {
-        this.aggregatorConfig = aggregatorConfig;
-        this.proxyRepoFileScanner = proxyRepoFileScanner;
-        this.aggregator = aggregator;
-
         if (aggregatorConfig.isEnabled()) {
+            final AggregateForwarder aggregateForwarder = aggregateForwarderProvider.get();
+
+            // Cleanup as part of the start up process in case aggregation has been turned on/off.
+            aggregateForwarder.cleanup();
+
             // If we are aggregating then we need to tell the source entry service to examine new sources when they are
             // added.
             proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
@@ -72,12 +72,45 @@ public class ProxyAggregationExecutor {
             // that are no longer needed.
             aggregateForwarder.addChangeListener(cleanup::cleanup);
 
+            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+                // Try aggregating again.
+                aggregator.aggregate();
+
+                // Scan the proxy repo to find new files to aggregate.
+                proxyRepoFileScanner.scan(scanSorted);
+
+                if (forceAggregation) {
+                    // Force close of old aggregates.
+                    aggregator.closeOldAggregates(System.currentTimeMillis());
+                }
+
+                // Retry failed forwards.
+                if (aggregateForwarder.retryFailures() > 0) {
+                    aggregateForwarder.forward();
+                }
+            };
+
         } else {
+            final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
+
+            // Cleanup as part of the start up process in case aggregation has been turned on/off.
+            sourceForwarder.cleanup();
+
             // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
             proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) -> sourceForwarder.forward());
             // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
             // that are no longer needed.
             sourceForwarder.addChangeListener(cleanup::cleanup);
+
+            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+                // Scan the proxy repo to find new files to aggregate.
+                proxyRepoFileScanner.scan(scanSorted);
+
+                // Retry failed forwards.
+                if (sourceForwarder.retryFailures() > 0) {
+                    sourceForwarder.forward();
+                }
+            };
         }
     }
 
@@ -89,26 +122,15 @@ public class ProxyAggregationExecutor {
                      final boolean scanSorted) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
-                if (aggregatorConfig.isEnabled()) {
-                    // Try aggregating again.
-                    aggregator.aggregate();
-
-                    // Scan the proxy repo to find new files to aggregate.
-                    proxyRepoFileScanner.scan(scanSorted);
-
-                    if (forceAggregation) {
-                        // Force close of old aggregates.
-                        aggregator.closeOldAggregates(System.currentTimeMillis());
-                    }
-
-                } else {
-                    // Scan the proxy repo to find new files to aggregate.
-                    proxyRepoFileScanner.scan(scanSorted);
-                }
-
+                exec.exec(forceAggregation, scanSorted);
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
+    }
+
+    private interface Exec {
+
+        void exec(boolean forceAggregation, boolean scanSorted);
     }
 }

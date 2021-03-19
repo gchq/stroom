@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS source (
   type_name                 VARCHAR(255) DEFAULT NULL,
   last_modified_time_ms     BIGINT NOT NULL,
   examined                  BOOLEAN DEFAULT FALSE,
+  forwarded                 BOOLEAN DEFAULT FALSE,
   forward_error             BOOLEAN DEFAULT FALSE
 );
 
