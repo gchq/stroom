@@ -1,0 +1,40 @@
+@startuml
+
+title Storing Data
+
+class ProxyRequestHandler {
+}
+
+class ProxyRepo {
+}
+
+class ProxyRepoSources {
+}
+
+storage repo {
+    folder folder {
+        file zip {
+        }
+        file meta {
+        }
+    }
+}
+
+
+
+package Database <<Database>> {
+entity SOURCE
+}
+
+
+
+interface ChangeListener {
+}
+
+ProxyRequestHandler --> ProxyRepo
+ProxyRepo --|> repo
+ProxyRepo --> ProxyRepoSources
+ProxyRepoSources --|> SOURCE
+ProxyRepoSources ..> ChangeListener
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity source {
+  *id : bigint
+  --
+  *path : varchar(255) - unique
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *last_modified_time_ms : bigint
+  examined : boolean
+  *forwarded : boolean
+  *forward_error : boolean
+}
+
+entity forward_url {
+  *id : int
+  --
+  *url : varchar(255)
+}
+
+entity forward_source {
+  *id : bigint
+  --
+  *fk_forward_url_id : int
+  *fk_source_id : bigint
+  *success : boolean
+  *error : varchar(255)
+}
+
+forward_source }o--|| forward_url
+forward_source }o..|| source
+
+@enduml
