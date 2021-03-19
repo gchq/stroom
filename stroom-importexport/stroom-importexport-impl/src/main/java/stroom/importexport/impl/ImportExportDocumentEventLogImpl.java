@@ -70,11 +70,11 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
 
     @Override
     public void exportDocument(final DocRef document, final Exception e) {
-        // TODO @AT Think this is a dup of the logging done in ContentResource
         try {
             eventLoggingService.log(
-                    "Export",
-                    buildEventDescription("Exporting", document.getType(), document.getName()),
+                    "ExportDocument",
+                    buildEventDescription("Exporting Stroom Config Item",
+                            document.getType(), document.getName()),
                     ExportEventAction.builder()
                             .withSource(MultiObject.builder()
                                     .addObject(OtherObject.builder()
