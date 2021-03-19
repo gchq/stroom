@@ -363,7 +363,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         if (descendants != null && descendants.size() > 0) {
             for (final ExplorerNode descendant : descendants) {
                 // Ensure that the user has permission to change the permissions of this child.
-                if (securityContextProvider.get().hasDocumentPermission(descendant.getUuid(), DocumentPermissionNames.OWNER)) {
+                if (securityContextProvider.get().hasDocumentPermission(descendant.getUuid(),
+                        DocumentPermissionNames.OWNER)) {
                     changeDocPermissions(eventTypeId, descendant.getDocRef(),
                             changes, affectedDocRefs, affectedUserUuids, clear);
                 } else {
