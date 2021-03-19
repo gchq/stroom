@@ -53,17 +53,55 @@ After clearing the failures forwarding is attempted again.
 The proxy may continue to fail to forward data until all configured destinations can be sent the data.
 
 ## Cleanup
-The `Cleanup` service is registered as a listener of the `SourceForwarder` and will run asynchronously whenever a change event is received if not already running and will run again if any changes occur after it starts running.
-The  `Cleanup` service will delete any `source` records and associated repository files if forwarding has been completed for a source.
+`Cleanup` is registered as a listener of the `SourceForwarder` and will run asynchronously whenever a change event is received if not already running and will run again if any changes occur after it starts running.
+`Cleanup` will delete any `source` records and associated repository files if forwarding has been completed for a source.
+`Cleanup` deletes repository files before database entries to avoid source being added again by a rescan.
 
 # Aggregating and Forwarding Stored Data
+If proxy is configured to store data and aggregate it before forwarding the process follows the sequence below:
 
+![](forward-aggregate-sequence.svg)
 
+After new `source` entries are added via `ProxyRepoSources` an `onChange` event is fired.
 
+The `ProxyRepoEntries` is registered to listen for new sources.
+When it is notified of nwe source data it asynchronously starts to examine it.
+Each new source will be examined by opening the source zip file so entries can be recorded in the database.
+The database records source items in terms of named data files and also records the associated meta and context entries.
+Uncompressed file sizes are recorded.
+Feed and type names are parsed from meta and also recorded. 
+When all of the source has been examined the `source` is marked as having been examined so it is not examined again.
+The `ProxyRepoEntries` fires an `onChange` event to notify listeners that new source entries are available.
+Note that all entries are added in a single transaction, so they are not available until source examination is complete.
+
+The `AggregateF` is registered to listen for new examined sources.
+It will perform aggregation on new examined sources asynchronously when notified.
+All `source_items` and `source_entries` are added to appropriate `aggregate`s based on the configured maximum size of aggregates and the maximum number of entries.
+Aggregates are separated by feed and type as recorded against `source_items`
+When a `source_item` is added to an aggregate it is marked as `aggregated`.
+Aggregates that are older than the aggregation frequency are marked `complete` and an `onChange` event is fired to notify all registered listeners that a new aggregate is ready for forwarding.
+
+The `AggregateForwarder` is registered to listen for new aggregates.
+The `AggregateForwarder` will find completed aggregates to forward and will try and send each asynchronously to each of the forward destinations.
+When an aggregate is successfully sent to a destination a record is added to the `forward_aggregate` table.
+When an aggregate has been sent to all destinations the aggregate table is updated to set `forwarded` to `true` so that the system no longer tries to forward the aggregate.
+After setting the `forwarded` flag the `forward_aggregate`, `aggregate_item` and `aggregate` records are deleted prior to firing a change event to any listeners.
+
+If an error occurs when forwarding an aggregate it is recorded in the `forward_aggregate` table and the `aggregate` table has the `forward_error` flag set so that the proxy stops trying to forward the aggregate until a retry attempt is made.
+If a forwarding error is recorded it will be logged.
+Without forwarding being marked as successful the aggregate will not be deleted.
 
 ## Retry Forwarding
+If forwarding retry is configured then based on the retry schedule all `forward_aggregate` records with errors will be deleted and all `aggregate` `forward_error` flags will be reset.
+After clearing the failures forwarding is attempted again.
+The proxy may continue to fail to forward data until all configured destinations can be sent the data.
 
 ## Cleanup
+`Cleanup` is registered as a listener of the `AggregateForwarder` and will run asynchronously whenever a change event is received if not already running and will run again if any changes occur after it starts running.
+`Cleanup` will delete all `source_item` and related `source_entry` records that are marked as `aggregated` if associated `aggregate_item` records have been deleted.
+`Cleanup` will delete any `source` records that are marked as having been `examined` that no longer have any associated `source_item` records.
+All repository files associated with a `source` being deleted are also deleted.
+`Cleanup` deletes repository files before database entries to avoid source being added again by a rescan.
 
 # Database Structure
 

@@ -7,8 +7,8 @@ participant SourceForwarder
 database db
 database repo
 participant ForwardStreamHandlers
-actor Destination
 participant Cleanup
+actor Destination
 
 ProxyRepoSources --// SourceForwarder: onChange
 SourceForwarder -> db: Find new sources
@@ -17,9 +17,9 @@ SourceForwarder -// SourceForwarder++: Forward Source
 SourceForwarder -> repo: read
 SourceForwarder -> ForwardStreamHandlers: write
 ForwardStreamHandlers --> Destination: handle
-SourceForwarder -> db: record FORWARD_SOURCE
+SourceForwarder -> db: record 'forward_source'
 
-SourceForwarder -> db: record SOURCE forwarded
+SourceForwarder -> db: record 'source' forwarded
 return
 return
 
