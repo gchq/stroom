@@ -18,6 +18,13 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.ForwardSourceDao;
+import stroom.proxy.repo.dao.ForwardUrlDao;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceDao.Source;
+import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.ByteCountInputStream;
@@ -30,8 +37,6 @@ import stroom.util.thread.StroomThreadGroup;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jooq.Record4;
-import org.jooq.Result;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -51,18 +56,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
-import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class SourceForwarder implements Forwarder {
@@ -83,10 +78,14 @@ public class SourceForwarder implements Forwarder {
             TimeUnit.MINUTES,
             threadFactory);
 
-    private final SqliteJooqHelper jooq;
+    private final SourceDao sourceDao;
+    private final SourceEntryDao sourceEntryDao;
+    private final AggregateDao aggregateDao;
+    private final ForwardAggregateDao forwardAggregateDao;
+    private final ForwardSourceDao forwardSourceDao;
+    private final ForwardUrlDao forwardUrlDao;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
-    private final ForwardUrlService forwardUrlService;
     private final Path repoDir;
 
     private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
@@ -94,55 +93,38 @@ public class SourceForwarder implements Forwarder {
     private volatile String hostName = null;
     private volatile boolean shutdown;
 
-    private final AtomicLong forwardSourceId = new AtomicLong();
-
     @Inject
-    SourceForwarder(final ProxyRepoDbConnProvider connProvider,
+    SourceForwarder(final SourceDao sourceDao,
+                    final SourceEntryDao sourceEntryDao,
+                    final AggregateDao aggregateDao,
+                    final ForwardAggregateDao forwardAggregateDao,
+                    final ForwardSourceDao forwardSourceDao,
+                    final ForwardUrlDao forwardUrlDao,
                     final ForwarderDestinations forwarderDestinations,
-                    final ForwardUrlService forwardUrlService,
                     final RepoDirProvider repoDirProvider) {
-        this.jooq = new SqliteJooqHelper(connProvider);
+
+        this.sourceDao = sourceDao;
+        this.sourceEntryDao = sourceEntryDao;
+        this.aggregateDao = aggregateDao;
+        this.forwardAggregateDao = forwardAggregateDao;
+        this.forwardSourceDao = forwardSourceDao;
+        this.forwardUrlDao = forwardUrlDao;
+
         this.forwarderDestinations = forwarderDestinations;
-        this.forwardUrlService = forwardUrlService;
         this.repoDir = repoDirProvider.get();
-
-        init();
-    }
-
-    private void init() {
-        final long maxForwardSourceRecordId = jooq
-                .getMaxId(FORWARD_SOURCE, FORWARD_SOURCE.ID).orElse(0L);
-        forwardSourceId.set(maxForwardSourceRecordId);
     }
 
     @Override
     public synchronized int cleanup() {
-        return jooq.transactionResult(context -> {
-            int total = 0;
+        int total = 0;
 
-            // Delete any aggregate forward attempts as we are no longer forwarding aggregates.
-            total += context
-                    .deleteFrom(FORWARD_AGGREGATE)
-                    .execute();
-            total += context
-                    .deleteFrom(AGGREGATE_ITEM)
-                    .execute();
-            total += context
-                    .deleteFrom(AGGREGATE)
-                    .execute();
-            total += context
-                    .deleteFrom(SOURCE_ENTRY)
-                    .execute();
-            total += context
-                    .deleteFrom(SOURCE_ITEM)
-                    .execute();
-            total += context
-                    .update(SOURCE)
-                    .set(SOURCE.EXAMINED, false)
-                    .execute();
+        // Delete any aggregate forward attempts as we are no longer forwarding aggregates.
+        total += forwardAggregateDao.deleteAll();
+        total += aggregateDao.deleteAll();
+        total += sourceEntryDao.deleteAll();
+        total += sourceDao.resetExamined();
 
-            return total;
-        });
+        return total;
     }
 
     @Override
@@ -150,17 +132,10 @@ public class SourceForwarder implements Forwarder {
         int count = 0;
 
         // Allow the system to retry all failed destinations.
-        count += jooq.contextResult(context -> context
-                .deleteFrom(FORWARD_SOURCE)
-                .where(FORWARD_SOURCE.SUCCESS.isFalse())
-                .execute());
+        count += forwardSourceDao.deleteFailedForwards();
 
-        // Reconsider failed aggregates for forwarding.
-        count += jooq.contextResult(context -> context
-                .update(SOURCE)
-                .set(SOURCE.FORWARD_ERROR, false)
-                .where(SOURCE.FORWARD_ERROR.isTrue())
-                .execute());
+        // Reconsider failed sources for forwarding.
+        count += sourceDao.resetFailedForwards();
 
         return count;
     }
@@ -172,22 +147,13 @@ public class SourceForwarder implements Forwarder {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record4<Long, String, String, String>> result = getCompletedSources(BATCH_SIZE);
+            final List<Source> sources = sourceDao.getCompletedSources(BATCH_SIZE);
 
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
-            result.forEach(record -> {
+            sources.forEach(source -> {
                 if (!shutdown) {
-                    final long sourceId = record.get(SOURCE.ID);
-                    final String sourcePath = record.get(SOURCE.PATH);
-                    final String feedName = record.get(SOURCE.FEED_NAME);
-                    final String typeName = record.get(SOURCE.TYPE_NAME);
-
                     count.incrementAndGet();
-                    final CompletableFuture<Void> completableFuture = forwardSource(
-                            sourceId,
-                            sourcePath,
-                            feedName,
-                            typeName);
+                    final CompletableFuture<Void> completableFuture = forwardSource(source);
                     futures.add(completableFuture);
                 }
             });
@@ -196,32 +162,20 @@ public class SourceForwarder implements Forwarder {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             // Stop forwarding if the last query did not return a result as big as the batch size.
-            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (sources.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
     }
 
-    private CompletableFuture<Void> forwardSource(final long sourceId,
-                                                  final String sourcePath,
-                                                  final String feedName,
-                                                  final String typeName) {
+    private CompletableFuture<Void> forwardSource(final Source source) {
         // See if this data has been sent to all forward URLs.
-        final Map<Integer, Boolean> successMap = jooq.contextResult(context -> context
-                .select(FORWARD_SOURCE.FK_FORWARD_URL_ID, FORWARD_SOURCE.SUCCESS)
-                .from(FORWARD_SOURCE)
-                .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(sourceId))
-                .fetch()
-                .stream()
-                .collect(
-                        Collectors.toMap(
-                                r -> r.get(FORWARD_SOURCE.FK_FORWARD_URL_ID),
-                                r -> r.get(FORWARD_SOURCE.SUCCESS))));
+        final Map<Integer, Boolean> successMap = forwardSourceDao.getForwardingState(source.getSourceId());
 
         // Forward to all remaining places.
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
         final AtomicInteger failureCount = new AtomicInteger();
-        for (final Entry<Integer, String> entry : forwardUrlService.getForwardIdUrlMap().entrySet()) {
+        for (final Entry<Integer, String> entry : forwardUrlDao.getForwardIdUrlMap().entrySet()) {
             final int forwardId = entry.getKey();
 
             final Boolean previousSuccess = successMap.get(forwardId);
@@ -232,10 +186,7 @@ public class SourceForwarder implements Forwarder {
                 final String forwardUrl = entry.getValue();
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                     final boolean success = forwardSourceData(
-                            sourceId,
-                            sourcePath,
-                            feedName,
-                            typeName,
+                            source,
                             forwardId,
                             forwardUrl);
                     if (!success) {
@@ -252,37 +203,30 @@ public class SourceForwarder implements Forwarder {
                 .thenRunAsync(() -> {
                     // Delete the source if we have successfully forwarded to all destinations.
                     if (failureCount.get() == 0) {
-                        deleteSource(sourceId);
+                        setForwardSuccess(source.getSourceId());
                     } else {
                         // Mark the source as having errors so we don't keep endlessly trying to send it.
-                        jooq.context(context -> context
-                                .update(SOURCE)
-                                .set(SOURCE.FORWARD_ERROR, true)
-                                .where(SOURCE.ID.eq(sourceId))
-                                .execute());
+                        sourceDao.setForwardError(source.getSourceId());
                     }
                 }, executor);
     }
 
-    boolean forwardSourceData(final long sourceId,
-                              final String sourcePath,
-                              final String feedName,
-                              final String typeName,
+    boolean forwardSourceData(final Source source,
                               final int forwardUrlId,
                               final String forwardUrl) {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
         final long thisPostId = proxyForwardId.incrementAndGet();
-        final String info = thisPostId + " " + feedName + " - " + typeName;
+        final String info = thisPostId + " " + source.getFeedName() + " - " + source.getTypeName();
         LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
-        attributeMap.put(StandardHeaderArguments.FEED, feedName);
-        if (typeName != null) {
-            attributeMap.put(StandardHeaderArguments.TYPE, typeName);
+        attributeMap.put(StandardHeaderArguments.FEED, source.getFeedName());
+        if (source.getTypeName() != null) {
+            attributeMap.put(StandardHeaderArguments.TYPE, source.getTypeName());
         }
         if (LOGGER.isDebugEnabled()) {
             attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
@@ -292,8 +236,8 @@ public class SourceForwarder implements Forwarder {
 
         // Start the POST
         try {
-            streamHandlers.handle(feedName, typeName, attributeMap, handler -> {
-                final Path zipFilePath = repoDir.resolve(sourcePath);
+            streamHandlers.handle(source.getFeedName(), source.getTypeName(), attributeMap, handler -> {
+                final Path zipFilePath = repoDir.resolve(source.getSourcePath());
 
                 try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
                     final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
@@ -327,65 +271,23 @@ public class SourceForwarder implements Forwarder {
             });
         } catch (final RuntimeException ex) {
             error.set(ex.getMessage());
-            LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
+            LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + source.getFeedName() + " ( " + ex + ")");
             LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
         }
 
         // Record that we sent the data or if there was no data to send.
-        createForwardSourceRecord(forwardUrlId, sourceId, success.get(), error.get());
+        forwardSourceDao.createForwardSourceRecord(forwardUrlId, source.getSourceId(), success.get(), error.get());
 
         return success.get();
     }
 
-    /**
-     * Create a record of the fact that we forwarded a source or at least tried to.
-     */
-    void createForwardSourceRecord(final int forwardUrlId,
-                                   final long sourceId,
-                                   final boolean success,
-                                   final String error) {
-        jooq.context(context -> context
-                .insertInto(
-                        FORWARD_SOURCE,
-                        FORWARD_SOURCE.ID,
-                        FORWARD_SOURCE.FK_FORWARD_URL_ID,
-                        FORWARD_SOURCE.FK_SOURCE_ID,
-                        FORWARD_SOURCE.SUCCESS,
-                        FORWARD_SOURCE.ERROR)
-                .values(forwardSourceId.incrementAndGet(), forwardUrlId, sourceId, success, error)
-                .execute());
-    }
-
-    void deleteSource(final long sourceId) {
+    void setForwardSuccess(final long sourceId) {
         LOGGER.debug(() -> "deleteSource: " + sourceId);
 
-        jooq.transaction(context -> {
-            context
-                    .deleteFrom(FORWARD_SOURCE)
-                    .where(FORWARD_SOURCE.FK_SOURCE_ID.equal(sourceId))
-                    .execute();
-
-            // Record the source as forwarded so it can be deleted by Cleanup.
-            context
-                    .update(SOURCE)
-                    .set(SOURCE.FORWARDED, true)
-                    .where(SOURCE.ID.eq(sourceId))
-                    .execute();
-        });
+        forwardSourceDao.setForwardSuccess(sourceId);
 
         // Once we have deleted a source cleanup operation might want to run.
         fireChange();
-    }
-
-    Result<Record4<Long, String, String, String>> getCompletedSources(final int limit) {
-        return jooq.contextResult(context -> context
-                // Get all completed sources.
-                .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
-                .from(SOURCE)
-                .where(SOURCE.FORWARD_ERROR.isFalse())
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS)
-                .limit(limit)
-                .fetch());
     }
 
     private String getHostName() {
@@ -409,21 +311,8 @@ public class SourceForwarder implements Forwarder {
     }
 
     public void clear() {
-        jooq.deleteAll(FORWARD_SOURCE);
-        jooq.deleteAll(FORWARD_URL);
-
-        jooq
-                .getMaxId(FORWARD_SOURCE, FORWARD_SOURCE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        jooq
-                .getMaxId(FORWARD_URL, FORWARD_URL.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-
-        init();
+        forwardSourceDao.clear();
+        forwardUrlDao.clear();
     }
 
     private void fireChange() {

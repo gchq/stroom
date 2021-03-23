@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqHelper;
 

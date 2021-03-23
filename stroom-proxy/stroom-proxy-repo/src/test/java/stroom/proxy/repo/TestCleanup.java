@@ -179,8 +179,8 @@ public class TestCleanup {
 
         // Make sure we can't delete any sources.
         printAllTables();
-        assertThat(cleanup.deleteSourceEntries()).isEqualTo(0);
-        assertThat(cleanup.deleteSource()).isEqualTo(0);
+        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(0);
+        assertThat(cleanup.deleteUnusedSources()).isEqualTo(0);
 
         // Now pretend we forwarded the first aggregate by deleting it.
         printAllTables();
@@ -193,8 +193,8 @@ public class TestCleanup {
 
         // Make sure we can delete source entries and items but not data.
         printAllTables();
-        assertThat(cleanup.deleteSourceEntries()).isEqualTo(6);
-        assertThat(cleanup.deleteSource()).isEqualTo(0);
+        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(6);
+        assertThat(cleanup.deleteUnusedSources()).isEqualTo(0);
 
         // Now forward some more.
         printAllTables();
@@ -207,8 +207,8 @@ public class TestCleanup {
 
         // Check we can now delete the first source.
         printAllTables();
-        assertThat(cleanup.deleteSourceEntries()).isEqualTo(6);
-        assertThat(cleanup.deleteSource()).isEqualTo(1);
+        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(6);
+        assertThat(cleanup.deleteUnusedSources()).isEqualTo(1);
 
         // Forward remaining.
         printAllTables();
@@ -221,8 +221,8 @@ public class TestCleanup {
 
         // Check everything is deleted.
         printAllTables();
-        assertThat(cleanup.deleteSourceEntries()).isEqualTo(132);
-        assertThat(cleanup.deleteSource()).isEqualTo(11);
+        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(132);
+        assertThat(cleanup.deleteUnusedSources()).isEqualTo(11);
 
         // Check we have no source left
         assertThat(jooq.count(SOURCE_ENTRY)).isZero();

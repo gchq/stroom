@@ -17,8 +17,6 @@ import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.ProxyRepoSourceEntries;
 import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.SourceForwarder;
-import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.StroomThreadGroup;
 
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -26,10 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -110,7 +104,7 @@ public class ProxyLifecycle implements Managed {
                             proxyRepoSourceEntries::examine,
                             100);
                     // Aggregate whenever we have new source entries.
-                    proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
+                    proxyRepoSources.addChangeListener((source) ->
                             proxyRepoSourceEntriesExecutor.onChange());
                     services.add(proxyRepoSourceEntriesExecutor);
 
@@ -123,24 +117,36 @@ public class ProxyLifecycle implements Managed {
                     aggregator.addChangeListener(count -> forwarderExecutor.onChange());
                     services.add(aggregatorExecutor);
 
+                    final Cleanup cleanup = cleanupProvider.get();
+                    final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
+                            Cleanup.class.getSimpleName(),
+                            () -> {
+                                cleanup.deleteUnusedSourceEntries();
+                                cleanup.deleteUnusedSources();
+                            },
+                            proxyRepoConfig.getCleanupFrequency().toMillis());
+                    // Cleanup whenever we have forwarded data.
+                    forwarder.addChangeListener(cleanupExecutor::onChange);
+                    services.add(cleanupExecutor);
+
                     // Proxy repo source entries are extracted using an executor service so remember to shut it down.
                     requireShutdown.add(proxyRepoSourceEntries);
 
                 } else {
                     // Forward when we have a new source to forward.
                     final ProxyRepoSources proxyRepoSources = proxyRepoSourcesProvider.get();
-                    proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
+                    proxyRepoSources.addChangeListener((source) ->
                             forwarderExecutor.onChange());
-                }
 
-                final Cleanup cleanup = cleanupProvider.get();
-                final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
-                        Cleanup.class.getSimpleName(),
-                        cleanup::cleanup,
-                        proxyRepoConfig.getCleanupFrequency().toMillis());
-                // Cleanup whenever we have forwarded data.
-                forwarder.addChangeListener(cleanupExecutor::onChange);
-                services.add(cleanupExecutor);
+                    final Cleanup cleanup = cleanupProvider.get();
+                    final ChangeListenerExecutor cleanupExecutor = new ChangeListenerExecutor(
+                            Cleanup.class.getSimpleName(),
+                            cleanup::deleteUnusedSources,
+                            proxyRepoConfig.getCleanupFrequency().toMillis());
+                    // Cleanup whenever we have forwarded data.
+                    forwarder.addChangeListener(cleanupExecutor::onChange);
+                    services.add(cleanupExecutor);
+                }
 
                 // Forwarding is done using an executor service so remember to shut it down.
                 requireShutdown.add(forwarder);

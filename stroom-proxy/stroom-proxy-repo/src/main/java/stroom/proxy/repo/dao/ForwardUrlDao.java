@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.proxy.repo;
+package stroom.proxy.repo.dao;
+
+import stroom.proxy.repo.ForwarderDestinations;
+import stroom.proxy.repo.ProxyRepoDbConnProvider;
+
+import org.jooq.Record1;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +34,7 @@ import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 
 @Singleton
-public class ForwardUrlService {
+public class ForwardUrlDao {
 
     private final SqliteJooqHelper jooq;
     private final ForwarderDestinations forwarderDestinations;
@@ -39,8 +44,8 @@ public class ForwardUrlService {
     private final AtomicInteger forwardUrlRecordId = new AtomicInteger();
 
     @Inject
-    ForwardUrlService(final ProxyRepoDbConnProvider connProvider,
-                      final ForwarderDestinations forwarderDestinations) {
+    ForwardUrlDao(final ProxyRepoDbConnProvider connProvider,
+                  final ForwarderDestinations forwarderDestinations) {
         this.jooq = new SqliteJooqHelper(connProvider);
         this.forwarderDestinations = forwarderDestinations;
 
@@ -80,14 +85,14 @@ public class ForwardUrlService {
         }
     }
 
-    int getForwardUrlId(final String forwardUrl) {
+    public int getForwardUrlId(final String forwardUrl) {
         return jooq.contextResult(context -> {
             final Optional<Integer> optionalId = context
                     .select(FORWARD_URL.ID)
                     .from(FORWARD_URL)
                     .where(FORWARD_URL.URL.equal(forwardUrl))
                     .fetchOptional()
-                    .map(r -> r.get(FORWARD_URL.ID));
+                    .map(Record1::value1);
 
             return optionalId.orElseGet(() -> {
                 final int newId = forwardUrlRecordId.incrementAndGet();
@@ -102,5 +107,15 @@ public class ForwardUrlService {
 
     public Map<Integer, String> getForwardIdUrlMap() {
         return forwardIdUrlMap;
+    }
+
+    public void clear() {
+        jooq.deleteAll(FORWARD_URL);
+        jooq
+                .getMaxId(FORWARD_URL, FORWARD_URL.ID)
+                .ifPresent(id -> {
+                    throw new RuntimeException("Unexpected ID");
+                });
+        init();
     }
 }

@@ -6,6 +6,9 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceDao.Source;
+import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
@@ -17,9 +20,6 @@ import stroom.util.thread.StroomThreadGroup;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jooq.Record2;
-import org.jooq.Record4;
-import org.jooq.Result;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,13 +36,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class ProxyRepoSourceEntries implements HasShutdown {
@@ -63,34 +58,24 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             TimeUnit.MINUTES,
             threadFactory);
 
-    private final SqliteJooqHelper jooq;
+    private final SourceDao sourceDao;
+    private final SourceEntryDao sourceEntryDao;
     private final Path repoDir;
     private final ErrorReceiver errorReceiver;
 
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
-    private final AtomicLong sourceItemRecordId = new AtomicLong();
-    private final AtomicLong sourceEntryRecordId = new AtomicLong();
-
     private volatile boolean shutdown;
 
     @Inject
-    public ProxyRepoSourceEntries(final ProxyRepoDbConnProvider connProvider,
+    public ProxyRepoSourceEntries(final SourceDao sourceDao,
+                                  final SourceEntryDao sourceEntryDao,
                                   final RepoDirProvider repoDirProvider,
                                   final ErrorReceiver errorReceiver) {
-        this.jooq = new SqliteJooqHelper(connProvider);
+        this.sourceDao = sourceDao;
+        this.sourceEntryDao = sourceEntryDao;
         this.errorReceiver = errorReceiver;
         repoDir = repoDirProvider.get();
-
-        init();
-    }
-
-    private void init() {
-        final long maxSourceItemRecordId = jooq.getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID).orElse(0L);
-        sourceItemRecordId.set(maxSourceItemRecordId);
-
-        final long maxSourceEntryRecordId = jooq.getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID).orElse(0L);
-        sourceEntryRecordId.set(maxSourceEntryRecordId);
     }
 
     public synchronized void examine() {
@@ -99,19 +84,13 @@ public class ProxyRepoSourceEntries implements HasShutdown {
 
             final AtomicInteger count = new AtomicInteger();
 
-            final Result<Record4<Long, String, String, String>> result = getNewSources();
-
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
-            result.forEach(record -> {
+            final List<Source> sources = sourceDao.getNewSources(BATCH_SIZE);
+            sources.forEach(source -> {
                 if (!shutdown) {
-                    final long id = record.get(SOURCE.ID);
-                    final String path = record.get(SOURCE.PATH);
-                    final String feedName = record.get(SOURCE.FEED_NAME);
-                    final String typeName = record.get(SOURCE.TYPE_NAME);
-
                     count.incrementAndGet();
                     final CompletableFuture<Void> completableFuture =
-                            CompletableFuture.runAsync(() -> examineSource(id, path, feedName, typeName), executor);
+                            CompletableFuture.runAsync(() -> examineSource(source), executor);
                     futures.add(completableFuture);
                 }
             });
@@ -120,40 +99,15 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             // Stop examining if the last query did not return a result as big as the batch size.
-            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (sources.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
     }
 
-    Result<Record4<Long, String, String, String>> getNewSources() {
-        return jooq.contextResult(context -> context
-                .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
-                .from(SOURCE)
-                .where(SOURCE.EXAMINED.isFalse())
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
-                .limit(BATCH_SIZE)
-                .fetch());
-    }
-
-    int countSources() {
-        return jooq.count(SOURCE);
-    }
-
-    int countItems() {
-        return jooq.count(SOURCE_ITEM);
-    }
-
-    int countEntries() {
-        return jooq.count(SOURCE_ENTRY);
-    }
-
-    public void examineSource(final long sourceId,
-                              final String sourcePath,
-                              final String sourceFeedName,
-                              final String sourceTypeName) {
+    public void examineSource(final Source source) {
         if (!shutdown) {
-            final Path fullPath = repoDir.resolve(sourcePath);
+            final Path fullPath = repoDir.resolve(source.getSourcePath());
 
             LOGGER.debug(() -> "Examining zip  '" + FileUtil.getCanonicalPath(fullPath) + "'");
 
@@ -175,8 +129,8 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                         final StroomZipFileType stroomZipFileType = stroomZipEntry.getStroomZipFileType();
 
                         // If this is a meta entry then get the feed name.
-                        String feedName = sourceFeedName;
-                        String typeName = sourceTypeName;
+                        String feedName = source.getFeedName();
+                        String typeName = source.getTypeName();
 
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
@@ -216,21 +170,22 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                             }
 
                         } else {
-                            sourceItemId = this.sourceItemRecordId.incrementAndGet();
+                            sourceItemId = sourceEntryDao.nextSourceItemId();
                             sourceItemRecord = new SourceItemRecord(
                                     sourceItemId,
                                     baseName,
                                     feedName,
                                     typeName,
-                                    sourceId,
+                                    source.getSourceId(),
                                     false);
                             itemNameMap.put(baseName, sourceItemRecord);
                         }
 
+                        final long sourceEntryId = sourceEntryDao.nextSourceEntryId();
                         entryMap
                                 .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
                                 .add(new SourceEntryRecord(
-                                        sourceEntryRecordId.incrementAndGet(),
+                                        sourceEntryId,
                                         extension,
                                         stroomZipFileType.getId(),
                                         entry.getSize(),
@@ -249,44 +204,11 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             }
 
             // We now have a map of all source entries so add them to the DB.
-            addEntries(fullPath, sourceId, itemNameMap, entryMap);
+            sourceEntryDao.addEntries(fullPath, source.getSourceId(), itemNameMap, entryMap);
 
             // Let others know there are new source entries to consume.
-            listeners.forEach(listener -> listener.onChange(sourceId));
+            listeners.forEach(listener -> listener.onChange(source.getSourceId()));
         }
-    }
-
-    void addEntries(final Path fullPath,
-                    final long sourceId,
-                    final Map<String, SourceItemRecord> itemNameMap,
-                    final Map<Long, List<SourceEntryRecord>> entryMap) {
-        jooq.transaction(context -> {
-            final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
-            final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
-            for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
-                if (sourceItemRecord.getFeedName() == null) {
-                    LOGGER.error(() ->
-                            "Source item has no feed name: " +
-                                    fullPath +
-                                    " - " +
-                                    sourceItemRecord.getName());
-                } else {
-                    sourceItemRecords.add(sourceItemRecord);
-                    final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
-                    sourceEntryRecords.addAll(entries);
-                }
-            }
-
-            context.batchInsert(sourceItemRecords).execute();
-            context.batchInsert(sourceEntryRecords).execute();
-
-            // Mark the source as having been examined.
-            context
-                    .update(SOURCE)
-                    .set(SOURCE.EXAMINED, true)
-                    .where(SOURCE.ID.eq(sourceId))
-                    .execute();
-        });
     }
 
     @Override
@@ -307,21 +229,7 @@ public class ProxyRepoSourceEntries implements HasShutdown {
     }
 
     public void clear() {
-        jooq.deleteAll(SOURCE_ENTRY);
-        jooq.deleteAll(SOURCE_ITEM);
-
-        jooq
-                .getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        jooq
-                .getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-
-        init();
+        sourceEntryDao.clear();
     }
 
     public interface ChangeListener {

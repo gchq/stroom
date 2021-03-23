@@ -7,12 +7,16 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.AggregateDao.Aggregate;
+import stroom.proxy.repo.dao.ForwardUrlDao;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceEntryDao;
+import stroom.proxy.repo.dao.SourceEntryDao.SourceItem;
 import stroom.util.io.StreamUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.jooq.Record3;
-import org.jooq.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
@@ -30,17 +35,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestAggregator {
 
     @Inject
+    private SourceDao sourceDao;
+    @Inject
+    private SourceEntryDao sourceEntryDao;
+    @Inject
     private ProxyRepo proxyRepo;
     @Inject
     private ProxyRepoSources proxyRepoSources;
     @Inject
     private ProxyRepoSourceEntries proxyRepoSourceEntries;
     @Inject
+    private AggregateDao aggregateDao;
+    @Inject
     private Aggregator aggregator;
     @Inject
     private AggregateForwarder aggregateForwarder;
     @Inject
-    private ForwardUrlService forwardUrlService;
+    private ForwardUrlDao forwardUrlDao;
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -64,8 +75,8 @@ public class TestAggregator {
 
     @Test
     void testWithSourceEntries() {
-        assertThat(aggregator.getNewSourceItems().size()).isZero();
-        assertThat(aggregator.getNewSourceItemsForSource(1).size()).isZero();
+        assertThat(sourceEntryDao.getNewSourceItems().size()).isZero();
+        assertThat(sourceEntryDao.getNewSourceItemsForSource(1).size()).isZero();
         ensureNonDeletable();
 
         // Add entries.
@@ -73,8 +84,8 @@ public class TestAggregator {
         ensureNonDeletable();
 
         // Check that there is now something to aggregate.
-        assertThat(aggregator.getNewSourceItems().size()).isEqualTo(1000);
-        assertThat(aggregator.getNewSourceItemsForSource(sourceId).size()).isEqualTo(1000);
+        assertThat(sourceEntryDao.getNewSourceItems().size()).isEqualTo(1000);
+        assertThat(sourceEntryDao.getNewSourceItemsForSource(sourceId).size()).isEqualTo(1000);
 
         // Make sure we have no existing aggregates.
         int count = aggregator.closeOldAggregates(System.currentTimeMillis());
@@ -84,28 +95,26 @@ public class TestAggregator {
         aggregator.aggregate();
 
         // Check that we now have nothing left to aggregate.
-        assertThat(aggregator.getNewSourceItems().size()).isZero();
-        assertThat(aggregator.getNewSourceItemsForSource(1).size()).isZero();
+        assertThat(sourceEntryDao.getNewSourceItems().size()).isZero();
+        assertThat(sourceEntryDao.getNewSourceItemsForSource(1).size()).isZero();
         ensureNonDeletable();
 
         // Check that the new aggregates are not yet completed.
-        assertThat(aggregateForwarder.getCompletedAggregates(Integer.MAX_VALUE).size()).isZero();
+        assertThat(aggregateDao.getCompletedAggregates(Integer.MAX_VALUE).size()).isZero();
         // Close all aggregates.
         aggregator.closeOldAggregates(System.currentTimeMillis());
         // Check that we now have some aggregates.
-        final Result<Record3<Long, String, String>> completedAggregates =
-                aggregateForwarder.getCompletedAggregates(Integer.MAX_VALUE);
+        final List<Aggregate> completedAggregates =
+                aggregateDao.getCompletedAggregates(Integer.MAX_VALUE);
         assertThat(completedAggregates.size()).isEqualTo(10);
         ensureNonDeletable();
 
         // Now forward the completed aggregates.
         final String forwardUrl = "http://test-url.com";
-        final int forwardUrlId = forwardUrlService.getForwardUrlId(forwardUrl);
-        for (final Record3<Long, String, String> aggregate : completedAggregates) {
+        final int forwardUrlId = forwardUrlDao.getForwardUrlId(forwardUrl);
+        for (final Aggregate aggregate : completedAggregates) {
             aggregateForwarder.forwardAggregateData(
-                    aggregate.value1(),
-                    aggregate.value2(),
-                    aggregate.value3(),
+                    aggregate,
                     forwardUrlId,
                     forwardUrl);
         }
@@ -114,27 +123,27 @@ public class TestAggregator {
         ensureNonDeletable();
 
         // Now delete forward records and aggregates.
-        for (final Record3<Long, String, String> aggregate : completedAggregates) {
-            aggregateForwarder.deleteAggregate(aggregate.value1());
+        for (final Aggregate aggregate : completedAggregates) {
+            aggregateForwarder.setForwardSuccess(aggregate.getAggregateId());
         }
 
         // Now we should be able to delete sources.
-        assertThat(cleanup.getDeletableSourceEntries().size()).isEqualTo(3000);
-        assertThat(cleanup.getDeletableSourceItems().size()).isEqualTo(1000);
-        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
+        assertThat(sourceEntryDao.getDeletableSourceEntryIds().size()).isEqualTo(3000);
+        assertThat(sourceEntryDao.getDeletableSourceItemIds().size()).isEqualTo(1000);
+        assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
 
-        cleanup.deleteSourceEntries();
+        cleanup.deleteUnusedSourceEntries();
 
         // WE should now have no source entries but some sources we can delete.
-        assertThat(cleanup.getDeletableSourceEntries().size()).isZero();
-        assertThat(cleanup.getDeletableSourceItems().size()).isZero();
-        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isEqualTo(1);
+        assertThat(sourceEntryDao.getDeletableSourceEntryIds().size()).isZero();
+        assertThat(sourceEntryDao.getDeletableSourceItemIds().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isEqualTo(1);
     }
 
     private void ensureNonDeletable() {
-        assertThat(cleanup.getDeletableSourceEntries().size()).isZero();
-        assertThat(cleanup.getDeletableSourceItems().size()).isZero();
-        assertThat(cleanup.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
+        assertThat(sourceEntryDao.getDeletableSourceEntryIds().size()).isZero();
+        assertThat(sourceEntryDao.getDeletableSourceItemIds().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
     }
 
     @Test
@@ -145,7 +154,7 @@ public class TestAggregator {
 
         for (int i = 0; i < 10; i++) {
             // Add an item but make sure no aggregation takes place.
-            count = aggregator.addItem(1, "TEST_FEED", null, 10);
+            count = aggregator.addItem(new SourceItem(1, "TEST_FEED", null, 10));
             assertThat(count).isEqualTo(0);
         }
 
@@ -174,8 +183,8 @@ public class TestAggregator {
 
         final AtomicInteger total = new AtomicInteger();
 
-        proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) ->
-                proxyRepoSourceEntries.examineSource(sourceId, sourcePath, feedName, typeName));
+        proxyRepoSources.addChangeListener((source) ->
+                proxyRepoSourceEntries.examineSource(source));
 
         proxyRepoSourceEntries.addChangeListener(sourceId ->
                 aggregator.aggregate(sourceId));

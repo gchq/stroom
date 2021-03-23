@@ -16,58 +16,36 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
+import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.SourceEntryDao;
+import stroom.proxy.repo.dao.SourceEntryDao.SourceItem;
 
-import org.jooq.Condition;
-import org.jooq.Record4;
-import org.jooq.Result;
-import org.jooq.impl.DSL;
-
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class Aggregator {
 
     private static final int BATCH_SIZE = 1000000;
 
-    private final SqliteJooqHelper jooq;
+    private final SourceEntryDao sourceEntryDao;
+    private final AggregateDao aggregateDao;
     private final AggregatorConfig config;
-    private long lastClosedAggregates;
 
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 
-    private final AtomicLong aggregateRecordId = new AtomicLong();
-    private final AtomicLong aggregateItemRecordId = new AtomicLong();
-
+    private long lastClosedAggregates;
     private volatile boolean firstRun = true;
 
     @Inject
-    Aggregator(final ProxyRepoDbConnProvider connProvider,
+    Aggregator(final SourceEntryDao sourceEntryDao,
+               final AggregateDao aggregateDao,
                final AggregatorConfig config) {
-        this.jooq = new SqliteJooqHelper(connProvider);
+        this.sourceEntryDao = sourceEntryDao;
+        this.aggregateDao = aggregateDao;
         this.config = config;
-
-        init();
-    }
-
-    private void init() {
-        final long maxAggregateRecordId = jooq.getMaxId(AGGREGATE, AGGREGATE.ID).orElse(0L);
-        aggregateRecordId.set(maxAggregateRecordId);
-        final long maxAggregateItemRecordId = jooq.getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID).orElse(0L);
-        aggregateItemRecordId.set(maxAggregateItemRecordId);
     }
 
     public synchronized void aggregate() {
@@ -76,22 +54,11 @@ public class Aggregator {
 
         boolean run = true;
         while (run) {
-
-            final AtomicInteger count = new AtomicInteger();
-
-            final Result<Record4<Long, String, String, BigDecimal>> result = getNewSourceItems();
-            result.forEach(record -> {
-                final long sourceItemId = record.value1();
-                final String feedName = record.value2();
-                final String typeName = record.value3();
-                final BigDecimal totalSize = record.value4();
-                addItem(sourceItemId, feedName, typeName, totalSize.longValue());
-
-                count.incrementAndGet();
-            });
+            final List<SourceItem> sourceItems = sourceEntryDao.getNewSourceItems(BATCH_SIZE);
+            sourceItems.forEach(this::addItem);
 
             // Stop aggregating if the last query did not return a result as big as the batch size.
-            if (result.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
+            if (sourceItems.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
                 run = false;
             }
         }
@@ -101,128 +68,15 @@ public class Aggregator {
         // Start by trying to close old aggregates.
         closeOldAggregates();
 
-        final Result<Record4<Long, String, String, BigDecimal>> result = getNewSourceItemsForSource(sourceId);
-        result.forEach(record -> {
-            final long sourceItemId = record.value1();
-            final String feedName = record.value2();
-            final String typeName = record.value3();
-            final BigDecimal totalSize = record.value4();
-
-            addItem(sourceItemId, feedName, typeName, totalSize.longValue());
-        });
+        final List<SourceItem> sourceItems = sourceEntryDao.getNewSourceItemsForSource(sourceId);
+        sourceItems.forEach(this::addItem);
     }
 
-    Result<Record4<Long, String, String, BigDecimal>> getNewSourceItems() {
-        return jooq.contextResult(context -> context
-                // Get all data items that have not been added to aggregate destinations.
-                .select(SOURCE_ITEM.ID,
-                        SOURCE_ITEM.FEED_NAME,
-                        SOURCE_ITEM.TYPE_NAME,
-                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                .from(SOURCE_ITEM)
-                .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.AGGREGATED.isFalse())
-                .groupBy(SOURCE_ITEM.ID)
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.ID)
-                .limit(BATCH_SIZE)
-                .fetch());
-    }
-
-    Result<Record4<Long, String, String, BigDecimal>> getNewSourceItemsForSource(final long sourceId) {
-        return jooq.contextResult(context -> context
-                // Get all data items that have not been added to aggregate destinations.
-                .select(SOURCE_ITEM.ID,
-                        SOURCE_ITEM.FEED_NAME,
-                        SOURCE_ITEM.TYPE_NAME,
-                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                .from(SOURCE_ITEM)
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
-                .and(SOURCE_ITEM.AGGREGATED.isFalse())
-                .groupBy(SOURCE_ITEM.ID)
-                .orderBy(SOURCE_ITEM.ID)
-                .fetch());
-    }
-
-    synchronized int addItem(final long sourceItemId,
-                             final String feedName,
-                             final String typeName,
-                             final long totalSize) {
-        final long maxUncompressedByteSize = config.getMaxUncompressedByteSize();
-        final int maxItemsPerAggregate = config.getMaxItemsPerAggregate();
-        final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - totalSize);
-        final Condition condition = DSL
-                .and(feedName == null
-                        ? AGGREGATE.FEED_NAME.isNull()
-                        : AGGREGATE.FEED_NAME.equal(feedName))
-                .and(typeName == null
-                        ? AGGREGATE.TYPE_NAME.isNull()
-                        : AGGREGATE.TYPE_NAME.equal(typeName))
-                .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
-                .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
-                .and(AGGREGATE.COMPLETE.isFalse());
-
-        jooq.transaction(context -> {
-            // See if we can get an existing aggregate that will fit this data collection.
-            final Optional<AggregateRecord> optionalRecord = context
-                    .selectFrom(AGGREGATE)
-                    .where(condition)
-                    .orderBy(AGGREGATE.CREATE_TIME_MS)
-                    .fetchOptional();
-
-            long aggregateId;
-            if (optionalRecord.isPresent()) {
-                aggregateId = optionalRecord.get().getId();
-
-                // We have somewhere we can add the data collection so add it to the aggregate.
-                context
-                        .update(AGGREGATE)
-                        .set(AGGREGATE.BYTE_SIZE, AGGREGATE.BYTE_SIZE.plus(totalSize))
-                        .set(AGGREGATE.ITEMS, AGGREGATE.ITEMS.plus(1))
-                        .where(AGGREGATE.ID.eq(aggregateId))
-                        .execute();
-
-            } else {
-                // Create a new aggregate to add this data collection to.
-                aggregateId = aggregateRecordId.incrementAndGet();
-                context
-                        .insertInto(
-                                AGGREGATE,
-                                AGGREGATE.ID,
-                                AGGREGATE.FEED_NAME,
-                                AGGREGATE.TYPE_NAME,
-                                AGGREGATE.BYTE_SIZE,
-                                AGGREGATE.ITEMS,
-                                AGGREGATE.CREATE_TIME_MS,
-                                AGGREGATE.COMPLETE)
-                        .values(aggregateId,
-                                feedName,
-                                typeName,
-                                totalSize,
-                                1,
-                                System.currentTimeMillis(),
-                                false)
-                        .execute();
-            }
-
-            // Add the item.
-            context
-                    .insertInto(
-                            AGGREGATE_ITEM,
-                            AGGREGATE_ITEM.ID,
-                            AGGREGATE_ITEM.FK_AGGREGATE_ID,
-                            AGGREGATE_ITEM.FK_SOURCE_ITEM_ID)
-                    .values(aggregateItemRecordId.incrementAndGet(), aggregateId, sourceItemId)
-                    .execute();
-
-            // Mark the item as added.
-            context
-                    .update(SOURCE_ITEM)
-                    .set(SOURCE_ITEM.AGGREGATED, true)
-                    .where(SOURCE_ITEM.ID.eq(sourceItemId))
-                    .execute();
-        });
+    synchronized int addItem(final SourceItem sourceItem) {
+        aggregateDao.addItem(
+                sourceItem,
+                config.getMaxUncompressedByteSize(),
+                config.getMaxItemsPerAggregate());
 
         // Close any old aggregates.
         return closeOldAggregates();
@@ -240,17 +94,11 @@ public class Aggregator {
     }
 
     public synchronized int closeOldAggregates(final long oldest) {
-        final Condition condition =
-                AGGREGATE.COMPLETE.eq(false)
-                        .and(
-                                DSL.or(
-                                        AGGREGATE.ITEMS.greaterOrEqual(config.getMaxItemsPerAggregate()),
-                                        AGGREGATE.BYTE_SIZE.greaterOrEqual(config.getMaxUncompressedByteSize()),
-                                        AGGREGATE.CREATE_TIME_MS.lessOrEqual(oldest)
-                                )
-                        );
-
-        final int count = closeAggregates(condition);
+        final int count = aggregateDao.closeAggregates(
+                config.getMaxItemsPerAggregate(),
+                config.getMaxUncompressedByteSize(),
+                oldest
+        );
 
         // If we have closed some aggregates then let others know there are some available.
         if (count > 0 || firstRun) {
@@ -259,14 +107,6 @@ public class Aggregator {
         }
 
         return count;
-    }
-
-    private synchronized int closeAggregates(final Condition condition) {
-        return jooq.contextResult(context -> context
-                .update(AGGREGATE)
-                .set(AGGREGATE.COMPLETE, true)
-                .where(condition)
-                .execute());
     }
 
     private void fireChange(final int count) {
@@ -278,21 +118,7 @@ public class Aggregator {
     }
 
     public void clear() {
-        jooq.deleteAll(AGGREGATE_ITEM);
-        jooq.deleteAll(AGGREGATE);
-
-        jooq
-                .getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        jooq
-                .getMaxId(AGGREGATE, AGGREGATE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-
-        init();
+        aggregateDao.clear();
     }
 
     public interface ChangeListener {

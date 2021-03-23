@@ -2,13 +2,14 @@ package stroom.proxy.repo;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceDao.Source;
+import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.jooq.Record4;
-import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,10 @@ public class TestSourceEntries {
     private ProxyRepoSources proxyRepoSources;
     @Inject
     private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    @Inject
+    private SourceDao sourceDao;
+    @Inject
+    private SourceEntryDao sourceEntryDao;
 
     @BeforeEach
     void beforeEach() {
@@ -55,12 +60,11 @@ public class TestSourceEntries {
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
 
         // Check that we have a new source.
-        final Result<Record4<Long, String, String, String>> result = proxyRepoSourceEntries.getNewSources();
-        assertThat(result.size()).isOne();
-        final long sourceId = result.get(0).value1();
-        final String path = result.get(0).value2();
-        final String feedName = result.get(0).value3();
-        final String typeName = result.get(0).value4();
+        final List<Source> sources = sourceDao.getNewSources(1000);
+        assertThat(sources.size()).isOne();
+        final Source source = sources.get(0);
+        final long sourceId = source.getSourceId();
+        final String path = source.getSourcePath();
 
         addEntriesToSource(sourceId, path, 1, 1);
 
@@ -77,22 +81,21 @@ public class TestSourceEntries {
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
 
         // Check that we have a new source.
-        final Result<Record4<Long, String, String, String>> result = proxyRepoSourceEntries.getNewSources();
-        assertThat(result.size()).isOne();
-        final long sourceId = result.get(0).value1();
-        final String path = result.get(0).value2();
-        final String feedName = result.get(0).value3();
-        final String typeName = result.get(0).value4();
+        final List<Source> sources = sourceDao.getNewSources(1000);
+        assertThat(sources.size()).isOne();
+        final Source source = sources.get(0);
+        final long sourceId = source.getSourceId();
+        final String path = source.getSourcePath();
 
         addEntriesToSource(sourceId, path, 100, 10);
 
-        assertThat(proxyRepoSourceEntries.countSources()).isOne();
-        assertThat(proxyRepoSourceEntries.countItems()).isEqualTo(1000);
-        assertThat(proxyRepoSourceEntries.countEntries()).isEqualTo(3000);
+        assertThat(sourceDao.countSources()).isOne();
+        assertThat(sourceEntryDao.countItems()).isEqualTo(1000);
+        assertThat(sourceEntryDao.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
-        final Result<Record4<Long, String, String, String>> result2 = proxyRepoSourceEntries.getNewSources();
-        assertThat(result2.size()).isZero();
+        final List<Source> sources2 = sourceDao.getNewSources(1000);
+        assertThat(sources2.size()).isZero();
 
         return sourceId;
     }
@@ -154,7 +157,7 @@ public class TestSourceEntries {
             }
         }
 
-        proxyRepoSourceEntries.addEntries(
+        sourceEntryDao.addEntries(
                 Paths.get(path),
                 sourceId,
                 itemNameMap,

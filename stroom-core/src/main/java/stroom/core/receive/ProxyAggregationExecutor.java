@@ -70,7 +70,10 @@ public class ProxyAggregationExecutor {
             aggregator.addChangeListener(count -> aggregateForwarder.forward());
             // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
             // that are no longer needed.
-            aggregateForwarder.addChangeListener(cleanup::cleanup);
+            aggregateForwarder.addChangeListener(() -> {
+                cleanup.deleteUnusedSourceEntries();
+                cleanup.deleteUnusedSources();
+            });
 
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
                 // Try aggregating again.
@@ -97,10 +100,10 @@ public class ProxyAggregationExecutor {
             sourceForwarder.cleanup();
 
             // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
-            proxyRepoSources.addChangeListener((sourceId, sourcePath, feedName, typeName) -> sourceForwarder.forward());
+            proxyRepoSources.addChangeListener((source) -> sourceForwarder.forward());
             // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
             // that are no longer needed.
-            sourceForwarder.addChangeListener(cleanup::cleanup);
+            sourceForwarder.addChangeListener(cleanup::deleteUnusedSources);
 
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
                 // Scan the proxy repo to find new files to aggregate.
