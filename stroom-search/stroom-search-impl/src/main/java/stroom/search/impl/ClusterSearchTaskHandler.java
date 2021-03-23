@@ -92,7 +92,6 @@ class ClusterSearchTaskHandler {
             if (task.getShards().size() > 0) {
                 final Receiver extractionReceiver = extractionDecoratorFactory.create(
                         taskContext,
-                        task.getStoredFields(),
                         coprocessors,
                         query);
 
@@ -102,7 +101,13 @@ class ClusterSearchTaskHandler {
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
                 final AtomicLong hitCount = new AtomicLong();
-                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
+                indexShardSearchFactory.search(
+                        task,
+                        expression,
+                        coprocessors.getFieldIndex(),
+                        extractionReceiver,
+                        taskContext,
+                        hitCount);
 
                 // Wait for search completion.
                 boolean allComplete = false;

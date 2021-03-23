@@ -391,6 +391,10 @@ public class ImportConfigConfirmPresenter extends
                         "Import Aborted",
                         () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
                                 ImportConfigConfirmPresenter.this, false, false)))
+                .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
+                        caught.getMessage(),
+                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                                ImportConfigConfirmPresenter.this, false, false)))
                 .call(CONTENT_RESOURCE)
                 .importContent(new ImportConfigRequest(resourceKey, new ArrayList<>()));
     }

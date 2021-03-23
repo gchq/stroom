@@ -14,8 +14,6 @@ import javax.validation.constraints.Pattern;
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
 
-    //    private int resilientReplicationCount = 1;
-//    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
 
     private List<String> defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
@@ -41,25 +39,6 @@ public class FsVolumeConfig extends AbstractConfig {
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-
-//    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
-//    public int getResilientReplicationCount() {
-//        return resilientReplicationCount;
-//    }
-//
-//    public void setResilientReplicationCount(final int resilientReplicationCount) {
-//        this.resilientReplicationCount = resilientReplicationCount;
-//    }
-//
-//    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
-//            "remote ones?")
-//    public boolean isPreferLocalVolumes() {
-//        return preferLocalVolumes;
-//    }
-//
-//    public void setPreferLocalVolumes(final boolean preferLocalVolumes) {
-//        this.preferLocalVolumes = preferLocalVolumes;
-//    }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +

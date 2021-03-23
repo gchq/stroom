@@ -8463,12 +8463,6 @@
           "sourceTaskId" : {
             "$ref" : "#/components/schemas/TaskId"
           },
-          "storedFields" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
           "taskName" : {
             "type" : "string"
           }

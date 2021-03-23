@@ -847,8 +847,6 @@ appConfig:
     port: 443
     pathPrefix: null
   volumes:
-    resilientReplicationCount: 1
-    preferLocalVolumes: false
     volumeSelector: "RoundRobin"
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeGroupName: "Default Volume Group"

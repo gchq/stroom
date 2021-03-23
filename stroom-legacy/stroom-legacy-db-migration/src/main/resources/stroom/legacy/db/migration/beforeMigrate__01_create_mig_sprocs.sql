@@ -78,7 +78,7 @@ END $$
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS core_create_non_unique_index_v1 $$
+DROP PROCEDURE IF EXISTS core_create_non_unique $$
 
 -- DO NOT change this without reading the header!
 CREATE PROCEDURE core_create_non_unique (

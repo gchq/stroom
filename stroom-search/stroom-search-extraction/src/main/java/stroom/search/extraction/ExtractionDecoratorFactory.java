@@ -3,6 +3,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessor;
@@ -50,15 +51,18 @@ public class ExtractionDecoratorFactory {
     }
 
     public Receiver create(final TaskContext parentContext,
-                           final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query) {
+        // We are going to do extraction or at least filter streams so add fields to the field index to do this.
+        coprocessors.getFieldIndex().create(IndexConstants.STREAM_ID);
+        coprocessors.getFieldIndex().create(IndexConstants.EVENT_ID);
+
         // Update config for extraction task executor.
         extractionTaskExecutor.setMaxThreads(extractionConfig.getMaxThreads());
 
         // Create an object to make event lists from raw index data.
         final StreamMapCreator streamMapCreator = new StreamMapCreator(
-                storedFields,
+                coprocessors.getFieldIndex(),
                 metaService);
 
         final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();

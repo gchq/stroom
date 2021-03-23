@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#479** : Include folder names in audit events when exporting configuration.
+
+* Provide audit log record for permission changes to explorer items (documents)
+
+## [v7.0-beta.95] - 2021-03-18
+
+* Issue **#2105** : Fixed migration of annotations DB.
+
+
+## [v7.0-beta.94] - 2021-03-17
+
+* Issue **#2104** : Fixed issue where the index creation stored procedure was trying to delete a procedure with the wrong name before creating a new one. 
+
+* Issue **#2103** : Fixed statistics migration script to correctly check for empty tables.
+
+* Issue **#2102** : Fixed query migration script.
+
+* Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
+
+* Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
+
+
+## [v7.0-beta.93] - 2021-03-16
+
+* Issue **#2088** : Fixed retrieval of stored search results when not using extraction.
+
+* Issue **#2088** : Fixed NullPointerException caused when stepping.
+
+* Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
+
 
 ## [v7.0-beta.92] - 2021-03-15
 
@@ -3167,7 +3197,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.92...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.95...HEAD
+[v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
+[v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
+[v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
 [v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
 [v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
 [v7.0-beta.90]: https://github.com/gchq/stroom/compare/v7.0-beta.89...v7.0-beta.90

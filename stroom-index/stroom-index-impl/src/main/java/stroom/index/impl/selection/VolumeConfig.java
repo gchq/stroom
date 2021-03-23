@@ -12,33 +12,12 @@ import javax.inject.Singleton;
 public class VolumeConfig extends AbstractConfig {
 
     public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
-    private int resilientReplicationCount = 1;
-    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
     private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
     private List<String> defaultIndexVolumeGroupNodes = List.of("node1a");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
-
-    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
-    public int getResilientReplicationCount() {
-        return resilientReplicationCount;
-    }
-
-    public void setResilientReplicationCount(final int resilientReplicationCount) {
-        this.resilientReplicationCount = resilientReplicationCount;
-    }
-
-    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
-            "remote ones?")
-    public boolean isPreferLocalVolumes() {
-        return preferLocalVolumes;
-    }
-
-    public void setPreferLocalVolumes(final boolean preferLocalVolumes) {
-        this.preferLocalVolumes = preferLocalVolumes;
-    }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
@@ -114,8 +93,6 @@ public class VolumeConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "VolumeConfig{" +
-                "resilientReplicationCount=" + resilientReplicationCount +
-                ", preferLocalVolumes=" + preferLocalVolumes +
                 ", volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
                 ", defaultIndexVolumeGroupName=" + "\"" + defaultIndexVolumeGroupName + "\"" +

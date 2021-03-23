@@ -1,6 +1,3 @@
--- Stop NOTE level warnings about objects (not)? existing
-SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
-
 --
 -- Create the annotation tables
 --
@@ -43,5 +40,3 @@ CREATE TABLE IF NOT EXISTS annotation_data_link (
   UNIQUE KEY            fk_annotation_id_stream_id_event_id (fk_annotation_id, stream_id, event_id),
   CONSTRAINT            annotation_data_link_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-SET SQL_NOTES=@OLD_SQL_NOTES;
