@@ -1,47 +1,23 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
---
--- Create the annotation tables
---
-CREATE TABLE IF NOT EXISTS annotation (
-  id                    bigint NOT NULL AUTO_INCREMENT,
-  version               int NOT NULL,
-  create_time_ms        bigint NOT NULL,
-  create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint NOT NULL,
-  update_user           varchar(255) NOT NULL,
-  title                 longtext,
-  subject               longtext,
-  status                varchar(255) NOT NULL,
-  assigned_to           varchar(255) DEFAULT NULL,
-  comment               longtext,
-  history               longtext,
-  PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation              CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation              CHANGE COLUMN id                id                  bigint NOT NULL AUTO_INCREMENT;
+ALTER TABLE annotation              CHANGE COLUMN version           version             int NOT NULL;
+ALTER TABLE annotation              CHANGE COLUMN create_time_ms    create_time_ms      bigint NOT NULL;
+ALTER TABLE annotation              CHANGE COLUMN update_time_ms    update_time_ms      bigint NOT NULL;
 
-CREATE TABLE IF NOT EXISTS annotation_entry (
-  id                    bigint NOT NULL AUTO_INCREMENT,
-  version               int NOT NULL,
-  create_time_ms        bigint NOT NULL,
-  create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint NOT NULL,
-  update_user           varchar(255) NOT NULL,
-  fk_annotation_id      bigint NOT NULL,
-  type                  varchar(255) NOT NULL,
-  data                  longtext,
-  PRIMARY KEY           (id),
-  CONSTRAINT            annotation_entry_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation_entry        CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation_entry        CHANGE COLUMN id                id                  bigint NOT NULL AUTO_INCREMENT;
+ALTER TABLE annotation_entry        CHANGE COLUMN version           version             int NOT NULL;
+ALTER TABLE annotation_entry        CHANGE COLUMN create_time_ms    create_time_ms      bigint NOT NULL;
+ALTER TABLE annotation_entry        CHANGE COLUMN update_time_ms    update_time_ms      bigint NOT NULL;
+ALTER TABLE annotation_entry        CHANGE COLUMN fk_annotation_id  fk_annotation_id    bigint NOT NULL;
 
-CREATE TABLE IF NOT EXISTS annotation_data_link (
-  id                    bigint NOT NULL AUTO_INCREMENT,
-  fk_annotation_id      bigint NOT NULL,
-  stream_id             bigint NOT NULL,
-  event_id              bigint NOT NULL,
-  PRIMARY KEY           (id),
-  UNIQUE KEY            fk_annotation_id_stream_id_event_id (fk_annotation_id, stream_id, event_id),
-  CONSTRAINT            annotation_data_link_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation_data_link    CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE annotation_data_link    CHANGE COLUMN id                id                  bigint NOT NULL AUTO_INCREMENT;
+ALTER TABLE annotation_data_link    CHANGE COLUMN fk_annotation_id  fk_annotation_id    bigint NOT NULL;
+ALTER TABLE annotation_data_link    CHANGE COLUMN stream_id         stream_id           bigint NOT NULL;
+ALTER TABLE annotation_data_link    CHANGE COLUMN event_id          event_id            bigint NOT NULL;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
