@@ -269,9 +269,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.meta = meta;
 
         // Load the stream.
-//        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
-        SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
+        // When we start stepping we are not on a record so want to see
+        // from the start of the stream for non-segmented with no highlight and
+        // nothing for segmented. DataFetcher will interpret the -1 rec no to return
+        // the right data.
+        final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
                 .withChildStreamType(childStreamType)
+                .withPartNo(0L)
+                .withSegmentNumber(-1L)
                 .build();
         sourcePresenter.setSourceLocation(sourceLocation);
 
@@ -394,19 +399,26 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             if (foundRecord) {
-//                // Determine the type of input for input highlighting.
-//                final StreamType childStreamType = action.getChildStreamType();
-//
-//                // Set the source selection and highlight.
-//                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
-//                        childStreamType, result.getStepData().getSourceHighlights());
-                sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
+                // What we display depends on whether it is segmented (cooked) or not (raw)
+                // Segmented shows one event segment on the screen with no highlighting
+                // Non-segmented shows the record/event highlighted amongst a load of context.
+                if (result.isSegmentedData()) {
+                    // Strip any highlighting
+                    final SourceLocation newSourceLocation = result.getStepData()
+                            .getSourceLocation()
+                            .copy()
+                            .withHighlight(null)
+                            .build();
+                    sourcePresenter.setSourceLocation(newSourceLocation);
+                } else {
+                    sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
+                }
 
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
                 // position ready for the next step.
-                stepLocationPresenter.setStepLocation(result.getStepLocation());
                 request.setStepLocation(result.getStepLocation());
+                stepLocationPresenter.setStepLocation(result.getStepLocation());
             }
 
             // Sync step filters.

@@ -211,13 +211,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setCurrentSegmentNo(final long segmentNo) {
-        this.currentSourceLocation = currentSourceLocation.clone()
+        this.currentSourceLocation = currentSourceLocation.copy()
                 .withSegmentNumber(segmentNo)
                 .build();
     }
 
     public void setCurrentPartNo(final long currentPartNo) {
-        this.currentSourceLocation = currentSourceLocation.clone()
+        this.currentSourceLocation = currentSourceLocation.copy()
                 .withPartNo(currentPartNo)
                 .build();
     }
@@ -423,7 +423,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void fetchDataForCurrentStreamNo(final String childDataType) {
         effectiveChildStreamType = childDataType;
-        currentSourceLocation = currentSourceLocation.clone()
+        currentSourceLocation = currentSourceLocation.copy()
                 .withChildStreamType(childDataType)
                 .build();
         update(true, currentStreamType);
@@ -533,7 +533,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (effectiveChildStreamType != null
                 && availableChildStreamTypes.contains(effectiveChildStreamType)) {
             if (!Objects.equals(currentSourceLocation.getChildType(), effectiveChildStreamType)) {
-                currentSourceLocation = currentSourceLocation.clone()
+                currentSourceLocation = currentSourceLocation.copy()
                         .withChildStreamType(effectiveChildStreamType)
                         .build();
             }
@@ -545,7 +545,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             }
             // null child data type indicates to show the data child stream
             effectiveChildStreamType = null;
-            currentSourceLocation = currentSourceLocation.clone()
+            currentSourceLocation = currentSourceLocation.copy()
                     .withChildStreamType(null)
                     .build();
         }
