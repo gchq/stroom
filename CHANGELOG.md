@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2099** : Fix stepping source pane for segmented (cooked) data.
+
 * Issue **#479** : Include folder names in audit events when exporting configuration.
 
 * Provide audit log record for permission changes to explorer items (documents)
+
 
 ## [v7.0-beta.95] - 2021-03-18
 

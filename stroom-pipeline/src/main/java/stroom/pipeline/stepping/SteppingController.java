@@ -26,6 +26,9 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
@@ -37,6 +40,8 @@ import javax.inject.Inject;
 
 @PipelineScoped
 public class SteppingController {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SteppingController.class);
 
     private static final TextRange DEFAULT_TEXT_RANGE = new TextRange(
             new DefaultLocation(1, 1),
@@ -54,6 +59,7 @@ public class SteppingController {
     private StepLocation stepLocation;
     private StepLocation foundLocation;
     private RecordDetector recordDetector;
+    private boolean isSegmentedData;
 
     private TaskContext taskContext;
 
@@ -105,6 +111,8 @@ public class SteppingController {
     }
 
     public void setStepLocation(final StepLocation stepLocation) {
+        LOGGER.debug(() -> LogUtil.message("setStepLocation {}:{}:{}",
+                stepLocation.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
         this.stepLocation = stepLocation;
     }
 
@@ -114,6 +122,10 @@ public class SteppingController {
 
     public boolean isFound() {
         return foundLocation != null;
+    }
+
+    public void setIsSegmentedData(final boolean isSegmented) {
+        this.isSegmentedData = isSegmented;
     }
 
     /**
@@ -135,6 +147,8 @@ public class SteppingController {
             getTaskContext().info(() ->
                     "Stepping {" + streamInfo + "} [" + currentStreamNo + ":" + currentRecordNo + "]");
         }
+
+        LOGGER.debug("endRecord() strm {} rec {}", currentStreamNo, currentRecordNo);
 
         // Figure out what the highlighted portion of the input stream should be.
         TextRange highlight = DEFAULT_TEXT_RANGE;
@@ -169,15 +183,16 @@ public class SteppingController {
             // have found the record we are interested in and any filter matches
             // if one has been specified.
             if (allMatch || filterMatch) {
-                // Create step data for the current step.
-                final StepData stepData = createStepData(highlight);
-
                 // Create a location for each monitoring filter to store data
                 // against.
                 foundLocation = new StepLocation(
                         metaHolder.getMeta().getId(),
                         currentStreamNo,
                         currentRecordNo);
+
+                // Create step data for the current step.
+                final StepData stepData = createStepData(highlight);
+
                 steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
@@ -198,26 +213,34 @@ public class SteppingController {
                 && stepLocation != null
                 && currentStreamNo == stepLocation.getPartNo()
                 && currentRecordNo >= stepLocation.getRecordNo() - 1;
-
     }
 
     StepData createStepData(final TextRange textRange) {
-        SourceLocation sourceLocation = null;
-        if (stepLocation != null) {
+        final SourceLocation sourceLocation;
+        if (foundLocation != null) {
 
             // Will rely on SourcePresenter to adjust the data range to fit the
             // highlight
-            // TODO @AT PartNo/StreamNo is a mix of one and zero based depending on where it is used.
-            //   Similar for SegmentNo/RecordNo/EventId.
-            //   Always one based for the user.  Need a consistent approach, or VERY clear
-            //   comments/javadoc saying what base is in use.
-            sourceLocation = SourceLocation.builder(stepLocation.getId())
+            // At this point stepLocation is the location prior to the found record.
+            // Also recordNo is one based, segmentNo is zero based.
+            // So a prior stepLocation.recordNo == 0 equates to a current segment no of 0
+            sourceLocation = SourceLocation.builder(foundLocation.getId())
                     .withChildStreamType(metaHolder.getChildDataType())
-                    .withPartNo(stepLocation.getPartNo() - 1) // convert to zero based
-                    .withSegmentNumber(stepLocation.getRecordNo() - 1) // convert to zero based
+                    .withPartNo(foundLocation.getPartNo() - 1) // convert to zero based
+                    .withSegmentNumber(foundLocation.getRecordNo() - 1) // no -1, see comment above
                     .withDataRange(DataRange.fromLocation(DefaultLocation.of(1, 1)))
                     .withHighlight(textRange)
                     .build();
+
+            LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} from foundLocation {}:{}:{}",
+                    sourceLocation.getId(),
+                    sourceLocation.getPartNo(),
+                    sourceLocation.getSegmentNo(),
+                    foundLocation.getId(),
+                    foundLocation.getPartNo(),
+                    foundLocation.getRecordNo()));
+        } else {
+            sourceLocation = null;
         }
 
         final StepData stepData = new StepData();

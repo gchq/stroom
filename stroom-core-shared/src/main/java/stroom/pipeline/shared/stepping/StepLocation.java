@@ -43,6 +43,11 @@ public class StepLocation {
     @JsonProperty
     private final long recordNo;
 
+    /**
+     * @param id       The stream ID
+     * @param partNo   One based
+     * @param recordNo One based
+     */
     @JsonCreator
     public StepLocation(@JsonProperty("id") final long id,
                         @JsonProperty("partNo") final long partNo,
@@ -50,6 +55,10 @@ public class StepLocation {
         this.id = id;
         this.partNo = partNo;
         this.recordNo = recordNo;
+    }
+
+    public StepLocation copyWithNewRecordNo(final long newRecordNo) {
+        return new StepLocation(id, partNo, newRecordNo);
     }
 
     public static StepLocation last(final long id) {
