@@ -1,11 +1,14 @@
 ---
 proxyConfig:
+  path:
+    home: "."
+    temp: "/tmp/stroom"
   receiptPolicy:
     receiptPolicyUuid: null
   repository:
     storingEnabled: false
-    repoDir: "${stroom.home}/repo"
-    dbDir: "${stroom.home}/repo"
+    repoDir: "repo"
+    dbDir: "repo"
     format: "${pathId}/${id}"
     cleanupFrequency: "PT1H"
     lockDeleteAge: "PT1H"

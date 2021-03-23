@@ -442,8 +442,8 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    repoDir: "${stroom.home}/proxy_repo"
-    dbDir: "${stroom.home}/proxy_repo_db"
+    repoDir: "proxy_repo"
+    dbDir: "proxy_repo_db"
     aggregator:
       enabled: true
       maxItemsPerAggregate: 1000

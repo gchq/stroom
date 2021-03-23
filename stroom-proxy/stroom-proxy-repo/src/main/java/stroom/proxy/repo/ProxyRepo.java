@@ -284,13 +284,7 @@ public class ProxyRepo {
         final Path zipFile = repoDir.resolve(zipFileName);
         final Path metaFile = repoDir.resolve(metaFileName);
 
-        StroomZipOutputStreamImpl outputStream;
-
-        // Ensure parent dir's exist
-        final Path dir = zipFile.getParent();
-        Files.createDirectories(dir);
-
-        outputStream = new StroomZipOutputStreamImpl(zipFile) {
+        return new StroomZipOutputStreamImpl(zipFile) {
             private boolean closed = false;
 
             @Override
@@ -329,8 +323,6 @@ public class ProxyRepo {
                 }
             }
         };
-
-        return outputStream;
     }
 
     public void clean(final boolean deleteRootDirectory) {

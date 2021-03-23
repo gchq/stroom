@@ -1,7 +1,10 @@
 package stroom.data.zip;
 
 import stroom.task.api.TaskContext;
+import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
     private static final String LOCK_EXTENSION = ".lock";
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
     private final ZipOutputStream zipOutputStream;
@@ -36,7 +39,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
     public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext, final boolean monitorEntries)
             throws IOException {
-        Path lockFile = file.getParent().resolve(file.getFileName().toString() + LOCK_EXTENSION);
+        Path dir = file.getParent();
+        Path lockFile = dir.resolve(file.getFileName().toString() + LOCK_EXTENSION);
 
         if (Files.deleteIfExists(file)) {
             LOGGER.warn("deleted file " + file);
@@ -48,7 +52,26 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         this.file = file;
 
         // Ensure the lock file is created so that the parent dir is not cleaned up before we start writing data.
-        this.lockFile = Files.createFile(lockFile);
+        Path result = null;
+        int tryCount = 0;
+        while (!Files.exists(lockFile) && tryCount < 100) {
+            try {
+                LOGGER.debug(() -> "Creating directories: " + FileUtil.getCanonicalPath(dir));
+                Files.createDirectories(dir);
+                LOGGER.debug(() -> "Creating file: " + FileUtil.getCanonicalPath(lockFile));
+                result = Files.createFile(lockFile);
+            } catch (final IOException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+            tryCount++;
+        }
+
+        if (result == null || !Files.exists(lockFile)) {
+            LOGGER.error("Unable to create lock file: " + FileUtil.getCanonicalPath(lockFile));
+            throw new IOException("Unable to create lock file: " + FileUtil.getCanonicalPath(lockFile));
+        }
+
+        this.lockFile = result;
 
         streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
         final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
