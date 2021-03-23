@@ -18,7 +18,7 @@ ProxyRepositoryStreamHandler ->> repo: Write data
 ProxyRepo -> repo: Add meta file
 ProxyRepo -> repo: Unlock zip file
 ProxyRepo ->> ProxyRepoSources: addSource
-ProxyRepoSources ->> db: Add SOURCE record
+ProxyRepoSources ->> db: Add `source` record
 ProxyRepoSources --// ChangeListener: onChange
 ProxyRequestHandler --> Supplier: 200 Response
 

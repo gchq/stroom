@@ -10,7 +10,7 @@ actor ChangeListener
 
 ProxyRepoFileScanner ->> repo: scan
 ProxyRepoFileScanner ->> ProxyRepoSources: addSource
-ProxyRepoSources ->> db: Add SOURCE record
+ProxyRepoSources ->> db: Add `source` record
 ProxyRepoSources --// ChangeListener: onChange
 
 

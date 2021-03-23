@@ -23,7 +23,7 @@ storage repo {
 
 
 package Database <<Database>> {
-entity SOURCE
+entity source
 }
 
 
@@ -34,7 +34,7 @@ interface ChangeListener {
 ProxyRequestHandler --> ProxyRepo
 ProxyRepo --|> repo
 ProxyRepo --> ProxyRepoSources
-ProxyRepoSources --|> SOURCE
+ProxyRepoSources --|> source
 ProxyRepoSources ..> ChangeListener
 
 @enduml
