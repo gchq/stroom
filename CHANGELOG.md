@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2107** : Fixed issue where the processor filter UI was saying that no filter had been applied to feeds because the UI wasn't checking feed filtering by docref. 
+
 * Issue **#479** : Include folder names in audit events when exporting configuration.
 
 * Provide audit log record for permission changes to explorer items (documents)

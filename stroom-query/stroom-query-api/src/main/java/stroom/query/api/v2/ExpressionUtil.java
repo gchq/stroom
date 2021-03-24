@@ -151,10 +151,14 @@ public class ExpressionUtil {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-                        if ((fields == null || fields.stream()
-                                .anyMatch(field -> field.getName().equals(expressionTerm.getField()))) &&
-                                expressionTerm.getValue() != null &&
-                                expressionTerm.getValue().length() > 0) {
+                        if (fields == null || fields.stream()
+                                .anyMatch(field ->
+                                        field.getName().equals(expressionTerm.getField()) &&
+                                                (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
+                                                        expressionTerm.getDocRef() != null &&
+                                                        expressionTerm.getDocRef().getUuid() != null) ||
+                                                (expressionTerm.getValue() != null &&
+                                                        expressionTerm.getValue().length() > 0))) {
                             terms.add(expressionTerm);
                         }
                     } else if (item instanceof ExpressionOperator) {
