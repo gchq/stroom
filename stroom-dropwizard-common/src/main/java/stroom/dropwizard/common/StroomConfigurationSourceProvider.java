@@ -40,9 +40,14 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             "currentLogFilename",
             "archivedLogFilenamePattern");
 
-    private static final String PATH_CONFIG_JSON_POINTER = "/appConfig/path";
-    private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
-    private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
+    private static final String APP_CONFIG_JSON_POINTER = "/appConfig/path";
+    private static final String STROOM_HOME_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/home";
+    private static final String STROOM_TEMP_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/temp";
+
+    // Used by proxy too.
+    private static final String PROXY_CONFIG_JSON_POINTER = "/proxyConfig/path";
+    private static final String PROXY_HOME_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/home";
+    private static final String PROXY_TEMP_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
 
@@ -146,8 +151,10 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private PathCreator getPathCreator(final JsonNode rootNode) {
         Objects.requireNonNull(rootNode);
 
-        final Optional<String> optHome = getNodeValue(rootNode, STROOM_HOME_JSON_POINTER);
-        final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
+        final Optional<String> optHome = getNodeValue(rootNode, STROOM_HOME_JSON_POINTER)
+                .or(() -> getNodeValue(rootNode, PROXY_HOME_JSON_POINTER));
+        final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER)
+                .or(() -> getNodeValue(rootNode, PROXY_TEMP_JSON_POINTER));
 
         // A vanilla PathConfig with the hard coded defaults
         final PathConfig pathConfig = new PathConfig();

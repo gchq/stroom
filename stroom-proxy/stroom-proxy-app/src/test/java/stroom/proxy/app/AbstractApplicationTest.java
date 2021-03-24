@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.util.logging.LogUtil;
 
 import io.dropwizard.configuration.ConfigurationException;
@@ -47,9 +48,11 @@ public abstract class AbstractApplicationTest {
     }
 
     private static Config readConfig(final Path configFile) {
-        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
+        final ConfigurationSourceProvider configurationSourceProvider =
+                new StroomConfigurationSourceProvider(
+                        new SubstitutingSourceProvider(
+                                new FileConfigurationSourceProvider(),
+                                new EnvironmentVariableSubstitutor(false)));
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
