@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2107** : Fixed issue where the processor filter UI was saying that no filter had been applied to feeds because the UI wasn't checking feed filtering by docref. 
+* Issue **#2107** : Fixed issue where the processor filter UI was saying that no filter had been applied to feeds because the UI wasn't checking feed filtering by docref.
+
+
+## [v7.0-beta.96] - 2021-03-23
+
+* Issue **#2099** : Fix stepping source pane for segmented (cooked) data.
 
 * Issue **#479** : Include folder names in audit events when exporting configuration.
 
 * Provide audit log record for permission changes to explorer items (documents)
+
 
 ## [v7.0-beta.95] - 2021-03-18
 
@@ -3199,7 +3205,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.95...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.96...HEAD
+[v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
 [v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
 [v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
 [v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93

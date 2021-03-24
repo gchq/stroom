@@ -535,9 +535,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                     new HashMap<>());
                         }
                         newStepData.getElementMap().put(elementId, newElementData);
-                        newResponse = new SteppingResult(stepResponse.getStepFilterMap(),
-                                stepResponse.getStepLocation(), newStepData, stepResponse.getCurrentStreamOffset(),
-                                stepResponse.isFoundRecord(), null);
+                        newResponse = new SteppingResult(
+                                stepResponse.getStepFilterMap(),
+                                stepResponse.getStepLocation(),
+                                newStepData,
+                                stepResponse.getCurrentStreamOffset(),
+                                stepResponse.isFoundRecord(),
+                                null,
+                                stepResponse.isSegmentedData());
                     }
                 }
 
