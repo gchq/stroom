@@ -75,7 +75,6 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -169,9 +168,8 @@ public class ProxyModule extends AbstractModule {
     @Provides
     @Singleton
     Persistence providePersistence(PathCreator pathCreator) {
-        String path = configuration.getProxyConfig().getContentDir();
-        path = pathCreator.replaceSystemProperties(path);
-        return new FSPersistence(Paths.get(path));
+        final String path = configuration.getProxyConfig().getContentDir();
+        return new FSPersistence(pathCreator.toAppPath(path));
     }
 
     @Provides

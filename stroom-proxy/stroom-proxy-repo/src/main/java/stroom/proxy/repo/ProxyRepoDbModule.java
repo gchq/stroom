@@ -53,7 +53,6 @@ public class ProxyRepoDbModule extends AbstractModule {
             throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(dbDir));
         }
 
-        FileUtil.mkdirs(dbDir);
         final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
 

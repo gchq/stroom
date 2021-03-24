@@ -5,7 +5,6 @@ import stroom.util.io.PathCreator;
 import com.google.common.base.Strings;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -21,8 +20,7 @@ public class RepoDirProviderImpl implements RepoDirProvider {
             throw new RuntimeException("No repo directory have been provided in 'repoDir'");
         }
 
-        final String path = pathCreator.replaceSystemProperties(repoConfig.getRepoDir());
-        this.repoDir = Paths.get(path);
+        this.repoDir = pathCreator.toAppPath(repoConfig.getRepoDir());
     }
 
     @Override
