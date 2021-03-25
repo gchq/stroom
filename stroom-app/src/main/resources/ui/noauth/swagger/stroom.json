@@ -8995,10 +8995,7 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "feedName" : {
-            "type" : "string"
-          },
-          "metaType" : {
+          "feed" : {
             "type" : "string"
           },
           "ruleName" : {
@@ -9007,6 +9004,9 @@
           "ruleNumber" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "type" : {
+            "type" : "string"
           }
         }
       },
@@ -13950,6 +13950,9 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          },
+          "segmentedData" : {
+            "type" : "boolean"
           },
           "stepData" : {
             "$ref" : "#/components/schemas/SharedStepData"

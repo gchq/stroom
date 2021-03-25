@@ -6199,15 +6199,15 @@ components:
         count:
           type: integer
           format: int32
-        feedName:
-          type: string
-        metaType:
+        feed:
           type: string
         ruleName:
           type: string
         ruleNumber:
           type: integer
           format: int32
+        type:
+          type: string
     DataRetentionDeleteSummaryRequest:
       type: object
       properties:
@@ -9899,6 +9899,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        segmentedData:
+          type: boolean
         stepData:
           $ref: '#/components/schemas/SharedStepData'
         stepFilterMap:

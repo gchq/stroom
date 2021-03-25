@@ -1,6 +1,5 @@
 package stroom.meta.impl.db;
 
-import stroom.collection.api.CollectionService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -17,9 +16,9 @@ import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.TermHandlerFactory;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
-import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -149,7 +148,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaKeyDaoImpl metaKeyDao;
     private final DataRetentionConfig dataRetentionConfig;
     private final DocRefInfoService docRefInfoService;
-
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
@@ -165,9 +163,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 final MetaKeyDaoImpl metaKeyDao,
                 final DataRetentionConfig dataRetentionConfig,
                 final ExpressionMapperFactory expressionMapperFactory,
-                final WordListProvider wordListProvider,
-                final CollectionService collectionService,
-                final DocRefInfoService docRefInfoService) {
+                final DocRefInfoService docRefInfoService,
+                final TermHandlerFactory termHandlerFactory) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
@@ -176,16 +173,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
         this.dataRetentionConfig = dataRetentionConfig;
         this.docRefInfoService = docRefInfoService;
 
-
         // Extended meta fields.
         metaExpressionMapper = new MetaExpressionMapper(
                 metaKeyDao,
                 META_VAL.META_KEY_ID.getName(),
                 META_VAL.VAL.getName(),
                 META_VAL.META_ID.getName(),
-                MetaFields.getExtendedFields().size(),
-                wordListProvider,
-                collectionService);
+                termHandlerFactory);
         //Add term handlers
         metaExpressionMapper.map(MetaFields.REC_READ);
         metaExpressionMapper.map(MetaFields.REC_WRITE);

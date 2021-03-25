@@ -8,6 +8,7 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.GlobalConfigService;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
@@ -83,7 +84,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private void doFileUpdateTest(final Path devYamlCopyPath,
                                   final AppConfig appConfig) throws IOException, InterruptedException {
 
-        final String newPathValue = "new_value_" + new Random().nextInt(100000000);
+        final String newPathValue = FileUtil.getCanonicalPath(Files.createTempDirectory("test"));
         LOGGER.info("---------------------------------------------------------------");
         LOGGER.info("Updating value in file to {}", newPathValue);
 
