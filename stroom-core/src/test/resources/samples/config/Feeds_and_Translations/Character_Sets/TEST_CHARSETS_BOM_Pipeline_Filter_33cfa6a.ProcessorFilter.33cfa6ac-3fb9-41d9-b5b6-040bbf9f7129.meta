@@ -10,7 +10,7 @@
       "type" : "operator",
       "children" : [ {
         "type" : "term",
-        "field" : "Feed Name",
+        "field" : "Feed",
         "condition" : "EQUALS",
         "value" : "TEST_CHARSETS_*"
       }, {
@@ -23,7 +23,7 @@
         "op" : "NOT",
         "children" : [ {
           "type" : "term",
-          "field" : "Feed Name",
+          "field" : "Feed",
           "condition" : "EQUALS",
           "value" : "TEST_CHARSETS_*NO_BOM*"
         } ]
