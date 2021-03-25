@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2140** : Fixed migration issue that was causing the creation of unnecessaru index volume groups. 
+
 * Issue **#2137** : Data retention rules are now migrated from previous versions.
 
 * Issue **#2107** : Removed `Feed Name` field and fixed UUID to field name resolution.
