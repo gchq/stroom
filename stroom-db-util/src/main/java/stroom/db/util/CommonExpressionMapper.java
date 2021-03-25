@@ -9,6 +9,8 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -34,7 +36,7 @@ import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Condition> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonExpressionMapper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonExpressionMapper.class);
 
     private static final String LIST_DELIMITER = ",";
     private static final String ASTERISK = "*";
@@ -69,7 +71,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
      */
     @Override
     public Condition apply(final ExpressionItem item) {
+        LOGGER.debug(item::toMultiLineString);
         final Condition conditions = apply(item, true);
+        LOGGER.debug(conditions::toString);
         return conditions;
     }
 
@@ -261,21 +265,21 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 case BETWEEN: {
                     final String[] parts = term.getValue().split(LIST_DELIMITER);
                     if (parts.length == 2) {
-                        return field.between(getSingleValue(parts[0]), getSingleValue(parts[1]));
+                        return field.between(getSingleValue(term, parts[0]), getSingleValue(term, parts[1]));
                     }
                     break;
                 }
                 case GREATER_THAN: {
-                    return field.greaterThan(getSingleValue(term.getValue()));
+                    return field.greaterThan(getSingleValue(term, term.getValue()));
                 }
                 case GREATER_THAN_OR_EQUAL_TO: {
-                    return field.greaterOrEqual(getSingleValue(term.getValue()));
+                    return field.greaterOrEqual(getSingleValue(term, term.getValue()));
                 }
                 case LESS_THAN: {
-                    return field.lessThan(getSingleValue(term.getValue()));
+                    return field.lessThan(getSingleValue(term, term.getValue()));
                 }
                 case LESS_THAN_OR_EQUAL_TO: {
-                    return field.lessOrEqual(getSingleValue(term.getValue()));
+                    return field.lessOrEqual(getSingleValue(term, term.getValue()));
                 }
                 case IN: {
                     List<T> values = Collections.emptyList();
@@ -301,9 +305,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
                         return field.isNull();
                     } else if (useName) {
-                        return field.equal(getSingleValue(term.getDocRef().getName()));
+                        return field.equal(getSingleValue(term, term.getDocRef().getName()));
                     } else {
-                        return field.equal(getSingleValue(term.getDocRef().getUuid()));
+                        return field.equal(getSingleValue(term, term.getDocRef().getUuid()));
                     }
                 }
                 case IS_NULL: {
@@ -314,10 +318,16 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 }
 
                 default:
-                    throw new RuntimeException("Unexpected condition: " + term.getCondition());
+                    throw new RuntimeException("Unexpected condition '" +
+                            term.getCondition() +
+                            "' for term: " +
+                            term.toString());
             }
 
-            throw new RuntimeException("Unexpected condition: " + term.getCondition());
+            throw new RuntimeException("Unexpected condition '" +
+                    term.getCondition() +
+                    "' for term: " +
+                    term.toString());
         }
 
         private Condition eq(final ExpressionTerm term) {
@@ -341,10 +351,10 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
             }
         }
 
-        private T getSingleValue(final String value) {
+        private T getSingleValue(final ExpressionTerm term, final String value) {
             final List<T> list = converter.apply(value);
             if (list.size() != 1) {
-                throw new RuntimeException("Expected single value");
+                throw new RuntimeException("Expected single value for term: " + term.toString());
             }
             return list.get(0);
         }

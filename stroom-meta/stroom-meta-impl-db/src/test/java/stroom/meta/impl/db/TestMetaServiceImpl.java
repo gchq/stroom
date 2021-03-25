@@ -544,8 +544,8 @@ class TestMetaServiceImpl {
         assertTotalRowCount(totalRows);
 
         LOGGER.info("result:\n\n{}\n", AsciiTable.builder(summary)
-                .withColumn(Column.of("Feed Name", DataRetentionDeleteSummary::getFeedName))
-                .withColumn(Column.of("Type", DataRetentionDeleteSummary::getMetaType))
+                .withColumn(Column.of("Feed", DataRetentionDeleteSummary::getFeed))
+                .withColumn(Column.of("Type", DataRetentionDeleteSummary::getType))
                 .withColumn(Column.builder("Rule No.", DataRetentionDeleteSummary::getRuleNumber)
                         .rightAligned()
                         .build())

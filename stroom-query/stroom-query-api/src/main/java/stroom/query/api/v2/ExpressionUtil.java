@@ -47,7 +47,7 @@ public class ExpressionUtil {
 
     public static ExpressionOperator equals(final DocRefField field, final DocRef value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addTerm(field, Condition.IS_DOC_REF, value)
                 .build();
     }
 

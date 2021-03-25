@@ -78,8 +78,8 @@ public class DataRetentionImpactPresenter
     private static final List<AbstractField> FILTERABLE_FIELDS = new ArrayList<>();
 
     static {
-        FILTERABLE_FIELDS.add(MetaFields.FEED_NAME);
-        FILTERABLE_FIELDS.add(MetaFields.TYPE_NAME);
+        FILTERABLE_FIELDS.add(MetaFields.FEED);
+        FILTERABLE_FIELDS.add(MetaFields.TYPE);
     }
 
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
@@ -249,19 +249,16 @@ public class DataRetentionImpactPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(runButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            refreshSourceData(new Range(0, Integer.MAX_VALUE));
-        }));
+        // Get the user's rules without our default one
+        registerHandler(runButton.addClickHandler(event ->
+                refreshSourceData(new Range(0, Integer.MAX_VALUE))));
 
-        registerHandler(stopButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            cancelQuery();
-        }));
+        // Get the user's rules without our default one
+        registerHandler(stopButton.addClickHandler(event ->
+                cancelQuery()));
 
-        registerHandler(filterButton.addClickHandler(event -> {
-            openFilterPresenter();
-        }));
+        registerHandler(filterButton.addClickHandler(event ->
+                openFilterPresenter()));
 
         registerHandler(flatNestedToggleButton.addClickHandler(
                 onClickedEvent -> {
@@ -389,17 +386,17 @@ public class DataRetentionImpactPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getType)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_TYPE)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_META_TYPE,
+                DataRetentionImpactRow.FIELD_NAME_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeedName)
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_FEED_NAME)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeed)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_FEED)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_FEED_NAME,
+                DataRetentionImpactRow.FIELD_NAME_FEED,
                 ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
@@ -432,14 +429,5 @@ public class DataRetentionImpactPresenter
     public DataRetentionImpactRow getSelectedItem() {
         return getView().getSelectionModel().getSelected();
     }
-
-    private void showError(final Throwable throwable, final String message) {
-        AlertEvent.fireError(
-                DataRetentionImpactPresenter.this,
-                message + " - " + throwable.getMessage(),
-                null,
-                null);
-    }
-
 
 }

@@ -17,6 +17,7 @@
 package stroom.expression.matcher;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -32,12 +33,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionMatcher {
 
-    private static final TextField FEED_NAME = new TextField("Feed Name");
-    private static final TextField TYPE_NAME = new TextField("Type");
-    private static final Map<String, AbstractField> FIELD_MAP = Map.of(FEED_NAME.getName(),
-            FEED_NAME,
-            TYPE_NAME.getName(),
-            TYPE_NAME);
+    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
+    private static final TextField TYPE = new TextField("Type");
+    private static final Map<String, AbstractField> FIELD_MAP = Map.of(
+            FEED.getName(),
+            FEED,
+            TYPE.getName(),
+            TYPE);
 
     @Test
     void testSimpleMatch() {
@@ -87,14 +89,14 @@ class TestExpressionMatcher {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(op);
-        builder.addTerm(FEED_NAME, Condition.EQUALS, feedName);
+        builder.addTerm(FEED, Condition.EQUALS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(FEED_NAME.getName(), "TEST_FEED");
-        attributeMap.put(TYPE_NAME.getName(), "Raw Events");
+        attributeMap.put(FEED.getName(), "TEST_FEED");
+        attributeMap.put(TYPE.getName(), "Raw Events");
         return attributeMap;
     }
 }

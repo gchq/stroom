@@ -336,8 +336,8 @@ class FsStore implements Store, AttributeMapFactory {
                     String.valueOf(meta.getParentMetaId()));
         }
 
-        updateAttribute(target, MetaFields.FEED_NAME, meta.getFeedName());
-        updateAttribute(target, MetaFields.TYPE_NAME, meta.getTypeName());
+        updateAttribute(target, MetaFields.FEED, meta.getFeedName());
+        updateAttribute(target, MetaFields.TYPE, meta.getTypeName());
         updateAttribute(target, MetaFields.CREATE_TIME, String.valueOf(meta.getCreateMs()));
         if (meta.getEffectiveMs() != null) {
             updateAttribute(target, MetaFields.EFFECTIVE_TIME, String.valueOf(meta.getEffectiveMs()));

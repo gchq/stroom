@@ -143,7 +143,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, MetaFields.FEED_NAME);
+        final int feedCount = termCount(queryData, MetaFields.FEED);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 
@@ -162,7 +162,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, MetaFields.TYPE_NAME);
+        final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 

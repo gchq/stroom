@@ -151,7 +151,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
+        builder.addTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
         dataRetentionRules.setRules(Collections.singletonList(rule));
         dataRetentionRulesService.writeDocument(dataRetentionRules);

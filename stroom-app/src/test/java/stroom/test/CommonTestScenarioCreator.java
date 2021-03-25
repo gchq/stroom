@@ -72,8 +72,8 @@ public class CommonTestScenarioCreator {
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
-                        .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed)
+                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
