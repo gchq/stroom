@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2136** : Fixed sorting problems in users and API keys pages.
+
 * Issue **#2146** : Fixed use of dashboard expression parameters.
 
 * Issue **#2141** : Pre v7 index shards can now be used after upgrade.
