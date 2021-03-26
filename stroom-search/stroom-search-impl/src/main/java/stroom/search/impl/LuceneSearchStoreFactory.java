@@ -94,7 +94,8 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 nowEpochMilli);
 
         // Create a coprocessor settings list.
-        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory.createSettings(modifiedSearchRequest);
+        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
+                .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
