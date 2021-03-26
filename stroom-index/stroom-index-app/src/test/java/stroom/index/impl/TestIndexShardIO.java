@@ -394,7 +394,7 @@ class TestIndexShardIO {
 
         writer.close();
         assertThat(flushSet.isEmpty()).as("Expected not to flush").isTrue();
-        // assertThat(// flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
+        // assertThat( // flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
         // 6144, 4096, 8192]");
     }
 }
