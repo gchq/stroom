@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.97] - 2021-03-26
+
 * Issue **#2136** : Fixed sorting problems in users and API keys pages.
 
 * Issue **#2146** : Fixed use of dashboard expression parameters.
@@ -3221,7 +3224,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.96...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.97...HEAD
+[v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
 [v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
 [v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
 [v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
