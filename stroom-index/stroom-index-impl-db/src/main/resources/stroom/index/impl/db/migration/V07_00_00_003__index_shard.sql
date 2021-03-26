@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS index_shard (
     id                    bigint NOT NULL AUTO_INCREMENT,
     node_name             varchar(255) NOT NULL,
     fk_volume_id          int NOT NULL,
+    old_index_id          int DEFAULT NULL,
     index_uuid            varchar(255) NOT NULL,
     commit_document_count int DEFAULT NULL,
     commit_duration_ms    bigint DEFAULT NULL,

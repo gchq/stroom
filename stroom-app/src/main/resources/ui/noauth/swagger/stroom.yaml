@@ -7609,6 +7609,9 @@ components:
           type: string
         nodeName:
           type: string
+        oldIndexId:
+          type: integer
+          format: int32
         partition:
           type: string
         partitionFromTime:

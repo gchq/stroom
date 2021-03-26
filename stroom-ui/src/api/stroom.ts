@@ -1409,6 +1409,9 @@ export interface IndexShard {
   indexUuid?: string;
   indexVersion?: string;
   nodeName?: string;
+
+  /** @format int32 */
+  oldIndexId?: number;
   partition?: string;
 
   /** @format int64 */
