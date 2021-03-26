@@ -16,16 +16,15 @@
 
 package stroom.pipeline.reader;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestInvalidXmlCharReplacementFilter {
 
@@ -54,8 +53,8 @@ public class TestInvalidXmlCharReplacementFilter {
         return false;
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         bmpRepTwice = new char[0x20000];
         for (int i = 0; i != bmpRepTwice.length; ++i) {
             bmpRepTwice[i] = (char) i;
@@ -66,7 +65,9 @@ public class TestInvalidXmlCharReplacementFilter {
         while (i < brokenUTF16Str.length) {
             final int randomCP = gen.nextInt() & (~Integer.MIN_VALUE) % Character.MAX_CODE_POINT;
             final char[] rchars = Character.toChars(randomCP);
-            final int cpylen = (i < (brokenUTF16Str.length - 1)) ? rchars.length : 1;
+            final int cpylen = (i < (brokenUTF16Str.length - 1))
+                    ? rchars.length
+                    : 1;
             System.arraycopy(rchars, 0, brokenUTF16Str, i, cpylen);
             i += cpylen;
         }
@@ -81,11 +82,11 @@ public class TestInvalidXmlCharReplacementFilter {
         final Reader r = getReader(testData, mode);
         for (int idx = 0; idx != testData.length; ++idx) {
             final int rch = r.read();
-            assertTrue(isValidXmlCP(rch, mode));
-            assertTrue((char) idx == rch || rch == REPLACE_CHAR);
+            assertThat(isValidXmlCP(rch, mode)).isTrue();
+            assertThat((char) idx == rch || rch == REPLACE_CHAR).isTrue();
         }
         final int rch = r.read();
-        assertEquals(-1, rch);
+        assertThat(rch).isEqualTo(-1);
     }
 
     private void readArrayBMP(final char[] testData, final XmlChars mode) throws IOException {
@@ -96,19 +97,23 @@ public class TestInvalidXmlCharReplacementFilter {
             final int trail_size = testData.length % chunkSize;
             final int num_chunks = testData.length / chunkSize;
             for (int idx = 0; idx <= num_chunks; ++idx) {
-                final int expect_read = (idx == num_chunks) ? trail_size : buf.length;
+                final int expect_read = (idx == num_chunks)
+                        ? trail_size
+                        : buf.length;
                 if (expect_read == 0) {
                     break;
                 }
                 final int rch = r.read(buf, 0, buf.length);
                 // as idx < floor(char_len /chunk_len)
-                assertEquals(rch, expect_read);
+                assertThat(rch).isEqualTo(expect_read);
                 for (int i = 0; i != expect_read; ++i, ++origchar) {
-                    assertEquals(isValidXmlCP(origchar, mode) ? origchar : REPLACE_CHAR, buf[i]);
+                    assertThat(buf[i]).isEqualTo(isValidXmlCP(origchar, mode)
+                            ? origchar
+                            : REPLACE_CHAR);
                 }
             }
             final int reof = r.read();
-            assertEquals(-1, reof);
+            assertThat(reof).isEqualTo(-1);
         }
     }
 
@@ -116,21 +121,21 @@ public class TestInvalidXmlCharReplacementFilter {
         final Reader r = getReader(testData, mode);
         for (int idx = 0; idx != testData.length; ++idx) {
             final int rch = r.read();
-            assertTrue(rch > 0);
+            assertThat(rch).isGreaterThan(0);
             if (Character.isHighSurrogate((char) rch)) {
                 final int rchl = r.read();
-                assertTrue(rchl > 0);
-                assertTrue(Character.isLowSurrogate((char) rchl));
-                assertTrue(isValidXmlCP(Character.toCodePoint((char) rch, (char) rchl), mode));
-                assertTrue(testData[idx] == rch || (rch == REPLACE_CHAR && rchl == REPLACE_CHAR));
+                assertThat(rchl).isGreaterThan(0);
+                assertThat(Character.isLowSurrogate((char) rchl)).isTrue();
+                assertThat(isValidXmlCP(Character.toCodePoint((char) rch, (char) rchl), mode)).isTrue();
+                assertThat(testData[idx] == rch || (rch == REPLACE_CHAR && rchl == REPLACE_CHAR)).isTrue();
                 ++idx;
             } else {
-                assertTrue(isValidXmlCP(rch, mode));
-                assertTrue(testData[idx] == rch || rch == REPLACE_CHAR);
+                assertThat(isValidXmlCP(rch, mode)).isTrue();
+                assertThat(testData[idx] == rch || rch == REPLACE_CHAR).isTrue();
             }
         }
         final int rch = r.read();
-        assertEquals(-1, rch);
+        assertThat(rch).isEqualTo(-1);
     }
 
     private void readArrayFullUTF16(final char[] testData, final XmlChars mode)
@@ -143,75 +148,77 @@ public class TestInvalidXmlCharReplacementFilter {
             final int num_chunks = testData.length / chunkSize;
             char highSurrogate = 0;
             for (int idx = 0; idx <= num_chunks; ++idx) {
-                final int expect_read = (idx == num_chunks) ? trail_size : buf.length;
+                final int expect_read = (idx == num_chunks)
+                        ? trail_size
+                        : buf.length;
                 if (expect_read == 0) {
                     break;
                 }
                 final int rch = r.read(buf, 0, buf.length);
                 if (rch != expect_read) {
                     // as idx < floor(char_len / chunk_len)
-                    assertEquals(rch, expect_read);
+                    assertThat(rch).isEqualTo(expect_read);
                 }
                 for (int i = 0; i != expect_read; ++i, ++origidx) {
                     if (highSurrogate != 0) {
-                        assertTrue(Character.isLowSurrogate(buf[i]));
-                        assertTrue(isValidXmlCP(Character.toCodePoint(highSurrogate, buf[i]), mode));
-                        assertTrue(brokenUTF16Str[origidx] == buf[i]);
+                        assertThat(Character.isLowSurrogate(buf[i])).isTrue();
+                        assertThat(isValidXmlCP(Character.toCodePoint(highSurrogate, buf[i]), mode)).isTrue();
+                        assertThat(brokenUTF16Str[origidx] == buf[i]).isTrue();
                         highSurrogate = 0;
                     } else {
                         if (Character.isHighSurrogate(buf[i])) {
                             highSurrogate = buf[i];
                         } else {
                             if (!isValidXmlCP(buf[i], mode)) {
-                                assertTrue(isValidXmlCP(buf[i], mode));
+                                assertThat(isValidXmlCP(buf[i], mode)).isTrue();
                             }
-                            assertTrue(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR);
+                            assertThat(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR).isTrue();
                         }
                     }
                 }
             }
             final int reof = r.read();
-            assertEquals(-1, reof);
+            assertThat(reof).isEqualTo(-1);
         }
     }
 
     @Test
-    public void testReadCharBMP_XML10() throws IOException {
+    void testReadCharBMP_XML10() throws IOException {
         readCharBMP(bmpRepTwice, new Xml10Chars());
     }
 
     @Test
-    public void testReadCharBMP_XML11() throws IOException {
+    void testReadCharBMP_XML11() throws IOException {
         readCharBMP(bmpRepTwice, new Xml11Chars());
     }
 
     @Test
-    public void testReadArrayBMP_XML10() throws IOException {
+    void testReadArrayBMP_XML10() throws IOException {
         readArrayBMP(bmpRepTwice, new Xml10Chars());
     }
 
     @Test
-    public void testReadArrayBMP_XML11() throws IOException {
+    void testReadArrayBMP_XML11() throws IOException {
         readArrayBMP(bmpRepTwice, new Xml11Chars());
     }
 
     @Test
-    public void testReadCharFullUTF16_XML10() throws IOException {
+    void testReadCharFullUTF16_XML10() throws IOException {
         readCharFullUTF16(brokenUTF16Str, new Xml10Chars());
     }
 
     @Test
-    public void testReadCharFullUTF16_XML11() throws IOException {
+    void testReadCharFullUTF16_XML11() throws IOException {
         readCharFullUTF16(brokenUTF16Str, new Xml11Chars());
     }
 
     @Test
-    public void testReadArrayFullUTF16_XML10() throws IOException {
+    void testReadArrayFullUTF16_XML10() throws IOException {
         readArrayFullUTF16(brokenUTF16Str, new Xml10Chars());
     }
 
     @Test
-    public void testReadArrayFullUTF16_XML11() throws IOException {
+    void testReadArrayFullUTF16_XML11() throws IOException {
         readArrayFullUTF16(brokenUTF16Str, new Xml11Chars());
     }
 }
