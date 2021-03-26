@@ -23,7 +23,7 @@ public class TestInvalidCharFilterReader {
         final String goodXml = appendRecords(new StringBuilder(), goodParms).toString();
         final String badXml = appendRecords(new StringBuilder(), badParms).toString();
 
-        assertThat(badXml).isNotEqualTo(badXml);
+        assertThat(badXml.equals(goodXml)).isFalse();
 
         final String convertGoodXml = XMLUtil.prettyPrintXML(goodXml);
         final String convertBadXml = convert(badXml);
@@ -42,7 +42,7 @@ public class TestInvalidCharFilterReader {
         final String goodXml = appendRecords(new StringBuilder(), goodParms).toString();
         final String badXml = appendRecords(new StringBuilder(), badParms).toString();
 
-        assertThat(badXml).isNotEqualTo(badXml);
+        assertThat(badXml.equals(goodXml)).isFalse();
 
         final String convertGoodXml = XMLUtil.prettyPrintXML(goodXml);
         final String convertBadXml = convert2(badXml);

@@ -46,6 +46,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
 
     private boolean useDefaultOpenIdCredentials;
+    private boolean allowCertificateAuthentication;
     private String certificateCnPattern = ".*\\((.*)\\)";
     private int certificateCnCaptureGroupIndex = 1;
     private Integer failedLoginLockThreshold = 3;
@@ -73,6 +74,20 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     @SuppressWarnings("unused")
     public void setUseDefaultOpenIdCredentials(final boolean useDefaultOpenIdCredentials) {
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonProperty
+    @JsonPropertyDescription("In order for clients to be able to login with certificates this property must be set " +
+            "to true. For security certificate authentication should not be allowed unless the application is " +
+            "adequately secured and HTTPS is configured either directly for DropWizard or by an appropriate reverse " +
+            "proxy such as NGINX.")
+    public boolean isAllowCertificateAuthentication() {
+        return allowCertificateAuthentication;
+    }
+
+    public void setAllowCertificateAuthentication(final boolean allowCertificateAuthentication) {
+        this.allowCertificateAuthentication = allowCertificateAuthentication;
     }
 
     @NotNull

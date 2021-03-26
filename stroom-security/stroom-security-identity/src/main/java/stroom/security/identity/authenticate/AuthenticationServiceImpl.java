@@ -13,6 +13,7 @@ import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenService;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.util.cert.CertificateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -101,8 +102,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
             LOGGER.debug("Has current auth state");
             return Optional.of(authState);
 
+        } else if (config.isAllowCertificateAuthentication()) {
+            LOGGER.debug("Attempting login with certificate");
+            try {
+                loginWithCertificate(request);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage());
+            }
         } else {
-            loginWithCertificate(request);
+            LOGGER.debug("Certificate authentication is disabled");
         }
 
         return Optional.ofNullable(getAuthState(request));
@@ -110,43 +118,41 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private void loginWithCertificate(final HttpServletRequest request) {
         LOGGER.debug("loginWithCertificate");
-        String dn = CertificateUtil.extractCertificateDN(request);
-        LOGGER.debug(() -> "DN = " + dn);
-        if (dn != null) {
-            final String cn = CertificateUtil.extractCNFromDN(dn);
-            LOGGER.debug(() -> "CN = " + cn);
+        final Optional<String> optionalCN = CertificateUtil.getCN(request);
+        optionalCN.ifPresent(cn -> {
+            // Check for a certificate
+            LOGGER.debug(() -> "Got CN: " + cn);
+            Optional<String> optionalUserId = getIdFromCertificate(cn);
 
-            if (cn != null) {
-                // Check for a certificate
-                LOGGER.debug(() -> "User has presented a certificate: " + cn);
-                Optional<String> optionalSubject = getIdFromCertificate(cn);
+            if (optionalUserId.isEmpty()) {
+                throw new RuntimeException(
+                        "Found CN but the identity cannot be extracted (CN = " +
+                                cn +
+                                ")");
 
-                if (optionalSubject.isEmpty()) {
-                    throw new RuntimeException(
-                            "User is presenting a certificate but this certificate cannot be processed!");
+            } else {
+                final String userId = optionalUserId.get();
+                final Optional<Account> optionalAccount = accountDao.get(userId);
+                if (optionalAccount.isEmpty()) {
+                    // There's no user so we can't let them have access.
+                    throw new BadRequestException(
+                            "An account for the userId does not exist (userId = " +
+                                    userId +
+                                    ")");
 
                 } else {
-                    final String subject = optionalSubject.get();
-                    final Optional<Account> optionalAccount = accountDao.get(subject);
-                    if (optionalAccount.isEmpty()) {
-                        // There's no user so we can't let them have access.
-                        throw new BadRequestException(
-                                "The user identified by the certificate does not exist in the auth database.");
+                    final Account account = optionalAccount.get();
+                    if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
+                        LOGGER.info(() -> "Logging user in: " + userId);
+                        setAuthState(request.getSession(true),
+                                new AuthStateImpl(account, false, System.currentTimeMillis()));
 
-                    } else {
-                        final Account account = optionalAccount.get();
-                        if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
-                            LOGGER.info("Logging user in using DN with subject {}", subject);
-                            setAuthState(request.getSession(true),
-                                    new AuthStateImpl(account, false, System.currentTimeMillis()));
-
-                            // Reset last access, login failures, etc...
-                            accountDao.recordSuccessfulLogin(subject);
-                        }
+                        // Reset last access, login failures, etc...
+                        accountDao.recordSuccessfulLogin(userId);
                     }
                 }
             }
-        }
+        });
     }
 
     public LoginResponse handleLogin(final LoginRequest loginRequest,
