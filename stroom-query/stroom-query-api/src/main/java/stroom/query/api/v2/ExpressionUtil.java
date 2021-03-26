@@ -215,7 +215,7 @@ public class ExpressionUtil {
         return result;
     }
 
-    public static Query replaceExpressionParameters(Query query) {
+    public static Query replaceExpressionParameters(final Query query) {
         Query result = query;
         if (query != null) {
             ExpressionOperator expression = query.getExpression();
