@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2141** : Pre v7 index shards can now be used after upgrade.
+
 * Issue **#2142** : Fixed certificate authentication issues.
 
 * Issue **#2140** : Fixed migration issue that was causing the creation of unnecessary index volume groups. 
