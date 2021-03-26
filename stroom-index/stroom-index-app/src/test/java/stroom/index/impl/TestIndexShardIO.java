@@ -356,7 +356,6 @@ class TestIndexShardIO {
         final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
-        FileUtil.deleteDir(testDir);
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
@@ -365,10 +364,6 @@ class TestIndexShardIO {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
-        // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
