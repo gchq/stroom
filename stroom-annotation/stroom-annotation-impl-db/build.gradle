@@ -20,6 +20,7 @@ dependencies {
     compile libs.guice5
     compile libs.hikari
     compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api

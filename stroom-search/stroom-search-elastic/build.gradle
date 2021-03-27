@@ -1,0 +1,65 @@
+ext.moduleName = 'stroom.search.elastic'
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+
+shadowJar {
+    zip64 true
+
+    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+
+    mergeServiceFiles()
+}
+
+tasks.build.dependsOn shadowJar
+
+dependencies {
+    compile project(':stroom-annotation:stroom-annotation-api')
+    permitUnusedDeclared project(':stroom-annotation:stroom-annotation-api')
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-search:stroom-search-extraction')
+    compile project(':stroom-security-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile project(':stroom-connectors')
+    permitUnusedDeclared project(':stroom-connectors')
+
+    compile libs.elasticsearch_rest_high_level_client
+    compile libs.elasticsearch_rest_client
+    compile libs.elasticsearch
+    compile libs.elasticsearch_core
+    compile libs.httpcore
+    compile libs.http_client
+    compile libs.http_async_client
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.log4j_to_slf4j
+    permitUnusedDeclared libs.log4j_to_slf4j
+    compile libs.slf4j_api
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.stroomExpression
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
+    compile libs.swagger_annotations
+    compile libs.jackson_annotations
+    permitUnusedDeclared libs.jackson_annotations_sources
+    compile libs.jackson_databind
+    permitUnusedDeclared libs.jackson_databind_sources
+    compile libs.javax_inject
+    compile libs.ws_rs_api
+    compile libs.xml_apis
+
+    permitTestUnusedDeclared project(':stroom-test-common')
+    testCompile project(':stroom-test-common')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+
+    testCompile libs.junit
+}

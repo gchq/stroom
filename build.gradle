@@ -28,7 +28,7 @@ plugins {
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
     id "com.dorongold.task-tree" version "1.3.1" apply true
 
-    id "com.github.johnrengelman.shadow" version "5.2.0" apply false
+    id "com.github.johnrengelman.shadow" version "6.1.0" apply false
 
     id 'nu.studer.jooq' version '4.1' apply false
 
@@ -111,6 +111,8 @@ ext.versions = [
         //------------3rd-party------------
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '1.3.14', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        elasticsearch     : '7.12.0',
+        httpcore          : '4.4.12', // Transient dependency of Elasticsearch
         guice5            : '5.0.1',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
@@ -176,6 +178,11 @@ ext.libs = [
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
         dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
+        elasticsearch_rest_high_level_client : "org.elasticsearch.client:elasticsearch-rest-high-level-client:$versions.elasticsearch",
+        elasticsearch_rest_client      : "org.elasticsearch.client:elasticsearch-rest-client:$versions.elasticsearch",
+        elasticsearch                  : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
+        elasticsearch_core             : "org.elasticsearch:elasticsearch-core:$versions.elasticsearch",
+        httpcore                       : "org.apache.httpcomponents:httpcore:$versions.httpcore",
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
         flyway_core                    : "org.flywaydb:flyway-core:5.2.4", // We are stuck on 5.2.4 as newer non-enterprise versions don't support mysql 5.6
         gin                            : "com.google.gwt.inject:gin:2.1.2",

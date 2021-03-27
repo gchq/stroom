@@ -123,6 +123,7 @@ public class SolrConnectionConfig implements Serializable {
                 '}';
     }
 
+    // TODO: Remove
     public enum InstanceType implements HasDisplayValue {
         SINGLE_NOOE("Single Node"),
         SOLR_CLOUD("Solr Cloud");
