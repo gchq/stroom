@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+* Issue **##2142**:  Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
+
+
 ## [v7.0-beta.97] - 2021-03-26
 
 * Issue **#2136** : Fixed sorting problems in users and API keys pages.
