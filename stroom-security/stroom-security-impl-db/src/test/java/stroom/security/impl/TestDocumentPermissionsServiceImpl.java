@@ -18,26 +18,29 @@
 package stroom.security.impl;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDocumentPermissionsServiceImpl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     private static UserService userService;
@@ -133,7 +136,8 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(
+                    docRef.getUuid());
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }
@@ -172,21 +176,21 @@ class TestDocumentPermissionsServiceImpl {
     private User createUser(final String name) {
         User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private User createUserGroup(final String name) {
         User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private DocRef createTestDocRef() {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .type("Index")
                 .uuid(UUID.randomUUID().toString())
                 .build();

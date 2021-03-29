@@ -17,20 +17,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -57,6 +43,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +70,7 @@ import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
@@ -178,7 +180,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                 }
                 return getSafeHtmlWithState(pipelineReference, pipelineReference.getStreamType());
             }
-        }, "Stream Type", 200);
+        }, "Type", 200);
     }
 
     private void addInheritedFromColumn() {
@@ -278,9 +280,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private void showEditor(final PipelineReference pipelineReference, final boolean isNew) {
         if (pipelineReference != null) {
             final List<PipelineReference> added = pipelineModel.getPipelineData().getAddedPipelineReferences();
-            if (added.contains(pipelineReference)) {
-                added.remove(pipelineReference);
-            }
+            added.remove(pipelineReference);
 
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
             editor.read(pipelineReference);
@@ -485,6 +485,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private enum State {
-        INHERITED, ADDED, REMOVED
+        INHERITED,
+        ADDED,
+        REMOVED
     }
 }

@@ -1,14 +1,16 @@
 package stroom.pipeline.reader;
 
+import stroom.util.xml.XMLUtil;
+
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.util.xml.XMLUtil;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
 public class TestInvalidCharFilterReader {
+
     @Test
     public void test() throws IOException {
         char[] good = {'v', 'a', 'l', 'u', 'e'};
@@ -57,7 +59,8 @@ public class TestInvalidCharFilterReader {
 
     private String convert2(final String string) throws IOException {
         final StringWriter writer = new StringWriter();
-        try (final FindReplaceFilter reader = new FindReplaceFilter.Builder()
+        try (final FindReplaceFilter reader = FindReplaceFilter
+                .builder()
                 .find("\u0005")
                 .replacement("")
                 .reader(new StringReader(string))
@@ -122,6 +125,7 @@ public class TestInvalidCharFilterReader {
     }
 
     private static class Params {
+
         private final String attributeValue;
         private final String content;
 

@@ -1,13 +1,16 @@
 package stroom.index.impl.db;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexVolumeGroupService;
+import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestModule extends AbstractModule {
+
     static final String TEST_USER = "testUser";
 
     @Override
@@ -27,7 +31,9 @@ class TestModule extends AbstractModule {
         final SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getUserId()).thenReturn(TEST_USER);
         bind(SecurityContext.class).toInstance(securityContext);
-        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() { });
+        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
+        });
+        bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
     }
 
     @Provides

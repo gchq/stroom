@@ -29,9 +29,9 @@ const resourceBuilder: ResourceBuilder = (
       res.json(
         testCache
           .data!.userDocPermission.filter(
-            udp => udp.docRefUuid === docRefUuid && udp.userUuid === userUuid,
+            (udp) => udp.docRefUuid === docRefUuid && udp.userUuid === userUuid,
           )
-          .map(udp => udp.permissionName),
+          .map((udp) => udp.permissionName),
       );
     });
 
@@ -61,7 +61,7 @@ const resourceBuilder: ResourceBuilder = (
       const { docRefUuid, userUuid, permissionName } = req.params;
 
       testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        udp =>
+        (udp) =>
           !(
             udp.userUuid === userUuid &&
             udp.docRefUuid === docRefUuid &&
@@ -77,10 +77,10 @@ const resourceBuilder: ResourceBuilder = (
     .get(`${resource}/forDoc/:docRefUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { docRefUuid } = req.params;
-      let documentPermissions: DocumentPermissions = {
+      const documentPermissions: DocumentPermissions = {
         docRefUuid,
         userPermissions: testCache
-          .data!.userDocPermission.filter(d => d.docRefUuid === docRefUuid)
+          .data!.userDocPermission.filter((d) => d.docRefUuid === docRefUuid)
           .reduce(
             (acc, { userUuid, permissionName }) => ({
               ...acc,
@@ -100,7 +100,7 @@ const resourceBuilder: ResourceBuilder = (
       const { docRefUuid, userUuid } = req.params;
 
       testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        udp => !(udp.docRefUuid === docRefUuid && udp.userUuid === userUuid),
+        (udp) => !(udp.docRefUuid === docRefUuid && udp.userUuid === userUuid),
       );
 
       res.status(204).send(undefined);
@@ -113,7 +113,7 @@ const resourceBuilder: ResourceBuilder = (
       const { docRefUuid } = req.params;
 
       testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        udp => udp.docRefUuid !== docRefUuid,
+        (udp) => udp.docRefUuid !== docRefUuid,
       );
 
       res.status(204).send(undefined);

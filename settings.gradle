@@ -40,13 +40,6 @@ include 'stroom-annotation:stroom-annotation-pipeline'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
-// Authentication
-include 'stroom-authentication:stroom-authentication-api'
-include 'stroom-authentication:stroom-authentication-common'
-include 'stroom-authentication:stroom-authentication-impl'
-include 'stroom-authentication:stroom-authentication-impl-db'
-include 'stroom-authentication:stroom-authentication-impl-db-jooq'
-
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
@@ -103,6 +96,9 @@ include 'stroom-dictionary:stroom-dictionary-api'
 include 'stroom-dictionary:stroom-dictionary-impl'
 include 'stroom-dictionary:stroom-dictionary-mock'
 
+// Docref
+include 'stroom-docref'
+
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-impl'
@@ -113,14 +109,17 @@ include 'stroom-docstore:stroom-docstore-impl-memory'
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
 
-// Elastic
-include 'stroom-elastic:stroom-elastic-api'
-include 'stroom-elastic:stroom-elastic-impl'
-include 'stroom-elastic:stroom-elastic-impl-http'
+//// Elastic
+//include 'stroom-elastic:stroom-elastic-api'
+//include 'stroom-elastic:stroom-elastic-impl'
+//include 'stroom-elastic:stroom-elastic-impl-http'
 
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'
 include 'stroom-event-logging:stroom-event-logging-impl'
+include 'stroom-event-logging:stroom-event-logging-mock'
+include 'stroom-event-logging-rs:stroom-event-logging-rs-api'
+include 'stroom-event-logging-rs:stroom-event-logging-rs-impl'
 
 // Explorer
 include 'stroom-explorer:stroom-collection-api'
@@ -169,6 +168,9 @@ include 'stroom-legacy:stroom-legacy-model_6_1'
 include 'stroom-lifecycle:stroom-lifecycle-api'
 include 'stroom-lifecycle:stroom-lifecycle-impl'
 
+// LMDB support
+include 'stroom-lmdb'
+
 // Data Meta projects
 include 'stroom-meta:stroom-meta-api'
 include 'stroom-meta:stroom-meta-impl'
@@ -200,6 +202,11 @@ include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
+// Query
+include 'stroom-query:stroom-expression'
+include 'stroom-query:stroom-query-api'
+include 'stroom-query:stroom-query-common'
+
 // Resource store
 include 'stroom-resource:stroom-resource-api'
 include 'stroom-resource:stroom-resource-impl'
@@ -220,6 +227,9 @@ include 'stroom-search:stroom-searchable-api'
 include 'stroom-search:stroom-searchable-impl'
 
 // Security
+include 'stroom-security:stroom-security-identity'
+include 'stroom-security:stroom-security-identity-db'
+include 'stroom-security:stroom-security-identity-db-jooq'
 include 'stroom-security:stroom-security-api'
 include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-mock'
@@ -228,6 +238,7 @@ include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
+include 'stroom-security:stroom-security-openid-api'
 
 // Service discovery
 include 'stroom-servicediscovery:stroom-servicediscovery-api'

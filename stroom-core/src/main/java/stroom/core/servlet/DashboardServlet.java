@@ -19,8 +19,8 @@ package stroom.core.servlet;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.IsServlet;
 
-import javax.inject.Inject;
 import java.util.Set;
+import javax.inject.Inject;
 
 public class DashboardServlet extends AppServlet implements IsServlet {
 

@@ -16,19 +16,20 @@
 
 package stroom.headless;
 
+import stroom.content.ContentPacks;
+import stroom.test.common.ComparisonHelper;
+import stroom.test.common.util.test.ContentPackDownloader;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.shared.Version;
+import stroom.util.zip.ZipUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.ContentImportService;
-import stroom.test.ContentImportService.ContentPack;
-import stroom.test.ContentPackDownloader;
-import stroom.test.common.ComparisonHelper;
-import stroom.util.io.FileUtil;
-import stroom.util.shared.Version;
-import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -36,7 +37,6 @@ import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -44,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 class TestHeadless {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
@@ -51,7 +52,8 @@ class TestHeadless {
 
     @Test
     void test(@TempDir Path newTempDir) throws IOException {
-//        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
         // Make sure the new temp directory is empty.
         if (Files.isDirectory(newTempDir)) {
@@ -72,7 +74,9 @@ class TestHeadless {
         Files.createDirectories(inputDirPath);
         Files.createDirectories(outputDirPath);
 
-        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
+        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples")
+                .toAbsolutePath()
+                .normalize();
         final Path outputFilePath = outputDirPath.resolve("output");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 
@@ -84,9 +88,8 @@ class TestHeadless {
         ZipUtil.zip(inputFilePath, rawInputPath);
 
         // Create config zip file
-        final Path contentPacks = tmpPath.resolve("contentPacks");
-        Files.createDirectories(contentPacks);
-        importXmlSchemas(contentPacks);
+        final Path downloadedContentPacks = FileSystemTestUtil.getContentPackDownloadsDir();
+        downloadXmlSchemas(downloadedContentPacks);
 
         // Copy required config into the temp dir.
         final Path rawConfigPath = tmpPath.resolve("config");
@@ -95,7 +98,7 @@ class TestHeadless {
         FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
 
         // Unzip the downloaded content packs into the temp dir.
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacks)) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(downloadedContentPacks)) {
             stream.forEach(file -> {
                 try {
                     ZipUtil.unzip(file, rawConfigPath);
@@ -138,14 +141,10 @@ class TestHeadless {
         ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
     }
 
-    private void importXmlSchemas(final Path path) {
-        importContentPacks(Arrays.asList(
-                ContentImportService.CORE_XML_SCHEMAS_PACK,
-                ContentImportService.EVENT_LOGGING_XML_SCHEMA_PACK
-        ), path);
-    }
-
-    private void importContentPacks(final List<ContentPack> packs, final Path path) {
-        packs.forEach(pack -> ContentPackDownloader.downloadContentPack(pack.getNameAsStr(), pack.getVersion(), path));
+    private void downloadXmlSchemas(final Path path) {
+        List.of(ContentPacks.CORE_XML_SCHEMAS_PACK,
+                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK)
+                .forEach(contentPack ->
+                        ContentPackDownloader.downloadContentPack(contentPack, path));
     }
 }

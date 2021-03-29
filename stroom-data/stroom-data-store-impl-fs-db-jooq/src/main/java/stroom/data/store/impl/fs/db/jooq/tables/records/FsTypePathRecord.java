@@ -4,7 +4,7 @@
 package stroom.data.store.impl.fs.db.jooq.tables.records;
 
 
-import javax.annotation.processing.Generated;
+import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -12,7 +12,7 @@ import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
+import javax.annotation.processing.Generated;
 
 
 /**

@@ -16,24 +16,28 @@
 
 package stroom.meta.statistics.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
-import javax.inject.Provider;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+
 import java.util.Arrays;
 import java.util.Collections;
+import javax.inject.Provider;
 
 public class MetaStatisticsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(MetaStatistics.class).to(MetaStatisticsImpl.class);
     }
 
     @Provides
-    public MetaStatisticsImpl metaStatistics(final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+    public MetaStatisticsImpl metaStatistics(
+            final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+
         final MetaStatisticsImpl metaDataStatistic = new MetaStatisticsImpl(internalStatisticsReceiverProvider);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaStatisticsTemplate(

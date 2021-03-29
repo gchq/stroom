@@ -17,17 +17,18 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.lmdb.Deserializer;
+import stroom.lmdb.Serde;
+import stroom.lmdb.Serializer;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Deserializer;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serializer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -75,7 +76,7 @@ public class RefDataProcessingInfoSerde implements
     }
 
     public void updateState(final ByteBuffer byteBuffer,
-                                   final ProcessingState newProcessingState) {
+                            final ProcessingState newProcessingState) {
 
         // absolute put so no need to change the buffer position
         byteBuffer.put(PROCESSING_STATE_OFFSET, newProcessingState.getId());
@@ -102,18 +103,20 @@ public class RefDataProcessingInfoSerde implements
     /**
      * Return true if the {@link RefDataProcessingInfo} object represent by valueBuffer has a last accessed
      * time after the epoch millis time represented by timeMsBuffer.
+     *
      * @param processingInfoBuffer {@link ByteBuffer} containing a serialised {@link RefDataProcessingInfo}
-     * @param timeMsBuffer a {@link ByteBuffer} containing a long representing an epoch millis time
+     * @param timeMsBuffer         a {@link ByteBuffer} containing a long representing an epoch millis time
      */
     public static boolean wasAccessedAfter(final ByteBuffer processingInfoBuffer, final ByteBuffer timeMsBuffer) {
         int compareResult = ByteBufferUtils.compareAsLong(
                 timeMsBuffer, timeMsBuffer.position(),
                 processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
                 compareResult,
                 Instant.ofEpochMilli(timeMsBuffer.getLong(0)),
                 Instant.ofEpochMilli(processingInfoBuffer.getLong(LAST_ACCESSED_TIME_OFFSET))));
+
         return compareResult < 0;
     }
 

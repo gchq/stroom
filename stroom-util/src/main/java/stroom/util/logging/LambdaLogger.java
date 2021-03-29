@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface LambdaLogger extends Logger {
+
     void trace(Supplier<String> message);
 
     void trace(Supplier<String> message, Throwable t);

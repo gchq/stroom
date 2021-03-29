@@ -28,6 +28,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
+
     private static final long serialVersionUID = 4737939969786534908L;
 
     @JsonProperty
@@ -194,6 +195,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         return builder.toHashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -211,6 +213,9 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     public enum MatchStyle {
-        Wild, WildStart, WildEnd, WildStartAndEnd
+        Wild,
+        WildStart,
+        WildEnd,
+        WildStartAndEnd
     }
 }

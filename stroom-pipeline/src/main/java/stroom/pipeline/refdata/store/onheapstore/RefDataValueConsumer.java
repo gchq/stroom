@@ -17,14 +17,17 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
 import stroom.pipeline.refdata.store.RefDataValue;
 
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
+
 public interface RefDataValueConsumer {
+
     void consume(final RefDataValue refDataValue);
 
     interface Factory {
+
         RefDataValueConsumer create(
                 final Receiver receiver,
                 final PipelineConfiguration pipelineConfiguration);

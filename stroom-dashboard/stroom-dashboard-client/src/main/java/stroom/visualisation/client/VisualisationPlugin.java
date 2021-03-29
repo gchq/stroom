@@ -17,10 +17,6 @@
 
 package stroom.visualisation.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
+
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     private final Provider<VisualisationPresenter> editorProvider;
@@ -58,23 +60,28 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<VisualisationDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<VisualisationDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<VisualisationDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override
-    public void save(final DocRef docRef, final VisualisationDoc document, final Consumer<VisualisationDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final VisualisationDoc document,
+                     final Consumer<VisualisationDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<VisualisationDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
-                .update(document);
+                .update(document.getUuid(), document);
     }
 
     @Override

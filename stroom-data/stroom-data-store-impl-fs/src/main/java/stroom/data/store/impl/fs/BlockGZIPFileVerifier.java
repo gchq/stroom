@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.util.io.FileUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,25 +28,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
+import javax.annotation.Nonnull;
 
 /**
  * Class used to check a Block GZIP file.
  */
 class BlockGZIPFileVerifier {
+
     // File being read
+    private final Path path;
     private final RandomAccessFile raFile;
     private final InputStream stream;
 
     // Used a a buffer to read longs into
-    private byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
-    private LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
-    private byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
-    private byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
+    private final byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
+    private final LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
+    private final byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
+    private final byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
 
     /**
      * Constructor to open a Block GZIP File.
      */
     private BlockGZIPFileVerifier(final Path bgz) throws IOException {
+        path = bgz;
         raFile = new RandomAccessFile(bgz.toFile(), BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
     }
@@ -187,10 +193,10 @@ class BlockGZIPFileVerifier {
 
         fillBuffer(stream, magicMarkerRawBufffer, 0, magicMarkerRawBufffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.MAGIC_MARKER, magicMarkerRawBufffer)) {
-            byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
+            final byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
 
             getRaFile().seek(Math.max(0, pos - 10));
-            int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
+            final int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
 
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Failed to find block sync point at ");
@@ -212,7 +218,9 @@ class BlockGZIPFileVerifier {
     private void readHeaderMarker() throws IOException {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream");
+            throw new IOException("Does not look like a Block GZIP V1 Stream \"" +
+                    FileUtil.getCanonicalPath(path) +
+                    "\"");
         }
     }
 
@@ -220,20 +228,19 @@ class BlockGZIPFileVerifier {
      * Class to interface a stream to a random access file.
      */
     class RAInputStreamAdaptor extends InputStream {
+
         @Override
         public int read() throws IOException {
             return getRaFile().read();
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
-        public int read(final byte[] b) throws IOException {
+        public int read(@Nonnull final byte[] b) throws IOException {
             return getRaFile().read(b);
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
+        public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
             return getRaFile().read(b, off, len);
         }
     }

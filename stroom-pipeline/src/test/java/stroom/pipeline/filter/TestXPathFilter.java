@@ -16,32 +16,34 @@
 
 package stroom.pipeline.filter;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.om.NodeInfo;
-import org.junit.jupiter.api.Test;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
+import org.junit.jupiter.api.Test;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXPathFilter extends StroomUnitTest {
+
     private static final String INPUT = "TestTranslationStepping/1.xml";
     private static final SAXParserFactory PARSER_FACTORY;
 
@@ -75,23 +77,26 @@ class TestXPathFilter extends StroomUnitTest {
         testPathEquals("records/record/data[@name = 'FileNo']/@value", "1", steppingFilter);
     }
 
-    private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
+    private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter)
+            throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setXPath(xPath);
+        xPathFilter.setPath(xPath);
         xPathFilter.setMatchType(MatchType.EXISTS);
         assertThat(match(xPathFilter, steppingFilter)).isTrue();
     }
 
-    private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
+    private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter)
+            throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setXPath(xPath);
+        xPathFilter.setPath(xPath);
         xPathFilter.setMatchType(MatchType.EQUALS);
         xPathFilter.setValue(value);
         assertThat(match(xPathFilter, steppingFilter)).isTrue();
     }
 
     @SuppressWarnings("unchecked")
-    private boolean match(final XPathFilter xPathFilter, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
+    private boolean match(final XPathFilter xPathFilter, final SAXEventRecorder steppingFilter)
+            throws XPathExpressionException {
         final Configuration configuration = steppingFilter.getConfiguration();
         final NodeInfo nodeInfo = steppingFilter.getEvents();
         final NamespaceContext namespaceContext = steppingFilter.getNamespaceContext();

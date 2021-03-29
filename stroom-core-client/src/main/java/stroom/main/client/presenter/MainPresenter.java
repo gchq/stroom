@@ -16,6 +16,16 @@
 
 package stroom.main.client.presenter;
 
+import stroom.content.client.event.RefreshCurrentContentTabEvent;
+import stroom.core.client.KeyboardInterceptor;
+import stroom.core.client.presenter.CorePresenter;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.tab.client.event.MaximiseEvent;
+import stroom.widget.util.client.DoubleSelectTester;
+
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -30,17 +40,9 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
-import stroom.content.client.event.RefreshCurrentContentTabEvent;
-import stroom.core.client.KeyboardInterceptor;
-import stroom.core.client.presenter.CorePresenter;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
-import stroom.task.client.event.OpenTaskManagerEvent;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTester;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
+
     @ContentSlot
     public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
@@ -135,9 +137,11 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
     @ProxyCodeSplit
     public interface MainProxy extends Proxy<MainPresenter> {
+
     }
 
     public interface MainView extends View {
+
         SpinnerDisplay getSpinner();
 
         void maximise(View view);
@@ -146,6 +150,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     }
 
     public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
+
         void start();
 
         void stop();

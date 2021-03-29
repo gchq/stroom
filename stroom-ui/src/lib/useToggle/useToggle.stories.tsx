@@ -1,7 +1,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import JsonDebug from "testing/JsonDebug";
-import useToggle from "./useToggle";
+import { useToggle } from "./useToggle";
 import Button from "components/Button";
 
 const TestHarness: React.FunctionComponent = () => {
@@ -9,7 +9,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button text="Toggle" onClick={toggle} />
+      <Button onClick={toggle}>Toggle</Button>
       <JsonDebug value={{ value }} />
     </div>
   );

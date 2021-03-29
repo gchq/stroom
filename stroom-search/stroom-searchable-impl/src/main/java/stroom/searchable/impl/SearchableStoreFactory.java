@@ -1,10 +1,12 @@
 package stroom.searchable.impl;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -16,13 +18,18 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableStoreFactory implements StoreFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final String TASK_NAME = "DB Search";
@@ -32,18 +39,21 @@ class SearchableStoreFactory implements StoreFactory {
     private final SearchableConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
+    private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     SearchableStoreFactory(final Executor executor,
                            final TaskContextFactory taskContextFactory,
                            final SearchableConfig config,
                            final UiConfig clientConfig,
-                           final SearchableProvider searchableProvider) {
+                           final SearchableProvider searchableProvider,
+                           final CoprocessorsFactory coprocessorsFactory) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.config = config;
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
+        this.coprocessorsFactory = coprocessorsFactory;
     }
 
     @Override
@@ -56,20 +66,37 @@ class SearchableStoreFactory implements StoreFactory {
                             Preconditions.checkNotNull(searchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                    "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                    "searchRequest must have at least one resultRequest");
 
             final Searchable searchable = searchableProvider.get(docRef);
 
             Preconditions.checkNotNull(searchable, "Searchable could not be found for " + docRef);
 
-            return buildStore(taskContext, searchRequest, searchable);
+            // Get the search.
+            final Query query = searchRequest.getQuery();
+
+            // Replace expression parameters.
+            final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+
+            // Create a handler for search results.
+            final Coprocessors coprocessors = coprocessorsFactory.create(updatedSearchRequest);
+
+            return buildStore(taskContext,
+                    updatedSearchRequest,
+                    searchable,
+                    coprocessors,
+                    updatedSearchRequest.getQuery().getExpression());
         }).get();
     }
 
     private Store buildStore(final TaskContext taskContext,
                              final SearchRequest searchRequest,
-                             final Searchable searchable) {
+                             final Searchable searchable,
+                             final Coprocessors coprocessors,
+                             final ExpressionOperator expression) {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
@@ -79,14 +106,13 @@ class SearchableStoreFactory implements StoreFactory {
 
         //wrap the resultHandler in a new store, initiating the search in the process
         return new SearchableStore(
-                defaultMaxResultsSizes,
-                storeSize,
-                resultHandlerBatchSize,
                 searchable,
                 taskContextFactory,
                 taskContext,
                 searchRequest,
-                executor);
+                executor,
+                coprocessors,
+                expression);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

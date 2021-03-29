@@ -28,6 +28,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plugin {
+
     private final ContentManager contentManager;
     private final Provider<P> presenterProvider;
     private P presenter;

@@ -27,11 +27,14 @@ set -e
 
 #Shell Colour constants for use in 'echo -e'
 #e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
-NC='\033[0m' # No Colour 
+# shellcheck disable=SC2034
+{
+  RED='\033[1;31m'
+  GREEN='\033[1;32m'
+  YELLOW='\033[1;33m'
+  BLUE='\033[1;34m'
+  NC='\033[0m' # No Colour 
+}
 
 #IMPORTANT - This script requires HTTPie so please install it.
 
@@ -46,8 +49,13 @@ if ! [ -x "$(command -v jq)" ]; then
 fi
 
 if [ "x" == "x${TOKEN}" ]; then
-    echo -e "${RED}ERROR${NC} - TOKEN is not set, set it like '${BLUE}export TOKEN=\".....\"${NC}' where ..... is the JWT token from 'Tools->API' Keys in stroom" 
+    echo -e "${GREEN}Using hard coded token, to override, set it like " \
+      "'${BLUE}export TOKEN=\".....\"${NC}' where ..... is the JWT token from " \
+      "'Tools->API' Keys in stroom"
+    api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2MzY0NDQ1NzcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YFcNS0W8-whP9F0ANSHoe8MNBUUs3VAhyqB06jF40bPEvdq_gAhQR8KVMdgYaYxK-NcQH3Pi062ve7cbwYJ2p1t6J-PRUyY7SwdMf4z-LgoOQXyyoaFBe5Jy100mXOzrEtlQ28DRtzes8X6A7NDzdtbghG5cpfjSqB29WgLWjHoqQiKYv_s_29xajkooUBQXOvKCDR8se3hA9SKwPoO-qyYHC0sZyvRJ9KgdXA6DkHJPuqjnYY-kjkeDOdI5ufTteTsAaQV0ot44XR2SF9yenD4Bzk7IyfN5H31Ly5Bh30S4E0dRiUghvnGeiD0mKB1zPEV_6ZDss6tOXdwQML4Wfw"
     exit 1
+else
+  api_token="${TOKEN}"
 fi
 
 uuid=""
@@ -130,12 +138,11 @@ fi
 
 if [ "x" == "x${uuid}" ]; then
     # No uuid provide so use the one in the file
-    uuid="$(cat "${requestFile}" | 
-        jq -r '.key.uuid')"
+    uuid="$(jq -r '.key.uuid' < "${requestFile}") "
     req="$(cat "$requestFile")"
 else
     # Modify the json with our provided uuid
-    req="$(cat "$requestFile" | jq ".key.uuid = \"${uuid}\"")"
+    req="$(jq ".key.uuid = \"${uuid}\"" < "${requestFile}" )"
 fi
  
 
@@ -162,6 +169,6 @@ if [[ "${fullUrl}" =~ ^https.* ]]; then
     extraHttpieArgs="${extraHttpieArgs} --verify=no"
 fi
 
-#echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${TOKEN}" 
+#echo -e "${req}" | jq -r ".key.uuid = \"${uuid}\"" | http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${api_token}" 
 echo -e "${req}" | 
-    http ${extraHttpieArgs} POST ${fullUrl} "Authorization:Bearer ${TOKEN}" 
+    http "${extraHttpieArgs}" POST "${fullUrl}" "Authorization:Bearer ${api_token}" 

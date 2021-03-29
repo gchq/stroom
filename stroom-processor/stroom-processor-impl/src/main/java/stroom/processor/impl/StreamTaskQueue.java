@@ -18,10 +18,12 @@ package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorTask;
 
+import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
+
     private final LinkedBlockingQueue<ProcessorTask> queue = new LinkedBlockingQueue<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 
@@ -31,6 +33,10 @@ public class StreamTaskQueue {
 
     public void add(final ProcessorTask streamTask) {
         queue.add(streamTask);
+    }
+
+    public boolean addAll(final Collection<? extends ProcessorTask> streamTasks) {
+        return queue.addAll(streamTasks);
     }
 
     public int size() {

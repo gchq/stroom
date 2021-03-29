@@ -22,11 +22,11 @@ export default {
   name: "Stroom",
   type: "Folder",
   children: Object.entries(testPipelines)
-    .map(k => ({
+    .map((k) => ({
       uuid: k[0],
       data: k[1],
     }))
-    .map(pipeline => ({
+    .map((pipeline) => ({
       uuid: pipeline.uuid,
       type: "Pipeline",
       name: pipeline.uuid,

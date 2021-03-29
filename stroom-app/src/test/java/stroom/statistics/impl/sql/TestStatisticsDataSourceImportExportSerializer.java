@@ -18,7 +18,6 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -34,17 +33,21 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -53,6 +56,8 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private CommonTestControl commonTestControl;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> docRefs = new HashSet<>();
@@ -88,7 +93,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(0);
 

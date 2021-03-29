@@ -27,4 +27,13 @@
   	-webkit-user-select: text;
   	-moz-user-select: text;
   	user-select: text;
+
+  	max-width: 500px;
+  	max-height: 500px;
+  	overflow: auto;
+}
+
+.tooltip table {
+    white-space: pre;
+    table-layout: fixed;
 }

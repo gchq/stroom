@@ -16,13 +16,15 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.data.zip.*;
+import stroom.data.zip.StroomFileNameUtil;
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -36,8 +38,12 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,8 +52,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 public class DataDownloadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
@@ -61,7 +69,6 @@ public class DataDownloadTaskHandler {
 
     private final AtomicLong fileCount = new AtomicLong(0);
     private String lastPossibleFileName;
-    private String lastFeedName;
 
     @Inject
     public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
@@ -110,13 +117,16 @@ public class DataDownloadTaskHandler {
                         metaMap.put(StandardHeaderArguments.FEED, meta.getFeedName());
                         metaMap.put("streamType", meta.getTypeName());
                         metaMap.put("streamId", String.valueOf(meta.getId()));
-                        final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, format, metaMap, ZIP_EXTENSION);
-                        if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
+                        final String possibleFilename = StroomFileNameUtil.constructFilename(null,
+                                0,
+                                format,
+                                metaMap,
+                                ZIP_EXTENSION);
+                        if (stroomZipOutputStream != null && !possibleFilename.equals(lastPossibleFileName)) {
                             stroomZipOutputStream.close();
                             stroomZipOutputStream = null;
                         }
                         lastPossibleFileName = possibleFilename;
-                        lastFeedName = meta.getFeedName();
 
                         // Open a zip output stream if we don't currently have one.
                         if (stroomZipOutputStream == null) {
@@ -156,6 +166,7 @@ public class DataDownloadTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
+                        result.addMessage(new Message(Severity.WARNING, e.getMessage()));
                     }
                 }
 
@@ -205,19 +216,30 @@ public class DataDownloadTaskHandler {
                         // Write out the manifest
                         if (index == 0) {
                             try (final OutputStream outputStream = stroomZipOutputStream
-                                    .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName())) {
+                                    .addEntry(new StroomZipEntry(null,
+                                            basePartName,
+                                            StroomZipFileType.Manifest).getFullName())) {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
                             }
                         }
 
                         try (final InputStream dataInputStream = inputStreamProvider.get()) {
-                            streamToStream(dataInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Data);
+                            streamToStream(dataInputStream,
+                                    stroomZipOutputStream,
+                                    basePartName,
+                                    StroomZipFileType.Data);
                         }
                         try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-                            streamToStream(metaInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Meta);
+                            streamToStream(metaInputStream,
+                                    stroomZipOutputStream,
+                                    basePartName,
+                                    StroomZipFileType.Meta);
                         }
                         try (final InputStream contextInputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-                            streamToStream(contextInputStream, stroomZipOutputStream, basePartName, StroomZipFileType.Context);
+                            streamToStream(contextInputStream,
+                                    stroomZipOutputStream,
+                                    basePartName,
+                                    StroomZipFileType.Context);
                         }
                     }
                 }
@@ -253,7 +275,10 @@ public class DataDownloadTaskHandler {
         }
     }
 
-    private StroomZipOutputStream getStroomZipOutputStream(final TaskContext taskContext, final Path outputDir, final String format, final AttributeMap attributeMap)
+    private StroomZipOutputStream getStroomZipOutputStream(final TaskContext taskContext,
+                                                           final Path outputDir,
+                                                           final String format,
+                                                           final AttributeMap attributeMap)
             throws IOException {
         final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
                 attributeMap, ZIP_EXTENSION);

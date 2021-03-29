@@ -19,6 +19,7 @@ package stroom.docstore.shared;
 import stroom.docref.DocRef;
 
 public final class DocRefUtil {
+
     private DocRefUtil() {
         // Utility class.
     }

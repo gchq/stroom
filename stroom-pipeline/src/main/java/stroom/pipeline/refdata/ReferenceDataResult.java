@@ -16,15 +16,19 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class ReferenceDataResult implements ErrorReceiver {
@@ -32,10 +36,12 @@ public class ReferenceDataResult implements ErrorReceiver {
 
     private RefDataValueProxy refDataValueProxy;
 
-    private List<LazyMessage> messages = new ArrayList<>();
+    private final List<LazyMessage> messages = new ArrayList<>();
 
-    public RefDataValueProxy getRefDataValueProxy() {
-        return refDataValueProxy;
+    private final List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
+
+    public Optional<RefDataValueProxy> getRefDataValueProxy() {
+        return Optional.ofNullable(refDataValueProxy);
     }
 
     void setRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
@@ -50,8 +56,21 @@ public class ReferenceDataResult implements ErrorReceiver {
         messages.add(new LazyMessage(severity, null, null, message));
     }
 
+    public void addEffectiveStream(final RefStreamDefinition refStreamDefinition) {
+        Objects.requireNonNull(refStreamDefinition);
+        refStreamDefinitions.add(refStreamDefinition);
+    }
+
+    public List<RefStreamDefinition> getEffectiveStreams() {
+        return refStreamDefinitions;
+    }
+
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message, final Throwable e) {
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
+                    final Throwable e) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(message);
 
@@ -92,7 +111,10 @@ public class ReferenceDataResult implements ErrorReceiver {
         private String elementId;
         private Supplier<String> message;
 
-        LazyMessage(final Severity severity, final Location location, final String elementId, final Supplier<String> message) {
+        LazyMessage(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final Supplier<String> message) {
             this.severity = severity;
             this.location = location;
             this.elementId = elementId;

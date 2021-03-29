@@ -16,6 +16,7 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -39,6 +40,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class PipelineModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new TextConverterModule());
@@ -46,6 +48,7 @@ public class PipelineModule extends AbstractModule {
         install(new XsltModule());
 
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
+        bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
@@ -55,8 +58,7 @@ public class PipelineModule extends AbstractModule {
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(PipelineResourceImpl.class)
-                .bind(NewUiPipelineResource.class);
+                .bind(PipelineResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
@@ -64,19 +66,21 @@ public class PipelineModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Doc.class, DocObjectInfoProvider.class)
+                .bind(DocRef.class, DocRefObjectInfoProvider.class)
                 .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PipelineDestinationRoll.class, builder -> builder
-                        .withName("Pipeline Destination Roll")
-                        .withDescription("Roll any destinations based on their roll settings")
-                        .withSchedule(PERIODIC, "1m"));
+                        .name("Pipeline Destination Roll")
+                        .description("Roll any destinations based on their roll settings")
+                        .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(RollingDestinationsForceRoll.class);
-   }
+    }
 
     private static class PipelineDestinationRoll extends RunnableWrapper {
+
         @Inject
         PipelineDestinationRoll(final RollingDestinations rollingDestinations) {
             super(rollingDestinations::roll);
@@ -84,6 +88,7 @@ public class PipelineModule extends AbstractModule {
     }
 
     private static class RollingDestinationsForceRoll extends RunnableWrapper {
+
         @Inject
         RollingDestinationsForceRoll(final RollingDestinations rollingDestinations) {
             super(rollingDestinations::forceRoll);

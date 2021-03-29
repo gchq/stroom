@@ -8,7 +8,7 @@ class StreamTask {
     private String filterName;
     private String pipelineName;
     private Long pipelineId;
-    private Long  trackerMs;
+    private Long trackerMs;
     private Integer trackerPercent;
     private String lastPollAge;
     private Integer taskCount;
@@ -108,12 +108,17 @@ class StreamTask {
         return filter;
     }
 
+    public static StreamTaskBuilder builder() {
+        return new StreamTaskBuilder();
+    }
+
     public static final class StreamTaskBuilder {
+
         // Most important data, probably
         private String filterName;
         private String pipelineName;
         private Long pipelineId;
-        private Long  trackerMs;
+        private Long trackerMs;
         private Integer trackerPercent;
         private String lastPollAge;
         private Integer taskCount;
@@ -133,10 +138,6 @@ class StreamTask {
         private Long minEventId;
 
         private StreamTaskBuilder() {
-        }
-
-        public static StreamTaskBuilder aStreamTask() {
-            return new StreamTaskBuilder();
         }
 
         public StreamTaskBuilder withFilterName(String filterName) {

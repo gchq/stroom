@@ -17,7 +17,7 @@ interface AnalyzerOption {
 }
 
 const OPTIONS: AnalyzerOption[] = Object.entries(AnalyzerDisplayValues).map(
-  d => ({
+  (d) => ({
     value: d[0],
     label: d[1],
   }),
@@ -31,7 +31,7 @@ const AnalyzerPicker: React.FunctionComponent<Props> = ({
   <Select
     className={className}
     placeholder="Index Field Type"
-    value={OPTIONS.find(o => o.value === value)}
+    value={OPTIONS.find((o) => o.value === value)}
     onChange={(o: AnalyzerOption) => onChange(o.value as AnalyzerType)}
     options={OPTIONS}
   />

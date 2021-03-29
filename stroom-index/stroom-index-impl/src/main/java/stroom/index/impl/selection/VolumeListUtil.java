@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VolumeListUtil {
+
     public static List<IndexVolume> removeFullVolumes(final List<IndexVolume> list) {
         final List<IndexVolume> newList = new ArrayList<>(list.size());
         for (final IndexVolume volume : list) {

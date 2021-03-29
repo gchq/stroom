@@ -26,11 +26,20 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class StepLocation {
+
+    // It seems javascript can't handle longs above 2^53 so use a max val
+    // that is as big as it can handle.
+    private static final long MAX_PART_NO = (long) (Math.pow(2, 53) - 1);
+    private static final long MAX_RECORD_NO = MAX_PART_NO;
+
     @JsonProperty
     private final long id;
-    // The stream number is 1 based and not 0 based as in the stream store.
+
+    // One based
     @JsonProperty
     private final long partNo;
+
+    // One based
     @JsonProperty
     private final long recordNo;
 
@@ -43,22 +52,44 @@ public class StepLocation {
         this.recordNo = recordNo;
     }
 
+    public static StepLocation last(final long id) {
+        return new StepLocation(id, MAX_PART_NO, MAX_RECORD_NO);
+    }
+
+    /**
+     * @param partNo One based
+     */
+    public static StepLocation last(final long id, final long partNo) {
+        return new StepLocation(id, partNo, MAX_RECORD_NO);
+    }
+
     public long getId() {
         return id;
     }
 
+    /**
+     * One based
+     */
     public long getPartNo() {
         return partNo;
     }
 
+    /**
+     * One based
+     */
     public long getRecordNo() {
         return recordNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final StepLocation that = (StepLocation) o;
         return id == that.id &&
                 partNo == that.partNo &&

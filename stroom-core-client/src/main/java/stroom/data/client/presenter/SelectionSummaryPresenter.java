@@ -20,6 +20,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView> {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
@@ -32,7 +33,12 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         this.restFactory = restFactory;
     }
 
-    public void show(final FindMetaCriteria criteria, final String postAction, final String action, final String caption, final boolean reprocess, final Runnable runnable) {
+    public void show(final FindMetaCriteria criteria,
+                     final String postAction,
+                     final String action,
+                     final String caption,
+                     final boolean reprocess,
+                     final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
         final Rest<SelectionSummary> rest = restFactory.create();

@@ -2,9 +2,9 @@ import * as React from "react";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 
-const StatisticStoreEditor: React.FunctionComponent<
-  SwitchedDocRefEditorProps
-> = ({ docRefUuid }) => {
+const StatisticStoreEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
+  docRefUuid,
+}) => {
   const { editorProps } = useDocRefEditor({ docRefUuid });
 
   return (

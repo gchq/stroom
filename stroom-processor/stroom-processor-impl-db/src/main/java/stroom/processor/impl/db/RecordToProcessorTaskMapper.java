@@ -1,16 +1,18 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Record;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 
+import org.jooq.Record;
+
 import java.util.function.Function;
 
-import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
+import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
+
     @Override
     public ProcessorTask apply(final Record record) {
         final ProcessorTask processorTask = new ProcessorTask();
@@ -24,8 +26,9 @@ class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
         if (record.field(PROCESSOR_FEED.NAME) != null) {
             processorTask.setFeedName(record.get(PROCESSOR_FEED.NAME));
         }
-        processorTask.setStatus(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
-        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
+        processorTask.setStatus(
+                TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
+        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.START_TIME_MS));
         processorTask.setCreateTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS));
         processorTask.setStatusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
         processorTask.setEndTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS));

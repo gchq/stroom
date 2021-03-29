@@ -20,6 +20,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 
 public class ServletContextUtil {
+
     private static final String DEFAULT_NAME = "stroom";
     private static final String WEBAPP = "ui";
 

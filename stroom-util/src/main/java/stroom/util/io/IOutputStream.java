@@ -21,9 +21,10 @@ import java.io.Flushable;
 import java.io.IOException;
 
 public interface IOutputStream extends Closeable, Flushable {
+
     void write(int b) throws IOException;
 
-    void write(byte b[]) throws IOException;
+    void write(byte[] b) throws IOException;
 
-    void write(byte b[], int off, int len) throws IOException;
+    void write(byte[] b, int off, int len) throws IOException;
 }

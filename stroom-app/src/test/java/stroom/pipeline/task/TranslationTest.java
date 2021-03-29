@@ -18,10 +18,12 @@
 package stroom.pipeline.task;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.*;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.SourceUtil;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
@@ -64,19 +66,33 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 
-import javax.inject.Inject;
-import java.io.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
@@ -156,11 +172,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     priority++;
                 }
 
-                final String streamType = feed.isReference() ?
-                        StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
-                final QueryData findStreamQueryData = new QueryData.Builder()
+                final String streamType = feed.isReference()
+                        ?
+                        StreamTypeNames.RAW_REFERENCE
+                        : StreamTypeNames.RAW_EVENTS;
+                final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(Op.AND)
+                        .expression(ExpressionOperator.builder()
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
@@ -229,10 +247,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
                             //got an error stream so dump it to console
 
-                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
+                            final Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
 //                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
-//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
+//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(
+//                                inputStreamProvider.get());
                             LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
                                     meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
@@ -253,7 +272,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                assertThat(processedMeta.size()).isGreaterThan(0);
+                assertThat(processedMeta.size())
+                        .withFailMessage("Processed count should be > 0")
+                        .isGreaterThan(0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
@@ -268,7 +289,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final Path actualFile = outputDir.resolve(stem + num + ".out_tmp");
                     final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
-                    try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
+                    try (final OutputStream outputStream = new BufferedOutputStream(
+                            Files.newOutputStream(actualFile))) {
                         copyStream(meta, outputStream);
                     }
 
@@ -305,7 +327,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
@@ -335,7 +357,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedProperties, null, feed.getName(), feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
+                handlerList,
+                new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(Files.newInputStream(file), "test");
@@ -373,9 +397,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = pipelines.get(0);
 //        final FeedDoc feed = feeds.get();
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
@@ -416,9 +440,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getOutputIndicators() != null
-                    && elementData.getOutputIndicators().getMaxSeverity() != null).as("Translation stepping has output indicators.").isFalse();
+                    && elementData.getOutputIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has output indicators.").isFalse();
             assertThat(elementData.getCodeIndicators() != null
-                    && elementData.getCodeIndicators().getMaxSeverity() != null).as("Translation stepping has code indicators.").isFalse();
+                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has code indicators.").isFalse();
 
             final String stem = feedName + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {
@@ -548,8 +574,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
-            ComparisonHelper.compare(expectedFile, actualFile, false, true);
-            Files.deleteIfExists(actualFile);
+            boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile, 0);
+            if (areFilesTheSame) {
+                Files.deleteIfExists(actualFile);
+            } else {
+                throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)));
+            }
         } catch (final IOException | RuntimeException e) {
             exceptions.add(e);
         }

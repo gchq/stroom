@@ -16,22 +16,25 @@
 
 package stroom.meta.impl.db;
 
-import com.google.inject.Guice;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 
-import javax.inject.Inject;
+import com.google.inject.Guice;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaFeedDaoImpl {
+
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -40,17 +43,18 @@ class TestMetaFeedDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-            new MetaTestModule(),
-            new MetaDbModule(),
-            new MockClusterLockModule(),
-            new MockSecurityContextModule(),
-            new MockCollectionModule(),
-            new MockWordListProviderModule(),
-            new CacheModule(),
-            new DbTestModule())
-            .injectMembers(this);
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
+                .injectMembers(this);
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test

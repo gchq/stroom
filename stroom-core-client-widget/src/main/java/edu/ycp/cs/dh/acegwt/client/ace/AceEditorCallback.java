@@ -29,11 +29,12 @@ import com.google.gwt.core.client.JavaScriptObject;
  * make use of it.
  */
 public interface AceEditorCallback {
+
     /**
      * Callback method.
      *
      * @param obj the event object: for example, an onChange event
      *            if this callback is receiving onChange events
      */
-    public void invokeAceCallback(JavaScriptObject obj);
+    void invokeAceCallback(JavaScriptObject obj);
 }

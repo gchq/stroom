@@ -37,8 +37,8 @@ const TestList = () => {
     toggleSelection,
     ...restOfSelectable
   } = useSelectableItemListing({
-    getKey: React.useCallback(a => a.name, []),
-    openItem: React.useCallback(a => setLastAction(`Opened Item ${a.name}`), [
+    getKey: React.useCallback((a) => a.name, []),
+    openItem: React.useCallback((a) => setLastAction(`Opened Item ${a.name}`), [
       setLastAction,
     ]),
     items: animals,
@@ -57,11 +57,11 @@ const TestList = () => {
       <h3>Test Selectable Item Listing</h3>
       <p>
         The lightblue items are selected items, the black bordered item is the
-        focussed one. If you focus scroll off the end of the list, it should
-        demo the pre-focus wrap hook which allows the calling component to
-        request more data instead.
+        focused one. If you focus scroll off the end of the list, it should demo
+        the pre-focus wrap hook which allows the calling component to request
+        more data instead.
       </p>
-      <Button text="Reset" onClick={reset} />
+      <Button onClick={reset}>Reset</Button>
       <ul>
         {animals.map((animal, i) => (
           <li

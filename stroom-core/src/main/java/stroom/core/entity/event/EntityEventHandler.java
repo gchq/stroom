@@ -16,39 +16,55 @@
 
 package stroom.core.entity.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class EntityEventHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventHandler.class);
     private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;
 
     private final Provider<Set<Handler>> entityEventHandlerProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityEventHandler(final Provider<Set<Handler>> entityEventHandlerProvider) {
+    EntityEventHandler(final Provider<Set<Handler>> entityEventHandlerProvider,
+                       final SecurityContext securityContext) {
         this.entityEventHandlerProvider = entityEventHandlerProvider;
+        this.securityContext = securityContext;
     }
 
     void fireLocally(final EntityEvent event) {
-        // Fire to type specific handlers.
-        fireEventByType(event, event.getDocRef().getType());
-        // Fire to any (*) type handlers.
-        fireEventByType(event, "*");
+        // Ensure all incoming calls belong to authenticated users with administrative permissions.
+        // Note that this should always be the processing user really as the EntityEventBus is responsible for
+        // distributing entity events to all nodes and should be sending all requests as the processing user.
+        if (!securityContext.isAdmin()) {
+            LOGGER.error("Only an account with administrative privileges can fire entity events (" +
+                    securityContext.getUserIdentity() +
+                    ")");
+
+        } else {
+            // Fire to type specific handlers.
+            fireEventByType(event, event.getDocRef().getType());
+            // Fire to any (*) type handlers.
+            fireEventByType(event, "*");
+        }
     }
 
     /**
@@ -99,7 +115,6 @@ class EntityEventHandler {
         }
     }
 
-    //    @Override
     private void addHandler(final Handler handler, final String type, final EntityAction... action) {
         final Map<EntityAction, List<Handler>> map = handlers.computeIfAbsent(type, k -> new HashMap<>());
         if (action == null || action.length == 0) {
@@ -129,7 +144,8 @@ class EntityEventHandler {
         if (!initialised) {
             try {
                 for (final Handler handler : entityEventHandlerProvider.get()) {
-                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass().getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
+                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass()
+                            .getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
                     if (annotation != null) {
                         final String type = annotation.type();
                         addHandler(handler, type, annotation.action());

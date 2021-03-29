@@ -1,6 +1,9 @@
 import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
-import { DataSourceType, ExpressionOperatorType } from "components/ExpressionBuilder/types";
+import {
+  DataSourceType,
+  ExpressionOperatorType,
+} from "components/ExpressionBuilder/types";
 import { MetaRow, PageRequest, StreamAttributeMapResult } from "../types";
 import useUrlFactory from "lib/useUrlFactory";
 
@@ -22,7 +25,7 @@ export const useApi = (): Api => {
 
   const getPageUrl = React.useCallback(
     (pageInfo: PageRequest) => {
-      var url = new URL(resource);
+      const url = new URL(resource);
 
       if (!!pageInfo) {
         const { pageOffset, pageSize } = pageInfo;
@@ -38,21 +41,11 @@ export const useApi = (): Api => {
 
   return {
     fetchDataSource: React.useCallback(
-      () =>
-        httpGetJson(
-          `${resource}/dataSource`,
-          {},
-          false,
-        ),
+      () => httpGetJson(`${resource}/dataSource`, {}, false),
       [resource, httpGetJson],
     ),
     getDetailsForSelectedStream: React.useCallback(
-      (metaId: number) =>
-        httpGetJson(
-          `${resource}/${metaId}`,
-          {},
-          false,
-        ),
+      (metaId: number) => httpGetJson(`${resource}/${metaId}`, {}, false),
       [resource, httpGetJson],
     ),
     fetch: React.useCallback(
@@ -68,9 +61,7 @@ export const useApi = (): Api => {
     ),
     getRelations: React.useCallback(
       (metaId: number, anyStatus: boolean) =>
-        httpGetJson(
-          `${resource}/${metaId}/${anyStatus}/relations`,
-        ),
+        httpGetJson(`${resource}/${metaId}/${anyStatus}/relations`),
       [resource, httpGetJson],
     ),
   };

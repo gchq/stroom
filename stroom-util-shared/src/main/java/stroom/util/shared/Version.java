@@ -22,6 +22,7 @@ import java.io.Serializable;
  * Wrapper for build versions
  */
 public class Version implements Serializable, Comparable<Version> {
+
     private static final long serialVersionUID = -302774034712796288L;
 
     private Integer major;
@@ -55,6 +56,65 @@ public class Version implements Serializable, Comparable<Version> {
 
     public static Version of(final Integer major, final Integer minor, final Integer patch) {
         return new Version(major, minor, patch);
+    }
+
+    public static Version parse(final String string) {
+        Integer major = null;
+        Integer minor = null;
+        Integer patch = null;
+        if (string != null) {
+            final String[] parts = string.split("\\.");
+            if (parts.length > 0) {
+                major = Integer.parseInt(parts[0]);
+            }
+            if (parts.length > 1) {
+                minor = Integer.parseInt(parts[1]);
+            }
+            if (parts.length > 2) {
+                patch = Integer.parseInt(parts[2]);
+            }
+        }
+        return new Version(major, minor, patch);
+    }
+
+    public boolean gt(final Version version) {
+        final int[] a = toArray(this);
+        final int[] b = toArray(version);
+
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] > b[i]) {
+                return true;
+            } else if (a[i] < b[i]) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean lt(final Version version) {
+        final int[] a = toArray(this);
+        final int[] b = toArray(version);
+
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < b[i]) {
+                return true;
+            } else if (a[i] > b[i]) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private int[] toArray(final Version v) {
+        return new int[]{v.major != null
+                ? v.major
+                : 0, v.minor != null
+                ? v.minor
+                : 0, v.patch != null
+                ? v.patch
+                : 0};
     }
 
     public Integer getMajor() {
@@ -92,6 +152,7 @@ public class Version implements Serializable, Comparable<Version> {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Version)) {

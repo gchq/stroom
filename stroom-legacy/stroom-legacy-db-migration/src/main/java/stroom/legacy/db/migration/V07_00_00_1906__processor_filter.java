@@ -10,14 +10,15 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import javax.xml.bind.JAXBContext;
 
 @Deprecated
 public class V07_00_00_1906__processor_filter extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1906__processor_filter.class);
 
     @Override
@@ -36,7 +37,9 @@ public class V07_00_00_1906__processor_filter extends BaseJavaMigration {
                         final String data = resultSet.getString(2);
 
                         if (data != null) {
-                            final stroom.legacy.model_6_1.QueryData queryData = XMLMarshallerUtil.unmarshal(jaxbContext, stroom.legacy.model_6_1.QueryData.class, data);
+                            final stroom.legacy.model_6_1.QueryData queryData = XMLMarshallerUtil.unmarshal(jaxbContext,
+                                    stroom.legacy.model_6_1.QueryData.class,
+                                    data);
                             final stroom.processor.shared.QueryData mapped = MappingUtil.map(queryData);
 
                             ProcessorFilter processorFilter = new ProcessorFilter();

@@ -1,8 +1,8 @@
 package stroom.config.global.impl;
 
 import stroom.config.global.impl.validation.ValidationModule;
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class GlobalConfigModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
@@ -32,16 +33,18 @@ public class GlobalConfigModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
-                        .withName("Property Cache Reload")
-                        .withDescription("Reload properties in the cluster")
-                        .withSchedule(PERIODIC, "1m"));
+                        .name("Property Cache Reload")
+                        .description("Reload properties in the cluster")
+                        .schedule(PERIODIC, "1m"));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override
@@ -50,6 +53,7 @@ public class GlobalConfigModule extends AbstractModule {
     }
 
     private static class PropertyCacheReload extends RunnableWrapper {
+
         @Inject
         PropertyCacheReload(final GlobalConfigService globalConfigService) {
             super(globalConfigService::updateConfigObjects);

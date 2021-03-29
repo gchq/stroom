@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.docstore.impl'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
+//    compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-api')
@@ -11,15 +11,15 @@ dependencies {
     compile project(':stroom-util')
 
     // stroom libs
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     // 3rd party libs
-    compile libs.guice4
-    compile libs.guice_assistedinject
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
+//    compile libs.guice5
+//    compile libs.guice_assistedinject
+//    compile libs.jackson_annotations
+//    compile libs.jackson_databind
     compile libs.javax_inject
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     compile libs.slf4j_api
     
     testCompile libs.assertj_core

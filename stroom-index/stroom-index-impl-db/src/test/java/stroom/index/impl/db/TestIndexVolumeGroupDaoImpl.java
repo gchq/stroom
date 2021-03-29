@@ -1,19 +1,21 @@
 package stroom.index.impl.db;
 
+import stroom.index.impl.IndexVolumeGroupDao;
+import stroom.index.shared.IndexVolumeGroup;
+import stroom.util.AuditUtil;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import stroom.index.impl.IndexVolumeGroupDao;
-import stroom.index.shared.IndexVolumeGroup;
-import stroom.util.AuditUtil;
 
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexVolumeGroupDaoImpl {
+
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 
     @BeforeAll

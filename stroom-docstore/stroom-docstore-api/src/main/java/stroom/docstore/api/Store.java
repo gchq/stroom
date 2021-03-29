@@ -75,6 +75,7 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     List<DocRef> findByName(String name);
 
     interface DocumentCreator<D extends Doc> {
+
         D create(final String type,
                  final String uuid,
                  final String name,

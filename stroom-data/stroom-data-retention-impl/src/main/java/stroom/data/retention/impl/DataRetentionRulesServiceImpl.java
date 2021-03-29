@@ -37,16 +37,19 @@ import stroom.util.shared.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
 
@@ -58,7 +61,8 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                                   final Serialiser2Factory serialiser2Factory,
                                   final SecurityContext securityContext) {
         this.securityContext = securityContext;
-        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
+        DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
+                DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
     }
 
@@ -155,8 +159,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DataRetentionRules writeDocument(final DataRetentionRules document) {
-        return securityContext.secureResult(() ->
-                store.writeDocument(document));
+        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+        // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
+        return securityContext.secureResult(MANAGE_POLICIES_PERMISSION,
+                () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
+
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -173,12 +180,17 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
@@ -201,31 +213,35 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DataRetentionRules getOrCreate() {
-        final Set<DocRef> docRefs = listDocuments();
-        final Set<DocRef> filtered = docRefs
-                .stream()
-                .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
-                .collect(Collectors.toSet());
+        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+        // access it via the proc user.
+        return securityContext.asProcessingUserResult(() -> {
+            final Set<DocRef> docRefs = listDocuments();
+            final Set<DocRef> filtered = docRefs
+                    .stream()
+                    .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
+                    .collect(Collectors.toSet());
 
-        if (filtered.size() > 0) {
-            if (filtered.size() > 1) {
-                LOGGER.warn("Found more than one matching set of data retention rules.");
+            if (filtered.size() > 0) {
+                if (filtered.size() > 1) {
+                    LOGGER.warn("Found more than one matching set of data retention rules.");
+                }
+
+                final DocRef docRef = filtered.iterator().next();
+                return readDocument(docRef);
             }
 
-            final DocRef docRef = filtered.iterator().next();
-            return readDocument(docRef);
-        }
+            if (docRefs.size() > 0) {
+                if (docRefs.size() > 1) {
+                    LOGGER.warn("Found more than one matching set of data retention rules.");
+                }
 
-        if (docRefs.size() > 0) {
-            if (docRefs.size() > 1) {
-                LOGGER.warn("Found more than one matching set of data retention rules.");
+                final DocRef docRef = docRefs.iterator().next();
+                return readDocument(docRef);
             }
 
-            final DocRef docRef = docRefs.iterator().next();
+            final DocRef docRef = createDocument(POLICY_NAME);
             return readDocument(docRef);
-        }
-
-        final DocRef docRef = createDocument(POLICY_NAME);
-        return readDocument(docRef);
+        });
     }
 }

@@ -2,10 +2,10 @@ package stroom.db.util;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
-import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 
 import org.jooq.Condition;
@@ -21,7 +21,6 @@ import org.jooq.impl.SQLDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -34,8 +33,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.sql.DataSource;
 
 public final class JooqUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
@@ -76,7 +77,6 @@ public final class JooqUtil {
 
     public static <R extends Record> void truncateTable(final DataSource dataSource,
                                                         final Table<R> table) {
-
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             context
@@ -119,7 +119,8 @@ public final class JooqUtil {
         return result;
     }
 
-//    public static void contextResultWithOptimisticLocking(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+//    public static void contextResultWithOptimisticLocking(
+//    final DataSource dataSource, final Consumer<DSLContext> consumer) {
 //        try (final Connection connection = dataSource.getConnection()) {
 //            final DSLContext context = createContextWithOptimisticLocking(connection);
 //            consumer.accept(context);
@@ -147,7 +148,8 @@ public final class JooqUtil {
     }
 
     public static <R> R transactionResult(final DataSource dataSource, final Function<DSLContext, R> function) {
-        return contextResult(dataSource, context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+        return contextResult(dataSource,
+                context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
     /**
@@ -290,7 +292,9 @@ public final class JooqUtil {
         }
 
         // Combine conditions.
-        final Optional<Condition> condition = fromCondition.map(c1 -> toCondition.map(c1::and).orElse(c1)).or(() -> toCondition);
+        final Optional<Condition> condition = fromCondition.map(c1 ->
+                toCondition.map(c1::and).orElse(c1))
+                .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
 
@@ -347,7 +351,18 @@ public final class JooqUtil {
         return convertMatchNull(field, criteria.getMatchNull(), valueCondition);
     }
 
-    private static Optional<Condition> convertMatchNull(final Field<?> field, final Boolean matchNull, final Optional<Condition> condition) {
+    public static Optional<Condition> getBooleanCondition(final Field<Boolean> field,
+                                                          final Boolean value) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(field.eq(value));
+        }
+    }
+
+    private static Optional<Condition> convertMatchNull(final Field<?> field,
+                                                        final Boolean matchNull,
+                                                        final Optional<Condition> condition) {
         if (matchNull == null) {
             return condition;
         }
@@ -357,7 +372,8 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
+    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
+                                                           final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
             return Collections.emptyList();
         }
@@ -370,15 +386,15 @@ public final class JooqUtil {
                 .collect(Collectors.toList());
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {
-        final Field<?> field = fieldMap.get(sort.getField());
+    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
+                                                         final CriteriaFieldSort sort) {
+        final Field<?> field = fieldMap.get(sort.getId());
 
-        if (null != field) {
-            switch (sort.getDirection()) {
-                case ASCENDING:
-                    return Optional.of(field.asc());
-                case DESCENDING:
-                    return Optional.of(field.desc());
+        if (field != null) {
+            if (sort.isDesc()) {
+                return Optional.of(field.desc());
+            } else {
+                return Optional.of(field.asc());
             }
         }
 

@@ -1,68 +1,49 @@
-@import "themes.scss";
-@import "themify.scss";
+@import "themes";
 
 ////////////////////////
 // General-use styles //
 ////////////////////////
 
-.header {
-  @include themify($themes) {
-    color: themed("page__text-color");
-  }
-}
+//.header {
+//    color: var(--page__text-color);
+//}
+//
+//.header > .icon {
+//    color: var(--header__icon-color);
+//}
 
-.header > .icon {
-  @include themify($themes) {
-    color: themed("header__icon-color");
-  }
-}
-
-table {
-  @include themify($themes) {
-    background-color: themed("page__background-color");
-    color: themed("page__text-color");
-    border: thin solid themed("border-color");
-  }
-
-  td {
-    @include themify($themes) {
-      color: themed("page__text-color");
-    }
-  }
-
-  th {
-    @include themify($themes) {
-      background-color: themed("page__background-color");
-      color: themed("page__text-color");
-    }
-  }
-}
+//table {
+//    background-color: var(--page__background-color);
+//    color: var(--page__text-color);
+//    border: thin solid var(--border-color);
+//
+//  td {
+//      color: var(--page__text-color);
+//  }
+//
+//  th {
+//      background-color: var(--page__background-color);
+//      color: var(--page__text-color);
+//  }
+//}
 
 // .dropdown__content {
-//   @include themify($themes) {
-//     background-color: themed("control__background-color");
-//   }
+//     background-color: var(--control__background-color);
 // }
 
 input {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
 }
 
 .form {
   label {
-    @include themify($themes) {
-      color: themed("page__text-color");
-    }
+    color: var(--page__text-color);
   }
 
   input {
-    @include themify($themes) {
-      background-color: themed("control__background-color");
-      color: themed("control__text-color");
-    }
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
   }
 }
 
@@ -70,25 +51,20 @@ input {
 // even though most of it is the standard palette.
 .dropdown {
   // This styles the main drop-down box
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-    border: thin solid themed("control__border-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border: thin solid var(--control__border-color);
+
   // This styles the actual drop-down bit.
   .menu {
-    @include themify($themes) {
-      background-color: themed("control__background-color");
-      color: themed("control__text-color");
-      border: thin solid themed("control__border-color");
-    }
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    border: thin solid var(--control__border-color);
   }
 
   // This makes sure the text is the right colour
   .text {
-    @include themify($themes) {
-      color: themed("control__text-color");
-    }
+    color: var(--control__text-color);
   }
 
   // We need to get rid of the border for everything inside the drop-down.
@@ -97,95 +73,67 @@ input {
   .item,
   .icon {
     border: 0;
-    @include themify($themes) {
-      color: themed("control__text-color");
-    }
+    color: var(--control__text-color);
   }
 
   // We need a hover colour for the drop-down.
   .item:hover,
   .text:hover {
-    @include themify($themes) {
-      background-color: themed("item__background-color--hover");
-      color: themed("item__text-color--hover");
-    }
+    background-color: var(--item__background-color--hover);
+    color: var(--item__text-color--hover);
   }
 }
 
 :focus .inFocus {
-  @include themify($themes) {
-    background-color: themed("raised-high__selected-focus-background-color");
-  }
+  background-color: var(--raised-high__selected-focus-background-color);
 }
 
 .raised-high .selected {
-  @include themify($themes) {
-    background-color: themed("raised-high__selected-background-color");
-  }
+  background-color: var(--raised-high__selected-background-color);
 }
 
 :focus .raised-high .inFocus {
-  @include themify($themes) {
-    background-color: themed("raised-high__selected-focus-background-color");
-  }
+  background-color: var(--raised-high__selected-focus-background-color);
 }
 
 .page {
-  @include themify($themes) {
-    background-color: themed("page__background-color");
-    color: themed("page__text-color");
-  }
+  background-color: var(--page__background-color);
+  color: var(--page__text-color);
 }
 
 .page__text {
-  @include themify($themes) {
-    color: themed("page__text-color");
-  }
+  color: var(--page__text-color);
 }
 
 .raised-low {
-  @include themify($themes) {
-    background-color: themed("raised-low__background-color");
-    color: themed("raised-low__text-color");
-  }
+  background-color: var(--raised-low__background-color);
+  color: var(--raised-low__text-color);
 }
 
 .raised-high {
-  @include themify($themes) {
-    background-color: themed("raised-high__background-color");
-    color: themed("raised-high__text-color");
-  }
+  background-color: var(--raised-high__background-color);
+  color: var(--raised-high__text-color);
 }
 
 .control {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
 }
 
 .border {
-  @include themify($themes) {
-    border: thin solid themed("border-color");
-  }
+  border: thin solid var(--border-color);
 }
 
 .border-color {
-  @include themify($themes) {
-    border-color: themed("border-color");
-  }
+  border-color: var(--border-color);
 }
 
 .raised-border {
-  @include themify($themes) {
-    border: themed("raised-element__border");
-  }
+  border: var(--raised-element__border);
 }
 
 .borderless {
-  @include themify($themes) {
-    border: 0;
-  }
+  border: 0;
 }
 
 
@@ -214,47 +162,35 @@ input {
 
 
 .tooltip-popup {
-  @include themify($themes) {
-    &.place-top {
-      &:after {
-        border-top-color: themed("raised-high__background-color");
-        border-top-style: solid;
-        border-top-width: 6px;
-      }
+  &.place-top {
+    &:after {
+      border-top-color: var(--raised-high__background-color);
+      border-top-style: solid;
+      border-top-width: 6px;
     }
   }
 }
 
 .-pagination input, .-pagination button, .-pagination select {
-  @include themify($themes) {
-    background-color: themed("control__background-color") !important;
-    color: themed("control__text-color") !important;
-  }
+  background-color: var(--control__background-color) !important;
+  color: var(--control__text-color) !important;
 }
 
 .pagination__container .pagination a {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
 }
 
 .pagination__container .pagination .active {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    color: themed("control__text-color");
-  }
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
 }
 
 .react-sweet-progress-line {
-  @include themify($themes) {
-    background-color: themed("raised-low__background-color");
-  }
+  background-color: var(--raised-low__background-color);
 }
 .react-sweet-progress-line-inner {
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-  }
+  background-color: var(--control__background-color);
 }
 
 .tabs {
@@ -262,25 +198,19 @@ input {
     border-bottom: thin solid #5f5f5f;
 
     .active.item {
-      @include themify($themes) {
-        background-color: themed("page__background-color");
-        color: themed("page__text-color");
-        border: thin solid themed("border-color");
-      }
+      background-color: var(--page__background-color);
+      color: var(--page__text-color);
+      border: thin solid var(--border-color);
     }
     .item {
-      @include themify($themes) {
-        background-color: themed("page__background-color");
-        color: themed("page__text-color");
-        border: none;
-      }
+      background-color: var(--page__background-color);
+      color: var(--page__text-color);
+      border: none;
     }
   }
   .tab {
-    @include themify($themes) {
-      background-color: themed("page__background-color");
-      color: themed("page__text-color");
-      border: none;
-    }
+    background-color: var(--page__background-color);
+    color: var(--page__text-color);
+    border: none;
   }
 }

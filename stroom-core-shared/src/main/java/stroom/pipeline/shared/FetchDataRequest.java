@@ -16,26 +16,25 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.Severity;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.Severity;
+
+import java.util.function.Consumer;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataRequest {
+
     @JsonProperty
-    private Long streamId;
+    private SourceLocation sourceLocation;
     @JsonProperty
-    private String childStreamType;
+    private long segmentCount = 1;
     @JsonProperty
     private DocRef pipeline;
-    @JsonProperty
-    private OffsetRange<Long> streamRange;
-    @JsonProperty
-    private OffsetRange<Long> pageRange;
     @JsonProperty
     private boolean showAsHtml;
     @JsonProperty
@@ -43,63 +42,74 @@ public class FetchDataRequest {
     @JsonProperty
     private Severity[] expandedSeverities;
 
+    // Segmented (one rec could still be too large for display in the UI)
+    // rec no. offset => rec count
+    // rec no. offset => rec no. offset
+    // All of the above limited by a max char count to display on screen, ideally with a way
+    // to decided which truncated portion so show.
+    // Ideally display one rec only, not a page of them
+
+    // Non-segmented (i.e. raw, a rec could be a tiny slice of one massive line,
+    // one line out of many or a set of lines out of many)
+    // line/col => char count
+    // line/col => line/col
+    // char offset => char offset
+    // char offset => char count
+    // All of the above limited by a max char count to display on screen, ideally with a way
+    // to decided which truncated portion so show.
+
+    // recordOffsetFrom
+    // recordOffsetTo
+    // recordCount
+
+    // locationFrom
+    // locationTo
+    // charOffsetFrom
+    // charOffsetTo
+    // charCount
+
     @JsonIgnore
     private transient boolean fireEvents;
 
-    public FetchDataRequest() {
-        streamRange = new OffsetRange<>(0L, 1L);
-        pageRange = new OffsetRange<>(0L, 100L);
+    public FetchDataRequest(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+
+    public FetchDataRequest(final long metaId, final Consumer<SourceLocation.Builder> sourceLocationBuilder) {
+        final SourceLocation.Builder builder = SourceLocation.builder(metaId);
+        sourceLocationBuilder.accept(builder);
+        this.sourceLocation = builder.build();
     }
 
     @JsonCreator
-    public FetchDataRequest(@JsonProperty("streamId") final Long streamId,
-                            @JsonProperty("childStreamType") final String childStreamType,
+    public FetchDataRequest(@JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+                            @JsonProperty("segmentCount") final long segmentCount,
                             @JsonProperty("pipeline") final DocRef pipeline,
-                            @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-                            @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
                             @JsonProperty("showAsHtml") final boolean showAsHtml,
                             @JsonProperty("markerMode") final boolean markerMode,
                             @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
-        this.streamId = streamId;
-        this.childStreamType = childStreamType;
+        this.sourceLocation = sourceLocation;
+        this.segmentCount = segmentCount;
         this.pipeline = pipeline;
-        this.streamRange = streamRange;
-        this.pageRange = pageRange;
         this.showAsHtml = showAsHtml;
         this.markerMode = markerMode;
         this.expandedSeverities = expandedSeverities;
     }
 
-    public Long getStreamId() {
-        return streamId;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
-    public void setStreamId(final Long streamId) {
-        this.streamId = streamId;
+    public void setSourceLocation(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
     }
 
-    public String getChildStreamType() {
-        return childStreamType;
+    public long getSegmentCount() {
+        return segmentCount;
     }
 
-    public void setChildStreamType(final String childStreamType) {
-        this.childStreamType = childStreamType;
-    }
-
-    public OffsetRange<Long> getStreamRange() {
-        return streamRange;
-    }
-
-    public void setStreamRange(final OffsetRange<Long> streamRange) {
-        this.streamRange = streamRange;
-    }
-
-    public OffsetRange<Long> getPageRange() {
-        return pageRange;
-    }
-
-    public void setPageRange(final OffsetRange<Long> pageRange) {
-        this.pageRange = pageRange;
+    public void setSegmentCount(final long segmentCount) {
+        this.segmentCount = segmentCount;
     }
 
     public boolean isShowAsHtml() {

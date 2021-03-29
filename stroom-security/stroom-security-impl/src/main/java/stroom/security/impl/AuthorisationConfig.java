@@ -1,29 +1,35 @@
 package stroom.security.impl;
 
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.inject.Singleton;
 
 @Singleton
-public class AuthorisationConfig extends AbstractConfig {
-    private CacheConfig userGroupsCache = new CacheConfig.Builder()
+public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
+
+    private CacheConfig userGroupsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userAppPermissionsCache = new CacheConfig.Builder()
+    private CacheConfig userAppPermissionsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userCache = new CacheConfig.Builder()
+    private CacheConfig userCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userDocumentPermissionsCache = new CacheConfig.Builder()
+    private CacheConfig userDocumentPermissionsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
+    private DbConfig dbConfig = new DbConfig();
 
     public CacheConfig getUserGroupsCache() {
         return userGroupsCache;
@@ -45,11 +51,24 @@ public class AuthorisationConfig extends AbstractConfig {
         return userCache;
     }
 
+    public void setUserCache(final CacheConfig userCache) {
+        this.userCache = userCache;
+    }
+
     public CacheConfig getUserDocumentPermissionsCache() {
         return userDocumentPermissionsCache;
     }
 
     public void setUserDocumentPermissionsCache(final CacheConfig userDocumentPermissionsCache) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
+    }
+
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
+
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 }

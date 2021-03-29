@@ -1,7 +1,5 @@
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
@@ -13,20 +11,30 @@ import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Class that reads repositories.
  */
 public final class ProxyRepositoryReader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
 
     private final TaskContextFactory taskContextFactory;
@@ -191,14 +199,16 @@ public final class ProxyRepositoryReader {
         final List<StroomZipRepository> readyToProcessList = proxyRepositoryManager.getReadableRepository();
 
         for (final StroomZipRepository readyToProcess : readyToProcessList) {
-            if (!isTerminated()) {
+            if (isTerminated()) {
                 return;
             }
 
             // Only process the thing if we have some outgoing handlers.
             final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
             if (handlers.size() > 0) {
-                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(handlerFactory, bufferFactory);
+                final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(
+                        handlerFactory,
+                        bufferFactory);
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
                         executorProvider,
                         taskContextFactory,

@@ -17,43 +17,46 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public class LookupIdentifier {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupIdentifier.class);
 
     static final String NEST_SEPARATOR = "/";
 
-    private final String map;
-    private final String key;
+    private final String map; // e.g. "MAP1/MAP2/MAP3"
+    private final String key; // e.g. 'jbloggs'
     private final long eventTime;
-    private final int splitPos;
-    private final String primaryMapName;
-    private final String secondaryMapName;
+    private final String primaryMapName; // e.g. "MAP1"
+    private final String secondaryMapName; // e.g. "MAP2/MAP3"
 
     /**
      * Class to describe an identifier to be looked up in the temporal reference data store.
-     * Supports recursive lookups where 'map' describes a series of map names to use in a
+     * Supports chained lookups where 'map' describes a series of map names to use in a
      * recursive fashion, e.g. for ("map1/map2", "key1", 123456)
      * Lookup in map1: "key1" => "key2"
      * Lookup in map2: "key2" => "someValue"
-     * @param map The name of the map, or a delimited string listing a sequence of map names to
-     *            perform a recursive lookup, e.g. "myMap" or "map1/map2/map3"
-     * @param key The key to lookup in the map or primaryMap
-     * @param eventTime The time the lookup is effective at
+     *
+     * @param map       The name of the map, or a delimited string listing a sequence of map names to
+     *                  perform a chained lookup, e.g. "myMap" or "map1/map2/map3"
+     * @param key       The key to lookup in the map or primaryMap
+     * @param eventTime The time the lookup is effective at (epochMs)
      */
     public LookupIdentifier(final String map, final String key, final long eventTime) {
+
         this.map = Objects.requireNonNull(map);
         this.key = Objects.requireNonNull(key);
         this.eventTime = eventTime;
 
         // the following are all derived properties of the object
-        this.splitPos = map.indexOf(NEST_SEPARATOR);
+        final int splitPos = map.indexOf(NEST_SEPARATOR);
 
         // compute the nested parts if we have nesting
         if (splitPos != -1) {
@@ -82,13 +85,13 @@ public class LookupIdentifier {
         sb.append(primaryMapName);
         sb.append(", key = ");
         sb.append(key);
-        sb.append(", eventTime = ");
+        sb.append(", event time = ");
         sb.append(DateUtil.createNormalDateTimeString(eventTime));
         sb.append(")");
     }
 
     public boolean isMapNested() {
-        return splitPos != -1;
+        return secondaryMapName != null;
     }
 
     public String getMap() {
@@ -107,6 +110,13 @@ public class LookupIdentifier {
         return primaryMapName;
     }
 
+    /**
+     * @return The secondary map name which may itself be a nested map, e.g. "MAP2/MAP3"
+     */
+    public String getSecondaryMapName() {
+        return secondaryMapName;
+    }
+
     public LookupIdentifier getNestedLookupIdentifier(final String newKey) {
         if (!isMapNested()) {
             throw new RuntimeException(LogUtil.message("Identifier {} is not nested", this));
@@ -115,7 +125,7 @@ public class LookupIdentifier {
     }
 
     public LookupIdentifier cloneWithNewKey(String newKey) {
-       return new LookupIdentifier(map, newKey, eventTime);
+        return new LookupIdentifier(map, newKey, eventTime);
     }
 
     @Override
@@ -128,10 +138,15 @@ public class LookupIdentifier {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final LookupIdentifier that = (LookupIdentifier) o;
         return eventTime == that.eventTime &&
                 Objects.equals(map, that.map) &&

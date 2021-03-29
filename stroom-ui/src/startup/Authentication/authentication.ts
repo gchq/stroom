@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// import * as jwtDecode from "jwt-decode";
+// import jwtDecode from "jwt-decode";
 // import * as uuidv4 from "uuid";
 // import * as sjcl from "sjcl";
-import {History, Location} from "history";
+import { History, Location } from "history";
 // import * as queryString from "query-string";
 
 // export const sendAuthenticationRequest = (
@@ -71,73 +71,71 @@ import {History, Location} from "history";
 // };
 
 export const handleAuthenticationResponse = (
-    location: Location,
-    openIdConfigUrl: string,
-    clientId: string,
-    tokenIdChange: (idToken: string) => void,
-    history: History,
+  location: Location,
+  openIdConfigUrl: string,
+  clientId: string,
+  tokenIdChange: (idToken: string) => void,
+  history: History,
 ) => {
-    redirectToReferrer(history);
+  redirectToReferrer(history);
 
-    // // Get the openid configuration.
-    // getOpenIdConfiguration(openIdConfigUrl, openIdConfiguration => {
-    //     let query;
-    //     if (location.search) {
-    //         query = queryString.parse(location.search);
-    //     } else {
-    //         query = queryString.parse(location.hash);
-    //     }
-    //
-    //     const state = query.state;
-    //     // const access_token = query.access_token as string;
-    //     // const token_type = query.token_type;
-    //     // const expires_in = query.expires_in;
-    //     // const scope = query.scope;
-    //     const id_token = query.id_token as string;
-    //     // const authuser = query.authuser;
-    //     // const session_state = query.session_state;
-    //     // const prompt = query.prompt;
-    //
-    //     const localState = localStorage.getItem("state");
-    //     const localNonce = localStorage.getItem("nonce");
-    //     localStorage.removeItem("nonce");
-    //     localStorage.removeItem("state");
-    //
-    //     if (localState !== state) {
-    //         console.error("State does not match");
-    //
-    //     } else {
-    //         const decodedIdToken = jwtDecode<{ iss: string, nonce: string }>(id_token);
-    //         if (localNonce !== decodedIdToken.nonce) {
-    //             console.error("Nonce does not match.");
-    //         } else if (openIdConfiguration.issuer !== decodedIdToken.iss) {
-    //             console.error("Unexpected issuer");
-    //         } else {
-    //             tokenIdChange(id_token);
-    //         }
-    //     }
-    //     redirectToReferrer(history);
-    // });
-
-
+  // // Get the openid configuration.
+  // getOpenIdConfiguration(openIdConfigUrl, openIdConfiguration => {
+  //     let query;
+  //     if (location.search) {
+  //         query = queryString.parse(location.search);
+  //     } else {
+  //         query = queryString.parse(location.hash);
+  //     }
+  //
+  //     const state = query.state;
+  //     // const access_token = query.access_token as string;
+  //     // const token_type = query.token_type;
+  //     // const expires_in = query.expires_in;
+  //     // const scope = query.scope;
+  //     const id_token = query.id_token as string;
+  //     // const authuser = query.authuser;
+  //     // const session_state = query.session_state;
+  //     // const prompt = query.prompt;
+  //
+  //     const localState = localStorage.getItem("state");
+  //     const localNonce = localStorage.getItem("nonce");
+  //     localStorage.removeItem("nonce");
+  //     localStorage.removeItem("state");
+  //
+  //     if (localState !== state) {
+  //         console.error("State does not match");
+  //
+  //     } else {
+  //         const decodedIdToken = jwtDecode<{ iss: string, nonce: string }>(id_token);
+  //         if (localNonce !== decodedIdToken.nonce) {
+  //             console.error("Nonce does not match.");
+  //         } else if (openIdConfiguration.issuer !== decodedIdToken.iss) {
+  //             console.error("Unexpected issuer");
+  //         } else {
+  //             tokenIdChange(id_token);
+  //         }
+  //     }
+  //     redirectToReferrer(history);
+  // });
 };
 
 // const createUniqueString = () => {
-//     const uuid = uuidv4();
+//     const uuid = v4();
 //     const uuidHashBytes = sjcl.hash.sha256.hash(uuid);
 //     return sjcl.codec.hex.fromBits(uuidHashBytes);
 // };
 
-const redirectToReferrer = (
-    history: History
-) => {
-    const referrer = localStorage.getItem("preAuthenticationRequestReferrer") as string;
-    if (referrer) {
-        localStorage.removeItem("preAuthenticationRequestReferrer");
-        history.push(referrer);
-    } else {
-        console.error("Unable to redirect to referrer as it is undefined.");
-    }
+const redirectToReferrer = (history: History) => {
+  const referrer = localStorage.getItem(
+    "preAuthenticationRequestReferrer",
+  ) as string;
+  if (referrer) {
+    localStorage.removeItem("preAuthenticationRequestReferrer");
+    history.push(referrer);
+  } else {
+    console.error("Unable to redirect to referrer as it is undefined.");
+  }
 };
 
 // const getOpenIdConfiguration = (

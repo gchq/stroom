@@ -18,18 +18,23 @@ import { SizeProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { ButtonProps } from "./types";
-import RippleContainer, { useRipple } from "./RippleContainer";
+import { RippleContainer, useRipple } from "./RippleContainer";
+import { FunctionComponent, useEffect, useRef } from "react";
+import { Spinner } from "react-bootstrap";
 
-export const Button = ({
-  text,
+export const Button: FunctionComponent<ButtonProps> = ({
   icon,
   className: rawClassName,
   appearance,
   action,
   selected,
   disabled,
+  loading,
   size,
   onClick,
+  children,
+  autoFocus = false,
+  allowFocus,
   ...rest
 }: ButtonProps) => {
   const className = React.useMemo(() => {
@@ -90,14 +95,24 @@ export const Button = ({
       classNames.push(actionName);
     }
 
-    if (text) classNames.push("has-text");
+    if (children) classNames.push("has-text");
     if (selected) classNames.push("Button--selected");
     if (disabled) classNames.push("Button--disabled");
+    if (loading) classNames.push("Button--loading");
 
     classNames.push(size);
 
     return classNames.join(" ");
-  }, [rawClassName, appearance, action, text, selected, disabled, size]);
+  }, [
+    rawClassName,
+    appearance,
+    action,
+    children,
+    selected,
+    disabled,
+    loading,
+    size,
+  ]);
 
   const fontAwesomeSize: SizeProp = React.useMemo(() => {
     switch (size) {
@@ -115,21 +130,72 @@ export const Button = ({
     return "lg";
   }, [size]);
 
-  const showText = text && appearance !== "icon";
+  const showText = children !== undefined; // && appearance !== "icon";
 
   const { onClickWithRipple, ripples } = useRipple(onClick);
 
-  return (
-    <button className={className} onClick={onClickWithRipple} {...rest}>
+  // For some reason autofocus doesn't work inside bootstrap modal forms so we need to use an effect.
+  const element = useRef(null);
+  useEffect(() => {
+    if (autoFocus) {
+      element.current.focus();
+    }
+  }, [autoFocus]);
+
+  const content = (
+    <React.Fragment>
       <RippleContainer ripples={ripples} />
-      {icon ? (
-        <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
-      ) : (
-        undefined
-      )}
-      {showText && icon ? <span className="Button__margin" /> : undefined}
-      {showText ? <span className="Button__text">{text}</span> : undefined}
-    </button>
+      <div className="Button__content">
+        <span
+          className={
+            loading
+              ? "Button__spinner Button__spinner-loading"
+              : "Button__spinner"
+          }
+        >
+          <Spinner
+            as="span"
+            animation="border"
+            size="sm"
+            role="status"
+            aria-hidden="true"
+          />
+        </span>
+
+        {icon ? (
+          <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
+        ) : undefined}
+        {showText && icon ? <span className="Button__margin" /> : undefined}
+
+        {showText ? (
+          <span className="Button__text">{children}</span>
+        ) : undefined}
+      </div>
+    </React.Fragment>
+  );
+
+  if (allowFocus === undefined || allowFocus) {
+    return (
+      <button
+        className={className}
+        onClick={onClickWithRipple}
+        ref={element}
+        {...rest}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={className}
+      onClick={onClickWithRipple}
+      ref={element}
+      {...rest}
+    >
+      {content}
+    </div>
   );
 };
 

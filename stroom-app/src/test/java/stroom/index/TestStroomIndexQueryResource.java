@@ -1,15 +1,5 @@
 package stroom.index;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
@@ -23,16 +13,27 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.servicediscovery.api.RegisteredService;
 import stroom.util.shared.ResourcePaths;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,20 +55,23 @@ class TestStroomIndexQueryResource {
     private String jwtToken;
 
     private static SearchRequest getSearchRequest() {
-        QueryKey queryKey = new QueryKey("Some UUID");
-        Query query = new Query(
-                new DocRef("docRefType", "docRefUuid", "docRefName"),
-                new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+        final QueryKey queryKey = new QueryKey("Some UUID");
+        final Query query = Query.builder()
+                .dataSource(new DocRef("docRefType", "docRefUuid", "docRefName"))
+                .expression(ExpressionOperator.builder()
                         .addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1")
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build())
                         .addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2")
-                        .build()
-        );
+                        .build())
+                .build();
 
         List<ResultRequest> resultRequestList = new ArrayList<>();
         String datetimeLocale = "en-gb";
         boolean incremental = false;
-        SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequestList, datetimeLocale, incremental);
+        SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequestList,
+                datetimeLocale,
+                incremental);
         return searchRequest;
     }
 
@@ -76,7 +80,8 @@ class TestStroomIndexQueryResource {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract
+        // classes
 //        mapper.enableDefaultTyping();
         return mapper;
     }
@@ -86,11 +91,14 @@ class TestStroomIndexQueryResource {
         return objectMapper.writeValueAsString(searchRequest);
     }
 
-    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    @Disabled
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/test/resources/searchRequest.json")));
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get(
+                "src/test/resources/searchRequest.json")));
         ObjectMapper objectMapper = new ObjectMapper();
         SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
@@ -111,7 +119,9 @@ class TestStroomIndexQueryResource {
         System.out.println(response.toString());
     }
 
-    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    @Disabled
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void test() throws JsonProcessingException {
         // Given

@@ -16,7 +16,7 @@
 
 package stroom.search.impl.shard;
 
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -25,38 +25,43 @@ import stroom.task.api.TaskProducer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.inject.Provider;
 
 class IndexShardSearchTaskProducer extends TaskProducer {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
     private static final String TASK_NAME = "Search Index Shard";
 
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
 
-    private final Tracker tracker;
+    private final IndexShardSearchProgressTracker tracker;
 
     IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                  final Receiver receiver,
                                  final List<Long> shards,
                                  final IndexShardQueryFactory queryFactory,
-                                 final String[] fieldNames,
+                                 final String[] storedFieldNames,
                                  final int maxThreadsPerTask,
                                  final TaskContextFactory taskContextFactory,
                                  final TaskContext parentContext,
                                  final Provider<IndexShardSearchTaskHandler> handlerProvider,
-                                 final Tracker tracker) {
+                                 final IndexShardSearchProgressTracker tracker) {
         super(taskExecutor, maxThreadsPerTask, taskContextFactory, parentContext, TASK_NAME);
         this.tracker = tracker;
 
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker);
-            final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory,
+                    shard,
+                    storedFieldNames,
+                    receiver,
+                    tracker.getHitCount());
+            final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider, tracker);
             taskQueue.add(runnable);
         }
     }
@@ -70,60 +75,59 @@ class IndexShardSearchTaskProducer extends TaskProducer {
 
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
+    }
 
-        // Set the total number of index shards we are searching.
-        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
-        setTasksTotal(count);
-
-        // Let consumers know there will be no more tasks.
-        finishedAddingTasks();
+    protected boolean isComplete() {
+        return Thread.currentThread().isInterrupted() || tracker.isComplete();
     }
 
     @Override
     protected Consumer<TaskContext> getNext() {
         IndexShardSearchRunnable task = null;
 
-        if (!Thread.currentThread().isInterrupted()) {
-            // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
+        if (!isComplete()) {
+            // If there are no open shards that can be used for any tasks then just get the task at the
+            // head of the queue.
             task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();
-                task.getTask().setShardTotal(getTasksTotal());
+                task.getTask().setShardTotal(tracker.getShardTotal());
                 task.getTask().setShardNumber(no);
             }
         }
-
-        checkCompletion();
 
         return task;
     }
 
     @Override
-    protected void incrementTasksCompleted() {
-        super.incrementTasksCompleted();
-        checkCompletion();
-    }
-
-    private void checkCompletion() {
-        if (isComplete()) {
-            // Set complete.
-            tracker.complete();
-        }
+    public String toString() {
+        return "IndexShardSearchTaskProducer{" +
+                "tracker=" + tracker +
+                '}';
     }
 
     private static class IndexShardSearchRunnable implements Consumer<TaskContext> {
+
         private final IndexShardSearchTask task;
         private final Provider<IndexShardSearchTaskHandler> handlerProvider;
+        private final IndexShardSearchProgressTracker tracker;
 
-        IndexShardSearchRunnable(final IndexShardSearchTask task, final Provider<IndexShardSearchTaskHandler> handlerProvider) {
+        IndexShardSearchRunnable(final IndexShardSearchTask task,
+                                 final Provider<IndexShardSearchTaskHandler> handlerProvider,
+                                 final IndexShardSearchProgressTracker tracker) {
             this.task = task;
             this.handlerProvider = handlerProvider;
+            this.tracker = tracker;
         }
 
         @Override
         public void accept(final TaskContext taskContext) {
-            final IndexShardSearchTaskHandler handler = handlerProvider.get();
-            handler.exec(taskContext, task);
+            try {
+                final IndexShardSearchTaskHandler handler = handlerProvider.get();
+                handler.exec(taskContext, task);
+            } finally {
+                tracker.incrementCompleteShardCount();
+            }
         }
 
         public IndexShardSearchTask getTask() {

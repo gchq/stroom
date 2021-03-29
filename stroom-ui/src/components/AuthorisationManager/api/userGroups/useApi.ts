@@ -38,35 +38,26 @@ export const useApi = (): Api => {
     ),
     addUserToGroup: React.useCallback(
       (userUuid: string, groupUuid: string) =>
-        httpPutEmptyResponse(
-          `${resource}/${userUuid}/${groupUuid}`,
-        ),
+        httpPutEmptyResponse(`${resource}/${userUuid}/${groupUuid}`),
       [resource, httpPutEmptyResponse],
     ),
     createUser: React.useCallback(
       (name: string, isGroup: boolean) =>
-        httpPostJsonResponse(
-          `${resource}/create/${name}/${isGroup}`,
-        ),
+        httpPostJsonResponse(`${resource}/create/${name}/${isGroup}`),
       [resource, httpPostJsonResponse],
     ),
     deleteUser: React.useCallback(
-      (uuid: string) =>
-        httpDeleteEmptyResponse(`${resource}/${uuid}`),
+      (uuid: string) => httpDeleteEmptyResponse(`${resource}/${uuid}`),
       [resource, httpDeleteEmptyResponse],
     ),
     findGroupsForUser: React.useCallback(
       (userUuid: string) =>
-        httpGetJson(
-          `${resource}/groupsForUser/${userUuid}`,
-          {},
-          false,
-        ),
+        httpGetJson(`${resource}/groupsForUser/${userUuid}`, {}, false),
       [resource, httpGetJson],
     ),
     findUsers: React.useCallback(
       (name?: string, isGroup?: boolean, uuid?: string) => {
-        var url = new URL(resource);
+        const url = new URL(resource);
         if (name !== undefined && name.length > 0)
           url.searchParams.append("name", name);
         url.searchParams.append("isGroup", (isGroup || false).toString());
@@ -80,18 +71,12 @@ export const useApi = (): Api => {
     ),
     findUsersInGroup: React.useCallback(
       (groupUuid: string) =>
-        httpGetJson(
-          `${resource}/usersInGroup/${groupUuid}`,
-          {},
-          false,
-        ),
+        httpGetJson(`${resource}/usersInGroup/${groupUuid}`, {}, false),
       [resource, httpGetJson],
     ),
     removeUserFromGroup: React.useCallback(
       (userUuid: string, groupUuid: string) =>
-        httpDeleteEmptyResponse(
-          `${resource}/${userUuid}/${groupUuid}`,
-        ),
+        httpDeleteEmptyResponse(`${resource}/${userUuid}/${groupUuid}`),
       [resource, httpDeleteEmptyResponse],
     ),
   };

@@ -16,15 +16,11 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 import IndexFieldEditor, { useEditor } from "./IndexFieldEditor";
 import { generateTestField } from "testing/data/indexDocs";
 import Button from "../../../Button";
 import JsonDebug from "testing/JsonDebug";
 import { IndexField } from "components/DocumentEditors/useDocumentApi/types/indexDoc";
-
-const stories = storiesOf("Document Editors/Index/Field Editor", module);
 
 const FIELD_ID = 1007;
 
@@ -44,11 +40,13 @@ const TestHarness: React.FunctionComponent = () => {
   return (
     <div>
       <h2>Index Field Editor</h2>
-      <Button text="Edit" onClick={onClick} />
+      <Button onClick={onClick}>Edit</Button>
       <IndexFieldEditor {...componentProps} />
       <JsonDebug value={{ FIELD_ID, lastId, indexField }} />
     </div>
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Document Editors/Index", module).add("Field Editor", () => (
+  <TestHarness />
+));

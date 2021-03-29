@@ -16,13 +16,14 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.widget.tab.client.event.MaximiseEvent;
+import stroom.widget.tab.client.event.RequestCloseTabEvent;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPresenter<CurveTabLayoutView, P> {
+
     private final Map<TabData, Layer> tabContentMap = new HashMap<>();
 
     @Inject
@@ -42,8 +44,12 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
         super.onBind();
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event -> RequestCloseTabEvent.fire(CurveTabLayoutPresenter.this, event.getTabData())));
-        registerHandler(getView().getTabBar().addMaximiseRequestHandler(event -> MaximiseEvent.fire(CurveTabLayoutPresenter.this, getView())));
+        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event -> RequestCloseTabEvent.fire(
+                CurveTabLayoutPresenter.this,
+                event.getTabData())));
+        registerHandler(getView().getTabBar().addMaximiseRequestHandler(event -> MaximiseEvent.fire(
+                CurveTabLayoutPresenter.this,
+                getView())));
     }
 
     public void add(final TabData tabData, final Layer layer) {

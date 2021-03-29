@@ -27,7 +27,7 @@ const UserPicker: React.FunctionComponent<Props> = ({
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const onCreateOption = React.useCallback(
-    d => {
+    (d) => {
       setIsLoading(true);
       createUser(d, isGroup !== undefined ? isGroup : false).then(
         (newUser: StroomUser) => {
@@ -42,8 +42,8 @@ const UserPicker: React.FunctionComponent<Props> = ({
   const options: UserOption[] = React.useMemo(
     () =>
       users
-        .filter(user => !valuesToFilterOut.includes(user.uuid))
-        .map(g => ({
+        .filter((user) => !valuesToFilterOut.includes(user.uuid))
+        .map((g) => ({
           value: g.uuid,
           label: g.name,
         })),
@@ -52,7 +52,7 @@ const UserPicker: React.FunctionComponent<Props> = ({
   return isGroup ? (
     <CreatableSelect
       isLoading={isLoading}
-      value={options.find(o => o.value === value)}
+      value={options.find((o) => o.value === value)}
       onChange={(o: UserOption) => onChange(o.value)}
       placeholder="Index Volume Group"
       onCreateOption={onCreateOption}
@@ -60,7 +60,7 @@ const UserPicker: React.FunctionComponent<Props> = ({
     />
   ) : (
     <Select
-      value={options.find(o => o.value === value)}
+      value={options.find((o) => o.value === value)}
       onChange={(o: UserOption) => onChange(o.value)}
       placeholder="User"
       options={options}

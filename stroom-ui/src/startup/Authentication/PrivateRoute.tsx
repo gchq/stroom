@@ -14,43 +14,39 @@
  * limitations under the License.
  */
 import * as React from "react";
-import {Route, RouteProps} from "react-router-dom";
+import { Route, RouteProps } from "react-router-dom";
 import AuthenticationRequest from "./AuthenticationRequest";
 import useAuthenticationContext from "./useAuthenticationContext";
 import useUrlFactory from "../../lib/useUrlFactory";
 
-const PrivateRoute = ({render, ...rest}: RouteProps) => {
+const PrivateRoute = ({ render, ...rest }: RouteProps) => {
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/login/v1");
-    const {idToken} = useAuthenticationContext();
+  const { idToken } = useAuthenticationContext();
 
-    if (
-        !(
-            resource !== undefined
-        )
-    ) {
-        throw new Error(
-            `Config Not Correct for Private Routes ${JSON.stringify({
-                loginServiceUrl: resource,
-            })}`,
-        );
-    }
-
-    return (
-        <Route
-            {...rest}
-            render={props =>
-                !!idToken ? (
-                    render && render({...props})
-                ) : (
-                    <AuthenticationRequest
-                        referrer={window.location.href}
-                        loginUrl={resource}
-                    />
-                )
-            }
-        />
+  if (!(resource !== undefined)) {
+    throw new Error(
+      `Config Not Correct for Private Routes ${JSON.stringify({
+        loginServiceUrl: resource,
+      })}`,
     );
+  }
+
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        !!idToken ? (
+          render && render({ ...props })
+        ) : (
+          <AuthenticationRequest
+            referrer={window.location.href}
+            loginUrl={resource}
+          />
+        )
+      }
+    />
+  );
 };
 
 export default PrivateRoute;

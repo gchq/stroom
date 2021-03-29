@@ -21,12 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlSeeAlso;
-
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -38,5 +32,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class ComponentSettings {
+public interface ComponentSettings {
+
 }

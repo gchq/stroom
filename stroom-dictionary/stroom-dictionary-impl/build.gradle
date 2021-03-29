@@ -5,19 +5,21 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-resource:stroom-resource-api')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-importexport:stroom-importexport-api')
     
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.dropwizard_metrics_annotation
-    compile libs.guice4
-    compile libs.jackson_annotations
+    compile libs.guice5
+//    compile libs.jackson_annotations
+    compile libs.javax_inject
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 }

@@ -1,0 +1,8 @@
+{
+  "type" : "TextConverter",
+  "uuid" : "97f770cf-b2fa-4494-a58a-f5f1c6e3f3d9",
+  "name" : "SINGLE_LINE_CSV_WITH_HEADER",
+  "version" : "95d91cfb-5537-4bc0-8373-e90731d96a16",
+  "description" : "",
+  "converterType" : "NONE"
+}

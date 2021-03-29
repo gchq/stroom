@@ -16,14 +16,16 @@
 
 package stroom.pipeline;
 
-import org.xml.sax.Locator;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
+
+import org.xml.sax.Locator;
 
 import javax.xml.transform.SourceLocator;
 
 @PipelineScoped
 public class LocationFactoryProxy implements LocationFactory {
+
     private LocationFactory locationFactory;
 
     @Override

@@ -16,20 +16,26 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+
+import java.time.Instant;
 import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lookup.class);
 
     @Inject
     Lookup(final ReferenceData referenceData,
@@ -43,35 +49,77 @@ class Lookup extends AbstractLookup {
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
+
+        LOGGER.debug(() -> LogUtil.message("Looking up {}, {}",
+                lookupIdentifier, Instant.ofEpochMilli(lookupIdentifier.getEventTime())));
+
         // TODO rather than putting the proxy in the result we could just put the refStreamDefinition
         // in there and then do the actual lookup in the sequenceMaker by passing an injected RefDataStore
         // into it.
         final ReferenceDataResult result = getReferenceData(lookupIdentifier);
 
-        final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
-
-//        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
+
 
         boolean wasFound = false;
         try {
-            if (refDataValueProxy != null) {
+            if (result.getRefDataValueProxy().isPresent()) {
                 sequenceMaker.open();
 
-                wasFound = sequenceMaker.consume(refDataValueProxy);
+                wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
 
                 sequenceMaker.close();
 
                 if (wasFound && trace) {
-                    outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+                    outputInfo(
+                            Severity.INFO,
+                            "Success ",
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
+                } else if (!wasFound && !ignoreWarnings) {
+                    outputInfo(
+                            Severity.WARNING,
+                            "Key not found ",
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
                 }
+            } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
+                // We have effective streams so as there is no proxy present then the map was not found
+                // in the loaded streams
+                outputInfo(
+                        Severity.WARNING,
+                        "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
+                        lookupIdentifier,
+                        trace,
+                        ignoreWarnings,
+                        result,
+                        context);
+            } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+                // No effective streams were found to lookup from
+                outputInfo(
+                        Severity.WARNING,
+                        "No effective streams found ",
+                        lookupIdentifier,
+                        trace,
+                        ignoreWarnings,
+                        result,
+                        context);
             }
         } catch (XPathException e) {
-            outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
-        }
-
-        if (!wasFound && !ignoreWarnings) {
-            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+            outputInfo(
+                    Severity.ERROR,
+                    "Lookup errored: " + e.getMessage(),
+                    lookupIdentifier,
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
         }
 
         return sequenceMaker.toSequence();

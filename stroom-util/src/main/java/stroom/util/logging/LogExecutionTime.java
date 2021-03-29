@@ -22,7 +22,8 @@ import stroom.util.shared.ModelStringUtil;
  * Class to output timings.
  */
 public class LogExecutionTime {
-    private long startTime = System.currentTimeMillis();
+
+    private final long startTime = System.currentTimeMillis();
 
     public long getDuration() {
         return System.currentTimeMillis() - startTime;

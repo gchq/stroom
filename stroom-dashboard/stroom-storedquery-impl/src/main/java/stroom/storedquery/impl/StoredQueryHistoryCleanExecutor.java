@@ -22,16 +22,17 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 /**
  * Task to clean out old query history items.
  */
 public class StoredQueryHistoryCleanExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredQueryHistoryCleanExecutor.class);
 
     private final StoredQueryDao storedQueryDao;
@@ -48,7 +49,11 @@ public class StoredQueryHistoryCleanExecutor {
     }
 
     public void exec() {
-        taskContextFactory.context("Clean Stored History", taskContext -> clean(taskContext, false)).run();
+        taskContextFactory.context(
+                "Clean Stored History",
+                taskContext ->
+                        clean(taskContext, false))
+                .run();
     }
 
     private void clean(final TaskContext taskContext, final boolean favourite) {
@@ -57,7 +62,9 @@ public class StoredQueryHistoryCleanExecutor {
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
         final int historyDaysRetention = storedQueryConfig.getDaysRetention();
 
-        final long oldestCrtMs = Instant.now().minus(historyDaysRetention, ChronoUnit.DAYS).toEpochMilli();
+        final long oldestCrtMs = Instant.now()
+                .minus(historyDaysRetention, ChronoUnit.DAYS)
+                .toEpochMilli();
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(user -> {

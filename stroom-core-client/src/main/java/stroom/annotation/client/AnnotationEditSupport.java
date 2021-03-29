@@ -22,6 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Provider;
 
 public class AnnotationEditSupport {
+
     @Inject
     public AnnotationEditSupport(final EventBus eventBus, final Provider<AnnotationEditPresenter> presenterProvider) {
         eventBus.addHandler(ShowAnnotationEvent.getType(), e -> {

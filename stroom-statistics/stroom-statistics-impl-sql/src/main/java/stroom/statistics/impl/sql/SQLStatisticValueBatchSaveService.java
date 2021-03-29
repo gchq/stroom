@@ -21,12 +21,12 @@ import stroom.util.logging.LogExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import javax.inject.Inject;
 
 /**
  * SQL_STAT_VAL_SRC - Input Table SQL_STAT_KEY - Key Table SQL_STAT_VAL - Value
@@ -34,6 +34,7 @@ import java.util.List;
  */
 // @Transactional
 class SQLStatisticValueBatchSaveService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
     private static final String SAVE_CALL;
 
@@ -162,11 +163,17 @@ class SQLStatisticValueBatchSaveService {
                         savedCount++;
                     } catch (final RuntimeException e) {
                         // log the error and carry on with the rest
-                        LOGGER.error(
-                                "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "
-                                        + "typePrimValue: [{}], type: [{}], value: [{}], count: [{}]",
-                                SAVE_CALL, item.getCreateMs(), item.getName(), item.getType().getPrimitiveValue(),
-                                item.getType().name(), item.getValueSum(), item.getCount(), e);
+                        LOGGER.error("Error while tyring to insert a SQL statistic record.  SQL: [{}], " +
+                                        "createMs: [{}], name: [{}], typePrimValue: [{}], type: [{}], " +
+                                        "value: [{}], count: [{}]",
+                                SAVE_CALL,
+                                item.getCreateMs(),
+                                item.getName(),
+                                item.getType().getPrimitiveValue(),
+                                item.getType().name(),
+                                item.getValueSum(),
+                                item.getCount(),
+                                e);
                         failedCount++;
                     }
                     preparedStatement.clearParameters();

@@ -26,7 +26,9 @@ interface RippleProps {
   ripples: Ripple[];
 }
 
-const RippleContainer: React.FunctionComponent<RippleProps> = ({ ripples }) => (
+export const RippleContainer: React.FunctionComponent<RippleProps> = ({
+  ripples,
+}) => (
   <div className="ripple-container">
     {ripples.map(({ id, x, y }) => (
       <span
@@ -44,11 +46,16 @@ export const useRipple = <T extends HTMLElement>(
   const [ripples, dispatch] = React.useReducer(reducer, []);
 
   const onClickWithRipple = React.useCallback(
-    (evt: React.MouseEvent<T>): void => {
-      const btn = evt.currentTarget;
+    (e: React.MouseEvent<T>) => {
+      const btn = e.currentTarget;
       const rect = btn.getBoundingClientRect();
-      var x = evt.clientX - rect.left;
-      var y = evt.clientY - rect.top;
+
+      let x = rect.width / 2;
+      let y = rect.height / 2;
+      if (e.clientX > 0 || e.clientY > 0) {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+      }
 
       dispatch({
         id: `${nextId++}`,
@@ -57,7 +64,7 @@ export const useRipple = <T extends HTMLElement>(
       });
 
       if (onClick) {
-        onClick(evt);
+        onClick(e);
       }
     },
     [onClick, dispatch],
@@ -68,5 +75,3 @@ export const useRipple = <T extends HTMLElement>(
     ripples,
   };
 };
-
-export default RippleContainer;

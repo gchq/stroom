@@ -17,7 +17,6 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -47,8 +46,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.Test;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,10 +58,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
+
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -161,10 +163,8 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
             try {
                 // We have to use /tmp here as the pipeline is hard coded to output
                 // to ${stroom.temp}/TestRecordOutputFilter.xml
-                final Path tempDir = FileUtil.getTempDir();
-
-                final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
-                final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
+                final Path outputFile = getCurrentTestDir().resolve("TestRecordOutputFilter.xml");
+                final Path outputLockFile = getCurrentTestDir().resolve("TestRecordOutputFilter.xml.lock");
 
                 // Delete any output file.
                 FileUtil.deleteFile(outputFile);

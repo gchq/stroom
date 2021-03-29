@@ -16,20 +16,20 @@
 
 package stroom.meta.api;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public interface StandardHeaderArguments {
+
     String GUID = "GUID";
     String COMPRESSION = "Compression";
     String COMPRESSION_ZIP = "ZIP";
     String COMPRESSION_GZIP = "GZIP";
     String COMPRESSION_NONE = "NONE";
 
-    Set<String> VALID_COMPRESSION_SET = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(COMPRESSION_GZIP, COMPRESSION_ZIP, COMPRESSION_NONE)));
+    Set<String> VALID_COMPRESSION_SET = Set.of(
+            COMPRESSION_GZIP,
+            COMPRESSION_ZIP,
+            COMPRESSION_NONE);
 
     String CONTENT_LENGTH = "content-length";
     String USER_AGENT = "user-agent";
@@ -48,7 +48,13 @@ public interface StandardHeaderArguments {
     String STROOM_STATUS = "Stroom-Status";
 
     String FEED = "Feed";
+    String TYPE = "Type";
 
-    Set<String> HEADER_CLONE_EXCLUDE_SET = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList("accept", "connection", "content-length", "transfer-encoding", "expect", COMPRESSION)));
+    Set<String> HEADER_CLONE_EXCLUDE_SET = Set.of(
+            "accept",
+            "connection",
+            "content-length",
+            "transfer-encoding",
+            "expect",
+            COMPRESSION);
 }

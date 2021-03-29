@@ -16,17 +16,19 @@
 
 package stroom.headless;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.pipeline.ErrorWriter;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
 import java.io.Writer;
 
 public class CliErrorWriter implements ErrorWriter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CliErrorWriter.class);
 
     private static final String NEW_LINE = "\n";

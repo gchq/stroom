@@ -16,7 +16,6 @@
 
 package stroom.pipeline.client.gin;
 
-import com.google.inject.Singleton;
 import stroom.core.client.gin.PluginModule;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
@@ -76,7 +75,10 @@ import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 
+import com.google.inject.Singleton;
+
 public class PipelineModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(TextConverterPlugin.class);

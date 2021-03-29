@@ -14,7 +14,7 @@ const TestHarness: React.FunctionComponent = () => {
   const { recentItems, addRecentItem } = useRecentItems();
   const { documentTree } = useDocumentTree();
   const documents = React.useMemo(() => {
-    let d: DocRefType[] = [];
+    const d: DocRefType[] = [];
     iterateNodes(documentTree, (_, node) => d.push(node));
     return d;
   }, [documentTree]);
@@ -26,9 +26,9 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button onClick={onClickAddNext} text="Add" />
+      <Button onClick={onClickAddNext}>Add</Button>
       <ul>
-        {recentItems.map(recentItem => (
+        {recentItems.map((recentItem) => (
           <li key={recentItem.uuid}>
             {JSON.stringify(copyDocRef(recentItem))}
           </li>

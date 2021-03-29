@@ -32,7 +32,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ filters }) => {
 
       <form>
         {Object.entries(keyIsDown)
-          .map(k => ({ key: k[0], isDown: k[1] }))
+          .map((k) => ({ key: k[0], isDown: k[1] }))
           .map(({ key, isDown }) => (
             <div key={key}>
               <label>{key}</label>

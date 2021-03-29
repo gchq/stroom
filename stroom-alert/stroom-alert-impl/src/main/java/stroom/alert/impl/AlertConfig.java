@@ -16,10 +16,12 @@ public class AlertConfig extends AbstractConfig {
 
     @JsonPropertyDescription("Comma delimited list of the Stroom folder explorer paths used " +
             "to hold dashboards that will be run as rules, in order to create alerts during indexing.")
-    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths (separate folders with / character)")
+    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited" +
+            " string of paths (separate folders with / character)")
     private String rulesFolderList = "";
 
-    @JsonPropertyDescription("Should alerts include all fields from extraction pipeline, in addition to those defined in the dashboard")
+    @JsonPropertyDescription("Should alerts include all fields from extraction pipeline," +
+            " in addition to those defined in the dashboard")
     private boolean reportAllExtractedFieldsEnabled = false;
 
     @JsonPropertyDescription("When reporting fields defined in the extraction pipeline, a prefix can be added to " +

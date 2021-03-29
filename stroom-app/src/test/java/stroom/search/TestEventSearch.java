@@ -18,7 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -27,6 +26,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -37,32 +37,35 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEventSearch extends AbstractSearchTest {
-    private static boolean doneSetup;
+
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
         if (!doneSetup) {
-            doneSetup = true;
             commonIndexingTestHelper.setup();
+            doneSetup = true;
         }
     }
 
@@ -81,11 +84,15 @@ class TestEventSearch extends AbstractSearchTest {
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionOperator.Builder expressionIn,
+                      final int expectResultCount,
+                      final List<String> componentIds,
                       final boolean extractValues) {
 //        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-//        StroomProperties.setOverrideProperty("stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-//        StroomProperties.setOverrideProperty("stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
@@ -96,13 +103,22 @@ class TestEventSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                    Collections.singletonList(tableSettings),
+                    null,
+                    null,
+                    ResultRequest.ResultStyle.TABLE,
+                    Fetch.CHANGES);
             resultRequests.add(tableResultRequest);
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(indexRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = search(searchRequest);
 
         final Map<String, List<Row>> rows = new HashMap<>();
@@ -153,7 +169,8 @@ class TestEventSearch extends AbstractSearchTest {
                 if (extractValues) {
                     final String time = firstResult.getValues().get(1);
                     assertThat(time).as("Incorrect heading").isNotNull();
-                    assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(expectResultCount);
+                    assertThat(values.size()).as("Incorrect number of hits found")
+                            .isEqualTo(expectResultCount);
                     boolean found = false;
                     for (final Row hit : values) {
                         final String str = hit.getValues().get(1);
@@ -168,19 +185,24 @@ class TestEventSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
-        final Field idField = new Field.Builder()
+        final Field idField = Field.builder()
                 .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 
-        final Field timeField = new Field.Builder()
+        final Field timeField = Field.builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
-                .format(Format.Type.DATE_TIME)
+                .format(Format.DATE_TIME)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, resultPipeline, null, null);
+        return TableSettings.builder()
+                .addFields(idField)
+                .addFields(timeField)
+                .extractValues(extractValues)
+                .extractionPipeline(resultPipeline)
+                .build();
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField,
@@ -189,7 +211,7 @@ class TestEventSearch extends AbstractSearchTest {
                                                        final String to,
                                                        final String wordsField,
                                                        final String wordsTerm) {
-        return new ExpressionOperator.Builder()
+        return ExpressionOperator.builder()
                 .addTerm(userField, Condition.EQUALS, userTerm)
                 .addTerm("EventTime", Condition.BETWEEN, from + "," + to)
                 .addTerm(wordsField, Condition.EQUALS, wordsTerm);

@@ -40,7 +40,7 @@ public class UnknownRefDataValue extends RefDataValue {
      * rather than hashcode of the whole object.
      */
     @Override
-    public int getValueHashCode() {
+    public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         return 0;
     }
 

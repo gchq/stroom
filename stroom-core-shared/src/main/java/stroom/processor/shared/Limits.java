@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "limits")
 @JsonInclude(Include.NON_NULL)
 public class Limits {
+
     @XmlElement(name = "streamCount")
     @JsonProperty
     private Long streamCount;
@@ -81,31 +82,49 @@ public class Limits {
         this.durationMs = durationMs;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        private final Limits instance;
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-        public Builder() {
-            this.instance = new Limits();
+    public static final class Builder {
+
+        private Long streamCount;
+        private Long eventCount;
+        private Long durationMs;
+
+        private Builder() {
+        }
+
+        private Builder(final Limits limits) {
+            this.streamCount = limits.streamCount;
+            this.eventCount = limits.eventCount;
+            this.durationMs = limits.durationMs;
         }
 
         public Builder streamCount(final Long value) {
-            this.instance.streamCount = value;
+            this.streamCount = value;
             return this;
         }
 
         public Builder eventCount(final Long value) {
-            this.instance.eventCount = value;
+            this.eventCount = value;
             return this;
         }
 
         public Builder durationMs(final Long value) {
-            this.instance.durationMs = value;
+            this.durationMs = value;
             return this;
         }
 
         public Limits build() {
-            return instance;
+            return new Limits(
+                    streamCount,
+                    eventCount,
+                    durationMs);
         }
     }
 }

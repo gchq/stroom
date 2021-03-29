@@ -4,7 +4,865 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
+
+* Provide audit log record for permission changes to explorer items (documents)
+
+## [v7.0-beta.95] - 2021-03-18
+
+* Issue **#2105** : Fixed migration of annotations DB.
+
+
+## [v7.0-beta.94] - 2021-03-17
+
+* Issue **#2104** : Fixed issue where the index creation stored procedure was trying to delete a procedure with the wrong name before creating a new one. 
+
+* Issue **#2103** : Fixed statistics migration script to correctly check for empty tables.
+
+* Issue **#2102** : Fixed query migration script.
+
+* Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
+
+* Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
+
+
+## [v7.0-beta.93] - 2021-03-16
+
+* Issue **#2088** : Fixed retrieval of stored search results when not using extraction.
+
+* Issue **#2088** : Fixed NullPointerException caused when stepping.
+
+* Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
+
+
+## [v7.0-beta.92] - 2021-03-15
+
+* Issue **#2096** : Remove deprecated int display lengths when creating tables
+
+* Issue **#2095** : Tidy upo statistics migration.
+
+* Issue **#2094** : Corrected DB table creation to state the charset as `utf8mb4` and not `utf8` which is ambiguous in MySQL.
+
+
+## [v7.0-beta.91] - 2021-03-14
+
+* Refactor auth/identity DB migration scripts.
+
+* Add pre migration SQL scripts.
+
+
+## [v7.0-beta.90] - 2021-03-12
+
+* Issue **#2087** : Fixed NPE caused during legacy migration.
+
+* Uplift guice to v5.0.1.
+
+* Issue **#1871** : Invalidate the users and user groups cache when the _manage_users_ command is run.
+
+* Issue **#2064** : Delete empty directories left by running unit test.
+
+* Add index to cluster_lock table to fix whole table locking for single lock key.
+
+* Issue **#2059** : Add cluster lock protection to task creation. Stops duplicate task creation when master node changes.
+
+* Change task creation by master node to try to wait for search tasks to complete and to try to only create the configured number of tasks.
+
+* Refactor logic to determine master node into one place. Fixes discrepancies between UI and back-end.
+
+* Change node monitoring screen to return nodes in name order.
+
+* Issue **#2066** : Add data bars to node monitoring screen.
+
+* Issue **#2059** : Fix `Duplicate key` error in task assignment.
+
+* Issue **#2056** : Fix error sending permission change events to other cluster nodes.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
+
+## [v7.0-beta.89] - 2021-02-26
+
+* Change stroom/proxy docker image base to `adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine`
+
+* Add authentication config to swagger spec.
+
+
+## [v7.0-beta.88] - 2021-02-26
+
+* Fix travis release artefacts.
+
+
+## [v7.0-beta.87] - 2021-02-25
+
+* No changes
+
+
+## [v7.0-beta.86] - 2021-02-25
+
+* Fix travis release artefacts.
+
+
+## [v7.0-beta.85] - 2021-02-24
+
+* Change dockerfile to use Open JDK 15
+
+* Change build to use Open JDK 15
+
+* Fix travis build failure.
+
+* Issue **#2028** : Don't autolog standard object fields by default
+
+
+## [v7.0-beta.84] - 2021-02-24
+
+* No changes, adding more release artefacts in Travis build.
+
+
+## [v7.0-beta.83] - 2021-02-23
+
+* Add -q flag to start/stop/migrate.sh to stop log tailing.
+
+* Change migrate.sh to run the migration in the background.
+
+* Add JVM OOM args to zip distribution scripts.
+
+* Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
+
+* Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
+
+
+## [v7.0-beta.82] - 2021-02-18
+
+* Issue **#2049** : Updated Swagger and moved to the OpenAPI 3.0 Specification.
+
+* Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading. 
+
+
+## [v7.0-beta.81] - 2021-02-16
+
+* Issue **#2042** : Fixed an issue sorting search results that was making sorting very slow causing searches with large numbers of results to hang. 
+
+* Issue **#2043** : Removed an artificial limit on the number of data points that will be returned to a dashboard visualisation. The UI code had been written to only request a maximum of 1000 data points which meant that some visualisations were missing expected data. It may be necessary to add some limitation to avoid the UI being overloaded but the limitation has been removed for now as it was not configurable and did not warn the user when the limit had been reached.
+
+* Migrated new UI to use Swagger generated endpoints and types.
+
+* Issue **#1414** : A User Id can no longer be changed once a user is created.
+
+* Issue **#1862** : Email and name fields are no longer required when creating users.
+
+* Issue **#1765** : Added confirmation dialog when deleting users and API keys.
+
+* Issue **#2036** : Autologger now delegates exception handling.
+
+* Issue **#2039** : Limit the amount of text data output by autologger.
+
+* Issue **#2037** : Add config prop to ensure every REST call is logged
+
+* Issue **#2038** : Allow autologger action to be modified (search and process)
+
+* Issue **#2027** : Fix autologger update operation
+
+* Issue **#1764** : The create API key page now loads users to select on open.
+
+* Issue **#1766** : Removed comment from token.
+
+* Issue **#1763** : Improved column sizes on API keys dialog.
+
+* Issue **#1767** : Improved column sizes on account management dialog.
+
+* Improve exception alerts in the UI.
+
+* Issue **#2023** : Enable autologger to output multiple path or query parameters
+
+* Issue **#2022** : Simplify consistent event logging with POJOs
+
+* Issue **#2021** : Fix typo when autologger encounters class names ending in 'y'
+
+* Issue **#2020** : Prevent autologger redacting boolean properties
+
+
+## [v7.0-beta.80] - 2021-01-28
+
+* Issue **#2018** : Fixed intermittent search issue that was sometimes causing search to complete too early without results.
+
+* Fix dashboards not handling NUMERIC index fields.
+
+* Fix bug in Negate expression function.
+
+* Issue **#1995** : Add help info to the expression functions drop down menu.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
+
+* Issue **#2004** : Fix import of legacy v6 index so default volume group is assigned.
+
+* Issue **#2017** : Fixed dashboard table filtering.
+
+* Issue **#1946** : Removed unnecessary index shard state change error.
+
+
+## [v7.0-beta.79] - 2021-01-26
+
+* Issue **#2006** : Use UTC timezone when comparing date in repository folder name.
+
+* Issue **#2006** : Use `ArrayList.size()` as a method, instead of a property in Gradle build.
+
+* Issue **#2016** : Fixed StackOverflowException in document event log. 
+
+* Issue **#2003** : Fixed some issues with LMDB search results.
+
+* Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
+
+* Introduce functionality to provide configurable, automatic logging for RESTful API calls.
+
+* Add `search_results` dir to dockerfile.
+
+* Fix NPE in StroomEventLoggingUtil.
+
+
+## [v7.0-beta.78] - 2021-01-14
+
+* Issue **#2000** : `RemoteSearchResultFactory.destroy()` is now performed as the processing user.
+
+* Issue **#2000** : Fixed NPE affecting adding/removing columns on a dashboard table and changing column options like grouping and sorting.
+
+* Issue **#2000** : Fixed dashboard table child result expansion.
+
+* Issue **#2001** : Fixed intermittent test failure associated with byte buffers being used incorrectly with LMDB.
+
+* Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
+
+* Improved security for handling entity events.
+
+
+## [v7.0-beta.77] - 2021-01-12
+
+* Issue **#1867** : Cluster entity events are now sent to each node asynchronously to prevent delays caused by one or more slow/bad nodes.
+
+* Issue **#1923** : Fixed an issue affecting sorting dashboard table values that have mixed data types. In addition you can now sort columns alphanumerically if the column format is set to text. 
+
+* Issue **#1811** : Fixed issue where deleting or cutting/pasting text in a dashboard query editor was not marking the dashboard as dirty.
+
+* Search results are now stored off-heap to reduce the chance of out of memory errors.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
+
+* Issue **#1990** : Change order of items in quick filter popup help.
+
+* Change quick filter word boundary matching to handle a mix of delimited and canelCase, e.g. `stroom.prop.maxFileSize`.
+
+* Issue **#1986** : Fix missing gutter warning/error icons in the stepper code editor.
+
+
+## [v7.0-beta.76] - 2021-01-07
+
+* No changes.
+
+
+## [v7.0-beta.75] - 2021-01-06
+
+* Issue **#1989** : Fix for dashboard tables that were only showing a total of 100 rows.
+
+* Change event logging to use new fluent API.
+
+
+## [v7.0-beta.74] - 2020-12-15
+
+* No changes.
+
+
+## [v7.0-beta.73] - 2020-12-15
+
+* Change github tokens in travis build.
+
+
+## [v7.0-beta.72] - 2020-12-15
+
+* Issue **#1983** : Fix line number inconsistency in View Source when last char is a line break.
+
+* Issue **#1971** : Fix 'no appender' errors when editing a Data volume.
+
+* Issue **#1965** : Ignore gzipped data that has no uncompressed content.
+
+* Issue **#1976** : Add an enabled check box and insert above button to retention rules list.
+
+* Fix bug with retention rules impact summary when rows are identical.
+
+* Replace two buttons with toggle button on retetion impact summary.
+
+* Fix path for user event logs.
+
+* Uplift send_to_stroom script to v3.0.
+
+* Issue **#1978** : Fix Meta tab losing syntax highlighting when switching streams.
+
+* Remove byte count in brackets on Info tab when size is below 1024 bytes.
+
+* Fix help links on Jobs screen.
+
+* Fix inability to select text on Info tab in Data viewer.
+
+* Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
+
+* Issue **#1974** : Fix job screen only showing one job.
+
+* Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
+
+* Change reference data lookup request object to support string or epoch millis date.
+
+* Add byte count to Info tab, make date values consistent.
+
+* Fix problem of wrong charset being used.
+
+* Fix syntax highlighting for Meta streams in Source view.
+
+* Fix bug in PreviewInputStream read() method.
+
+* Improve the way the YAML logger paths are modified on boot.
+
+* Issue **#1964** : BGZIP files are now closed on exception.
+
+* Changed default dashboard time zone to use UTC.
+
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
+* Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
+
+
+## [v7.0-beta.71] - 2020-12-02
+
+* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+
+* Issue **#1960** : Fix the data preview display of empty streams.
+
+* Moved content download to Java.
+
+* All paths in the config YAML including logging config can now be made relative to the home dir.
+
+* Issue **#1912** : Moved dashboard table conditional formatting logic to server.
+
+* Fix missing favicon.
+
+* Issue **#1808** : Fix bug with permission handling for Retention Policy feature.
+
+* Issue **#1948** : Made UI report errors that occur during download.
+
+* Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
+
+* Fix byte conversion bug with `read()` method in RASegmentInputStream.
+
+* Add `viewType` and `displayType` args to `data(...)` dashboard expression.
+
+* Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
+
+* Add _progress_ bar to Source Data view and Data Preview to show location in the file.
+
+* Issue **#1678** : Fix data display in dashboard text pane.
+
+* Issue **#1679** : Fix data display in dashboard text pane.
+
+* Issue **#1777** : Fix sub stream tab selection when switching streams in data screen.
+
+* Issue **#1647** : Right align numeric columns in data screen.
+
+* Issue **#1872** : Fix display of source data when data has no line breaks.
+
+* Add completion and snippets to dashboard expression builder.
+
+* Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
+
+* Replace stream Info icon on data screen with a sub-stream type tab.
+
+* Add Source View tab available from Data Preview screen to show the unformatted source data.
+
+* Fix highlighting while stepping single line data.
+
+* Add completion and snippets to edit screens using the ACE editor.
+
+* Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
+
+* Issue **#1949** : Fixed bug in download for streams from multiple feeds.
+
+
+## [v7.0-beta.70] - 2020-11-16
+
+* Issue **#1947** : Fixed NPE thrown when trying to unassign processing tasks by setting the assigned node to null.
+
+* Issue **#1940** : Old searches are now terminated by the processing user.
+
+* Issue **#1932** : Physical stream delete will no longer fail if a file or directory it wants to delete cannot be found, i.e. has been deleted by another external process.
+
+* Fix log output counts for reference data.
+
+* Add REST endpoint for purging reference data.
+
+* Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
+
+## [v7.0-beta.69] - 2020-11-10
+
+* Improve handling of duplicates in reference data loads.
+
+* Improve error messages for reference loading failures.
+
+* Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
+
+* Improve PooledByteBufferOutputStream.
+
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
+* Issue **#1925** : Fixed logging error that was happening on search.
+
+* Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
+
+* Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
+
+* Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.
+
+* Removed rxjava.
+
+* Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
+
+* Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
+
+* Issue **#1915** : Fixed task context user identity for statistics searches.
+
+* Issue **#1915** : Fixed task context for statistics searches.
+
+* Merged external expression and query libraries into the source code and added Kryo serialisation to search results.
+
+* Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
+
+* Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
+
+* Issue **#1906** : Added info about queue sizes to extraction task.
+
+* Issue **#1906** : Made changes to allow early termination of searches if we have enough data.
+
+* Issue **#1906** : Fixed node task nesting.
+
+* Issue **#1906** : The maximum size of the stream event map is now configurable with the `stroom.search.extraction.maxStreamEventMapSize` property.
+
+* Issue **#1906** : Improved the way search extractions events are grouped so we can extract more events per stream and therefore improve performance.
+
+* Issue **#1907** : Fixed NPE.
+
+
+## [v7.0-beta.68] - 2020-10-22
+
+* Issue **#1733** : Support xsl:output options for XML output from pipeline (XMLWriter)
+
+* Issue **#1893** : Change delimited string volume properties to lists of strings
+
+* Issue **#1848** : Fix NPE when importing certain processor filters.
+
+* Issue **#1894** : Improvements to search performance and fix for hanging searches.
+
+
+## [v7.0-beta.67] - 2020-10-15
+
+* Issue **#1901** : Create default (index) volume group if it is used prior to UI.
+
+* Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
+
+* Change dashboard field expression editor to be a bit wider and use a monospace font.
+
+* Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
+
+* Issue **#1877** : Change conditional formatting to support decimals.
+
+* Change conditional formatting to set the available rule operators according to the format type of the column.
+
+* Change conditional formatting to support date terms and date comparisons.
+
+* Issue **#1885** : Fix annotations icon not being enabled on dashboard tables.
+
+* Issue **#1883** : Code now deals with missing streams when performing search extraction.
+
+* Issue **#1882** : Added capacity restriction to the stream event map used in search result extraction. The previous version was causing out of memory exceptions.
+
+* Change names of hidden special table columns on dashboards to avoid name clashes.
+
+* Make dashboard table settings popup bigger to accommodate the conditional formatting.
+
+* Added logic to rename conditional formatting term fields on a column rename.
+
+* Added logic to prevent renaming a column to an existing name.
+
+* Issue **#1872** : Partially fixed to show the 1st 1k chars of the single line raw source. Full fix will come in v7.
+
+* Issue **#1874** : Fixed dashboard tables not showing data if the stream id column is present.
+
+* Issue **#1868** : Stop `Stream not found with id=nnn` errors during searching.
+
+* Issue **#1864** : Added `*` wildcard to conditional formatting matches. 
+
+* Issue **#1865** : Fixed NoSuchMethodError.
+
+* Issue **#1854** : Changed search mechanism to poll for remote results to reduce the chances of hung searches.
+
+* Uplift event-logging-schema content pack to v3.4.2.
+
+* Uplift standard-pipelines content pack to v0.2.
+
+* Uplift template-pipelines content pack to v0.3.
+
+* Change the off-heap ref store to use xxHash for hashing its values.
+
+* Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.
+
+
+## [v7.0-beta.66] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.65] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.64] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.63] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.62] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.61] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.60] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.59] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+* Changed default behaviour of `useDefaultOpenIdCredentials`.
+
+
+## [v7.0-beta.58] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.57] - 2020-09-18
+
+* Failed build.
+
+
+## [v7.0-beta.56] - 2020-09-18
+
+* Added code to authenticate against AWS ALB.
+
+* Remove requirement for Reference stream type in ref data API lookup requests.
+
+
+## [v7.0-beta.55] - 2020-09-15
+
+* Fix names in travis release plugin.
+
+
+## [v7.0-beta.54] - 2020-09-15
+
+* Rename release artefact `stroom-proxy-config.X.yml` to `stroom-proxy-app-config.X.yml`.
+
+
+## [v7.0-beta.53] - 2020-09-15
+
+* Change `prod.yml` and `proxy-prod.yml` to be templated so as to generate custom config for the zip and docker distributions.
+
+* Add the docker config files to the release artefacts.
+
+* Issue **#580** : Added conditional formatting options to dashboard tables.
+
+* Add comments to `prod.yml`/`config.yml`.
+
+* Change `reset_password` CLI command to also reset various locked/inactive type flags.
+
+* Change stroom admin path from `admin` to `stroomAdmin` in the distribution.
+
+* Fix `command not found` bug in distribution `start.sh`.
+
+* Change `start.sh` to log pre-logback output to start.sh.log.
+
+* Change logFormat to include time in `prod.yml` and `config.yml`.
+
+
+## [v7.0-beta.52] - 2020-09-10
+
+* Issue **#1850** : Add new command line commands `create_account`, `reset_password` and `manage_users` to enable the creation of accounts to bootstrap the application.
+
+* Change `admin` to `stroomAdmin` in distribution shell scripts.
+
+
+## [v7.0-beta.51] - 2020-09-09
+
+* Added `formTokenRequest` property to OpenId config for use with AWS authentication. This forces the use of a form request when fetching tokens.
+
+* Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
+
+* Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
+
+* Issue **#1837** : Added `joining()` function to concatenate supplied fields in child rows.
+
+* Issue **#1784** : Several functions were previously prevented from working on results from aggregate functions but are now applied regardless.
+
+* Fix config file validation not working when hot loading config file changes.
+
+* Change config file validation to be the first thing that happens on boot.
+
+* Fix error when empty branches are in the config file.
+
+* Add `pipeline.referenceData.getLmdbSystemLibraryPath` prop to support provided LMDB binary.
+
+* Change extraction location of bundled LMDB binary to be the same as the store files.
+
+* Change default value for `pipeline.referenceData.maxPutsBeforeCommit` to 0 (i.e. don't commit mid-load).
+
+
+## [v7.0-beta.50] - 2020-09-07
+
+* Add /api/refData/v1/lookup REST endpoint for doing ref data lookups.
+
+* Issue **#1755** : Stepping now runs in a separate thread to prevent interruption of DW threads when trying to terminate stepping early.
+
+* Issue **#1798** : Fixed REST serialisation issue that was preventing stepping XPath filters from being passed to the server.
+
+* Issue **#1666** : Stepping now loads element documents that use name patterns.
+
+* Issue **#1666** : Parsers now support name patterns for loading config documents. 
+
+* Issue **#1835** : Fix error when viewing data as lowly user.
+
+* Issue **#1836** : Fix Forbidden error when importing data.
+
+* Issue **#1809** : Fix handling of import with no permissions except Import Configuration.
+
+* Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.
+
+* Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the error handling for the remote data sources.
+
+* Issue **#1781** : Fix SQL stats handling of NOT() with more than one term in the NOT.
+
+* Issue **#1830** : Change quick filters on Annotations screen to use fuzzy filtering consistent with the rest of stroom. Disable the comment quick filter drop down if there are no standard comments configured. Remove the qualified fields from the quick filter tooltips.
+
+* Issue **#1829** : Fix Annotations screen recording change history when clicking an empty title/subject.
+
+* Issue **#1737** : Fix quick filter in users/groups popup.
+
+* Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
+
+
+## [v7.0-beta.49] - 2020-09-02
+
+* Fix accidental commit of broken code.
+
+
+## [v7.0-beta.48] - 2020-09-02
+
+* Fix duplicate call to bintray upload in travis script.
+
+
+## [v7.0-beta.47] - 2020-09-02
+
+* Issue **#1821** : Fix SQL Stat queries whose table doesn't use any datasource fields.
+
+* Issue **#1694** : Fix UUID filtering in quick filters, now using `uuid:` field qualifier. Removed support for `#` prefix in Quick Filter and suggesters.
+
+* Issue **#1699** : Add a docker managed volume for the ref data store.
+
+* Add `pooledByteBufferCounts` to ref data config.
+
+* Issue **#1700** : Stopped stepping happening on open.
+
+* Uplift LMDB to v0.8.1.
+
+* Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
+
+* Increase default value for ref data `maxPutsBeforeCommit` to improve load times.
+
+* Fix instances of trace logging that are not using lambdas for complex args. This is particularly a problem in the ref data store code.
+
+* Made stroom compatible with AWS authentication.
+
+* Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
+
+* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
+
+* Issue **#1762** : Fix for search jobs that do not terminate correctly.
+
+* The build should now ensure GWT compilation only occurs after test has completed.
+
+* Issue **#1790** : You can now provide `TYPE` as an optional HTTP header when sending data to Stroom. If provided this attribute is used to determine what data type to assign to the data being received. Data forwarding and aggregation also maintains this attribute and behaviour. 
+
+* Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the pipeline editor.
+
+
+## [v7.0-beta.46] - 2020-08-23
+
+* Issue **#1702** : Fix namespace handling in XML reference data values.
+
+* Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
+
+* Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
+
+* Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
+
+* Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
+
+* Issue **#1805** : Fix missing alert popup when document is saved but has been updated by another user/tab.
+
+* Fix _No appender for stroom.docref.DocRef_ ERRORs in the log.
+
+
+## [v7.0-beta.45] - 2020-08-14
+
+* Issue **#1793** : Fixed Solr search query creation.
+
+* Issue **#1791** : Fixed Solr connection test response.
+
+* Update Gradle to v6.6
+
+* Revert back to full build.
+
+
+## [v7.0-beta.44] - 2020-08-14
+
+* Reverted deploy changes until travis dpl v2 is stable.
+
+
+## [v7.0-beta.43] - 2020-08-14
+
+* Fixing release artefacts.
+
+
+## [v7.0-beta.42] - 2020-08-13
+
+* Issue **#1783** : Made change to prevent nodes called by the cluster from using localhost, 127.0.0.1 or the same URL as other nodes.
+
+* Issue **#1706** : Terminating processing jobs early now writes appropriate termination errors to the processing info (error) stream and deletes other outputs.
+
+* Issue **#1749** : Removed old benchmark job.
+
+
+## [v7.0-beta.41] - 2020-08-12
+
+* Issue **#1785** : Fix proxy not forwarding any data.
+
+* Issue **#1675** : All dashboard table fields are now present in text pane settings even if they are hidden or special, e.g. internally added mandatory fields like StreamId and EventId. This change prevents the field settings from being altered incorrectly when these fields were not found.
+
+* Issue **#1758** : Added file locations to meta details and improved tooltip layout.
+
+* Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
+
+* Added support for time based expressions when searching for streams from UI. 
+
+* Issue **#1760** : Support time based expressions for ProcessorTask data source
+
+* Issue **#1761** : Allow processor id to be displayed when searching processor tasks data source.
+
+* Issue **#1693** : Fix dependencies screen listing links to internal searchables as "missing".
+
+* Issue **#1751** : Display correct UUID for "to" dependency in UI dependency screen.
+
+* Issue **#1664** : Fix crash when all streams for pipeline are deleted.
+
+* Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
+
+## [v7.0-beta.40] - 2020-07-27
+
+* Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
+
+* Issue **#1741** : Fix for search hanging issue.
+
+* Issue **#1740** : `CombinedParser` now removes invalid XML 1.0 characters when `fixInvalidChars` is set and not XML 1.1.
+
+* Add `readTimeout` property to `HTTPAppender` 
+
+* Issue **#1747** : Nodes are now notified about changes to document permissions so that caches are cleared etc.
+
+* Issue **#1752** : Meta info tooltips now show appropriate units for values.
+
+* The `admin` account is now auto created if it doesn't exist.
+
+* Issue **#1310** : Improved file cleanup between tests.
+
+* Issue **#1533** : Improved meta data attribute value flushing to DB.
+
+* Issue **#1634** : `FileSystemClean` will now only examine active data volumes.
+
+* Issue **#1672** : Index shards are now only updated in the DB on flush when the document count or shard size changes.
+
+* Issue **#1713** : Fixed issue where processor task start times were being displayed incorrectly.
+
+* Issue **#1748** : Removed border from explorer quick filter.
+
+* Issue **#1656** : Only managed jobs will now appear on the jobs page.
+
+* Issue **#1669** : Changed the way next scheduled time is calculated based on current time.
+
+* Issue **#1662** : Processor tasks and meta data sources now correctly show pipeline names in dashboard results.
+
+* Issue **#1677** : Active tasks are now correctly filtered.
+
+* Issue **#1718** : Added server task info for some tasks.
+
+* Issue **#1731** : Fixed calendar date picker style that was broken by tooltip CSS changes.
+
+* Issue **#1657** : `INTERNAL_PROCESSING_USER` is no longer visible in the UI.
+
+* Issue **#1449** : You can now create users to associate permissions by clicking the create button in the `User Permissions` page.
+
+* Issue **#1727** : Typo.
+
+* Issue **#1501** : Multiple fixes for new UI.
+
+* Issue **#1506** : Multiple fixes for new UI.
+
+* Issue **#1561** : Multiple fixes for new UI.
+
+* Issue **#1483** : Multiple fixes for new UI.
+
+* Issue **#1525** : Multiple fixes for new UI.
+
+* Issue **#1587** : Multiple fixes for new UI.
+
+* Issue **#1526** : Multiple fixes for new UI.
+
+* Issue **#1499** : Multiple fixes for new UI.
+
+* Issue **#1481** : Multiple fixes for new UI.
+
+* Issue **#1498** : Multiple fixes for new UI.
+
+* Issue **#1660** : Multiple fixes for new UI.
+
+* Issue **#1659** : Multiple fixes for new UI.
+
+* Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
+
+
+## [v7.0-beta.39] - 2020-07-06
+
+* Issue **#1716** : Prevent export of processor filters that are reprocess or deleted.
 
 * Issue **#1638** : Suppress error when searching deleted streams.
 
@@ -311,7 +1169,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove internal statistics from setup sample data.
 
-* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+* Fix issue of pipeline structure not showing when it contains a StatisticsFilter.
 
 * Update auth flow for auth-into-stroom integration
 
@@ -1479,9 +2337,6 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
 
-
-## [v6.0-alpha.22]
-
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
 
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
@@ -2340,7 +3195,64 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.38...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.95...HEAD
+[v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
+[v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
+[v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
+[v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
+[v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
+[v7.0-beta.90]: https://github.com/gchq/stroom/compare/v7.0-beta.89...v7.0-beta.90
+[v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89
+[v7.0-beta.88]: https://github.com/gchq/stroom/compare/v7.0-beta.87...v7.0-beta.88
+[v7.0-beta.87]: https://github.com/gchq/stroom/compare/v7.0-beta.86...v7.0-beta.87
+[v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
+[v7.0-beta.85]: https://github.com/gchq/stroom/compare/v7.0-beta.84...v7.0-beta.85
+[v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
+[v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
+[v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
+[v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
+[v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
+[v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
+[v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
+[v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
+[v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
+[v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75
+[v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74
+[v7.0-beta.73]: https://github.com/gchq/stroom/compare/v7.0-beta.72...v7.0-beta.73
+[v7.0-beta.72]: https://github.com/gchq/stroom/compare/v7.0-beta.71...v7.0-beta.72
+[v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
+[v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
+[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
+[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
+[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.67
+[v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
+[v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
+[v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64
+[v7.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v7.0-beta.63
+[v7.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v7.0-beta.62
+[v7.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v7.0-beta.61
+[v7.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v7.0-beta.60
+[v7.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v7.0-beta.59
+[v7.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v7.0-beta.58
+[v7.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v7.0-beta.57
+[v7.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v7.0-beta.56
+[v7.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v7.0-beta.55
+[v7.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v7.0-beta.54
+[v7.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v7.0-beta.53
+[v7.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v7.0-beta.52
+[v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
+[v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
+[v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
+[v7.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
+[v7.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v7.0-beta.47
+[v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
+[v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45
+[v7.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v7.0-beta.44
+[v7.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v7.0-beta.43
+[v7.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v7.0-beta.42
+[v7.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v7.0-beta.41
+[v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
+[v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
 [v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
 [v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37
 [v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36

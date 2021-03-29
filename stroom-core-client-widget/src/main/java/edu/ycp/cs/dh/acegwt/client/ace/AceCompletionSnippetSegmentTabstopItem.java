@@ -27,7 +27,7 @@ package edu.ycp.cs.dh.acegwt.client.ace;
  */
 public class AceCompletionSnippetSegmentTabstopItem implements AceCompletionSnippetSegment {
 
-    private String tabstopText;
+    private final String tabstopText;
 
     /**
      * Text that should fit inside a tabstop, the first tabstop is selected after a substitution, and subsequent tabstops are moved between by

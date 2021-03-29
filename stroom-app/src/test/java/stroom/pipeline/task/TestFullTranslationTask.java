@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
  * Component test class for <code>TransDevServiceImpl</code>.
  */
 class TestFullTranslationTask extends TranslationTest {
+
     @Test
     void test() {
         testTranslationTask(false, true);

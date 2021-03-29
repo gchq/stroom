@@ -40,13 +40,14 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import java.util.EnumSet;
-import java.util.Objects;
 
 public class App extends Application<Config> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     @Inject
@@ -130,7 +131,8 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   These should only be used in test/demo environments. " +
-                    "\n   Set useDefaultOpenIdCredentials to false for production environments. The API key in use is:" +
+                    "\n   Set useDefaultOpenIdCredentials to false for production environments. " +
+                    "The API key in use is:" +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +
                     "\n  ---------------------------------------------------------------------------------------" +

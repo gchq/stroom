@@ -17,13 +17,13 @@
 
 package stroom.pipeline.refdata.store;
 
-import com.google.common.util.concurrent.Striped;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import com.google.common.util.concurrent.Striped;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
@@ -93,7 +93,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                 refStreamDefinition));
                     }
                 },
-                LambdaLogUtil.message("Acquiring lock for {}", refStreamDefinition));
+                () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));
         try {
             // now we have sole access to this RefStreamDefinition so perform the work on it
             work.run();

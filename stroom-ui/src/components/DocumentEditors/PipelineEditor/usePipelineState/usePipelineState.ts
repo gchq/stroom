@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useDocumentApi from "components/DocumentEditors/useDocumentApi";
+import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
 import { useDocRefEditor } from "../../DocRefEditor";
 import {
   getPipelineAsTree,
@@ -18,7 +18,7 @@ import {
   PipelineDocumentType,
   PipelineElementType,
 } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
-import useElement from "../useElement";
+import { useElement } from "../useElement";
 
 export const usePipelineState = (pipelineId: string): PipelineProps => {
   const documentApi = useDocumentApi<"Pipeline", PipelineDocumentType>(
@@ -84,7 +84,7 @@ export const usePipelineState = (pipelineId: string): PipelineProps => {
         setSelectedElementId(undefined);
       }, [setSelectedElementId]),
       elementDeleted: React.useCallback<PipelineEditApi["elementDeleted"]>(
-        elementId => {
+        (elementId) => {
           if (!!docRefContents) {
             onDocumentChange(
               removeElementFromPipeline(docRefContents, elementId),
@@ -106,7 +106,7 @@ export const usePipelineState = (pipelineId: string): PipelineProps => {
         [docRefContents, onDocumentChange],
       ),
       elementAdded: React.useCallback<PipelineEditApi["elementAdded"]>(
-        newElement => {
+        (newElement) => {
           if (!!docRefContents) {
             onDocumentChange(
               createNewElementInPipeline(docRefContents, newElement),

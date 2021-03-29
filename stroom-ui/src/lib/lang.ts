@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as dateFormat from "dateformat";
+import dateFormat from "dateformat";
 
 function hasAnyProps(object: any) {
   let hasProps = false;

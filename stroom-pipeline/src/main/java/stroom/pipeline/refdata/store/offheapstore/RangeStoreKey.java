@@ -24,6 +24,7 @@ import java.util.Objects;
 
 /**
  * <mapUid><rangeStartInc><rangeEndExc>
+ * <4 bytes><8 bytes><8 bytes>
  */
 public class RangeStoreKey {
 
@@ -47,6 +48,7 @@ public class RangeStoreKey {
         return keyRange;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

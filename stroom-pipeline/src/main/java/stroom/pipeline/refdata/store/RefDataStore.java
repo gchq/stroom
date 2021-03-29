@@ -18,9 +18,12 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.time.StroomDuration;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public interface RefDataStore {
 
@@ -80,6 +83,11 @@ public interface RefDataStore {
                                        final long effectiveTimeMs,
                                        final Consumer<RefDataLoader> work);
 
+    List<RefStoreEntry> list(final int limit);
+
+    List<RefStoreEntry> list(final int limit,
+                             final Predicate<RefStoreEntry> filter);
+
     long getKeyValueEntryCount();
 
     long getKeyRangeValueEntryCount();
@@ -87,6 +95,8 @@ public interface RefDataStore {
     long getProcessingInfoEntryCount();
 
     void purgeOldData();
+
+    void purgeOldData(final StroomDuration purgeAge);
 
     void logAllContents();
 

@@ -16,15 +16,17 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Objects;
 
@@ -32,7 +34,8 @@ import java.util.Objects;
  * Some path on the network where we can store stuff.
  */
 @JsonInclude(Include.NON_NULL)
-public class FsVolume implements HasAuditInfo {
+public class FsVolume implements HasAuditInfo, HasIntegerId {
+
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
 
@@ -102,6 +105,7 @@ public class FsVolume implements HasAuditInfo {
         return volume;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -216,10 +220,15 @@ public class FsVolume implements HasAuditInfo {
         return used >= max;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FsVolume that = (FsVolume) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(version, that.version) &&
@@ -261,8 +270,8 @@ public class FsVolume implements HasAuditInfo {
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                VolumeUseStatus.values());
+        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER =
+                new PrimitiveValueConverter<>(VolumeUseStatus.values());
 
         private final String displayValue;
         private final byte primitiveValue;

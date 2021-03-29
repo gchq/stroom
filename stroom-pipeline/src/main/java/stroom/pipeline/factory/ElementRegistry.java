@@ -17,10 +17,10 @@
 package stroom.pipeline.factory;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.shared.HasType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ElementRegistry {
+
     private final Map<String, Class<Element>> elementMap = new HashMap<>();
     private final Map<String, Map<String, Method>> propertyMap = new HashMap<>();
     private final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes = new HashMap<>();
@@ -148,12 +149,16 @@ public class ElementRegistry {
         if (HasType.class.isAssignableFrom(paramType)) {
             try {
                 typeName = ((HasType) paramType.getDeclaredConstructor(new Class[0]).newInstance()).getType();
-            } catch (final InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                throw new PipelineFactoryException("Unable to create global property for type " + typeName + " (reason: " + e.getMessage() + ")");
+            } catch (final InstantiationException
+                    | IllegalAccessException
+                    | NoSuchMethodException
+                    | InvocationTargetException e) {
+                throw new PipelineFactoryException("Unable to create global property for type " +
+                        typeName + " (reason: " + e.getMessage() + ")");
             }
         }
 
-        return new PipelinePropertyType.Builder()
+        return PipelinePropertyType.builder()
                 .elementType(elementType)
                 .name(propertyName)
                 .type(typeName)
@@ -161,7 +166,9 @@ public class ElementRegistry {
                 .defaultValue(property.defaultValue())
                 .displayPriority(property.displayPriority())
                 .pipelineReference(paramType.equals(PipelineReference.class))
-                .docRefTypes((docRefProperty != null) ? docRefProperty.types() : null)
+                .docRefTypes((docRefProperty != null)
+                        ? docRefProperty.types()
+                        : null)
                 .build();
     }
 

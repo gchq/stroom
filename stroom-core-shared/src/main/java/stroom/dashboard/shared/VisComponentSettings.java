@@ -16,27 +16,28 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
+
+import java.util.Objects;
 
 @JsonPropertyOrder({"tableId", "visualisation", "json", "tableSettings"})
 @JsonInclude(Include.NON_NULL)
-public class VisComponentSettings extends ComponentSettings {
-    @JsonProperty("tableId")
-    private String tableId;
-    @JsonProperty("visualisation")
-    private DocRef visualisation;
-    @JsonProperty("json")
-    private String json;
-    @JsonProperty
-    private TableComponentSettings tableSettings;
+public class VisComponentSettings implements ComponentSettings {
 
-    public VisComponentSettings() {
-    }
+    @JsonProperty
+    private final String tableId;
+    @JsonProperty
+    private final DocRef visualisation;
+    @JsonProperty
+    private final String json;
+    @JsonProperty
+    private final TableComponentSettings tableSettings;
 
     @JsonCreator
     public VisComponentSettings(@JsonProperty("tableId") final String tableId,
@@ -53,31 +54,96 @@ public class VisComponentSettings extends ComponentSettings {
         return tableId;
     }
 
-    public void setTableId(final String tableId) {
-        this.tableId = tableId;
-    }
-
     public DocRef getVisualisation() {
         return visualisation;
-    }
-
-    public void setVisualisation(final DocRef visualisation) {
-        this.visualisation = visualisation;
     }
 
     public String getJson() {
         return json;
     }
 
-    public void setJson(final String json) {
-        this.json = json;
-    }
-
     public TableComponentSettings getTableSettings() {
         return tableSettings;
     }
 
-    public void setTableSettings(final TableComponentSettings tableSettings) {
-        this.tableSettings = tableSettings;
+    @SuppressWarnings("checkstyle:needbraces")
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final VisComponentSettings that = (VisComponentSettings) o;
+        return Objects.equals(tableId, that.tableId) &&
+                Objects.equals(visualisation, that.visualisation) &&
+                Objects.equals(json, that.json) &&
+                Objects.equals(tableSettings, that.tableSettings);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableId, visualisation, json, tableSettings);
+    }
+
+    @Override
+    public String toString() {
+        return "VisComponentSettings{" +
+                "tableId='" + tableId + '\'' +
+                ", visualisation=" + visualisation +
+                ", json='" + json + '\'' +
+                ", tableSettings=" + tableSettings +
+                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String tableId;
+        private DocRef visualisation;
+        private String json;
+        private TableComponentSettings tableSettings;
+
+        private Builder() {
+        }
+
+        private Builder(final VisComponentSettings visComponentSettings) {
+            this.tableId = visComponentSettings.tableId;
+            this.visualisation = visComponentSettings.visualisation;
+            this.json = visComponentSettings.json;
+            this.tableSettings = visComponentSettings.tableSettings;
+        }
+
+        public Builder tableId(final String tableId) {
+            this.tableId = tableId;
+            return this;
+        }
+
+        public Builder visualisation(final DocRef visualisation) {
+            this.visualisation = visualisation;
+            return this;
+        }
+
+        public Builder json(final String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Builder tableSettings(final TableComponentSettings tableSettings) {
+            this.tableSettings = tableSettings;
+            return this;
+        }
+
+        public VisComponentSettings build() {
+            return new VisComponentSettings(tableId, visualisation, json, tableSettings);
+        }
     }
 }

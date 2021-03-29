@@ -19,12 +19,11 @@ package stroom.docstore.impl.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.docstore.impl.Persistence;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
 
 public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, DocStoreDbConnProvider> {
+
     private static final String MODULE = "stroom-docstore";
     private static final String FLYWAY_LOCATIONS = "stroom/docstore/impl/db/migration";
     private static final String FLYWAY_TABLE = "docstore_history";
@@ -34,9 +33,6 @@ public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, 
         super.configure();
 
         bind(Persistence.class).to(DBPersistence.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(DBPersistence.class);
     }
 
     @Override
@@ -65,6 +61,7 @@ public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, 
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements DocStoreDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

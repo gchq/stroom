@@ -6,9 +6,9 @@ import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import { docRefEditorClasses } from "./types";
 
-let SwitchedDocRefEditor: React.FunctionComponent<
-  SwitchedDocRefEditorProps
-> = ({ docRefUuid }) => {
+const SwitchedDocRefEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
+  docRefUuid,
+}) => {
   const { addRecentItem } = useRecentItems();
   const { findDocRefWithLineage } = useDocumentTree();
   const { node: docRef } = React.useMemo(

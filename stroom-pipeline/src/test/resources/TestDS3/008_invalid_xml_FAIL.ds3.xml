@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+
+  <!-- All subsequent lines are records -->
+  <split>
+  <!--
+    <group value="$1">
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
+        <data name="$heading$1" value="$1" />
+      </split>
+    </group>
+    -->
+
+    <!-- missing end element -->
+  </split>
+
+</dataSplitter>

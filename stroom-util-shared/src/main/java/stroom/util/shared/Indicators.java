@@ -36,6 +36,7 @@ import java.util.Set;
 @JsonPropertyOrder({"errorCount", "uniqueErrorSet", "errorList"})
 @JsonInclude(Include.NON_NULL)
 public class Indicators {
+
     @JsonProperty
     private final Map<Severity, Integer> errorCount;
     @JsonProperty

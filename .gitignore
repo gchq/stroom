@@ -33,8 +33,10 @@ local3.yml*
 */out/
 *.iml
 .idea/*
-!/.idea/codeStyles
-!/.idea/runConfigurations
+!.idea/codeStyles
+!.idea/runConfigurations
+!.idea/icon.png
+!.idea/checkstyle-idea.xml
 # END OF IntelliJ
 
 #Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)

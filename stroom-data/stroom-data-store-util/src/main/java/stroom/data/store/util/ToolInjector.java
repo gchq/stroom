@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 class ToolInjector {
+
     private Injector injector = null;
 
     Injector getInjector() {

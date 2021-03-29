@@ -8,9 +8,9 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.db.util.JooqUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -18,18 +18,19 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.TableField;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 
 @Singleton
 public class FsVolumeDaoImpl implements FsVolumeDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
@@ -56,7 +57,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
             volumeToRecord(fileVolume, record);
             // This depends on there being a field named 'id' that is what we expect it to be.
             // I'd rather this was implicit/opinionated than forced into place with an interface.
-            LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
+            LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+                    FS_VOLUME.getName(), record.getValue("id")));
             record.update();
             return recordToVolume(record, fileVolume.getVolumeState());
         });
@@ -143,13 +145,15 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         fileVolume.setUpdateTimeMs(record.get(FS_VOLUME.UPDATE_TIME_MS));
         fileVolume.setUpdateUser(record.get(FS_VOLUME.UPDATE_USER));
         fileVolume.setPath(record.get(FS_VOLUME.PATH));
-        fileVolume.setStatus(VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
+        fileVolume.setStatus(
+                VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
         fileVolume.setByteLimit(record.get(FS_VOLUME.BYTE_LIMIT));
         fileVolume.setVolumeState(fileSystemVolumeState);
         return fileVolume;
     }
 
-    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final Selection<VolumeUseStatus> selection) {
+    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field,
+                                                                   final Selection<VolumeUseStatus> selection) {
         final Selection<Byte> set = Selection.selectNone();
         set.setMatchAll(selection.isMatchAll());
         set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));

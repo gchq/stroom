@@ -18,17 +18,15 @@ export const getNewOperator = (): ExpressionOperatorType => ({
   children: [],
 });
 
-function childrenToString(
-  expression: ExpressionOperatorType,
-  asString: string = "",
-) {
+function childrenToString(expression: ExpressionOperatorType, asString = "") {
   if (!!expression.children) {
     expression.children.forEach((child: ExpressionItem, i: number) => {
       if (child.enabled) {
         if (child.type === "term") {
-          let childTerm = child as ExpressionTermType;
-          asString += `${childTerm.field} ${childTerm.condition &&
-            ConditionDisplayValues[childTerm.condition]} ${childTerm.value}`;
+          const childTerm = child as ExpressionTermType;
+          asString += `${childTerm.field} ${
+            childTerm.condition && ConditionDisplayValues[childTerm.condition]
+          } ${childTerm.value}`;
           if (
             expression.children!.length > i + 1 &&
             expression.children![i + 1].enabled
@@ -36,8 +34,8 @@ function childrenToString(
             asString += ` ${expression.op} `;
           }
         } else if (child.type === "operator") {
-          let childOperator = child as ExpressionOperatorType;
-          let childTerms = "";
+          const childOperator = child as ExpressionOperatorType;
+          const childTerms = "";
           asString += `(${childrenToString(childOperator, childTerms)})`;
         }
       }

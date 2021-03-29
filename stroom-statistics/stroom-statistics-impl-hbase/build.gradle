@@ -13,13 +13,13 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.kafka_clients
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.stroomStatsSchema
     compile libs.xml_apis
 

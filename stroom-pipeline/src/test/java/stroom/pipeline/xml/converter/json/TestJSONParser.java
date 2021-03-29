@@ -18,12 +18,6 @@
 package stroom.pipeline.xml.converter.json;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.StreamLocationFactory;
@@ -44,6 +38,13 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestJSONParser extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJSONParser.class);
 
     @Test
@@ -126,7 +128,7 @@ class TestJSONParser extends StroomUnitTest {
         final OutputStreamAppender xmlAppender = new OutputStreamAppender(errorReceiverProxy, xmlOS);
         final OutputStreamAppender jsonAppender = new OutputStreamAppender(errorReceiverProxy, jsonOS);
 
-        final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null);
+        final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null, null, null, null, null, null);
         xmlWriter.setIndentOutput(true);
         xmlWriter.setTarget(xmlAppender);
 

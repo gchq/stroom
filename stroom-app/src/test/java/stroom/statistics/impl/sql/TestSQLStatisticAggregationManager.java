@@ -16,14 +16,12 @@
 
 package stroom.statistics.impl.sql;
 
-
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,17 +38,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
     private static final long STAT_VALUE = 10L;
     private static final String COL_NAME_VAL = "VAL";
     private static final String COL_NAME_CNT = "CT";
 
-    @Inject
-    private CommonTestControl commonTestControl;
     @Inject
     private SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     @Inject
@@ -66,21 +63,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private SQLStatisticsConfig sqlStatisticsConfig;
     @Inject
     private TaskContextFactory taskContextFactory;
-
-    @Override
-    public void onBefore() {
-        try {
-            sqlStatisticAggregationTransactionHelper
-                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
-        } catch (final SQLException e) {
-            throw new RuntimeException("Error tearing down tables", e);
-        }
-
-        commonTestControl.teardown();
-        commonTestControl.setup();
-    }
 
     /**
      * Test loads data into stat val src, with stats aged so that there are
@@ -107,7 +89,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 4;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -275,7 +259,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -444,7 +430,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3 + 1;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -457,7 +445,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final Instant newStartDate = startDate.minus(200, ChronoUnit.DAYS);
         LOGGER.info("Adding stats working back from: " + newStartDate);
-        //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the data loaded above
+        //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the
+        // data loaded above
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
 
         LOGGER.info("First aggregation run");
@@ -534,7 +523,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3 + 1;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -617,7 +608,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
     private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
                           final StatisticType statisticType) throws SQLException {
-        int iteration = 0;
 
         LOGGER.info("Filling STAT_VAL_SRC");
 
@@ -625,6 +615,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         Instant newStartDate = startDate;
         LOGGER.info("Adding stats working back from: " + newStartDate);
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
+        int iteration = 0;
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME))
                 .isEqualTo(statNameCount * timesCount * ++iteration);
 
@@ -751,7 +742,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
 //    private void deleteRows(final String tableName) throws SQLException {
 //        try (final Connection connection = connectionProvider.getConnection()) {
-//            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + tableName)) {
+//            try (final PreparedStatement preparedStatement =
+//            connection.prepareStatement("delete from " + tableName)) {
 //                preparedStatement.execute();
 //            }
 //        }

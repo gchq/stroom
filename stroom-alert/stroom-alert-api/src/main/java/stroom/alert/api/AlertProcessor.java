@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.alert.api;
 
 import org.apache.lucene.document.Document;
 
 public interface AlertProcessor {
+
     void addIfNeeded(final Document document);
+
     void createAlerts();
 }
 

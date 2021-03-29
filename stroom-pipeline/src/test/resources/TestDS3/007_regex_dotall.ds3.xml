@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter
+    xmlns="data-splitter:3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+    version="3.0">
+
+  <regex pattern="^(?:INFO|DEBUG|WARN|ERROR|TRACE) +.*?(?=(?:(?:INFO|DEBUG|WARN|ERROR|TRACE) +)|\z)" dotAll="true">
+    <group>
+
+      <!-- Now split the single log entry into its parts -->
+      <regex pattern="^([A-Z]+) +([\S]+) - (.*)" dotAll="true">
+        <data name="logLevel" value="$1" />
+        <data name="logger" value="$2" />
+        <data name="message" value="$3" />
+      </regex>
+    </group>
+  </regex>
+</dataSplitter>

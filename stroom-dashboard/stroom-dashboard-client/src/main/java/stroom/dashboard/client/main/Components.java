@@ -16,6 +16,13 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.unknown.UnknownComponentPresenter;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -24,12 +31,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.unknown.UnknownComponentPresenter;
-import stroom.dashboard.shared.DashboardDoc;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class Components implements HasHandlers, HasChangeDataHandlers<Components>, Iterable<Component> {
+
     private final EventBus eventBus;
     private final ComponentRegistry componentRegistry;
 

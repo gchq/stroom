@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.AlertEvent;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
@@ -30,12 +26,17 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 
-import javax.sql.XADataSource;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
+
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
     private final RestFactory restFactory;
@@ -44,7 +45,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private DocRef loadedDataSourceRef;
     private List<String> indexFieldNames;
     private DataSourceFieldsMap dataSourceFieldsMap;
-    private int loadCount;
 
     public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
         this.eventBus = eventBus;
@@ -77,15 +77,16 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
                             indexFieldNames = new ArrayList<>();
                         }
 
-                        loadCount++;
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
                     })
                     .onFailure(caught -> {
                         loadedDataSourceRef = null;
                         indexFieldNames = null;
                         dataSourceFieldsMap = null;
-                        loadCount++;
-                        AlertEvent.fireError(IndexLoader.this, "Unable to locate datasource " + dataSourceRef.getUuid(), null);
+
+                        AlertEvent.fireError(IndexLoader.this,
+                                "Unable to locate datasource " + dataSourceRef.getUuid(),
+                                null);
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
 
                     })
@@ -95,7 +96,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
             loadedDataSourceRef = null;
             indexFieldNames = null;
             dataSourceFieldsMap = null;
-            loadCount++;
             ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
         }
     }
@@ -110,9 +110,5 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public DataSourceFieldsMap getDataSourceFieldsMap() {
         return dataSourceFieldsMap;
-    }
-
-    public int getLoadCount() {
-        return loadCount;
     }
 }

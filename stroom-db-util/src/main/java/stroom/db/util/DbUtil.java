@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -15,8 +14,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.sql.DataSource;
 
 public class DbUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
@@ -26,28 +27,28 @@ public class DbUtil {
     }
 
     public static void validate(final ConnectionConfig connectionConfig) {
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverClassName(),
-            "The JDBC driver class has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUrl(),
-            "The JDBC URL has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUsername(),
-            "The JDBC username has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverPassword(),
-            "The JDBC password has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getClassName(),
+                "The JDBC driver class has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getUrl(),
+                "The JDBC URL has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getUser(),
+                "The JDBC username has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getPassword(),
+                "The JDBC password has not been supplied");
 
         try {
-            Class.forName(connectionConfig.getJdbcDriverClassName());
+            Class.forName(connectionConfig.getClassName());
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Invalid JDBC driver class name {}", connectionConfig.getJdbcDriverClassName()), e);
+                    "Invalid JDBC driver class name {}", connectionConfig.getClassName()), e);
         }
     }
 
     public static Connection getSingleConnection(final ConnectionConfig connectionConfig) throws SQLException {
         return DriverManager.getConnection(
-                connectionConfig.getJdbcDriverUrl(),
-                connectionConfig.getJdbcDriverUsername(),
-                connectionConfig.getJdbcDriverPassword());
+                connectionConfig.getUrl(),
+                connectionConfig.getUser(),
+                connectionConfig.getPassword());
     }
 
     /**
@@ -58,10 +59,10 @@ public class DbUtil {
      * retry pointless, e.g. invalid password, then an exception will be thrown.
      */
     public static void waitForConnection(ConnectionConfig connectionConfig) {
-        final String jdbcUrl = connectionConfig.getJdbcDriverUrl();
-        final String username = connectionConfig.getJdbcDriverUsername();
-        LOGGER.info("Ensuring database connection to {} with username {} and driver class {}",
-                jdbcUrl, username, connectionConfig.getJdbcDriverClassName());
+        final String jdbcUrl = connectionConfig.getUrl();
+        final String username = connectionConfig.getUser();
+        LOGGER.info("Ensuring database connection to [{}] with username [{}] and driver class [{}]",
+                jdbcUrl, username, connectionConfig.getClassName());
 
         long sleepMs = 500;
         Throwable lastThrowable = null;
@@ -80,7 +81,9 @@ public class DbUtil {
                             "Error connecting to {} with username {}", jdbcUrl, username), e);
                 }
                 final Throwable cause = e.getCause();
-                final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+                final String errorMsg = cause != null
+                        ? cause.getMessage()
+                        : e.getMessage();
                 final int vendorCode = e.getErrorCode();
                 LOGGER.warn("Unable to establish database connection due to error: [{}] " +
                                 "and vendorCode [{}], will try again " +
@@ -115,7 +118,9 @@ public class DbUtil {
             return true;
         } catch (SQLException e) {
             final Throwable cause = e.getCause();
-            final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+            final String errorMsg = cause != null
+                    ? cause.getMessage()
+                    : e.getMessage();
             final int vendorCode = e.getErrorCode();
             throw new RuntimeException(LogUtil.message(
                     "Unable to establish database connection due to error: [{}] and vendorCode [{}].",
@@ -145,9 +150,10 @@ public class DbUtil {
             }
         } catch (SQLException e) {
             throw new RuntimeException(
-                LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
+                    LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
         }
     }
+
     public static void renameTable(final Connection connection,
                                    final String oldTableName,
                                    final String newTableName) {
@@ -167,7 +173,7 @@ public class DbUtil {
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(
-                    LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
+                        LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
             }
         } else {
             if (!isIdempotent) {
@@ -183,21 +189,29 @@ public class DbUtil {
 
     public static Integer getInteger(final ResultSet rs, final String strColName) throws SQLException {
         final int nValue = rs.getInt(strColName);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Integer getInteger(final ResultSet rs, final int columnIndex) throws SQLException {
         final int nValue = rs.getInt(columnIndex);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Long getLong(final ResultSet rs, final String strColName) throws SQLException {
         final long nValue = rs.getLong(strColName);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Long getLong(final ResultSet rs, final int columnIndex) throws SQLException {
         final long nValue = rs.getLong(columnIndex);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 }

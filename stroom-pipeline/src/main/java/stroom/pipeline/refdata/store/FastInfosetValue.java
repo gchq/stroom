@@ -44,11 +44,11 @@ public class FastInfosetValue extends RefDataValue {
 
 
     @Override
-    public int getValueHashCode() {
-//        return Arrays.hashCode(fastInfosetBytes);
-        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
+    public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -59,7 +59,7 @@ public class FastInfosetValue extends RefDataValue {
 
     @Override
     public int hashCode() {
-        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
+        return ByteBufferUtils.basicHashCode(fastInfosetByteBuffer);
     }
 
     public ByteBuffer getByteBuffer() {

@@ -1,7 +1,5 @@
-import DocRefImage from './DocRefImage';
+import DocRefImage from "./DocRefImage";
 
 export default DocRefImage;
 
-export {
-  DocRefImage
-}
+export { DocRefImage };

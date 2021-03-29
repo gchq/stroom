@@ -16,44 +16,62 @@
 
 package stroom.activity.impl;
 
-import com.google.inject.Inject;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.Activity;
+import stroom.security.api.SecurityContext;
+
+import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class CurrentActivityImpl implements CurrentActivity {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CurrentActivity.class);
+
     private static final String NAME = "SESSION_ACTIVITY";
     private final Provider<HttpServletRequest> httpServletRequestProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    CurrentActivityImpl(final Provider<HttpServletRequest> httpServletRequestProvider) {
+    CurrentActivityImpl(final Provider<HttpServletRequest> httpServletRequestProvider,
+                        final SecurityContext securityContext) {
         this.httpServletRequestProvider = httpServletRequestProvider;
+        this.securityContext = securityContext;
     }
 
     public Activity getActivity() {
-        Activity activity = null;
+        return securityContext.secureResult(() -> {
+            Activity activity = null;
 
-        final HttpServletRequest request = httpServletRequestProvider.get();
-        if (request != null) {
-            final HttpSession session = request.getSession();
-            final Object object = session.getAttribute(NAME);
-            if (object instanceof Activity) {
-                activity = (Activity) object;
+            try {
+                final HttpServletRequest request = httpServletRequestProvider.get();
+                if (request != null) {
+                    final HttpSession session = request.getSession();
+                    final Object object = session.getAttribute(NAME);
+                    if (object instanceof Activity) {
+                        activity = (Activity) object;
+                    }
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
             }
-        }
 
-        return activity;
+            return activity;
+        });
     }
 
     public void setActivity(final Activity activity) {
-        final HttpServletRequest request = httpServletRequestProvider.get();
-        if (request != null) {
-            final HttpSession session = request.getSession();
-            session.setAttribute(NAME, activity);
-        }
+        securityContext.secure(() -> {
+            final HttpServletRequest request = httpServletRequestProvider.get();
+            if (request != null) {
+                final HttpSession session = request.getSession();
+                session.setAttribute(NAME, activity);
+            }
+        });
     }
 }
 

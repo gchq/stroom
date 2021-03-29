@@ -10,6 +10,7 @@ import stroom.index.impl.IndexVolumeGroupDao;
 import javax.sql.DataSource;
 
 public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
+
     private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";
     private static final String FLYWAY_TABLE = "index_schema_history";
@@ -48,6 +49,7 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbCo
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements IndexDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

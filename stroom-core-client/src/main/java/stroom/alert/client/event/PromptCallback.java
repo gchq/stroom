@@ -17,5 +17,6 @@
 package stroom.alert.client.event;
 
 public interface PromptCallback {
+
     void onResult(String result);
 }

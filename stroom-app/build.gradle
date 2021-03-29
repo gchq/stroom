@@ -10,33 +10,54 @@ buildscript {
 }
 
 plugins {
-    id "com.benjaminsproule.swagger" version "1.0.8"
+//    id "com.benjaminsproule.swagger" version "1.0.14"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
+    id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.7"
 }
 
+configurations {
+    swagger {
+        extendsFrom runtimeClasspath
+        resolutionStrategy {
+            // The swagger plugin seems to need a particular version of jackson wich is more recent
+            // than ours so force it here.
+            force "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-core:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-databind:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-dataformat-yaml:${versions.jackson_swagger}"
+            force "com.fasterxml.jackson.core:jackson-datatype-jsr310:${versions.jackson_swagger}"
 
-import org.reflections.Reflections
-import org.reflections.scanners.SubTypesScanner
-import org.reflections.scanners.TypeAnnotationsScanner
-import org.reflections.util.ConfigurationBuilder
-import org.reflections.util.FilterBuilder
-import java.nio.file.Paths
-import java.nio.file.Files
+            //dependencySubstitution {
+                //// for some reason the DEBUG logging in the swagger plugin is being
+                //// output as part of the gradle build. This is a very crude hack to stop it
+                //// accepting that you will get no logging at all, even errors.
+                //substitute 
+                    //module("ch.qos.logback:logback-classic") 
+                    //using module("org.slf4j:slf4j-nop:1.7.30") 
+                    //because "We don't want all the debug"
+            //}
+        }
+    }
+}
 
 ext.moduleName = 'stroom.app'
 
 def uiDir = project.file('src/main/resources/ui')
-def swaggerDir = "${uiDir}/noauth/swagger"
-def restResourceClassNames = []
-def jarName = 'stroom-app.jar'
+//def swaggerDir = "${uiDir}/noauth/swagger"
+//def restResourceClassNames = []
+//def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
-def releaseBuildDir = 'build/release'
-def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
-def configSchemaFile = releaseBuildDir + '/config/config-schema.yml'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.0'
+def releaseBuildDir = "${projectDir}/build/release"
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
+def stroomZipDistContentPacksDir = "${releaseBuildDir}/content_packs"
+def stroomDockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
 mainClassName = 'stroom.app.App'
 
 dependencies {
@@ -44,8 +65,6 @@ dependencies {
     compile project(':stroom-alert:stroom-alert-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-annotation:stroom-annotation-pipeline')
-    compile project(':stroom-authentication:stroom-authentication-impl')
-    compile project(':stroom-authentication:stroom-authentication-impl-db')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
@@ -68,9 +87,11 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-dropwizard-common')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-elastic:stroom-elastic-impl-http')
+//    compile project(':stroom-elastic:stroom-elastic-impl')
+//    compile project(':stroom-elastic:stroom-elastic-impl-http')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
     compile project(':stroom-explorer:stroom-explorer-impl')
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-impl')
@@ -88,12 +109,16 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-search:stroom-searchable-impl')
+    compile project(':stroom-security:stroom-security-identity')
+    compile project(':stroom-security:stroom-security-identity-db')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -121,7 +146,7 @@ dependencies {
     compile libs.dropwizard_validation
     compile libs.flyway_core
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jaxb_api
@@ -132,7 +157,7 @@ dependencies {
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.validation_api
     compile libs.ws_rs_api
 
@@ -144,7 +169,6 @@ dependencies {
 
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
-    testCompile project(':stroom-authentication:stroom-authentication-impl')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')
@@ -156,9 +180,10 @@ dependencies {
     testCompile project(':stroom-docstore:stroom-docstore-api')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-elastic:stroom-elastic-impl')
+//    testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-explorer:stroom-explorer-api')
     testCompile project(':stroom-explorer:stroom-explorer-impl')
@@ -173,6 +198,7 @@ dependencies {
     testCompile project(':stroom-pipeline')
     testCompile project(':stroom-processor:stroom-processor-mock')
     testCompile project(':stroom-receive:stroom-receive-rules-impl')
+    testCompile project(':stroom-security:stroom-security-identity')
     testCompile project(':stroom-security:stroom-security-api')
     testCompile project(':stroom-security:stroom-security-impl')
     testCompile project(':stroom-security:stroom-security-mock')
@@ -188,15 +214,16 @@ dependencies {
 
     testCompile libs.commons_io
     testCompile libs.classgraph
-    testCompile libs.guice4
+    testCompile libs.guice5
     testCompile libs.guice_extension
     testCompile libs.hikari
+    testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
     testCompile libs.lmdbjava
     testCompile libs.lucene_core
     testCompile libs.saxon_he
     testCompile libs.slf4j_api
-    testCompile libs.stroomQueryCommon
+    testCompile libs.stroomTestData
     testCompile libs.vavr
 
     testRuntimeOnly libs.javax_activation
@@ -226,25 +253,39 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-    archiveName jarName
+//    archiveName jarName
     exclude '**/gwt-unitCache'
 }
+
+//// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+//task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
+//task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
+//task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
+//buildUiPart1.mustRunAfter  ":stroom-ui:jar"
+//buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
+//buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
+//buildUiPart2.mustRunAfter buildUiPart1
+//buildUiPart3.mustRunAfter buildUiPart2
+//
+// Make sure GWT compilation doesn't run before tests.
+//tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
-    // We want to compile all GWT content before we build the fat jar.
-    dependsOn ':stroom-app-gwt:gwtCompile'
-    dependsOn ':stroom-dashboard-gwt:gwtCompile'
-    // We need the React UI artifacts
-    dependsOn ':stroom-ui:copyYarnBuild'
+    // We want to compile all GWT and React content before we build the fat jar.
+    dependsOn ":stroom-ui:copyYarnBuild"
+    dependsOn ":stroom-app-gwt:gwtCompile"
+    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
-    dependsOn generateSwaggerDocumentation
+    dependsOn resolve
 
     // Allows us to build fat jars with lots of files
     zip64 true
 
-    // Ensure we include the GWT generated resources.
+    // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
@@ -253,10 +294,6 @@ shadowJar {
     archiveName fatJarName
     exclude '**/gwt-unitCache'
 }
-// Make sure GWT compilation doesn't run before tests.
-tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
@@ -277,23 +314,52 @@ task migrate(type: JavaExec) {
     args 'migrate', '../local.yml'
 }
 
-def stroomDockerBuildDir = "${projectDir}/docker/build"
 
 clean {
     delete stroomDockerBuildDir
+    delete releaseBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.dist.GenerateDistributionConfig"
+}
+
+task downloadStroomContentForDocker(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomDockerContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
+}
+
+task downloadStroomContentForZipDist(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomZipDistContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomZipDistContentPacksDir]
+}
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
-    dependsOn parent.downloadStroomContent
+    //dependsOn parent.downloadStroomContent
+    dependsOn generateConfigFiles
+    dependsOn downloadStroomContentForDocker
 
     doFirst {
-        new File(stroomPluginsDir).mkdirs()
-        def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/contentPacks"
-        def stroomDockerPluginsDir = "${stroomDockerBuildDir}/plugins"
-        new File(stroomPluginsDir).mkdirs()
 
         // Copy the stroom app fat jar
         copy {
@@ -301,174 +367,193 @@ task copyFilesForStroomDockerBuild() {
             into stroomDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/prod.yml"
-            into stroomDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
-        copy {
-            from "${contentPackDownloadDir}"
-            into stroomDockerContentPacksDir
-        }
+        //copy {
+            //from "${contentPackDownloadDir}"
+            //into stroomDockerContentPacksDir
+        //}
     }
 }
 
-// Generate the swagger spec files from the resource classes
-// For configuration see https://github.com/gigaSproule/swagger-gradle-plugin
-// 
-// If you see big stack traces like:
-//   could not create Dir using jarFile from url file:/home/dev/git_work/stroom/stroom-task/stroom-task-api/build/libs/stroom-task-api-v9.9.9.jar. skipping.
-//   java.lang.NullPointerException
-//   could not create Vfs.Dir from url. ignoring the exception and continuing
-//   org.reflections.ReflectionsException: Could not open url connection
-// it may be caused by running a versioned build (-Pversion=v9.9.9) and then a non-versioned
-// or vice versa.  The gradle daemon seems to hold references to jars from previous builds
-// somewhere so swagger then looks for classes that don't exist. You can either do
-// ./gradlew --stop to stop the daemon or run a build with --no-daemon
-swagger {
-    apiSource {
-        springmvc = false
-        outputFormats = ['json', 'yaml']
-        // See prepareSwaggerClasses task
-        locations = restResourceClassNames
-        schemes = ['https']
-        basePath = '/api'
-        info {
-            title = 'Stroom API'
-            version = 'v1/v2'
-            description = 'Various APIs for interacting with Stroom and its data'
-            contact {
-                name = 'Stroom'
-                url = 'https://github.com/gchq/stroom'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        // Define the security definitions that are available
-        securityDefinition {
-            // `name` can be used refer to this security schemes from elsewhere
-            name = 'ApiKeyAuth'
-            type = 'apiKey'
-            // The location of the API key. Valid values are "query" or "header".
-            keyLocation = 'header'
-            // The name of the header
-            keyName = 'Authorization'
-        }
-        // Defing the named security definition to use for the whole API
-        security = [ [ ApiKeyAuth : [] ] ]
-        swaggerDirectory = "${swaggerDir}"
-    }
+//// Generate the swagger spec files from the resource classes
+//// For configuration see https://github.com/gigaSproule/swagger-gradle-plugin
+////
+//// If you see big stack traces like:
+////   could not create Dir using jarFile from url file:/home/dev/git_work/stroom/stroom-task/stroom-task-api/build/libs/stroom-task-api-v9.9.9.jar. skipping.
+////   java.lang.NullPointerException
+////   could not create Vfs.Dir from url. ignoring the exception and continuing
+////   org.reflections.ReflectionsException: Could not open url connection
+//// it may be caused by running a versioned build (-Pversion=v9.9.9) and then a non-versioned
+//// or vice versa.  The gradle daemon seems to hold references to jars from previous builds
+//// somewhere so swagger then looks for classes that don't exist. You can either do
+//// ./gradlew --stop to stop the daemon or run a build with --no-daemon
+//swagger {
+//    apiSource {
+//        springmvc = false
+//        outputFormats = ['json', 'yaml']
+//        // See prepareSwaggerClasses task
+//        locations = restResourceClassNames
+//        schemes = ['https']
+//        basePath = '/api'
+//        info {
+//            title = 'Stroom API'
+//            version = 'v1/v2'
+//            description = 'Various APIs for interacting with Stroom and its data'
+//            contact {
+//                name = 'Stroom'
+//                url = 'https://github.com/gchq/stroom'
+//            }
+//            license {
+//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+//                name = 'Apache 2.0'
+//            }
+//        }
+//        // Define the security definitions that are available
+//        securityDefinition {
+//            // `name` can be used refer to this security schemes from elsewhere
+//            name = 'ApiKeyAuth'
+//            type = 'apiKey'
+//            // The location of the API key. Valid values are "query" or "header".
+//            keyLocation = 'header'
+//            // The name of the header
+//            keyName = 'Authorization'
+//        }
+//        // Defing the named security definition to use for the whole API
+//        security = [[ApiKeyAuth: []]]
+//        swaggerDirectory = "${swaggerDir}"
+//    }
+//}
+
+resolve {
+    outputFileName = 'stroom'
+    outputFormat = 'JSONANDYAML'
+    prettyPrint = 'TRUE'
+    sortOutput = 'TRUE'
+    openApiFile = file('openapi.yaml')
+    // As we are pulling in the whole classpath, that includes stroom-app and all the dropwiz
+    // deps which includes logback-classic.  In the absence of a logback.xml logback will output
+    // DEBUG which makes for a LOT of output. Thus provide it with a logback.xml to use
+    // so we have control.
+    classpath = configurations.swagger + files("../config/swagger-plugin")
+    resourcePackages = ['stroom']
+    outputDir = file('src/main/resources/ui/noauth/swagger')
 }
 
-
-// A task to fix the classpath for running the swagger plugin and
-// to scan the classpath to find all the REST resource classes to pass to
-// the plugin to generate documentation for.
-// It is a chicken/egg problem as we can't really use the stroom-app jar as
-// that is where we need to put the generated swagger.json file. Thus
-// abuse the build classpath so we can see all the sub projects.
-task prepareSwaggerClasses {
-
-    doLast {
-        // Get all jars from the compile classpath
-        def urls = project.configurations.compileClasspath.resolve()
-            .collect { 
-                it.toURI().toURL() 
-            }
-
-        // Add each one to the gradle build script classpath
-        // so the swagger plugin can see them all.
-        // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
-        urls.each { 
-            //println "classpath url ${it}"
-            buildscript.classLoader.addURL it 
-        }
-
-        // Now filter down to just our stroom jars
-        def stroomUrls = urls
-            .findAll {
-                // We need the version in there as jars are versioned
-                // when we set an explicit build version
-                boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
-                //if (isStroomJar) {
-                    //println it.toString()
-                //}
-                return isStroomJar
-            }
-            .findAll {
-                // ensure it exists - it should really
-                Files.isRegularFile(Paths.get(it.toURI()))
-            }
-            .sort {
-                it.toString()
-            }
-            .unique();
-
-        // Scan all the stroom pkgs in the stroom jars
-        // Filter should be redundant if we only look in stroom jars, but what the heck
-        ConfigurationBuilder configBuilder = new ConfigurationBuilder()
-             .filterInputsBy(new FilterBuilder().includePackage("stroom"))
-             .setUrls(stroomUrls)
-             .setScanners(
-                new TypeAnnotationsScanner(), 
-                new SubTypesScanner()
-             );
-
-        // Find all the @Api classes
-        Reflections reflections = new Reflections(configBuilder);
-        Set<Class<?>> restClasses = reflections
-            .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
-
-        logger.info("Adding API classes to Swagger spec")
-
-        // Add them to a list for swagger to scan over
-        restClasses
-            .sort { it.name }
-            .each {
-                restResourceClassNames.add(it.name)
-                logger.info it.name
-            }
-        print "Using swagger directory ${swaggerDir}"
-    }
-}
-generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
-
+//// A task to fix the classpath for running the swagger plugin and
+//// to scan the classpath to find all the REST resource classes to pass to
+//// the plugin to generate documentation for.
+//// It is a chicken/egg problem as we can't really use the stroom-app jar as
+//// that is where we need to put the generated swagger.json file. Thus
+//// abuse the build classpath so we can see all the sub projects.
+//task prepareSwaggerClasses {
+//    doLast {
+//        // Get all jars from the compile classpath
+//        def urls = project.configurations.compileClasspath.resolve()
+//                .collect {
+//                    it.toURI().toURL()
+//                }
+//
+//        // Add each one to the gradle build script classpath
+//        // so the swagger plugin can see them all.
+//        // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
+//        urls.each {
+//            //println "classpath url ${it}"
+//            buildscript.classLoader.addURL it
+//        }
+//
+//        // Now filter down to just our stroom jars
+//        def stroomUrls = urls
+//                .findAll {
+//                    // We need the version in there as jars are versioned
+//                    // when we set an explicit build version
+//                    boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
+//                    //if (isStroomJar) {
+//                    //println it.toString()
+//                    //}
+//                    return isStroomJar
+//                }
+//                .findAll {
+//                    // ensure it exists - it should really
+//                    Files.isRegularFile(Paths.get(it.toURI()))
+//                }
+//                .sort {
+//                    it.toString()
+//                }
+//                .unique();
+//
+//        // Scan all the stroom pkgs in the stroom jars
+//        // Filter should be redundant if we only look in stroom jars, but what the heck
+//        ConfigurationBuilder configBuilder = new ConfigurationBuilder()
+//                .filterInputsBy(new FilterBuilder().includePackage("stroom"))
+//                .setUrls(stroomUrls)
+//                .setScanners(
+//                        new TypeAnnotationsScanner(),
+//                        new SubTypesScanner()
+//                );
+//
+//        // Find all the @Api classes
+//        Reflections reflections = new Reflections(configBuilder);
+//        Set<Class<?>> restClasses = reflections
+//                .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
+//
+//        logger.info("Adding API classes to Swagger spec")
+//
+//        // Add them to a list for swagger to scan over
+//        restClasses
+//                .sort { it.name }
+//                .each {
+//                    restResourceClassNames.add(it.name)
+//                    logger.info it.name
+//                }
+//        print "Using swagger directory ${swaggerDir}"
+//    }
+//}
+//generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
 
 task copyJar(type: Copy) {
+    dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
 
+task copyCommonSupportingFiles(type: Copy) {
+    from '../dist'
+    into releaseBuildDir
+}
+
 task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
+    from 'src/main/resources/banner.txt'
     from 'src/dist'
-    into releaseBuildDir 
+    into releaseBuildDir
 
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
 task downloadSend(type: Download) {
+    dependsOn copySupportingFiles
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task downloadSendArgs(type: Download) {
+    dependsOn copySupportingFiles
     src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task makeSendExecutable {
-    dependsOn copySupportingFiles
-    doLast{
+    dependsOn downloadSend
+    doLast {
         // The args script is sourced so doesn't need execute perms
         exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
@@ -476,10 +561,10 @@ task makeSendExecutable {
     }
 }
 
-task copyContentPackToDistribution(type: Copy) {
-    from contentPackDownloadDir
-    into "${releaseBuildDir}/contentPacks"
-}
+//task copyContentPackToDistribution(type: Copy) {
+    //from contentPackDownloadDir
+    //into "${releaseBuildDir}/contentPacks"
+//}
 
 // Create an example yaml config file from the compile-time defaults
 task generateConfigDefaultsYamlFile(type: JavaExec) {
@@ -500,8 +585,8 @@ task buildDistribution(type: Zip) {
     dependsOn downloadSend
     dependsOn downloadSendArgs
     dependsOn makeSendExecutable
-    dependsOn parent.downloadStroomContent
-    dependsOn copyContentPackToDistribution
+    dependsOn downloadStroomContentForZipDist
+    dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir
@@ -509,7 +594,7 @@ task buildDistribution(type: Zip) {
 
 // Ensure that the test task for this project runs after all other test tasks as
 // this project has all the lengthy int tests so we want it to fail fast
-def thisProject = project;
+def thisProject = project
 rootProject.subprojects { subProj ->
     //println "subProj ${subProj.name} project ${thisProject.name}"
     if (!subProj.name.equals(thisProject.name)) {
@@ -522,13 +607,12 @@ rootProject.subprojects { subProj ->
     }
 }
 
-// Ensure all projects have built their jars so swagger can see them
-tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
+//// Ensure all projects have built their jars so swagger can see them
+//tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
-tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForStroomDockerBuild
-tasks.build.dependsOn shadowJar
-tasks.build.dependsOn buildDistribution
+//tasks.build.dependsOn resolve
+//tasks.build.dependsOn copyFilesForStroomDockerBuild
+//tasks.build.dependsOn buildDistribution
 
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin
@@ -557,20 +641,41 @@ shadowDistTar.enabled = false
 ////}
 //}
 
-
 task setupSampleDataApplication(type: JavaExec) {
-    dependsOn this:compileJava
-    dependsOn this:compileTestJava
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
+
+    args = ['local.yml']
 }
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
 ////for its test. This is a TODO as stroom-connectors needs a big refactor once we
 ////decide what we are doing with plugable client libs and pipeline elements.
 //tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+
+// Make sure GWT compilation doesn't run before processResources.
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
+
+// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeTestClassesDependencies
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
+tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
+tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
+
+// Make the build command create the full distribution
+tasks.build.dependsOn resolve
+tasks.build.dependsOn copyFilesForStroomDockerBuild
+tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution
 
 // vim: set tabstop=4 shiftwidth=4 expandtab:

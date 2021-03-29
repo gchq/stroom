@@ -28,9 +28,16 @@ import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
-        "showDetail"})
-@Deprecated
+@XmlType(name = "table", propOrder = {
+        "queryId",
+        "fields",
+        "extractValues",
+        "extractionPipeline",
+        "maxResults",
+        "showDetail",
+        "conditionalFormattingRules",
+        "modelVersion"
+})
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
@@ -48,6 +55,11 @@ public class TableComponentSettings extends ComponentSettings {
     private int[] maxResults = DEFAULT_MAX_RESULTS;
     @XmlElement(name = "showDetail")
     private Boolean showDetail;
+    @XmlElementWrapper(name = "conditionalFormattingRules")
+    @XmlElements({@XmlElement(name = "conditionalFormattingRule", type = ConditionalFormattingRule.class)})
+    private List<ConditionalFormattingRule> conditionalFormattingRules;
+    @XmlElement(name = "modelVersion")
+    private String modelVersion;
 
     public TableComponentSettings() {
         // Default constructor necessary for GWT serialisation.
@@ -57,7 +69,12 @@ public class TableComponentSettings extends ComponentSettings {
         this.fields = fields;
     }
 
-    public TableComponentSettings(final String queryId, final List<Field> fields, final Boolean extractValues, final DocRef extractionPipeline, final int[] maxResults, final Boolean showDetail) {
+    public TableComponentSettings(final String queryId,
+                                  final List<Field> fields,
+                                  final Boolean extractValues,
+                                  final DocRef extractionPipeline,
+                                  final int[] maxResults,
+                                  final Boolean showDetail) {
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
@@ -160,47 +177,56 @@ public class TableComponentSettings extends ComponentSettings {
         return showDetail;
     }
 
+    public List<ConditionalFormattingRule> getConditionalFormattingRules() {
+        return conditionalFormattingRules;
+    }
+
+    public void setConditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        this.conditionalFormattingRules = conditionalFormattingRules;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(final String modelVersion) {
+        this.modelVersion = modelVersion;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof TableComponentSettings)) {
-            return false;
-        }
-
-        final TableComponentSettings tableSettings = (TableComponentSettings) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(queryId, tableSettings.queryId);
-        builder.append(fields, tableSettings.fields);
-        builder.append(extractValues, tableSettings.extractValues);
-        builder.append(extractionPipeline, tableSettings.extractionPipeline);
-        builder.append(maxResults, tableSettings.maxResults);
-        builder.append(showDetail, tableSettings.showDetail);
-        return builder.isEquals();
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final TableComponentSettings that = (TableComponentSettings) o;
+        return Objects.equals(queryId, that.queryId) &&
+                Objects.equals(fields, that.fields) &&
+                Objects.equals(extractValues, that.extractValues) &&
+                Objects.equals(extractionPipeline, that.extractionPipeline) &&
+                Arrays.equals(maxResults, that.maxResults) &&
+                Objects.equals(showDetail, that.showDetail) &&
+                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+                Objects.equals(modelVersion, that.modelVersion);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(queryId);
-        builder.append(fields);
-        builder.append(extractValues);
-        builder.append(extractionPipeline);
-        builder.append(maxResults);
-        builder.append(showDetail);
-        return builder.toHashCode();
+        int result = Objects.hash(queryId, fields, extractValues, extractionPipeline, showDetail, conditionalFormattingRules, modelVersion);
+        result = 31 * result + Arrays.hashCode(maxResults);
+        return result;
     }
 
     @Override
     public String toString() {
-        final ToStringBuilder builder = new ToStringBuilder();
-        builder.append("queryId", queryId);
-        builder.append("fields", fields);
-        builder.append("extractValues", extractValues);
-        builder.append("extractionPipeline", extractionPipeline);
-        builder.append("maxResults", Arrays.toString(maxResults));
-        builder.append("showDetail", showDetail);
-        return builder.toString();
+        return "TableComponentSettings{" +
+                "queryId='" + queryId + '\'' +
+                ", fields=" + fields +
+                ", extractValues=" + extractValues +
+                ", extractionPipeline=" + extractionPipeline +
+                ", maxResults=" + Arrays.toString(maxResults) +
+                ", showDetail=" + showDetail +
+                ", conditionalFormattingRules=" + conditionalFormattingRules +
+                ", modelVersion='" + modelVersion + '\'' +
+                '}';
     }
 
     public TableComponentSettings copy() {

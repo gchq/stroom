@@ -1,11 +1,12 @@
 package stroom.data.zip;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -16,8 +17,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
+
     private static final String LOCK_EXTENSION = ".lock";
-    private static Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
     private final ZipOutputStream zipOutputStream;
@@ -34,7 +36,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         this(file, taskContext, true);
     }
 
-    public StroomZipOutputStreamImpl(final Path path, final TaskContext taskContext, final boolean monitorEntries) throws IOException {
+    public StroomZipOutputStreamImpl(final Path path, final TaskContext taskContext, final boolean monitorEntries)
+            throws IOException {
         Path file = path;
         Path lockFile = path.getParent().resolve(path.getFileName().toString() + LOCK_EXTENSION);
 
@@ -53,7 +56,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
         final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
         final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
-        final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream, streamProgressMonitor);
+        final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
+                streamProgressMonitor);
         zipOutputStream = new ZipOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
@@ -152,7 +156,9 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     public void closeDelete() throws IOException {
         // ZIP's don't like to be empty !
         if (entryCount == 0) {
-            final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT", "NULL", StroomZipFileType.Data).getFullName());
+            final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT",
+                    "NULL",
+                    StroomZipFileType.Data).getFullName());
             os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
             os.close();
         }

@@ -16,20 +16,13 @@
 
 package stroom.search.extraction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
-
 import stroom.alert.api.AlertDefinition;
 import stroom.alert.api.AlertManager;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.impl.TableSettingsUtil;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -37,17 +30,22 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-//import stroom.pipeline.xml.event.simple.AttributesImpl;
-//import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.search.coprocessor.Values;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
+
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -57,10 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import javax.inject.Inject;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchResultOutputFilter.class);
 
     private static final String RECORDS = "records";
@@ -83,18 +83,20 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private Map<String, String> indexVals = new HashMap<>();
 
     @Inject
-    SearchResultOutputFilter (final AlertManager alertManager, final LocationFactoryProxy locationFactory, final ErrorReceiverProxy errorReceiverProxy){
+    SearchResultOutputFilter(final AlertManager alertManager, final LocationFactoryProxy locationFactory,
+                              final ErrorReceiverProxy errorReceiverProxy) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.timeZoneId = alertManager.getTimeZoneId();
         isoFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS'Z'");
         isoFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(timeZoneId)));
-        additionalFieldsPrefix = alertManager.getAdditionalFieldsPrefix() != null ? alertManager.getAdditionalFieldsPrefix() : "";
+        additionalFieldsPrefix = alertManager.getAdditionalFieldsPrefix() != null ?
+                alertManager.getAdditionalFieldsPrefix() : "";
         outputIndexFields = alertManager.isReportAllExtractedFieldsEnabled();
 
     }
 
-    public boolean isConfiguredForAlerting(){
+    public boolean isConfiguredForAlerting() {
         return alertDefinitions != null;
     }
 
@@ -111,12 +113,12 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
                 if (isConfiguredForAlerting()) {
                     indexVals.put(name, value);
-                } 
+                }
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final int fieldIndex = fieldIndexes.get(name);
-                    if (fieldIndex >= 0) {
-                        values[fieldIndex] = ValString.create(value);
+                    final Integer pos = fieldIndexes.getPos(name);
+                    if (pos != null) {
+                        values[pos] = ValString.create(value);
                     }
                 }
             }
@@ -124,7 +126,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             values = new Val[fieldIndexes.size()];
             recordAtts = atts;
             indexVals.clear();
-        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
+        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)) {
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -132,30 +134,32 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-
             if (isConfiguredForAlerting()) {
                 //Alert generation search extraction - create records when filters match
                 if (values == null || values.length == 0) {
-                    log(Severity.WARNING,"No values to extract from ",null );
+                    log(Severity.WARNING, "No values to extract from ", null);
                     return;
                 }
 
-                Values vals = new Values (values);
-                for (AlertDefinition rule : alertDefinitions){
-                   if (!rule.isDisabled()) {
-                       CompiledFieldValue[] outputFields = extractAlert(rule, vals);
-                       if (outputFields != null) {
-                           writeRecord(uri, qName, rule, outputFields);
-                       }
-                   }
+                Val[] vals = values;
+                for (AlertDefinition rule : alertDefinitions) {
+                    if (!rule.isDisabled()) {
+                        CompiledFieldValue[] outputFields = extractAlert(rule, vals);
+                        if (outputFields != null) {
+                            writeRecord(uri, qName, rule, outputFields);
+                        }
+                    }
                 }
             } else {
                 //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
-                consumer.accept(new Values(values));
+                SearchDebugUtil.writeExtractionData(values);
+
+                consumer.accept(values);
+                count++;
                 values = null;
             }
 
-        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
+        } else if (isConfiguredForAlerting() && !DATA.equals(localName)) {
             super.endElement(uri, localName, qName);
         }
 
@@ -164,12 +168,12 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         //Extraction pipeline ends at this element if not alerting (i.e. interactive searching)
-        if (isConfiguredForAlerting()){
+        if (isConfiguredForAlerting()) {
             super.characters(ch, start, length);
         }
     }
 
-    private void createDataElement(String nsUri, String name, String value) throws SAXException{
+    private void createDataElement(String nsUri, String name, String value) throws SAXException {
         AttributesImpl attrs = new AttributesImpl();
         attrs.addAttribute("", NAME, NAME, "xs:string", name);
         attrs.addAttribute("", VALUE, VALUE, "xs:string", value);
@@ -177,12 +181,13 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         super.endElement(nsUri, DATA, DATA);
     }
 
-    private void writeRecord(String nsUri, String recordsQName, AlertDefinition alertDefinition, CompiledFieldValue[] fieldVals) throws SAXException {
+    private void writeRecord(String nsUri, String recordsQName, AlertDefinition alertDefinition,
+                             CompiledFieldValue[] fieldVals) throws SAXException {
         if (fieldVals == null || fieldVals.length == 0) {
             return;
         }
 
-        if (fieldVals.length != alertDefinition.getTableComponentSettings().getFields().size()){
+        if (fieldVals.length != alertDefinition.getTableComponentSettings().getFields().size()) {
             log(Severity.ERROR, "Incorrect number of fields extracted for alert! " +
                     "Need " + alertDefinition.getTableComponentSettings().getFields().size() +
                     " but got " + fieldVals.length, null);
@@ -192,16 +197,16 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
         super.startElement(nsUri, RECORD, recordsQName, recordAtts);
 
-        createDataElement (nsUri, AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, isoFormat.format(new Date()));
-        for (String attrName : alertDefinition.getAttributes().keySet()){
-            createDataElement (nsUri, attrName, alertDefinition.getAttributes().get(attrName));
+        createDataElement(nsUri, AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, isoFormat.format(new Date()));
+        for (String attrName : alertDefinition.getAttributes().keySet()) {
+            createDataElement(nsUri, attrName, alertDefinition.getAttributes().get(attrName));
         }
 
         //Output all the dashboard fields
         List<String> skipFields = new ArrayList<>();
         final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(timeZoneId));
         int index = 0;
-        for (stroom.dashboard.shared.Field field: alertDefinition.getTableComponentSettings().getFields()){
+        for (Field field : alertDefinition.getTableComponentSettings().getFields()) {
             if (field.isVisible()) {
                 String fieldName = field.getDisplayValue();
                 Val fieldVal = fieldVals[index].getVal();
@@ -209,7 +214,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 //Remember this field so not to output again
                 skipFields.add(fieldName);
                 if (fieldVal != null) {
-                    String fieldValStr = fieldFormatter.format(fieldVals[index].getCompiledField().getField(), fieldVal);
+                    String fieldValStr = fieldFormatter
+                            .format(fieldVals[index].getCompiledField().getField(), fieldVal);
                     createDataElement(nsUri, fieldName, fieldValStr);
                 }
             }
@@ -224,14 +230,14 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         String streamId = "Unknown";
         String eventId = "Unknown";
         for (String fieldName : toOutput) {
-            if (IndexConstants.STREAM_ID.equals(fieldName)){
+            if (IndexConstants.STREAM_ID.equals(fieldName)) {
                 streamId = indexVals.get(fieldName);
                 createDataElement(nsUri, AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, streamId);
-            } else if (IndexConstants.EVENT_ID.equals(fieldName)){
+            } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
                 eventId = indexVals.get(fieldName);
                 createDataElement(nsUri, AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, eventId);
             } else if (outputIndexFields) {
-                createDataElement(nsUri,additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
+                createDataElement(nsUri, additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
             }
         }
 
@@ -240,14 +246,22 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         super.endElement(nsUri, RECORD, RECORD);
     }
 
-    private CompiledFieldValue[] extractAlert (AlertDefinition rule, Values vals) {
-        TableSettings tableSettings = TableSettingsUtil.mapTableSettings(rule.getTableComponentSettings());
+    private CompiledFieldValue[] extractAlert(AlertDefinition rule, Val[] vals) {
+        TableComponentSettings tableComponentSettings = rule.getTableComponentSettings();
+        TableSettings tableSettings = TableSettings.builder()
+                .queryId(tableComponentSettings.getQueryId())
+                .addFields(tableComponentSettings.getFields())
+                .extractValues(tableComponentSettings.extractValues())
+                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
+                .addMaxResults(tableComponentSettings.getMaxResults())
+                .showDetail(tableComponentSettings.getShowDetail())
+                .build();
 
         final List<stroom.query.api.v2.Field> fields = tableSettings.getFields();
-        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexes,
+        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndexes,
                 paramMapForAlerting);
 
-        final CompiledFieldValue[] output = new CompiledFieldValue [compiledFields.size()];
+        final CompiledFieldValue[] output = new CompiledFieldValue [compiledFields.length];
         int index = 0;
 
         for (final CompiledField compiledField : compiledFields) {
@@ -255,15 +269,17 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
             if (expression != null) {
                 if (expression.hasAggregate()) {
-                    LOGGER.error("Rules error: Dashboard " + rule.getAttributes().getOrDefault(AlertManager.DASHBOARD_NAME_KEY, "Unknown")
-                            + " at " + rule.getAttributes().getOrDefault(AlertManager.RULES_FOLDER_KEY, "Unknown location")
+                    LOGGER.error("Rules error: Dashboard " +
+                            rule.getAttributes().getOrDefault(AlertManager.DASHBOARD_NAME_KEY, "Unknown")
+                            + " at " + rule.getAttributes().getOrDefault(AlertManager.RULES_FOLDER_KEY,
+                            "Unknown location")
                             + " contains aggregate functions.  This is not supported.");
                     rule.setDisabled(true);
                     return null;
                 } else {
                     final Generator generator = expression.createGenerator();
 
-                    generator.set(vals.getValues());
+                    generator.set(vals);
                     Val value = generator.eval();
                     output[index] = new CompiledFieldValue(compiledField, value);
 
@@ -271,7 +287,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                         // If we are filtering then we need to evaluate this field
                         // now so that we can filter the resultant value.
 
-                        if (compiledField.getCompiledFilter() != null && value != null && !compiledField.getCompiledFilter().match(value.toString())) {
+                        if (compiledField.getCompiledFilter() != null && value != null
+                                && !compiledField.getCompiledFilter().match(value.toString())) {
                             // We want to exclude this item.
                             return null;
                         }

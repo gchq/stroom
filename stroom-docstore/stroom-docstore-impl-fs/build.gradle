@@ -1,13 +1,19 @@
 ext.moduleName = 'stroom.docstore.impl.fs'
 
 dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-docstore:stroom-docstore-impl')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
-    compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
+//    compile libs.guice5
+//    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+//    compile libs.jaxb_api
     compile libs.slf4j_api
 
     testCompile libs.junit_jupiter_api

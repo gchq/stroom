@@ -16,17 +16,19 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
 public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter.StepControlView>
         implements StepControlUIHandlers {
+
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
         super(eventBus, view);
@@ -118,6 +120,7 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
     }
 
     public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {
+
         void setStepFirstEnabled(boolean enabled);
 
         void setStepBackwardEnabled(boolean enabled);

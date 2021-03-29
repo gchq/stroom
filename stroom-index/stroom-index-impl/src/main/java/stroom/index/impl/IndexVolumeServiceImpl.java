@@ -1,6 +1,5 @@
 package stroom.index.impl;
 
-import com.google.common.collect.ImmutableMap;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
@@ -15,12 +14,14 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import com.google.common.collect.ImmutableMap;
+
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -29,15 +30,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-public class IndexVolumeServiceImpl implements IndexVolumeService {
+public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeServiceImpl.class);
 
     private final IndexVolumeDao indexVolumeDao;
@@ -65,12 +64,16 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     public IndexVolume create(IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
-        var names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
+        final List<String> names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName())
+                ? ""
+                : i.getNodeName())
                 .collect(Collectors.toList());
         indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
                 : indexVolume.getNodeName());
-        indexVolume.setPath(isNullOrEmpty(indexVolume.getPath()) ? null : indexVolume.getPath());
+        indexVolume.setPath(isNullOrEmpty(indexVolume.getPath())
+                ? null
+                : indexVolume.getPath());
         indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
 
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
@@ -83,20 +86,20 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume update(IndexVolume updateVolumeDTO) {
-        final var indexVolume = securityContext.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(null));
+    public IndexVolume update(IndexVolume indexVolume) {
+        final IndexVolume loadedIndexVolume = securityContext.secureResult(() ->
+                indexVolumeDao.fetch(indexVolume.getId()).orElse(
+                        null));
 
-        // Map from DTO to entity
-        indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
-        indexVolume.setPath((updateVolumeDTO.getPath()));
-        indexVolume.setNodeName(updateVolumeDTO.getNodeName());
-        indexVolume.setBytesLimit(updateVolumeDTO.getBytesLimit());
-        indexVolume.setState(updateVolumeDTO.getState());
+        loadedIndexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
+        loadedIndexVolume.setPath((indexVolume.getPath()));
+        loadedIndexVolume.setNodeName(indexVolume.getNodeName());
+        loadedIndexVolume.setBytesLimit(indexVolume.getBytesLimit());
+        loadedIndexVolume.setState(indexVolume.getState());
 
-
-        AuditUtil.stamp(securityContext.getUserId(), indexVolume);
+        AuditUtil.stamp(securityContext.getUserId(), loadedIndexVolume);
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.update(indexVolume));
+                () -> indexVolumeDao.update(loadedIndexVolume));
     }
 
     @Override
@@ -123,19 +126,19 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
 
         // Ensure the path exists
         if (Files.isDirectory(path)) {
-            LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path exists: {}", path));
+            LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
             setSizes(path, volume);
         } else {
             try {
                 Files.createDirectories(path);
-                LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path created: {}", path));
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
                 setSizes(path, volume);
             } catch (final IOException e) {
-                LOGGER.error(LambdaLogUtil.message("updateVolumeState() path not created: {}", path));
+                LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
             }
         }
 
-        LOGGER.debug(LambdaLogUtil.message("updateVolumeState() exit {}", volume));
+        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
         return volume;
     }
 
@@ -197,6 +200,15 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         }
     }
 
-
-
+    @Override
+    public void clear() {
+        // Delete the contents of all index volumes.
+        find(new ExpressionCriteria()).getValues()
+                .forEach(volume -> {
+                    // The parent will also pick up the index shard (as well as the
+                    // store)
+                    LOGGER.info("Clearing index volume {}", volume.getPath());
+                    FileUtil.deleteContents(Paths.get(volume.getPath()));
+                });
+    }
 }

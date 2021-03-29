@@ -23,6 +23,7 @@ import stroom.cache.client.view.CacheViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class CacheModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(CacheMonitoringPlugin.class);

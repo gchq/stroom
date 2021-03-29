@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
  * its own context.
  */
 public class TestDataFeedServiceImplModule extends AbstractModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataFeedServiceImplModule.class);
 
     @Override

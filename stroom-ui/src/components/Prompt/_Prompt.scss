@@ -1,0 +1,25 @@
+.Button__ok {
+  min-width: 7rem;
+}
+
+.Button__icon {
+  min-width: 2rem;
+  margin-left: -1.5rem;
+}
+
+.ImageHeader {
+  display: flex;
+  flex-direction: row;
+  min-width: 15rem;
+  align-items: center;
+}
+
+.ImageHeader__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ImageHeader__text {
+  padding-left: 1rem;
+  font-size: large;
+}

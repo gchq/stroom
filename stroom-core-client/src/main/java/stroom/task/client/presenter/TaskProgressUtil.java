@@ -20,11 +20,10 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class TaskProgressUtil {
+
     private TaskProgressUtil() {
     }
 
@@ -176,13 +176,15 @@ class TaskProgressUtil {
                     state = true;
                 } else if (treeAction.hasExpandedState(parent)) {
                     state = treeAction.isRowExpanded(parent);
-//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
+//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
+//                    ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
                 } else {
                     // Expansion state has not been set so decide the initial state here
                     state = getDefaultExpansionState(criteria, parent, childMap);
                     treeAction.setRowExpanded(parent, state);
                 }
-//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
+//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
+//                ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
                 parent.setExpander(new Expander(depth, state, false));
             } else {
                 state = true;
@@ -276,6 +278,7 @@ class TaskProgressUtil {
     }
 
     private static class TaskProgressComparator implements Comparator<TaskProgress> {
+
         private final FindTaskProgressCriteria criteria;
 
         private TaskProgressComparator(final FindTaskProgressCriteria criteria) {
@@ -285,8 +288,8 @@ class TaskProgressUtil {
         @Override
         public int compare(final TaskProgress o1, final TaskProgress o2) {
             if (criteria.getSortList() != null) {
-                for (final Sort sort : criteria.getSortList()) {
-                    final String field = sort.getField();
+                for (final CriteriaFieldSort sort : criteria.getSortList()) {
+                    final String field = sort.getId();
 
                     int compare = 0;
                     switch (field) {
@@ -310,7 +313,7 @@ class TaskProgressUtil {
                             break;
                     }
 
-                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    if (sort.isDesc()) {
                         compare = compare * -1;
                     }
 

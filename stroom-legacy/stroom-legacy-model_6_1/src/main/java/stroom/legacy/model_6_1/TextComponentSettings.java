@@ -22,8 +22,20 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
-@Deprecated
+@XmlType(name = "text", propOrder = {
+        "tableId",
+        "streamIdField",
+        "partNoField",
+        "recordNoField",
+        "lineFromField",
+        "colFromField",
+        "lineToField",
+        "colToField",
+        "pipeline",
+        "showAsHtml",
+        "showStepping",
+        "modelVersion"
+})
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
@@ -48,7 +60,9 @@ public class TextComponentSettings extends ComponentSettings {
     @XmlElement(name = "showAsHtml")
     private boolean showAsHtml;
     @XmlElement(name = "showStepping")
-    private boolean showStepping = true;
+    private boolean showStepping;
+    @XmlElement(name = "modelVersion")
+    private String modelVersion;
 
     public TextComponentSettings() {
         // Default constructor necessary for GWT serialisation.
@@ -140,5 +154,13 @@ public class TextComponentSettings extends ComponentSettings {
 
     public void setShowStepping(final boolean showStepping) {
         this.showStepping = showStepping;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(final String modelVersion) {
+        this.modelVersion = modelVersion;
     }
 }

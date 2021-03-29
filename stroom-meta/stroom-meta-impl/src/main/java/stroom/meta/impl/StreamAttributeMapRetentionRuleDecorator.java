@@ -29,8 +29,6 @@ import stroom.util.date.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -38,8 +36,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 class StreamAttributeMapRetentionRuleDecorator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapRetentionRuleDecorator.class);
 
     private final List<DataRetentionRule> rules;
@@ -74,7 +75,9 @@ class StreamAttributeMapRetentionRuleDecorator {
                 String keepUntil = DataRetentionRule.FOREVER;
                 if (meta != null) {
                     final long millis = meta.getCreateMs();
-                    final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
+                    final LocalDateTime createTime = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneOffset.UTC)
+                            .toLocalDateTime();
                     final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
                     if (ms != null) {
                         keepUntil = DateUtil.createNormalDateTimeString(ms);

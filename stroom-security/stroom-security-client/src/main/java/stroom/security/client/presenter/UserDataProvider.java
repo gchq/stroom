@@ -16,8 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
@@ -28,11 +26,14 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+
+import com.google.gwt.core.client.GWT;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
 public class UserDataProvider implements Refreshable {
+
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final EventBus eventBus;
@@ -49,11 +50,7 @@ public class UserDataProvider implements Refreshable {
         view.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 dataProvider.refresh();
             }
         });
@@ -71,9 +68,14 @@ public class UserDataProvider implements Refreshable {
         if (dataProvider == null) {
             this.dataProvider = new RestDataProvider<User, ResultPage<User>>(eventBus, criteria.obtainPageRequest()) {
                 @Override
-                protected void exec(final Consumer<ResultPage<User>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                protected void exec(final Consumer<ResultPage<User>> dataConsumer,
+                                    final Consumer<Throwable> throwableConsumer) {
                     final Rest<ResultPage<User>> rest = restFactory.create();
-                    rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(USER_RESOURCE).find(criteria);
+                    rest
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwableConsumer)
+                            .call(USER_RESOURCE)
+                            .find(criteria);
                 }
 
                 // We override the default set data functionality to allow the

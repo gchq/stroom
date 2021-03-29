@@ -16,29 +16,33 @@
 
 package stroom.search.impl.shard;
 
+import stroom.query.common.v2.Receiver;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import stroom.search.coprocessor.Receiver;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 class IndexShardSearchTask {
+
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
-    private final String[] fieldNames;
+    private final String[] storedFieldNames;
     private final Receiver receiver;
-    private final Tracker tracker;
+    private final AtomicLong hitCount;
     private int shardNumber;
     private int shardTotal;
 
     IndexShardSearchTask(final IndexShardQueryFactory queryFactory,
                          final long indexShardId,
-                         final String[] fieldNames,
+                         final String[] storedFieldNames,
                          final Receiver receiver,
-                         final Tracker tracker) {
+                         final AtomicLong hitCount) {
         this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
-        this.fieldNames = fieldNames;
+        this.storedFieldNames = storedFieldNames;
         this.receiver = receiver;
-        this.tracker = tracker;
+        this.hitCount = hitCount;
     }
 
     IndexShardQueryFactory getQueryFactory() {
@@ -49,16 +53,16 @@ class IndexShardSearchTask {
         return indexShardId;
     }
 
-    String[] getFieldNames() {
-        return fieldNames;
+    String[] getStoredFieldNames() {
+        return storedFieldNames;
     }
 
     Receiver getReceiver() {
         return receiver;
     }
 
-    Tracker getTracker() {
-        return tracker;
+    AtomicLong getHitCount() {
+        return hitCount;
     }
 
     int getShardNumber() {
@@ -78,6 +82,7 @@ class IndexShardSearchTask {
     }
 
     interface IndexShardQueryFactory {
+
         Query getQuery(Version luceneVersion);
     }
 }

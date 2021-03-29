@@ -1,2 +1,1 @@
-export * from "./ProcessingList";
-export { default } from "./ProcessingList";
+export { ProcessingList } from "./ProcessingList";

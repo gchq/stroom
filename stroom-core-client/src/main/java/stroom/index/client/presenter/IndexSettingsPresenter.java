@@ -17,14 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -42,11 +34,23 @@ import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.util.shared.ResultPage;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc> implements IndexSettingsUiHandlers {
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
+        implements IndexSettingsUiHandlers {
+
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final RestFactory restFactory;
 
@@ -131,6 +135,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
+
         TextArea getDescription();
 
         int getMaxDocsPerShard();

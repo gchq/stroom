@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.search;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -26,12 +25,15 @@ import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFilterTermsTreeBuilder extends StroomUnitTest {
+
     private Set<String> fieldBlackList = Set.of(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
     /**
@@ -65,12 +67,12 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final String term1value2 = "term1value2";
         final String term1value3 = "term1value3";
 
-        final ExpressionOperator.Builder op1 = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator.Builder op1 = ExpressionOperator.builder()
                 .addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm("term2field", Condition.EQUALS, "term2value")
                         .addTerm("term3field", Condition.EQUALS, "term3value")
-                        .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                        .addOperator(ExpressionOperator.builder().op(Op.NOT)
                                 .addTerm("term4field", Condition.EQUALS, "term4value")
                                 .build())
                         .build());
@@ -118,7 +120,7 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
     @Test
     void testEmptyExpressionTree() {
         // AND (op1)
-        final ExpressionOperator.Builder op1 = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder op1 = ExpressionOperator.builder();
         FilterTermsTreeBuilder.convertExpresionItemsTree(op1.build());
     }
 
@@ -133,7 +135,7 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
             // --term1 - datetime equals 123456789
             // --term2 - field1 between 1 and 2
 
-            final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder and = ExpressionOperator.builder();
             and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.EQUALS, "123456789");
             and.addTerm("term2field", Condition.BETWEEN, "1,2");
 
@@ -147,11 +149,12 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // --term1 - datetime between 1 and 2
         // --term2 - field1 equals 123456789
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term2field", Condition.EQUALS, "123456789");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         // if we get here without an exception then it has worked as planned
         assertThat(filterTermsTree != null).isTrue();
@@ -160,11 +163,12 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
     @Test
     void testInConditionOneValue() {
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "123456789");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
@@ -175,11 +179,12 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
     @Test
     void testInConditionNoValue() {
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "");
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(),
+                fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 

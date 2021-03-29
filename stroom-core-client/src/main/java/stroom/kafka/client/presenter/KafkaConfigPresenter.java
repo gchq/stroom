@@ -17,10 +17,6 @@
 
 package stroom.kafka.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -39,9 +35,15 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+
 import javax.inject.Provider;
 
 public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView, KafkaConfigDoc> {
+
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData CONFIG_TAB = new TabDataImpl("Config");
@@ -59,8 +61,11 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private DocRef docRef;
 
     @Inject
-    public KafkaConfigPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final KafkaConfigSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider,
+    public KafkaConfigPresenter(final EventBus eventBus,
+                                final LinkTabPanelView view,
+                                final KafkaConfigSettingsPresenter settingsPresenter,
+                                final ClientSecurityContext securityContext,
+                                final Provider<EditorPresenter> editorPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
         super(eventBus, view, securityContext);
@@ -89,7 +94,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
-                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(KAFKA_CONFIG_RESOURCE)
                     .download(docRef);
         }));
@@ -135,7 +140,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         settingsPresenter.onReadOnly(readOnly);
         if (editorPresenter != null) {
             editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+            editorPresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -147,12 +152,11 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private EditorPresenter getOrCreateCodePresenter() {
         if (editorPresenter == null) {
             editorPresenter = editorPresenterProvider.get();
-;
             editorPresenter.setMode(AceEditorMode.PROPERTIES);
             registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
             editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+            editorPresenter.getFormatAction().setAvailable(!readOnly);
             if (getEntity() != null && getEntity().getData() != null) {
                 editorPresenter.setText(getEntity().getData());
             }

@@ -8,6 +8,6 @@ dependencies {
     compile project(':stroom-dashboard:stroom-dashboard-impl')
     compile project(':stroom-index:stroom-index-impl')
     compile project(':stroom-search:stroom-search-impl')
-    compile libs.guice4
+    compile libs.guice5
     compile libs.lucene_memory
 }

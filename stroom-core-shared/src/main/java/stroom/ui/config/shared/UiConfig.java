@@ -26,9 +26,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
-import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
@@ -50,7 +50,8 @@ public class UiConfig extends AbstractConfig {
     private String maintenanceMessage;
 
     @JsonProperty
-    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values.")
+    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the " +
+            "user requests lower values.")
     private String defaultMaxResults;
 
     @JsonProperty
@@ -77,8 +78,9 @@ public class UiConfig extends AbstractConfig {
 
     @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
-    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is for developer " +
-            "use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard " +
+    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is " +
+            "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' " +
+            "to see the standard " +
             "browser menu.")
     private String oncontextmenu;
 
@@ -93,6 +95,9 @@ public class UiConfig extends AbstractConfig {
 
     @JsonProperty
     private UiPreferences uiPreferences;
+
+    @JsonProperty
+    private SourceConfig source;
 
     public UiConfig() {
         setDefaults();
@@ -113,7 +118,8 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("url") final UrlConfig url,
-                    @JsonProperty("uiPreferences") final UiPreferences uiPreferences) {
+                    @JsonProperty("uiPreferences") final UiPreferences uiPreferences,
+                    @JsonProperty("source") final SourceConfig source) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -128,6 +134,8 @@ public class UiConfig extends AbstractConfig {
         this.splash = splash;
         this.activity = activity;
         this.url = url;
+        this.uiPreferences = uiPreferences;
+        this.source = source;
 
         setDefaults();
     }
@@ -174,6 +182,9 @@ public class UiConfig extends AbstractConfig {
         }
         if (uiPreferences == null) {
             uiPreferences = new UiPreferences();
+        }
+        if (source == null) {
+            source = new SourceConfig();
         }
     }
 
@@ -297,6 +308,14 @@ public class UiConfig extends AbstractConfig {
         this.uiPreferences = uiPreferences;
     }
 
+    public SourceConfig getSource() {
+        return source;
+    }
+
+    public void setSource(final SourceConfig source) {
+        this.source = source;
+    }
+
     @Override
     public String toString() {
         return "UiConfig{" +
@@ -318,10 +337,15 @@ public class UiConfig extends AbstractConfig {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final UiConfig uiConfig = (UiConfig) o;
         return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) &&
                 Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
@@ -342,6 +366,20 @@ public class UiConfig extends AbstractConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(welcomeHtml, aboutHtml, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url, uiPreferences);
+        return Objects.hash(welcomeHtml,
+                aboutHtml,
+                maintenanceMessage,
+                defaultMaxResults,
+                process,
+                helpUrl,
+                theme,
+                query,
+                namePattern,
+                htmlTitle,
+                oncontextmenu,
+                splash,
+                activity,
+                url,
+                uiPreferences);
     }
 }

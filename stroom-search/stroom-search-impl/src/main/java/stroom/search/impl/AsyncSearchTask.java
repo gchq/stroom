@@ -17,33 +17,41 @@
 package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 public class AsyncSearchTask {
+
+    private final QueryKey key;
     private final String searchName;
     private final Query query;
-    private final int resultSendFrequency;
-    private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
+    @JsonProperty
+    private final List<CoprocessorSettings> settings;
     private final String dateTimeLocale;
     private final long now;
 
-    private volatile transient ClusterSearchResultCollector resultCollector;
+    private transient volatile ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final String searchName,
+    public AsyncSearchTask(final QueryKey key,
+                           final String searchName,
                            final Query query,
-                           final int resultSendFrequency,
-                           final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                           @JsonProperty("settings") final List<CoprocessorSettings> settings,
                            final String dateTimeLocale,
                            final long now) {
+        this.key = key;
         this.searchName = searchName;
         this.query = query;
-        this.resultSendFrequency = resultSendFrequency;
-        this.coprocessorMap = coprocessorMap;
+        this.settings = settings;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
+    }
+
+    public QueryKey getKey() {
+        return key;
     }
 
     public String getSearchName() {
@@ -54,12 +62,8 @@ public class AsyncSearchTask {
         return query;
     }
 
-    public int getResultSendFrequency() {
-        return resultSendFrequency;
-    }
-
-    public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
-        return coprocessorMap;
+    public List<CoprocessorSettings> getSettings() {
+        return settings;
     }
 
     public String getDateTimeLocale() {

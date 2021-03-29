@@ -28,6 +28,7 @@ import java.util.Set;
  * documents that are stored just how to create, copy, move and delete them.
  */
 public interface ExplorerActionHandler extends HasDocumentType, HasDependencies {
+
     /**
      * Called to create a new item in this document store.
      *

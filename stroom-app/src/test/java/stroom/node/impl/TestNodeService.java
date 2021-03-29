@@ -18,16 +18,18 @@
 package stroom.node.impl;
 
 
-import org.junit.jupiter.api.Test;
-import stroom.node.api.NodeService;
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeService;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNodeService extends AbstractCoreIntegrationTest {
+
     @Inject
     private NodeService nodeService;
 

@@ -17,17 +17,15 @@
 package stroom.pipeline;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -46,13 +44,13 @@ import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,10 +61,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
 
     @Inject
@@ -95,17 +96,11 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
-
-        final Path tempDir = getCurrentTestDir();
-
-        // Make sure the config dir is set.
-        FileUtil.setTempDir(tempDir);
-
-        LOGGER.debug("Setting tempDir to {}", FileUtil.getCanonicalPath(tempDir));
-
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
-        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
+        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml",
+                name,
+                TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
         final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
 
@@ -217,7 +212,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
     }
 
-    void validateOuptut(final String outputReference,
+    void validateOutput(final String outputReference,
                         final String type) {
         try {
             final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
@@ -234,7 +229,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     private void checkInnerData(final long streamId, final boolean text) throws IOException {
         if (text) {
-            final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+            @SuppressWarnings("checkstyle:LineLength") final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
                     "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
 
             checkInnerData(streamId, 143, innerRef);

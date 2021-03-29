@@ -30,6 +30,7 @@ import java.nio.LongBuffer;
  * that opens files for random access.
  */
 class RASegmentOutputStream extends SegmentOutputStream {
+
     private static final int LONG_BYTES = 8;
 
     private final OutputStream dataOutputStream;
@@ -40,7 +41,8 @@ class RASegmentOutputStream extends SegmentOutputStream {
     private long position;
     private long lastBoundary;
 
-    RASegmentOutputStream(final OutputStream dataOutputStream, final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+    RASegmentOutputStream(final OutputStream dataOutputStream,
+                          final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
         this.dataOutputStream = dataOutputStream;
         this.indexOutputStreamSupplier = indexOutputStreamSupplier;
     }

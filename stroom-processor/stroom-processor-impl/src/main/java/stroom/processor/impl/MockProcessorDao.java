@@ -10,19 +10,22 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorDao implements ProcessorDao, Clearable {
+
     private final MockIntCrud<Processor> dao = new MockIntCrud<>();
 
     @Override
     public Processor create(final Processor processor) {
-        final ExpressionOperator findProcessorExpression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, new DocRef("Pipeline", processor.getPipelineUuid()))
+        final ExpressionOperator findProcessorExpression = ExpressionOperator.builder()
+                .addTerm(ProcessorFields.PIPELINE,
+                        Condition.EQUALS,
+                        new DocRef("Pipeline", processor.getPipelineUuid()))
                 .build();
         final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(findProcessorExpression);
 //        findProcessorCriteria.obtainPipelineUuidCriteria().setString(processor.getPipelineUuid());
@@ -67,7 +70,8 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 .values()
                 .stream()
                 .filter(pf -> {
-                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(), ProcessorFields.PIPELINE);
+                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(),
+                            ProcessorFields.PIPELINE);
                     return pipelineUuids == null || pipelineUuids.contains(pf.getPipelineUuid());
                 })
                 .collect(Collectors.toList());

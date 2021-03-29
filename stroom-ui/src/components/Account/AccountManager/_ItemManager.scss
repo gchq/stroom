@@ -1,0 +1,21 @@
+.ItemManager__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: space-between;
+  margin: 5px 0;
+  flex-grow: 0;
+  flex-shrink: 0;
+  gap: 5px;
+}
+
+.ItemManager__table {
+  //width: 700px;
+  //height: 500px;
+  outline: none;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  overflow: hidden;
+  flex-grow: 1;
+  flex-shrink: 1;
+}

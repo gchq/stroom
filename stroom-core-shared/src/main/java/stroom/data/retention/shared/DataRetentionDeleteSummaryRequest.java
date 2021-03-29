@@ -18,9 +18,11 @@ public class DataRetentionDeleteSummaryRequest {
     private final FindDataRetentionImpactCriteria criteria;
 
     @JsonCreator
-    public DataRetentionDeleteSummaryRequest(@JsonProperty("queryId") final String queryId,
-                                             @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
-                                             @JsonProperty("criteria") final FindDataRetentionImpactCriteria criteria) {
+    public DataRetentionDeleteSummaryRequest(
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
+            @JsonProperty("criteria") final FindDataRetentionImpactCriteria criteria) {
+
         this.queryId = queryId;
         this.dataRetentionRules = dataRetentionRules;
         this.criteria = criteria;
@@ -38,10 +40,15 @@ public class DataRetentionDeleteSummaryRequest {
         return criteria;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionDeleteSummaryRequest request = (DataRetentionDeleteSummaryRequest) o;
         return Objects.equals(queryId, request.queryId) &&
                 Objects.equals(dataRetentionRules, request.dataRetentionRules) &&

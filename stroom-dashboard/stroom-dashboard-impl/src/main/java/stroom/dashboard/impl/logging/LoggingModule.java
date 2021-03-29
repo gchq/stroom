@@ -19,6 +19,7 @@ package stroom.dashboard.impl.logging;
 import com.google.inject.AbstractModule;
 
 public class LoggingModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SearchEventLog.class).to(SearchEventLogImpl.class);

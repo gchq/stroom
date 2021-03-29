@@ -19,6 +19,7 @@ package stroom.menubar.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface MenuBarUiHandlers extends UiHandlers {
+
     void onMouseOver();
 
     void onMouseOut();

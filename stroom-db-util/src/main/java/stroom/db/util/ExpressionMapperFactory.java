@@ -6,10 +6,11 @@ import stroom.query.api.v2.ExpressionItem;
 
 import org.jooq.Condition;
 
-import javax.inject.Inject;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 public class ExpressionMapperFactory {
+
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
 

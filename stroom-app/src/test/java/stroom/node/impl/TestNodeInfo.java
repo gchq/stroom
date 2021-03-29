@@ -17,15 +17,17 @@
 package stroom.node.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNodeInfo extends AbstractCoreIntegrationTest {
+
     @Inject
     private NodeInfo nodeInfo;
 

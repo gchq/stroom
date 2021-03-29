@@ -16,7 +16,7 @@ const MetaAttributes: React.FunctionComponent<Props> = ({ dataRow }) => (
         <table className="StreamDetails__table">
           <tbody>
             {Object.entries(dataRow.attributes || defaultAttributes)
-              .map(k => ({ key: k[0], value: k[1] }))
+              .map((k) => ({ key: k[0], value: k[1] }))
               .map(({ key, value }) => {
                 if (key !== "Until" && key !== "Rule" && key !== "Age") {
                   return (

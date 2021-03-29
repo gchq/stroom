@@ -2,12 +2,15 @@ ext.moduleName = 'stroom.db.util'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-explorer:stroom-collection-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 //
-//    compile libs.stroomDocRef
+//    compile project(':stroom-docref')
 //    
 //    compile libs.commons_codec
 //    compile libs.dropwizard_metrics_healthchecks
@@ -15,7 +18,7 @@ dependencies {
     compile libs.google_findbugs
     compile libs.guava
     compile libs.hikari
-    compile libs.guice4
+    compile libs.guice5
 //    compile libs.jackson_annotations
 //    compile libs.jackson_core
 //    compile libs.jackson_databind
@@ -24,8 +27,6 @@ dependencies {
 //    compile libs.javax_inject
 //    compile libs.jaxb_api
     compile libs.jooq
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
 //    compile libs.saxon_he
     compile libs.slf4j_api
 //

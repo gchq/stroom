@@ -16,12 +16,12 @@
 
 package stroom.dictionary.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.dictionary.api.WordListProvider;
-import stroom.util.shared.RestResource;
-import stroom.util.guice.GuiceUtil;
+
+import com.google.inject.AbstractModule;
 
 public class DictionaryModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);

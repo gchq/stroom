@@ -16,11 +16,12 @@
 
 package stroom.util.zip;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -44,15 +45,11 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public final class ZipUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipUtil.class);
 
     private ZipUtil() {
         // Utility class.
-    }
-
-    public static Path workingZipDir(final Path zipFile) {
-        final String name = zipFile.getFileName().toString();
-        return zipFile.resolveSibling(name.substring(0, name.length() - ".zip".length()));
     }
 
     public static void zip(final Path zipFile, final Path dir) throws IOException {
@@ -72,21 +69,25 @@ public final class ZipUtil {
     private static void zip(final Path parent, final ZipOutputStream zip,
                             final Pattern includePattern, final Pattern excludePattern) {
         try {
-            Files.walkFileTree(parent, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fullPath = parent.relativize(file).toString();
-                        if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
-                                (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
-                            putEntry(zip, file, fullPath);
+            Files.walkFileTree(
+                    parent,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fullPath = parent.relativize(file).toString();
+                                if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
+                                        (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
+                                    putEntry(zip, file, fullPath);
+                                }
+                            } catch (final IOException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final IOException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final NotDirectoryException e) {
             // Ignore.
         } catch (final IOException e) {

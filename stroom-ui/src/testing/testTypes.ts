@@ -13,7 +13,7 @@ import { DataSourceType } from "components/ExpressionBuilder/types";
 import { IndexVolumeGroup } from "components/IndexVolumes/indexVolumeGroupApi";
 import { IndexVolume } from "components/IndexVolumes/indexVolumeApi";
 import { StreamTaskType } from "components/Processing/types";
-import { Account } from "components/users/types";
+import { Account, Token } from "api/stroom";
 
 export interface UserGroupMembership {
   userUuid: string;
@@ -32,7 +32,7 @@ export interface TestData {
   elements: ElementDefinition[];
   elementProperties: ElementPropertiesByElementIdType;
   documents: {
-    [docRefType in keyof ResourcesByDocType]: DocumentBase<docRefType>[]
+    [docRefType in keyof ResourcesByDocType]: DocumentBase<docRefType>[];
   };
   trackers: StreamTaskType[];
   dataList: StreamAttributeMapResult;
@@ -52,6 +52,7 @@ export interface TestData {
   docPermissionByType: {
     [docType: string]: string[];
   };
+  tokens: Token[];
   users: Account[];
   userDocPermission: UserDocPermission[];
 }

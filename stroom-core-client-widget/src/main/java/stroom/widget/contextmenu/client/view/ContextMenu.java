@@ -25,10 +25,11 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ContextMenu extends DecoratedPopupPanel {
+
     private static final Binder binder = GWT.create(Binder.class);
     @UiField
     Style style;
-    private FlowPanel layout;
+    private final FlowPanel layout;
 
     public ContextMenu() {
         super(true, false);
@@ -47,9 +48,11 @@ public class ContextMenu extends DecoratedPopupPanel {
     }
 
     interface Binder extends UiBinder<FlowPanel, ContextMenu> {
+
     }
 
     interface Style extends CssResource {
+
         String separator();
     }
 }

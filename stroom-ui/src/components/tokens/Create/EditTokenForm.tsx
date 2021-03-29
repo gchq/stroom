@@ -15,25 +15,24 @@
  */
 
 import * as React from "react";
-import * as CopyToClipboard from "react-copy-to-clipboard";
+import CopyToClipboard from "react-copy-to-clipboard";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import { ByCopy, OnCopyMs } from "components/auditCopy";
 import Button from "components/Button";
 import Loader from "components/Loader";
 import { Token } from "../api/types";
-import useConfig from "startup/config/useConfig";
 
 const EditTokenForm: React.FunctionComponent<{
   onBack: () => void;
-  onChangeState: (id: string, newState: boolean) => void;
+  onChangeState: (id: number, newState: boolean) => void;
   token: Token;
 }> = ({ onBack, onChangeState, token }) => {
-  const { dateFormat } = useConfig();
   return (
     <form>
       <div className="header">
-        <Button icon="arrow-left" text="Back" onClick={() => onBack()} />
+        <Button icon="arrow-left" onClick={() => onBack()}>
+          Back
+        </Button>
       </div>
       {token === undefined ? (
         <div className="loader-container">
@@ -62,12 +61,8 @@ const EditTokenForm: React.FunctionComponent<{
                   />
                 </div>
               </div>
-              <ByCopy by={token.userEmail} verb="Issued to" />
-              <OnCopyMs
-                on={token.expiresOnMs}
-                verb="Expires"
-                dateFormat={dateFormat}
-              />
+              <ByCopy by={token.userId} verb="Issued to" />
+              <OnCopyMs on={token.expiresOnMs} verb="Expires" />
             </div>
           </div>
           <div className="section">
@@ -75,17 +70,9 @@ const EditTokenForm: React.FunctionComponent<{
               <h3>Audit</h3>
             </div>
             <div className="section__fields">
-              <OnCopyMs
-                on={token.createTimeMs}
-                verb="Issued"
-                dateFormat={dateFormat}
-              />
+              <OnCopyMs on={token.createTimeMs} verb="Issued" />
               <ByCopy by={token.createUser} verb="Issued by" />
-              <OnCopyMs
-                on={token.updateTimeMs}
-                verb="Updated"
-                dateFormat={dateFormat}
-              />
+              <OnCopyMs on={token.updateTimeMs} verb="Updated" />
               <ByCopy by={token.updateUser} verb="Updated by" />
             </div>
           </div>
@@ -101,8 +88,9 @@ const EditTokenForm: React.FunctionComponent<{
                   action="primary"
                   type="button"
                   icon="copy"
-                  text="Copy key"
-                />
+                >
+                  Copy key
+                </Button>
               </CopyToClipboard>
             </div>
           </div>

@@ -4,10 +4,10 @@
 package stroom.data.store.impl.fs.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.processing.Generated;
+import stroom.data.store.impl.fs.db.jooq.Indexes;
+import stroom.data.store.impl.fs.db.jooq.Keys;
+import stroom.data.store.impl.fs.db.jooq.Stroom;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -23,10 +23,9 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
-import stroom.data.store.impl.fs.db.jooq.Indexes;
-import stroom.data.store.impl.fs.db.jooq.Keys;
-import stroom.data.store.impl.fs.db.jooq.Stroom;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.processing.Generated;
 
 
 /**

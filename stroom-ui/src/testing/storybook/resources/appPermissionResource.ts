@@ -37,7 +37,7 @@ const resourceBuilder: ResourceBuilder = (
       testCache.data!.userAppPermissions[
         req.params.userUuid
       ] = testCache.data!.userAppPermissions[req.params.userUuid].filter(
-        p => p !== req.params.permissionName,
+        (p) => p !== req.params.permissionName,
       );
 
       res.status(204).send(undefined);

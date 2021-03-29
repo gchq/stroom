@@ -19,7 +19,7 @@ import * as React from "react";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import Loader from "../../Loader";
-import useDocumentApi from "components/DocumentEditors/useDocumentApi";
+import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
 import ThemedAceEditor from "../../ThemedAceEditor";
 import { XsltDoc } from "components/DocumentEditors/useDocumentApi/types/xsltDoc";
 
@@ -36,7 +36,7 @@ const XsltEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   const { docRefContents } = editorProps;
 
   const onDataChange = React.useCallback(
-    value => onDocumentChange({ data: value }),
+    (value) => onDocumentChange({ data: value }),
     [onDocumentChange],
   );
 

@@ -19,6 +19,7 @@ package stroom.index.impl.analyzer;
 import org.apache.lucene.analysis.Analyzer;
 
 class AlphaNumericAnalyzer extends Analyzer {
+
     private final boolean caseSensitive;
 
     AlphaNumericAnalyzer(final boolean caseSensitive) {

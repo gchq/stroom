@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class TabSelectorEvent extends GwtEvent<TabSelectorHandler> {
+
     private static Type<TabSelectorHandler> TYPE;
 
     private final Element element;

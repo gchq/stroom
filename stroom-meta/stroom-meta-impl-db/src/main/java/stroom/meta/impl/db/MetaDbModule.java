@@ -9,6 +9,7 @@ import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaRetentionTrackerDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.util.RunnableWrapper;
@@ -19,6 +20,7 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
+
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
     private static final String FLYWAY_TABLE = "meta_schema_history";
@@ -38,7 +40,12 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
         bind(MetaRetentionTrackerDao.class).to(MetaRetentionTrackerDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(Cleanup.class);
+                .addBinding(MetaValueDaoImpl.class)
+                .addBinding(MetaKeyDaoImpl.class)
+                .addBinding(MetaDaoImpl.class)
+                .addBinding(MetaProcessorDaoImpl.class)
+                .addBinding(MetaTypeDaoImpl.class)
+                .addBinding(MetaFeedDaoImpl.class);
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(MetaValueServiceFlush.class);
@@ -70,12 +77,14 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements MetaDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }
     }
 
     private static class MetaValueServiceFlush extends RunnableWrapper {
+
         @Inject
         MetaValueServiceFlush(final MetaValueDaoImpl metaValueService) {
             super(metaValueService::flush);

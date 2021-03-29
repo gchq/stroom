@@ -21,6 +21,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 
@@ -28,9 +29,9 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,18 +45,19 @@ class TestMetaRetentionTrackerDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-            new MetaTestModule(),
-            new MetaDbModule(),
-            new MockClusterLockModule(),
-            new MockSecurityContextModule(),
-            new MockCollectionModule(),
-            new MockWordListProviderModule(),
-            new CacheModule(),
-            new DbTestModule())
-            .injectMembers(this);
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
+                .injectMembers(this);
 
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test
@@ -64,23 +66,6 @@ class TestMetaRetentionTrackerDaoImpl {
         final Optional<DataRetentionTracker> optTracker = metaRetentionTrackerDao.getTracker();
 
         assertThat(optTracker).isEmpty();
-    }
-
-    @Test
-    void testClear() {
-
-        final DataRetentionTracker tracker1 = new DataRetentionTracker(Instant.now(), "1234");
-        metaRetentionTrackerDao.createOrUpdate(tracker1);
-
-        final Optional<DataRetentionTracker> optTracker = metaRetentionTrackerDao.getTracker();
-
-        assertThat(optTracker).isPresent();
-
-        metaRetentionTrackerDao.clear();
-
-        final Optional<DataRetentionTracker> optTracker2 = metaRetentionTrackerDao.getTracker();
-
-        assertThat(optTracker2).isEmpty();
     }
 
     @Test

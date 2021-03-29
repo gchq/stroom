@@ -53,7 +53,7 @@ export const useDialog = (onDeleteElement: (e: string) => void): UseDialog => {
         setElementId(undefined);
       },
     },
-    showDialog: _elementId => {
+    showDialog: (_elementId) => {
       setIsOpen(true);
       setElementId(_elementId);
     },

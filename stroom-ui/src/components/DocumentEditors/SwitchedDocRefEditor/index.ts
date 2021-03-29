@@ -1,4 +1,4 @@
-import SwitchedDocRefEditor from './SwitchedDocRefEditor';
+import SwitchedDocRefEditor from "./SwitchedDocRefEditor";
 
 export default SwitchedDocRefEditor;
 

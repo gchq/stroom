@@ -17,27 +17,40 @@
 
 package stroom.pipeline.refdata.store;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class RefDataProcessingInfo {
 
+    @JsonProperty
     private final long createTimeEpochMs;
+    @JsonProperty
     private final long lastAccessedTimeEpochMs;
+    @JsonProperty
     private final long effectiveTimeEpochMs;
+    @JsonProperty
     private final ProcessingState processingState;
 
-    public RefDataProcessingInfo(final long createTimeEpochMs,
-                                 final long lastAccessedTimeEpochMs,
-                                 final long effectiveTimeEpochMs,
-                                 final ProcessingState processingState) {
+    @JsonCreator
+    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final long createTimeEpochMs,
+                                 @JsonProperty("lastAccessedTimeEpochMs") final long lastAccessedTimeEpochMs,
+                                 @JsonProperty("effectiveTimeEpochMs") final long effectiveTimeEpochMs,
+                                 @JsonProperty("processingState") final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
         this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.processingState = processingState;
     }
 
-    public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState, boolean touchLastAccessedTime) {
+    public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState,
+                                                   boolean touchLastAccessedTime) {
 
         long newLastAccessedTime;
         if (touchLastAccessedTime) {
@@ -45,11 +58,19 @@ public class RefDataProcessingInfo {
         } else {
             newLastAccessedTime = lastAccessedTimeEpochMs;
         }
-        return new RefDataProcessingInfo(createTimeEpochMs, newLastAccessedTime, effectiveTimeEpochMs, newProcessingState);
+        return new RefDataProcessingInfo(
+                createTimeEpochMs,
+                newLastAccessedTime,
+                effectiveTimeEpochMs,
+                newProcessingState);
     }
 
     public RefDataProcessingInfo updateLastAccessedTime() {
-        return new RefDataProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
+        return new RefDataProcessingInfo(
+                createTimeEpochMs,
+                System.currentTimeMillis(),
+                effectiveTimeEpochMs,
+                processingState);
     }
 
     public long getCreateTimeEpochMs() {
@@ -68,10 +89,30 @@ public class RefDataProcessingInfo {
         return processingState;
     }
 
+    @JsonIgnore
+    public Instant getCreateTime() {
+        return Instant.ofEpochMilli(createTimeEpochMs);
+    }
+
+    @JsonIgnore
+    public Instant getLastAccessedTime() {
+        return Instant.ofEpochMilli(lastAccessedTimeEpochMs);
+    }
+
+    @JsonIgnore
+    public Instant getEffectiveTime() {
+        return Instant.ofEpochMilli(effectiveTimeEpochMs);
+    }
+
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final RefDataProcessingInfo that = (RefDataProcessingInfo) o;
         return createTimeEpochMs == that.createTimeEpochMs &&
                 effectiveTimeEpochMs == that.effectiveTimeEpochMs &&

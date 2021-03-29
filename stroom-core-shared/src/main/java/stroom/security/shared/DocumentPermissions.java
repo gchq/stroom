@@ -17,6 +17,7 @@ import java.util.Set;
 @JsonPropertyOrder({"docUuid", "users", "groups", "permissions"})
 @JsonInclude(Include.NON_NULL)
 public class DocumentPermissions {
+
     @JsonProperty
     private final String docUuid;
     @JsonProperty
@@ -53,14 +54,55 @@ public class DocumentPermissions {
         return permissions;
     }
 
+    public boolean containsUserOrGroup(final String uuid, final boolean isGroup) {
+        return isGroup
+                ? containsGroup(uuid)
+                : containsUser(uuid);
+    }
+
+    public boolean containsUser(final String userUuid) {
+        return users.stream()
+                .map(User::getUuid)
+                .anyMatch(uuid -> Objects.equals(uuid, userUuid));
+    }
+
+    public boolean containsGroup(final String groupUuid) {
+        return groups.stream()
+                .map(User::getUuid)
+                .anyMatch(uuid -> Objects.equals(uuid, groupUuid));
+    }
+
     public Set<String> getPermissionsForUser(final String userUuid) {
         return permissions.getOrDefault(userUuid, Collections.emptySet());
     }
 
+    public void addUser(final User user) {
+        users.add(user);
+        permissions.putIfAbsent(user.getUuid(), new HashSet<>());
+    }
+
+    public void addGroup(final User group) {
+        groups.add(group);
+        permissions.putIfAbsent(group.getUuid(), new HashSet<>());
+    }
+
+    public void addUser(final User user, final boolean isGroup) {
+        if (isGroup) {
+            addGroup(user);
+        } else {
+            addUser(user);
+        }
+    }
+
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DocumentPermissions that = (DocumentPermissions) o;
         return Objects.equals(docUuid, that.docUuid) &&
                 Objects.equals(users, that.users) &&
@@ -83,11 +125,30 @@ public class DocumentPermissions {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
         private String docUuid;
         private List<User> users;
         private List<User> groups;
         private Map<String, Set<String>> permissions = new HashMap<>();
+
+        private Builder() {
+        }
+
+        private Builder(final DocumentPermissions documentPermissions) {
+            this.docUuid = documentPermissions.docUuid;
+            this.users = documentPermissions.users;
+            this.groups = documentPermissions.groups;
+            this.permissions = documentPermissions.permissions;
+        }
 
         public Builder docUuid(final String value) {
             docUuid = value;

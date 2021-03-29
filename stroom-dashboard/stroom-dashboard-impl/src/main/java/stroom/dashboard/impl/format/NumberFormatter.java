@@ -17,10 +17,11 @@
 package stroom.dashboard.impl.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.NumberFormatSettings;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.NumberFormatSettings;
 
 public class NumberFormatter implements Formatter {
+
     private final NumberFormatSettings numberFormatSettings;
 
     private NumberFormatter(final NumberFormatSettings numberFormatSettings) {

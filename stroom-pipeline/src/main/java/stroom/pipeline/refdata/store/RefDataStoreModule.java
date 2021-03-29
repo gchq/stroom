@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
@@ -33,8 +32,9 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
-import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferModule;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -47,6 +47,8 @@ import static stroom.job.api.Schedule.ScheduleType.CRON;
 public class RefDataStoreModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new ByteBufferModule());
+
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         ByteBufferConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetByteBufferConsumer.Factory.class)
@@ -56,6 +58,8 @@ public class RefDataStoreModule extends AbstractModule {
         ValueConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
+
+        bind(RefDataStoreFactory.class).asEagerSingleton();
 
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
@@ -71,15 +75,17 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
+        bind(ValueStoreHashAlgorithm.class).to(XxHashValueStoreHashAlgorithm.class);
+
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPool.class)
                 .bind(RefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder
-                        .withName("Ref Data Off-heap Store Purge")
-                        .withDescription("Purge old reference data from the off heap store as configured")
-                        .withSchedule(CRON, "0 2 *"));
+                        .name("Ref Data Off-heap Store Purge")
+                        .description("Purge old reference data from the off heap store as configured")
+                        .schedule(CRON, "0 2 *"));
+
     }
 
     private static class RefDataPurge extends RunnableWrapper {

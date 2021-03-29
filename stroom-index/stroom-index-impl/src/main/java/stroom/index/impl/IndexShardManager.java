@@ -25,15 +25,12 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -53,12 +50,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * Pool API into open index shards.
  */
 @Singleton
 public class IndexShardManager {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManager.class);
 
     private final IndexStore indexStore;
@@ -91,11 +92,25 @@ public class IndexShardManager {
         this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
-        allowedStateTransitions.put(IndexShardStatus.NEW, Set.of(IndexShardStatus.OPENING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPENING, Set.of(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPEN, Set.of(IndexShardStatus.CLOSING, IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSING, Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSED, Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.NEW,
+                Set.of(IndexShardStatus.OPENING,
+                        IndexShardStatus.CLOSED,
+                        IndexShardStatus.DELETED,
+                        IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPENING,
+                Set.of(IndexShardStatus.OPEN,
+                        IndexShardStatus.CLOSED,
+                        IndexShardStatus.DELETED,
+                        IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.OPEN,
+                Set.of(IndexShardStatus.CLOSING,
+                        IndexShardStatus.CLOSED,
+                        IndexShardStatus.DELETED,
+                        IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.CLOSING,
+                Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
+        allowedStateTransitions.put(IndexShardStatus.CLOSED,
+                Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
         allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
@@ -114,30 +129,35 @@ public class IndexShardManager {
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 
-                    final Runnable runnable = taskContextFactory.context("Delete Logically Deleted Shards", taskContext -> {
-                        try {
-                            taskContext.info(() -> "Deleting Logically Deleted Shards...");
-
-                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                            final Iterator<IndexShard> iter = shards.getValues().iterator();
-                            while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
-                                final IndexShard shard = iter.next();
-                                final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
+                    final Runnable runnable = taskContextFactory.context("Delete Logically Deleted Shards",
+                            taskContext -> {
                                 try {
-                                    if (writer != null) {
-                                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
-                                    } else {
-                                        deleteFromDisk(shard);
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e::getMessage, e);
+                                    taskContext.info(() -> "Deleting Logically Deleted Shards...");
+
+                                    LOGGER.logDurationIfDebugEnabled(() -> {
+                                        final Iterator<IndexShard> iter = shards.getValues().iterator();
+                                        while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
+                                            final IndexShard shard = iter.next();
+                                            final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(
+                                                    shard.getId());
+                                            try {
+                                                if (writer != null) {
+                                                    LOGGER.debug(() ->
+                                                            "deleteLogicallyDeleted() - Unable to delete index " +
+                                                                    "shard " + shard.getId() + " as it is currently " +
+                                                                    "in use");
+                                                } else {
+                                                    deleteFromDisk(shard);
+                                                }
+                                            } catch (final RuntimeException e) {
+                                                LOGGER.error(e::getMessage, e);
+                                            }
+                                        }
+                                    }, "deleteLogicallyDeleted()");
+                                } finally {
+                                    deletingShards.set(false);
                                 }
-                            }
-                            LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
-                        } finally {
-                            deletingShards.set(false);
-                        }
-                    });
+                            });
 
                     // In tests we don't have a task manager.
                     if (executor == null) {
@@ -198,7 +218,13 @@ public class IndexShardManager {
             // Create a scheduled executor for us to continually log index shard writer action progress.
             final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             // Start logging action progress.
-            executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(
+                    () ->
+                            LOGGER.info(() ->
+                                    "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+                    10,
+                    10,
+                    TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
             ownedShards.parallelStream().forEach(shard -> {
@@ -251,10 +277,15 @@ public class IndexShardManager {
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
                 final Long partitionToTime = shard.getPartitionToTime();
-                if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
+                if (retentionDayAge != null
+                        && partitionToTime != null
+                        && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
                     // See if this index shard is older than the index retention
                     // period.
-                    final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionDayAge).toInstant().toEpochMilli();
+                    final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC)
+                            .minusDays(retentionDayAge)
+                            .toInstant()
+                            .toEpochMilli();
 
                     if (partitionToTime < retentionTime) {
                         setStatus(shard.getId(), IndexShardStatus.DELETED);
@@ -294,12 +325,17 @@ public class IndexShardManager {
                     // Only allow certain state transitions.
                     final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
                     if (allowed == null) {
-                        throw new RuntimeException("No state transitions are defined for " + indexShard.getStatus());
+                        throw new RuntimeException("No state transitions are defined for " +
+                                indexShard.getStatus());
                     } else {
                         if (allowed.contains(status)) {
                             indexShardService.setStatus(indexShard.getId(), status);
                         } else {
-                            throw new RuntimeException("State transition from " + indexShard.getStatus() + " to " + status + " was attempted but is not allowed");
+                            LOGGER.debug("State transition from " +
+                                    indexShard.getStatus() +
+                                    " to " +
+                                    status +
+                                    " was attempted but is not allowed");
                         }
                     }
                 }
@@ -333,7 +369,8 @@ public class IndexShardManager {
     }
 
     public enum IndexShardAction {
-        FLUSH("flush", "flushing"), DELETE("delete", "deleting");
+        FLUSH("flush", "flushing"),
+        DELETE("delete", "deleting");
 
         private final String name;
         private final String activity;

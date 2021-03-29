@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class FieldMapper {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldMapper.class);
 
     private enum CopyOption {
@@ -25,10 +26,11 @@ public class FieldMapper {
          * If the source is a default value (i.e. the value a newly instantiated object would have)
          * then don't copy it to the dest.
          */
-        DONT_COPY_DEFAULTS;
+        DONT_COPY_DEFAULTS
     }
 
     public interface UpdateAction {
+
         void accept(final Object destParent,
                     final Prop prop,
                     final Object sourcePropValue,
@@ -86,10 +88,10 @@ public class FieldMapper {
     }
 
     private static <T> void copy(final T source,
-                                final T dest,
-                                final T vanillaObject,
-                                final UpdateAction updateAction,
-                                final CopyOption... copyOptions) {
+                                 final T dest,
+                                 final T vanillaObject,
+                                 final UpdateAction updateAction,
+                                 final CopyOption... copyOptions) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(dest);
 
@@ -115,7 +117,13 @@ public class FieldMapper {
 //                            LOGGER.info("Updating config value of {} from [{}] to [{}]",
 //                                    prop.getName(), destPropValue, sourcePropValue);
 //                            prop.getSetter().invoke(dest, sourcePropValue);
-                            updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
+                        updateValue(dest,
+                                prop,
+                                sourcePropValue,
+                                destPropValue,
+                                defaultPropValue,
+                                updateAction,
+                                copyOptions);
                     } else if (destPropValue == null) {
                         // Create a new object to copy into
                         final Object newInstance = prop.getValueClass().getConstructor().newInstance();
@@ -131,11 +139,20 @@ public class FieldMapper {
                     // prop is a primitive or a non-stroom class, so update it if it is different
                     if ((sourcePropValue == null && destPropValue != null) ||
                             (sourcePropValue != null && !sourcePropValue.equals(destPropValue))) {
-                        updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
+                        updateValue(dest,
+                                prop,
+                                sourcePropValue,
+                                destPropValue,
+                                defaultPropValue,
+                                updateAction,
+                                copyOptions);
                     }
                 }
             }
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | InstantiationException e) {
+        } catch (InvocationTargetException
+                | IllegalAccessException
+                | NoSuchMethodException
+                | InstantiationException e) {
             throw new RuntimeException(LogUtil.message("Error copying fields from [{}] to [{}]", source, dest), e);
         }
     }
@@ -146,7 +163,8 @@ public class FieldMapper {
                                         final Object destPropValue,
                                         final Object defaultPropValue,
                                         final UpdateAction updateAction,
-                                        final CopyOption... copyOptions) throws IllegalAccessException, InvocationTargetException {
+                                        final CopyOption... copyOptions)
+            throws IllegalAccessException, InvocationTargetException {
         if (sourcePropValue != null || !isOptionPresent(CopyOption.DONT_COPY_NULLS, copyOptions)) {
             // source not null OR are copying nulls
 
@@ -154,7 +172,8 @@ public class FieldMapper {
 
             if (isOptionPresent(CopyOption.DONT_COPY_DEFAULTS, copyOptions)) {
                 if (Objects.equals(sourcePropValue, defaultPropValue)) {
-                    LOGGER.trace("Source value of {} is a default value but we are not copying defaults", sourcePropValue);
+                    LOGGER.trace("Source value of {} is a default value but we are not copying defaults",
+                            sourcePropValue);
                 } else {
                     doCopy = true;
                 }
@@ -163,7 +182,10 @@ public class FieldMapper {
             }
 
             if (doCopy) {
-                LOGGER.debug("Updating config value of {} from [{}] to [{}]", prop.getName(), destPropValue, sourcePropValue);
+                LOGGER.debug("Updating config value of {} from [{}] to [{}]",
+                        prop.getName(),
+                        destPropValue,
+                        sourcePropValue);
                 prop.getSetter().invoke(destParent, sourcePropValue);
                 if (updateAction != null) {
                     updateAction.accept(destParent, prop, sourcePropValue, destPropValue);

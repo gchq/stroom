@@ -17,10 +17,10 @@
 package stroom.dashboard.impl.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.TimeZone;
-import stroom.dashboard.shared.TimeZone.Use;
+import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.TimeZone;
+import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 
@@ -30,6 +30,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class DateFormatter implements Formatter {
+
     private final DateTimeFormatter format;
 
     private DateFormatter(final DateTimeFormatter format) {
@@ -37,7 +38,7 @@ public class DateFormatter implements Formatter {
     }
 
     public static DateFormatter create(final FormatSettings settings, final String dateTimeLocale) {
-        Use use = Use.LOCAL;
+        Use use = Use.UTC;
         String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
         int offsetHours = 0;
         int offsetMinutes = 0;
@@ -45,7 +46,8 @@ public class DateFormatter implements Formatter {
 
         if (settings instanceof DateTimeFormatSettings) {
             final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
-            if (dateTimeFormatSettings.getPattern() != null && dateTimeFormatSettings.getPattern().trim().length() > 0) {
+            if (dateTimeFormatSettings.getPattern() != null
+                    && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                 pattern = dateTimeFormatSettings.getPattern();
 
                 final TimeZone timeZone = dateTimeFormatSettings.getTimeZone();

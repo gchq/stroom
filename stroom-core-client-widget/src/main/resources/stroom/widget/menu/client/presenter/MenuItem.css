@@ -56,6 +56,14 @@
 	margin-right: 5px;
 }
 
+.simpleText {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
 .shortcut {
 	display: inline-block;
 	vertical-align: top;

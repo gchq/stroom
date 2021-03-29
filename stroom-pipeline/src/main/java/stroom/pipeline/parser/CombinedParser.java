@@ -17,9 +17,6 @@
 
 package stroom.pipeline.parser;
 
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
@@ -34,33 +31,52 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.InvalidXmlCharFilter;
-import stroom.pipeline.reader.Xml11Chars;
+import stroom.pipeline.reader.Xml10Chars;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
+import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.Severity;
 import stroom.util.xml.SAXParserFactoryFactory;
 
-import javax.inject.Inject;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
-@ConfigurableElement(type = "CombinedParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
+@ConfigurableElement(
+        type = "CombinedParser",
+        category = Category.PARSER,
+        roles = {
+                PipelineElementType.ROLE_PARSER,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.ROLE_HAS_CODE},
+        icon = ElementIcons.TEXT)
 public class CombinedParser extends AbstractParser implements SupportsCodeInjection {
+
     public static final String DEFAULT_NAME = "combinedParser";
     private static final SAXParserFactory PARSER_FACTORY;
 
@@ -70,22 +86,34 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterStore textConverterStore;
+    private final Provider<FeedHolder> feedHolder;
+    private final Provider<PipelineHolder> pipelineHolder;
+    private final DocFinder<TextConverterDoc> docHelper;
 
     private String type;
     private boolean fixInvalidChars = false;
     private String injectedCode;
     private boolean usePool = true;
     private DocRef textConverterRef;
+    private String namePattern;
+    private boolean suppressDocumentNotFoundWarnings;
     private PoolItem<StoredParserFactory> poolItem;
 
     @Inject
     public CombinedParser(final ErrorReceiverProxy errorReceiverProxy,
                           final LocationFactoryProxy locationFactory,
                           final ParserFactoryPool parserFactoryPool,
-                          final TextConverterStore textConverterStore) {
+                          final TextConverterStore textConverterStore,
+                          final PathCreator pathCreator,
+                          final Provider<FeedHolder> feedHolder,
+                          final Provider<PipelineHolder> pipelineHolder) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
+        this.feedHolder = feedHolder;
+        this.pipelineHolder = pipelineHolder;
+
+        this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override
@@ -137,22 +165,13 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private XMLReader createTextConverter() throws SAXException {
-        if (textConverterRef == null) {
-            throw new ProcessException(
-                    "No text converter has been assigned to the parser but parsers of type '" + type + "' require one");
-        }
-
         // Load the latest TextConverter to get round the issue of the pipeline
         // being cached and therefore holding onto stale TextConverter.
 
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverterDoc tc = textConverterStore.readDocument(textConverterRef);
-        if (tc == null) {
-            throw new ProcessException(
-                    "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
-        }
+        final TextConverterDoc tc = loadTextConverterDoc();
 
         // If we are in stepping mode and have made code changes then we want to
         // add them to the newly loaded text converter.
@@ -192,7 +211,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
             Reader inputStreamReader = new InputStreamReader(bris, charsetName);
             if (fixInvalidChars) {
-                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml11Chars());
+                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml10Chars());
             }
 
             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -225,19 +244,102 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.injectedCode = injectedCode;
     }
 
-    @PipelineProperty(description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.", displayPriority = 1)
+    @PipelineProperty(
+            description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.",
+            displayPriority = 1)
     public void setType(final String type) {
         this.type = type;
     }
 
-    @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.", displayPriority = 2)
+    @PipelineProperty(
+            description = "The text converter configuration that should be used to parse the input data.",
+            displayPriority = 2)
     @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
 
-    @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false", displayPriority = 3)
+    @PipelineProperty(
+            description = "A name pattern to load a text converter dynamically.",
+            displayPriority = 3)
+    public void setNamePattern(final String namePattern) {
+        this.namePattern = namePattern;
+    }
+
+    @PipelineProperty(
+            description = "If the text converter cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false",
+            displayPriority = 4)
+    public void setSuppressDocumentNotFoundWarnings(final boolean suppressDocumentNotFoundWarnings) {
+        this.suppressDocumentNotFoundWarnings = suppressDocumentNotFoundWarnings;
+    }
+
+    @PipelineProperty(
+            description = "Fix invalid XML characters from the input stream.",
+            defaultValue = "false",
+            displayPriority = 5)
     public void setFixInvalidChars(final boolean fixInvalidChars) {
         this.fixInvalidChars = fixInvalidChars;
+    }
+
+    public TextConverterDoc loadTextConverterDoc() {
+        final DocRef docRef = findDoc(
+                getFeedName(),
+                getPipelineName(),
+                message ->
+                        getErrorReceiverProxy().log(
+                                Severity.WARNING,
+                                null,
+                                getElementId(),
+                                message,
+                                null));
+        if (docRef == null) {
+            throw new ProcessException(
+                    "No text converter is configured or can be found to match the provided name pattern");
+        } else {
+            final TextConverterDoc tc = textConverterStore.readDocument(docRef);
+            if (tc == null) {
+                final String message = "Text converter \"" +
+                        docRef.getName() +
+                        "\" appears to have been deleted";
+                throw new ProcessException(message);
+            }
+
+            return tc;
+        }
+    }
+
+    private String getFeedName() {
+        if (feedHolder != null) {
+            final FeedHolder fh = feedHolder.get();
+            if (fh != null) {
+                return fh.getFeedName();
+            }
+        }
+        return null;
+    }
+
+    private String getPipelineName() {
+        if (pipelineHolder != null) {
+            final PipelineHolder ph = pipelineHolder.get();
+            if (ph != null) {
+                final DocRef pipeline = ph.getPipeline();
+                if (pipeline != null) {
+                    return pipeline.getName();
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
+        return docHelper.findDoc(
+                textConverterRef,
+                namePattern,
+                feedName,
+                pipelineName,
+                errorConsumer,
+                suppressDocumentNotFoundWarnings);
     }
 }

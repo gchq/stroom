@@ -16,19 +16,21 @@
 
 package stroom.core.servlet;
 
-import com.google.inject.AbstractModule;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.shared.ResourcePaths;
+
+import com.google.inject.AbstractModule;
 
 import javax.servlet.http.HttpServletRequest;
 
 public class ServletModule extends AbstractModule {
+
     private static final String MATCH_ALL_PATHS = "/*";
 
     @Override
@@ -46,7 +48,9 @@ public class ServletModule extends AbstractModule {
                         RejectPostFilter.class)
                 .bind(new FilterInfo(CacheControlFilter.class.getSimpleName(), MATCH_ALL_PATHS)
                                 .addparameter(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600")
-                                .addparameter(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex),
+                                .addparameter(
+                                        CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX,
+                                        cacheablePathsRegex),
                         CacheControlFilter.class);
 
         ServletBinder.create(binder())

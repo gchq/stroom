@@ -38,6 +38,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
@@ -50,8 +51,7 @@ public class ProcessorModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ProcessorResourceImpl.class)
                 .bind(ProcessorFilterResourceImpl.class)
-                .bind(ProcessorTaskResourceImpl.class)
-                .bind(StreamTaskResource.class);
+                .bind(ProcessorTaskResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);
@@ -68,14 +68,14 @@ public class ProcessorModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
-                        .withName("Processor Task Queue Statistics")
-                        .withDescription("Write statistics about the size of the task queue")
-                        .withSchedule(PERIODIC, "1m"))
+                        .name("Processor Task Queue Statistics")
+                        .description("Write statistics about the size of the task queue")
+                        .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
-                        .withName("Processor Task Retention")
-                        .withDescription("Physically delete processor tasks that have been logically " +
+                        .name("Processor Task Retention")
+                        .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.process.deletePurgeAge)")
-                        .withSchedule(PERIODIC, "1m"));
+                        .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
@@ -83,6 +83,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
+
         @Inject
         ProcessorTaskQueueStatistics(final ProcessorTaskManager processorTaskManager) {
             super(processorTaskManager::writeQueueStatistics);
@@ -90,6 +91,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskRetention extends RunnableWrapper {
+
         @Inject
         ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
             super(processorTaskDeleteExecutor::exec);
@@ -97,6 +99,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
+
         @Inject
         ProcessorTaskManagerStartup(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::startup);
@@ -104,6 +107,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
+
         @Inject
         ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::shutdown);

@@ -1,0 +1,50 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="section">
+         <data name="threeColRow">
+            <data name="number" value="11"/>
+            <data name="type" value="a11"/>
+            <data name="text" value="Three cols"/>
+         </data>
+         <data name="threeColRow">
+            <data name="number" value="31"/>
+            <data name="type" value="c31"/>
+            <data name="text" value="Three cols"/>
+         </data>
+         <data name="twoColRow">
+            <data name="type" value="d41"/>
+            <data name="text" value="Two cols"/>
+         </data>
+         <data name="twoColRow">
+            <data name="type" value="f61"/>
+            <data name="text" value="Two cols"/>
+         </data>
+      </data>
+   </record>
+   <record>
+      <data name="section">
+         <data name="threeColRow">
+            <data name="number" value="12"/>
+            <data name="type" value="a12"/>
+            <data name="text" value="Three cols"/>
+         </data>
+         <data name="threeColRow">
+            <data name="number" value="32"/>
+            <data name="type" value="c32"/>
+            <data name="text" value="Three cols"/>
+         </data>
+         <data name="twoColRow">
+            <data name="type" value="d42"/>
+            <data name="text" value="Two cols"/>
+         </data>
+         <data name="twoColRow">
+            <data name="type" value="f62"/>
+            <data name="text" value="Two cols"/>
+         </data>
+      </data>
+   </record>
+</records>

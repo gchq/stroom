@@ -18,10 +18,14 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.nio.ByteBuffer;
 
 class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueStoreMetaSerde> {
 
@@ -44,6 +48,40 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
         ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
         doExtractionTest(valueStoreMeta, getSerde()::extractReferenceCount, ValueStoreMeta::getReferenceCount);
+    }
+
+    @Test
+    void testIncrementRefCount() {
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+
+        getSerde().serialize(byteBuffer, valueStoreMeta);
+
+        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+
+        getSerde().cloneAndIncrementRefCount(byteBuffer, newBuffer);
+
+        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(newBuffer);
+
+        Assertions.assertThat(valueStoreMeta2.getReferenceCount())
+                .isEqualTo(valueStoreMeta.getReferenceCount() + 1);
+    }
+
+    @Test
+    void testDecrementRefCount() {
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+
+        getSerde().serialize(byteBuffer, valueStoreMeta);
+
+        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+
+        getSerde().cloneAndDecrementRefCount(byteBuffer, newBuffer);
+
+        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(newBuffer);
+
+        Assertions.assertThat(valueStoreMeta2.getReferenceCount())
+                .isEqualTo(valueStoreMeta.getReferenceCount() - 1);
     }
 
     @Override

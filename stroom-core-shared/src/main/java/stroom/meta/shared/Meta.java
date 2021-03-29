@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class Meta {
+
     @JsonProperty
     private long id;
     @JsonProperty
@@ -152,10 +153,15 @@ public class Meta {
         this.effectiveMs = effectiveMs;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Meta meta = (Meta) o;
         return id == meta.id;
     }
@@ -170,77 +176,106 @@ public class Meta {
         return String.valueOf(id);
     }
 
-    public static class Builder {
-        private final Meta meta = new Meta();
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public Builder() {
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private long id;
+        private String feedName;
+        private String typeName;
+        private String processorUuid;
+        private String pipelineUuid;
+        private Long parentMetaId;
+        private Status status;
+        private Long statusMs;
+        private long createMs;
+        private Long effectiveMs;
+
+        private Builder() {
         }
 
-        public Builder(final Meta meta) {
-            id(meta.getId());
-            feedName(meta.getFeedName());
-            typeName(meta.getTypeName());
-            pipelineUuid(meta.getPipelineUuid());
-            processorUuid(meta.getProcessorUuid());
-            parentDataId(meta.getParentMetaId());
-            status(meta.getStatus());
-            statusMs(meta.getStatusMs());
-            createMs(meta.getCreateMs());
-            effectiveMs(meta.getEffectiveMs());
+        private Builder(final Meta meta) {
+            this.id = meta.id;
+            this.feedName = meta.feedName;
+            this.typeName = meta.typeName;
+            this.processorUuid = meta.processorUuid;
+            this.pipelineUuid = meta.pipelineUuid;
+            this.parentMetaId = meta.parentMetaId;
+            this.status = meta.status;
+            this.statusMs = meta.statusMs;
+            this.createMs = meta.createMs;
+            this.effectiveMs = meta.effectiveMs;
         }
 
         public Builder id(final long id) {
-            meta.id = id;
+            this.id = id;
             return this;
         }
 
         public Builder feedName(final String feedName) {
-            meta.feedName = feedName;
+            this.feedName = feedName;
             return this;
         }
 
         public Builder typeName(final String typeName) {
-            meta.typeName = typeName;
+            this.typeName = typeName;
             return this;
         }
 
         public Builder processorUuid(final String processorUuid) {
-            meta.processorUuid = processorUuid;
+            this.processorUuid = processorUuid;
             return this;
         }
 
         public Builder pipelineUuid(final String pipelineUuid) {
-            meta.pipelineUuid = pipelineUuid;
+            this.pipelineUuid = pipelineUuid;
             return this;
         }
 
         public Builder parentDataId(final Long parentDataId) {
-            meta.parentMetaId = parentDataId;
+            this.parentMetaId = parentDataId;
             return this;
         }
 
         public Builder status(final Status status) {
-            meta.status = status;
+            this.status = status;
             return this;
         }
 
         public Builder statusMs(final Long statusMs) {
-            meta.statusMs = statusMs;
+            this.statusMs = statusMs;
             return this;
         }
 
         public Builder createMs(final long createMs) {
-            meta.createMs = createMs;
+            this.createMs = createMs;
             return this;
         }
 
         public Builder effectiveMs(final Long effectiveMs) {
-            meta.effectiveMs = effectiveMs;
+            this.effectiveMs = effectiveMs;
             return this;
         }
 
         public Meta build() {
-            return meta;
+            return new Meta(
+                    id,
+                    feedName,
+                    typeName,
+                    processorUuid,
+                    pipelineUuid,
+                    parentMetaId,
+                    status,
+                    statusMs,
+                    createMs,
+                    effectiveMs
+            );
         }
     }
 }

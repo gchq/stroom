@@ -20,6 +20,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 public interface CurveTabLayoutView extends View {
+
     TabBar getTabBar();
 
     LayerContainer getLayerContainer();

@@ -23,6 +23,7 @@ import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
 class ScheduleService {
+
     /**
      * Gets a scheduled time object for a given schedule based on the current
      * time. The scheduled time object holds the reference time, last scheduled
@@ -33,21 +34,15 @@ class ScheduleService {
      * @throws RuntimeException Could be thrown.
      */
     ScheduledTimes getScheduledTimes(final JobType jobType,
-                                            final Long scheduleReferenceTime,
-                                            final Long lastExecutedTime,
-                                            final String expression) {
+                                     final Long scheduleReferenceTime,
+                                     final Long lastExecutedTime,
+                                     final String expression) {
         ScheduledTimes scheduledTimes = null;
 
         if (JobType.CRON.equals(jobType)) {
             final SimpleCron cron = SimpleCron.compile(expression);
-
-            Long time = scheduleReferenceTime;
-            if (time == null) {
-                time = System.currentTimeMillis();
-            }
-            if (time != null) {
-                time = cron.getNextTime(time);
-            }
+            Long time = System.currentTimeMillis();
+            time = cron.getNextTime(time);
             scheduledTimes = getScheduledTimes(lastExecutedTime, time);
 
         } else if (JobType.FREQUENCY.equals(jobType)) {

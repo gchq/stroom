@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AuditedEntity {
+
     static final Set<String> AUDIT_FIELDS = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList("createTime", "updateTime", "createUser", "updateUser")));
 

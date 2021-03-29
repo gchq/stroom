@@ -17,16 +17,17 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.lmdb.AbstractKryoSerde;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.AbstractKryoSerde;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
@@ -34,8 +35,8 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
 
     private static final int BUFFER_CAPACITY = (VariableLengthUUIDKryoSerializer.BUFFER_CAPACITY * 2) +
-                    (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
-                    AbstractKryoSerde.BOOLEAN_BYTES;
+            (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
+            AbstractKryoSerde.BOOLEAN_BYTES;
 
     private final VariableLengthUUIDKryoSerializer variableLengthUUIDKryoSerializer;
 
@@ -47,7 +48,8 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
     public void write(final Output output,
                       final RefStreamDefinition refStreamDefinition) {
 
-        Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
+        Preconditions.checkArgument(
+                refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
         variableLengthUUIDKryoSerializer.write(output, refStreamDefinition.getPipelineDocRef().getUuid());
 
         // We are only ever dealing with pipeline DocRefs so we don't need

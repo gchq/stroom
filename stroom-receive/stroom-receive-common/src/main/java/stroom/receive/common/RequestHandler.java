@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
  * Class to handle every incoming feed request.
  */
 public interface RequestHandler {
+
     /**
      * Handle the request and return a HTTP response code.
      *

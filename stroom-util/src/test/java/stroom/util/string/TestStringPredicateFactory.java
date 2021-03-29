@@ -75,7 +75,7 @@ class TestStringPredicateFactory {
                                 "SO_IS_THIS_IS_MY_FEED",
                                 "timf",
                                 "TIMF",
-                                "th  i   s i  s m  y feed" ),
+                                "th  i   s i  s m  y feed"),
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 1 (upper case)",
@@ -85,7 +85,7 @@ class TestStringPredicateFactory {
                                 "SO_IS_THIS_IS_MY_FEED",
                                 "timf",
                                 "TIMF",
-                                "th  i   s i  s m  y feed" ),
+                                "th  i   s i  s m  y feed"),
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 2",
@@ -182,6 +182,28 @@ class TestStringPredicateFactory {
                         List.of("CountPipelineSQLPipe",
                                 "CountPipelineSwimPipe"),
                         List.of("CountPipelineSoQueueLongPipe")),
+
+                makeTest("Word boundary match 6 (camel + delimited) ",
+                        "?JDCN",
+                        List.of("stroom.job.db.connection.jdbcDriverClassName"),
+                        List.of("stroom.job.db.connection.jdbcDriverPassword")),
+
+                makeTest("Word boundary match 7 (camel + delimited) ",
+                        "?SJDCJDCN",
+                        List.of("stroom.job.db.connection.jdbcDriverClassName"),
+                        List.of("stroom.job.db.connection.jdbcDriverPassword")),
+
+                makeTest("Word boundary match 8",
+                        "?MFN",
+                        List.of("MY_FEED NAME"),
+                        List.of("MY FEEDNAME")),
+
+                makeTest("Word boundary match 9 (one word)",
+                        "?A",
+                        List.of("alpha",
+                                "alpha bravo",
+                                "bravo alpha"),
+                        List.of("bravo")),
 
                 makeTest("Word boundary (brackets)",
                         "?Xml",

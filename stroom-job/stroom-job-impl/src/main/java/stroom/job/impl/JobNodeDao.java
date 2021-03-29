@@ -6,6 +6,7 @@ import stroom.job.shared.JobNodeListResponse;
 import java.util.Optional;
 
 public interface JobNodeDao {
+
     JobNode create(JobNode jobNode);
 
     JobNode update(JobNode jobNode);

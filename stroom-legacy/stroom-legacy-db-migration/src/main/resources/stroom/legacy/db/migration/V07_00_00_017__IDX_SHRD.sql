@@ -26,7 +26,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX') THEN
 
         RENAME TABLE IDX TO OLD_IDX;
     END IF;
@@ -45,7 +46,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX_SHRD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX_SHRD') THEN
 
         RENAME TABLE IDX_SHRD TO OLD_IDX_SHRD;
     END IF;
@@ -87,7 +89,7 @@ CALL core_rename_column_v1(
     'OLD_IDX_SHRD',
     'FK_IDX_ID',
     'OLD_IDX_ID',
-    'int(11) default NULL');
+    'int default NULL');
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.MetaFields;
@@ -26,17 +25,21 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
+
     @Inject
     private ProcessorConfig processorConfig;
     @Inject
@@ -109,10 +112,11 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNotNull();
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
 
-        final QueryData findStreamQueryData = new QueryData.Builder()
+        final QueryData findStreamQueryData = QueryData
+                .builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())

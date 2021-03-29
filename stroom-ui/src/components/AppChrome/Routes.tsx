@@ -16,9 +16,7 @@
 
 import * as React from "react";
 import { Route, RouteComponentProps, Switch } from "react-router";
-import {
-  PrivateRoute,
-} from "startup/Authentication";
+import { PrivateRoute } from "startup/Authentication";
 import AuthorisationManager, {
   UserAuthorisationEditor,
 } from "../AuthorisationManager";
@@ -28,35 +26,37 @@ import MetaBrowser from "components/MetaBrowser";
 import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEditor";
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
-import { Login } from "components/Login";
 import {
-  ChangePassword,
-  ResetPassword,
-  ResetPasswordRequest,
-  ConfirmPasswordResetEmail,
+  ResetPasswordContainer,
+  ResetPasswordRequestContainer,
+  ConfirmPasswordResetEmailContainer,
 } from "components/password";
 import PathNotFound from "components/PathNotFound";
 import { Processing } from "components/Processing";
 import { CreateToken } from "components/tokens";
 import { EditToken } from "components/tokens/Create";
 import TokenSearch from "components/tokens/Search/SearchToken";
-import { UserCreate, UserEdit, UserSearch } from "components/users";
+// import { UserCreate, UserEdit, UserSearch } from "components/Account";
 import UserSettings from "components/UserSettings";
-import Welcome from "components/Welcome";
+import { Welcome } from "components/Welcome";
 import AppChrome from "./AppChrome";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
+import SignInManager from "../Authentication/SignInManager";
+import StroomWrapper from "../Authentication/StroomWrapper";
 
 const renderWelcome = ({
   match: {
     params: { urlPrefix },
   },
 }: RouteComponentProps<{ urlPrefix: string }>) => (
-  <AppChrome
-    activeMenuItem="welcome"
-    urlPrefix={urlPrefix}
-    content={<Welcome />}
-  />
+  // <AppChrome
+  //   activeMenuItem="welcome"
+  //   urlPrefix={urlPrefix}
+  //   content={<Welcome />}
+  // />
+
+  <StroomWrapper />
 );
 
 /**
@@ -69,6 +69,7 @@ const Routes: React.FunctionComponent = () => {
   const { urlGenerator } = useAppNavigation();
   return (
     <Switch>
+      <Route path={`${singlePagePrefix}/stroom`} component={StroomWrapper} />
       <Route exact path={`${singlePagePrefix}/error`} component={ErrorPage} />
       <Route
         exact
@@ -78,24 +79,23 @@ const Routes: React.FunctionComponent = () => {
       <Route
         exact
         path={`${singlePagePrefix}/resetPassword`}
-        component={ResetPassword}
+        component={ResetPasswordContainer}
       />
       <Route
         exact
         path={`${singlePagePrefix}/resetPasswordRequest`}
-        component={ResetPasswordRequest}
+        component={ResetPasswordRequestContainer}
       />
       <Route
         exact
         path={`${singlePagePrefix}/confirmPasswordResetEmail`}
-        component={ConfirmPasswordResetEmail}
+        component={ConfirmPasswordResetEmailContainer}
       />
 
-      <Route exact path={`${singlePagePrefix}/login`} component={Login} />
       <Route
         exact
-        path={`${singlePagePrefix}/changepassword`}
-        component={ChangePassword}
+        path={`${singlePagePrefix}/signIn`}
+        component={SignInManager}
       />
       <PrivateRoute exact path="/" render={renderWelcome} />
       <PrivateRoute
@@ -148,7 +148,7 @@ const Routes: React.FunctionComponent = () => {
           />
         )}
       />
-      {[false, true].map(isGroup => (
+      {[false, true].map((isGroup) => (
         <PrivateRoute
           key={isGroup ? "Group" : "User"}
           exact
@@ -281,51 +281,51 @@ const Routes: React.FunctionComponent = () => {
         )}
       />
 
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToUsers()}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            urlPrefix={urlPrefix}
-            activeMenuItem="userIdentities"
-            content={<UserSearch />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToNewUser()}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            urlPrefix={urlPrefix}
-            activeMenuItem="userIdentities"
-            content={<UserCreate />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToUser(":userId")}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            activeMenuItem="userIdentities"
-            content={<UserEdit />}
-            urlPrefix={urlPrefix}
-          />
-        )}
-      />
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToUsers()}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserSearch />}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToNewUser()}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserCreate />}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToUser(":userId")}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserEdit />}*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
 
       <PrivateRoute
         exact

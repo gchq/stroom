@@ -17,15 +17,14 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.lmdb.Deserializer;
+import stroom.lmdb.Serde;
+import stroom.lmdb.Serializer;
 import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Deserializer;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serializer;
 
 public interface RefDataValueSerde extends
         Serde<RefDataValue>,
         Serializer<RefDataValue>,
         Deserializer<RefDataValue> {
-
 
 }

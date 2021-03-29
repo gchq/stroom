@@ -26,12 +26,13 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.
@@ -45,6 +46,7 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
 public class RollingFileAppender extends AbstractRollingAppender {
+
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
@@ -68,11 +70,11 @@ public class RollingFileAppender extends AbstractRollingAppender {
         String dir = this.dir;
         String fileName = this.fileName;
 
-        dir = PathCreator.replaceTimeVars(dir);
-        dir = PathCreator.replaceUUIDVars(dir);
+        dir = pathCreator.replaceTimeVars(dir);
+        dir = pathCreator.replaceUUIDVars(dir);
 
-        fileName = PathCreator.replaceTimeVars(fileName);
-        fileName = PathCreator.replaceUUIDVars(fileName);
+        fileName = pathCreator.replaceTimeVars(fileName);
+        fileName = pathCreator.replaceUUIDVars(fileName);
 
         // Create a new destination.
         final Path file = Paths.get(dir).resolve(fileName);
@@ -87,7 +89,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
         }
 
-        return new RollingFileDestination(key,
+        return new RollingFileDestination(pathCreator,
+                key,
                 getFrequency(),
                 getSchedule(),
                 getRollSize(),
@@ -106,6 +109,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 dir = getRandomOutputPath();
                 dir = pathCreator.replaceContextVars(dir);
                 dir = pathCreator.replaceSystemProperties(dir);
+                dir = pathCreator.makeAbsolute(dir);
 
                 fileName = fileNamePattern;
                 fileName = pathCreator.replaceContextVars(fileName);
@@ -119,8 +123,6 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
 
             return key;
-        } catch (final IOException e) {
-            throw e;
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
@@ -162,7 +164,9 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
     }
 
-    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+    @PipelineProperty(
+            description = "One or more destination paths for output files separated with commas. " +
+                    "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
@@ -193,7 +197,9 @@ public class RollingFileAppender extends AbstractRollingAppender {
         super.setSchedule(expression);
     }
 
-    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.",
+    @PipelineProperty(
+            description = "When the current output file exceeds this size it will be closed and a new one " +
+                    "created, e.g. 10M, 1G.",
             defaultValue = "100M",
             displayPriority = 6)
     public void setRollSize(final String rollSize) {

@@ -7,7 +7,7 @@ export const appPermissionNames = [
   "Apparate Within Hogwarts",
   "Help Yourself to Biscuits",
   "Distribute Birthday Muffins",
-  "Login as Root",
+  "SignIn as Root",
 ];
 
 export default appPermissionNames;

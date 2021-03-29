@@ -17,10 +17,11 @@
 
 package stroom.pipeline.refdata.store;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.refdata.store.onheapstore.RefDataOnHeapStore;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,7 +30,7 @@ import javax.inject.Singleton;
 public class RefDataStoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreFactory.class);
 
-    private final RefDataStore offHeapRefDataStore;
+    private final RefDataOffHeapStore offHeapRefDataStore;
 
     @Inject
     RefDataStoreFactory(final RefDataOffHeapStore refDataOffHeapStore) {

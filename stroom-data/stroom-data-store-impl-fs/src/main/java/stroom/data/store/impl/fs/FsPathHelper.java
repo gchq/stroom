@@ -23,16 +23,25 @@ import stroom.util.io.FileUtil;
 
 import com.google.inject.Inject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 class FsPathHelper {
+
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
@@ -270,6 +279,59 @@ class FsPathHelper {
         return Paths.get(builder.toString());
     }
 
+    String decodeStreamType(final Path path) {
+        Objects.requireNonNull(path);
+
+        final Pattern internalTypesPattern = Pattern.compile("\\.(" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.BOUNDARY_INDEX) + "|" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.SEGMENT_INDEX) + "|" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.MANIFEST) + ")");
+
+        // remove the internal types e.g. .revt.bdy. => .revt.
+        final String pathStr = internalTypesPattern.matcher(path.toString())
+                .replaceFirst("");
+
+        final String[] splits = pathStr.split("\\.");
+
+        if (splits.length >= 3) {
+            final String typeExt = splits[splits.length - 2];
+            return StreamTypeExtensions.getType(typeExt);
+        } else {
+            throw new RuntimeException("Unable to extract type from " + pathStr);
+        }
+    }
+
+    /**
+     * Gets all files associated with a parent.
+     */
+    List<Path> getFiles(final Path parent) throws IOException {
+        String glob = parent.getFileName().toString();
+        int index = glob.lastIndexOf(".");
+        if (index != -1) {
+            glob = glob.substring(0, index);
+        }
+        glob = "glob:**" + File.separator + glob + ".*";
+
+        final List<Path> result = new ArrayList<>();
+        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
+        Files.walkFileTree(parent.getParent(), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                if (matcher.matches(file)) {
+                    result.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return result;
+    }
+
     private FileStoreType getFileStoreType(final String streamTypeName) {
         if (InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)) {
             return FileStoreType.dat;
@@ -284,11 +346,13 @@ class FsPathHelper {
     }
 
     boolean isStreamTypeLazy(final String streamTypeName) {
-        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)
+                || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 //
 //    static boolean isStreamTypeSegment(final String streamTypeName) {
-//        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+//        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)
+//        || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
 //    }
 
     /**

@@ -1,18 +1,19 @@
 package stroom.proxy.repo;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
-import javax.inject.Inject;
+import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -24,12 +25,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
 
 /**
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
 public class ProxyRepositoryManager implements HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
@@ -41,8 +44,11 @@ public class ProxyRepositoryManager implements HasHealthCheck {
     private volatile boolean finish = false;
 
     @Inject
-    public ProxyRepositoryManager(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(proxyRepositoryConfig.getDir()), getFormat(proxyRepositoryConfig.getFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
+    public ProxyRepositoryManager(final TempDirProvider tempDirProvider,
+                                  final ProxyRepositoryConfig proxyRepositoryConfig) {
+        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getDir()),
+                getFormat(proxyRepositoryConfig.getFormat()),
+                createScheduler(proxyRepositoryConfig.getRollCron()));
     }
 
     ProxyRepositoryManager(final Path repoDir,
@@ -53,13 +59,13 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         this.scheduler = scheduler;
     }
 
-    private static Path getPath(final String repoDir) {
+    private static Path getPath(final Path tempDir, final String repoDir) {
         Path path;
 
         if (repoDir != null && !repoDir.isEmpty()) {
             path = Paths.get(repoDir);
         } else {
-            path = FileUtil.getTempDir().resolve("stroom-proxy");
+            path = tempDir.resolve("stroom-proxy");
             LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + FileUtil.getCanonicalPath(path));
         }
 
@@ -140,8 +146,8 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                         final String fileName = file.getFileName().toString();
                         final String baseName = FileNameUtil.getBaseName(fileName);
 
-                        // Rolled repositories start with a date and we are only rolling repositories if somebody has set
-                        // the rollCron property which creates a scheduler.
+                        // Rolled repositories start with a date and we are only rolling repositories if somebody
+                        // has set the rollCron property which creates a scheduler.
                         if (this.scheduler != null) {
                             // Looks like a date
                             if (DateUtil.looksLikeDate(baseName)) {
@@ -150,7 +156,8 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                                     // Is this directory name an ISO 8601 compliant date?
                                     millis = DateUtil.parseFileDateTimeString(baseName);
                                 } catch (final RuntimeException e) {
-                                    LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
+                                    LOGGER.warn("Failed to parse directory that looked like it should be " +
+                                            "rolled repository: " + file);
                                 }
 
                                 // Only proceed if we managed to parse the dir name as a ISO 8601 date.

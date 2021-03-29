@@ -16,10 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter.DocumentPermissionsTabView;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissions;
@@ -33,16 +29,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DocumentPermissionsTabPresenter
         extends MyPresenterWidget<DocumentPermissionsTabView> {
+
     private final DocumentUserListPresenter userListPresenter;
     private final PermissionsListPresenter permissionsListPresenter;
     private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
@@ -50,11 +51,13 @@ public class DocumentPermissionsTabPresenter
     private final ButtonView removeButton;
 
     private DocumentPermissions documentPermissions;
-    private boolean group;
+    private boolean isGroup;
 
     @Inject
-    public DocumentPermissionsTabPresenter(final EventBus eventBus, final DocumentPermissionsTabView view,
-                                           final DocumentUserListPresenter userListPresenter, final PermissionsListPresenter permissionsListPresenter,
+    public DocumentPermissionsTabPresenter(final EventBus eventBus,
+                                           final DocumentPermissionsTabView view,
+                                           final DocumentUserListPresenter userListPresenter,
+                                           final PermissionsListPresenter permissionsListPresenter,
                                            final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
         super(eventBus, view);
         this.userListPresenter = userListPresenter;
@@ -98,7 +101,7 @@ public class DocumentPermissionsTabPresenter
 
     private void add() {
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
-        findUserCriteria.setGroup(group);
+        findUserCriteria.setGroup(isGroup);
 
 //                // If we are a group then get users and vice versa.
 //                findUserCriteria.setGroup(!relatedUser.isGroup());
@@ -111,7 +114,11 @@ public class DocumentPermissionsTabPresenter
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {
-                HidePopupEvent.fire(DocumentPermissionsTabPresenter.this, selectUserPresenter, autoClose, ok);
+                HidePopupEvent.fire(
+                        DocumentPermissionsTabPresenter.this,
+                        selectUserPresenter,
+                        autoClose,
+                        ok);
             }
 
             @Override
@@ -120,8 +127,9 @@ public class DocumentPermissionsTabPresenter
                     final User selected = selectUserPresenter.getSelectionModel().getSelected();
                     if (selected != null) {
                         final String uuid = selected.getUuid();
-                        if (documentPermissions.getPermissions().get(uuid) == null) {
-                            documentPermissions.getPermissions().put(uuid, new HashSet<>());
+                        if (!documentPermissions.containsUserOrGroup(uuid, isGroup)) {
+                            // This will ensure a perm map exists for the user/group
+                            documentPermissions.addUser(selected, isGroup);
                             userListPresenter.getSelectionModel().setSelected(selected);
                             refreshUserList();
                         }
@@ -131,10 +139,16 @@ public class DocumentPermissionsTabPresenter
         };
 
         String type = "User";
-        if (group) {
+        if (isGroup) {
             type = "Group";
         }
-        ShowPopupEvent.fire(DocumentPermissionsTabPresenter.this, selectUserPresenter, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Choose " + type + " To Add", popupUiHandlers);
+        ShowPopupEvent.fire(
+                DocumentPermissionsTabPresenter.this,
+                selectUserPresenter,
+                PopupView.PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Choose " + type + " To Add",
+                popupUiHandlers);
     }
 
     private void remove() {
@@ -156,9 +170,12 @@ public class DocumentPermissionsTabPresenter
         }
     }
 
-    public void setDocumentPermissions(final List<String> allPermissions, final DocumentPermissions documentPermissions, final boolean group, final Changes changes) {
+    public void setDocumentPermissions(final List<String> allPermissions,
+                                       final DocumentPermissions documentPermissions,
+                                       final boolean group,
+                                       final Changes changes) {
         this.documentPermissions = documentPermissions;
-        this.group = group;
+        this.isGroup = group;
 
         if (group) {
             getView().setUsersLabelText("Groups:");
@@ -188,6 +205,7 @@ public class DocumentPermissionsTabPresenter
     }
 
     public interface DocumentPermissionsTabView extends View {
+
         void setUserView(View view);
 
         void setPermissionsView(View view);

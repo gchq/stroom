@@ -1,44 +1,23 @@
 package stroom.index.impl.selection;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import java.util.List;
 import javax.inject.Singleton;
-import javax.validation.constraints.Pattern;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
-    private static final String PATH_LIST_PATTERN = "^[^,]+(,[ ]?[^,]+)*$";
-    private static final String NODE_LIST_PATTERN = "^[^ ,:@]+(,[ ]?[^ ,:@]+)*$";
 
-    private int resilientReplicationCount = 1;
-    private boolean preferLocalVolumes;
+    public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
-    private String defaultIndexVolumeGroupPaths = "volumes/defaultIndexVolume";
-    private String defaultIndexVolumeGroupNodes = "node1a";
+    private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
+    private List<String> defaultIndexVolumeGroupNodes = List.of("node1a");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
-
-    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
-    public int getResilientReplicationCount() {
-        return resilientReplicationCount;
-    }
-
-    public void setResilientReplicationCount(final int resilientReplicationCount) {
-        this.resilientReplicationCount = resilientReplicationCount;
-    }
-
-    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
-            "remote ones?")
-    public boolean isPreferLocalVolumes() {
-        return preferLocalVolumes;
-    }
-
-    public void setPreferLocalVolumes(final boolean preferLocalVolumes) {
-        this.preferLocalVolumes = preferLocalVolumes;
-    }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
@@ -53,8 +32,8 @@ public class VolumeConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing index volume groups are present a default volume group will be created on application " +
-            "start. Use property defaultIndexVolumeGroupName to define its name")
+    @JsonPropertyDescription("If no existing index volume groups are present a default volume group will be " +
+            "created on application start. Use property defaultIndexVolumeGroupName to define its name")
     public boolean isCreateDefaultIndexVolumesOnStart() {
         return createDefaultIndexVolumesOnStart;
     }
@@ -63,9 +42,10 @@ public class VolumeConfig extends AbstractConfig {
         this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
     }
 
-    @JsonPropertyDescription("The name of the default index volume group that is created if none exist on application start. " +
-            "Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths and defaultIndexVolumeGroupNodes to specify details.")
-    public String getDefaultIndexVolumeGroupName(){
+    @JsonPropertyDescription("The name of the default index volume group that is created if none exist on " +
+            "application start. Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths " +
+            "and defaultIndexVolumeGroupNodes to specify details.")
+    public String getDefaultIndexVolumeGroupName() {
         return defaultIndexVolumeGroupName;
     }
 
@@ -75,27 +55,28 @@ public class VolumeConfig extends AbstractConfig {
 
     @JsonPropertyDescription("The paths on the nodes that hold the data and are created " +
             "on the defined list of nodes if the default index is created on application start. " +
-            "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
-    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths")
-    public String getDefaultIndexVolumeGroupPaths(){
+            "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple " +
+            "nodes but there must always be the same number of elements in this list as in property " +
+            "defaultIndexVolumeGroupNodes. If a path is a relative path then it will be treated as being " +
+            "relative to stroom.path.home.")
+    public List<String> getDefaultIndexVolumeGroupPaths() {
         return defaultIndexVolumeGroupPaths;
     }
 
-    public void setDefaultIndexVolumeGroupPaths(final String defaultIndexVolumeGroupPaths) {
+    public void setDefaultIndexVolumeGroupPaths(final List<String> defaultIndexVolumeGroupPaths) {
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
     }
 
     @JsonPropertyDescription("The nodes associated with the paths that are created if " +
             "the default index is created on application start." +
             "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
-    @Pattern(regexp = NODE_LIST_PATTERN, message = "Value must be a comma delimited string of node names")
-    public String getDefaultIndexVolumeGroupNodes() {
+            "there must always be the same number of elements in this list as in property " +
+            "defaultIndexVolumeGroupNodes.")
+    public List<String> getDefaultIndexVolumeGroupNodes() {
         return defaultIndexVolumeGroupNodes;
     }
 
-    public void setDefaultIndexVolumeGroupNodes(final String defaultIndexVolumeGroupNodes) {
+    public void setDefaultIndexVolumeGroupNodes(final List<String> defaultIndexVolumeGroupNodes) {
         this.defaultIndexVolumeGroupNodes = defaultIndexVolumeGroupNodes;
     }
 
@@ -112,13 +93,11 @@ public class VolumeConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "VolumeConfig{" +
-                "resilientReplicationCount=" + resilientReplicationCount +
-                ", preferLocalVolumes=" + preferLocalVolumes +
                 ", volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
-                ", defaultIndexVolumeGroupName=" + "\"" +defaultIndexVolumeGroupName + "\"" +
+                ", defaultIndexVolumeGroupName=" + "\"" + defaultIndexVolumeGroupName + "\"" +
                 ", defaultIndexVolumeFilesystemUtilisation=" + defaultIndexVolumeFilesystemUtilisation +
-                ", defaultIndexVolumeGroupNodes=" + "\"" +defaultIndexVolumeGroupNodes + "\"" +
+                ", defaultIndexVolumeGroupNodes=" + "\"" + defaultIndexVolumeGroupNodes + "\"" +
                 ", defaultIndexVolumeGroupPaths=" + "\"" + defaultIndexVolumeGroupPaths + "\"" +
                 '}';
     }

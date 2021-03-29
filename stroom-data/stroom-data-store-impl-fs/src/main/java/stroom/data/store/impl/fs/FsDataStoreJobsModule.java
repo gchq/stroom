@@ -26,25 +26,27 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class FsDataStoreJobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PhysicalDelete.class, builder -> builder
-                        .withName("Data Delete")
-                        .withDescription("Physically delete meta data and associated files that have been logically deleted " +
-                                "based on age of delete (stroom.data.store.deletePurgeAge)")
-                        .withSchedule(CRON, "0 0 *")
-                        .withAdvancedState(false))
+                        .name("Data Delete")
+                        .description("Physically delete meta data and associated files that have been logically " +
+                                "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
+                        .schedule(CRON, "0 0 *")
+                        .advanced(false))
                 .bindJobTo(FileSystemClean.class, builder -> builder
-                        .withName("File System Clean (deprecated)")
-                        .withDescription("Job to process a volume deleting files that are no " +
+                        .name("File System Clean (deprecated)")
+                        .description("Job to process a volume deleting files that are no " +
                                 "longer indexed (maybe the retention period has past or they have been deleted)")
-                        .withSchedule(CRON, "0 0 *")
-                        .withEnabledState(false));
+                        .schedule(CRON, "0 0 *")
+                        .enabled(false));
     }
 
     private static class PhysicalDelete extends RunnableWrapper {
+
         @Inject
         PhysicalDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
             super(physicalDeleteExecutor::exec);
@@ -52,6 +54,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
     private static class FileSystemClean extends RunnableWrapper {
+
         @Inject
         FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
             super(fileSystemCleanExecutor::clean);

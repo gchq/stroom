@@ -1,1 +1,1 @@
-export { default } from "./useAppNavigation";
+export { useAppNavigation } from "./useAppNavigation";

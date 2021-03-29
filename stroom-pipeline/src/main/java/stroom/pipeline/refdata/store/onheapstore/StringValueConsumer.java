@@ -17,16 +17,17 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
+import stroom.util.logging.LogUtil;
+
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
-import stroom.util.logging.LogUtil;
 
 public class StringValueConsumer implements RefDataValueConsumer {
 
@@ -57,5 +58,4 @@ public class StringValueConsumer implements RefDataValueConsumer {
             return new StringValueConsumer(receiver);
         }
     }
-
 }

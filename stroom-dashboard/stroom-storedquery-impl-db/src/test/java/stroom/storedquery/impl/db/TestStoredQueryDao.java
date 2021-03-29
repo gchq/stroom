@@ -33,7 +33,6 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,15 +43,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestStoredQueryDao {
+
     private static final String QUERY_COMPONENT = "Test Component";
-    private static Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
 
     @Mock
     private SecurityContext securityContext;
@@ -66,19 +63,21 @@ class TestStoredQueryDao {
     private DocRef indexRef;
 
     @BeforeEach
-    void beforeEach() throws SQLException {
+    void beforeEach() {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new StoredQueryDbModule(), new StoredQueryConfig());
 
-        DbTestUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
+        // Clear the current DB.
+        DbTestUtil.clear();
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
-        storedQueryDao.clear();
 
-        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao, new StoredQueryConfig(), new SimpleTaskContextFactory());
+        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao,
+                new StoredQueryConfig(),
+                new SimpleTaskContextFactory());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");
@@ -87,11 +86,14 @@ class TestStoredQueryDao {
         refQuery.setName("Ref query");
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query(indexRef, new ExpressionOperator(true, Op.AND, Collections.emptyList())));
+        refQuery.setQuery(Query.builder()
+                .dataSource(indexRef)
+                .expression(ExpressionOperator.builder().build())
+                .build());
         AuditUtil.stamp(securityContext.getUserId(), refQuery);
         storedQueryDao.create(refQuery);
 
-        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
+        final ExpressionOperator.Builder root = ExpressionOperator.builder().op(Op.OR);
         root.addTerm("Some field", Condition.EQUALS, "Some value");
 
         LOGGER.info(root.toString());
@@ -100,7 +102,10 @@ class TestStoredQueryDao {
         testQuery.setName("Test query");
         testQuery.setDashboardUuid(dashboardRef.getUuid());
         testQuery.setComponentId(QUERY_COMPONENT);
-        testQuery.setQuery(new Query(indexRef, root.build()));
+        testQuery.setQuery(Query.builder()
+                .dataSource(indexRef)
+                .expression(root.build())
+                .build());
         AuditUtil.stamp(securityContext.getUserId(), testQuery);
         testQuery = storedQueryDao.create(testQuery);
 
@@ -112,7 +117,7 @@ class TestStoredQueryDao {
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
         criteria.setComponentId(QUERY_COMPONENT);
-        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
 
         final ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
 
@@ -155,7 +160,7 @@ class TestStoredQueryDao {
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
         criteria.setComponentId(QUERY_COMPONENT);
-        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
 
         ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);

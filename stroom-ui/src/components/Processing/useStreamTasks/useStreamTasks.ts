@@ -85,7 +85,7 @@ const useStreamTasks = (): UseStreamTasks => {
   const updateEnabled = React.useCallback(
     (filterId: number, enabled: boolean) => {
       setPagedTrackerInfo({
-        trackers: trackers.map(tracker =>
+        trackers: trackers.map((tracker) =>
           tracker.filterId === filterId
             ? { ...tracker, enabled: enabled }
             : tracker,
@@ -161,7 +161,7 @@ const useStreamTasks = (): UseStreamTasks => {
 
   const enableToggleLocal = React.useCallback(
     (filterId: number) => {
-      const tracker = trackers.find(t => t.filterId === filterId);
+      const tracker = trackers.find((t) => t.filterId === filterId);
       if (tracker) {
         setEnabled(filterId, !tracker.enabled).then(() =>
           updateEnabled(filterId, !tracker.enabled),

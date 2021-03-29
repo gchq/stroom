@@ -54,10 +54,15 @@ public class DataRetentionDeleteSummary {
         return count;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionDeleteSummary that = (DataRetentionDeleteSummary) o;
         return ruleNumber == that.ruleNumber &&
                 count == that.count &&

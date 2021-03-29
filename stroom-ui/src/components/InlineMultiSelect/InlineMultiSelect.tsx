@@ -18,7 +18,7 @@ import Button from "components/Button";
 import InlineSelect, {
   SelectOption,
 } from "components/InlineSelect/InlineSelect";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { ChangeEvent, useEffect, useMemo, useCallback } from "react";
 
@@ -69,7 +69,7 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
   // We only want to allow something to be selected once, so we need to
   // work out what options are remaining...
   const remainingOptions = options.filter(
-    option => items.indexOf(option.value) < 0,
+    (option) => items.indexOf(option.value) < 0,
   );
   return (
     <span>
@@ -78,7 +78,7 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
         //... but we must have this option present in the list, otherwise
         // it can't be selected
         const thisSelectsOptions = Object.assign([], remainingOptions);
-        const selectedOption = options.find(option => option.value === value);
+        const selectedOption = options.find((option) => option.value === value);
         if (!!selectedOption) {
           thisSelectsOptions.push(selectedOption);
         }
@@ -99,17 +99,16 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
               type="button"
               appearance="icon"
               action="secondary"
-              text="Remove"
               icon="times"
               title="Remove"
               onClick={onRemove}
-            />
+            >
+              Remove
+            </Button>
             {/* we only want to display this if we're not at the end of the list */}
             {index !== options.length - 1 ? (
               <span>,{"\u00A0"}</span>
-            ) : (
-              undefined
-            )}
+            ) : undefined}
           </React.Fragment>
         );
       })}
@@ -120,14 +119,13 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
           type="button"
           appearance="icon"
           action="primary"
-          text="Add"
           icon="plus"
           title="Add"
           onClick={addNewItem}
-        />
-      ) : (
-        undefined
-      )}
+        >
+          Add
+        </Button>
+      ) : undefined}
       ]
     </span>
   );

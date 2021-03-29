@@ -19,13 +19,12 @@ package stroom.statistics.impl.sql;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,9 +32,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 
 public class SQLStatisticFlushTaskHandler {
+
     /**
      * The number of records to flush to the DB in one go.
      */
@@ -133,12 +134,12 @@ public class SQLStatisticFlushTaskHandler {
             final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
 
             if (seconds > 0) {
-                taskContext.info(LambdaLogUtil.message("Saving {}/{} ({}/sec)",
+                taskContext.info(() -> LogUtil.message("Saving {}/{} ({}/sec)",
                         ModelStringUtil.formatCsv(counter),
                         ModelStringUtil.formatCsv(total),
                         ModelStringUtil.formatCsv(savedCount / seconds)));
             } else {
-                taskContext.info(LambdaLogUtil.message("Saving {}/{} (? ps)",
+                taskContext.info(() -> LogUtil.message("Saving {}/{} (? ps)",
                         ModelStringUtil.formatCsv(counter),
                         ModelStringUtil.formatCsv(total)));
             }
@@ -148,7 +149,7 @@ public class SQLStatisticFlushTaskHandler {
             savedCount += batchInsert.size();
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            LOGGER.warn(LambdaLogUtil.message(
+            LOGGER.warn(() -> LogUtil.message(
                     "doSaveBatch() - Failed to insert {} records will try slower PreparedStatement method - {}",
                     batchInsert.size(), e.getMessage()));
 
@@ -174,11 +175,10 @@ public class SQLStatisticFlushTaskHandler {
                     }
                 }
 
-                LOGGER.error(LambdaLogUtil.message(
-                        "doSaveBatch() - Failed to insert {} records out of a batch size of {} using " +
+                LOGGER.error("doSaveBatch() - Failed to insert {} records out of a batch size of {} using " +
                                 "PreparedStatement (though succeeded in inserting {}), will try much slower " +
                                 "IndividualPreparedStatements method",
-                        batchInsert.size() - successCount, batchInsert.size(), successCount), e2);
+                        batchInsert.size() - successCount, batchInsert.size(), successCount, e2);
 
                 final int insertedCount = sqlStatisticValueBatchSaveService
                         .saveBatchStatisticValueSource_IndividualPreparedStatements(revisedBatch);

@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.testclient.presenter;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -33,6 +32,8 @@ import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,24 +41,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineModel {
+
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
-    private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE1 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty1")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE2 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty2")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE3 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE3 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty3")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE4 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE4 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty4")
             .type("String")
@@ -299,7 +301,9 @@ class TestPipelineModel {
 
         final PipelineElement source = createElement("Source", null, "Source");
         final PipelineElement combinedParser = createElement("CombinedParser", Category.PARSER, "combinedParser");
-        final PipelineElement findReplaceFilter = createElement("FindReplaceFilter", Category.READER, "FindReplaceFilter");
+        final PipelineElement findReplaceFilter = createElement("FindReplaceFilter",
+                Category.READER,
+                "FindReplaceFilter");
 
         final PipelineData pipelineData = new PipelineData();
 //        pipelineData.addElement(sourceElementType, "Source");
@@ -330,7 +334,9 @@ class TestPipelineModel {
 
         final PipelineElement source = createElement("Source", null, "Source");
         final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
-        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter", Category.FILTER, "idEnrichmentFilter");
+        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter",
+                Category.FILTER,
+                "idEnrichmentFilter");
         final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
 
         final PipelineData base = new PipelineData();
@@ -368,7 +374,9 @@ class TestPipelineModel {
 
         final PipelineElement source = createElement("Source", null, "Source");
         final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
-        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter", Category.FILTER, "idEnrichmentFilter");
+        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter",
+                Category.FILTER,
+                "idEnrichmentFilter");
         final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
 //        final PipelineElement xsltFilter2 = createElement("XSLTFilter", Category.FILTER, "xsltFilter2");
 
@@ -392,7 +400,9 @@ class TestPipelineModel {
         checkChildren(tree1, xmlParser, new PipelineElement[]{idEnrichmentFilter});
         checkChildren(tree1, idEnrichmentFilter, new PipelineElement[]{xsltFilter});
 
-        final PipelineElement xsltFilter2 = pipelineModel.addElement(idEnrichmentFilter, createType("XSLTFilter", Category.FILTER), "xsltFilter2");
+        final PipelineElement xsltFilter2 = pipelineModel.addElement(idEnrichmentFilter,
+                createType("XSLTFilter", Category.FILTER),
+                "xsltFilter2");
         pipelineModel.moveElement(xsltFilter2, xsltFilter);
 
         pipelineModel.build();
@@ -411,7 +421,9 @@ class TestPipelineModel {
         checkChildren(tree3, idEnrichmentFilter, new PipelineElement[]{xsltFilter, xsltFilter2});
     }
 
-    private void checkChildren(final DefaultTreeForTreeLayout<PipelineElement> tree, final PipelineElement parent, final PipelineElement[] children) {
+    private void checkChildren(final DefaultTreeForTreeLayout<PipelineElement> tree,
+                               final PipelineElement parent,
+                               final PipelineElement[] children) {
         List<PipelineElement> list = tree.getChildren(parent);
         if (children.length == 0) {
             assertThat(list == null || list.size() == 0).isTrue();
@@ -435,25 +447,31 @@ class TestPipelineModel {
     private PipelineElementType createType(final String type, final Category category) {
         String[] roles = null;
         if (category == null) {
-            roles = new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE};
+            roles = new String[]{
+                    PipelineElementType.ROLE_SOURCE,
+                    PipelineElementType.ROLE_HAS_TARGETS,
+                    PipelineElementType.VISABILITY_SIMPLE};
         } else {
             switch (category) {
                 case READER:
-                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_TARGET,
                             PipelineElementType.ROLE_HAS_TARGETS,
                             PipelineElementType.ROLE_READER,
                             PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.VISABILITY_STEPPING};
                     break;
                 case PARSER:
-                    roles = new String[]{PipelineElementType.ROLE_PARSER,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_PARSER,
                             PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
                             PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.ROLE_HAS_CODE};
                     break;
 
                 case FILTER:
-                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_TARGET,
                             PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
                             PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.ROLE_HAS_CODE};
@@ -467,9 +485,15 @@ class TestPipelineModel {
                 roles, null);
     }
 
-    private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,
-                      final int removedElements, final int addedProperties, final int removedProperties,
-                      final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
+    private void test(final List<PipelineData> baseStack,
+                      final PipelineData pipelineData,
+                      final int addedElements,
+                      final int removedElements,
+                      final int addedProperties,
+                      final int removedProperties,
+                      final int addedPipelineReferences,
+                      final int removedPipelineReferences,
+                      final int addedLinks,
                       final int removedLinks) throws PipelineModelException {
         final PipelineModel pipelineModel = new PipelineModel();
         pipelineModel.setBaseStack(baseStack);

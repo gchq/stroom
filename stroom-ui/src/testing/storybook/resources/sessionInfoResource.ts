@@ -12,10 +12,7 @@ const SESSION_INFO: SessionInfo = {
   },
 };
 
-const resourceBuilder: ResourceBuilder = (
-  server: any,
-  apiUrl: any,
-) => {
+const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
   const resource = apiUrl("/sessionInfo/v1");
 
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {

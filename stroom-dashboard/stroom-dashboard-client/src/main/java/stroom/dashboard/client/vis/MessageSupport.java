@@ -16,6 +16,11 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.vis.PostMessage.FrameListener;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.util.client.JSONUtil;
+
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.GwtEvent;
@@ -23,16 +28,12 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dashboard.client.vis.PostMessage.FrameListener;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.util.client.JSONUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MessageSupport implements FrameListener, HasHandlers {
+
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
     private static int callbackId;
@@ -78,7 +79,7 @@ public class MessageSupport implements FrameListener, HasHandlers {
         if ("link".equals(functionName)) {
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
-            final Hyperlink hyperlink = new Builder().href(href).type(target).build();
+            final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
             HyperlinkEvent.fire(this, hyperlink);
 
         } else {

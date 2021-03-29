@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class DataRetentionModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
@@ -38,10 +39,10 @@ public class DataRetentionModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
-                        .withName("Data Retention")
-                        .withDescription("Delete data that exceeds the retention period " +
+                        .name("Policy Based Data Retention")
+                        .description("Delete data that exceeds the retention period " +
                                 "specified by data retention policy")
-                        .withSchedule(CRON, "0 0 *"));
+                        .schedule(CRON, "0 0 *"));
     }
 
     @SuppressWarnings("unused") // called by guice
@@ -51,6 +52,7 @@ public class DataRetentionModule extends AbstractModule {
     }
 
     private static class DataRetention extends RunnableWrapper {
+
         @Inject
         DataRetention(final DataRetentionPolicyExecutor dataRetentionPolicyExecutor) {
             super(dataRetentionPolicyExecutor::exec);

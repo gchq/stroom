@@ -21,12 +21,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_feed_path table
 --
 CREATE TABLE IF NOT EXISTS fs_feed_path (
-    id                int(11) NOT NULL AUTO_INCREMENT,
+    id                int NOT NULL AUTO_INCREMENT,
     name              varchar(255) NOT NULL,
     path              varchar(255) NOT NULL,
     PRIMARY KEY       (id),
     UNIQUE KEY        name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the fs_feed_path table
@@ -38,7 +38,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'FD') THEN
 
         RENAME TABLE FD TO OLD_FD;
     END IF;
@@ -47,7 +48,8 @@ BEGIN
     IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_FD') THEN
 
         INSERT INTO fs_feed_path (
             id,

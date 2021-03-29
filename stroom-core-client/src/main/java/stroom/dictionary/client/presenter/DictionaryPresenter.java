@@ -16,9 +16,6 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
@@ -37,9 +34,15 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+
 import javax.inject.Provider;
 
 public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
+
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
 
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
@@ -90,7 +93,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
-                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(DICTIONARY_RESOURCE)
                     .download(docRef);
         }));
@@ -115,6 +118,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         settingsPresenter.read(docRef, doc);
         if (codePresenter != null) {
             codePresenter.setText(doc.getData());
+            codePresenter.setMode(AceEditorMode.TEXT);
         }
     }
 
@@ -132,6 +136,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         settingsPresenter.onReadOnly(readOnly);
         codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
+        codePresenter.getStylesOption().setUnavailable();
+        codePresenter.getFormatAction().setUnavailable();
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
         }
@@ -145,6 +151,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     private EditorPresenter getOrCreateCodePresenter() {
         if (codePresenter == null) {
             codePresenter = editorPresenterProvider.get();
+            codePresenter.setMode(AceEditorMode.TEXT);
+            // Text only, no styling or formatting
+            codePresenter.getStylesOption().setUnavailable();
+            codePresenter.getFormatAction().setUnavailable();
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
         }

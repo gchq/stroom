@@ -28,7 +28,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'APP_PERM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'APP_PERM') THEN
 
         RENAME TABLE APP_PERM TO OLD_APP_PERM;
     END IF;
@@ -37,7 +38,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'PERM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'PERM') THEN
 
         RENAME TABLE PERM TO OLD_PERM;
     END IF;
@@ -45,7 +47,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_APP_PERM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_APP_PERM') THEN
 
         INSERT INTO app_permission (
             user_uuid,

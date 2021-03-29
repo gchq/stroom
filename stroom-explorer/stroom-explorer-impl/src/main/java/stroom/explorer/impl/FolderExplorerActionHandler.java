@@ -10,13 +10,14 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.inject.Inject;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
+
     private static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private final SecurityContext securityContext;
@@ -43,7 +44,8 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to read (" + FOLDER + ")");
         }
 
         final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);
@@ -58,7 +60,8 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to read (" + FOLDER + ")");
         }
         return explorerTreeNode.getDocRef();
     }
@@ -70,7 +73,8 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to rename");
         }
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to update (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
         explorerTreeNode.setName(name);
@@ -84,7 +88,8 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to delete");
         }
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to delete (" + FOLDER + ")");
         }
     }
 
@@ -96,11 +101,13 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to read (" + FOLDER + ")");
         }
 
-        return new DocRefInfo.Builder()
-                .docRef(new DocRef.Builder()
+        return DocRefInfo
+                .builder()
+                .docRef(DocRef.builder()
                         .type(explorerTreeNode.getType())
                         .uuid(explorerTreeNode.getUuid())
                         .name(explorerTreeNode.getName())

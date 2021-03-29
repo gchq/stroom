@@ -21,6 +21,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class QueryModule extends AbstractModule {
+
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())

@@ -8,10 +8,10 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.flyway_core
-    compile libs.guice4
+    compile libs.guice5
     compile libs.hikari
     compile libs.jackson_annotations
     compile libs.javax_inject

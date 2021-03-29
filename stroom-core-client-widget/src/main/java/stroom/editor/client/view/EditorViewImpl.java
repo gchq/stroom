@@ -16,6 +16,20 @@
 
 package stroom.editor.client.view;
 
+import stroom.editor.client.event.FormatEvent;
+import stroom.editor.client.event.FormatEvent.FormatHandler;
+import stroom.editor.client.model.XmlFormatter;
+import stroom.editor.client.presenter.Action;
+import stroom.editor.client.presenter.EditorUiHandlers;
+import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.presenter.Option;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Location;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
+import stroom.util.shared.TextRange;
+import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -44,23 +58,14 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
-import stroom.editor.client.event.FormatEvent;
-import stroom.editor.client.event.FormatEvent.FormatHandler;
-import stroom.editor.client.model.XmlFormatter;
-import stroom.editor.client.presenter.EditorUiHandlers;
-import stroom.editor.client.presenter.EditorView;
-import stroom.editor.client.presenter.Option;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Location;
-import stroom.util.shared.Severity;
-import stroom.util.shared.StoredError;
-import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * This is a widget that can be used to edit text. It provides useful
@@ -68,13 +73,23 @@ import java.util.Set;
  * markers.
  */
 public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> implements EditorView {
+
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
+    private static final boolean SHOW_INDICATORS_DEFAULT = false;
     private static volatile Binder binder;
     private static volatile Resources resources;
+    private final Action formatAction;
     private final Option stylesOption;
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
     private final Option lineWrapOption;
+    private final Option showInvisiblesOption;
+    private final Option useVimBindingsOption;
+    private final Option basicAutoCompletionOption;
+    private final Option snippetsOption;
+    private final Option liveAutoCompletionOption;
+    private final Option highlightActiveLineOption;
+
     @UiField(provided = true)
     DockLayoutPanel layout;
     @UiField
@@ -91,6 +106,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
+    private Function<String, List<TextRange>> formattedHighlightsFunc;
 
     @Inject
     public EditorViewImpl() {
@@ -104,7 +120,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             @Override
             public void onResize() {
                 super.onResize();
-                doLayout();
+                doLayout(SHOW_INDICATORS_DEFAULT);
             }
         };
 
@@ -128,10 +144,29 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         filterInactive.getElement().getStyle().setTop(top, Unit.PX);
         filterActive.getElement().getStyle().setTop(top, Unit.PX);
 
-        stylesOption = new Option("Styles", true, true, (on) -> setMode(mode));
-        lineNumbersOption = new Option("Line Numbers", true, true, (on) -> updateGutter());
-        indicatorsOption = new Option("Indicators", false, false, (on) -> doLayout());
-        lineWrapOption = new Option("Wrap Lines", false, false, (on) -> editor.setUseWrapMode(on));
+        formatAction = new Action("Format", false, this::format);
+
+        // Don't forget to add any new options into EditorPresenter
+        stylesOption = new Option(
+                "Styles", true, true, (on) -> setMode(mode, on));
+        lineNumbersOption = new Option(
+                "Line Numbers", true, true, (on) -> editor.setShowGutter(on));
+        indicatorsOption = new Option(
+                "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
+        lineWrapOption = new Option(
+                "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
+        showInvisiblesOption = new Option(
+                "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
+        useVimBindingsOption = new Option(
+                "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
+        basicAutoCompletionOption = new Option(
+                "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
+        liveAutoCompletionOption = new Option(
+                "Live Auto Completion", false, true, (on) -> editor.setUseLiveAutoCompletion(on));
+        snippetsOption = new Option(
+                "Snippets", true, true, (on) -> editor.setUseSnippets(on));
+        highlightActiveLineOption = new Option(
+                "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -152,14 +187,28 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         return layout;
     }
 
-    private void updateGutter() {
-        editor.setShowGutter(lineNumbersOption.isOn());
+    private void updateGutter(final boolean showLineNumbers) {
+        editor.setShowGutter(showLineNumbers);
     }
 
     private void doLayout() {
-        rightBar.render(indicators, indicatorsOption.isOn());
+        doLayout(indicatorsOption.isOn());
+    }
+
+    private void doLayout(final boolean showIndicators) {
+        rightBar.render(indicators, showIndicators);
         layout.setWidgetSize(rightBar, rightBar.getWidth());
         editor.onResize();
+    }
+
+    @Override
+    public String getEditorId() {
+        return editor.getId();
+    }
+
+    @Override
+    public void focus() {
+        editor.focus();
     }
 
     @Override
@@ -169,7 +218,37 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setText(final String text) {
-        editor.setText(text);
+        setText(text, false);
+    }
+
+    @Override
+    public void setText(final String text, final boolean format) {
+        if (text == null) {
+            editor.setText("");
+        } else {
+            if (format) {
+                final String formattedText = formatAsIfXml(text);
+                editor.setText(formattedText);
+                applyFormattedHighlights(formattedText);
+            } else {
+                editor.setText(text);
+            }
+        }
+    }
+
+    @Override
+    public void insertTextAtCursor(final String text) {
+        editor.insertTextAtCursor(text);
+    }
+
+    @Override
+    public void replaceSelectedText(final String text) {
+        editor.replaceSelectedText(text);
+    }
+
+    @Override
+    public void insertSnippet(final String snippet) {
+        editor.insertSnippet(snippet);
     }
 
     @Override
@@ -213,9 +292,18 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                             case FATAL_ERROR:
                                 annotationType = AceAnnotationType.FATAL_ERROR;
                                 break;
+                            default:
+                                throw new RuntimeException("Unexpected severity " + severity);
                         }
 
-                        annotations.add(new Annotation(row, col, error.getMessage(), annotationType));
+                        // Ace munges all the msgs together in one popup for annotaions on the same line/col
+                        // so add the severity as if we have some info + warnings then we get a warning
+                        // icon whose popup contains all the msgs.
+                        annotations.add(new Annotation(
+                                row,
+                                col,
+                                error.getSeverity().toString() + " " + error.getMessage(),
+                                annotationType));
                     }
                 }
             }
@@ -227,27 +315,44 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         }
 
         editor.setAnnotations(annotations);
-        doLayout();
+        doLayout(indicatorsOption.isOn());
     }
 
     @Override
-    public void setHighlights(final List<Highlight> highlights) {
+    public void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction) {
+        this.formattedHighlightsFunc = highlightsFunction;
+    }
+
+    @Override
+    public void setHighlights(final List<TextRange> highlights) {
+
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
-                final List<Marker> markers = new ArrayList<>();
-                int minLineNo = Integer.MAX_VALUE;
+                // Find our first from location
+                final Location minLocation = highlights.stream()
+                        .map(TextRange::getFrom)
+                        .min(Location::compareTo)
+                        .orElse(DefaultLocation.beginning());
 
-                for (final Highlight highlight : highlights) {
-                    minLineNo = Math.min(minLineNo, highlight.getFrom().getLineNo());
-                    final AceRange range = AceRange.create(
-                            highlight.getFrom().getLineNo() - firstLineNumber,
-                            highlight.getFrom().getColNo() - 1,
-                            highlight.getTo().getLineNo() - firstLineNumber,
-                            highlight.getTo().getColNo() - 1);
-                    markers.add(new Marker(range, "hl", AceMarkerType.TEXT, false));
-                }
+                final List<Marker> markers = highlights.stream()
+                        .map(highlightStr -> {
+                            // Location is all one based and exclusive, AceRange is a mix
+                            return AceRange.create(
+                                    highlightStr.getFrom().getLineNo() - firstLineNumber,
+                                    highlightStr.getFrom().getColNo() - 1, // zero-based & inclusive
+                                    highlightStr.getTo().getLineNo() - firstLineNumber,
+                                    highlightStr.getTo().getColNo()); // zero-based & exclusive so no need to change
+                        })
+                        .map(aceRange ->
+                                new Marker(aceRange, "hl", AceMarkerType.TEXT, false))
+                        .collect(Collectors.toList());
+
                 editor.setMarkers(markers);
-                editor.gotoLine(minLineNo - firstLineNumber + 1);
+                // Move the cursor location so the highlight is in view.  Line and col as we
+                // could be dealing with single line data with the highlight at col 500 for example.
+                editor.gotoLocation(
+                        minLocation.getLineNo() - firstLineNumber + 1,
+                        minLocation.getColNo());
             } else {
                 editor.setMarkers(null);
             }
@@ -269,25 +374,39 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         }
     }
 
+    public void setMode(final AceEditorMode mode, final boolean areStylesEnabled) {
+        this.mode = mode;
+        if (areStylesEnabled) {
+            editor.setMode(mode);
+        } else {
+            editor.setMode(AceEditorMode.TEXT);
+        }
+    }
+
     @Override
     public void setTheme(final AceEditorTheme theme) {
         editor.setTheme(theme);
     }
 
+    private String formatAsIfXml(final String text) {
+        return new XmlFormatter().format(text);
+    }
+
     /**
      * Formats the currently displayed text.
      */
-    @Override
-    public void format() {
+    private void format() {
         Scheduler.get().scheduleDeferred(() -> {
             final int scrollTop = editor.getScrollTop();
             final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
 
+            final String formattedText;
             if (AceEditorMode.XML.equals(mode)) {
-                final String formatted = new XmlFormatter().format(getText());
-                setText(formatted);
+                formattedText = formatAsIfXml(getText());
+                setText(formattedText);
             } else {
                 editor.beautify();
+                formattedText = editor.getText();
             }
 
             if (cursorPosition != null) {
@@ -300,7 +419,21 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             editor.focus();
 
             FormatEvent.fire(this);
+
+            applyFormattedHighlights(formattedText);
         });
+    }
+
+    private void applyFormattedHighlights(final String formattedText) {
+        if (formattedHighlightsFunc != null) {
+            final List<TextRange> highlightRanges = formattedHighlightsFunc.apply(formattedText);
+            setHighlights(highlightRanges);
+        }
+    }
+
+    @Override
+    public Action getFormatAction() {
+        return formatAction;
     }
 
     @Override
@@ -321,6 +454,36 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getLineWrapOption() {
         return lineWrapOption;
+    }
+
+    @Override
+    public Option getShowInvisiblesOption() {
+        return showInvisiblesOption;
+    }
+
+    @Override
+    public Option getUseVimBindingsOption() {
+        return useVimBindingsOption;
+    }
+
+    @Override
+    public Option getBasicAutoCompletionOption() {
+        return basicAutoCompletionOption;
+    }
+
+    @Override
+    public Option getSnippetsOption() {
+        return snippetsOption;
+    }
+
+    @Override
+    public Option getLiveAutoCompletionOption() {
+        return liveAutoCompletionOption;
+    }
+
+    @Override
+    public Option getHighlightActiveLineOption() {
+        return highlightActiveLineOption;
     }
 
     @Override
@@ -373,10 +536,16 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         layout.fireEvent(event);
     }
 
+    @Override
+    public void onResize() {
+        doLayout();
+    }
+
     /**
      * Declare styles.
      */
     public interface Style extends CssResource {
+
         String filterButtons();
 
         String filterButton();
@@ -386,6 +555,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
      * Bundle for the indicator icons and styles.
      */
     public interface Resources extends ClientBundle {
+
         ImageResource filterActive();
 
         ImageResource filterInactive();
@@ -395,5 +565,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
+
     }
 }

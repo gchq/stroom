@@ -19,5 +19,6 @@ package stroom.widget.htree.client;
 import stroom.widget.htree.client.treelayout.Bounds;
 
 public interface CellRenderer<T> {
+
     void render(Bounds bounds, T item, boolean mouseOver, boolean selected);
 }

@@ -1,0 +1,46 @@
+.dialog-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flexible-modal {
+  position: absolute;
+  z-index: 1;
+  //border: 1px solid #ccc;
+  background: white;
+  border-radius: 0.3rem;
+}
+
+.flexible-modal-mask {
+  position: fixed;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+.flexible-modal-resizer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  cursor: se-resize;
+  //margin: 5px;
+  //border-bottom: solid 2px #333;
+  //border-right: solid 2px #333;
+  background: url('../images/resize.svg');
+  padding: 5px;
+}
+
+.flexible-modal-drag-area {
+  background: transparent;
+  height: 68px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  cursor: move;
+}

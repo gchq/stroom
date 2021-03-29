@@ -78,7 +78,11 @@ public class AceCompletionSnippet extends AceCompletion {
      * @param htmlTooltip     the HTML tooltip
      * @param score           The score is the value assigned to the autocompletion option. Scores with a higher value will appear closer to the top. Items with an identical score are sorted alphbetically by caption in the drop down.
      */
-    public AceCompletionSnippet(String caption, AceCompletionSnippetSegment[] snippetSegments, String meta, String htmlTooltip, int score) {
+    public AceCompletionSnippet(String caption,
+                                AceCompletionSnippetSegment[] snippetSegments,
+                                String meta,
+                                String htmlTooltip,
+                                int score) {
         this.caption = caption;
         this.score = score;
         this.meta = meta;

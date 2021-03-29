@@ -13,42 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.alert.impl;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.document.Document;
+package stroom.alert.impl;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.impl.TableSettingsUtil;
+import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TopDocs;
-
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
-
 import stroom.query.api.v2.Field;
+import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.Values;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,7 +65,7 @@ public class AlertProcessorImpl implements AlertProcessor {
     private final int maxBooleanClauseCount;
     private final IndexStructure indexStructure;
 
-    private final List <RuleConfig> rules;
+    private final List<RuleConfig> rules;
 
     private final Map<String, Analyzer> analyzerMap;
 
@@ -78,12 +75,12 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final String locale;
 
-    public AlertProcessorImpl (final ExtractionDecoratorFactory extractionDecoratorFactory,
+    public AlertProcessorImpl(final ExtractionDecoratorFactory extractionDecoratorFactory,
                                final List<RuleConfig> rules,
                                final IndexStructure indexStructure,
                                final WordListProvider wordListProvider,
                                final int maxBooleanClauseCount,
-                               final String locale){
+                               final String locale) {
         this.rules = rules;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
@@ -106,47 +103,47 @@ public class AlertProcessorImpl implements AlertProcessor {
     public void addIfNeeded(final Document document) {
 
         Long streamId = findStreamId(document);
-        if (streamId == null){
+        if (streamId == null) {
             LOGGER.warn("Unable to locate StreamId for document, alerting disabled for this stream");
             return;
         }
-        if (currentStreamId == null){
+        if (currentStreamId == null) {
             currentStreamId = streamId;
         }
-        if (currentStreamId.longValue() != streamId.longValue()){
+        if (currentStreamId.longValue() != streamId.longValue()) {
             throw new IllegalStateException("Unable to reuse AlertProcessorImpl for more than single stream" +
                     " was created with streamid " + currentStreamId +
                     " now applied to streamid " + streamId);
         }
 
         MemoryIndex memoryIndex = new MemoryIndex();
-        if (analyzerMap == null || analyzerMap.size() == 0){
+        if (analyzerMap == null || analyzerMap.size() == 0) {
             //Don't create alerts if index isn't configured
             return;
         }
 
-        Long eventId = findEventId (document);
+        Long eventId = findEventId(document);
         if (eventId == null) {
             LOGGER.warn("Unable to locate event id processing alerts for stream " + streamId);
             return;
         }
 
-        for (IndexableField field : document){
+        for (IndexableField field : document) {
 
             Analyzer fieldAnalyzer = analyzerMap.get(field.name());
 
-            if (fieldAnalyzer != null){
+            if (fieldAnalyzer != null) {
                 TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
                 if (tokenStream != null) {
-                    memoryIndex.addField(field.name(),tokenStream, field.boost());
+                    memoryIndex.addField(field.name(), tokenStream, field.boost());
                 }
             }
         }
 
-        checkRules (eventId, memoryIndex);
+        checkRules(eventId, memoryIndex);
     }
 
-    private void checkRules (final long eventId, final MemoryIndex memoryIndex){
+    private void checkRules(final long eventId, final MemoryIndex memoryIndex) {
         if (rules == null) {
             return;
         }
@@ -155,27 +152,29 @@ public class AlertProcessorImpl implements AlertProcessor {
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexStructure.getIndex().getFields());
         try {
             for (RuleConfig rule : rules) {
-                if (matchQuery(indexSearcher, indexFieldsMap, rule.getExpression())){
+                if (matchQuery(indexSearcher, indexFieldsMap, rule.getExpression())) {
                     //This query matches - now apply filters
 
                     //First get the original event XML
 
    //                 System.out.println ("Found a matching query rule");
 
-                    alertQueryHits.addQueryHitForRule(rule,eventId);
-                    LOGGER.debug("Adding {}:{} to rule {} from dashboards {}", currentStreamId, eventId, rule.getQueryId(),
+                    alertQueryHits.addQueryHitForRule(rule, eventId);
+                    LOGGER.debug("Adding {}:{} to rule {} from dashboards {}", currentStreamId,
+                            eventId, rule.getQueryId(),
                             rule.getAlertDefinitions().stream()
                                 .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
                                 .collect(Collectors.joining(", ")));
                     ;
                 } else {
-                    LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId, eventId, rule.getQueryId(),
+                    LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId,
+                            eventId, rule.getQueryId(),
                             rule.getAlertDefinitions().stream()
                                     .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
                                     .collect(Collectors.joining(", ")));
                 }
             }
-        } catch (IOException ex){
+        } catch (IOException ex) {
             throw new RuntimeException("Unable to create alerts", ex);
         }
     }
@@ -188,11 +187,11 @@ public class AlertProcessorImpl implements AlertProcessor {
         for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
             LOGGER.trace("Iterating pipeline {}", pipeline.getName());
             Collection<RuleConfig> rulesForPipeline = alertQueryHits.getRulesForPipeline(pipeline);
-            for (RuleConfig ruleConfig : rulesForPipeline){
+            for (RuleConfig ruleConfig : rulesForPipeline) {
                 LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getQueryId());
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
-                    final Receiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
+                    final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
                     extractionDecoratorFactory.createAlertExtractionTask(receiver,
                                 currentStreamId, eventIds, pipeline,
@@ -207,8 +206,8 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     }
 
-    private boolean matchQuery (final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,
-                                final ExpressionOperator query) throws IOException {
+    private boolean matchQuery(final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,
+                               final ExpressionOperator query) throws IOException {
 
         try {
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
@@ -225,61 +224,64 @@ public class AlertProcessorImpl implements AlertProcessor {
             } else {
                 LOGGER.error("Unexpected number of documents {}  found by rule, should be 1 or 0.", docs.totalHits);
             }
-        }
-        catch (SearchException se){
+
+        } catch (SearchException se) {
             LOGGER.warn("Unable to create alerts for rule " + query + " due to " + se.getMessage());
         }
+
         return false;
     }
 
-    private static Long findEventId(final Document document){
+    private static Long findEventId(final Document document) {
         try {
             return document.getField("EventId").numericValue().longValue();
-        } catch (RuntimeException ex){
+        } catch (RuntimeException ex) {
             return null;
         }
     }
 
-    private static Long findStreamId(final Document document){
+    private static Long findStreamId(final Document document) {
         try {
             return document.getField("StreamId").numericValue().longValue();
-        } catch (RuntimeException ex){
+        } catch (RuntimeException ex) {
             return null;
         }
     }
 
-    private static class AlertProcessorReceiver implements Receiver {
-        private final CompiledFields compiledFields;
-        private final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+    private static class AlertProcessorReceiver implements ExtractionReceiver {
+        private final CompiledField[] compiledFields;
+        private final FieldIndex fieldIndexMap = FieldIndex.forFields();
 
-        AlertProcessorReceiver (final List<AlertDefinition> alertDefinitions,
-                                final Map<String, String> paramMap){
+        AlertProcessorReceiver(final List<AlertDefinition> alertDefinitions,
+                                final Map<String, String> paramMap) {
 
-            final List<Field> fields = TableSettingsUtil.mapFields(
-                    alertDefinitions.stream().map(a -> a.getTableComponentSettings().getFields())
-                    .reduce(new ArrayList<>(), (a,b)->{a.addAll(b); return a;}));
+            final List<Field> fields = alertDefinitions.stream().map(a -> a.getTableComponentSettings().getFields())
+                    .reduce(new ArrayList<>(), (a, b) -> {
+                        a.addAll(b);
+                        return a;
+                    });
 
-            compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
+            compiledFields = CompiledFields.create(fields, fieldIndexMap, paramMap);
         }
 
         @Override
-        public FieldIndexMap getFieldIndexMap() {
-            return fieldIndexMap;
-        }
-
-        @Override
-        public Consumer<Values> getValuesConsumer() {
+        public Consumer<Val[]> getValuesConsumer() {
             return values -> {};
         }
 
         @Override
-        public Consumer<Error> getErrorConsumer() {
-            return error -> LOGGER.error(error.getMessage(), error.getThrowable());
+        public Consumer<Throwable> getErrorConsumer() {
+            return error -> LOGGER.error(error.getMessage(), error.getCause());
         }
 
         @Override
-        public Consumer<Long> getCompletionCountConsumer() {
-            return count -> {};
+        public Consumer<Long> getCompletionConsumer() {
+            return null;
         }
-    };
+
+        @Override
+        public FieldIndex getFieldMap() {
+            return fieldIndexMap;
+        }
+    }
 }

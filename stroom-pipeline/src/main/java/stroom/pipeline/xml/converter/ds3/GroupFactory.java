@@ -24,11 +24,13 @@ import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 import java.util.Set;
 
 public class GroupFactory extends StoreFactory {
+
     private final boolean reverse;
     private final boolean ignoreErrors;
     private final MatchOrder matchOrder;
     private String value;
     private RefResolver refValue;
+
     public GroupFactory(final NodeFactory parent, final String id) {
         this(parent, id, null, false, MatchOrder.SEQUENCE, false);
     }

@@ -6,6 +6,7 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 public class MockProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
+
     private static final UserIdentity USER_IDENTITY = new MockUserIdentity();
 
     @Override
@@ -13,7 +14,13 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
         return USER_IDENTITY;
     }
 
+    @Override
+    public boolean isProcessingUser(final UserIdentity userIdentity) {
+        return UserIdentity.IDENTITY_COMPARATOR.compare(USER_IDENTITY, userIdentity) == 0;
+    }
+
     private static class MockUserIdentity implements UserIdentity {
+
         @Override
         public String getId() {
             return "INTERNAL_PROCESSING_USER";
@@ -29,10 +36,15 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
             return null;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof UserIdentity)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof UserIdentity)) {
+                return false;
+            }
             final UserIdentity that = (UserIdentity) o;
             return Objects.equals(getId(), that.getId()) &&
                     Objects.equals(getJws(), that.getJws());

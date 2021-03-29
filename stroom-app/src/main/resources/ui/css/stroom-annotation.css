@@ -108,6 +108,9 @@
 .annotationSettingHeading {
     display: flex;
     width: 100%;
+}
+
+.annotationSettingHeading.clickable {
     cursor: pointer;
 }
 
@@ -123,7 +126,7 @@
     -o-transition: opacity 0.5s linear;
 }
 
-.annotationClickLabel:hover {
+.annotationClickLabel.clickable:hover {
     opacity: 1;
     text-decoration: underline;
 }

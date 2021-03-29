@@ -3,7 +3,6 @@ package stroom.proxy.app.guice;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
-import stroom.dictionary.impl.NewUiDictionaryResource2;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -14,6 +13,7 @@ import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
+import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.proxy.app.BufferFactoryImpl;
@@ -32,7 +32,7 @@ import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
-import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
@@ -53,6 +53,10 @@ import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
@@ -66,13 +70,14 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.nio.file.Paths;
-import java.util.Optional;
 
 public class ProxyModule extends AbstractModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
 
     // This name is used by dropwizard metrics
@@ -116,9 +121,12 @@ public class ProxyModule extends AbstractModule {
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
 
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(FeedStatusResource.class)
+                .bind(FeedStatusResourceImpl.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
@@ -136,16 +144,16 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUiDictionaryResource2.class)
                 .bind(ReceiveDataRuleSetResourceImpl.class)
-                .bind(FeedStatusResource.class);
+                .bind(FeedStatusResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
-                .addBinding(PermissionExceptionMapper.class);
+                .addBinding(PermissionExceptionMapper.class)
+                .addBinding(TokenExceptionMapper.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetService.class)

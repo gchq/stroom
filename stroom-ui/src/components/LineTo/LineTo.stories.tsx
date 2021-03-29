@@ -22,7 +22,7 @@ import Curve from "./lineCreators/Curve";
 import ElbowDown from "./lineCreators/ElbowDown";
 import LineEndpoint from "./LineEndpoint";
 
-let testBlockStyle: React.CSSProperties = {
+const testBlockStyle: React.CSSProperties = {
   position: "absolute",
   width: "50px",
   border: "solid thin black",
@@ -131,12 +131,12 @@ const ElbowDownTest: React.FunctionComponent = () => {
   );
 };
 
-let multiBlockStyle: React.CSSProperties = {
+const multiBlockStyle: React.CSSProperties = {
   display: "flex",
   width: "100%",
   height: "100%",
 };
-let multiBlockPartStyle: React.CSSProperties = {
+const multiBlockPartStyle: React.CSSProperties = {
   borderStyle: "solid",
   width: "100%",
   height: "100%",

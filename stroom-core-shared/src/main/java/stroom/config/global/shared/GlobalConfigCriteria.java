@@ -1,8 +1,8 @@
 package stroom.config.global.shared;
 
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,7 +21,7 @@ public class GlobalConfigCriteria extends BaseCriteria {
 
     @JsonCreator
     public GlobalConfigCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                @JsonProperty("sortList") final List<Sort> sortList,
+                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                 @JsonProperty("quickFilterInput") final String quickFilterInput) {
         super(pageRequest, sortList);
         this.quickFilterInput = quickFilterInput;
@@ -44,11 +44,18 @@ public class GlobalConfigCriteria extends BaseCriteria {
         this.quickFilterInput = quickFilterInput;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final GlobalConfigCriteria that = (GlobalConfigCriteria) o;
         return Objects.equals(quickFilterInput, that.quickFilterInput);
     }

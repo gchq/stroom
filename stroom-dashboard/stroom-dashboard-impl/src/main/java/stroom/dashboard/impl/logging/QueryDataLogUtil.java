@@ -25,11 +25,11 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Not;
-import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.AdvancedQueryItem;
+import event.logging.AdvancedQueryOperator;
+import event.logging.And;
+import event.logging.Not;
+import event.logging.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 
@@ -38,7 +38,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class QueryDataLogUtil {
-    public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
+
+    public static void appendExpressionItem(final List<AdvancedQueryItem> items,
                                             final WordListProvider wordListProvider,
                                             final CollectionService collectionService,
                                             final ExpressionItem item) {
@@ -108,7 +109,8 @@ public class QueryDataLogUtil {
                         break;
                     case IN_FOLDER:
                         if (collectionService != null) {
-                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
+                            final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(),
+                                    expressionTerm.getField());
                             if (docRefs != null && docRefs.size() > 0) {
                                 final String words = docRefs
                                         .stream()
@@ -137,11 +139,11 @@ public class QueryDataLogUtil {
         }
     }
 
-    private static void appendOperator(final List<BaseAdvancedQueryItem> items,
+    private static void appendOperator(final List<AdvancedQueryItem> items,
                                        final WordListProvider wordListProvider,
                                        final CollectionService collectionService,
                                        final ExpressionOperator exp) {
-        BaseAdvancedQueryOperator operator;
+        AdvancedQueryOperator operator;
         if (exp.op() == Op.NOT) {
             operator = new Not();
         } else if (exp.op() == Op.OR) {
@@ -154,12 +156,14 @@ public class QueryDataLogUtil {
 
         if (exp.getChildren() != null) {
             for (final ExpressionItem child : exp.getChildren()) {
-                appendExpressionItem(operator.getAdvancedQueryItems(), wordListProvider, collectionService, child);
+                appendExpressionItem(operator.getQueryItems(), wordListProvider, collectionService, child);
             }
         }
     }
 
-    private static void appendTerm(final List<BaseAdvancedQueryItem> items, String field, TermCondition condition,
+    private static void appendTerm(final List<AdvancedQueryItem> items,
+                                   String field,
+                                   TermCondition condition,
                                    String value) {
         if (field == null) {
             field = "";

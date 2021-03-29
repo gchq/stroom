@@ -9,32 +9,30 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.inject.Inject;
 
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
     private final IndexVolumeGroupDao indexVolumeGroupDao;
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
     private final VolumeConfig volumeConfig;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final PathCreator pathCreator;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -44,12 +42,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final IndexVolumeDao indexVolumeDao,
                                        final SecurityContext securityContext,
                                        final VolumeConfig volumeConfig,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final PathCreator pathCreator) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -102,7 +102,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     @Override
     public IndexVolumeGroup get(final int id) {
         ensureDefaultVolumes();
-        return securityContext.secureResult(() -> indexVolumeGroupDao.get(id));
+        return securityContext.secureResult(() ->
+                indexVolumeGroupDao.get(id));
     }
 
     @Override
@@ -114,7 +115,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .collect(Collectors.toList());
-                    indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
+                    indexVolumesInGroup.forEach(indexVolume ->
+                            indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
                 });
     }
@@ -132,37 +134,43 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
-                        List<String> allVolGroups = getNames ();
+                        final List<String> allVolGroups = getNames();
 
-                        if (allVolGroups == null || allVolGroups.size() == 0){
+                        if (allVolGroups == null || allVolGroups.size() == 0) {
                             if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
-                                LOGGER.info(() -> "Creating default index volume group");
                                 final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
                                 final String processingUserId = processingUserIdentityProvider.get().getId();
-                                indexVolumeGroup.setName(volumeConfig.getDefaultIndexVolumeGroupName());
+                                final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
+                                indexVolumeGroup.setName(groupName);
                                 AuditUtil.stamp(processingUserId, indexVolumeGroup);
 
+                                LOGGER.info("Creating default index volume group [{}]", groupName);
                                 IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
-
-
 
                                 //Now create associated volumes within the group
                                 if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
                                         volumeConfig.getDefaultIndexVolumeGroupNodes() != null) {
 
-                                    String[] paths = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",");
-                                    String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
-                                    if (nodes.length == paths.length){
-                                        for (int i = 0; i < paths.length; i++){
-                                            String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim()).toString();
+                                    final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
+                                    final List<String> nodes = volumeConfig.getDefaultIndexVolumeGroupNodes();
+                                    if (nodes.size() == paths.size()) {
+                                        int i = 0;
+                                        for (String path : paths) {
+                                            final Path resolvedPath = Paths.get(
+                                                    pathCreator.makeAbsolute(
+                                                            pathCreator.replaceSystemProperties(path)));
 
-                                            OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath);
+                                            LOGGER.info("Creating index volume with path {}",
+                                                    resolvedPath.toAbsolutePath().normalize());
 
-                                            IndexVolume indexVolume = new IndexVolume();
+                                            final OptionalLong byteLimitOption = getDefaultVolumeLimit(
+                                                    resolvedPath.toString());
+
+                                            final IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0l));
-                                            indexVolume.setNodeName(nodes[i]);
-                                            indexVolume.setPath(resolvedPath);
+                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
+                                            indexVolume.setNodeName(nodes.get(i++));
+                                            indexVolume.setPath(resolvedPath.toString());
                                             indexVolume.setCreateTimeMs(System.currentTimeMillis());
                                             indexVolume.setUpdateTimeMs(System.currentTimeMillis());
                                             indexVolume.setCreateUser(processingUserId);
@@ -181,8 +189,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                             "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
                                             "and defaultVolumeGroupLimit must all be defined.");
                                 }
-                            }
-                            else {
+                            } else {
                                 LOGGER.warn(() -> "Unable to create default index " +
                                         "Property defaultVolumeGroupName must be defined.");
                             }
@@ -202,38 +209,9 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         }
     }
 
-
-    private Optional<Path> getDefaultVolumesPath() {
-        return Stream.<Supplier<Optional<Path>>>of(
-                this::getApplicationJarDir,
-                this::getDotStroomDir,
-                () -> Optional.of(FileUtil.getTempDir()),
-                Optional::empty
-        )
-                .map(Supplier::get)
-                .filter(Optional::isPresent)
-                .findFirst()
-                .map(Optional::get);
-    }
-
-    private Optional<Path> getDotStroomDir() {
-        final String userHome = System.getProperty("user.home");
-        if (userHome == null) {
-            return Optional.empty();
-        } else {
-            final Path dotStroomDir = Paths.get(userHome)
-                    .resolve(".stroom");
-            if (Files.isDirectory(dotStroomDir)) {
-                return Optional.of(dotStroomDir);
-            } else {
-                return Optional.empty();
-            }
-        }
-    }
-
     private OptionalLong getDefaultVolumeLimit(final String path) {
         try {
-            File parentDir = new File(path);
+            final File parentDir = new File(path);
             parentDir.mkdirs();
             long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
             // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
@@ -244,23 +222,9 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             // this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
+            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                     " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
             return OptionalLong.empty();
-        }
-    }
-
-    private Optional<Path> getApplicationJarDir() {
-        try {
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
-                return Optional.of(Paths.get(codeSourceLocation).getParent());
-            } else {
-                return Optional.empty();
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
-            return Optional.empty();
         }
     }
 }

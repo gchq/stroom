@@ -45,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
+
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
@@ -228,7 +229,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 //                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
 //                    if (result) {
 //                        final Rest<Processor> rest = restFactory.create();
-//                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_RESOURCE).delete(streamProcessorRow.getProcessor().getId());
+//                        rest
+//                        .onSuccess(res ->
+//                        processorListPresenter.refresh())
+//                        .call(PROCESSOR_RESOURCE)
+//                        .delete(streamProcessorRow.getProcessor().getId());
 //                    }
 //                });
 //            } else
@@ -259,6 +264,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     public interface ProcessorView extends View {
+
         void setProcessorList(View view);
 
         void setDetailsView(View view);

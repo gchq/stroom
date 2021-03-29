@@ -17,8 +17,7 @@
 
 package stroom.meta.impl;
 
-import stroom.util.shared.Clearable;
+public interface MetaProcessorDao {
 
-public interface MetaProcessorDao extends Clearable {
     Integer getOrCreate(String processorUuid, String pipelineUuid);
 }

@@ -37,6 +37,7 @@ import java.io.Serializable;
 })
 @JsonInclude(Include.NON_NULL)
 public class Range<T extends Number> implements Serializable, HasIsConstrained {
+
     private static final long serialVersionUID = -7405632565984023195L;
 
     @JsonProperty
@@ -122,12 +123,9 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
             return false;
         }
         // If we have an upper bound check that the time is not ON or after it.
-        if (to != null && num >= to.longValue()) {
-            return false;
-        }
+        return to == null || num < to.longValue();
 
         // Must be covered in our period then
-        return true;
     }
 
     /**
@@ -157,7 +155,9 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
      * @return The from value or if that is null, the supplied other value
      */
     public T getFromOrElse(final T other) {
-        return from != null ? from : other;
+        return from != null
+                ? from
+                : other;
     }
 
     public T getTo() {
@@ -173,7 +173,9 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
      * @return The to value or if that is null, the supplied other value
      */
     public T getToOrElse(final T other) {
-        return to != null ? to : other;
+        return to != null
+                ? to
+                : other;
     }
 
     /**
@@ -201,8 +203,12 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public Range<T> union(final Range other) {
-        return new Range(this.from.longValue() < other.from.longValue() ? this.from : other.from,
-                this.to.longValue() > other.to.longValue() ? this.to : other.to);
+        return new Range(this.from.longValue() < other.from.longValue()
+                ? this.from
+                : other.from,
+                this.to.longValue() > other.to.longValue()
+                        ? this.to
+                        : other.to);
 
     }
 

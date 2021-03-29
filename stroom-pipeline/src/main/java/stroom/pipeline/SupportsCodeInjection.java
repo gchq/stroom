@@ -16,6 +16,12 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
+
+import java.util.function.Consumer;
+
 public interface SupportsCodeInjection {
     void setInjectedCode(String injectedCode);
+
+    DocRef findDoc(String feedName, String pipelineName, Consumer<String> errorConsumer);
 }

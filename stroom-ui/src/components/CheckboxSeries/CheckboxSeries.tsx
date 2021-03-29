@@ -22,7 +22,7 @@ export const CheckboxSeries: React.FunctionComponent<Props> = ({
   return (
     <div>
       {allValues
-        .map(value => ({
+        .map((value) => ({
           value,
           isSelected: includedValues.includes(value),
         }))

@@ -17,5 +17,6 @@
 package stroom.node.api;
 
 public interface NodeInfo {
+
     String getThisNodeName();
 }

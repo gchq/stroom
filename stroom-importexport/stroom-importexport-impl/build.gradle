@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.importexport.impl'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
@@ -13,12 +14,12 @@ dependencies {
     compile project(':stroom-util-shared')
     
     compile libs.eventLogging
-    compile libs.guice4
-    compile libs.jackson_annotations
+    compile libs.guice5
+//    compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 

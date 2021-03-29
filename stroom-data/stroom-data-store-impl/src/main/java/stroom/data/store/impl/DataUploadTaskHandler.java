@@ -17,8 +17,6 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
@@ -42,15 +40,19 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 public class DataUploadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataUploadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
@@ -90,12 +92,12 @@ public class DataUploadTaskHandler {
     }
 
     private void uploadData(final TaskContext taskContext,
-                           final String fileName,
-                           final Path file,
-                           final String feedName,
-                           final String streamTypeName,
-                           final Long effectiveMs,
-                           final String metaData) {
+                            final String fileName,
+                            final Path file,
+                            final String feedName,
+                            final String streamTypeName,
+                            final Long effectiveMs,
+                            final String metaData) {
         securityContext.secure(() -> {
             taskContext.info(file::toString);
             if (feedName == null) {
@@ -120,11 +122,13 @@ public class DataUploadTaskHandler {
             }
 
             if (effectiveMs != null) {
-                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
+                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME,
+                        DateUtil.createNormalDateTimeString(effectiveMs));
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
+                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
 
             if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
@@ -161,7 +165,13 @@ public class DataUploadTaskHandler {
                 final int pos = i;
                 taskContext.info(() -> "Zip " + pos + "/" + groupedFileLists.size());
 
-                uploadData(taskContext, stroomZipFile, feedName, streamTypeName, effectiveMs, attributeMap, groupedFileLists.get(i));
+                uploadData(taskContext,
+                        stroomZipFile,
+                        feedName,
+                        streamTypeName,
+                        effectiveMs,
+                        attributeMap,
+                        groupedFileLists.get(i));
 
             }
         } catch (final RuntimeException | IOException e) {
@@ -201,7 +211,7 @@ public class DataUploadTaskHandler {
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                 "Read");
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(streamTypeName)
                 .effectiveMs(effectiveMs)
@@ -222,7 +232,11 @@ public class DataUploadTaskHandler {
                             streamProgressMonitor);
                     streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
                             streamProgressMonitor);
-                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
+                    streamContents(stroomZipFile,
+                            attributeMap,
+                            outputStreamProvider,
+                            inputBase,
+                            StroomZipFileType.Context,
                             streamProgressMonitor);
                 }
             }

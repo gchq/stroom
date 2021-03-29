@@ -16,13 +16,15 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.ResultRequest.Fetch;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import stroom.query.api.v2.ResultRequest.Fetch;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,26 +36,26 @@ import stroom.query.api.v2.ResultRequest.Fetch;
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class ComponentResultRequest {
-    @JsonProperty
-    private Fetch fetch;
 
-    public ComponentResultRequest() {
-    }
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
+            required = true)
+    @JsonProperty
+    private final String componentId;
+    @JsonProperty
+    private final Fetch fetch;
 
     @JsonCreator
-    public ComponentResultRequest(@JsonProperty("fetch") final Fetch fetch) {
+    public ComponentResultRequest(@JsonProperty("componentId") final String componentId,
+                                  @JsonProperty("fetch") final Fetch fetch) {
+        this.componentId = componentId;
         this.fetch = fetch;
+    }
+
+    public String getComponentId() {
+        return componentId;
     }
 
     public Fetch getFetch() {
         return fetch;
-    }
-
-    public void setFetch(final Fetch fetch) {
-        this.fetch = fetch;
-    }
-
-    public enum ComponentType {
-        TABLE, VIS
     }
 }

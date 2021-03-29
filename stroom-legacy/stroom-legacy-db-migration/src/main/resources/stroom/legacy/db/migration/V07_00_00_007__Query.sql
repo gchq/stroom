@@ -27,12 +27,14 @@ BEGIN
     IF NOT EXISTS (
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'OLD_QUERY') THEN
+        WHERE TABLE_SCHEMA = database()
+        AND TABLE_NAME = 'OLD_QUERY') THEN
 
         IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'QUERY') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'QUERY') THEN
 
             RENAME TABLE QUERY TO OLD_QUERY;
         END IF;
@@ -52,12 +54,14 @@ BEGIN
     IF NOT EXISTS (
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'OLD_DASH') THEN
+        WHERE TABLE_SCHEMA = database()
+        AND TABLE_NAME = 'OLD_DASH') THEN
 
         IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'DASH') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'DASH') THEN
 
             RENAME TABLE DASH TO OLD_DASH;
         END IF;

@@ -1,55 +1,59 @@
 package stroom.core.sysinfo;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import event.logging.Event;
-import event.logging.ObjectOutcome;
 import event.logging.Resource;
-import event.logging.util.EventLoggingUtil;
+import event.logging.ViewEventAction;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SystemInfoResourceImpl implements SystemInfoResource {
 
-    private final SystemInfoService systemInfoService;
-    private final StroomEventLoggingService stroomEventLoggingService;
+    private final Provider<SystemInfoService> systemInfoServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    public SystemInfoResourceImpl(final SystemInfoService systemInfoService,
-                                  final StroomEventLoggingService stroomEventLoggingService) {
-        this.systemInfoService = systemInfoService;
-        this.stroomEventLoggingService = stroomEventLoggingService;
+    public SystemInfoResourceImpl(final Provider<SystemInfoService> systemInfoServiceProvider,
+                                  final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+        this.systemInfoServiceProvider = systemInfoServiceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Override
     public SystemInfoResultList getAll() {
 
-        logViewResourceEvent(
+        return stroomEventLoggingServiceProvider.get()
+                .loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info results",
-                "");
-
-        return SystemInfoResultList.of(systemInfoService.getAll());
+                buildViewEventAction(""),
+                () ->
+                        SystemInfoResultList.of(systemInfoServiceProvider.get().getAll())
+        );
     }
 
     @Override
     public List<String> getNames() {
-        logViewResourceEvent(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info result names",
-                NAMES_PATH_PART);
-
-        return systemInfoService.getNames().stream()
-                .sorted()
-                .collect(Collectors.toList());
+                buildViewEventAction(NAMES_PATH_PART),
+                () -> systemInfoServiceProvider.get().getNames().stream()
+                        .sorted()
+                        .collect(Collectors.toList())
+        );
     }
 
     @Override
@@ -59,28 +63,22 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
             throw new BadRequestException("name not supplied");
         }
 
-        logViewResourceEvent(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "getSystemInfo",
                 "Getting system info results for " + name,
-                "/" + name);
-
-        return systemInfoService.get(name)
-                .orElseThrow(() ->
-                        new NotFoundException(LogUtil.message("Name {} not found", name)));
+                buildViewEventAction("/"),
+                () -> systemInfoServiceProvider.get().get(name)
+                        .orElseThrow(() ->
+                                new NotFoundException(LogUtil.message("Name {} not found", name)))
+        );
     }
 
-    private void logViewResourceEvent(final String typeId,
-                                      final String description,
-                                      final String subPath) {
+    private ViewEventAction buildViewEventAction(final String subPath) {
 
-        final Event event = stroomEventLoggingService.createEvent();
-        final Event.EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
-        final Resource resource = new Resource();
-        resource.setURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath));
-        final ObjectOutcome objectOutcome = new ObjectOutcome();
-        objectOutcome.getObjects().add(resource);
-        eventDetail.setView(objectOutcome);
-        event.setEventDetail(eventDetail);
-        stroomEventLoggingService.log(event);
+        return ViewEventAction.builder()
+                .addResource(Resource.builder()
+                        .withURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath))
+                        .build())
+                .build();
     }
 }

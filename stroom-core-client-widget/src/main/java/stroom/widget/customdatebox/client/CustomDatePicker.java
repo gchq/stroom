@@ -21,6 +21,7 @@ import com.google.gwt.user.datepicker.client.DefaultCalendarView;
 import com.google.gwt.user.datepicker.client.DefaultMonthSelector;
 
 public class CustomDatePicker extends DatePicker {
+
     public CustomDatePicker() {
         super(new DefaultMonthSelector(), new DefaultCalendarView(), new CustomCalendarModel());
     }

@@ -17,12 +17,9 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import DataRetentionRuleEditor from "./DataRetentionRuleEditor";
 import { DataRetentionRule } from "../types/DataRetentionRule";
 import { action } from "@storybook/addon-actions";
-
-const stories = storiesOf("Sections/DataRetention/Rule", module);
 
 const rule1: DataRetentionRule = {
   ruleNumber: 1,
@@ -58,4 +55,6 @@ const TestHarness: React.FunctionComponent<Props> = ({ initialRule }) => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness initialRule={rule1} />);
+storiesOf("Sections/DataRetention", module).add("Rule", () => (
+  <TestHarness initialRule={rule1} />
+));

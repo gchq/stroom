@@ -17,12 +17,14 @@
 package stroom.util.testshared;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.shared.CompareUtil;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCompareUtil {
+
     @Test
     void testStringCompare() {
         assertThat(CompareUtil.compareString(null, null)).isEqualTo(0);

@@ -17,18 +17,18 @@
 
 package stroom.importexport.impl;
 
-import event.logging.Event;
-import event.logging.Export;
-import event.logging.MultiObject;
-import event.logging.Object;
-import event.logging.ObjectOutcome;
-import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.security.api.SecurityContext;
+
+import event.logging.CreateEventAction;
+import event.logging.ExportEventAction;
+import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
@@ -47,20 +47,21 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
 
     @Override
     public void importDocument(final String type, final String uuid, final String name, final Exception e) {
+        // TODO @AT Think this is a dup of the logging done in ContentResource
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Import", "Importing", type, name);
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setCreate(objectOutcome);
+                eventLoggingService.log(
+                        "Import",
+                        buildEventDescription("Importing", type, name),
+                        CreateEventAction.builder()
+                                .addObject(OtherObject.builder()
+                                        .withId(uuid)
+                                        .withType(type)
+                                        .withName(name)
+                                        .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
+                                .build());
 
-                final Object object = new Object();
-                object.setType(type);
-                object.setId(uuid);
-                object.setName(name);
-
-                objectOutcome.getObjects().add(object);
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(e));
-                eventLoggingService.log(event);
             } catch (final RuntimeException ex) {
                 LOGGER.error("Unable to create event!", ex);
             }
@@ -69,32 +70,30 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
 
     @Override
     public void exportDocument(final DocRef document, final Exception e) {
+        // TODO @AT Think this is a dup of the logging done in ContentResource
         try {
-            final Event event = createAction("Export", "Exporting", document.getType(), document.getName());
+            eventLoggingService.log(
+                    "Export",
+                    buildEventDescription("Exporting", document.getType(), document.getName()),
+                    ExportEventAction.builder()
+                            .withSource(MultiObject.builder()
+                                    .addObject(OtherObject.builder()
+                                            .withId(document.getUuid())
+                                            .withType(document.getType())
+                                            .withName(document.getName())
+                                            .build())
+                                    .build())
+                            .withOutcome(EventLoggingUtil.createOutcome(e))
+                            .build());
 
-            final Object object = new Object();
-            object.setType(document.getType());
-            object.setId(document.getUuid());
-            object.setName(document.getName());
-
-            final MultiObject multiObject = new MultiObject();
-            multiObject.getObjects().add(object);
-
-            final Export export = new Export();
-            export.setSource(multiObject);
-            export.setOutcome(EventLoggingUtil.createOutcome(e));
-
-            event.getEventDetail().setExport(export);
-
-            eventLoggingService.log(event);
         } catch (final RuntimeException ex) {
             LOGGER.error("Unable to create event!", ex);
         }
     }
 
-    private Event createAction(final String typeId, final String description, final String entityType,
-                               final String entityName) {
-        final String desc = description + " " + entityType + " \"" + entityName;
-        return eventLoggingService.createAction(typeId, desc);
+    private String buildEventDescription(final String description,
+                                         final String entityType,
+                                         final String entityName) {
+        return description + " " + entityType + " \"" + entityName + "\"";
     }
 }

@@ -19,6 +19,7 @@ package stroom.search.solr.search;
 import java.util.Set;
 
 public interface HasHighlights {
+
     Set<String> getHighlights();
 
     void setHighlights(Set<String> highlights);

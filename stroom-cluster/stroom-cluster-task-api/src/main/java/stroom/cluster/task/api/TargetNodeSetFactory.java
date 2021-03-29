@@ -19,6 +19,7 @@ package stroom.cluster.task.api;
 import java.util.Set;
 
 public interface TargetNodeSetFactory {
+
     String getSourceNode();
 
     String getMasterNode() throws NullClusterStateException, NodeNotFoundException;

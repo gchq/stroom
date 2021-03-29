@@ -17,14 +17,16 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCustomRollUpMask {
+
     @Test
     void testIsTagRolledUp() {
         final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));

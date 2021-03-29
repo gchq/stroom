@@ -1,0 +1,7 @@
+ext.moduleName = 'stroom.security.openid.api'
+
+dependencies {
+    compile libs.jackson_annotations
+    compile libs.jose4j
+    compile libs.ws_rs_api
+}

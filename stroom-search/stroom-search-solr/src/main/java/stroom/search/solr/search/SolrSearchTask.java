@@ -16,15 +16,13 @@
 
 package stroom.search.solr.search;
 
-import org.apache.solr.common.params.SolrParams;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.Receiver;
 import stroom.search.solr.CachedSolrIndex;
 
-import java.util.function.Consumer;
+import org.apache.solr.common.params.SolrParams;
 
 class SolrSearchTask {
+
     private final CachedSolrIndex solrIndex;
     private final SolrParams solrParams;
     private final String[] fieldNames;

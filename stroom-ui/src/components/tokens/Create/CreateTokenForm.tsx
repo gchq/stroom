@@ -18,9 +18,10 @@ import Button from "components/Button";
 import * as React from "react";
 import { DatePicker } from "antd";
 import styled from "styled-components";
-import UserSelect from "components/UserSelect";
-import * as moment from "moment";
-import useConfig from "startup/config/useConfig";
+import moment from "moment";
+import { useEffect, useState } from "react";
+import { TokenConfig } from "../api/types";
+import { useApi } from "../api";
 
 const Field = styled.div`
   display: flex;
@@ -38,19 +39,30 @@ const Label = styled.div`
   width: 15em;
 `;
 
-const UserSelectContainer = styled.div`
-  width: 25em;
-`;
-
 const CreateTokenForm: React.FunctionComponent<{
   onSubmit: (userId: string, expiryDate: string) => void;
   onBack: () => void;
 }> = ({ onSubmit, onBack }) => {
+  const { fetchTokenConfig } = useApi();
+
+  // Get token config
+  const [tokenConfig, setTokenConfig] = useState<TokenConfig>({
+    defaultApiKeyExpiryInMinutes: 525600,
+  });
+  useEffect(() => {
+    fetchTokenConfig().then((tokenConfig: TokenConfig) => {
+      setTokenConfig(tokenConfig);
+    });
+  }, [fetchTokenConfig, setTokenConfig]);
+
   // TODO: make default validity customisable
-  const { defaultApiKeyExpiryInMinutes } = useConfig();
-  const initialExpiryDate = moment().add(defaultApiKeyExpiryInMinutes, "m");
+  // const { defaultApiKeyExpiryInMinutes } = useConfig();
+  const initialExpiryDate = moment().add(
+    tokenConfig.defaultApiKeyExpiryInMinutes,
+    "m",
+  );
   const [expiryDate, setExpiryDate] = React.useState(initialExpiryDate);
-  const [selectedUser, setSelectedUser] = React.useState("");
+  const [selectedUser] = React.useState("");
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     onSubmit(selectedUser, expiryDate.toISOString());
     event.preventDefault();
@@ -64,9 +76,10 @@ const CreateTokenForm: React.FunctionComponent<{
           <Button
             appearance="default"
             icon="arrow-left"
-            text="Back"
             onClick={() => onBack()}
-          />
+          >
+            Back
+          </Button>
         </div>
         <div className="container">
           <div className="section">
@@ -83,9 +96,9 @@ const CreateTokenForm: React.FunctionComponent<{
               </Field>
               <Field>
                 <Label>User</Label>
-                <UserSelectContainer>
-                  <UserSelect fuzzy={false} onChange={setSelectedUser} />
-                </UserSelectContainer>
+                {/*<UserSelectContainer>*/}
+                {/*  <UserSelect fuzzy={false} onChange={setSelectedUser} />*/}
+                {/*</UserSelectContainer>*/}
               </Field>
             </SectionFields>
           </div>
@@ -97,8 +110,9 @@ const CreateTokenForm: React.FunctionComponent<{
             disabled={submitIsDisabled}
             icon="plus"
             type="submit"
-            text="Create"
-          />
+          >
+            Create
+          </Button>
         </div>
       </form>
     </div>

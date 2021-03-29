@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.widget.util.client.DoubleSelectTester;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -29,12 +31,12 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
-import stroom.widget.util.client.DoubleSelectTester;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
  */
 public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTextCell.ViewData> {
+
     private static Template template;
     private final FieldsManager fieldsManager;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
@@ -257,6 +259,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<input class=\"{0}\" type=\"text\" value=\"{1}\" tabindex=\"-1\"></input>")
         SafeHtml input(String className, String value);
 
@@ -272,6 +275,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
      * text string.
      */
     static class ViewData {
+
         private boolean isEditing;
 
         /**
@@ -348,7 +352,9 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
         }
 
         private boolean equalsOrBothNull(final Object o1, final Object o2) {
-            return (o1 == null) ? o2 == null : o1.equals(o2);
+            return (o1 == null)
+                    ? o2 == null
+                    : o1.equals(o2);
         }
     }
 }

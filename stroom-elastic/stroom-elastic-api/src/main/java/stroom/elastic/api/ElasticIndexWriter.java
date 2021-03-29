@@ -7,6 +7,7 @@ import java.util.function.Consumer;
  * A Stroom abstraction over the Elastic client library
  */
 public interface ElasticIndexWriter {
+
     /**
      * Write a record to elastic search
      *

@@ -1,16 +1,18 @@
 package stroom.processor.client.presenter;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class RestSaveQueue<K, V> implements HasHandlers {
+
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final Map<K, Boolean> setting = new HashMap<>();

@@ -16,23 +16,34 @@
 
 package stroom.pipeline.task;
 
+import stroom.test.common.StroomPipelineTestFileUtil;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.common.StroomPipelineTestFileUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
 class TestFullTranslationTaskAndStepping extends TranslationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
+    private static boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
+        if (!doneSetup) {
+            testTranslationTask(false, false);
+            doneSetup = true;
+        }
+    }
+
     @Override
-    protected boolean onAfterSetup() {
-        testTranslationTask(false, false);
-        return true;
+    protected boolean setupBetweenTests() {
+        return false;
     }
 
     @Test
@@ -91,7 +102,8 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     private void testStepping(final String feedName) throws IOException {
-        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestFullTranslationTaskAndStepping");
+        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(
+                "TestFullTranslationTaskAndStepping");
 
         final long time = System.currentTimeMillis();
         testSteppingTask(feedName, outDir);

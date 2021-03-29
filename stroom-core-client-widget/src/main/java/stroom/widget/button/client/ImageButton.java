@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MyCustomButton;
 
 public class ImageButton extends MyCustomButton implements ImageButtonView {
+
     private static final String DEFAULT_STYLE = "imageButton";
 
     public ImageButton() {

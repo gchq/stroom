@@ -14,6 +14,7 @@ import stroom.util.shared.Clearable;
 import javax.sql.DataSource;
 
 public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
+
     private static final String MODULE = "stroom-processor";
     private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db/migration";
     private static final String FLYWAY_TABLE = "processor_schema_history";
@@ -58,6 +59,7 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, P
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements ProcessorDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

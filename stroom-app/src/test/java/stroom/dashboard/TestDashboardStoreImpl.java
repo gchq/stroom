@@ -18,7 +18,6 @@
 package stroom.dashboard;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -35,11 +34,14 @@ import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private DashboardStore dashboardStore;
     @Inject
@@ -52,8 +54,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         final VisComponentSettings visSettings = getVisSettings();
 
         final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");
-        ;
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -75,11 +76,12 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         final String type = "table";
                         final String id = type + "_" + System.currentTimeMillis();
 
-                        final ComponentConfig componentData = new ComponentConfig();
-                        componentData.setType(type);
-                        componentData.setId(id);
-                        componentData.setName("table" + " " + i + ":" + j + ":" + k);
-                        componentData.setSettings(visSettings);
+                        final ComponentConfig componentData = ComponentConfig.builder()
+                                .type(type)
+                                .id(id)
+                                .name("table" + " " + i + ":" + j + ":" + k)
+                                .settings(visSettings)
+                                .build();
                         components.add(componentData);
 
                         final TabConfig tabConfig = new TabConfig(id, true);
@@ -94,6 +96,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
         dashboardData.setLayout(down);
 
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
         dashboard.setDashboardConfig(dashboardData);
 
         dashboard = dashboardStore.writeDocument(dashboard);
@@ -114,9 +117,8 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         vis.setScriptRef(scriptRef);
         visualisationStore.writeDocument(vis);
 
-        final VisComponentSettings visSettings = new VisComponentSettings();
-        visSettings.setVisualisation(visRef);
-
-        return visSettings;
+        return VisComponentSettings.builder()
+                .visualisation(visRef)
+                .build();
     }
 }

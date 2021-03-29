@@ -16,148 +16,85 @@
 
 package stroom.dictionary.impl;
 
-import stroom.dictionary.shared.DictionaryDTO;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.importexport.api.DocumentData;
-import stroom.importexport.api.ImportExportActionHandler;
-import stroom.importexport.shared.Base64EncodedDocumentData;
-import stroom.importexport.shared.ImportState;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
-import io.swagger.annotations.ApiParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
-class DictionaryResourceImpl implements DictionaryResource {
-    private final DictionaryStore dictionaryStore;
-    private final DocumentResourceHelper documentResourceHelper;
-    private final ResourceStore resourceStore;
-    private final DocumentEventLog documentEventLog;
-    private final SecurityContext securityContext;
+@AutoLogged
+class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<DictionaryDoc> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryResourceImpl.class);
+
+    private final Provider<DictionaryStore> dictionaryStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<ResourceStore> resourceStoreProvider;
 
     @Inject
-    DictionaryResourceImpl(final DictionaryStore dictionaryStore,
-                           final DocumentResourceHelper documentResourceHelper,
-                           final ResourceStore resourceStore,
-                           final DocumentEventLog documentEventLog,
-                           final SecurityContext securityContext) {
-        this.dictionaryStore = dictionaryStore;
-        this.documentResourceHelper = documentResourceHelper;
-        this.resourceStore = resourceStore;
-        this.documentEventLog = documentEventLog;
-        this.securityContext = securityContext;
-    }
-
-    ///////////////////////
-    // GWT UI end points //
-    ///////////////////////
-
-    @Override
-    public DictionaryDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(dictionaryStore, docRef);
+    DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
+                           final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                           final Provider<ResourceStore> resourceStoreProvider) {
+        this.dictionaryStoreProvider = dictionaryStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.resourceStoreProvider = resourceStoreProvider;
     }
 
     @Override
-    public DictionaryDoc update(final DictionaryDoc doc) {
-        return documentResourceHelper.update(dictionaryStore, doc);
+    public DictionaryDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(dictionaryStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public ResourceGeneration download(final DocRef dictionaryRef) {
-        return securityContext.secureResult(() -> {
-            // Get dictionary.
-            final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
-            if (dictionary == null) {
-                throw new EntityServiceException("Unable to find dictionary");
-            }
-
-            try {
-                final ResourceKey resourceKey = resourceStore.createTempFile("dictionary.txt");
-                final Path file = resourceStore.getTempFile(resourceKey);
-                Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
-                documentEventLog.download(dictionary, null);
-                return new ResourceGeneration(resourceKey, new ArrayList<>());
-
-            } catch (final IOException e) {
-                documentEventLog.download(dictionary, null);
-                throw new UncheckedIOException(e);
-            }
-        });
+    public DictionaryDoc update(final String uuid, final DictionaryDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(dictionaryStoreProvider.get(), doc);
     }
 
-
-    ////////////////////////
-    // React UI endpoints //
-    ////////////////////////
-
-    public Set<DocRef> listDocuments() {
-        return dictionaryStore.listDocuments();
-    }
-
-    public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
-        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-
-        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
-            return result.getDocRef();
-        else
-            return null;
-    }
-
-    public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
-        final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
-        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
-    }
-
-    private DictionaryDTO fetchInScope(final String dictionaryUuid) {
-        final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
-        final DictionaryDTO dto = new DictionaryDTO(doc);
-        return dto;
-    }
-
-    public DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
-    }
-
-    private DocRef getDocRef(final String pipelineId) {
-        return new DocRef.Builder()
-                .uuid(pipelineId)
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
                 .type(DictionaryDoc.DOCUMENT_TYPE)
                 .build();
     }
 
-    public void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-                     final DictionaryDTO updates) {
-        System.out.println("DEBUG in save");
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        securityContext.useAsRead(() -> {
-            final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
+    @Override
+    public ResourceGeneration download(final DocRef dictionaryRef) {
+        // Get dictionary.
+        final DictionaryDoc dictionary = dictionaryStoreProvider.get().readDocument(dictionaryRef);
+        if (dictionary == null) {
+            throw new EntityServiceException("Unable to find dictionary");
+        }
 
-            if (doc != null) {
-                doc.setDescription(updates.getDescription());
-                doc.setData(updates.getData());
-                doc.setImports(updates.getImports());
-                dictionaryStore.writeDocument(doc);
-            }
-        });
+        final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
+        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+        try {
+            Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
+        } catch (final IOException e) {
+            LOGGER.error("Unable to download Dictionary", e);
+            throw new UncheckedIOException(e);
+        }
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 }

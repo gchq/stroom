@@ -16,6 +16,12 @@
 
 package stroom.dashboard.impl.download;
 
+import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.NumberFormatSettings;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -24,11 +30,6 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.NumberFormatSettings;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ExcelTarget implements SearchResultWriter.Target {
+
     // Excel cannot store more than 32767 characters in a cell so we must truncate some values.
     private static final int EXCEL_MAX_CELL_CHARACTERS = 32767;
     private static final int TRUNCATED_LENGTH = EXCEL_MAX_CELL_CHARACTERS - 3;
@@ -53,7 +55,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private int rowNum = 0;
 
     private CellStyle headingStyle;
-    private Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
+    private final Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
 
     public ExcelTarget(final OutputStream outputStream) {
         this.outputStream = outputStream;
@@ -219,7 +221,8 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         } else {
                             sb.append("#");
                         }
-                        if (numberFormatSettings.getDecimalPlaces() != null && numberFormatSettings.getDecimalPlaces() > 0) {
+                        if (numberFormatSettings.getDecimalPlaces() != null
+                                && numberFormatSettings.getDecimalPlaces() > 0) {
                             sb.append(".");
                             for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
                                 sb.append("0");

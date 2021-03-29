@@ -16,20 +16,22 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
+
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final Map<TabData, ComponentDataModifier> modifiers = new HashMap<>();
 
@@ -94,12 +96,14 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
         }
     }
 
-    public void write(final ComponentConfig componentData) {
+    public ComponentConfig write(ComponentConfig componentConfig) {
+        ComponentConfig result = componentConfig;
         for (final Entry<TabData, ComponentDataModifier> entry : modifiers.entrySet()) {
             if (!getView().getTabBar().isTabHidden(entry.getKey())) {
-                entry.getValue().write(componentData);
+                result = entry.getValue().write(result);
             }
         }
+        return result;
     }
 
     public boolean validate() {

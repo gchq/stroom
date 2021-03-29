@@ -11,13 +11,14 @@ import stroom.util.xml.XMLMarshallerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.util.Map;
 
 public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineSerialiser.class);
 
     private static final String XML = "xml";
@@ -91,7 +92,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     public String getXmlFromPipelineData(final PipelineData pipelineData) {
         if (pipelineData != null) {
             try {
-                return XMLMarshallerUtil.marshal(getJAXBContext(), XMLMarshallerUtil.removeEmptyCollections(pipelineData));
+                return XMLMarshallerUtil.marshal(getJAXBContext(),
+                        XMLMarshallerUtil.removeEmptyCollections(pipelineData));
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
             }

@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ShardModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(IndexShardSearcherCache.class).to(IndexShardSearcherCacheImpl.class);
@@ -38,15 +39,16 @@ public class ShardModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexSearcherCacheRefresh.class, builder -> builder
-                        .withName("Index Searcher Cache Refresh")
-                        .withDescription("Job to refresh index shard searchers in the cache")
-                        .withSchedule(PERIODIC, "10m"));
+                        .name("Index Searcher Cache Refresh")
+                        .description("Job to refresh index shard searchers in the cache")
+                        .schedule(PERIODIC, "10m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(IndexShardSearchTaskExecutorShutdown.class);
     }
 
     private static class IndexSearcherCacheRefresh extends RunnableWrapper {
+
         @Inject
         IndexSearcherCacheRefresh(final IndexShardSearcherCache indexShardSearcherCache) {
             super(indexShardSearcherCache::refresh);
@@ -54,6 +56,7 @@ public class ShardModule extends AbstractModule {
     }
 
     private static class IndexShardSearchTaskExecutorShutdown extends RunnableWrapper {
+
         @Inject
         IndexShardSearchTaskExecutorShutdown(final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor) {
             super(indexShardSearchTaskExecutor::shutdown);

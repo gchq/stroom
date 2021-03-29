@@ -17,8 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
-import stroom.meta.api.AttributeMapFactory;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
@@ -27,6 +29,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class FsDataStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DataStoreMaintenanceService.class).to(FsDataStoreMaintenanceService.class);
@@ -39,15 +42,20 @@ public class FsDataStoreModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(FsVolumeResourceImpl.class);
 
+        ObjectInfoProviderBinder.create(binder())
+                .bind(FsVolume.class, FsVolumeObjectInfoProvider.class);
+
         ServletBinder.create(binder())
                 .bind(EchoServlet.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

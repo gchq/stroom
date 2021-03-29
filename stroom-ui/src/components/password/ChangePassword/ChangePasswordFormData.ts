@@ -3,4 +3,4 @@ export default interface ChangePasswordFormData {
   password: string;
   verifyPassword: string;
   email: string;
-};
+}

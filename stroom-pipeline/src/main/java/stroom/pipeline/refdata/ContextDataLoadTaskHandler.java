@@ -17,8 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
@@ -43,12 +41,16 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
+import javax.inject.Inject;
 
 
 class ContextDataLoadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
     private final PipelineFactory pipelineFactory;
@@ -94,7 +96,8 @@ class ContextDataLoadTaskHandler {
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
         securityContext.secure(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use'
+            // permission on can be read.
             securityContext.useAsRead(() -> {
                 final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
@@ -131,7 +134,11 @@ class ContextDataLoadTaskHandler {
                         metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                         // Get the appropriate encoding for the stream type.
-                        final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);
+                        final String streamTypeName = meta != null
+                                ? meta.getTypeName()
+                                : null;
+                        final String encoding = feedProperties.getEncoding(
+                                feedName, streamTypeName, StreamTypeNames.CONTEXT);
 //                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
                         // TODO is it always 0 for context streams?

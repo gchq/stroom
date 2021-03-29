@@ -3,13 +3,14 @@ package stroom.security.impl.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.security.impl.AppPermissionDao;
+import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.DocumentPermissionDao;
-import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.UserDao;
 
 import javax.sql.DataSource;
 
-public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, SecurityDbConnProvider> {
+public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationConfig, SecurityDbConnProvider> {
+
     private static final String MODULE = "stroom-security";
     private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db/migration";
     private static final String FLYWAY_TABLE = "security_schema_history";
@@ -48,6 +49,7 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, Sec
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements SecurityDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

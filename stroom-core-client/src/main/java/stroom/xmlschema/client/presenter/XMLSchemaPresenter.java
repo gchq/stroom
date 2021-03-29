@@ -17,9 +17,6 @@
 
 package stroom.xmlschema.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -32,13 +29,20 @@ import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+
 public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData GRAPHICAL = new TabDataImpl("Graphical");
     private static final TabData TEXT = new TabDataImpl("Text");
 
     private final XSDBrowserPresenter xsdBrowserPresenter;
     private final EditorPresenter codePresenter;
+    private boolean readOnly = true;
 
     private final XSDModel data = new XSDModel();
     private final XMLSchemaSettingsPresenter settingsPresenter;
@@ -104,6 +108,8 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             } else if (content.equals(codePresenter)) {
                 if (!shownText) {
                     shownText = true;
+                    codePresenter.setMode(AceEditorMode.XML);
+                    codePresenter.getFormatAction().setAvailable(!readOnly);
                     codePresenter.setText(getEntity().getData(), true);
                 }
             }
@@ -132,7 +138,9 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
+        this.readOnly = readOnly;
         codePresenter.setReadOnly(readOnly);
+        codePresenter.getFormatAction().setAvailable(!readOnly);
         settingsPresenter.onReadOnly(readOnly);
 
         if (!readOnly) {

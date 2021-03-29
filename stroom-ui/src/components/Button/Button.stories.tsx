@@ -16,7 +16,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import Button from "./Button";
 
 interface Variant {
@@ -77,151 +76,164 @@ const TestHarness: React.FunctionComponent = () => {
     <div>
       {variants.map(({ appearance }, i) => (
         <div key={i} style={styles.appearanceContainer}>
-          <h1 style={styles.appearanceHeader}>
+          <h3 style={styles.appearanceHeader}>
             appearance=&#34;{appearance}&#34;
-          </h1>
-          <h2 style={styles.propertyHeader}>Simple</h2>
+          </h3>
+          <b style={styles.propertyHeader}>Simple</b>
           <Button
             style={styles.firstButton}
             appearance={appearance}
             action="primary"
             icon="save"
-            text="Save"
             title="Save"
-          />
+          >
+            Save
+          </Button>
           <Button
             style={styles.secondButton}
             appearance={appearance}
             action="secondary"
-            text="Close"
             icon="times"
             title="Close"
-          />
+          >
+            Close
+          </Button>
           <Button
             style={styles.thirdButton}
             appearance={appearance}
             icon="key"
-            text="Permissions"
             title="Permissions"
-          />
+          >
+            Permissions
+          </Button>
 
-          <h2 style={styles.propertyHeader}>selected=&#123;true&#125;</h2>
+          <b style={styles.propertyHeader}>selected=&#123;true&#125;</b>
           <Button
             style={styles.firstButton}
             appearance={appearance}
             action="primary"
             icon="save"
-            text="Save"
             title="Save"
             selected={true}
-          />
+          >
+            Save
+          </Button>
           <Button
             style={styles.secondButton}
             appearance={appearance}
             action="secondary"
-            text="Close"
             icon="times"
             title="Close"
             selected={true}
-          />
+          >
+            Close
+          </Button>
           <Button
             style={styles.thirdButton}
             appearance={appearance}
             icon="key"
-            text="Permissions"
             title="Permissions"
             selected={true}
-          />
+          >
+            Permissions
+          </Button>
 
-          <h2 style={styles.propertyHeader}>disabled=&#123;true&#125;</h2>
+          <b style={styles.propertyHeader}>disabled=&#123;true&#125;</b>
           <Button
             style={styles.firstButton}
             appearance={appearance}
             action="primary"
             icon="save"
-            text="Save"
             title="Save"
             disabled={true}
-          />
+          >
+            Save
+          </Button>
           <Button
             style={styles.secondButton}
             appearance={appearance}
             action="secondary"
-            text="Close"
             icon="times"
             title="Close"
             disabled={true}
-          />
+          >
+            Close
+          </Button>
           <Button
             style={styles.thirdButton}
             appearance={appearance}
             icon="key"
-            text="Permissions"
             title="Permissions"
             disabled={true}
-          />
+          >
+            Permissions
+          </Button>
 
-          <h2 style={styles.propertyHeader}>size=&#34;small&#34;</h2>
+          <b style={styles.propertyHeader}>size=&#34;small&#34;</b>
           <Button
             style={styles.firstButton}
             size="small"
             appearance={appearance}
             action="primary"
             icon="save"
-            text="Save"
             title="Save"
-          />
+          >
+            Save
+          </Button>
           <Button
             style={styles.secondButton}
             size="small"
             appearance={appearance}
             action="secondary"
-            text="Close"
             icon="times"
             title="Close"
-          />
+          >
+            Close
+          </Button>
           <Button
             style={styles.thirdButton}
             size="small"
             appearance={appearance}
             icon="key"
-            text="Permissions"
             title="Permissions"
-          />
+          >
+            Permissions
+          </Button>
 
-          <h2 style={styles.propertyHeader}>size=&#34;large&#34;</h2>
+          <b style={styles.propertyHeader}>size=&#34;large&#34;</b>
           <Button
             style={styles.firstButton}
             size="large"
             appearance={appearance}
             action="primary"
             icon="save"
-            text="Save"
             title="Save"
-          />
+          >
+            Save
+          </Button>
           <Button
             style={styles.secondButton}
             size="large"
             appearance={appearance}
             action="secondary"
-            text="Close"
             icon="times"
             title="Close"
-          />
+          >
+            Close
+          </Button>
           <Button
             style={styles.thirdButton}
             size="large"
             appearance={appearance}
             icon="key"
-            text="Permissions"
             title="Permissions"
-          />
+          >
+            Permissions
+          </Button>
         </div>
       ))}
     </div>
   );
 };
 
-const stories = storiesOf("General Purpose/Button", module);
-
-addThemedStories(stories, () => <TestHarness />, true);
+storiesOf("General Purpose", module).add("Button", () => <TestHarness />);

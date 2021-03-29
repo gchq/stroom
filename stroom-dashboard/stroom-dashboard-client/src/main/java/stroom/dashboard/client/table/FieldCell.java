@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.Sort;
+
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ImageResourceCell;
@@ -25,14 +29,12 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Filter;
-import stroom.dashboard.shared.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FieldCell extends CompositeCell<Field> {
+
     private final FieldsManager fieldsManager;
 
     public FieldCell(final FieldsManager fieldsManager, final List<HasCell<Field, ?>> cells) {

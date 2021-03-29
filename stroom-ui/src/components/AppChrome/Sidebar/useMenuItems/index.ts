@@ -1,1 +1,1 @@
-export { default } from "./useMenuItems";
+export { useMenuItems } from "./useMenuItems";

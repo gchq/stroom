@@ -1,2 +1,2 @@
-export { default } from "./DisplayPillChoice";
+export { DisplayPillChoice } from "./DisplayPillChoice";
 export * from "./DisplayPillChoice";

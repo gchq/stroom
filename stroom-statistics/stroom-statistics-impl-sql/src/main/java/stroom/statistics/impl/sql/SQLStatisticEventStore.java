@@ -40,8 +40,6 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,9 +51,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     private static final int DEFAULT_POOL_SIZE = 10;
@@ -233,12 +234,12 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
      */
     private Predicate<StatisticEvent> getInsideProcessingThresholdPredicate() {
         return Optional
-            .ofNullable(config.getMaxProcessingAge())
-            .map(TimeUtils::durationToThreshold)
-            .map(threshold ->
-                (Predicate<StatisticEvent>) statisticEvent ->
-                    statisticEvent.getTimeMs() > threshold.toEpochMilli())
-            .orElse(statisticEvent -> true);
+                .ofNullable(config.getMaxProcessingAge())
+                .map(TimeUtils::durationToThreshold)
+                .map(threshold ->
+                        (Predicate<StatisticEvent>) statisticEvent ->
+                                statisticEvent.getTimeMs() > threshold.toEpochMilli())
+                .orElse(statisticEvent -> true);
     }
 
     public SQLStatisticAggregateMap createAggregateMap() {
@@ -271,7 +272,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                         entity.getName()));
             }
 
-            final Predicate<StatisticEvent> insideProcessingThresholdPredicate = getInsideProcessingThresholdPredicate();
+            final Predicate<StatisticEvent> insideProcessingThresholdPredicate =
+                    getInsideProcessingThresholdPredicate();
 
             try {
                 final SQLStatisticAggregateMap statisticAggregateMap = objectPool.borrowObject();
@@ -315,7 +317,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         if (!validateStatisticDataSource(statisticEvent, entity)) {
             // no StatisticsDataSource entity so don't record the stat as we
             // will have no way of querying the stat
-            throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s", entity.getName()));
+            throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s",
+                    entity.getName()));
         }
 
         final Predicate<StatisticEvent> insideProcessingThresholdPredicate = getInsideProcessingThresholdPredicate();
@@ -506,12 +509,13 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                     .collect(Collectors.toList());
         }
 
-        return SystemInfoResult.builder(getSystemInfoName())
-                .withDetail("poolObjects", poolDetails)
+        return SystemInfoResult.builder().name(getSystemInfoName())
+                .addDetail("poolObjects", poolDetails)
                 .build();
     }
 
     private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
+
         @Override
         public SQLStatisticAggregateMap create() {
             return createAggregateMap();

@@ -18,14 +18,12 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import DataRetentionSection from "./DataRetentionSection";
 import { DataRetentionPolicy } from "../types/DataRetentionPolicy";
 import { useState } from "react";
 import JsonDebug from "testing/JsonDebug";
 import { action } from "@storybook/addon-actions";
 
-const stories = storiesOf("Sections/DataRetention/Main view", module);
 const policy1: DataRetentionPolicy = {
   name: "rule2",
   type: "DataRetentionRules",
@@ -78,7 +76,7 @@ const policy1: DataRetentionPolicy = {
   uuid: "blah-blah-uuid-blah",
   version: "1",
 };
-addThemedStories(stories, () => {
+storiesOf("Sections/DataRetention", module).add("Main view", () => {
   const [policy] = useState(policy1);
   return (
     <div>

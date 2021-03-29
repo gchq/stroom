@@ -17,13 +17,15 @@
 package stroom.receive.common;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.meta.api.AttributeMap;
 import stroom.util.date.DateUtil;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamFactory {
+
     @Test
     void testSimple() {
         final String testDate = "2000-01-01T00:00:00.000Z";

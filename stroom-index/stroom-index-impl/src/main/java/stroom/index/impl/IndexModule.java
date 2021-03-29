@@ -36,6 +36,7 @@ import static stroom.job.api.Schedule.ScheduleType.CRON;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class IndexModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new IndexElementModule());
@@ -49,7 +50,8 @@ public class IndexModule extends AbstractModule {
         bind(Indexer.class).to(IndexerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(IndexStructureCacheImpl.class);
+                .addBinding(IndexStructureCacheImpl.class)
+                .addBinding(IndexVolumeServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
@@ -61,9 +63,6 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NewUIIndexResourceImpl.class)
-                .bind(NewUIIndexVolumeGroupResourceImpl.class)
-                .bind(NewUIIndexVolumeResourceImpl.class)
                 .bind(IndexResourceImpl.class)
                 .bind(IndexVolumeGroupResourceImpl.class)
                 .bind(IndexVolumeResourceImpl.class);
@@ -73,25 +72,26 @@ public class IndexModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexShardDelete.class, builder -> builder
-                        .withName("Index Shard Delete")
-                        .withDescription("Job to delete index shards from disk that have been marked as deleted")
-                        .withSchedule(CRON, "0 0 *"))
+                        .name("Index Shard Delete")
+                        .description("Job to delete index shards from disk that have been marked as deleted")
+                        .schedule(CRON, "0 0 *"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
-                        .withName("Index Shard Retention")
-                        .withDescription("Job to set index shards to have a status of deleted that have past their retention period")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Shard Retention")
+                        .description("Job to set index shards to have a status of deleted that have past their " +
+                                "retention period")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
-                        .withName("Index Writer Cache Sweep")
-                        .withDescription("Job to remove old index shard writers from the cache")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Writer Cache Sweep")
+                        .description("Job to remove old index shard writers from the cache")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterFlush.class, builder -> builder
-                        .withName("Index Writer Flush")
-                        .withDescription("Job to flush index shard data to disk")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Writer Flush")
+                        .description("Job to flush index shard data to disk")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(VolumeStatus.class, builder -> builder
-                        .withName("Index Volume Status")
-                        .withDescription("Update the usage status of volumes owned by the node")
-                        .withSchedule(PERIODIC, "5m"));
+                        .name("Index Volume Status")
+                        .description("Update the usage status of volumes owned by the node")
+                        .schedule(PERIODIC, "5m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)
@@ -99,6 +99,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardDelete extends RunnableWrapper {
+
         @Inject
         IndexShardDelete(final IndexShardManager indexShardManager) {
             super(indexShardManager::deleteFromDisk);
@@ -106,6 +107,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardRetention extends RunnableWrapper {
+
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
@@ -113,6 +115,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexWriterCacheSweep extends RunnableWrapper {
+
         @Inject
         IndexWriterCacheSweep(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::sweep);
@@ -120,6 +123,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexWriterFlush extends RunnableWrapper {
+
         @Inject
         IndexWriterFlush(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::flushAll);
@@ -127,6 +131,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class VolumeStatus extends RunnableWrapper {
+
         @Inject
         VolumeStatus(final IndexVolumeService volumeService) {
             super(volumeService::rescan);
@@ -134,6 +139,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
+
         @Inject
         IndexShardWriterCacheStartup(final IndexShardWriterCacheImpl indexShardWriterCache) {
             super(indexShardWriterCache::startup);
@@ -141,6 +147,7 @@ public class IndexModule extends AbstractModule {
     }
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
+
         @Inject
         IndexShardWriterCacheShutdown(final IndexShardWriterCacheImpl indexShardWriterCache) {
             super(indexShardWriterCache::shutdown);

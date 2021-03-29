@@ -4,6 +4,7 @@ package stroom.db.util;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import org.jooq.Condition;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,10 +46,7 @@ class TestCommonExpressionMapper {
         return Arrays.stream(ExpressionOperator.Op.values())
                 .map(opType -> {
                     return DynamicTest.dynamicTest(opType.getDisplayValue(), () -> {
-                        final ExpressionOperator expressionOperator = new ExpressionOperator(
-                                true,
-                                opType,
-                                Collections.emptyList());
+                        final ExpressionOperator expressionOperator = ExpressionOperator.builder().op(opType).build();
 
                         final CommonExpressionMapper mapper = new CommonExpressionMapper();
 
@@ -58,7 +55,7 @@ class TestCommonExpressionMapper {
                         LOGGER.info("expressionItem: {}", expressionOperator);
                         LOGGER.info("condition: {}", condition);
 
-                        if (expressionOperator.op().equals(ExpressionOperator.Op.NOT)) {
+                        if (expressionOperator.op().equals(Op.NOT)) {
                             assertThat(condition)
                                     .isEqualTo(DSL.falseCondition());
                         } else {
@@ -72,9 +69,9 @@ class TestCommonExpressionMapper {
 
     @Test
     void testNotEmptyAnd() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.NOT)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addOperator(ExpressionOperator.builder().build())
                 .build();
 
         final Condition condition = doTest(expressionOperator);
@@ -86,9 +83,8 @@ class TestCommonExpressionMapper {
 
     @Test
     void testAndEmptyAnd() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.AND)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().build())
                 .build();
 
         final Condition condition = doTest(expressionOperator);
@@ -100,10 +96,9 @@ class TestCommonExpressionMapper {
 
     @Test
     void testAlwaysFalseAnd() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.AND)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
-                .addTerm(new ExpressionTerm.Builder()
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_1)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_1_VALUE).build())
@@ -118,14 +113,12 @@ class TestCommonExpressionMapper {
 
     @Test
     void testAlwaysTrueAnd() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, List.of(
-                        new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .build(),
-                        new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .build()
-                )))
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().build())
+                .addOperator(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().build())
+                        .addOperator(ExpressionOperator.builder().op(Op.OR).build()).build()
+                )
                 .build();
 
         final Condition condition = doTest(expressionOperator);
@@ -137,10 +130,10 @@ class TestCommonExpressionMapper {
 
     @Test
     void testAlwaysTrueOr() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.OR)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
-                .addTerm(new ExpressionTerm.Builder()
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addOperator(ExpressionOperator.builder().build())
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_1)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_1_VALUE).build())
@@ -155,10 +148,10 @@ class TestCommonExpressionMapper {
 
     @Test
     void testAlwaysFalseOr() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.OR)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
+                .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .build();
 
         final Condition condition = doTest(expressionOperator);
@@ -170,9 +163,9 @@ class TestCommonExpressionMapper {
 
     @Test
     void testNotNot() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.NOT)
-                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .build();
 
         final Condition condition = doTest(expressionOperator);
@@ -184,13 +177,13 @@ class TestCommonExpressionMapper {
 
     @Test
     void testNotWithChildren() {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.NOT)
-                .addTerm(new ExpressionTerm.Builder()
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_1)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_1_VALUE).build())
-                .addTerm(new ExpressionTerm.Builder()
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_2)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_2_VALUE).build())
@@ -209,11 +202,11 @@ class TestCommonExpressionMapper {
 
     @TestFactory
     List<DynamicTest> testOneTerm() {
-        return Stream.of(ExpressionOperator.Op.AND, ExpressionOperator.Op.OR)
+        return Stream.of(Op.AND, Op.OR)
                 .map(op -> DynamicTest.dynamicTest(op.getDisplayValue(), () -> {
-                    final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                            true, op)
-                            .addTerm(new ExpressionTerm.Builder()
+                    final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                            .op(op)
+                            .addTerm(ExpressionTerm.builder()
                                     .field(DB_FIELD_NAME_1)
                                     .condition(ExpressionTerm.Condition.EQUALS)
                                     .value(FIELD_1_VALUE).build())
@@ -229,15 +222,15 @@ class TestCommonExpressionMapper {
 
     @TestFactory
     List<DynamicTest> testTwoTerms() {
-        return Stream.of(ExpressionOperator.Op.AND, ExpressionOperator.Op.OR)
+        return Stream.of(Op.AND, Op.OR)
                 .map(op -> DynamicTest.dynamicTest(op.getDisplayValue(), () -> {
-                    final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                            true, op)
-                            .addTerm(new ExpressionTerm.Builder()
+                    final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                            .op(op)
+                            .addTerm(ExpressionTerm.builder()
                                     .field(DB_FIELD_NAME_1)
                                     .condition(ExpressionTerm.Condition.EQUALS)
                                     .value(FIELD_1_VALUE).build())
-                            .addTerm(new ExpressionTerm.Builder()
+                            .addTerm(ExpressionTerm.builder()
                                     .field(DB_FIELD_NAME_2)
                                     .condition(ExpressionTerm.Condition.EQUALS)
                                     .value(FIELD_2_VALUE).build())
@@ -257,22 +250,21 @@ class TestCommonExpressionMapper {
 
     @Test
     void testNesting() {
-        final ExpressionOperator innerOr = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.OR)
-                .addTerm(new ExpressionTerm.Builder()
+        final ExpressionOperator innerOr = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_1)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_1_VALUE).build())
-                .addTerm(new ExpressionTerm.Builder()
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_2)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_2_VALUE).build())
                 .build();
 
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
-                true, ExpressionOperator.Op.AND)
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addOperator(innerOr)
-                .addTerm(new ExpressionTerm.Builder()
+                .addTerm(ExpressionTerm.builder()
                         .field(DB_FIELD_NAME_3)
                         .condition(ExpressionTerm.Condition.EQUALS)
                         .value(FIELD_3_VALUE).build())
@@ -292,9 +284,8 @@ class TestCommonExpressionMapper {
 
     private Condition doTest(final ExpressionItem expressionItem) {
         // create a noddy term mapper that doesn't need any generated code
-        Function<ExpressionTerm, Condition> handler = expressionTerm -> {
-            return DSL.condition(expressionTerm.getField() + "=" + expressionTerm.getValue());
-        };
+        Function<ExpressionTerm, Condition> handler = expressionTerm ->
+                DSL.condition(expressionTerm.getField() + "=" + expressionTerm.getValue());
 
         final CommonExpressionMapper mapper = new CommonExpressionMapper();
 

@@ -1,8 +1,8 @@
 package stroom.importexport.shared;
 
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,6 +15,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DependencyCriteria extends BaseCriteria {
+
     public static final String FIELD_FROM_TYPE = "From (Type)";
     public static final String FIELD_FROM_NAME = "From (Name)";
     public static final String FIELD_FROM_UUID = "From (UUID)";
@@ -24,14 +25,21 @@ public class DependencyCriteria extends BaseCriteria {
     public static final String FIELD_STATUS = "Status";
 
     // Default fields
-    public static final FilterFieldDefinition FIELD_DEF_FROM_NAME = FilterFieldDefinition.defaultField(FIELD_FROM_NAME);
-    public static final FilterFieldDefinition FIELD_DEF_TO_NAME = FilterFieldDefinition.defaultField(FIELD_TO_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_FROM_NAME =
+            FilterFieldDefinition.defaultField(FIELD_FROM_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_TO_NAME =
+            FilterFieldDefinition.defaultField(FIELD_TO_NAME);
     // Qualified Fields
-    public static final FilterFieldDefinition FIELD_DEF_FROM_TYPE = FilterFieldDefinition.qualifiedField(FIELD_FROM_TYPE);
-    public static final FilterFieldDefinition FIELD_DEF_FROM_UUID = FilterFieldDefinition.qualifiedField(FIELD_FROM_UUID);
-    public static final FilterFieldDefinition FIELD_DEF_TO_TYPE = FilterFieldDefinition.qualifiedField(FIELD_TO_TYPE);
-    public static final FilterFieldDefinition FIELD_DEF_TO_UUID = FilterFieldDefinition.qualifiedField(FIELD_TO_UUID);
-    public static final FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField(FIELD_STATUS);
+    public static final FilterFieldDefinition FIELD_DEF_FROM_TYPE =
+            FilterFieldDefinition.qualifiedField(FIELD_FROM_TYPE);
+    public static final FilterFieldDefinition FIELD_DEF_FROM_UUID =
+            FilterFieldDefinition.qualifiedField(FIELD_FROM_UUID);
+    public static final FilterFieldDefinition FIELD_DEF_TO_TYPE =
+            FilterFieldDefinition.qualifiedField(FIELD_TO_TYPE);
+    public static final FilterFieldDefinition FIELD_DEF_TO_UUID =
+            FilterFieldDefinition.qualifiedField(FIELD_TO_UUID);
+    public static final FilterFieldDefinition FIELD_DEF_STATUS =
+            FilterFieldDefinition.qualifiedField(FIELD_STATUS);
 
     public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_FROM_TYPE,
@@ -57,7 +65,7 @@ public class DependencyCriteria extends BaseCriteria {
 
     @JsonCreator
     public DependencyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                              @JsonProperty("sortList") final List<Sort> sortList,
+                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                               @JsonProperty("partialName") final String partialName) {
         super(pageRequest, sortList);
         this.partialName = partialName;

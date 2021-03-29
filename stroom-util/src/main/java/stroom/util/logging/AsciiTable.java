@@ -5,6 +5,8 @@ import stroom.util.logging.AsciiTable.Column.ColumnBuilder;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,10 +31,31 @@ import java.util.stream.Collectors;
  *  Mrs   | Joanna     | Bloggs  |  1972-04-01   |    170
  *
  * </pre>
- *
+ * <p>
  * Supports left/right/center alignment.
  */
 public class AsciiTable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsciiTable.class);
+
+    private static final String BLOCK_8_8THS_WIDE = "█";
+    private static final String BLOCK_7_8THS_WIDE = "▉";
+    private static final String BLOCK_6_8THS_WIDE = "▊";
+    private static final String BLOCK_5_8THS_WIDE = "▋";
+    private static final String BLOCK_4_8THS_WIDE = "▌";
+    private static final String BLOCK_3_8THS_WIDE = "▍";
+    private static final String BLOCK_2_8THS_WIDE = "▎";
+    private static final String BLOCK_1_8THS_WIDE = "▏";
+
+    private static final String[] BLOCKS_ARR = {
+            BLOCK_1_8THS_WIDE,
+            BLOCK_2_8THS_WIDE,
+            BLOCK_3_8THS_WIDE,
+            BLOCK_4_8THS_WIDE,
+            BLOCK_5_8THS_WIDE,
+            BLOCK_6_8THS_WIDE,
+            BLOCK_7_8THS_WIDE,
+            BLOCK_8_8THS_WIDE};
 
     private AsciiTable() {
     }
@@ -50,6 +73,7 @@ public class AsciiTable {
      * of the collection items. The column names are derived from the method name,
      * e.g. getFirstNameLength() becomes "First Name Length".
      * Columns are in declared order. Sub-classes of {@link Number} are right aligned.
+     *
      * @return A {@link String} containing the markdown style table.
      */
     public static <T> String from(final Collection<T> data) {
@@ -89,10 +113,40 @@ public class AsciiTable {
     }
 
     private static String convertToColumnName(final String methodName) {
-        return CaseFormat.LOWER_CAMEL.to(
-                            CaseFormat.UPPER_CAMEL,
-                            methodName.replaceAll("^(get|is)", "")).
-                            replaceAll("(?<!^)([A-Z])", " $1");
+        String result = methodName.replaceAll("^(get|is)", "");
+        result = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, result);
+        return result.replaceAll("(?<!^)([A-Z])", " $1");
+    }
+
+
+    public static String asciiBar(final long value,
+                                  final long minValueInc,
+                                  final long maxValueInc,
+                                  final int maxChars) {
+
+        final long range = maxValueInc - minValueInc;
+        final int barRange = maxChars * 8;
+        final double scaleFactor = barRange / (double) range;
+
+        final long scaledValue = (long) ((value - minValueInc) * scaleFactor);
+
+        final String bar;
+        if (scaledValue > barRange) {
+            bar = Strings.repeat(BLOCK_8_8THS_WIDE, maxChars);
+        } else {
+            final int fullBlockCount = (int) (scaledValue / 8);
+            final int remainder = (int) (scaledValue % 8);
+
+            LOGGER.trace("value {}, scaleFactor {}, scaledValue {}, fullBlockCount {}, remainder {}",
+                    value, scaleFactor, scaledValue, fullBlockCount, remainder);
+
+            if (remainder == 0) {
+                bar = Strings.repeat(BLOCK_8_8THS_WIDE, fullBlockCount);
+            } else {
+                bar = Strings.repeat(BLOCK_8_8THS_WIDE, fullBlockCount) + BLOCKS_ARR[remainder - 1];
+            }
+        }
+        return bar;
     }
 
 
@@ -235,43 +289,38 @@ public class AsciiTable {
                 final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
 
             return rawRows.stream()
-                            .limit(rowLimit)
-                            .map(rowMap -> columns.stream()
-                                    .map(column ->
-                                            formatCell(
-                                                    column,
-                                                    rowMap.get(column),
-                                                    maxColumnWidths.get(column)))
-                                    .collect(Collectors.joining(
-                                            String.valueOf(TABLE_COLUMN_DELIMITER))))
-                            .collect(Collectors.toList());
+                    .limit(rowLimit)
+                    .map(rowMap -> columns.stream()
+                            .map(column ->
+                                    formatCell(
+                                            column,
+                                            rowMap.get(column),
+                                            maxColumnWidths.get(column)))
+                            .collect(Collectors.joining(
+                                    String.valueOf(TABLE_COLUMN_DELIMITER))))
+                    .collect(Collectors.toList());
         }
 
         private String createHeaderLineString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             // TODO could add markdown alignment indicators e.g. |------:|
             return columns.stream()
-                            .map(column ->
-                                    Strings.repeat(
-                                            String.valueOf(TABLE_HEADER_DELIMITER),
-                                            maxColumnWidths.get(column) + (COLUMN_PADDING * 2)))
-                            .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .map(column ->
+                            Strings.repeat(
+                                    String.valueOf(TABLE_HEADER_DELIMITER),
+                                    maxColumnWidths.get(column) + (COLUMN_PADDING * 2)))
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
 
         private String createHeaderRowString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             return columns.stream()
-                            .map(column ->
-                                    formatCell(column, column.getName(), maxColumnWidths.get(column)))
-                            .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .map(column ->
+                            formatCell(column, column.getName(), maxColumnWidths.get(column)))
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
     }
 
 
-
-
     // -----------------------------------------------------------------------------------
-
-
-
 
 
     public static class Column<T_ROW, T_COL> {
@@ -330,10 +379,15 @@ public class AsciiTable {
             }
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Column<?, ?> column = (Column<?, ?>) o;
             return name.equals(column.name) &&
                     columnExtractor.equals(column.columnExtractor) &&
@@ -354,22 +408,18 @@ public class AsciiTable {
                     '}';
         }
 
-        public static enum Alignment {
+        public enum Alignment {
             LEFT,
             RIGHT,
             CENTER
         }
 
 
-
-
         // -----------------------------------------------------------------------------------
 
 
-
-
-
         public static class ColumnBuilder<T_ROW, T_COL> {
+
             private final String name;
             private final Function<T_ROW, T_COL> columnExtractor;
             private Function<T_COL, String> columnFormatter = null;
@@ -416,8 +466,12 @@ public class AsciiTable {
                 final Column<T_ROW, T_COL> column = new Column<>(
                         name,
                         columnExtractor,
-                        columnFormatter == null ? Objects::toString : columnFormatter,
-                        nullValueSupplier == null ? () -> "" : nullValueSupplier,
+                        columnFormatter == null
+                                ? Objects::toString
+                                : columnFormatter,
+                        nullValueSupplier == null
+                                ? () -> ""
+                                : nullValueSupplier,
                         alignment);
                 return column;
             }

@@ -1,63 +1,44 @@
 package stroom.data.store.impl.fs;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import java.util.List;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
-    private static final String PATH_LIST_PATTERN = "^[^,]+(,[ ]?[^,]+)*$";
-//    private int resilientReplicationCount = 1;
-//    private boolean preferLocalVolumes;
+
     private String volumeSelector = "RoundRobin";
 
-    private String defaultStreamVolumePaths = "volumes/defaultStreamVolume";
+    private List<String> defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
     private double defaultStreamVolumeFilesystemUtilisation = 0.9;
     private boolean createDefaultStreamVolumesOnStart = true;
 
     private static final String VOLUME_SELECTOR_PATTERN = "^(" +
-        RoundRobinVolumeSelector.NAME + "|" +
-        MostFreePercentVolumeSelector.NAME + "|" +
-        MostFreeVolumeSelector.NAME + "|" +
-        RandomVolumeSelector.NAME + "|" +
-        RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
-        RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
-        RoundRobinVolumeSelector.NAME + "|" +
-        WeightedFreePercentRandomVolumeSelector.NAME + "|" +
-        WeightedFreeRandomVolumeSelector.NAME + ")$";
+            RoundRobinVolumeSelector.NAME + "|" +
+            MostFreePercentVolumeSelector.NAME + "|" +
+            MostFreeVolumeSelector.NAME + "|" +
+            RandomVolumeSelector.NAME + "|" +
+            RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
+            RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
+            RoundRobinVolumeSelector.NAME + "|" +
+            WeightedFreePercentRandomVolumeSelector.NAME + "|" +
+            WeightedFreeRandomVolumeSelector.NAME + ")$";
 
-    private CacheConfig feedPathCache = new CacheConfig.Builder()
+    private CacheConfig feedPathCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig typePathCache = new CacheConfig.Builder()
+    private CacheConfig typePathCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-
-//    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
-//    public int getResilientReplicationCount() {
-//        return resilientReplicationCount;
-//    }
-//
-//    public void setResilientReplicationCount(final int resilientReplicationCount) {
-//        this.resilientReplicationCount = resilientReplicationCount;
-//    }
-//
-//    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
-//            "remote ones?")
-//    public boolean isPreferLocalVolumes() {
-//        return preferLocalVolumes;
-//    }
-//
-//    public void setPreferLocalVolumes(final boolean preferLocalVolumes) {
-//        this.preferLocalVolumes = preferLocalVolumes;
-//    }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
@@ -73,8 +54,8 @@ public class FsVolumeConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing stream volumes are present default volume swill be created on application " +
-            "start.  Use property defaultStreamVolumePaths to define the volumes created.")
+    @JsonPropertyDescription("If no existing stream volumes are present default volume swill be created on " +
+            "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
     public boolean isCreateDefaultStreamVolumesOnStart() {
         return createDefaultStreamVolumesOnStart;
     }
@@ -99,14 +80,13 @@ public class FsVolumeConfig extends AbstractConfig {
         this.typePathCache = typePathCache;
     }
 
-    @JsonPropertyDescription("Comma delimited list of the paths used " +
-            "if the default stream volumes are created on application start.")
-    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths")
-    public String getDefaultStreamVolumePaths() {
+    @JsonPropertyDescription("The paths used if the default stream volumes are created on application start." +
+            "If a path is a relative path then it will be treated as being relative to stroom.path.home.")
+    public List<String> getDefaultStreamVolumePaths() {
         return defaultStreamVolumePaths;
     }
 
-    public void setDefaultStreamVolumePaths(final String defaultStreamVolumePaths) {
+    public void setDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
     }
 
@@ -126,8 +106,8 @@ public class FsVolumeConfig extends AbstractConfig {
         return "VolumeConfig{" +
                 "volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
-                ", defaultStreamVolumePaths=" + "\"" +defaultStreamVolumePaths + "\"" +
-                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" +defaultStreamVolumeFilesystemUtilisation + "\"" +
+                ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
+                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
                 '}';
     }
 }

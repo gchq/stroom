@@ -31,7 +31,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -41,13 +40,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
 
     private static final int RETENTION_PERIOD_DAYS = 1;
@@ -59,6 +59,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private DataRetentionRulesService dataRetentionRulesService;
 
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     @Test
     void testMultipleRuns() {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
@@ -69,15 +70,16 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
                 - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
-        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
+                timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
-                new ExpressionOperator.Builder(true, Op.AND)
+                ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName1)
                         .build(), RETENTION_PERIOD_DAYS, TimeUnit.DAYS);
         final DataRetentionRule rule2 = createForeverRule(2,
-                new ExpressionOperator.Builder(true, Op.AND)
+                ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName2)
                         .build());
 
@@ -146,7 +148,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private Meta createMeta(final String feedName, final long createTime) {
         Meta meta = metaService.create(
-                new MetaProperties.Builder()
+                MetaProperties.builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(createTime)
@@ -159,8 +161,17 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         return meta;
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return DataRetentionRule.ageRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return DataRetentionRule.ageRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit);
     }
 
     private DataRetentionRule createForeverRule(final int num, final ExpressionOperator expression) {

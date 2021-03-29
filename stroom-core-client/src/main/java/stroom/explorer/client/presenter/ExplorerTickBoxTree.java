@@ -16,6 +16,15 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.view.ExplorerTickBoxCell;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeState;
+import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.MultiSelectEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -30,24 +39,17 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
-import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.event.ShowExplorerMenuEvent;
-import stroom.explorer.client.view.ExplorerTickBoxCell;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
-import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.MultiSelectEvent;
 
 import java.util.List;
 
 public class ExplorerTickBoxTree extends AbstractExplorerTree {
+
     private final ExplorerTreeModel treeModel;
     private final TickBoxSelectionModel selectionModel;
     private final CellTable<ExplorerNode> cellTable;
 
-    private String expanderClassName;
-    private String tickBoxClassName;
+    private final String expanderClassName;
+    private final String tickBoxClassName;
 
     public ExplorerTickBoxTree(final RestFactory restFactory) {
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
@@ -164,6 +166,8 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
             case KeyCodes.KEY_ENTER:
                 selectCurrent();
                 break;
+            default:
+                // Don't care about other key codes
         }
     }
 
@@ -283,16 +287,19 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     @CssResource.ImportedWithPrefix("gwt-CellTable")
     public interface ExplorerTreeStyle extends CellTable.Style {
+
         String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTree.css";
     }
 
     public interface ExplorerTreeResources extends CellTable.Resources {
+
         @Override
         @Source(ExplorerTreeStyle.DEFAULT_CSS)
         ExplorerTreeStyle cellTableStyle();
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
+
         MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
             super(table);
         }

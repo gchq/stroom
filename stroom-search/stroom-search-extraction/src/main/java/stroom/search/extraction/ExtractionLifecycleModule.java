@@ -33,6 +33,7 @@ class ExtractionLifecycleModule extends AbstractModule {
     }
 
     private static class ExtractionTaskExecutorShutdown extends RunnableWrapper {
+
         @Inject
         ExtractionTaskExecutorShutdown(final ExtractionTaskExecutor extractionTaskExecutor) {
             super(extractionTaskExecutor::shutdown);

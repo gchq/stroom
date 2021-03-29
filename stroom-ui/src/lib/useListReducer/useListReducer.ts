@@ -28,7 +28,9 @@ interface RemovedByIndexAction {
   index: number;
 }
 
-const createListReducer = <T extends {}>(getKey: (item: T) => string) => {
+export const createListReducer = <T extends {}>(
+  getKey: (item: T) => string,
+) => {
   return (
     state: T[],
     action:
@@ -43,10 +45,10 @@ const createListReducer = <T extends {}>(getKey: (item: T) => string) => {
         return action.items;
       case "itemAdded":
         return state
-          .filter(d => getKey(d) !== getKey(action.item)) // remove any existing item with same key
+          .filter((d) => getKey(d) !== getKey(action.item)) // remove any existing item with same key
           .concat([action.item]);
       case "itemRemoved":
-        return state.filter(u => getKey(u) !== action.itemKey);
+        return state.filter((u) => getKey(u) !== action.itemKey);
       case "itemUpdatedAtIndex":
         return state.map((u, i) => (i === action.index ? action.newValue : u));
       case "itemRemovedByIndex":
@@ -66,7 +68,7 @@ interface UseListReducer<T extends {}> {
   removeItemAtIndex: (index: number) => void;
 }
 
-const useListReducer = <T extends {}>(
+export const useListReducer = <T extends {}>(
   getKey: (item: T) => string,
   initialItems: T[] = [],
 ): UseListReducer<T> => {
@@ -116,5 +118,3 @@ const useListReducer = <T extends {}>(
     ),
   };
 };
-
-export default useListReducer;

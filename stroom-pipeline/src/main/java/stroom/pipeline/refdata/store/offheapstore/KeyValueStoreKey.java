@@ -19,6 +19,10 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import java.util.Objects;
 
+/**
+ * < mapUid >< key >
+ * < 4 bytes >< ? bytes >
+ */
 public class KeyValueStoreKey {
 
     private final UID mapUid;
@@ -37,6 +41,7 @@ public class KeyValueStoreKey {
         return key;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

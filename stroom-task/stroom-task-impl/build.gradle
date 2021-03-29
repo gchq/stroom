@@ -4,8 +4,11 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-core-shared')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
@@ -13,13 +16,11 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 
-    compile libs.guice4
+    compile libs.guice5
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.slf4j_api
-    compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile project(':stroom-docref')
     compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')

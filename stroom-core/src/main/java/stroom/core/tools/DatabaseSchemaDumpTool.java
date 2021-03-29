@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
+
     private String jdbcDriverClassName;
     private String jdbcDriverUrl;
     private String jdbcDriverUsername;
@@ -71,11 +72,16 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
         for (final String table : tables) {
             try (final ResultSet resultSet = databaseMetaData.getColumns(cat, schema, table, null)) {
                 while (resultSet.next()) {
-                    rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString("DOCUMENT_TYPE")
+                    rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString(
+                            "DOCUMENT_TYPE")
                             + ")").toUpperCase());
                 }
             }
-            try (final ResultSet resultSet = databaseMetaData.getIndexInfo(cat, schema, table.toUpperCase(), true, false)) {
+            try (final ResultSet resultSet = databaseMetaData.getIndexInfo(cat,
+                    schema,
+                    table.toUpperCase(),
+                    true,
+                    false)) {
                 while (resultSet.next()) {
                     final String idx = (table + " IDX " + resultSet.getString("INDEX_NAME")).toUpperCase();
                     if (!rtnList.contains(idx)) {

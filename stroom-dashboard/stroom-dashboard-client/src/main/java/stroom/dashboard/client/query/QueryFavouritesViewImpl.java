@@ -16,6 +16,13 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.cell.list.client.CustomCellList;
+import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
+import stroom.dashboard.shared.StoredQuery;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
@@ -24,14 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.cell.list.client.CustomCellList;
-import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
-import stroom.dashboard.shared.StoredQuery;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
 
 public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavouritesView {
+
     private final Widget widget;
 
     @UiField(provided = true)
@@ -64,9 +66,10 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, QueryFavouritesViewImpl> {
+
     }
 }

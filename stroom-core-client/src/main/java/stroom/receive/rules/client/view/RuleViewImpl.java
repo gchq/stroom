@@ -17,6 +17,10 @@
 
 package stroom.receive.rules.client.view;
 
+import stroom.item.client.ItemListBox;
+import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
+import stroom.receive.rules.shared.RuleAction;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -25,11 +29,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.item.client.ItemListBox;
-import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
-import stroom.receive.rules.shared.RuleAction;
 
 public class RuleViewImpl extends ViewImpl implements RuleView {
+
     private final Widget widget;
 
     @UiField
@@ -79,5 +81,6 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
+
     }
 }

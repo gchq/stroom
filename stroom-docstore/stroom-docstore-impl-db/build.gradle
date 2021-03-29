@@ -4,9 +4,9 @@ dependencies {
     compile project(':stroom-db-util')
     compile project(':stroom-docstore:stroom-docstore-impl')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     
-    compile libs.guice4
-    compile libs.jaxb_api
+    compile libs.guice5
+//    compile libs.jaxb_api
     compile libs.slf4j_api
 }

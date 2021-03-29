@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import PillChoice from "./PillChoice";
-import DisplayPillChoice from "./DisplayPillChoice";
+import { PillChoice } from "./PillChoice";
+import { DisplayPillChoice } from "./DisplayPillChoice";
 
 export const Step2 = () => {
   /**

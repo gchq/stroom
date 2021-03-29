@@ -23,9 +23,9 @@ import useUsers from "./useUsers";
 import Button from "components/Button";
 
 const testUserLists = [
-  fullTestData.usersAndGroups.users.slice(0, 3).map(u => u.uuid),
-  fullTestData.usersAndGroups.users.slice(4, 8).map(u => u.uuid),
-  fullTestData.usersAndGroups.users.slice(10, 14).map(u => u.uuid),
+  fullTestData.usersAndGroups.users.slice(0, 3).map((u) => u.uuid),
+  fullTestData.usersAndGroups.users.slice(4, 8).map((u) => u.uuid),
+  fullTestData.usersAndGroups.users.slice(10, 14).map((u) => u.uuid),
 ];
 
 const TestHarness = () => {
@@ -42,16 +42,16 @@ const TestHarness = () => {
 
   return (
     <div>
-      <Button onClick={switchList} text="Switch List" />
+      <Button onClick={switchList}>Switch List</Button>
       <h2>User UUIDS</h2>
       <ul>
-        {userUuids.map(userUuid => (
+        {userUuids.map((userUuid) => (
           <li key={userUuid}>{userUuid}</li>
         ))}
       </ul>
       <h2>Users</h2>
       <ul>
-        {users.map(user => (
+        {users.map((user) => (
           <li key={user.uuid}>{JSON.stringify(user)}</li>
         ))}
       </ul>

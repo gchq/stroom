@@ -16,12 +16,14 @@
 
 package stroom.processor.impl;
 
-import org.junit.jupiter.api.Test;
 import stroom.processor.shared.ProcessorFilterTracker;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorFilterTracker {
+
     @Test
     void testPercent() {
         final ProcessorFilterTracker track = new ProcessorFilterTracker();

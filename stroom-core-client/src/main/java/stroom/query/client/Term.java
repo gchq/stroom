@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public final class Term extends Item {
+
     private String field;
     private Condition condition;
     private String value;
@@ -39,6 +40,7 @@ public final class Term extends Item {
 
     public void setCondition(final Condition condition) {
         this.condition = condition;
+        // CONTAINS only supported for legacy content, not for use in UI
         if (Condition.CONTAINS.equals(this.condition)) {
             this.condition = Condition.EQUALS;
         }

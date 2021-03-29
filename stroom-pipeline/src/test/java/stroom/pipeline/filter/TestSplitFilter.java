@@ -16,9 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -26,6 +23,10 @@ import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,6 +41,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSplitFilter extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSplitFilter.class);
 
     private static final String INPUT = "TestSplitFilter/input.xml";

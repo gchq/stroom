@@ -2,15 +2,15 @@ import * as React from "react";
 import { LineElementCreator, LineDefinition } from "../types";
 
 const Curve: LineElementCreator = ({ fromRect, toRect }: LineDefinition) => {
-  let from = {
+  const from = {
     x: fromRect.left + fromRect.width / 2,
     y: fromRect.bottom,
   };
-  let to = {
+  const to = {
     x: toRect.left,
     y: toRect.top + toRect.height / 2,
   };
-  let pathSpec =
+  const pathSpec =
     "M " +
     from.x +
     " " +

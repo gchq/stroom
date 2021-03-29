@@ -1,7 +1,5 @@
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.pipeline.destination.Destination;
@@ -11,9 +9,12 @@ import stroom.pipeline.writer.AbstractDestinationProvider;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import javax.inject.Inject;
 
 //@Scope(StroomScope.PROTOTYPE)
 //@ConfigurableElement(
@@ -24,7 +25,8 @@ import java.io.OutputStream;
 //                PipelineElementType.VISABILITY_STEPPING},
 //        icon = ElementIcons.STREAM)
 public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider implements Destination {
-    private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamAppender.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final MetaDataHolder metaDataHolder;

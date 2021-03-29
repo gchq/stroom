@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 class FilterOutputStreamProgressMonitor extends WrappedOutputStream {
+
     private final StreamProgressMonitor streamProgressMonitor;
 
     FilterOutputStreamProgressMonitor(OutputStream outputStream, StreamProgressMonitor streamProgressMonitor) {

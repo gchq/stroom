@@ -16,34 +16,55 @@
 
 package stroom.pipeline.shared;
 
+import stroom.data.shared.DataType;
+import stroom.util.shared.Count;
+import stroom.util.shared.OffsetRange;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataResult extends AbstractFetchDataResult {
+
     @JsonProperty
     private final String data;
     @JsonProperty
     private final boolean html;
+    @JsonProperty
+    private final DataType dataType;
+    @JsonProperty
+    private final Long totalBytes;
 
     @JsonCreator
-    public FetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+    public FetchDataResult(@JsonProperty("feedName") final String feedName,
+                           @JsonProperty("streamTypeName") final String streamTypeName,
                            @JsonProperty("classification") final String classification,
-                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-                           @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-                           @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-                           @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
-                           @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
+                           @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+                           @JsonProperty("itemRange") final OffsetRange itemRange,
+                           @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+                           @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
+                           @JsonProperty("totalBytes") final Long totalBytes,
+                           @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
-                           @JsonProperty("html") final boolean html) {
-        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+                           @JsonProperty("html") final boolean html,
+                           @JsonProperty("dataType") final DataType dataType) {
+        super(feedName,
+                streamTypeName,
+                classification,
+                sourceLocation,
+                itemRange,
+                totalItemCount,
+                totalCharacterCount,
+                availableChildStreamTypes);
         this.data = data;
         this.html = html;
+        this.dataType = dataType;
+        this.totalBytes = totalBytes;
     }
 
     public String getData() {
@@ -52,5 +73,18 @@ public class FetchDataResult extends AbstractFetchDataResult {
 
     public boolean isHtml() {
         return html;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    public Long getTotalBytes() {
+        return totalBytes;
+    }
+
+    @JsonIgnore
+    public Optional<Long> getOptTotalBytes() {
+        return Optional.ofNullable(totalBytes);
     }
 }

@@ -16,16 +16,18 @@
 
 package stroom.pipeline.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.SteppingController;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 class InputStreamRecordDetector extends FilterInputStream {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;

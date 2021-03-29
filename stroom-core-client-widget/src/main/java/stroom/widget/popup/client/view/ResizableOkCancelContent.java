@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,10 +27,10 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class ResizableOkCancelContent extends ResizeComposite implements HasEnabled {
-    private static Binder binder = GWT.create(Binder.class);
+
+    private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
     @UiField
     Button ok;
@@ -36,6 +38,7 @@ public class ResizableOkCancelContent extends ResizeComposite implements HasEnab
     Button cancel;
     @UiField
     ResizeLayoutPanel content;
+
     public ResizableOkCancelContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.popupUiHandlers = popupUiHandlers;
@@ -63,6 +66,8 @@ public class ResizableOkCancelContent extends ResizeComposite implements HasEnab
         cancel.setEnabled(enabled);
     }
 
+
     public interface Binder extends UiBinder<Widget, ResizableOkCancelContent> {
+
     }
 }

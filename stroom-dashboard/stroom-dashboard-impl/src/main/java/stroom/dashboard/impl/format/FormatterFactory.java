@@ -16,10 +16,11 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format.Type;
 
 public class FormatterFactory {
+
     private final String dateTimeLocale;
 
     public FormatterFactory(final String dateTimeLocale) {

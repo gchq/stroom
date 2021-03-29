@@ -19,7 +19,7 @@ package stroom.legacy.db;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.logging.LambdaLogger;
@@ -34,26 +34,30 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the
  * entity manager factory, data sources.
  * <p>
  * This does not extend {@link stroom.db.util.AbstractDataSourceProviderModule} as the core migrations
- * are special and need to happen first before all the other migrations. {@link ForceCoreMigration} is
- * used to achieve this by making all other datasource providers depend on {@link ForceCoreMigration}.
+ * are special and need to happen first before all the other migrations. {@link ForceLegacyMigration} is
+ * used to achieve this by making all other datasource providers depend on {@link ForceLegacyMigration}.
  */
 @Deprecated
 public class LegacyDbModule extends AbstractModule {
@@ -64,7 +68,7 @@ public class LegacyDbModule extends AbstractModule {
     private static final String FLYWAY_LOCATIONS = "stroom/legacy/db/migration";
     private static final String FLYWAY_TABLE = "schema_version";
 
-    private static final AtomicBoolean HAS_COMPLETED_MIGRATION = new AtomicBoolean(false);
+    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
 
     @Override
     protected void configure() {
@@ -73,9 +77,10 @@ public class LegacyDbModule extends AbstractModule {
         // Force creation of connection provider so that legacy migration code executes.
         bind(ForceMigrationImpl.class).asEagerSingleton();
 
-        // Allows other db modules to inject CoreMigration to ensure the core db migration
+        // Allows other db modules to inject ForceLegacyMigration to ensure the legacy db migration
         // has run before they do
-        bind(ForceCoreMigration.class).to(ForceMigrationImpl.class);
+        // The legacy migration renames all the old tables, creates the new ones and copies old into new
+        bind(ForceLegacyMigration.class).to(ForceMigrationImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
@@ -94,9 +99,12 @@ public class LegacyDbModule extends AbstractModule {
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
         // Prevent migrations from being re-run for each test
-        if (!HAS_COMPLETED_MIGRATION.get()) {
+        final boolean required = COMPLETED_MIGRATIONS
+                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                .add(getModuleName());
+
+        if (required) {
             performMigration(dataSource);
-            HAS_COMPLETED_MIGRATION.set(true);
         }
 
         return createConnectionProvider(dataSource);
@@ -326,12 +334,13 @@ public class LegacyDbModule extends AbstractModule {
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements LegacyDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }
     }
 
-    private static class ForceMigrationImpl implements ForceCoreMigration {
+    private static class ForceMigrationImpl implements ForceLegacyMigration {
 
         @Inject
         ForceMigrationImpl(@SuppressWarnings("unused") final LegacyDbConnProvider dataSource) {

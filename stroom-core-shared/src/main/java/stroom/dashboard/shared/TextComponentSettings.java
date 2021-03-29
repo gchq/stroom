@@ -16,62 +16,58 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+import stroom.query.api.v2.Field;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
+@JsonPropertyOrder({
+        "tableId",
+        "streamIdField",
+        "partNoField",
+        "recordNoField",
+        "lineFromField",
+        "colFromField",
+        "lineToField",
+        "colToField",
+        "pipeline",
+        "showAsHtml",
+        "showStepping",
+        "modelVersion"
+})
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "text")
-@XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
-public class TextComponentSettings extends ComponentSettings {
-    @XmlElement(name = "tableId")
-    @JsonProperty("tableId")
-    private String tableId;
-    @XmlElement(name = "streamIdField")
-    @JsonProperty
-    private Field streamIdField;
-    @XmlElement(name = "partNoField")
-    @JsonProperty
-    private Field partNoField;
-    @XmlElement(name = "recordNoField")
-    @JsonProperty
-    private Field recordNoField;
-    @XmlElement(name = "lineFromField")
-    @JsonProperty
-    private Field lineFromField;
-    @XmlElement(name = "colFromField")
-    @JsonProperty
-    private Field colFromField;
-    @XmlElement(name = "lineToField")
-    @JsonProperty
-    private Field lineToField;
-    @XmlElement(name = "colToField")
-    @JsonProperty
-    private Field colToField;
-    @XmlElement(name = "pipeline")
-    @JsonProperty("pipeline")
-    private DocRef pipeline;
-    @XmlElement(name = "showAsHtml")
-    @JsonProperty("showAsHtml")
-    private boolean showAsHtml;
-    @XmlElement(name = "showStepping")
-    @JsonProperty
-    private boolean showStepping;
+public class TextComponentSettings implements ComponentSettings {
 
-    public TextComponentSettings() {
-        showStepping = true;
-    }
+    @JsonProperty("tableId")
+    private final String tableId;
+    @JsonProperty
+    private final Field streamIdField;
+    @JsonProperty
+    private final Field partNoField;
+    @JsonProperty
+    private final Field recordNoField;
+    @JsonProperty
+    private final Field lineFromField;
+    @JsonProperty
+    private final Field colFromField;
+    @JsonProperty
+    private final Field lineToField;
+    @JsonProperty
+    private final Field colToField;
+    @JsonProperty
+    private final DocRef pipeline;
+    @JsonProperty
+    private final boolean showAsHtml;
+    @JsonProperty
+    private final boolean showStepping;
+    @JsonProperty
+    private final String modelVersion;
 
     @JsonCreator
     public TextComponentSettings(@JsonProperty("tableId") final String tableId,
@@ -84,7 +80,8 @@ public class TextComponentSettings extends ComponentSettings {
                                  @JsonProperty("colToField") final Field colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
                                  @JsonProperty("showAsHtml") final boolean showAsHtml,
-                                 @JsonProperty("showStepping") final boolean showStepping) {
+                                 @JsonProperty("showStepping") final boolean showStepping,
+                                 @JsonProperty("modelVersion") final String modelVersion) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
         this.partNoField = partNoField;
@@ -96,93 +93,231 @@ public class TextComponentSettings extends ComponentSettings {
         this.pipeline = pipeline;
         this.showAsHtml = showAsHtml;
         this.showStepping = showStepping;
+        this.modelVersion = modelVersion;
     }
 
     public String getTableId() {
         return tableId;
     }
 
-    public void setTableId(final String tableId) {
-        this.tableId = tableId;
-    }
-
     public Field getStreamIdField() {
         return streamIdField;
-    }
-
-    public void setStreamIdField(final Field streamIdField) {
-        this.streamIdField = streamIdField;
     }
 
     public Field getPartNoField() {
         return partNoField;
     }
 
-    public void setPartNoField(final Field partNoField) {
-        this.partNoField = partNoField;
-    }
-
     public Field getRecordNoField() {
         return recordNoField;
-    }
-
-    public void setRecordNoField(final Field recordNoField) {
-        this.recordNoField = recordNoField;
     }
 
     public Field getLineFromField() {
         return lineFromField;
     }
 
-    public void setLineFromField(final Field lineFromField) {
-        this.lineFromField = lineFromField;
-    }
-
     public Field getColFromField() {
         return colFromField;
-    }
-
-    public void setColFromField(final Field colFromField) {
-        this.colFromField = colFromField;
     }
 
     public Field getLineToField() {
         return lineToField;
     }
 
-    public void setLineToField(final Field lineToField) {
-        this.lineToField = lineToField;
-    }
-
     public Field getColToField() {
         return colToField;
-    }
-
-    public void setColToField(final Field colToField) {
-        this.colToField = colToField;
     }
 
     public DocRef getPipeline() {
         return pipeline;
     }
 
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
-    }
-
     public boolean isShowAsHtml() {
         return showAsHtml;
-    }
-
-    public void setShowAsHtml(boolean showAsHtml) {
-        this.showAsHtml = showAsHtml;
     }
 
     public boolean isShowStepping() {
         return showStepping;
     }
 
-    public void setShowStepping(final boolean showStepping) {
-        this.showStepping = showStepping;
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    @SuppressWarnings("checkstyle:needbraces")
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TextComponentSettings that = (TextComponentSettings) o;
+        return showAsHtml == that.showAsHtml &&
+                showStepping == that.showStepping &&
+                Objects.equals(tableId, that.tableId) &&
+                Objects.equals(streamIdField, that.streamIdField) &&
+                Objects.equals(partNoField, that.partNoField) &&
+                Objects.equals(recordNoField, that.recordNoField) &&
+                Objects.equals(lineFromField, that.lineFromField) &&
+                Objects.equals(colFromField, that.colFromField) &&
+                Objects.equals(lineToField, that.lineToField) &&
+                Objects.equals(colToField, that.colToField) &&
+                Objects.equals(pipeline, that.pipeline) &&
+                Objects.equals(modelVersion, that.modelVersion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableId,
+                streamIdField,
+                partNoField,
+                recordNoField,
+                lineFromField,
+                colFromField,
+                lineToField,
+                colToField,
+                pipeline,
+                showAsHtml,
+                showStepping,
+                modelVersion);
+    }
+
+    @Override
+    public String toString() {
+        return "TextComponentSettings{" +
+                "tableId='" + tableId + '\'' +
+                ", streamIdField=" + streamIdField +
+                ", partNoField=" + partNoField +
+                ", recordNoField=" + recordNoField +
+                ", lineFromField=" + lineFromField +
+                ", colFromField=" + colFromField +
+                ", lineToField=" + lineToField +
+                ", colToField=" + colToField +
+                ", pipeline=" + pipeline +
+                ", showAsHtml=" + showAsHtml +
+                ", showStepping=" + showStepping +
+                ", modelVersion='" + modelVersion + '\'' +
+                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String tableId;
+        private Field streamIdField;
+        private Field partNoField;
+        private Field recordNoField;
+        private Field lineFromField;
+        private Field colFromField;
+        private Field lineToField;
+        private Field colToField;
+        private DocRef pipeline;
+        private boolean showAsHtml;
+        private boolean showStepping;
+        private String modelVersion;
+
+        private Builder() {
+        }
+
+        private Builder(final TextComponentSettings textComponentSettings) {
+            this.tableId = textComponentSettings.tableId;
+            this.streamIdField = textComponentSettings.streamIdField;
+            this.partNoField = textComponentSettings.partNoField;
+            this.recordNoField = textComponentSettings.recordNoField;
+            this.lineFromField = textComponentSettings.lineFromField;
+            this.colFromField = textComponentSettings.colFromField;
+            this.lineToField = textComponentSettings.lineToField;
+            this.colToField = textComponentSettings.colToField;
+            this.pipeline = textComponentSettings.pipeline;
+            this.showAsHtml = textComponentSettings.showAsHtml;
+            this.showStepping = textComponentSettings.showStepping;
+            this.modelVersion = textComponentSettings.modelVersion;
+        }
+
+        public Builder tableId(final String tableId) {
+            this.tableId = tableId;
+            return this;
+        }
+
+        public Builder streamIdField(final Field streamIdField) {
+            this.streamIdField = streamIdField;
+            return this;
+        }
+
+        public Builder partNoField(final Field partNoField) {
+            this.partNoField = partNoField;
+            return this;
+        }
+
+        public Builder recordNoField(final Field recordNoField) {
+            this.recordNoField = recordNoField;
+            return this;
+        }
+
+        public Builder lineFromField(final Field lineFromField) {
+            this.lineFromField = lineFromField;
+            return this;
+        }
+
+        public Builder colFromField(final Field colFromField) {
+            this.colFromField = colFromField;
+            return this;
+        }
+
+        public Builder lineToField(final Field lineToField) {
+            this.lineToField = lineToField;
+            return this;
+        }
+
+        public Builder colToField(final Field colToField) {
+            this.colToField = colToField;
+            return this;
+        }
+
+        public Builder pipeline(final DocRef pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
+        public Builder showAsHtml(final boolean showAsHtml) {
+            this.showAsHtml = showAsHtml;
+            return this;
+        }
+
+        public Builder showStepping(final boolean showStepping) {
+            this.showStepping = showStepping;
+            return this;
+        }
+
+        public Builder modelVersion(final String modelVersion) {
+            this.modelVersion = modelVersion;
+            return this;
+        }
+
+        public TextComponentSettings build() {
+            return new TextComponentSettings(
+                    tableId,
+                    streamIdField,
+                    partNoField,
+                    recordNoField,
+                    lineFromField,
+                    colFromField,
+                    lineToField,
+                    colToField,
+                    pipeline,
+                    showAsHtml,
+                    showStepping,
+                    modelVersion
+            );
+        }
     }
 }

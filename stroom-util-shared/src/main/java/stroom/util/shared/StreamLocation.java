@@ -22,11 +22,17 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 @JsonPropertyOrder({"streamNo", "lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
 public class StreamLocation implements Location {
+
+    private static final Comparator<StreamLocation> STREAM_LINE_COL_COMPARATOR = Comparator
+            .comparingLong(StreamLocation::getStreamNo)
+            .thenComparing(LINE_COL_COMPARATOR);
+
     @JsonProperty
     private final long streamNo;
     @JsonProperty
@@ -57,10 +63,15 @@ public class StreamLocation implements Location {
         return colNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final StreamLocation that = (StreamLocation) o;
         return streamNo == that.streamNo &&
                 lineNo == that.lineNo &&
@@ -82,11 +93,7 @@ public class StreamLocation implements Location {
         }
 
         final StreamLocation location = (StreamLocation) o;
-        final CompareBuilder builder = new CompareBuilder();
-        builder.append(streamNo, location.streamNo);
-        builder.append(lineNo, location.lineNo);
-        builder.append(colNo, location.colNo);
-        return builder.toComparison();
+        return STREAM_LINE_COL_COMPARATOR.compare(this, location);
     }
 
     @Override

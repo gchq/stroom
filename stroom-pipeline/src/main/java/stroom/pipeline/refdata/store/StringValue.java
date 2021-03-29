@@ -37,6 +37,7 @@ public class StringValue extends RefDataValue {
         return value;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -51,10 +52,9 @@ public class StringValue extends RefDataValue {
     }
 
     @Override
-    public int getValueHashCode() {
-        return Objects.hash(value);
+    public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        return valueStoreHashAlgorithm.hash(value);
     }
-
 
     @Override
     public int getTypeId() {

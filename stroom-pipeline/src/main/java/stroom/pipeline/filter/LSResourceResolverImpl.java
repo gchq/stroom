@@ -16,16 +16,18 @@
 
 package stroom.pipeline.filter;
 
-import org.w3c.dom.ls.LSInput;
-import org.w3c.dom.ls.LSResourceResolver;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.pipeline.xmlschema.XmlSchemaCache.SchemaSet;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
 
 import java.util.List;
 
 public class LSResourceResolverImpl implements LSResourceResolver {
+
     private final XmlSchemaCache xmlSchemaCache;
     private final FindXMLSchemaCriteria schemaConstraint;
 

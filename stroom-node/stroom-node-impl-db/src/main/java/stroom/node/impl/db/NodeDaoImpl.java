@@ -16,28 +16,30 @@
 
 package stroom.node.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
 import stroom.db.util.JooqUtil;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
-    private final Map<String, Field<?>> FIELD_MAP = Map.of(
-        FindNodeCriteria.FIELD_ID, NODE.ID,
-        FindNodeCriteria.FIELD_NAME, NODE.NAME);
+
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindNodeCriteria.FIELD_ID, NODE.ID,
+            FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 
@@ -72,7 +74,8 @@ public class NodeDaoImpl implements NodeDao {
     @Override
     public ResultPage<Node> find(final FindNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
+                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()),
+                JooqUtil.getBooleanCondition(NODE.ENABLED, criteria.isEnabled()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 

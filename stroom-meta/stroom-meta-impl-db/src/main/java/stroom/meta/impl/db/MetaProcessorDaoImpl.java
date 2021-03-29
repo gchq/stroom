@@ -21,17 +21,20 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
+import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
-class MetaProcessorDaoImpl implements MetaProcessorDao {
+class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
+
     private static final String CACHE_NAME = "Meta Processor Cache";
 
     private final ICache<Key, Integer> cache;
@@ -92,18 +95,11 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
     }
 
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_PROCESSOR);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_PROCESSOR)
-//                .execute());
-    }
-
     private static class Key {
+
         private final String processorUuid;
         private final String pipelineUuid;
 
@@ -120,10 +116,15 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
             return pipelineUuid;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return Objects.equals(processorUuid, key.processorUuid) &&
                     Objects.equals(pipelineUuid, key.pipelineUuid);

@@ -65,7 +65,7 @@ export const useTable = (
 ): UseTable => {
   const selectableTableProps = useSelectableReactTable<Activity>(
     {
-      getKey: React.useCallback(v => v.id, []),
+      getKey: React.useCallback((v) => v.id, []),
       items: activities,
       selectionBehaviour: SelectionBehaviour.SINGLE,
     },

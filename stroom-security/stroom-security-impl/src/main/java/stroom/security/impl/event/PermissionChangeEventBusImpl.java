@@ -16,22 +16,24 @@
 
 package stroom.security.impl.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventBusImpl.class);
 
     private final Executor executor;
@@ -65,7 +67,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     @Override
     public void fire(final PermissionChangeEvent event) {
         if (started) {
-            fireGlobally(event);
+            securityContext.asProcessingUser(() -> fireGlobally(event));
         }
     }
 
@@ -77,7 +79,8 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
             if (started) {
                 // Dispatch the entity event to all nodes in the cluster.
-                final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change", taskContext -> fireRemote(event));
+                final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change",
+                        taskContext -> fireRemote(event));
                 CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {

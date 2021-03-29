@@ -20,5 +20,6 @@ import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 
 public interface FeedStatusService {
+
     GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request);
 }

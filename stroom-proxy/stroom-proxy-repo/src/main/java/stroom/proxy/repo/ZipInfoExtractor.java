@@ -16,14 +16,15 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.FileUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
 class ZipInfoExtractor {
-    private final Logger LOGGER = LoggerFactory.getLogger(ZipInfoExtractor.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZipInfoExtractor.class);
 
     private final ErrorReceiver errorReceiver;
 
@@ -61,7 +63,8 @@ class ZipInfoExtractor {
                     // Extract meta data
                     if (attributeMap == null) {
                         try {
-                            final InputStream metaStream = stroomZipFile.getInputStream(sourceName, StroomZipFileType.Meta);
+                            final InputStream metaStream = stroomZipFile.getInputStream(sourceName,
+                                    StroomZipFileType.Meta);
                             if (metaStream == null) {
                                 errorReceiver.onError(path, "Unable to find meta?");
                             } else {
@@ -105,8 +108,14 @@ class ZipInfoExtractor {
             }
         }
 
+        String typeName = null;
+        if (attributeMap != null) {
+            typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+        }
+
+        final FileSetKey key = new FileSetKey(feedName, typeName);
         final ZipInfo zipInfo = new ZipInfo(path,
-                feedName,
+                key,
                 totalUncompressedSize,
                 totalCompressedSize,
                 attrs.lastModifiedTime().toMillis(),

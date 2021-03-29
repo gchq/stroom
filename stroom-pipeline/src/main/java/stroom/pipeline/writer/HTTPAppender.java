@@ -1,9 +1,7 @@
 package stroom.pipeline.writer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -20,9 +18,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -36,6 +34,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.inject.Inject;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handler class that forwards the request to a URL.
@@ -43,11 +44,13 @@ import java.util.zip.ZipOutputStream;
 @ConfigurableElement(
         type = "HTTPAppender",
         category = Category.DESTINATION,
-        roles = {PipelineElementType.ROLE_TARGET,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class HTTPAppender extends AbstractAppender {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HTTPAppender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
@@ -130,7 +133,8 @@ public class HTTPAppender extends AbstractAppender {
             connection.setDoInput(true);
 
             if (useCompression) {
-                connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+                connection.addRequestProperty(StandardHeaderArguments.COMPRESSION,
+                        StandardHeaderArguments.COMPRESSION_ZIP);
             }
 
             AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
@@ -223,7 +227,13 @@ public class HTTPAppender extends AbstractAppender {
 
     }
 
-    public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
+    public void log(final Logger logger,
+                    final AttributeMap attributeMap,
+                    final String type,
+                    final String url,
+                    final int responseCode,
+                    final long bytes,
+                    final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
             final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
@@ -252,7 +262,8 @@ public class HTTPAppender extends AbstractAppender {
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
-    @PipelineProperty(description = "When the current output exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output exceeds this size it will be closed and a " +
+            "new one created.",
             displayPriority = 2)
     public void setRollSize(final String size) {
         super.setRollSize(size);
@@ -288,13 +299,14 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "How long to wait for data to be available before closing the connection",
-        displayPriority = 7)
+            displayPriority = 7)
     public void setReadTimeout(final String string) {
         readTimeout = null;
         if (string != null && !string.isEmpty()) {
             readTimeout = ModelStringUtil.parseDurationString(string);
         }
     }
+
     @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be",
             displayPriority = 8)
     public void setForwardChunkSize(final String string) {

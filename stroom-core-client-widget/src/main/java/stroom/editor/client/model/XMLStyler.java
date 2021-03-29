@@ -16,7 +16,7 @@
 
 package stroom.editor.client.model;
 
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +27,7 @@ import java.util.List;
  * structure.
  */
 public class XMLStyler {
+
     private static final String DOCTYPE_START = "<!DOCTYPE";
     private static final String EMPTY_ELEMENT_END = "/>";
     private static final String END_ELEMENT_START = "</";
@@ -86,8 +87,8 @@ public class XMLStyler {
      * @return An HTML string of the formatted and styled XML.
      */
     public String processXML(final String input, final boolean applyStyle, final boolean format, final int startLineNo,
-                             final List<Highlight> highlights) {
-        List<Highlight> remainingHighlights = null;
+                             final List<TextRange> highlights) {
+        List<TextRange> remainingHighlights = null;
         if (highlights != null) {
             remainingHighlights = new ArrayList<>(highlights);
         }
@@ -169,7 +170,10 @@ public class XMLStyler {
                         if (commentState == CommentState.START && pos > elementStartPos + 3) {
                             commentState = CommentState.CONTENT;
                         }
-                        if (commentState == CommentState.CONTENT && c == '-' && forward(1) == '-' && forward(2) == '>') {
+                        if (commentState == CommentState.CONTENT
+                                && c == '-'
+                                && forward(1) == '-'
+                                && forward(2) == '>') {
                             commentState = CommentState.END;
                         }
                     }
@@ -182,7 +186,7 @@ public class XMLStyler {
                 if (!inHighlight) {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
-                    final Highlight highlight = remainingHighlights.get(0);
+                    final TextRange highlight = remainingHighlights.get(0);
                     if ((lineNo == highlight.getFrom().getLineNo() && colNo >= highlight.getFrom().getColNo())
                             || lineNo > highlight.getFrom().getLineNo()) {
                         inHighlight = true;
@@ -191,7 +195,7 @@ public class XMLStyler {
                 } else {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
-                    final Highlight highlight = remainingHighlights.get(0);
+                    final TextRange highlight = remainingHighlights.get(0);
                     if ((lineNo == highlight.getTo().getLineNo() && colNo >= highlight.getTo().getColNo())
                             || lineNo > highlight.getTo().getLineNo()) {
                         inHighlight = false;
@@ -654,8 +658,16 @@ public class XMLStyler {
      * Individual styles for each XML fragment type.
      */
     public enum Style {
-        SYNTAX("s"), PI("pi"), DOCTYPE("d"), ELEMENT_NAME("e"), ATTRIBUTE_NAME("an"), ATTRIBUTE_VALUE("av"), CONTENT(
-                "c"), COMMENT("z"), HIGHLIGHT("hl");
+        SYNTAX("s"),
+        PI("pi"),
+        DOCTYPE("d"),
+        ELEMENT_NAME("e"),
+        ATTRIBUTE_NAME("an"),
+        ATTRIBUTE_VALUE("av"),
+        CONTENT(
+                "c"),
+        COMMENT("z"),
+        HIGHLIGHT("hl");
 
         private final String start;
         private final String end;
@@ -683,8 +695,14 @@ public class XMLStyler {
      * The different fragment types of an XML instance.
      */
     private enum ElementType {
-        DOCTYPE(Style.DOCTYPE), START(Style.ELEMENT_NAME), END(Style.ELEMENT_NAME), EMPTY(Style.ELEMENT_NAME), PI(
-                Style.PI), COMMENT(Style.COMMENT), CONTENT(Style.CONTENT);
+        DOCTYPE(Style.DOCTYPE),
+        START(Style.ELEMENT_NAME),
+        END(Style.ELEMENT_NAME),
+        EMPTY(Style.ELEMENT_NAME),
+        PI(
+                Style.PI),
+        COMMENT(Style.COMMENT),
+        CONTENT(Style.CONTENT);
 
         private final Style style;
 
@@ -698,6 +716,8 @@ public class XMLStyler {
     }
 
     private enum CommentState {
-        START, CONTENT, END
+        START,
+        CONTENT,
+        END
     }
 }

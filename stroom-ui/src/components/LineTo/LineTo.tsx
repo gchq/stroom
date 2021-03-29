@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 
 import LineContext from "./LineContext";
 
@@ -25,7 +25,7 @@ interface Props {
 
 const LineTo: React.FunctionComponent<Props> = ({ fromId, toId }) => {
   const { createLine, destroyLine } = React.useContext(LineContext);
-  const lineId = React.useMemo(() => uuidv4(), []);
+  const lineId = React.useMemo(() => v4(), []);
 
   React.useEffect(() => {
     createLine({ lineId, fromId, toId });

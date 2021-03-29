@@ -19,14 +19,12 @@ package stroom.task.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public abstract class TaskProducer implements Comparable<TaskProducer> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
+public abstract class TaskProducer {
 
-    private final long now = System.currentTimeMillis();
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
     private final AtomicInteger threadsUsed = new AtomicInteger();
 
@@ -35,10 +33,6 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
     private final TaskContextFactory taskContextFactory;
     private final TaskContext parentContext;
     private final String taskName;
-
-    private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
-    private final AtomicInteger tasksTotal = new AtomicInteger();
-    private final AtomicInteger tasksCompleted = new AtomicInteger();
 
     public TaskProducer(final TaskExecutor taskExecutor,
                         final int maxThreadsPerTask,
@@ -58,7 +52,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      *
      * @return The next task to execute or null if no tasks are available at this time.
      */
-     final Runnable next() {
+    final Runnable next() {
         Runnable runnable = null;
 
         final int count = threadsUsed.incrementAndGet();
@@ -76,15 +70,11 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
             } else {
                 final Consumer<TaskContext> consumer = tc -> {
                     try {
-                        LOGGER.trace("Producing a task of class " + task.getClass().getName());
                         task.accept(tc);
-                        LOGGER.trace("Task produced");
                     } catch (final Throwable e) {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();
-                        incrementTasksCompleted();
-                        LOGGER.trace("Now completed " + getTasksCompleted() + " with " + getRemainingTasks() + " remaining.");
                     }
                 };
 
@@ -93,23 +83,19 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
             }
         }
 
-        if (runnable != null){
-            LOGGER.trace("Returning a runnable of class " + runnable.getClass().getName());
-        }
-
         return runnable;
     }
 
     protected abstract Consumer<TaskContext> getNext();
 
     /**
-     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued
+     * have completed processing.
      *
-     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued
+     * have completed processing.
      */
-    protected boolean isComplete() {
-        return finishedAddingTasks.get() && getRemainingTasks() == 0;
-    }
+    protected abstract boolean isComplete();
 
     protected void attach() {
         taskExecutor.addProducer(this);
@@ -123,36 +109,5 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         taskExecutor.signalAll();
     }
 
-    protected void finishedAddingTasks() {
-        this.finishedAddingTasks.set(true);
-    }
 
-    protected final int getTasksTotal() {
-        return tasksTotal.get();
-    }
-
-    protected final void setTasksTotal(int tasksTotal) {
-        this.tasksTotal.set(tasksTotal);
-    }
-
-    protected void incrementTasksTotal() {
-        tasksTotal.incrementAndGet();
-    }
-
-    final int getTasksCompleted() {
-        return tasksCompleted.get();
-    }
-
-    protected void incrementTasksCompleted() {
-        tasksCompleted.incrementAndGet();
-    }
-
-    public final int getRemainingTasks() {
-        return tasksTotal.get() - tasksCompleted.get();
-    }
-
-    @Override
-    public int compareTo(final TaskProducer o) {
-        return Long.compare(now, o.now);
-    }
 }

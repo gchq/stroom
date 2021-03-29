@@ -19,5 +19,6 @@ package stroom.task.client.event;
 import com.google.gwt.event.shared.EventHandler;
 
 public interface OpenUserTaskManagerHandler extends EventHandler {
+
     void onOpen(OpenTaskManagerEvent event);
 }

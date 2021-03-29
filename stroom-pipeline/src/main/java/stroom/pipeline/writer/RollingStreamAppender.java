@@ -17,7 +17,6 @@
 
 package stroom.pipeline.writer;
 
-import com.google.common.base.Strings;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
@@ -25,7 +24,11 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.destination.*;
+import stroom.pipeline.destination.RollingDestination;
+import stroom.pipeline.destination.RollingDestinationFactory;
+import stroom.pipeline.destination.RollingDestinations;
+import stroom.pipeline.destination.RollingStreamDestination;
+import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -34,6 +37,8 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+
+import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 
@@ -44,6 +49,7 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
+
     private final Store streamStore;
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
@@ -74,7 +80,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(key.getFeed())
                 .typeName(key.getStreamType())
                 .parent(metaHolder.getMeta())
@@ -133,7 +139,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(
-            description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
+            description = "The feed that output stream should be written to. If not specified the feed the input " +
+                    "stream belongs to will be used.",
             displayPriority = 2)
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     public void setFeed(final DocRef feedRef) {
@@ -161,7 +168,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(
-            description = "Should the output stream be marked with indexed segments to allow fast access to individual records?",
+            description = "Should the output stream be marked with indexed segments to allow fast access to " +
+                    "individual records?",
             defaultValue = "true",
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {

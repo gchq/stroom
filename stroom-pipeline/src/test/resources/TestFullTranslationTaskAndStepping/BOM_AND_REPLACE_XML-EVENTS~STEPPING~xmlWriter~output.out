@@ -17,14 +17,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -74,14 +74,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -131,14 +131,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -188,14 +188,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -245,14 +245,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -302,14 +302,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -359,14 +359,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -416,14 +416,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -473,14 +473,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -530,14 +530,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -587,14 +587,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -644,14 +644,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -701,14 +701,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -758,14 +758,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -815,14 +815,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -872,14 +872,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -929,14 +929,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -986,14 +986,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1043,14 +1043,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1100,14 +1100,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1157,14 +1157,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1214,14 +1214,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1271,14 +1271,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1328,14 +1328,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1385,14 +1385,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1442,14 +1442,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1499,14 +1499,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1556,14 +1556,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1613,14 +1613,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1670,14 +1670,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1727,14 +1727,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1784,14 +1784,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1841,14 +1841,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1898,14 +1898,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -1955,14 +1955,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2012,14 +2012,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2069,14 +2069,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2126,14 +2126,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2183,14 +2183,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2240,14 +2240,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2297,14 +2297,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2354,14 +2354,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2411,14 +2411,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2468,14 +2468,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2525,14 +2525,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2582,14 +2582,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2639,14 +2639,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2696,14 +2696,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2753,14 +2753,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2810,14 +2810,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2867,14 +2867,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2924,14 +2924,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -2981,14 +2981,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3038,14 +3038,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3095,14 +3095,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3152,14 +3152,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3209,14 +3209,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3266,14 +3266,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3323,14 +3323,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3380,14 +3380,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3437,14 +3437,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3494,14 +3494,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3551,14 +3551,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3608,14 +3608,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3665,14 +3665,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3722,14 +3722,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3779,14 +3779,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3836,14 +3836,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3893,14 +3893,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -3950,14 +3950,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4007,14 +4007,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4064,14 +4064,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4121,14 +4121,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4178,14 +4178,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4235,14 +4235,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4292,14 +4292,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4349,14 +4349,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4406,14 +4406,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4463,14 +4463,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4520,14 +4520,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4577,14 +4577,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4634,14 +4634,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4691,14 +4691,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4748,14 +4748,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4805,14 +4805,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4862,14 +4862,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4919,14 +4919,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -4976,14 +4976,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5033,14 +5033,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5090,14 +5090,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5147,14 +5147,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5204,14 +5204,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5261,14 +5261,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5318,14 +5318,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5375,14 +5375,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5432,14 +5432,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5489,14 +5489,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5546,14 +5546,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5603,14 +5603,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5660,14 +5660,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5717,14 +5717,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5774,14 +5774,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5831,14 +5831,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5888,14 +5888,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -5945,14 +5945,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6002,14 +6002,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6059,14 +6059,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6116,14 +6116,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6173,14 +6173,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6230,14 +6230,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6287,14 +6287,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6344,14 +6344,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6401,14 +6401,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>
@@ -6458,14 +6458,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>

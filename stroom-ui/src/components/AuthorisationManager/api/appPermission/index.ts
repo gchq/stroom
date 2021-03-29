@@ -1,4 +1,2 @@
-import useAllAppPermissions from "./useAllAppPermissions";
-import useAppPermissionsForUser from "./useAppPermissionsForUser";
-
-export { useAppPermissionsForUser, useAllAppPermissions };
+export { useAllAppPermissions } from "./useAllAppPermissions";
+export { useAppPermissionsForUser } from "./useAppPermissionsForUser";

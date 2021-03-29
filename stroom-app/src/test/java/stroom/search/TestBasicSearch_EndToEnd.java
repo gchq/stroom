@@ -18,7 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -35,14 +34,18 @@ import stroom.search.impl.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -50,10 +53,14 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
 
-    @Override
-    protected boolean onAfterSetup() {
-        commonIndexingTestHelper.setup();
-        return true;
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
+        if (!doneSetup) {
+            commonIndexingTestHelper.setup();
+            doneSetup = true;
+        }
     }
 
     @Test
@@ -74,7 +81,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     void testTermQuery() {
-        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder();
         expression.addTerm("UserId", Condition.EQUALS, "user5");
 
         test(expression, 1, 5);
@@ -84,7 +91,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     void testPhraseQuery() {
         final String field = "Command";
 
-        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder();
         expression.addTerm(field, Condition.EQUALS, "service");
         expression.addTerm(field, Condition.EQUALS, "cwhp");
         expression.addTerm(field, Condition.EQUALS, "authorize");
@@ -96,8 +103,8 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     void testBooleanQuery() {
         final String field = "Command";
-        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
-                .addOperator(new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder()
                         .addTerm(field, Condition.EQUALS, "service")
                         .addTerm(field, Condition.EQUALS, "cwhp")
                         .addTerm(field, Condition.EQUALS, "authorize")
@@ -110,10 +117,10 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     void testNestedBooleanQuery() {
         // Create an or query.
-        final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+        final ExpressionOperator.Builder orCondition = ExpressionOperator.builder().op(Op.OR);
         orCondition.addTerm("UserId", Condition.EQUALS, "user6");
 
-        final ExpressionOperator.Builder andCondition = orCondition.addOperator(new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator.Builder andCondition = orCondition.addOperator(ExpressionOperator.builder()
                 .addTerm("UserId", Condition.EQUALS, "user1")
                 .build());
 
@@ -135,13 +142,15 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     void testRangeQuery() {
-        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder();
         expression.addTerm("EventTime", Condition.BETWEEN, "2007-08-18T13:21:48.000Z,2007-08-18T13:23:49.000Z");
 
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents) {
+    private void test(final ExpressionOperator.Builder expression,
+                      final long expectedStreams,
+                      final long expectedEvents) {
         final ResultPage<IndexShard> resultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
         for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));

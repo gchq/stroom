@@ -5,11 +5,12 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.index.shared.IndexDoc;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
+
     private final Serialiser2<IndexDoc> delegate;
 
     @Inject

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
+
     private final List<IndexVolumeGroup> groups = new ArrayList<>();
     private static final String TEST_USER = "testVolumeGroupUser";
 

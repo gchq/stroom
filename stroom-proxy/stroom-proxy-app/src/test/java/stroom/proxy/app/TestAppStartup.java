@@ -10,8 +10,8 @@ public class TestAppStartup extends AbstractApplicationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppStartup.class);
 
     private static final DropwizardAppExtension<Config> DROPWIZARD = new DropwizardAppExtension<Config>(
-        App.class,
-        getConfig());
+            App.class,
+            getConfig());
 
     @Test
     public void testAppStartup() {

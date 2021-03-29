@@ -6,11 +6,12 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.util.string.EncodingUtil;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class TextConverterSerialiser implements DocumentSerialiser2<TextConverterDoc> {
+
     private static final String XML = "xml";
 
     private final Serialiser2<TextConverterDoc> delegate;

@@ -16,19 +16,21 @@
 
 package stroom.cluster.lock.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
 import stroom.util.logging.LogExecutionTime;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ClusterLockServiceImpl implements ClusterLockService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
@@ -59,7 +61,9 @@ class ClusterLockServiceImpl implements ClusterLockService {
         // Don't bother the master node if we already hold the lock.
         ClusterLockKey clusterLockKey = lockMap.get(lockName);
         if (clusterLockKey == null) {
-            clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
+            clusterLockKey = new ClusterLockKey(
+                    lockName,
+                    nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
             final Boolean didLock = clusterLockHandler.tryLock(clusterLockKey);
             if (didLock != null) {

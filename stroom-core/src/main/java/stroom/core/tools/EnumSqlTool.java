@@ -22,6 +22,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.HasPrimitiveValue;
 
 public class EnumSqlTool {
+
     public static void process(final String name, final HasPrimitiveValue[] list) {
         System.out.println("insert into enum_mig");
         System.out.println("\t( name, str, id )");
@@ -31,7 +32,7 @@ public class EnumSqlTool {
             if (i + 1 < list.length) {
                 System.out.println(",");
             } else {
-                System.out.println("");
+                System.out.println();
             }
         }
         System.out.println(";");
@@ -47,7 +48,7 @@ public class EnumSqlTool {
         System.out.println("\tprimary key (name, str, id),");
         System.out.println("\tkey (name,id)");
         System.out.println(");");
-        System.out.println("");
+        System.out.println();
 
         process("TaskStatus", TaskStatus.values());
         process("JobType", JobType.values());

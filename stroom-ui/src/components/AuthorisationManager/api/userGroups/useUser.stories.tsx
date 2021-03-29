@@ -38,7 +38,7 @@ const TestHarness = () => {
 
   return (
     <div>
-      <Button onClick={switchList} text="Switch List" />
+      <Button onClick={switchList}>Switch List</Button>
       <h2>User UUIDS</h2>
       <p>{userUuid}</p>
       <h2>Users</h2>

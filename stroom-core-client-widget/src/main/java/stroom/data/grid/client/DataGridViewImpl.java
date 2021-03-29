@@ -22,6 +22,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -68,6 +69,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, NativePreviewHandler {
+
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
     private static volatile DefaultResources resources;
@@ -91,7 +93,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private MultiSelectionModel<R> selectionModel;
     // Required for multiple selection using shift and control key modifiers.
     private R multiSelectStart;
-    private Widget widget;
+    private final Widget widget;
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
     private ResizeHandle<R> resizeHandle;
@@ -103,22 +105,25 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public DataGridViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, false, DEFAULT_LIST_PAGE_SIZE, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, false, DEFAULT_LIST_PAGE_SIZE, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final boolean allowMultiSelect) {
-        this(supportsSelection, allowMultiSelect, DEFAULT_LIST_PAGE_SIZE, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, allowMultiSelect, DEFAULT_LIST_PAGE_SIZE, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final int size) {
-        this(supportsSelection, size, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, size, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final int size, final Binder binder) {
         this(supportsSelection, false, size, binder);
     }
 
-    public DataGridViewImpl(final boolean supportsSelection, final boolean allowMultiSelect, final int size, final Binder binder) {
+    public DataGridViewImpl(final boolean supportsSelection,
+                            final boolean allowMultiSelect,
+                            final int size,
+                            final Binder binder) {
         this.allowMultiSelect = allowMultiSelect;
 
         if (resources == null) {
@@ -255,7 +260,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                         headingListener.onMouseDown(event, heading);
                     }
 
-                    if (!resizeHandle.isResizing() && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                    if (!resizeHandle.isResizing()
+                            && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                         resizeHandle.startResize(event);
 
                     } else {
@@ -537,7 +543,13 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
+    }
+
+    @Override
+    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
+                                            final SvgPreset secondaryPreset) {
+        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
     }
 
     @Override
@@ -660,9 +672,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {
+
     }
 
     public interface DefaultStyle extends Style {
+
         String dataGridHeaderBackground();
 
         String dataGridHeaderSelected();
@@ -687,6 +701,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface HeadingListener {
+
         void onMouseDown(NativeEvent event, Heading heading);
 
         void onMouseUp(NativeEvent event, Heading heading);
@@ -699,6 +714,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface DefaultResources extends Resources {
+
         String DEFAULT_CSS = "stroom/data/grid/client/DataGrid.css";
 
         /**
@@ -719,6 +735,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public static class ColSettings {
+
         private final boolean resizable;
         private final boolean movable;
 
@@ -737,6 +754,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public static class Heading {
+
         private final Element tableElement;
         private final Element element;
         private final int colIndex;
@@ -767,6 +785,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
+
         MySelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }
@@ -800,12 +819,15 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
 
                 if (!consumed) {
-                    // Since all of the controls we care about will not have interactive elements that are direct children
-                    // of the td we can assume that the cell will not consume the event if the parent of the target is the td.
+                    // Since all of the controls we care about will not have interactive elements that are
+                    // direct children of the td we can assume that the cell will not consume the event if
+                    // the parent of the target is the td.
                     if (!"td".equalsIgnoreCase(parentTag)) {
                         final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
                         if (cell != null && cell.getConsumedEvents() != null) {
-                            if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                            if (cell.getConsumedEvents().contains("click")
+                                    || cell.getConsumedEvents().contains("mousedown")
+                                    || cell.getConsumedEvents().contains("mouseup")) {
                                 consumed = true;
                             }
                         }
@@ -819,7 +841,12 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                     final R row = event.getValue();
                     if (row != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                         final boolean doubleClick = doubleClickTest.test(row);
-                        doSelect(row, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                        doSelect(row, new SelectionType(
+                                doubleClick,
+                                false,
+                                allowMultiSelect,
+                                event.getNativeEvent().getCtrlKey(),
+                                event.getNativeEvent().getShiftKey()));
                     }
                 }
             }

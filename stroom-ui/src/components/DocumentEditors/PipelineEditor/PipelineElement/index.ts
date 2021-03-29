@@ -1,1 +1,1 @@
-export { default } from "./PipelineElement";
+export { PipelineElement } from "./PipelineElement";

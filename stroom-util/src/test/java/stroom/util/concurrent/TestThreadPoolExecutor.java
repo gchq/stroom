@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Disabled;
 class TestThreadPoolExecutor {
 //    @Test
 //    public void test() throws Exception {
-//        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, 2, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+//        ThreadPoolExecutor threadPoolExecutor =
+//        new ThreadPoolExecutor(0, 2, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
 //
 //        final CountDownLatch countDownLatch = new CountDownLatch(100);
 //        for (int i = 0; i < 100; i++) {
@@ -27,7 +28,8 @@ class TestThreadPoolExecutor {
 //
 //    @Test
 //    public void test2() throws Exception {
-//        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, 2, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+//        ThreadPoolExecutor threadPoolExecutor =
+//        new ThreadPoolExecutor(0, 2, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 //
 //        final CountDownLatch countDownLatch = new CountDownLatch(100);
 //        for (int i = 0; i < 100; i++) {
@@ -47,7 +49,8 @@ class TestThreadPoolExecutor {
 //
 //    @Test
 //    public void test3() throws Exception {
-//        ThreadPoolExecutor threadPoolExecutor = ScalingThreadPoolExecutor.newScalingThreadPool(0, 2, 60L, TimeUnit.SECONDS);
+//        ThreadPoolExecutor threadPoolExecutor =
+//        ScalingThreadPoolExecutor.newScalingThreadPool(0, 2, 60L, TimeUnit.SECONDS);
 //
 //        final CountDownLatch countDownLatch = new CountDownLatch(100);
 //        for (int i = 0; i < 100; i++) {

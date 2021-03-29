@@ -2,6 +2,7 @@ package stroom.elastic.impl.http;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.impl.ElasticIndexConfigDoc;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 class TestHttpElasticIndexWriter {
+
     private static final Consumer<Exception> DEFAULT_CALLBACK = ex -> {
         throw new RuntimeException("Exception during write", ex);
     };

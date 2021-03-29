@@ -16,9 +16,10 @@
 
 package stroom.pipeline.refdata;
 
-import javax.inject.Singleton;
 import java.util.NavigableSet;
+import javax.inject.Singleton;
 
 @Singleton
 class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveStream>> {
+
 }

@@ -16,9 +16,9 @@
 
 package stroom.task.impl;
 
-import stroom.event.logging.api.DocumentEventLog;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
+import stroom.event.logging.api.EventActionDecorator;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -26,44 +26,36 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
+
+import event.logging.EventAction;
+import event.logging.ProcessAction;
+import event.logging.ProcessEventAction;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
+import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
-// TODO : @66 add event logging
+@AutoLogged
 class TaskResourceImpl implements TaskResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
-    private final TaskManagerImpl taskManager;
-    private final SessionIdProvider sessionIdProvider;
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final DocumentEventLog documentEventLog;
+    private final Provider<TaskManagerImpl> taskManagerProvider;
+    private final Provider<SessionIdProvider> sessionIdProvider;
+    private final Provider<NodeService> nodeServiceProvider;
 
     @Inject
-    TaskResourceImpl(final TaskManagerImpl taskManager,
-                     final SessionIdProvider sessionIdProvider,
-                     final NodeService nodeService,
-                     final NodeInfo nodeInfo,
-                     final WebTargetFactory webTargetFactory,
-                     final DocumentEventLog documentEventLog) {
-        this.taskManager = taskManager;
+    TaskResourceImpl(final Provider<TaskManagerImpl> taskManagerProvider,
+                     final Provider<SessionIdProvider> sessionIdProvider,
+                     final Provider<NodeService> nodeServiceProvider) {
+        this.taskManagerProvider = taskManagerProvider;
         this.sessionIdProvider = sessionIdProvider;
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
-        this.documentEventLog = documentEventLog;
+        this.nodeServiceProvider = nodeServiceProvider;
     }
 
     @Override
@@ -73,48 +65,33 @@ class TaskResourceImpl implements TaskResource {
 
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        TaskProgressResponse result = null;
-        // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            final ResultPage<TaskProgress> resultPage = taskManager.find(request.getCriteria());
-            result = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
-
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    TaskResource.BASE_PATH,
-                    TaskResource.FIND_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
-
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-
-                result = response.readEntity(TaskProgressResponse.class);
-
-                if (result == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
-                }
-            } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
-        return result;
+        return nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        TaskProgressResponse.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.FIND_PATH_PART,
+                                nodeName),
+                        () -> {
+                            final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
+                                    .find(request.getCriteria());
+                            return new TaskProgressResponse(
+                                    resultPage.getValues(),
+                                    resultPage.getPageResponse());
+                        },
+                        builder ->
+                                builder.post(Entity.json(request)));
     }
 
     @Override
+    @AutoLogged(OperationType.SEARCH)
     public TaskProgressResponse userTasks(final String nodeName) {
         try {
-            final String sessionId = sessionIdProvider.get();
+            final String sessionId = sessionIdProvider.get().get();
             if (sessionId != null) {
                 final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
                 criteria.setSessionId(sessionId);
                 final FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(criteria);
                 return find(nodeName, findTaskProgressRequest);
@@ -127,31 +104,33 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
+            decorator = TerminateDecorator.class)
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
-
-        // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            taskManager.terminate(request.getCriteria(), request.isKill());
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    TaskResource.BASE_PATH,
-                    TaskResource.TERMINATE_PATH_PART,
-                    nodeName);
-
-            try {
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        nodeServiceProvider.get()
+                .remoteRestCall(
+                        nodeName,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                TaskResource.BASE_PATH,
+                                TaskResource.TERMINATE_PATH_PART,
+                                nodeName),
+                        () ->
+                                taskManagerProvider.get().terminate(
+                                        request.getCriteria(),
+                                        request.isKill()),
+                        builder ->
+                                builder.post(Entity.json(request)));
 
         return true;
+    }
+
+    static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {
+
+        @Override
+        public ProcessEventAction decorate(final ProcessEventAction eventAction) {
+            return eventAction.newCopyBuilder()
+                    .withAction(ProcessAction.TERMINATE)
+                    .build();
+        }
     }
 }

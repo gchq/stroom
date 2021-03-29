@@ -16,13 +16,15 @@
 
 package stroom.processor.impl;
 
+import stroom.processor.shared.ProcessorTask;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.processor.shared.ProcessorTask;
 
 import java.util.List;
 
 class TaskStatusTraceLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
     void addUnownedTasks(final Class<?> clazz, final List<ProcessorTask> streamTasks) {

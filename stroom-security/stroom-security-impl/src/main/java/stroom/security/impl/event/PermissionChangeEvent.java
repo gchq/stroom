@@ -25,13 +25,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @Type(value = ClearUserPermissionsEvent.class, name = "clearUserPermissionsEvent"),
         @Type(value = RemovePermissionEvent.class, name = "removePermissionEvent"),
         @Type(value = AddPermissionEvent.class, name = "addPermissionEvent"),
         @Type(value = ClearDocumentPermissionsEvent.class, name = "clearDocumentPermissionsEvent")
 })
 public interface PermissionChangeEvent {
+
     interface Handler {
+
         void onChange(PermissionChangeEvent event);
     }
 }

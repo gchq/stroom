@@ -26,7 +26,7 @@ const DocRefBreadcrumb: React.FunctionComponent<Props> = ({
 
   return (
     <div className={`DocRefBreadcrumb ${className || ""}`}>
-      {lineage.map(l => (
+      {lineage.map((l) => (
         <React.Fragment key={l.uuid}>
           <Divider />
           <div

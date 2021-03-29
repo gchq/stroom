@@ -22,6 +22,7 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.AbstractModule;
 
 public class InternalModule extends AbstractModule {
+
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), InternalStatisticsService.class)

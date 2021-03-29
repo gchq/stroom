@@ -17,9 +17,10 @@
 package stroom.cell.tickbox.shared;
 
 
-
 public enum TickBoxState {
-    TICK, HALF_TICK, UNTICK;
+    TICK,
+    HALF_TICK,
+    UNTICK;
 
     public static TickBoxState fromBoolean(final Boolean state) {
         if (state == null) {

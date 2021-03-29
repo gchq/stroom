@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface Persistence {
+
     boolean exists(DocRef docRef);
 
     void delete(DocRef docRef);

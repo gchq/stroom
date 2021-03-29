@@ -19,6 +19,7 @@ package stroom.statistics.impl.sql.search;
 import java.util.regex.Matcher;
 
 public class SQLSafe {
+
     private SQLSafe() {
         // class should never be instantiated
     }

@@ -1,1 +1,1 @@
-export { default } from "./useOnKeyDown";
+export { useOnKeyDown } from "./useOnKeyDown";

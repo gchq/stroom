@@ -1,8 +1,8 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 
 export default {
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "Multi Branch Child",
   type: "Pipeline",
   description: "Complex pipeline with branching and inheritance",

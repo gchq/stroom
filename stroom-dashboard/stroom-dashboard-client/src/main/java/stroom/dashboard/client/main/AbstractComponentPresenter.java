@@ -17,13 +17,9 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TabConfig;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -35,8 +31,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
+
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private Components components;
@@ -57,8 +60,6 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     /**
      * Called just after a component is created from the component registry.
-     *
-     * @param components
      */
     @Override
     public void setComponents(final Components components) {
@@ -71,19 +72,35 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
-    public void write(final ComponentConfig componentConfig) {
-        componentConfig.setType(this.componentConfig.getType());
-        componentConfig.setId(this.componentConfig.getId());
-        componentConfig.setName(this.componentConfig.getName());
-        componentConfig.setSettings(this.componentConfig.getSettings());
+    public ComponentConfig write() {
         if (settingsPresenter != null) {
-            settingsPresenter.write(componentConfig);
+            componentConfig = settingsPresenter.write(componentConfig);
         }
+        return componentConfig;
     }
 
     @Override
     public ComponentConfig getComponentConfig() {
         return componentConfig;
+    }
+
+    public ComponentSettings getSettings() {
+        return componentConfig.getSettings();
+    }
+
+    public void setSettings(final ComponentSettings componentSettings) {
+        componentConfig = componentConfig
+                .copy()
+                .settings(componentSettings)
+                .build();
+    }
+
+    @Override
+    public void setComponentName(final String name) {
+        componentConfig = componentConfig
+                .copy()
+                .name(name)
+                .build();
     }
 
     @Override
@@ -98,7 +115,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
                 if (ok) {
                     if (settingsPresenter.validate()) {
                         final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                        settingsPresenter.write(componentConfig);
+                        componentConfig = settingsPresenter.write(componentConfig);
 
                         if (dirty) {
                             changeSettings();
@@ -120,7 +137,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         settingsPresenter.setComponents(components);
         settingsPresenter.read(componentConfig);
 
-        final PopupSize popupSize = new PopupSize(400, 400, true);
+        final PopupSize popupSize = new PopupSize(550, 400, true);
         ShowPopupEvent.fire(this, settingsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Settings", uiHandlers);
     }
 
@@ -173,9 +190,9 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         this.tabConfig = tabConfig;
     }
 
-    /***************
-     * Start TabData
-     ***************/
+    //###############
+    //# Start TabData
+    //###############
     @Override
     public Icon getIcon() {
         return null;
@@ -190,7 +207,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     public boolean isCloseable() {
         return true;
     }
-    /***************
-     * End TabData
-     ***************/
+    //###############
+    //# End TabData
+    //###############
 }

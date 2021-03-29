@@ -16,15 +16,16 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.BufferFactory;
+import stroom.util.net.HostNameUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
  * then both stroom-proxy and stroom can use it.
  */
 public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyForwardingFileSetProcessor.class);
 
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
@@ -65,21 +67,26 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
     @Override
     public void process(final FileSet fileSet) {
         if (fileSet.getFiles().size() > 0) {
-            final String feedName = fileSet.getFeed();
             final long thisPostId = proxyForwardId.incrementAndGet();
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("processFeedFiles() - proxyForwardId " + thisPostId + " " + feedName + " file count "
-                        + fileSet.getFiles().size());
+                LOGGER.debug("processFeedFiles() - proxyForwardId " + thisPostId + " " + fileSet);
             }
 
             // Sort the files in the file set so there is some consistency to processing.
             fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("process() - " + feedName + " " + fileSet.getFiles());
+                LOGGER.debug("process() - " + fileSet.getKey() + " " + fileSet.getFiles());
             }
+
+            final FileSetKey key = fileSet.getKey();
+            final String feedName = key.getFeedName();
+            final String typeName = key.getTypeName();
 
             final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
+            if (typeName != null && !typeName.isBlank()) {
+                attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());
+            }
             attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
             attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
             if (LOGGER.isDebugEnabled()) {
@@ -96,7 +103,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
                 }
 
                 long sequenceId = 1;
-                final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + feedName);
+                final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + key);
 
                 for (final Path file : fileSet.getFiles()) {
                     // Send no more if told to finish
@@ -118,7 +125,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
             } catch (final IOException ex) {
                 LOGGER.warn("processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("processFeedFiles() - Debug trace " + feedName, ex);
+                    LOGGER.debug("processFeedFiles() - Debug trace " + key, ex);
                 }
                 for (final StreamHandler streamHandler : handlers) {
                     try {
@@ -149,11 +156,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
 
     private String getHostName() {
         if (hostName == null) {
-            try {
-                hostName = InetAddress.getLocalHost().getHostName();
-            } catch (final Exception ex) {
-                hostName = "Unknown";
-            }
+            hostName = HostNameUtil.determineHostName();
         }
         return hostName;
     }

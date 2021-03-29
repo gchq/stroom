@@ -1,7 +1,5 @@
 package stroom.processor.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -11,6 +9,9 @@ import stroom.processor.shared.ProcessorRow;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ResultPage;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +27,14 @@ public class TestSerialisation {
         rows.add(new ProcessorRow(new Expander(), new Processor()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
 
-        final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(rows, ResultPage.createPageResponse(rows));
+        final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(
+                rows,
+                ResultPage.createPageResponse(rows));
         final String result1 = objectMapper.writeValueAsString(resultPage1);
         System.out.println(result1);
-        final ProcessorListRowResultPage resultPage2 = objectMapper.readValue(result1, ProcessorListRowResultPage.class);
+        final ProcessorListRowResultPage resultPage2 = objectMapper.readValue(
+                result1,
+                ProcessorListRowResultPage.class);
         final String result2 = objectMapper.writeValueAsString(resultPage2);
         System.out.println(result2);
 

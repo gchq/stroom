@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="name" value="fred">
+         <data name="roles">
+            <data name="role" value="manager"/>
+         </data>
+      </data>
+   </record>
+   <record>
+      <data name="name" value="jane">
+         <data name="roles">
+            <data name="role" value="project manager"/>
+            <data name="role" value="fire warden"/>
+         </data>
+      </data>
+   </record>
+   <record>
+      <data name="name" value="bob">
+         <data name="roles">
+            <data name="role" value="tea boy"/>
+            <data name="role" value="shredder operative"/>
+         </data>
+      </data>
+   </record>
+</records>

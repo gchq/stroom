@@ -17,17 +17,20 @@
 package stroom.processor.shared;
 
 
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilterTracker {
+public class ProcessorFilterTracker implements HasIntegerId {
+
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
 
@@ -103,6 +106,7 @@ public class ProcessorFilterTracker {
         this.eventCount = eventCount;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -277,10 +281,15 @@ public class ProcessorFilterTracker {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorFilterTracker that = (ProcessorFilterTracker) o;
         return Objects.equals(id, that.id);
     }

@@ -18,11 +18,14 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
+import stroom.lmdb.Serde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
@@ -33,9 +36,12 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractSerdeTest<T, S extends Serde<T>> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
 
     private static final int BYTE_BUFFER_SIZE = 10_000;
+
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     private S serde = null;
 
@@ -52,7 +58,10 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         return () -> {
             try {
                 return getSerdeType().getConstructor().newInstance();
-            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            } catch (NoSuchMethodException
+                    | InvocationTargetException
+                    | InstantiationException
+                    | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         };
@@ -69,7 +78,9 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     }
 
     ByteBuffer serialize(final T object) {
-        return getSerde().serialize(object);
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getSerde().getBufferCapacity());
+        getSerde().serialize(byteBuffer, object);
+        return byteBuffer;
     }
 
     T deserialize(final ByteBuffer byteBuffer) {
@@ -132,7 +143,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
         T object2 = serde2.deserialize(byteBuffer);
 
-        LOGGER.debug("Object 1 [{}]", object);
+        LOGGER.debug("Object   [{}]", object);
         LOGGER.debug("Object 2 [{}]", object2);
 
         assertThat(object2).isEqualTo(object);

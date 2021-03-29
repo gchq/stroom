@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import LineContext from "./LineContext";
 import StraightLine from "./lineCreators/StraightLine";
 import LinesSvg from "./LinesSvg";
@@ -36,9 +36,9 @@ const LineContainer: React.FunctionComponent<Props> = ({
     addItem: createLine,
     items: rawLines,
     removeItem: destroyLine,
-  } = useListReducer<LineType>(l => l.lineId);
+  } = useListReducer<LineType>((l) => l.lineId);
 
-  const lineContextId = React.useMemo(() => uuidv4(), []);
+  const lineContextId = React.useMemo(() => v4(), []);
   const getEndpointId = React.useCallback(
     (identity: string) => `${lineContextId}-${identity}`,
     [lineContextId],

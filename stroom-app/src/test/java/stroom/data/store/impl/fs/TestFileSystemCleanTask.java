@@ -18,9 +18,6 @@
 package stroom.data.store.impl.fs;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -33,21 +30,26 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
+
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
     @Inject
     private Store streamStore;
@@ -72,11 +74,11 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final MetaProperties lockfile1 = new MetaProperties.Builder()
+        final MetaProperties lockfile1 = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final MetaProperties nolockfile1 = new MetaProperties.Builder()
+        final MetaProperties nolockfile1 = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -87,7 +89,8 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         try (final Target lockstreamTarget1 = streamStore.openTarget(lockfile1)) {
             TargetUtil.write(lockstreamTarget1, "MyTest");
 
-            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getMeta());
+            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(
+                    lockstreamTarget1.getMeta());
             FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
             dataVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
             // // Hack making the last access time quite old
@@ -117,15 +120,18 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             // Create a old sub directory;
             final Path olddir = directory.resolve("olddir");
             FileUtil.mkdirs(olddir);
-            FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+            FileUtil.setLastModified(olddir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path newdir = directory.resolve("newdir");
             FileUtil.mkdirs(newdir);
-            FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+            FileUtil.setLastModified(newdir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
             Files.createFile(oldfileinnewdir);
-            FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
+            FileUtil.setLastModified(oldfileinnewdir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
             fileSystemCleanTaskExecutor.clean();
@@ -142,6 +148,9 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         }
     }
 
+    /**
+     * NOTE ERROR LOGGING "processDirectory() - Missing Files for..." is expected.
+     */
     @Test
     void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
@@ -156,15 +165,21 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         final FindDataVolumeCriteria streamVolumeCriteria = FindDataVolumeCriteria.create(meta);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+                .as("Must be saved to at least one volume")
+                .isTrue();
 
         fileSystemCleanTaskExecutor.clean();
 
         files = streamMaintenanceService.findAllStreamFile(meta);
 
-        assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
+        assertThat(files.size())
+                .as("Files have been deleted above")
+                .isEqualTo(0);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+                .as("Volumes should still exist as they are new")
+                .isTrue();
 
         fileSystemCleanTaskExecutor.clean();
 
@@ -183,7 +198,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)

@@ -29,18 +29,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class JobBootstrap {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
 
@@ -90,48 +91,57 @@ class JobBootstrap {
 
             // TODO: The form below isn't very clear. Split into job mapping and creation.
             for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
-                validJobNames.add(scheduledJob.getName());
+                // We only add managed jobs to the DB as only managed ones can accept user changes.
+                if (scheduledJob.isManaged()) {
+                    if (validJobNames.contains(scheduledJob.getName())) {
+                        LOGGER.error("Duplicate job name detected: " + scheduledJob.getName());
+                        throw new RuntimeException("Duplicate job name detected: " + scheduledJob.getName());
+                    }
+                    validJobNames.add(scheduledJob.getName());
 
-                Job job = new Job();
-                job.setName(scheduledJob.getName());
-                job.setEnabled(scheduledJob.isEnabled());
-                job = getOrCreateJob(job);
+                    Job job = new Job();
+                    job.setName(scheduledJob.getName());
+                    job.setEnabled(scheduledJob.isEnabled());
+                    job = getOrCreateJob(job);
 
-                final JobNode newJobNode = new JobNode();
-                newJobNode.setJob(job);
-                newJobNode.setNodeName(nodeName);
-                newJobNode.setEnabled(scheduledJob.isEnabled());
+                    final JobNode newJobNode = new JobNode();
+                    newJobNode.setJob(job);
+                    newJobNode.setNodeName(nodeName);
+                    newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                switch (scheduledJob.getSchedule().getScheduleType()) {
-                    case CRON:
-                        newJobNode.setJobType(JobType.CRON);
-                        break;
-                    case PERIODIC:
-                        newJobNode.setJobType(JobType.FREQUENCY);
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown ScheduleType!");
-                }
-                newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+                    switch (scheduledJob.getSchedule().getScheduleType()) {
+                        case CRON:
+                            newJobNode.setJobType(JobType.CRON);
+                            break;
+                        case PERIODIC:
+                            newJobNode.setJobType(JobType.FREQUENCY);
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown ScheduleType!");
+                    }
+                    newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
-                // Add the job node to the DB if it isn't there already.
-                JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
-                if (existingJobNode == null) {
-                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
-                            "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                    // Add the job node to the DB if it isn't there already.
+                    JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
+                    if (existingJobNode == null) {
+                        LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
+                                "' for node '" + newJobNode.getNodeName() + "' (state: " +
+                                (newJobNode.isEnabled()
+                                        ? "ENABLED"
+                                        : "DISABLED") + ")");
 
-                    AuditUtil.stamp(securityContext.getUserId(), newJobNode);
-                    jobNodeDao.create(newJobNode);
-                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                        AuditUtil.stamp(securityContext.getUserId(), newJobNode);
+                        jobNodeDao.create(newJobNode);
+                        existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                } else if (!Objects.equals(newJobNode.getJobType(), existingJobNode.getJobType())) {
-                    // If the job type has changed then update the job node.
-                    existingJobNode.setJobType(newJobNode.getJobType());
-                    existingJobNode.setSchedule(newJobNode.getSchedule());
-                    AuditUtil.stamp(securityContext.getUserId(), existingJobNode);
-                    existingJobNode = jobNodeDao.update(existingJobNode);
-                    existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                    } else if (!Objects.equals(newJobNode.getJobType(), existingJobNode.getJobType())) {
+                        // If the job type has changed then update the job node.
+                        existingJobNode.setJobType(newJobNode.getJobType());
+                        existingJobNode.setSchedule(newJobNode.getSchedule());
+                        AuditUtil.stamp(securityContext.getUserId(), existingJobNode);
+                        existingJobNode = jobNodeDao.update(existingJobNode);
+                        existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                    }
                 }
             }
 
@@ -157,7 +167,9 @@ class JobBootstrap {
 
                     LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                             "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                            (newJobNode.isEnabled()
+                                    ? "ENABLED"
+                                    : "DISABLED") + ")");
 
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
@@ -327,7 +339,8 @@ class JobBootstrap {
 //        }
 //
 //        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
+//        protected void appendBasicCriteria(final HqlBuilder sql,
+//        final String alias, final FindJobNodeCriteria criteria) {
 //            super.appendBasicCriteria(sql, alias, criteria);
 //            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
 //            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());

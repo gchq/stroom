@@ -41,7 +41,7 @@ const allImages = (size?: "lg" | "sm") => (
       </tr>
     </thead>
     <tbody>
-      {docRefTypes.map(docRefType => (
+      {docRefTypes.map((docRefType) => (
         <tr key={docRefType}>
           <td>
             <DocRefImage size={size} docRefType={docRefType} />

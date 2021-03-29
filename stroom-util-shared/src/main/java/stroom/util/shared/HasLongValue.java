@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public interface HasLongValue {
+
     Long getLongValue();
 
     void setLongValue(Long newValue);

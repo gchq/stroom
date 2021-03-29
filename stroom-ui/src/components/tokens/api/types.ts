@@ -1,19 +1,23 @@
 import { Filter, SortingRule } from "react-table";
 
-export interface Token {
-  id: string;
-  version: number;
-  createTimeMs: number;
-  updateTimeMs: number;
-  createUser: string;
-  updateUser: string;
+export interface TokenConfig {
+  defaultApiKeyExpiryInMinutes: number;
+}
 
-  userEmail: string;
-  tokenType: string;
-  data: string;
-  expiresOnMs: number;
-  comments: string;
-  enabled: boolean;
+export interface Token {
+  id?: number;
+  version?: number;
+  createTimeMs?: number;
+  updateTimeMs?: number;
+  createUser?: string;
+  updateUser?: string;
+
+  userId?: string;
+  tokenType?: "user" | "api" | "email_reset";
+  data?: string;
+  expiresOnMs?: number;
+  comments?: string;
+  enabled?: boolean;
 }
 
 export interface SearchConfig {

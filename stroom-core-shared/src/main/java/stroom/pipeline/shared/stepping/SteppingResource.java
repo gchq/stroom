@@ -16,13 +16,14 @@
 
 package stroom.pipeline.shared.stepping;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -30,7 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stepping - /v1")
+@Tag(name = "Stepping")
 @Path("/stepping" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,15 +39,23 @@ public interface SteppingResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/getPipelineForStepping")
-    @ApiOperation(
-            value = "Get a pipeline for stepping",
-            response = DocRef.class)
-    DocRef getPipelineForStepping(@ApiParam("request") GetPipelineForMetaRequest request);
+    @Operation(
+            summary = "Get a pipeline for stepping",
+            operationId = "getPipelineForStepping")
+    DocRef getPipelineForStepping(
+            @Parameter(description = "request", required = true) GetPipelineForMetaRequest request);
+
+    @POST
+    @Path("/findElementDoc")
+    @Operation(
+            summary = "Load the document for an element",
+            operationId = "findElementDoc")
+    DocRef findElementDoc(FindElementDocRequest request);
 
     @POST
     @Path("/step")
-    @ApiOperation(
-            value = "Step a pipeline",
-            response = SteppingResult.class)
-    SteppingResult step(@ApiParam("request") PipelineStepRequest request);
+    @Operation(
+            summary = "Step a pipeline",
+            operationId = "step")
+    SteppingResult step(@Parameter(description = "request", required = true) PipelineStepRequest request);
 }

@@ -38,14 +38,12 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,22 +56,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
-class ExplorerServiceImpl implements ExplorerService, CollectionService {
+class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-    // Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
-// items
-//            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Folder"), docRef ->
-//                    ExplorerConstants.FOLDER.equals(docRef.getType())
-//                            ? docRef.getName()
-//                            : null),
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType)
-    );
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -330,7 +325,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 // We don't want to filter child items if the parent folder matches the name filter.
                 final boolean ignoreChildNameFilter = filterPredicate.test(child.getDocRef());
 
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
+                // Recurse right down to find out if a descendant is being added and therefore if we need to
+                // include this as an ancestor.
                 final boolean hasChildren = addDescendants(
                         child,
                         treeModelIn,
@@ -398,7 +394,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         final List<ExplorerNode> children = filteredModel.getChildren(null);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                final ExplorerNode copy = child.copy();
+                final ExplorerNode copy = child.copy().build();
                 result.getRootNodes().add(copy);
                 addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 0, result);
             }
@@ -434,9 +430,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
             final List<ExplorerNode> newChildren = new ArrayList<>();
             parent.setChildren(newChildren);
             for (final ExplorerNode child : children) {
-                final ExplorerNode copy = child.copy();
+                final ExplorerNode copy = child.copy().build();
                 newChildren.add(copy);
-                addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, currentDepth + 1, result);
+                addChildren(copy,
+                        filteredModel,
+                        openItems,
+                        forcedOpenItems,
+                        temporaryOpenItems,
+                        currentDepth + 1,
+                        result);
             }
 
         } else {
@@ -565,7 +567,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 // Create the explorer node
                 if (destinationDocRef != null) {
                     // Copy the explorer node.
-                    explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
+                    explorerNodeService.copyNode(sourceDocRef,
+                            destinationDocRef,
+                            destinationFolderRef,
+                            permissionInheritance);
 
                     // Record where the document got copied from -> to.
                     remappings.put(sourceDocRef, destinationDocRef);
@@ -722,7 +727,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
-    private void recursiveDelete(final List<DocRef> docRefs, final HashSet<DocRef> deleted, final List<DocRef> resultDocRefs, final StringBuilder resultMessage) {
+    private void recursiveDelete(final List<DocRef> docRefs,
+                                 final HashSet<DocRef> deleted,
+                                 final List<DocRef> resultDocRefs,
+                                 final StringBuilder resultMessage) {
         docRefs.forEach(docRef -> {
             // Check this document hasn't already been deleted.
             if (!deleted.contains(docRef)) {
@@ -730,14 +738,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
                 if (children != null && children.size() > 0) {
                     // Recursive delete.
-                    final List<DocRef> childDocRefs = children.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+                    final List<DocRef> childDocRefs = children.stream()
+                            .map(ExplorerNode::getDocRef)
+                            .collect(Collectors.toList());
                     recursiveDelete(childDocRefs, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
                 children = explorerNodeService.getChildren(docRef);
                 if (children != null && children.size() > 0) {
-                    final String message = "Unable to delete '" + docRef.getName() + "' because the folder is not empty";
+                    final String message = "Unable to delete '" + docRef.getName() +
+                            "' because the folder is not empty";
                     resultMessage.append(message);
                     resultMessage.append("\n");
                     explorerEventLog.delete(docRef, new RuntimeException(message));
@@ -805,7 +816,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         final List<ExplorerNode> children = treeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
+                // Recurse right down to find out if a descendant is being added and therefore if we need to
+                // include this type as it is an ancestor.
                 final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
                 if (hasChildren) {
                     types.add(child.getType());
@@ -836,11 +848,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         // Only allow administrators to create documents with no folder.
         if (folderUUID == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
+                throw new PermissionException(securityContext.getUserId(),
+                        "Only administrators can create root level entries");
             }
         } else {
-            if (!securityContext.hasDocumentPermission(folderUUID, DocumentPermissionNames.getDocumentCreatePermission(type))) {
-                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + type + ") in folder " + folderUUID);
+            if (!securityContext.hasDocumentPermission(folderUUID,
+                    DocumentPermissionNames.getDocumentCreatePermission(type))) {
+                throw new PermissionException(securityContext.getUserId(),
+                        "You do not have permission to create (" + type + ") in folder " + folderUUID);
             }
         }
     }

@@ -17,20 +17,23 @@
 
 package stroom.annotation.impl;
 
-import event.logging.BaseObject;
-import event.logging.util.EventLoggingUtil;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.event.logging.api.ObjectInfoProvider;
 
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import event.logging.util.EventLoggingUtil;
+
 class AnnotationEventInfoProvider implements ObjectInfoProvider {
+
     @Override
     public BaseObject createBaseObject(final Object obj) {
         if (obj instanceof AnnotationDetail) {
             final AnnotationDetail annotationDetail = (AnnotationDetail) obj;
             final Annotation annotation = annotationDetail.getAnnotation();
 
-            event.logging.Object o = new event.logging.Object();
+            OtherObject o = new OtherObject();
             o.setId(String.valueOf(annotation.getId()));
             o.setType("Annotation");
             o.setName(annotation.getTitle());

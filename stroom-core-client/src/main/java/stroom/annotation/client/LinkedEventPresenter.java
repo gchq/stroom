@@ -1,11 +1,5 @@
 package stroom.annotation.client;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationResource;
@@ -13,6 +7,7 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.data.client.presenter.ClassificationWrappedDataPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
@@ -27,11 +22,19 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import javax.inject.Inject;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
+
     private final RestFactory restFactory;
 
     private final ButtonView addEventButton;
@@ -57,6 +60,11 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataPresenter = dataPresenter;
+        dataPresenter.setNavigationControlsVisible(false);
+        // It is not in its own dialog but is part of this one and this will determine how the
+        // source view is opened if the user clicks that
+        dataPresenter.setDisplayMode(DisplayMode.DIALOG);
+
         this.addEventLinkPresenter = addEventLinkPresenter;
 
         addEventButton = view.addButton(SvgPresets.ADD);
@@ -127,18 +135,33 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     private void show(final List<EventId> data) {
         setData(data);
-        final PopupSize popupSize = new PopupSize(800, 600, 800, 600, true);
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Linked Events", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(LinkedEventPresenter.this, LinkedEventPresenter.this);
-            }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                consumer.accept(dirty);
-            }
-        });
+        final PopupSize popupSize = new PopupSize(
+                800,
+                600,
+                800,
+                600,
+                true);
+
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.CLOSE_DIALOG,
+                popupSize,
+                "Linked Events",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        HidePopupEvent.fire(
+                                LinkedEventPresenter.this,
+                                LinkedEventPresenter.this);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        consumer.accept(dirty);
+                    }
+                });
     }
 
     private void setData(final List<EventId> data) {
@@ -167,7 +190,11 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private void onSelection() {
         final EventId selected = eventList.getSelectionModel().getSelected();
         if (selected != null) {
-            final SourceLocation sourceLocation = new SourceLocation(selected.getStreamId(), null, 1L, selected.getEventId(), null);
+            final SourceLocation sourceLocation = SourceLocation.builder(selected.getStreamId())
+                    .withPartNo(1L)
+                    .withSegmentNumber(selected.getEventId() - 1) // EventId obj is one based, segmentNo is 0 based
+                    .build();
+
             dataPresenter.fetchData(sourceLocation);
         } else {
             dataPresenter.clear();
@@ -181,6 +208,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     }
 
     public interface LinkedEventView extends View {
+
         ButtonView addButton(SvgPreset preset);
 
         void setEventListView(View view);

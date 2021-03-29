@@ -17,7 +17,6 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -42,17 +41,20 @@ import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestXMLTransformer extends AbstractProcessIntegrationTest {
+
     private static final String DIR = "TestXMLTransformer/";
 
     private static final int NUMBER_OF_RECORDS = 10;
@@ -179,11 +181,10 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
             try (final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource)) {
                 // We have to use /tmp here as the pipeline is hard coded to output
                 // to ${stroom.temp}/TestXMLTransformer.xml
-                final Path tempDir = FileUtil.getTempDir();
 
                 // Delete any output file.
-                final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");
-                final Path outputLockFile = tempDir.resolve("TestXMLTransformer.xml.lock");
+                final Path outputFile = getCurrentTestDir().resolve("TestXMLTransformer.xml");
+                final Path outputLockFile = getCurrentTestDir().resolve("TestXMLTransformer.xml.lock");
                 FileUtil.deleteFile(outputFile);
                 FileUtil.deleteFile(outputLockFile);
 

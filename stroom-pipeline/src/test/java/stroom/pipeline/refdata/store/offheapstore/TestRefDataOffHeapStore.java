@@ -17,16 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -46,17 +37,29 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
+import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.util.io.ByteSize;
-import stroom.util.logging.LambdaLogUtil;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
+import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
-import java.io.IOException;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -79,6 +82,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,10 +94,13 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1,
+            300).boxed().map(i -> "-").collect(Collectors.joining());
 
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+    @Inject
+    private ByteBufferPool byteBufferPool;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
@@ -108,9 +115,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     @BeforeEach
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
@@ -122,6 +127,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     @Override
                     protected void configure() {
                         bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
+                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }
@@ -145,7 +152,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
-        assertThat(isLoaded).isFalse();
+        assertThat(isLoaded)
+                .isFalse();
     }
 
     @Test
@@ -210,25 +218,38 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         String key = "myKey";
 
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
 
         AtomicBoolean didPutSucceed = new AtomicBoolean(false);
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value2));
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, key, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
+
+            putOutcome = loader.put(mapDefinition, key, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
         refDataStore.logAllContents();
 
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(1);
     }
 
     private void doKeyRangeValueOverwriteTest(final boolean overwriteExisting,
@@ -240,30 +261,40 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
-        String key = "50";
+        final String key = "50";
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
-
-        final AtomicBoolean didPutSucceed = new AtomicBoolean(false);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isEqualTo(0);
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value2));
+            putOutcome = loader.put(mapDefinition, range, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
 
             // second put for same key, should only succeed if overwriteExisting is enabled
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, range, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
 
         refDataStore.logAllContents();
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isEqualTo(1);
     }
 
     @Test
@@ -354,7 +385,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -424,13 +455,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             .boxed()
                             .sorted(Comparator.reverseOrder())
                             .forEach(i -> {
-                                Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinitionKey, "key" + i);
+                                Optional<RefDataValue> optValue =
+                                        refDataStore.getValue(mapDefinitionKey, "key" + i);
                                 assertThat(optValue.isPresent());
 
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -490,18 +522,24 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         getReferenceDataConfig().setPurgeAge(StroomDuration.ZERO);
 
-        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
-        assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isGreaterThan(0);
+        assertThat(refDataStore.getProcessingInfoEntryCount())
+                .isEqualTo(2);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isGreaterThan(0);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isGreaterThan(0);
 
         refDataStore.logAllContents();
 
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
         refDataStore.purgeOldData();
 
-        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(0);
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getProcessingInfoEntryCount())
+                .isEqualTo(0);
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
+                .isEqualTo(0);
     }
 
 
@@ -667,12 +705,140 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 totalValueEntryCount);
     }
 
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     * 50_000 takes about 4mins and makes a 250Mb db file.
+     */
+    @Test
+    void testBigLoadForPerfTesting() {
+
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        doBigLoadGetAndPurgeForPerfTesting(5, true, false, false, true);
+    }
+
+    @Test
+    void testConcurrentBigLoadAndGet() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        int entryCount = 5;
+        int threads = 6;
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, threads)
+                .boxed()
+                .map(i -> {
+                    LOGGER.info("Creating future {}", i);
+                    return CompletableFuture.runAsync(() -> {
+                        LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
+                        doBigLoadGetAndPurgeForPerfTesting(
+                                entryCount, true, true, false, false);
+                    }, executorService);
+                })
+                .collect(Collectors.toList());
+
+        futures.forEach(cf -> {
+            try {
+                cf.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+    }
+
+    @Test
+    void testLoadAndConcurrentGets() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        int entryCount = 5;
+        int threads = 6;
+
+        // Load the data
+        doBigLoadGetAndPurgeForPerfTesting(entryCount, true, false, false, true);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, threads)
+                .boxed()
+                .map(i -> {
+                    LOGGER.info("Creating future {}", i);
+                    return CompletableFuture.runAsync(() -> {
+                        LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
+                        // Now query the data
+                        doBigLoadGetAndPurgeForPerfTesting(
+                                entryCount, false, true, false, true);
+                    }, executorService);
+                })
+                .collect(Collectors.toList());
+
+        futures
+                .forEach(cf -> {
+                    try {
+                        cf.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+    }
 
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
     @Test
-    void testBigLoadForPerfTesting() {
+    void testBigLoadAndGetForPerfTesting() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(00_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        doBigLoadGetAndPurgeForPerfTesting(5, true, true, false, true);
+
+    }
+
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    @Test
+    void testBigLoadGetAndPurgeForPerfTesting() {
+        doBigLoadGetAndPurgeForPerfTesting(5, true, true, true, true);
+    }
+
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    private void doBigLoadGetAndPurgeForPerfTesting(final int entryCount,
+                                                    final boolean doLoad,
+                                                    final boolean doGets,
+                                                    final boolean doPurges,
+                                                    final boolean doAsserts) {
+
+        final Instant fullTestStartTime = Instant.now();
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
@@ -680,110 +846,160 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 50;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
         int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
 
-        LOGGER.info("-------------------------load starts here--------------------------------------");
-        List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
+        List<RefStreamDefinition> refStreamDefs1 = null;
+        List<RefStreamDefinition> refStreamDefs2 = null;
 
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
+        final Instant startInstant = Instant.now();
 
-        // here to aid debugging problems at low volumes
-        if (entryCount < 10) {
-            refDataStore.logAllContents(LOGGER::info);
+        if (doLoad) {
+            LOGGER.info("-------------------------load starts here--------------------------------------");
+            refStreamDefs1 = loadBulkData(
+                    refStreamDefCount,
+                    keyValueMapCount,
+                    rangeValueMapCount,
+                    entryCount,
+                    0,
+                    mapNamFunc);
+
+            if (doAsserts) {
+                assertDbCounts(
+                        refStreamDefCount,
+                        totalMapEntries,
+                        totalKeyValueEntryCount,
+                        totalRangeValueEntryCount,
+                        totalValueEntryCount);
+            }
+
+            // here to aid debugging problems at low volumes
+            if (entryCount < 10) {
+                refDataStore.logAllContents(LOGGER::info);
+            }
+
+
+            LOGGER.info("-----------------------second-load starts here----------------------------------");
+
+            refStreamDefs2 = loadBulkData(
+                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+
+            LAMBDA_LOGGER.info("Completed both loads in {}",
+                    Duration.between(startInstant, Instant.now()).toString());
         }
 
+        if (doAsserts) {
+            assertDbCounts(
+                    refStreamDefCount * 2,
+                    totalMapEntries * 2,
+                    totalKeyValueEntryCount * 2,
+                    totalRangeValueEntryCount * 2,
+                    totalValueEntryCount);
+        }
 
-        LOGGER.info("-----------------------second-load starts here----------------------------------");
+        if (doGets) {
+            LOGGER.info("-------------------------gets start here---------------------------------------");
 
-        List<RefStreamDefinition> refStreamDefs2 = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+            // In case the load was done elsewhere
+            if (refStreamDefs1 == null) {
+                refStreamDefs1 = buildRefStreamDefs(refStreamDefCount, 0);
+            }
+            if (refStreamDefs2 == null) {
+                refStreamDefs2 = buildRefStreamDefs(refStreamDefCount, refStreamDefCount);
+            }
 
-        assertDbCounts(
-                refStreamDefCount * 2,
-                totalMapEntries * 2,
-                totalKeyValueEntryCount * 2,
-                totalRangeValueEntryCount * 2,
-                totalValueEntryCount);
+            Random random = new Random();
+            // for each ref stream def & map def, have N goes at picking a random key and getting the value for it
+            Stream.concat(refStreamDefs1.stream(), refStreamDefs2.stream()).forEach(refStreamDef -> {
+                Instant startTime = Instant.now();
+                Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
+                    for (int i = 0; i < entryCount; i++) {
 
-        LOGGER.info("-------------------------gets start here---------------------------------------");
+                        String mapName = mapNamFunc.buildMapName(refStreamDef,
+                                valueType,
+                                random.nextInt(keyValueMapCount));
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
+                        int entryIdx = random.nextInt(entryCount);
 
-        Random random = new Random();
-        // for each ref stream def & map def, have N goes at picking a random key and getting the value for it
-        Stream.concat(refStreamDefs1.stream(), refStreamDefs2.stream()).forEach(refStreamDef -> {
-            Instant startTime = Instant.now();
-            Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
-                for (int i = 0; i < entryCount; i++) {
+                        String queryKey;
+                        String expectedValue;
+                        if (valueType.equals(KV_TYPE)) {
+                            queryKey = buildKey(entryIdx);
+                            expectedValue = buildKeyStoreValue(mapName, entryIdx, queryKey);
+                        } else {
+                            Range<Long> range = buildRangeKey(entryIdx);
+                            // in the DB teh keys are ranges so we need to pick a value in that range
+                            queryKey = Long.toString(random.nextInt(range.size().intValue()) + range.getFrom());
+                            expectedValue = buildRangeStoreValue(mapName, entryIdx, range);
+                        }
 
-                    String mapName = mapNamFunc.buildMapName(refStreamDef, valueType, random.nextInt(keyValueMapCount));
-                    MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
-                    int entryIdx = random.nextInt(entryCount);
+                        // get the proxy then get the value
+                        RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
+                        Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
-                    String queryKey;
-                    String expectedValue;
-                    if (valueType.equals(KV_TYPE)) {
-                        queryKey = buildKey(entryIdx);
-                        expectedValue = buildKeyStoreValue(mapName, entryIdx, queryKey);
-                    } else {
-                        Range<Long> range = buildRangeKey(entryIdx);
-                        // in the DB teh keys are ranges so we need to pick a value in that range
-                        queryKey = Long.toString(random.nextInt(range.size().intValue()) + range.getFrom());
-                        expectedValue = buildRangeStoreValue(mapName, entryIdx, range);
+                        assertThat(optRefDataValue).isNotEmpty();
+                        String value = ((StringValue) (optRefDataValue.get())).getValue();
+                        assertThat(value)
+                                .isEqualTo(expectedValue);
+
+                        //now do it in one hit
+                        optRefDataValue = refDataStore.getValue(mapDefinition, queryKey);
+                        assertThat(optRefDataValue).isNotEmpty();
+                        value = ((StringValue) (optRefDataValue.get())).getValue();
+                        assertThat(value)
+                                .isEqualTo(expectedValue);
                     }
-
-                    // get the proxy then get the value
-                    RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
-                    Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
-
-                    assertThat(optRefDataValue).isNotEmpty();
-                    String value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
-
-                    //now do it in one hit
-                    optRefDataValue = refDataStore.getValue(mapDefinition, queryKey);
-                    assertThat(optRefDataValue).isNotEmpty();
-                    value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
-                }
+                });
+                LOGGER.info("Done {} queries in {} for {}",
+                        entryCount * 2, Duration.between(startTime, Instant.now()).toString(), refStreamDef);
             });
-            LOGGER.info("Done {} queries in {} for {}",
-                    entryCount * 2, Duration.between(startTime, Instant.now()).toString(), refStreamDef);
-        });
+        }
 
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+        if (doPurges) {
 
-        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+            LOGGER.info("------------------------purge-starts-here--------------------------------------");
 
-        refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+            long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
 
-        // do the purge
-        refDataStore.purgeOldData();
+            refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
 
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
+            // do the purge
+            refDataStore.purgeOldData();
 
-        LOGGER.info("--------------------second-purge-starts-here------------------------------------");
+            if (doAsserts) {
+                assertDbCounts(
+                        refStreamDefCount,
+                        totalMapEntries,
+                        totalKeyValueEntryCount,
+                        totalRangeValueEntryCount,
+                        totalValueEntryCount);
+            }
 
-        refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+            LOGGER.info("--------------------second-purge-starts-here------------------------------------");
 
-        // do the purge
-        refDataStore.purgeOldData();
+            refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
 
-        assertDbCounts(0, 0, 0, 0, 0);
+            // do the purge
+            refDataStore.purgeOldData();
+
+            if (doAsserts) {
+                assertDbCounts(
+                        0,
+                        0,
+                        0,
+                        0,
+                        0);
+            }
+        }
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+
+        LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
     }
 
     private void assertDbCounts(final int refStreamDefCount,
@@ -848,6 +1064,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 this::buildMapNameWithRefStreamDef);
     }
 
+    private List<RefStreamDefinition> buildRefStreamDefs(final int count, final int offset) {
+
+        return IntStream.rangeClosed(1, count)
+                .boxed()
+                .map(i -> buildRefStreamDefinition(i + offset))
+                .collect(Collectors.toList());
+    }
+
     /**
      * @param refStreamDefinitionCount  Number of {@link RefStreamDefinition}s to create.
      * @param keyValueMapCount          Number of KeyValue type maps to create per {@link RefStreamDefinition}
@@ -864,36 +1088,53 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final int refStreamDefinitionOffset,
             final MapNamFunc mapNamFunc) {
 
-        assertThat(refStreamDefinitionCount).isGreaterThan(0);
-        assertThat(keyValueMapCount).isGreaterThanOrEqualTo(0);
-        assertThat(rangeValueMapCount).isGreaterThanOrEqualTo(0);
-        assertThat(entryCount).isGreaterThan(0);
+        assertThat(refStreamDefinitionCount)
+                .isGreaterThan(0);
+        assertThat(keyValueMapCount)
+                .isGreaterThanOrEqualTo(0);
+        assertThat(rangeValueMapCount)
+                .isGreaterThanOrEqualTo(0);
+        assertThat(entryCount)
+                .isGreaterThan(0);
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
-        for (int i = 0; i < refStreamDefinitionCount; i++) {
+        final Instant startInstant = Instant.now();
 
-            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
+        buildRefStreamDefs(refStreamDefinitionCount, refStreamDefinitionOffset)
+                .forEach(refStreamDefinition -> {
+                    refStreamDefinitions.add(refStreamDefinition);
 
-            refStreamDefinitions.add(refStreamDefinition);
+                    refDataStore.doWithLoaderUnlessComplete(
+                            refStreamDefinition,
+                            System.currentTimeMillis(),
+                            loader -> {
+                                loader.initialise(false);
+                                loader.setCommitInterval(32_000);
 
-            refDataStore.doWithLoaderUnlessComplete(
-                    refStreamDefinition,
-                    System.currentTimeMillis(),
-                    loader -> {
-                        loader.initialise(false);
-                        loader.setCommitInterval(1000);
+                                loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                                loadRangeValueData(keyValueMapCount,
+                                        entryCount,
+                                        refStreamDefinition,
+                                        loader,
+                                        mapNamFunc);
 
-                        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
-                        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                                loader.completeProcessing();
+                            });
+                });
 
-                        loader.completeProcessing();
-                    });
-        }
+        LAMBDA_LOGGER.info("Loaded {} ref stream definitions in {}",
+                refStreamDefinitionCount, Duration.between(startInstant, Instant.now()).toString());
+
+        LOGGER.info("Counts:, KeyValue: {}, KeyRangeValue: {}, ProcInfo: {}",
+                refDataStore.getKeyValueEntryCount(),
+                refDataStore.getKeyRangeValueEntryCount(),
+                refDataStore.getProcessingInfoEntryCount());
+
         return refStreamDefinitions;
     }
 
-    private RefStreamDefinition buildRefStreamDefintion(final long i) {
+    private RefStreamDefinition buildRefStreamDefinition(final long i) {
         return new RefStreamDefinition(
                 FIXED_PIPELINE_UUID,
                 FIXED_PIPELINE_VERSION,
@@ -904,7 +1145,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                     final int entryCount,
                                     final RefStreamDefinition refStreamDefinition,
                                     final RefDataLoader loader) {
-        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
+        loadRangeValueData(keyValueMapCount,
+                entryCount,
+                refStreamDefinition,
+                loader,
+                this::buildMapNameWithRefStreamDef);
     }
 
     private void loadRangeValueData(final int keyValueMapCount,
@@ -1041,8 +1286,10 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     expectedNewEntries = putAttempts;
                 }
 
-                assertThat(endEntryCounts._1).isEqualTo(startEntryCounts._1 + expectedNewEntries);
-                assertThat(endEntryCounts._2).isEqualTo(startEntryCounts._2 + expectedNewEntries);
+                assertThat(endEntryCounts._1)
+                        .isEqualTo(startEntryCounts._1 + expectedNewEntries);
+                assertThat(endEntryCounts._2)
+                        .isEqualTo(startEntryCounts._2 + expectedNewEntries);
 
                 lastRefStreamDefinition.set(refStreamDefinition);
 
@@ -1052,9 +1299,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
 //            refDataStore.logAllContents();
 
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
+            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition)
+                    .get();
 
-            assertThat(refDataProcessingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
+            assertThat(refDataProcessingInfo.getProcessingState())
+                    .isEqualTo(ProcessingState.COMPLETE);
 
         });
         assertLoadedKeyValueData(keyValueLoadedData);
@@ -1071,18 +1320,23 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             RefDataValue refDataValue = valueProxy.supplyValue().get();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
-            assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
+            assertThat((StringValue) refDataValue)
+                    .isEqualTo(tuple3._3);
 
             // now consume the proxied value in a txn
             valueProxy.consumeBytes(typedByteBuffer -> {
-                assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+                assertThat(typedByteBuffer.getTypeId())
+                        .isEqualTo(StringValue.TYPE_ID);
                 String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
-                assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
+                assertThat(foundStrVal)
+                        .isEqualTo(tuple3._3.getValue());
             });
         });
     }
 
-    private void assertLoadedKeyRangeValueData(final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) {
+    private void assertLoadedKeyRangeValueData(
+            final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) {
+
         keyRangeValueLoadedData.forEach(tuple3 -> {
 
             // build a variety of keys from the supplied range
@@ -1110,16 +1364,20 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
                 Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
-                assertThat(optRefDataValue.isPresent()).isEqualTo(isValueExpected);
+                assertThat(optRefDataValue.isPresent())
+                        .isEqualTo(isValueExpected);
 
                 optRefDataValue.ifPresent(refDataValue -> {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
-                    assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
+                    assertThat((StringValue) refDataValue)
+                            .isEqualTo(tuple3._3);
 
                     valueProxy.consumeBytes(typedByteBuffer -> {
-                        assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+                        assertThat(typedByteBuffer.getTypeId())
+                                .isEqualTo(StringValue.TYPE_ID);
                         String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
-                        assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
+                        assertThat(foundStrVal)
+                                .isEqualTo(tuple3._3.getValue());
                     });
                 });
             });
@@ -1176,19 +1434,23 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     loader.completeProcessing();
                 });
 
-        assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
+        assertThat(didLoadHappen)
+                .isEqualTo(isLoadExpectedToHappen);
 
         RefDataProcessingInfo processingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
 
-        assertThat(processingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
+        assertThat(processingInfo.getProcessingState())
+                .isEqualTo(ProcessingState.COMPLETE);
 
         boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
-        assertThat(isDataLoaded).isTrue();
+        assertThat(isDataLoaded)
+                .isTrue();
 
         return entriesPerMapDef * mapNames.size();
     }
 
     private interface MapNamFunc {
+
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
     }

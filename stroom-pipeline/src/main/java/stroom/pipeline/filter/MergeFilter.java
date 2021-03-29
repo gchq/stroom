@@ -16,11 +16,12 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -29,6 +30,7 @@ import java.util.Deque;
  * Merges XML that has been split into separate XML instances.
  */
 public class MergeFilter extends AbstractXMLFilter {
+
     private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
     private boolean started;
     private int depth;

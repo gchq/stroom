@@ -17,14 +17,15 @@
 package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.stepping.SharedStepData;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class StepData {
+
     private final Map<String, ElementData> elementMap = new HashMap<>();
     private SourceLocation sourceLocation;
 

@@ -16,10 +16,11 @@
 
 package stroom.pipeline.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.SteppingController;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FilterReader;
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class ReaderRecordDetector extends FilterReader {
     }
 
     @Override
-    public int read(final char buf[], final int off, final int len) throws IOException {
+    public int read(final char[] buf, final int off, final int len) throws IOException {
         if (controller == null) {
             return super.read(buf, off, len);
         }

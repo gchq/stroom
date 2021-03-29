@@ -18,9 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -29,6 +26,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -38,31 +36,37 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTagCloudSearch extends AbstractSearchTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
-    private static boolean doneSetup;
+
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
         if (!doneSetup) {
-            doneSetup = true;
             commonIndexingTestHelper.setup();
+            doneSetup = true;
         }
     }
 
@@ -75,33 +79,49 @@ class TestTagCloudSearch extends AbstractSearchTest {
         assertThat(index).as("Index is null").isNotNull();
 
         // Create text field.
-        final Field fldText = new Field.Builder()
+        final Field fldText = Field.builder()
                 .name("Text")
                 .expression(ParamUtil.makeParam("Text"))
                 .group(0)
-                .format(Format.Type.TEXT)
+                .format(Format.TEXT)
                 .build();
 
         // Create count field.
-        final Field fldCount = new Field.Builder()
+        final Field fldCount = Field.builder()
                 .name("Count")
                 .expression("count()")
-                .format(Format.Type.NUMBER)
+                .format(Format.NUMBER)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultTextPipeline();
-        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, resultPipeline, null, null);
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(fldText)
+                .addFields(fldCount)
+                .extractValues(true)
+                .extractionPipeline(resultPipeline)
+                .build();
 
-        final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final Query query = new Query(indexRef, expression.build());
+        final ExpressionOperator.Builder expression = buildExpression("user5",
+                "2000-01-01T00:00:00.000Z",
+                "2016-01-02T00:00:00.000Z");
+        final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                Collections.singletonList(tableSettings),
+                null,
+                null,
+                ResultRequest.ResultStyle.TABLE,
+                Fetch.CHANGES);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = search(searchRequest);
 
         final List<Row> values = new ArrayList<>();
@@ -144,7 +164,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
     private ExpressionOperator.Builder buildExpression(final String user, final String from,
                                                        final String to) {
-        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm("UserId", Condition.EQUALS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
 

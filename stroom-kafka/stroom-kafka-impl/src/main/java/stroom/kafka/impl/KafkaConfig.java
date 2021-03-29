@@ -1,10 +1,11 @@
 package stroom.kafka.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
@@ -13,7 +14,7 @@ public class KafkaConfig extends AbstractConfig {
 
     private String skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;
 
-    private CacheConfig kafkaConfigDocCache = new CacheConfig.Builder()
+    private CacheConfig kafkaConfigDocCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();

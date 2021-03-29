@@ -16,27 +16,30 @@
 
 package stroom.index.mock;
 
-
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.util.io.TempDirProvider;
 
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
+
     private final int maxDocumentCount;
 
     private final IndexShardService indexShardService;
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
 
-    MockIndexShardWriterCache() {
-        this(new MockIndexShardService(), Integer.MAX_VALUE);
+    @Inject
+    MockIndexShardWriterCache(final TempDirProvider tempDirProvider) {
+        this(new MockIndexShardService(tempDirProvider), Integer.MAX_VALUE);
     }
 
     public MockIndexShardWriterCache(final IndexShardService indexShardService, final int maxDocumentCount) {
@@ -53,7 +56,9 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
         return openWritersByShardKey.computeIfAbsent(indexShardKey, k -> {
             final IndexShard indexShard = indexShardService.createIndexShard(k, null);
-            final IndexShardWriter indexShardWriter = new MockIndexShardWriter(indexShardKey, indexShard, maxDocumentCount);
+            final IndexShardWriter indexShardWriter = new MockIndexShardWriter(indexShardKey,
+                    indexShard,
+                    maxDocumentCount);
             openWritersByShardId.put(indexShard.getId(), indexShardWriter);
             return indexShardWriter;
         });

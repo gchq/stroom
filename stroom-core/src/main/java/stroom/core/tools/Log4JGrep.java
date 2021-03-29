@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
 public class Log4JGrep {
+
     public static void main(String[] args) throws IOException {
         new Log4JGrep().doMain(System.in, args);
 
@@ -38,7 +39,7 @@ public class Log4JGrep {
         while ((line = reader.readLine()) != null) {
             String upperLine = line.toUpperCase();
             builder.setLength(0);
-            builder.append(line.substring(0, startPos));
+            builder.append(line, 0, startPos);
 
             for (int i = 1; i < args.length; i++) {
                 builder.append(",");

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.alert.impl;
 
 import stroom.alert.api.AlertDefinition;
@@ -35,8 +36,8 @@ class RuleConfig {
                final ExpressionOperator expression,
                final DocRef pipeline,
                final List<AlertDefinition> alertDefinitions,
-               final Map<String, String> params){
-        this.queryId = dashboardUUID+ "/" + queryId;
+               final Map<String, String> params) {
+        this.queryId = dashboardUUID + "/" + queryId;
         this.expression = expression;
         this.pipeline = pipeline;
         this.alertDefinitions = alertDefinitions;
@@ -65,11 +66,14 @@ class RuleConfig {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final RuleConfig that = (RuleConfig) o;
-        return queryId.equals(that.queryId) &&
-                pipeline.equals(that.pipeline);
+        return queryId.equals(that.queryId) && pipeline.equals(that.pipeline);
     }
 
     @Override

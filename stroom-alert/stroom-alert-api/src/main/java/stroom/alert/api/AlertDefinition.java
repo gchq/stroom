@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.alert.api;
 
 
@@ -21,7 +22,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import java.util.Map;
 
 public class AlertDefinition {
-    private final Map<String,String> attributes;
+    private final Map<String, String> attributes;
     private final TableComponentSettings tableComponentSettings;
     private boolean disabled = false;
 

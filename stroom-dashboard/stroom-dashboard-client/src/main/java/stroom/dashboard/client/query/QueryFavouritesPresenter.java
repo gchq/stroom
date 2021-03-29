@@ -17,13 +17,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.CellList;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
@@ -39,7 +32,6 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -48,7 +40,16 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.CellList;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
+
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
     private final RestFactory restFactory;
@@ -121,7 +122,10 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
 
                             } else {
-                                final Query query = new Query(currentDataSource, currentExpression);
+                                final Query query = Query.builder()
+                                        .dataSource(currentDataSource)
+                                        .expression(currentExpression)
+                                        .build();
                                 final StoredQuery queryEntity = new StoredQuery();
                                 queryEntity.setQuery(query);
                                 queryEntity.setDashboardUuid(currentDashboardUuid);
@@ -219,7 +223,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         criteria.setDashboardUuid(currentDashboardUuid);
         criteria.setComponentId(queryPresenter.getId());
-        criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
@@ -293,6 +297,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     public interface QueryFavouritesView extends View {
+
         CellList<StoredQuery> getCellList();
 
         void setExpressionView(View view);

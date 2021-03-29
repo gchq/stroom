@@ -37,6 +37,8 @@ import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
+import stroom.util.client.SafeHtmlUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -47,17 +49,25 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
-public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>> implements Refreshable {
+public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>>
+        implements Refreshable {
+
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
+    private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
@@ -75,9 +85,14 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
-            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(NODE_RESOURCE).find();
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(NODE_RESOURCE)
+                        .find();
             }
 
             @Override
@@ -118,6 +133,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         getView().addColumn(infoColumn, "<br/>", 20);
 
+
         // Name.
         final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
             @Override
@@ -142,28 +158,61 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         getView().addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
 
-        // Ping.
-        final Column<NodeStatusResult, String> pingColumn = new Column<NodeStatusResult, String>(new TextCell()) {
-            @Override
-            public String getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
+        // Ping (ms)
+        final Column<NodeStatusResult, SafeHtml> safeHtmlColumn = DataGridUtil.safeHtmlColumn(row -> {
+            if (row == null) {
+                return null;
+            }
+
+            final PingResult pingResult = latestPing.get(row.getNode().getName());
+            if (pingResult != null) {
+                if ("No response".equals(pingResult.getError())) {
+                    return SafeHtmlUtil.getSafeHtml(pingResult.getError());
+                }
+                if (pingResult.getError() != null) {
+                    return SafeHtmlUtil.getSafeHtml("Error");
                 }
 
-                final PingResult pingResult = latestPing.get(row.getNode().getName());
-                if (pingResult != null) {
-                    if ("No response".equals(pingResult.getError())) {
-                        return pingResult.getError();
-                    }
-                    if (pingResult.getError() != null) {
-                        return "Error";
-                    }
-                    return ModelStringUtil.formatDurationString(pingResult.getPing());
-                }
-                return "-";
+                // Bar widths are all relative to the longest ping.
+                final long unHealthyThresholdPing = 250;
+                final long highestPing = latestPing.values().stream()
+                        .filter(result -> result.getPing() != null)
+                        .mapToLong(PingResult::getPing)
+                        .max()
+                        .orElse(unHealthyThresholdPing);
+                final int maxBarWidthPct = 100;
+                final double barWidthPct = pingResult.getPing() > highestPing
+                        ? maxBarWidthPct
+                        : ((double) pingResult.getPing() / highestPing * maxBarWidthPct);
+
+                final SafeHtml textHtml = TooltipUtil.styledSpan(
+                        THOUSANDS_FORMATTER.format(pingResult.getPing()),
+                        safeStylesBuilder ->
+                                safeStylesBuilder.paddingLeft(0.25, Unit.EM));
+
+                final String healthyBarColour = "rgba(33, 150, 243, 0.6)"; // stroom blue with alpha
+                final String unHealthyBarColour = "rgba(255, 111, 0, 0.6)"; // stroom dirty amber with aplha
+                final String barColour = pingResult.getPing() < unHealthyThresholdPing
+                        ? healthyBarColour
+                        : unHealthyBarColour;
+
+                final SafeHtml barDiv = TooltipUtil.styledDiv(textHtml, safeStylesBuilder ->
+                        safeStylesBuilder
+                                .trustedColor("#white")
+                                .trustedBackgroundColor(barColour)
+                                .width(barWidthPct, Unit.PCT)
+                                .height(14, Unit.PX));
+
+                final SafeHtml outerDiv = TooltipUtil.styledDiv(barDiv, safeStylesBuilder ->
+                        safeStylesBuilder
+                                .paddingLeft(0.25, Unit.EM)
+                                .paddingRight(0.25, Unit.EM));
+
+                return outerDiv;
             }
-        };
-        getView().addResizableColumn(pingColumn, "Ping", 150);
+            return SafeHtmlUtil.getSafeHtml("-");
+        });
+        getView().addResizableColumn(safeHtmlColumn, "Ping (ms)", 300);
 
         // Master.
         final Column<NodeStatusResult, TickBoxState> masterColumn = new Column<NodeStatusResult, TickBoxState>(
@@ -176,6 +225,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return TickBoxState.fromBoolean(row.isMaster());
             }
         };
+        masterColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         getView().addColumn(masterColumn, "Master", 50);
 
         // Priority.
@@ -191,7 +241,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         priorityColumn.setFieldUpdater((index, row, value) -> {
             final Rest<Node> rest = restFactory.create();
-            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setPriority(row.getNode().getName(), value.intValue());
+            rest
+                    .onSuccess(result -> refresh())
+                    .call(NODE_RESOURCE)
+                    .setPriority(row.getNode().getName(), value.intValue());
         });
         getView().addColumn(priorityColumn, "Priority", 55);
 
@@ -206,9 +259,13 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return TickBoxState.fromBoolean(row.getNode().isEnabled());
             }
         };
+        enabledColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final Rest<Node> rest = restFactory.create();
-            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setEnabled(row.getNode().getName(), value.toBoolean());
+            rest
+                    .onSuccess(result -> refresh())
+                    .call(NODE_RESOURCE)
+                    .setEnabled(row.getNode().getName(), value.toBoolean());
         });
 
         getView().addColumn(enabledColumn, "Enabled", 60);
@@ -222,7 +279,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
             builder
-                    .addTable(tableBuilder -> {
+                    .addTwoColTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Node Details");
                         tableBuilder.addRow("Node Name", result.getNodeName(), true);
                         if (buildInfo != null) {
@@ -255,7 +312,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 }
             }
         } else {
-            builder.addTable(tableBuilder -> tableBuilder
+            builder.addTwoColTable(tableBuilder -> tableBuilder
                     .addRow("Node Name", node.getName(), true)
                     .addRow("Cluster URL", node.getUrl(), true)
                     .build());
@@ -290,6 +347,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private static final class PingResult {
+
         private final Long ping;
         private final String error;
 

@@ -16,10 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.security.client.presenter.GroupEditPresenter.UserGroupEditView;
 import stroom.security.shared.User;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -28,13 +24,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
+
     private final UserEditAddRemoveUsersPresenter addRemoveUsersPresenter;
     private final AppPermissionsPresenter appPermissionsPresenter;
 
     @Inject
-    public GroupEditPresenter(final EventBus eventBus, final UserGroupEditView view,
-                              final UserEditAddRemoveUsersPresenter addRemoveUsersPresenter, final AppPermissionsPresenter appPermissionsPresenter) {
+    public GroupEditPresenter(final EventBus eventBus,
+                              final UserGroupEditView view,
+                              final UserEditAddRemoveUsersPresenter addRemoveUsersPresenter,
+                              final AppPermissionsPresenter appPermissionsPresenter) {
         super(eventBus, view);
         this.addRemoveUsersPresenter = addRemoveUsersPresenter;
         this.appPermissionsPresenter = appPermissionsPresenter;
@@ -70,6 +74,7 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
     }
 
     public interface UserGroupEditView extends View {
+
         void setUsersView(View view);
 
         void setAppPermissionsView(View view);

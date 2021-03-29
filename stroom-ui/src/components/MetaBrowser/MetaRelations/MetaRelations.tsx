@@ -20,7 +20,7 @@ const MetaRelations: React.FunctionComponent<Props> = ({ metaRow }) => {
     streamAttributeMaps: relatedRows,
   });
 
-  return <MetaTable {...tableProps} />;;
+  return <MetaTable {...tableProps} />;
 };
 
 export default MetaRelations;

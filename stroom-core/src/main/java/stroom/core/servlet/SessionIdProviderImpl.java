@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 class SessionIdProviderImpl implements SessionIdProvider {
+
     private final Provider<HttpServletRequest> httpServletRequestProvider;
 
     @Inject

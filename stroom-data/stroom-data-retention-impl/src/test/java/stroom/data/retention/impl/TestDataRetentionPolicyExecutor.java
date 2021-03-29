@@ -3,11 +3,11 @@ package stroom.data.retention.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.api.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
@@ -47,14 +47,11 @@ import static org.mockito.Mockito.when;
 class TestDataRetentionPolicyExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
-
-    private static final ExpressionOperator EMPTY_AND_OP = new ExpressionOperator.Builder(
-            true, ExpressionOperator.Op.AND).build();
     private static final String RULES_VERSION = "1234567";
 
-    private ClusterLockService clusterLockService = new MockClusterLockService();
-    private DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
-    private TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
+    private final ClusterLockService clusterLockService = new MockClusterLockService();
+    private final DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
+    private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
 
     @Mock
     private MetaService metaService;
@@ -466,11 +463,11 @@ class TestDataRetentionPolicyExecutor {
 
     private DataRetentionPolicyExecutor createExecutor(final List<DataRetentionRule> rules) {
         return new DataRetentionPolicyExecutor(
-                    clusterLockService,
-                    () -> buildRules(rules),
-                    dataRetentionConfig,
-                    metaService,
-                    taskContextFactory);
+                clusterLockService,
+                () -> buildRules(rules),
+                dataRetentionConfig,
+                metaService,
+                taskContextFactory);
     }
 
     private void assertPeriod(final TimePeriod actualPeriod,
@@ -528,6 +525,7 @@ class TestDataRetentionPolicyExecutor {
         dataRetentionRules.setVersion(RULES_VERSION);
         return dataRetentionRules;
     }
+
     private DataRetentionRule buildRule(final int ruleNo,
                                         final boolean isEnabled,
                                         final int age,
@@ -548,7 +546,7 @@ class TestDataRetentionPolicyExecutor {
                                         final boolean isEnabled,
                                         final int age,
                                         final TimeUnit timeUnit) {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, ExpressionOperator.Op.AND)
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, ExpressionTerm.Condition.EQUALS, "RULE_" + ruleNo + "FEED")
                 .build();
         return buildRule(ruleNo, isEnabled, age, timeUnit, expressionOperator);
@@ -556,7 +554,7 @@ class TestDataRetentionPolicyExecutor {
 
     private DataRetentionRule buildForeverRule(final int ruleNo,
                                                final boolean isEnabled) {
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, ExpressionOperator.Op.AND)
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, ExpressionTerm.Condition.EQUALS, "RULE_" + ruleNo + "FEED")
                 .build();
         return buildForeverRule(ruleNo, isEnabled, expressionOperator);

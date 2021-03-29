@@ -16,18 +16,18 @@
 
 package stroom.cache.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.github.benmanes.caffeine.cache.RemovalListener;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Singleton;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalListener;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -35,9 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.inject.Singleton;
 
 @Singleton
 public class CacheManagerImpl implements CacheManager {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheManagerImpl.class);
 
     private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
@@ -53,12 +55,17 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name, final Supplier<CacheConfig> cacheConfigSupplier, final Function<K, V> loadFunction) {
+    public <K, V> ICache<K, V> create(final String name,
+                                      final Supplier<CacheConfig> cacheConfigSupplier,
+                                      final Function<K, V> loadFunction) {
         return create(name, cacheConfigSupplier, loadFunction, null);
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name, final Supplier<CacheConfig> cacheConfigSupplier, final Function<K, V> loadFunction, final BiConsumer<K, V> removalNotificationConsumer) {
+    public <K, V> ICache<K, V> create(final String name,
+                                      final Supplier<CacheConfig> cacheConfigSupplier,
+                                      final Function<K, V> loadFunction,
+                                      final BiConsumer<K, V> removalNotificationConsumer) {
         final CacheConfig cacheConfig = cacheConfigSupplier.get();
 
         final Caffeine cacheBuilder = Caffeine.newBuilder();

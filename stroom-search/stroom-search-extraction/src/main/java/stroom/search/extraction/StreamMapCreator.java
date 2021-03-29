@@ -16,21 +16,20 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaService;
-import stroom.search.coprocessor.Values;
+import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 class StreamMapCreator {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
     private final MetaService metaService;
@@ -38,64 +37,62 @@ class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private Map<Long, Optional<Object>> fiteredStreamCache;
+    private Map<Long, Optional<Object>> filteredStreamCache;
     private ExtractionException error;
 
-    StreamMapCreator(final String[] storedFields,
+    StreamMapCreator(final FieldIndex fieldIndex,
                      final MetaService metaService) {
         this.metaService = metaService;
 
         // First get the index in the stored data of the stream and event id fields.
-        streamIdIndex = getFieldIndex(storedFields, IndexConstants.STREAM_ID);
-        eventIdIndex = getFieldIndex(storedFields, IndexConstants.EVENT_ID);
+        streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
+        eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
     }
 
-    private int getFieldIndex(final String[] storedFields, final String fieldName) {
+    private int getFieldIndex(final FieldIndex fieldIndex, final String fieldName) {
         int index = -1;
 
-        for (int i = 0; i < storedFields.length && index == -1; i++) {
-            final String storedField = storedFields[i];
-            if (storedField.equals(fieldName)) {
-                index = i;
+        final Integer pos = fieldIndex.getPos(fieldName);
+        if (pos == null) {
+            if (error == null) {
+                error = new ExtractionException("The " + fieldName + " has not been stored in this index");
             }
-        }
-
-        if (index == -1 && error == null) {
-            error = new ExtractionException("The " + fieldName + " has not been stored in this index");
+        } else {
+            index = pos;
         }
 
         return index;
     }
 
-    void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
+    boolean addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {
             final long longStreamId = getLong(storedData, streamIdIndex);
             final long longEventId = getLong(storedData, eventIdIndex);
-            final Values data = getData(longStreamId, longEventId, storedData);
 
-            final Event event = new Event(longStreamId, longEventId, data);
-            storedDataMap.compute(longStreamId, (k, v) -> {
-                if (v == null) {
-                    v = new ArrayList<>();
-                }
-                v.add(event);
-                return v;
+            // Stream may have been deleted but still be in the index
+            final Optional<Val[]> optValues = getData(longStreamId, longEventId, storedData);
+            optValues.ifPresent(data -> {
+                final Event event = new Event(longStreamId, longEventId, data);
+                storedDataMap.add(event);
             });
+            return optValues.isPresent();
         }
     }
 
-    private Values getData(final long longStreamId, final long longEventId, final Val[] storedData) {
+    private Optional<Val[]> getData(final long longStreamId, final long longEventId, final Val[] storedData) {
         if (longStreamId != -1 && longEventId != -1) {
-            // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
-            if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
-                fiteredStreamCache = new HashMap<>();
+            // Create a map to cache stream lookups. If we have cached more than a million streams then
+            // discard the map and start again to avoid using too much memory.
+            if (filteredStreamCache == null || filteredStreamCache.size() > 1000000) {
+                filteredStreamCache = new HashMap<>();
             }
 
-            final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
+            final Optional<Object> optional = filteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
-                    // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
+                    // See if we can load the stream. We might get a StreamPermissionException if we aren't
+                    // allowed to read from this stream.
                     return Optional.ofNullable(metaService.getMeta(k));
 //                } catch (final StreamPermissionException e) {
 //                    LOGGER.debug(e::getMessage, e);
@@ -106,21 +103,22 @@ class StreamMapCreator {
                 }
             });
 
-            if (!optional.isPresent()) {
-                //Meta record not found - stream deleted.
-                return new Values(null);
+            if (optional.isEmpty()) {
+                // Likely stream has been deleted due to data retention rules so we can quietly ignore it
+                LOGGER.debug(() -> "Stream not found with id " + longStreamId);
             }
 
-            final Object cached = optional.get();
-            if (cached instanceof Throwable) {
-                final Throwable t = (Throwable) cached;
-                throw new ExtractionException(t.getMessage(), t);
-            } else if (cached instanceof Meta) {
-                return new Values(storedData);
-            }
-            throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
+            return optional.map(cached -> {
+                if (cached instanceof Throwable) {
+                    final Throwable t = (Throwable) cached;
+                    throw new ExtractionException(t.getMessage(), t);
+                } else if (cached instanceof Meta) {
+                    return storedData;
+                } else {
+                    throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
+                }
+            });
         }
-
         throw new ExtractionException("No event id supplied");
     }
 

@@ -17,9 +17,10 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.shared.TabConfig;
+import stroom.dashboard.shared.TabLayoutConfig;
 
 public interface FlexLayoutChangeHandler {
-    void requestTabClose(TabConfig tabConfig);
+    void requestTabClose(final TabLayoutConfig tabLayoutConfig, TabConfig tabConfig);
 
     void onDirty();
 }

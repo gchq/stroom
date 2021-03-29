@@ -1,6 +1,7 @@
 package stroom.elastic.impl;
 
 import org.eclipse.jetty.http.HttpStatus;
+
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
@@ -17,9 +18,10 @@ import javax.ws.rs.core.Response;
 
 @Singleton
 public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Clearable {
+
     private static final String CACHE_NAME = "Elastic Index Config Cache";
 
-//    private final DocRefResourceHttpClient<ElasticIndexConfigDoc> docRefHttpClient;
+    //    private final DocRefResourceHttpClient<ElasticIndexConfigDoc> docRefHttpClient;
     private final SecurityContext securityContext;
     private final ICache<DocRef, ElasticIndexConfigDoc> cache;
 

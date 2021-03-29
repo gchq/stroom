@@ -40,8 +40,14 @@ const useTokenState = (): TokenStateApi => {
   });
   return {
     token: state.token,
-    setEnabled: useCallback((enabled: boolean) => dispatch({ type: "enabled", enabled }), []),
-    setToken: useCallback((token: Token) => dispatch({ type: "token", token }), []),
+    setEnabled: useCallback(
+      (enabled: boolean) => dispatch({ type: "enabled", enabled }),
+      [],
+    ),
+    setToken: useCallback(
+      (token: Token) => dispatch({ type: "token", token }),
+      [],
+    ),
   };
 };
 

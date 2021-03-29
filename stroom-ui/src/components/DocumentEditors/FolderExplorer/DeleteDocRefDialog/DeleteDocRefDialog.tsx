@@ -79,7 +79,7 @@ export const useDialog = (onConfirm: (uuids: string[]) => void): UseDialog => {
         setUuidToDelete([]);
       },
     },
-    showDialog: _uuids => {
+    showDialog: (_uuids) => {
       setIsOpen(true);
       setUuidToDelete(_uuids);
     },

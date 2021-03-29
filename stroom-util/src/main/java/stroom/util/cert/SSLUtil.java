@@ -4,14 +4,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,8 +19,17 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Objects;
 import java.util.Optional;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 public class SSLUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SSLUtil.class);
     public static final HostnameVerifier PERMISSIVE_HOSTNAME_VERIFIER = (s, sslSession) -> true;
 
@@ -61,9 +62,12 @@ public class SSLUtil {
 
         // Load the keystore
         if (sslConfig.getKeyStorePath() != null) {
-            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getKeyStorePath()))) {
+            try (final InputStream inputStream = new BufferedInputStream(
+                    new FileInputStream(sslConfig.getKeyStorePath()))) {
+
                 keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
-                LOGGER.info(() -> "Loading keystore " + sslConfig.getKeyStorePath() + " of type " + sslConfig.getKeyStoreType());
+                LOGGER.info(() ->
+                        "Loading keystore " + sslConfig.getKeyStorePath() + " of type " + sslConfig.getKeyStoreType());
                 keyStore.load(inputStream, sslConfig.getKeyStorePassword().toCharArray());
             } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                 throw new RuntimeException(LogUtil.message("Error locating and loading keystore {} with type {}: {}",
@@ -92,9 +96,12 @@ public class SSLUtil {
 
         // Load the truststore
         if (sslConfig.getTrustStorePath() != null) {
-            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getTrustStorePath()))) {
+            try (final InputStream inputStream = new BufferedInputStream(
+                    new FileInputStream(sslConfig.getTrustStorePath()))) {
                 trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
-                LOGGER.info(() -> "Loading truststore " + sslConfig.getTrustStorePath() + " of type " + sslConfig.getTrustStoreType());
+                LOGGER.info(() ->
+                        "Loading truststore " + sslConfig.getTrustStorePath() +
+                                " of type " + sslConfig.getTrustStoreType());
                 trustStore.load(inputStream, sslConfig.getTrustStorePassword().toCharArray());
             } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                 throw new RuntimeException(LogUtil.message("Error locating and loading truststore {} with type {}: {}",

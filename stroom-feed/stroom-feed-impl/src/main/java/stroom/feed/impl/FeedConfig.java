@@ -1,11 +1,12 @@
 package stroom.feed.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
@@ -18,7 +19,7 @@ public class FeedConfig extends AbstractConfig {
     private String unknownClassification = "UNKNOWN CLASSIFICATION";
     private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
 
-    private CacheConfig feedDocCache = new CacheConfig.Builder()
+    private CacheConfig feedDocCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();

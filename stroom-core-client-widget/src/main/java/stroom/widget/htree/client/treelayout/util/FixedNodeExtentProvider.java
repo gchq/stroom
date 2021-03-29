@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -39,6 +40,7 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * node.
  */
 public class FixedNodeExtentProvider<T> implements NodeExtentProvider<T> {
+
     private final double width;
     private final double height;
 

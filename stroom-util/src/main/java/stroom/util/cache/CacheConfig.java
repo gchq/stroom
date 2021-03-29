@@ -16,6 +16,7 @@ public class CacheConfig extends AbstractConfig {
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
+
     private Long maximumSize;
     private StroomDuration expireAfterAccess;
     private StroomDuration expireAfterWrite;
@@ -75,10 +76,28 @@ public class CacheConfig extends AbstractConfig {
         this.expireAfterWrite = expireAfterWrite;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
         private Long maximumSize;
         private StroomDuration expireAfterAccess;
         private StroomDuration expireAfterWrite;
+
+        private Builder() {
+        }
+
+        private Builder(final CacheConfig cacheConfig) {
+            maximumSize = cacheConfig.maximumSize;
+            expireAfterAccess = cacheConfig.expireAfterAccess;
+            expireAfterWrite = cacheConfig.expireAfterWrite;
+        }
 
         public Builder maximumSize(final Long maximumSize) {
             this.maximumSize = maximumSize;

@@ -18,7 +18,9 @@ package stroom.pipeline.refdata;
 
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 public class ReferenceDataModule extends PipelineElementModule {
@@ -26,10 +28,18 @@ public class ReferenceDataModule extends PipelineElementModule {
     protected void configure() {
         super.configure();
 
+        bind(ReferenceDataService.class).to(ReferenceDataServiceImpl.class);
         bind(ReferenceDataLoader.class).to(ReferenceDataLoaderImpl.class);
         bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(EffectiveStreamCache.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(EffectiveStreamCache.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(ReferenceDataResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(ReferenceDataServiceImpl.class);
 
         install(new RefDataStoreModule());
     }

@@ -21,6 +21,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
 import stroom.docref.DocRef;
+import stroom.docref.HasType;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
@@ -32,7 +33,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.client.ImageUtil;
-import stroom.util.shared.HasType;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
@@ -103,7 +103,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
             addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
 //    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,

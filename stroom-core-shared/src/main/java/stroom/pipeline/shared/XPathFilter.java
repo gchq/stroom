@@ -16,19 +16,21 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.HasDisplayValue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 public class XPathFilter {
+
     @JsonProperty
-    private String xPath;
+    private String path;
     @JsonProperty
     private MatchType matchType;
     @JsonProperty
@@ -36,30 +38,30 @@ public class XPathFilter {
     @JsonProperty
     private Boolean ignoreCase;
     @JsonProperty
-    private Map<String, Record> uniqueValues;
+    private Map<String, Rec> uniqueValues;
 
     public XPathFilter() {
     }
 
     @JsonCreator
-    public XPathFilter(@JsonProperty("xPath") final String xPath,
+    public XPathFilter(@JsonProperty("path") final String path,
                        @JsonProperty("matchType") final MatchType matchType,
                        @JsonProperty("value") final String value,
                        @JsonProperty("ignoreCase") final Boolean ignoreCase,
-                       @JsonProperty("uniqueValues") final Map<String, Record> uniqueValues) {
-        this.xPath = xPath;
+                       @JsonProperty("uniqueValues") final Map<String, Rec> uniqueValues) {
+        this.path = path;
         this.matchType = matchType;
         this.value = value;
         this.ignoreCase = ignoreCase;
         this.uniqueValues = uniqueValues;
     }
 
-    public String getXPath() {
-        return xPath;
+    public String getPath() {
+        return path;
     }
 
-    public void setXPath(String xPath) {
-        this.xPath = xPath;
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public MatchType getMatchType() {
@@ -86,7 +88,7 @@ public class XPathFilter {
         this.ignoreCase = ignoreCase;
     }
 
-    public Record getUniqueRecord(final String value) {
+    public Rec getUniqueRecord(final String value) {
         if (uniqueValues == null) {
             return null;
         }
@@ -94,7 +96,7 @@ public class XPathFilter {
         return uniqueValues.get(value);
     }
 
-    public void addUniqueValue(final String value, final Record record) {
+    public void addUniqueValue(final String value, final Rec record) {
         if (uniqueValues == null) {
             uniqueValues = new HashMap<>();
         }
@@ -109,7 +111,10 @@ public class XPathFilter {
     }
 
     public enum MatchType implements HasDisplayValue {
-        EXISTS("exists", false), CONTAINS("contains", true), EQUALS("equals", true), UNIQUE("unique values", false);
+        EXISTS("exists", false),
+        CONTAINS("contains", true),
+        EQUALS("equals", true),
+        UNIQUE("unique values", false);
 
         private final String displayValue;
         private final boolean needsValue;

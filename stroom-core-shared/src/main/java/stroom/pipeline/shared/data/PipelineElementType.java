@@ -16,14 +16,15 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.docref.HasDisplayValue;
+import stroom.docref.HasType;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasType;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"type", "category", "roles", "icon"})
 public class PipelineElementType implements Comparable<PipelineElementType>, HasType {
+
     public static final String ROLE_SOURCE = "source";
     public static final String ROLE_DESTINATION = "destination";
     public static final String ROLE_TARGET = "target";
@@ -118,10 +120,15 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return roleSet.contains(role);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PipelineElementType that = (PipelineElementType) o;
         return type.equals(that.type);
     }
@@ -142,8 +149,13 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     }
 
     public enum Category implements HasDisplayValue {
-        INTERNAL("Internal", -1), READER("Reader", 0), PARSER("Parser", 1), FILTER("Filter", 2), WRITER("Writer",
-                3), DESTINATION("Destination", 4);
+        INTERNAL("Internal", -1),
+        READER("Reader", 0),
+        PARSER("Parser", 1),
+        FILTER("Filter", 2),
+        WRITER("Writer",
+                3),
+        DESTINATION("Destination", 4);
 
         private final String displayValue;
         private final int order;

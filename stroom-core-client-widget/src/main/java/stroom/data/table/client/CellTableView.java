@@ -22,6 +22,7 @@ import com.google.gwt.view.client.SelectionModel;
 import com.gwtplatform.mvp.client.View;
 
 public interface CellTableView<R> extends View, HasData<R> {
+
     void addColumn(Column<R, ?> column, int width);
 
     void addColumn(Column<R, ?> column);

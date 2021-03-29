@@ -6,11 +6,11 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder(alphabetic = true)
@@ -47,10 +47,6 @@ public class SystemInfoResult {
         return description;
     }
 
-    public static Builder builder(final String name) {
-        return new Builder(name);
-    }
-
     @Override
     public String toString() {
         return "SystemInfoResult{" +
@@ -60,10 +56,15 @@ public class SystemInfoResult {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SystemInfoResult that = (SystemInfoResult) o;
         return name.equals(that.name) &&
                 Objects.equals(description, that.description) &&
@@ -75,46 +76,64 @@ public class SystemInfoResult {
         return Objects.hash(name, description, details);
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        private final String name;
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String name;
         private String description = null;
-        private final Map<String, Object> detailMap = new HashMap<>();
+        private Map<String, Object> details = new HashMap<>();
 
-        public Builder(final String name) {
-            this.name = name;
+        private Builder() {
         }
 
-        public Builder withDescription(final String description) {
+        private Builder(final SystemInfoResult systemInfoResult) {
+            name = systemInfoResult.name;
+            description = systemInfoResult.description;
+            details = systemInfoResult.details;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(final String description) {
             this.description = description;
             return this;
         }
 
-        public Builder withDetail(final String key, final Object value) {
+        public Builder addDetail(final String key, final Object value) {
             Objects.requireNonNull(key);
-            detailMap.put(key, value);
+            details.put(key, value);
             return this;
         }
 
-        public Builder withError(final Throwable error) {
+        public Builder addError(final Throwable error) {
             Objects.requireNonNull(error);
-            detailMap.put("error", error.getMessage());
+            details.put("error", error.getMessage());
 
             return this;
         }
 
-        public Builder withError(final String error) {
+        public Builder addError(final String error) {
             Objects.requireNonNull(error);
-            detailMap.put("error", error);
+            details.put("error", error);
 
             return this;
         }
 
         public SystemInfoResult build() {
-            if (detailMap.isEmpty()) {
+            if (details.isEmpty()) {
                 return new SystemInfoResult(name, description, Collections.emptyMap());
             } else {
-                return new SystemInfoResult(name, description, detailMap);
+                return new SystemInfoResult(name, description, details);
             }
         }
     }

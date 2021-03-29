@@ -27,6 +27,7 @@ import java.io.InputStream;
  * Also allows us to use the buffer to read another stream.
  */
 class BlockBufferedInputStream extends BufferedInputStream {
+
     /**
      * How far we have read along the stream.
      */
@@ -35,7 +36,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     /**
      * @param in the stream we are buffering.
      */
-     BlockBufferedInputStream(final InputStream in) {
+    BlockBufferedInputStream(final InputStream in) {
         super(in);
     }
 
@@ -43,7 +44,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      * @param in      the stream we are buffering.
      * @param bufSize buffer size to use
      */
-     BlockBufferedInputStream(final InputStream in, final int bufSize) {
+    BlockBufferedInputStream(final InputStream in, final int bufSize) {
         super(in, bufSize);
     }
 
@@ -53,7 +54,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      *
      * @param newIn new stream to read
      */
-     void recycle(final InputStream newIn) {
+    void recycle(final InputStream newIn) {
         count = 0;
         pos = 0;
         streamPosition = 0;

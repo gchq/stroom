@@ -17,6 +17,40 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.ClassificationUiHandlers;
+import stroom.data.client.presenter.SourcePresenter;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
+import stroom.editor.client.view.IndicatorLines;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.pipeline.shared.PipelineModelException;
+import stroom.pipeline.shared.PipelineResource;
+import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResource;
+import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+import stroom.util.shared.Indicators;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,42 +63,6 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.ClassificationUiHandlers;
-import stroom.data.client.presenter.DataPresenter;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
-import stroom.pipeline.shared.PipelineModelException;
-import stroom.pipeline.shared.PipelineResource;
-import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.stepping.PipelineStepRequest;
-import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.shared.stepping.SteppingResource;
-import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
-import stroom.util.shared.Indicators;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,12 +71,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements HasDirtyHandlers {
+
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
     private final PipelineStepRequest request;
     private final PipelineTreePresenter pipelineTreePresenter;
-    private final DataPresenter sourcePresenter;
+    private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> editorProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
@@ -99,7 +98,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final RestFactory restFactory,
-                             final DataPresenter sourcePresenter,
+                             final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> editorProvider,
                              final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter) {
@@ -126,22 +125,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         // Create the translation request to use.
         request = new PipelineStepRequest();
 
-        stepControlPresenter.setEnabledButtons(false, request.getStepType(), true, showingData, foundRecord);
+        stepControlPresenter.setEnabledButtons(
+                false,
+                request.getStepType(),
+                true,
+                showingData,
+                foundRecord);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
-    }
-
-    private static String replace(final String path, final String type, final String replacement) {
-        String newPath = path;
-        final String param = "${" + type + "}";
-        int start = newPath.indexOf(param);
-        while (start != -1) {
-            final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
-        }
-
-        return newPath;
     }
 
     @Override
@@ -152,8 +143,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             .getSelectedObject();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
-        registerHandler(stepControlPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepLocationPresenter.addStepControlHandler(event ->
+                step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepControlPresenter.addStepControlHandler(event ->
+                step(event.getStepType(), event.getStepLocation())));
         registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
@@ -163,7 +156,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             getView().addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
@@ -171,45 +164,21 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             return sourcePresenter;
 
         } else {
-            DocRef docRef = null;
-            DocRef fuzzyDocRef = null;
-
-            final List<PipelineProperty> properties = pipelineModel.getProperties(element);
-            if (properties != null && properties.size() > 0) {
-                for (final PipelineProperty property : properties) {
-                    if (property.getValue() != null) {
-                        if (property.getValue().getEntity() != null) {
-                            docRef = property.getValue().getEntity();
-                        } else if (property.getName().toLowerCase().contains("pattern") && meta != null) {
-                            String value = property.getValue().getString();
-                            value = replace(value, "feed", meta.getFeedName());
-                            value = replace(value, "pipeline", request.getPipeline().getName());
-
-                            if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                fuzzyDocRef = new DocRef(XsltDoc.DOCUMENT_TYPE, null, value);
-                            } else {
-                                fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
-                            }
-                        }
-                    }
-                }
-            }
-
             final String elementId = element.getId();
             ElementPresenter editorPresenter = editorMap.get(elementId);
-
             if (editorPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
                     DirtyEvent.fire(SteppingPresenter.this, true);
                     saveButton.setEnabled(true);
                 };
 
-                final ElementPresenter presenter = editorProvider.get();
+                final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                presenter.setElementId(element.getId());
-                presenter.setElementType(element.getElementType());
-                presenter.setEntityRef(docRef);
-                presenter.setFuzzyEntityRef(fuzzyDocRef);
+                final ElementPresenter presenter = editorProvider.get();
+                presenter.setElement(element);
+                presenter.setProperties(properties);
+                presenter.setFeedName(meta.getFeedName());
+                presenter.setPipelineName(request.getPipeline().getName());
                 presenter.setPipelineStepRequest(request);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -265,10 +234,18 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 editorPresenter.setInput(input, 1, elementData.isFormatInput(), null);
 
                 if (output.length() == 0 && outputIndicators != null && outputIndicators.getMaxSeverity() != null) {
-                    editorPresenter.setOutput(outputIndicators.toString(), 1, false, null);
+                    editorPresenter.setOutput(
+                            outputIndicators.toString(),
+                            1,
+                            false,
+                            null);
                 } else {
                     // Don't try and format text output.
-                    editorPresenter.setOutput(output, 1, elementData.isFormatOutput(), new IndicatorLines(outputIndicators));
+                    editorPresenter.setOutput(
+                            output,
+                            1,
+                            elementData.isFormatOutput(),
+                            new IndicatorLines(outputIndicators));
                 }
             } else {
                 // // if we didn't find a record then it could be the input that
@@ -292,7 +269,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.meta = meta;
 
         // Load the stream.
-        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
+//        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
+        SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
+                .withChildStreamType(childStreamType)
+                .build();
+        sourcePresenter.setSourceLocation(sourceLocation);
 
         // Set the pipeline on the stepping action.
         request.setPipeline(pipeline);
@@ -319,15 +300,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         pipelineModel.setPipelineData(pipelineData);
                         pipelineModel.setBaseStack(baseStack);
                         pipelineModel.build();
-                        pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
+                        pipelineTreePresenter.getSelectionModel()
+                                .setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                        Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+                        Scheduler.get().scheduleDeferred(() ->
+                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
                     } catch (final PipelineModelException e) {
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
 
-                    if (stepLocation != null) {
-                        step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
+                    if (stepLocation != null && stepLocation.getRecordNo() > 0) {
+                        step(StepType.REFRESH, new StepLocation(
+                                meta.getId(),
+                                stepLocation.getPartNo(),
+                                stepLocation.getRecordNo()));
                     }
                 })
                 .call(PIPELINE_RESOURCE)
@@ -362,7 +348,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
-                    final String elementId = editorPresenter.getElementId();
+                    final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
                     codeMap.put(elementId, code);
                 }
@@ -414,7 +400,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //                // Set the source selection and highlight.
 //                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
 //                        childStreamType, result.getStepData().getSourceHighlights());
-                sourcePresenter.fetchData(result.getStepData().getSourceLocation());
+                sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
 
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
@@ -433,11 +419,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     sb.append("\n");
                 }
 
-                AlertEvent.fireError(this, "Some errors occurred during stepping", sb.toString(), null);
+                AlertEvent.fireError(
+                        this,
+                        "Some errors occurred during stepping",
+                        sb.toString(),
+                        null);
             }
 
         } finally {
-            stepControlPresenter.setEnabledButtons(true, request.getStepType(), true, showingData, foundRecord);
+            stepControlPresenter.setEnabledButtons(
+                    true,
+                    request.getStepType(),
+                    true,
+                    showingData,
+                    foundRecord);
             busyTranslating = false;
         }
     }
@@ -479,6 +474,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     public interface SteppingView extends View {
+
         void setTreeHeight(int height);
 
         void addWidgetLeft(Widget widget);

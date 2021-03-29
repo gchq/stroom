@@ -18,7 +18,7 @@ const SIMPLE_INITIAL_VALUES: SimpleInputsFormValues = {
 };
 
 const SimpleInputsTestHarness: React.FunctionComponent = () => {
-  const [validatedValue, onValidate] = React.useState<object>({});
+  const [validatedValue, onValidate] = React.useState({});
   const { useTextInput, value } = useForm<SimpleInputsFormValues>({
     initialValues: SIMPLE_INITIAL_VALUES,
     onValidate,

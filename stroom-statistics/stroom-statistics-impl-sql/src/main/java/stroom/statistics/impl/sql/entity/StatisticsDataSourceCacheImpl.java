@@ -22,23 +22,27 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.PermissionException;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(
@@ -48,7 +52,8 @@ import java.util.stream.Collectors;
                 EntityAction.UPDATE,
                 EntityAction.DELETE})
 class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler, Clearable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
 
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID = "StatisticDataSourceCacheById";
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME = "StatisticDataSourceCacheByName";
@@ -58,6 +63,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     private final SecurityContext securityContext;
     private final SQLStatisticsConfig sqlStatisticsConfig;
 
+    // The values are held as optionals so that if there is no doc for a name then
+    // the cache loader won't keep hitting the db for each get on that name.
     private volatile ICache<String, Optional<StatisticStoreDoc>> cacheByName;
     private volatile ICache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
 
@@ -81,21 +88,28 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                             return Optional.empty();
                         }
 
+                        final Optional<StatisticStoreDoc> result;
                         // Id and key not found in cache so try pulling it from the DB
-                        return securityContext.asProcessingUserResult(() -> {
+                        result = securityContext.asProcessingUserResult(() -> {
                             final List<DocRef> results = statisticStoreStore.list()
                                     .stream()
                                     .filter(docRef -> k.equals(docRef.getName()))
                                     .collect(Collectors.toList());
                             if (results.size() > 1) {
-                                throw new RuntimeException(String.format(
-                                        "Found multiple StatisticDataSource entities with name %s. This should not happen", k));
+                                throw new RuntimeException(String.format("Found multiple StatisticDataSource " +
+                                        "entities with name %s. This should not happen", k));
                             } else if (results.size() == 1) {
                                 return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
+                            } else {
+                                return Optional.empty();
                             }
-
-                            return Optional.empty();
                         });
+
+                        LOGGER.debug(() -> LogUtil.message("Adding key {} to name cache, value present: {}",
+                                k,
+                                result.map(v -> "Y").orElse("N")));
+
+                        return result;
                     };
                     cacheByName = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME, cacheLoader);
                 }
@@ -108,9 +122,18 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    final Function<DocRef, Optional<StatisticStoreDoc>> cacheLoader = k ->
-                            securityContext.asProcessingUserResult(() ->
-                                    Optional.ofNullable(statisticStoreStore.readDocument(k)));
+                    final Function<DocRef, Optional<StatisticStoreDoc>> cacheLoader = k -> {
+                        final Optional<StatisticStoreDoc> result;
+
+                        result = securityContext.asProcessingUserResult(() ->
+                                Optional.ofNullable(statisticStoreStore.readDocument(k)));
+
+                        LOGGER.debug(() -> LogUtil.message("Adding key {} to docRef cache, value present: {}",
+                                k,
+                                result.map(v -> "Y").orElse("N")));
+
+                        return result;
+                    };
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }
             }
@@ -131,6 +154,11 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final DocRef docRef) {
+        LOGGER.doIfDebugEnabled(() -> {
+            LOGGER.debug("get by docRef {}", docRef);
+            dumpEntries();
+        });
+
         return getCacheByRef()
                 .get(docRef)
                 .filter(this::permissionFilter)
@@ -139,6 +167,11 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
+        LOGGER.doIfDebugEnabled(() -> {
+            LOGGER.debug("get by name {}", statisticName);
+            dumpEntries();
+        });
+
         return getCacheByName()
                 .get(statisticName)
                 .filter(this::permissionFilter)
@@ -147,57 +180,128 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     @Override
     public void onChange(final EntityEvent event) {
+        LOGGER.debug("onChange called for {}", event);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Entries before onChange run");
+            dumpEntries();
+        }
         try {
-            final ICache<String, Optional<StatisticStoreDoc>> cacheByEngineName = getCacheByName();
-            final ICache<DocRef, Optional<StatisticStoreDoc>> cacheByRef = getCacheByRef();
+            final ICache<String, Optional<StatisticStoreDoc>> cacheByName = getCacheByName();
+            final ICache<DocRef, Optional<StatisticStoreDoc>> cacheByDocRef = getCacheByRef();
 
             final EntityAction entityAction = event.getAction();
 
             if (EntityAction.UPDATE.equals(entityAction) ||
                     EntityAction.DELETE.equals(entityAction) ||
                     EntityAction.CREATE.equals(entityAction)) {
-                final Optional<Optional<StatisticStoreDoc>> optional = cacheByRef.getOptional(event.getDocRef());
 
-                if (optional.isPresent() && optional.get().isPresent()) {
-                    final StatisticStoreDoc statisticStoreEntity = optional.get().get();
+                final DocRef eventDocRef = event.getDocRef();
+                final String eventDocName = eventDocRef != null
+                        ? eventDocRef.getName()
+                        : null;
+                final AtomicBoolean haveInvalidatedName = new AtomicBoolean(false);
+
+                final Optional<Optional<StatisticStoreDoc>> optional = cacheByDocRef.getOptional(
+                        event.getDocRef());
+
+                if (optional.isPresent()) {
 
                     // found it in one cache so remove from both
-                    cacheByRef.invalidate(event.getDocRef());
-                    cacheByEngineName.invalidate(statisticStoreEntity.getName());
+                    LOGGER.debug("Invalidating docRef {}", eventDocRef);
+                    cacheByDocRef.invalidate(eventDocRef);
+
+                    final String name;
+                    if (optional.get().isPresent()) {
+                        final StatisticStoreDoc statisticStoreEntity = optional.get().get();
+                        name = statisticStoreEntity.getName();
+                        haveInvalidatedName.set(true);
+                    } else {
+                        name = eventDocName;
+                    }
+                    if (name != null) {
+                        LOGGER.debug("Invalidating name {}", name);
+                        cacheByName.invalidate(name);
+                        haveInvalidatedName.set(true);
+                    }
                 } else {
                     // fall back option, as it couldn't be found in the ref cache so
-                    // try again in the nameEngine cache
+                    // iterate over the name cache to find the docref
 
                     // not very efficient but we shouldn't have that many entities
                     // in the cache and deletes will not happen very often.
-                    cacheByEngineName.asMap().forEach((k, v) -> {
+                    cacheByName.asMap().forEach((name, optDoc) -> {
                         try {
-                            if (v.isPresent()) {
-                                final StatisticStoreDoc value = v.get();
-                                final DocRef docRef = DocRefUtil.create(value);
+                            if (optDoc.isPresent()) {
+                                final StatisticStoreDoc value = optDoc.get();
+                                final DocRef docDocRef = DocRefUtil.create(value);
 
-                                if (docRef.equals(event.getDocRef())) {
-                                    cacheByRef.invalidate(docRef);
-                                    cacheByEngineName.invalidate(k);
+                                if (eventDocName != null
+                                        && Objects.equals(eventDocName, docDocRef.getName())) {
+                                    LOGGER.debug("Invalidating name {}", name);
+                                    cacheByName.invalidate(name);
+                                    haveInvalidatedName.set(true);
                                 }
+
+                                if (docDocRef.equals(event.getDocRef())) {
+                                    LOGGER.debug("Invalidating docRef {}", docDocRef);
+                                    cacheByDocRef.invalidate(docDocRef);
+                                }
+                            }
+                            // Just to be on the safe side
+                            if (name.equals(event.getDocRef().getName())) {
+                                LOGGER.debug("Invalidating name {}", name);
+                                cacheByName.invalidate(name);
+                                haveInvalidatedName.set(true);
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
                     });
                 }
+                if (!haveInvalidatedName.get()) {
+                    // some change events just give us a uuid and if we only have keys with empty optionals
+                    // then we have no way of invalidating the entry in a targeted way. Thus
+                    // we have to take the nuclear option and clear the whole cache.
+                    LOGGER.debug("Clearing name cache");
+                    cacheByName.clear();
+                }
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Entries after onChange run");
+            dumpEntries();
+        }
+    }
+
+    private void dumpEntries() {
+        LOGGER.debug("byName: {}", cacheMapToString(getCacheByName().asMap(), Function.identity()));
+        LOGGER.debug("byRef: {}", cacheMapToString(getCacheByRef().asMap(), docRef ->
+                docRef.getName() + ":" + docRef.getUuid()));
+    }
+
+    private <T> Set<String> cacheMapToString(final Map<T, Optional<StatisticStoreDoc>> map,
+                                             final Function<T, String> keyConverter) {
+        return map.entrySet()
+                .stream()
+                .map(entry ->
+                        keyConverter.apply(entry.getKey())
+                                + " - "
+                                + entry.getValue().map(v -> "Y").orElse("N"))
+                .collect(Collectors.toSet());
     }
 
     @Override
     public void clear() {
+        // The UI cache clearing clears the cache via the cache manager, not through this method
         if (cacheByName != null) {
+            LOGGER.debug("Clearing by name cache");
             cacheByName.clear();
         }
         if (cacheByRef != null) {
+            LOGGER.debug("Clearing by docRef cache");
             cacheByRef.clear();
         }
     }

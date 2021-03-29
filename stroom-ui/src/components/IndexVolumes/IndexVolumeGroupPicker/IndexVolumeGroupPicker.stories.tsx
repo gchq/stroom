@@ -19,7 +19,6 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import IndexVolumeGroupPicker from "./IndexVolumeGroupPicker";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import useForm from "lib/useForm";
 import JsonDebug from "testing/JsonDebug";
@@ -38,7 +37,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   const valuesToFilterOut = React.useMemo(
     () =>
-      fullTestData.indexVolumesAndGroups.groups.slice(0, 1).map(g => g.name),
+      fullTestData.indexVolumesAndGroups.groups.slice(0, 1).map((g) => g.name),
     [],
   );
   const groupPickerProps = useControlledInputProps<string>("groupName");
@@ -57,5 +56,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Sections/Index Volume Groups/Group Picker", module);
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Sections/Index Volume Groups", module).add("Group Picker", () => (
+  <TestHarness />
+));

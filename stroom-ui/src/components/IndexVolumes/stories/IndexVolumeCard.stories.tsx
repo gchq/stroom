@@ -16,14 +16,8 @@
 
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { IndexVolume } from "../indexVolumeApi";
 import IndexVolumeCard from "../IndexVolumeCard";
-
-const stories = storiesOf(
-  "Sections/Index Volumes 2/DraggableIndexVolumeCard",
-  module,
-);
 
 const indexVolume01: IndexVolume = {
   nodeName: "Index volume name",
@@ -41,12 +35,15 @@ const indexVolume01: IndexVolume = {
   updateUser: "Updating user",
 };
 
-addThemedStories(stories, () => (
-  <div style={{ padding: "1em" }}>
-    <IndexVolumeCard
-      indexVolume={indexVolume01}
-      onDelete={() => console.log("onDelete")}
-      onChange={() => console.log("onChange")}
-    />
-  </div>
-));
+storiesOf("Sections/Index Volumes 2", module).add(
+  "DraggableIndexVolumeCard",
+  () => (
+    <div style={{ padding: "1em" }}>
+      <IndexVolumeCard
+        indexVolume={indexVolume01}
+        onDelete={() => console.log("onDelete")}
+        onChange={() => console.log("onChange")}
+      />
+    </div>
+  ),
+);

@@ -23,10 +23,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonPropertyOrder({"lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
 public class DefaultLocation implements Location {
+
     @JsonProperty
     private final int lineNo;
     @JsonProperty
@@ -39,6 +41,14 @@ public class DefaultLocation implements Location {
         this.colNo = colNo;
     }
 
+    public static Location of(final int lineNo, final int colNo) {
+        return new DefaultLocation(lineNo, colNo);
+    }
+
+    public static Location beginning() {
+        return new DefaultLocation(1, 1);
+    }
+
     @Override
     public int getLineNo() {
         return lineNo;
@@ -49,10 +59,15 @@ public class DefaultLocation implements Location {
         return colNo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DefaultLocation that = (DefaultLocation) o;
         return lineNo == that.lineNo &&
                 colNo == that.colNo;
@@ -72,11 +87,7 @@ public class DefaultLocation implements Location {
             return 1;
         }
 
-        final DefaultLocation location = (DefaultLocation) o;
-        final CompareBuilder builder = new CompareBuilder();
-        builder.append(lineNo, location.lineNo);
-        builder.append(colNo, location.colNo);
-        return builder.toComparison();
+        return LINE_COL_COMPARATOR.compare(this, o);
     }
 
     @Override
@@ -84,5 +95,22 @@ public class DefaultLocation implements Location {
         return lineNo +
                 ":" +
                 colNo;
+    }
+
+    public static Optional<Location> parse(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        } else {
+            final String[] parts = value.split(":");
+            if (parts.length == 1) {
+                return Optional.of(DefaultLocation.of(Integer.parseInt(parts[0]), 1));
+            } else if (parts.length == 2) {
+                return Optional.of(DefaultLocation.of(
+                        Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1])));
+            } else {
+                throw new NumberFormatException("Value [" + value + "] is not valid");
+            }
+        }
     }
 }

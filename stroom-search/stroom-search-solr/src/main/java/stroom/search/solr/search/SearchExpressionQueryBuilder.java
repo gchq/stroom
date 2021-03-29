@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
  * Convert our query objects to a LUCENE query.
  */
 public class SearchExpressionQueryBuilder {
+
     private static final String DELIMITER = ",";
     private static final Pattern NON_WORD_OR_WILDCARD = Pattern.compile("[^a-zA-Z0-9+*?]");
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
@@ -60,8 +61,11 @@ public class SearchExpressionQueryBuilder {
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider, final Map<String, SolrIndexField> indexFieldsMap,
-                                        final int maxBooleanClauseCount, final String timeZoneId, final long nowEpochMilli) {
+    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
+                                        final Map<String, SolrIndexField> indexFieldsMap,
+                                        final int maxBooleanClauseCount,
+                                        final String timeZoneId,
+                                        final long nowEpochMilli) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
@@ -239,20 +243,25 @@ public class SearchExpressionQueryBuilder {
             switch (condition) {
                 case EQUALS:
                     final Long num1 = getNumber(fieldName, value);
-                    return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, num1, num1, true, true);
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
                             true);
                 case LESS_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
                             false);
                 case LESS_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
                             true);
                 case BETWEEN:
                     final long[] between = getNumbers(fieldName, value);
@@ -262,7 +271,8 @@ public class SearchExpressionQueryBuilder {
                     if (between[0] >= between[1]) {
                         throw new SearchException("From number must lower than to number");
                     }
-                    return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, between[0], between[1], true, true);
                 case IN:
                     return getNumericIn(fieldName, value);
                 case IN_DICTIONARY:
@@ -279,16 +289,23 @@ public class SearchExpressionQueryBuilder {
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, false,
+                    return NumericRangeQuery.newLongRange(fieldName,
+                            8,
+                            getDate(fieldName, value),
+                            Long.MAX_VALUE,
+                            false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
                             true);
                 case LESS_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             false);
                 case LESS_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
                             true);
                 case BETWEEN:
                     final long[] between = getDates(fieldName, value);
@@ -298,7 +315,8 @@ public class SearchExpressionQueryBuilder {
                     if (between[0] >= between[1]) {
                         throw new SearchException("From date must occur before to date");
                     }
-                    return NumericRangeQuery.newLongRange(fieldName, 8, between[0], between[1], true, true);
+                    return NumericRangeQuery.newLongRange(
+                            fieldName, 8, between[0], between[1], true, true);
                 case IN:
                     return getDateIn(fieldName, value);
                 case IN_DICTIONARY:
@@ -336,7 +354,8 @@ public class SearchExpressionQueryBuilder {
             } else {
                 final Builder builder = new Builder();
                 for (final long num : in) {
-                    final Query q = NumericRangeQuery.newLongRange(fieldName, num, num, true, true);
+                    final Query q = NumericRangeQuery.newLongRange(
+                            fieldName, num, num, true, true);
                     builder.add(q, Occur.SHOULD);
                 }
                 return builder.build();
@@ -355,7 +374,8 @@ public class SearchExpressionQueryBuilder {
             } else {
                 final Builder builder = new Builder();
                 for (final long date : in) {
-                    final Query q = NumericRangeQuery.newLongRange(fieldName, date, date, true, true);
+                    final Query q = NumericRangeQuery.newLongRange(
+                            fieldName, date, date, true, true);
                     builder.add(q, Occur.SHOULD);
                 }
                 return builder.build();
@@ -570,6 +590,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     public static class SearchExpressionQuery {
+
         private final Query query;
         private final Set<String> terms;
 

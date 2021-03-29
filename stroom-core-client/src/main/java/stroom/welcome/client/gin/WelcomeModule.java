@@ -23,6 +23,7 @@ import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 import stroom.welcome.client.view.WelcomeViewImpl;
 
 public class WelcomeModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(WelcomePlugin.class);

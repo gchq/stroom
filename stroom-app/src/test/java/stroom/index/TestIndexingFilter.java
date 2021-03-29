@@ -16,12 +16,6 @@
 
 package stroom.index;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableFieldType;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardWriter;
@@ -50,14 +44,22 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.InputStream;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexingFilter extends AbstractProcessIntegrationTest {
+
     private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
 
     @Inject
@@ -88,7 +90,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
-        indexFields.add(new IndexField.Builder()
+        indexFields.add(IndexField
+                .builder()
                 .fieldType(IndexFieldType.NUMERIC_FIELD)
                 .fieldName("size")
                 .analyzerType(AnalyzerType.KEYWORD)
@@ -175,7 +178,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         assertThat(documents.get(0).getField("f2").fieldType().stored()).isFalse();
 
-        assertThat(((documents.get(0).getField("d1")).numericValue().longValue())).isEqualTo(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"));
+        assertThat(((documents.get(0).getField("d1")).numericValue().longValue()))
+                .isEqualTo(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"));
 
     }
 
@@ -195,7 +199,9 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
+                    "index",
+                    indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
@@ -205,7 +211,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 //            feedHolderProvider.get().setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//            metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);

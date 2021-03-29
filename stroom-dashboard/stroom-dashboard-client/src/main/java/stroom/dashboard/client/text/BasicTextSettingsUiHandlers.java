@@ -19,5 +19,6 @@ package stroom.dashboard.client.text;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface BasicTextSettingsUiHandlers extends UiHandlers {
+
     void onTableChange();
 }

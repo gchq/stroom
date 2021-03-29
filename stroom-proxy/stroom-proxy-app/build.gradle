@@ -1,7 +1,9 @@
 ext.moduleName = 'stroom.proxy.app'
 
-def jarName = 'stroom-proxy-app.jar'
 def fatJarName = 'stroom-proxy-app-all.jar'
+def releaseBuildDir = 'build/release'
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -46,7 +48,7 @@ dependencies {
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_configuration
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind
@@ -55,14 +57,16 @@ dependencies {
     compile libs.jaxb_api
     compile libs.jetty_server
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     
     testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
-    testCompile libs.mockito_junit_jupiter
     testCompile libs.classgraph
     testCompile libs.guice_grapher
+    testCompile libs.jinjava
+    testCompile libs.mbknor_jackson_jsonSchema
+    testCompile libs.mockito_junit_jupiter
 
     testCompile libs.junit_jupiter_api
 
@@ -78,8 +82,6 @@ dependencies {
 }
 
 jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom Proxy",
@@ -87,7 +89,6 @@ jar {
                 "Main-Class": "stroom.proxy.app.App"
         )
     }
-    archiveName jarName
 }
 
 shadowJar {
@@ -103,15 +104,22 @@ shadowJar {
     archiveName fatJarName
 }
 
-
 def proxyDockerBuildDir = "${projectDir}/docker/build"
 clean {
     delete proxyDockerBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.proxy.dist.GenerateProxyDistributionConfig"
+}
+
 // Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
 task copyFilesForProxyDockerBuild() {
     dependsOn shadowJar
+    dependsOn generateConfigFiles
+
     doFirst {
         // Copy the stroom app fat jar
         copy {
@@ -119,16 +127,75 @@ task copyFilesForProxyDockerBuild() {
             into proxyDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/proxy-prod.yml"
-            into proxyDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
     }
 }
+
+test {
+    maxParallelForks = 1
+}
+
+
+// The gradle application plugin enables the distribution plugin
+// which creates .zip/tar archives by default, as does the shadow plugin
+// We have our own buildDistribution task so disable the standard ones to avoid confusion
+distZip.enabled = false
+distTar.enabled = false
+shadowDistZip.enabled = false
+shadowDistTar.enabled = false
+
+task copyJar(type: Copy) {
+    dependsOn shadowJar
+    from shadowJar.outputs.files
+    into "${releaseBuildDir}/bin"
+}
+
+task copyCommonSupportingFiles(type: Copy) {
+    from '../../dist'
+    // migrate is a stroom only thing
+    exclude '**/migrate.sh'
+    into releaseBuildDir
+}
+
+task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
+    from 'src/main/resources/banner.txt'
+    from 'src/dist'
+    into releaseBuildDir
+
+    doLast {
+        // This is a sym-link so it seems to go into the zip with +x perms
+        // which we don't want
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
+    }
+}
+
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
+    //dependsOn ':stroom-config:stroom-config-app:compileJava'
+    //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = project(':stroom-proxy:stroom-proxy-app').sourceSets.test.runtimeClasspath
+    main = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
+    args = [configDefaultsFile, configSchemaFile]
+}
+
+// Build the release distribution zip for stroom proxy
+task buildDistribution(type: Zip) {
+
+    // run all the tasks that produce content for the zip
+    dependsOn copyJar
+    dependsOn copySupportingFiles
+    dependsOn generateConfigFiles
+    dependsOn generateConfigDefaultsYamlFile
+
+    from releaseBuildDir
+}
+
+// Make the build command create the full distribution
 tasks.build.dependsOn copyFilesForProxyDockerBuild
-//
-//war {
-//    exclude 'WEB-INF/lib/**'
-//    exclude 'WEB-INF/classes/**'
-//}
+tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution

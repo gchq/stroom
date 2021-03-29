@@ -1,15 +1,17 @@
 package stroom.security.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -18,6 +20,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserDaoImplTest {
+
     private static UserDao userDao;
 
     @BeforeAll
@@ -34,20 +37,21 @@ class UserDaoImplTest {
         // When
         final User userCreated = createUser(userName, false);
         assertThat(userCreated).isNotNull();
-        final User foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final User foundByName = userDao.getByName(userName);
-        final User foundById = userDao.getById(userCreated.getId());
+        final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
+        final Optional<User> foundByName = userDao.getByName(userName);
+        final Optional<User> foundById = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
         assertThat(userCreated.isGroup()).isFalse();
 
-        Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
-            assertThat(u).isNotNull();
-            assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
-            assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.isGroup()).isFalse();
-        });
+        Stream.of(foundByUuid, foundByName, foundById)
+                .forEach(u -> {
+                    assertThat(u).isPresent();
+                    assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
+                    assertThat(u.map(User::getName).get()).isEqualTo(userName);
+                    assertThat(u.map(User::isGroup).get()).isFalse();
+                });
     }
 
     @Test
@@ -58,19 +62,19 @@ class UserDaoImplTest {
         // When
         final User userCreated = createUser(userName, true);
         assertThat(userCreated).isNotNull();
-        final User foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final User foundByName = userDao.getByName(userName);
-        final User foundById = userDao.getById(userCreated.getId());
+        final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
+        final Optional<User> foundByName = userDao.getByName(userName);
+        final Optional<User> foundById = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
         assertThat(userCreated.isGroup()).isTrue();
 
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
-            assertThat(u).isNotNull();
-            assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
-            assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.isGroup()).isTrue();
+            assertThat(u).isPresent();
+            assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
+            assertThat(u.map(User::getName).get()).isEqualTo(userName);
+            assertThat(u.map(User::isGroup).get()).isTrue();
         });
     }
 
@@ -81,14 +85,14 @@ class UserDaoImplTest {
 
         // When
         final User userCreated = createUser(userName, false);
-        final User userFoundBeforeDelete = userDao.getById(userCreated.getId());
+        final Optional<User> userFoundBeforeDelete = userDao.getById(userCreated.getId());
         userDao.delete(userCreated.getUuid());
-        final User userFoundAfterDelete = userDao.getById(userCreated.getId());
+        final Optional<User> userFoundAfterDelete = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated).isNotNull();
-        assertThat(userFoundBeforeDelete).isNotNull();
-        assertThat(userFoundAfterDelete).isNull();
+        assertThat(userFoundBeforeDelete).isPresent();
+        assertThat(userFoundAfterDelete).isEmpty();
     }
 
     @Test
@@ -105,7 +109,7 @@ class UserDaoImplTest {
                 .map(name -> createUser(name, false))
                 .peek(u -> userDao.addUserToGroup(u.getUuid(), group.getUuid()))
                 .collect(Collectors.toList());
-        final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid());
+        final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid(), null);
 
         // Then
         userNames.forEach(userName -> {
@@ -140,7 +144,7 @@ class UserDaoImplTest {
                 .peek(g -> users.forEach(
                         u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())))
                 .collect(Collectors.toList());
-        final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid());
+        final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid(), null);
 
         // Then
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()
@@ -149,7 +153,7 @@ class UserDaoImplTest {
     }
 
     private User createUser(final String name, boolean group) {
-        User user = new User.Builder()
+        User user = User.builder()
                 .name(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)

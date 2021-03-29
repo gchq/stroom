@@ -21,11 +21,13 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "StroomStatsFilter",
         category = PipelineElementType.Category.FILTER,
-        roles = {PipelineElementType.ROLE_TARGET,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
 class StroomStatsFilter extends AbstractKafkaProducerFilter {
+
     private final HBaseStatisticsConfig hBaseStatisticsConfig;
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
@@ -75,8 +77,12 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
         }
 
         if (!stroomStatsStoreEntity.isEnabled()) {
-            final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() + "] is disabled";
-            log(Severity.FATAL_ERROR, msg, null);
+            final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() +
+                    "] is disabled";
+            log(
+                    Severity.FATAL_ERROR,
+                    msg,
+                    null);
             throw new LoggedException(msg);
         }
 

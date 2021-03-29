@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ConstraintViolation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import javax.validation.ConstraintViolation;
 
 class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
 
@@ -55,6 +55,7 @@ class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
     }
 
     private static class PoJo {
+
         private final List<String> values;
 
         public PoJo(String... values) {

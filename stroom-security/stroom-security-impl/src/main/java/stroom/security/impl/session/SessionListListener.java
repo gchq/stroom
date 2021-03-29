@@ -16,8 +16,6 @@
 
 package stroom.security.impl.session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -30,6 +28,14 @@ import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
@@ -38,13 +44,10 @@ import javax.servlet.http.HttpSessionListener;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 @Singleton
 class SessionListListener implements HttpSessionListener, SessionListService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionListListener.class);
 
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
@@ -108,10 +111,11 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             // This is our node so execute locally
             sessionList = listSessionsOnThisNode();
+
         } else {
             // This is a different node so make a rest call to it to get the result
 
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName) +
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(
                             SessionResource.BASE_PATH,
                             SessionResource.LIST_PATH_PART);
@@ -138,10 +142,9 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
-                    final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
-
+                    final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(httpSession);
                     return new SessionDetails(
-                            userIdentity != null ? userIdentity.getId() : null,
+                            userIdentity.map(UserIdentity::getId).orElse(null),
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),
@@ -156,19 +159,24 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                         .stream()
                         .map(nodeName -> {
                             final Supplier<SessionListResponse> listSessionsOnNodeTask =
-                                    taskContextFactory.contextResult(parentTaskContext, LogUtil.message("Get session list on node [{}]", nodeName), taskContext ->
-                                            listSessions(nodeName));
+                                    taskContextFactory.contextResult(parentTaskContext,
+                                            LogUtil.message("Get session list on node [{}]", nodeName),
+                                            taskContext ->
+                                                    listSessions(nodeName));
 
                             LOGGER.debug("Creating async task for node {}", nodeName);
                             return CompletableFuture
                                     .supplyAsync(listSessionsOnNodeTask)
                                     .exceptionally(throwable -> {
-                                        LOGGER.error("Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
-                                                nodeName, throwable.getMessage());
+                                        LOGGER.error("Error getting session list for node [{}]: {}. " +
+                                                        "Enable DEBUG for stacktrace",
+                                                nodeName,
+                                                throwable.getMessage());
                                         LOGGER.debug("Error getting session list for node [{}]",
                                                 nodeName, throwable);
                                         // TODO do we want to silently ignore nodes that error?
-                                        // If we can't talk to one node we still want to see the results from the other nodes
+                                        // If we can't talk to one node we still want to see the results from the
+                                        // other nodes
                                         return SessionListResponse.empty();
                                     });
                         })

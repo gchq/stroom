@@ -21,9 +21,9 @@ export const useRecentItems = (): OutProps => {
 
   const addRecentItem = React.useCallback(
     (d: DocRefType) =>
-      reduceValue(existingValue => [
+      reduceValue((existingValue) => [
         d,
-        ...existingValue.filter(v => v.uuid !== d.uuid),
+        ...existingValue.filter((v) => v.uuid !== d.uuid),
       ]),
     [reduceValue],
   );

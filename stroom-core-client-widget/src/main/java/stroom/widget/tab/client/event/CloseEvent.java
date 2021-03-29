@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class CloseEvent extends GwtEvent<CloseEvent.CloseHandler> {
+
     private static Type<CloseHandler> TYPE;
 
     private CloseEvent() {
@@ -48,6 +49,7 @@ public class CloseEvent extends GwtEvent<CloseEvent.CloseHandler> {
     }
 
     public interface CloseHandler extends EventHandler {
+
         void onClose(CloseEvent event);
     }
 }

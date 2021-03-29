@@ -16,6 +16,12 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl.HoverResources;
+import stroom.data.table.client.ScrollableCellTableViewImpl;
+import stroom.query.api.v2.Field;
+import stroom.widget.util.client.MySingleSelectionModel;
+
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -25,11 +31,6 @@ import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandle
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.dashboard.shared.Field;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
-import stroom.data.table.client.ScrollableCellTableViewImpl;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.List;
 

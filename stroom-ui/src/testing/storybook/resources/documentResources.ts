@@ -11,7 +11,7 @@ const resourceBuilder: ResourceBuilder = (
   testCache: TestCache,
 ) => {
   Object.entries(DOCUMENT_RESOURCES)
-    .map(k => ({
+    .map((k) => ({
       docRefType: k[0],
       resourcePath: k[1],
     }))

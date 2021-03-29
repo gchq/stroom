@@ -17,16 +17,18 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.meta.api.MetaService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 //import stroom.entity.util.PeriodUtil;
 
 public class FeedDataRetentionExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedDataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";
@@ -113,16 +115,18 @@ public class FeedDataRetentionExecutor {
 //    }
 //
 //    private ExpressionOperator.Builder periodToExpression(final String field, final Period period) {
-//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 //        if (period != null) {
 //            if (period.getFromMs() != null && period.getToMs() != null) {
 //                builder
-//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
+//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO,
+//                        DateUtil.createNormalDateTimeString(period.getFromMs()))
 //                        .addTerm(field, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
 //            }
 //            if (period.getFromMs() != null) {
 //                builder
-//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()));
+//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO,
+//                        DateUtil.createNormalDateTimeString(period.getFromMs()));
 //            }
 //            if (period.getToMs() != null) {
 //                builder

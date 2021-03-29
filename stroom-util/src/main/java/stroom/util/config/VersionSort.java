@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class VersionSort {
+
     public static void main(String[] args) throws IOException {
         List<String> lines = new ArrayList<>();
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));

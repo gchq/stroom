@@ -16,7 +16,6 @@
 
 package stroom.data.store.util;
 
-import com.google.inject.Injector;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
@@ -24,7 +23,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -32,7 +30,8 @@ import stroom.task.shared.TaskId;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Sort.Direction;
+
+import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,6 +44,7 @@ import java.util.stream.Stream;
  * Handy tool to dump out content.
  */
 public class StreamDumpTool extends AbstractCommandLineTool {
+
     private final ToolInjector toolInjector;
 
     private String feed;
@@ -129,7 +129,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final MetaService metaService = injector.getInstance(MetaService.class);
         final SecurityContext securityContext = injector.getInstance(SecurityContext.class);
         final BufferFactory bufferFactory = () -> new byte[4096];
-        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(null, streamStore, metaService, securityContext, bufferFactory);
+        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(null,
+                streamStore,
+                metaService,
+                securityContext,
+                bufferFactory);
 
         securityContext.asProcessingUser(() ->
                 download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler));
@@ -146,9 +150,12 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                           final DataDownloadTaskHandler dataDownloadTaskHandler) {
         System.out.println("Dumping data for " + feedName);
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
-        if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
+        if (createPeriodFrom != null
+                && !createPeriodFrom.isEmpty()
+                && createPeriodTo != null
+                && !createPeriodTo.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
@@ -166,8 +173,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        criteria.addSort(MetaFields.FIELD_FEED, Direction.ASCENDING, true);
-        criteria.addSort(MetaFields.FIELD_ID, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_FEED, false, true);
+        criteria.addSort(MetaFields.FIELD_ID, false, true);
 
         final DataDownloadSettings dataDownloadSettings = new DataDownloadSettings();
         dataDownloadSettings.setMultipleFiles(true);
@@ -239,7 +246,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 //                try (final InputStream inputStream = inputStreamProvider.get()) {
 //                    final Path outputFile = outputDir.resolve(streamId + ".dat");
 //                    System.out.println(
-//                            "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
+//                            "Dumping stream " + count + " of " + total + " to file '" +
+//                            FileUtil.getCanonicalPath(outputFile) + "'");
 //                    StreamUtil.streamToFile(inputStream, outputFile);
 //                } catch (final RuntimeException e) {
 //                    e.printStackTrace();

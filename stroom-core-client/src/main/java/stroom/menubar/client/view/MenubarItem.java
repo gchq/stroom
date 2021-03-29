@@ -16,6 +16,8 @@
 
 package stroom.menubar.client.view;
 
+import stroom.widget.menu.client.presenter.MenuItemPresenter.MenuItemView;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
@@ -33,15 +35,16 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.widget.menu.client.presenter.MenuItemPresenter.MenuItemView;
 
 public class MenubarItem extends ViewImpl implements MenuItemView {
+
     private final Widget widget;
     @UiField
     SimplePanel background;
     @UiField
     Label text;
     private boolean enabled;
+
     @Inject
     public MenubarItem(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -102,5 +105,6 @@ public class MenubarItem extends ViewImpl implements MenuItemView {
     }
 
     public interface Binder extends UiBinder<Widget, MenubarItem> {
+
     }
 }

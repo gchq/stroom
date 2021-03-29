@@ -7,7 +7,7 @@ import ElementCategory from "./ElementCategory";
 import { getBinItems } from "../pipelineUtils";
 import { DragDropTypes, DropCollectedProps } from "../types";
 
-import useElements from "components/DocumentEditors/PipelineEditor/useElements";
+import { useElements } from "components/DocumentEditors/PipelineEditor/useElements";
 import { groupByCategory, keyByType } from "../elementUtils";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 import {
@@ -85,7 +85,7 @@ const ElementPalette: React.FunctionComponent<EnhancedProps> = ({
       ) : (
         <React.Fragment>
           <ElementCategory category="Bin" elementsWithData={recycleBinItems} />
-          {Object.entries(byCategory).map(k => (
+          {Object.entries(byCategory).map((k) => (
             <ElementCategory
               key={k[0]}
               category={k[0]}

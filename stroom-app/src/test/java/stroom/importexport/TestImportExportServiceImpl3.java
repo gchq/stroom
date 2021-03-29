@@ -17,8 +17,6 @@
 
 package stroom.importexport;
 
-
-import org.junit.jupiter.api.Test;
 import stroom.explorer.api.ExplorerService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportService;
@@ -28,15 +26,18 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.Message;
 import stroom.util.zip.ZipUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -46,25 +47,33 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+            explorerService.create(
+                    FeedDoc.DOCUMENT_TYPE,
+                    FileSystemTestUtil.getUniqueTestString(),
+                    null,
+                    null);
         }
         final List<Message> msgList = new ArrayList<>();
 
-        final Path testFile = getCurrentTestDir().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
+        final Path testFile = getCurrentTestDir()
+                .resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
         importExportService.exportConfig(null, testFile, msgList);
 
-        assertThat(msgList.size()).isEqualTo(0);
+        assertThat(msgList.size())
+                .isEqualTo(0);
 
         final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
         final int expectedSize = BATCH_SIZE * 2;
 
-        assertThat(list.size()).isEqualTo(expectedSize);
+        assertThat(list.size())
+                .isEqualTo(expectedSize);
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
-        assertThat(confirmList.size()).isEqualTo(BATCH_SIZE);
+        assertThat(confirmList.size())
+                .isEqualTo(BATCH_SIZE);
     }
 }

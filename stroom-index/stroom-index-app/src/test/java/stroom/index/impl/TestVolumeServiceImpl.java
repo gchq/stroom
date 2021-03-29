@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class TestVolumeServiceImpl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestVolumeServiceImpl.class);
 
     @Test
@@ -85,8 +86,6 @@ class TestVolumeServiceImpl {
 //        volumeList.add(public1b);
 //        volumeList.add(public2a);
 //        volumeList.add(public2b);
-//
-//        volumeConfig.setResilientReplicationCount(2);
 //
 //        Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
 //        Mockito.when(nodeInfo.getThisNode()).thenReturn(node1a);

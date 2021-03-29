@@ -16,12 +16,13 @@
 
 package stroom.test;
 
+import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.util.date.DateUtil;
+
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.util.date.DateUtil;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 public class GenerateSampleStatisticsData {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateSampleStatisticsData.class);
 
     private static final String USER1 = "user1";

@@ -10,18 +10,26 @@ import java.util.List;
 import java.util.Optional;
 
 public class MockExplorerNodeService implements ExplorerNodeService {
+
     @Override
-    public void createNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void createNode(final DocRef docRef,
+                           final DocRef destinationFolderRef,
+                           final PermissionInheritance permissionInheritance) {
 
     }
 
     @Override
-    public void copyNode(final DocRef sourceDocRef, final DocRef destDocRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void copyNode(final DocRef sourceDocRef,
+                         final DocRef destDocRef,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
 
     }
 
     @Override
-    public void moveNode(final DocRef docRef, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public void moveNode(final DocRef docRef,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
 
     }
 

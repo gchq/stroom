@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import {
   DocRefType,
   DocRefTree,
@@ -22,24 +22,24 @@ import { loremIpsum } from "lorem-ipsum";
 
 function createRandomItem(docRefType: string): DocRefType {
   return {
-    uuid: uuidv4(),
+    uuid: v4(),
     type: docRefType,
     name: loremIpsum({ count: 3, units: "words" }),
   };
 }
 
 const testTree: DocRefTree = {
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "Stroom",
   type: "Folder",
   children: [
     {
-      uuid: uuidv4(),
+      uuid: v4(),
       type: "Folder",
       name: "Some Examples",
       children: [
         {
-          uuid: uuidv4(),
+          uuid: v4(),
           type: "Folder",
           name: "Stroom 101",
           children: [
@@ -51,7 +51,7 @@ const testTree: DocRefTree = {
           ],
         },
         {
-          uuid: uuidv4(),
+          uuid: v4(),
           type: "Folder",
           name: "Stroom Elastic Example",
           children: [
@@ -65,12 +65,12 @@ const testTree: DocRefTree = {
       ],
     },
     {
-      uuid: uuidv4(),
+      uuid: v4(),
       type: "Folder",
       name: "Yet More Examples",
       children: [
         {
-          uuid: uuidv4(),
+          uuid: v4(),
           type: "Folder",
           name: "Stroom 102",
           children: [
@@ -80,14 +80,14 @@ const testTree: DocRefTree = {
             createRandomItem("Index"),
             createRandomItem("Dashboard"),
             {
-              uuid: uuidv4(),
+              uuid: v4(),
               type: "Visualisation",
               name: "abababababababa",
             },
           ],
         },
         {
-          uuid: uuidv4(),
+          uuid: v4(),
           type: "Folder",
           name: "Stroom Annotations Example",
           children: [
@@ -101,19 +101,19 @@ const testTree: DocRefTree = {
       ],
     },
     {
-      uuid: uuidv4(),
+      uuid: v4(),
       type: "Folder",
       name: "Stuff that wont match for tests",
       children: [
         {
-          uuid: uuidv4(),
+          uuid: v4(),
           type: "Visualisation",
           name: "abcdefghijklmnopqrstuvwxyz",
         },
       ],
     },
     {
-      uuid: uuidv4(),
+      uuid: v4(),
       type: "Dashboard",
       name: "ababababababababa",
     },

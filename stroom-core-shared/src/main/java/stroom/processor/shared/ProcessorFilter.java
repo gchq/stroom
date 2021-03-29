@@ -17,9 +17,10 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
+import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,7 +32,8 @@ import java.util.Comparator;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilter implements HasAuditInfo, HasUuid {
+public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
+
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {
@@ -145,6 +147,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.pipelineName = pipelineName;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -231,16 +234,18 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
     }
 
     public String getProcessorUuid() {
-        if (processorUuid == null && processor != null)
+        if (processorUuid == null && processor != null) {
             processorUuid = getProcessor().getUuid();
+        }
         return processorUuid;
     }
 
     public String getPipelineUuid() {
         if (pipelineUuid == null) {
             Processor processor = getProcessor();
-            if (processor != null)
+            if (processor != null) {
                 pipelineUuid = processor.getPipelineUuid();
+            }
         }
         return pipelineUuid;
     }
@@ -333,10 +338,15 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorFilter that = (ProcessorFilter) o;
         return Objects.equals(id, that.id);
     }

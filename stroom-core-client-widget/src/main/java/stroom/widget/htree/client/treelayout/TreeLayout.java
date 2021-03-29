@@ -18,7 +18,8 @@ package stroom.widget.htree.client.treelayout;
 
 import java.util.Map;
 
-public interface TreeLayout<TreeNode> {
+public interface TreeLayout<T_TREE_NODE> {
+
     /**
      * Calculate the layout for the tree model.
      */
@@ -43,15 +44,15 @@ public interface TreeLayout<TreeNode> {
      *
      * @return maps each node of the tree to its bounds (position and size).
      */
-    Map<TreeNode, Bounds> getNodeBounds();
+    Map<T_TREE_NODE, Bounds> getNodeBounds();
 
     /**
      * Returns the Tree the layout is created for.
      */
-    TreeForTreeLayout<TreeNode> getTree();
+    TreeForTreeLayout<T_TREE_NODE> getTree();
 
     /**
      * Sets the Tree the layout will be created for.
      */
-    void setTree(TreeForTreeLayout<TreeNode> tree);
+    void setTree(TreeForTreeLayout<T_TREE_NODE> tree);
 }

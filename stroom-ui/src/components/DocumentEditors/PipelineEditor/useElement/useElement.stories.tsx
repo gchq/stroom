@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 import JsonDebug from "testing/JsonDebug";
-import useElement from "./useElement";
+import { useElement } from "./useElement";
 
 import { fullTestData } from "testing/data";
 
@@ -19,5 +19,5 @@ const TestHarness: React.FunctionComponent<Props> = ({ type }) => {
 const stories = storiesOf("Document Editors/Pipeline/useElement", module);
 
 fullTestData.elements
-  .map(e => e.type)
-  .forEach(eType => stories.add(eType, () => <TestHarness type={eType} />));
+  .map((e) => e.type)
+  .forEach((eType) => stories.add(eType, () => <TestHarness type={eType} />));

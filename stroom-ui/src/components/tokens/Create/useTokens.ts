@@ -2,7 +2,7 @@ import { useTokenState } from "./useTokenState";
 import { useApi } from "../api/";
 import { Token } from "../api/types";
 import { useCallback } from "react";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 
 const useTokens = () => {
   const { token, setEnabled, setToken } = useTokenState();
@@ -14,7 +14,7 @@ const useTokens = () => {
   } = useApi();
 
   const toggleEnabledState = useCallback(
-    (tokenId: string, nextState: boolean) => {
+    (tokenId: number, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => setEnabled(nextState));
     },
     [toggleStateApi, setEnabled],

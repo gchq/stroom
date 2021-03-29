@@ -3,6 +3,7 @@ package stroom.node.api;
 import stroom.util.logging.LogUtil;
 
 public class NodeCallException extends RuntimeException {
+
     private final String nodeName;
     private final String url;
 
@@ -14,7 +15,7 @@ public class NodeCallException extends RuntimeException {
 
     public NodeCallException(final String nodeName, final String url, final Throwable throwable) {
         super(LogUtil.message("Unable to connect to node {} at url {}: {}",
-            nodeName, url, throwable.getMessage()), throwable);
+                nodeName, url, throwable.getMessage()), throwable);
         this.nodeName = nodeName;
         this.url = url;
     }

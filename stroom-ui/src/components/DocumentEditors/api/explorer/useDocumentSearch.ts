@@ -24,7 +24,7 @@ const useDocumentSearch = (): UseDocumentSearch => {
   return {
     documentTree,
     searchResults,
-    searchApp: React.useCallback(p => searchApp(p).then(setSearchResults), [
+    searchApp: React.useCallback((p) => searchApp(p).then(setSearchResults), [
       searchApp,
       setSearchResults,
     ]),

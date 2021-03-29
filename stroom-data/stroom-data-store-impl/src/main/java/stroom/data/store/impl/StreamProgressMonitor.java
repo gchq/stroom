@@ -25,11 +25,12 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 public class StreamProgressMonitor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamProgressMonitor.class);
+    private static final long INTERVAL_MS = 1000;
 
     private final TaskContext taskContext;
     private final String prefix;
-    private final long INTERVAL_MS = 1000;
     private long totalBytes = 0;
     private long lastProgressTime = System.currentTimeMillis();
 

@@ -19,5 +19,6 @@ package stroom.pipeline.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface PipelineSettingsUiHandlers extends UiHandlers {
+
     void setDirty(boolean dirty);
 }

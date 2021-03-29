@@ -16,6 +16,8 @@
 
 package stroom.pipeline.structure.client.view;
 
+import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
 
 public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelineReferenceView {
+
     private final Widget widget;
     @UiField
     Label element;
@@ -37,6 +39,7 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     SimplePanel feed;
     @UiField
     SimplePanel type;
+
     @Inject
     public NewPipelineReferenceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -73,5 +76,6 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     }
 
     public interface Binder extends UiBinder<Widget, NewPipelineReferenceViewImpl> {
+
     }
 }

@@ -17,27 +17,31 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.PutOutcome;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
-import java.util.Optional;
+import java.util.Iterator;
+import javax.inject.Inject;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
@@ -54,26 +58,44 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
     }
 
-    public Optional<ByteBuffer> getHighestUid(final Txn<ByteBuffer> txn) {
+    /**
+     * @return A bytebuffer of the next UID, NOT owned by LMDB
+     */
+    public ByteBuffer getNextUid(final Txn<ByteBuffer> txn,
+                                 final PooledByteBuffer newUidPooledBuffer) {
+        final ByteBuffer nextUidBuffer = newUidPooledBuffer.getByteBuffer();
         // scan backwards over all entries to find the first (i.e. highest) key
-        Optional<ByteBuffer> optHighestUid = Optional.empty();
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
-            if (cursorIterator.hasNext()) {
-                final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
-                optHighestUid = Optional.of(highestKeyVal.key());
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            if (iterator.hasNext()) {
+                final CursorIterable.KeyVal<ByteBuffer> highestKeyVal = iterator.next();
+
+                final ByteBuffer highestUidBuffer = highestKeyVal.key();
+
                 LAMBDA_LOGGER.trace(() ->
-                        LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));
+                        LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestUidBuffer)));
+
+                // DB has a UID in it so create a new one that is one higher
+                // in the pooled buffer
+                // Need to use the key buffer before the txn uses a cursor elsewhere so
+                // we write into our own buffer.
+                UID.wrap(highestUidBuffer)
+                        .writeNextUid(nextUidBuffer);
+            } else {
+                // Empty DB so create the lowest UID into the pooled buffer
+                UID.writeMinimumValue(nextUidBuffer);
             }
         }
-        return optHighestUid;
+        // Not owned by LMDB
+        return nextUidBuffer;
     }
 
     public void putReverseEntry(final Txn<ByteBuffer> writeTxn,
                                 final ByteBuffer uidKeyBuffer,
                                 final ByteBuffer mapDefinitionValueBuffer) {
 
-        boolean didPutSuceed = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
-        if (!didPutSuceed) {
+        final PutOutcome putOutcome = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
+        if (!putOutcome.isSuccess()) {
             throw new RuntimeException(LogUtil.message("Failed to put mapDefinition {}, uid {}",
                     ByteBufferUtils.byteBufferInfo(uidKeyBuffer),
                     ByteBufferUtils.byteBufferInfo(mapDefinitionValueBuffer)));
@@ -82,6 +104,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     }
 
     public interface Factory {
+
         MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

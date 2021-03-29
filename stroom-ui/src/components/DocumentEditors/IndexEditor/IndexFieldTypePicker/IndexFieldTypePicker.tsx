@@ -18,7 +18,7 @@ interface IndexFieldTypeOption {
 
 const OPTIONS: IndexFieldTypeOption[] = Object.entries(
   IndexFieldTypeDisplayValues,
-).map(d => ({
+).map((d) => ({
   value: d[0] as IndexFieldType,
   label: d[1],
 }));
@@ -31,7 +31,7 @@ const IndexFieldTypePicker: React.FunctionComponent<Props> = ({
   <Select
     className={className}
     placeholder="Index Field Type"
-    value={OPTIONS.find(o => o.value === value)}
+    value={OPTIONS.find((o) => o.value === value)}
     onChange={(o: IndexFieldTypeOption) => onChange(o.value)}
     options={OPTIONS}
   />

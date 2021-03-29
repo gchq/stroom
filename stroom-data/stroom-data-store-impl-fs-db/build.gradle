@@ -5,11 +5,11 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-impl-fs')
     compile project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.eventLogging
 
     compile libs.flyway_core
-    compile libs.guice4
+    compile libs.guice5
     compile libs.hikari
     compile libs.javax_inject
     compile libs.jooq

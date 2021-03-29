@@ -16,6 +16,11 @@
 
 package stroom.security.client.view;
 
+import stroom.item.client.ItemListBox;
+import stroom.security.client.presenter.DocumentPermissionsPresenter;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
@@ -26,12 +31,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.item.client.ItemListBox;
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public final class DocumentPermissionsViewImpl extends ViewImpl implements DocumentPermissionsPresenter.DocumentPermissionsView {
+public final class DocumentPermissionsViewImpl extends ViewImpl
+        implements DocumentPermissionsPresenter.DocumentPermissionsView {
+
     private final Widget widget;
     @UiField
     DockLayoutPanel layout;
@@ -78,5 +81,6 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {
+
     }
 }

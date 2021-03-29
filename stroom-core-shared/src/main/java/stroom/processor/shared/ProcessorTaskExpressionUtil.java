@@ -8,6 +8,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
 public final class ProcessorTaskExpressionUtil {
+
     private ProcessorTaskExpressionUtil() {
         // Utility class.
     }
@@ -21,7 +22,7 @@ public final class ProcessorTaskExpressionUtil {
     }
 
     public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.OR);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
 
         if (folders != null) {
             for (final DocRef folder : folders) {
@@ -34,13 +35,13 @@ public final class ProcessorTaskExpressionUtil {
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipeline) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final DocRef feed) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.FEED, Condition.IS_DOC_REF, feed)
                 .build();
     }

@@ -16,15 +16,17 @@
 
 package stroom.security.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.inject.client.Ginjector;
-import com.google.inject.Provider;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 
+import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.inject.client.Ginjector;
+import com.google.inject.Provider;
+
 public interface SecurityGinjector extends Ginjector {
+
     LoginManager getLoginManager();
 
     AsyncProvider<LogoutPlugin> getLogoutPlugin();

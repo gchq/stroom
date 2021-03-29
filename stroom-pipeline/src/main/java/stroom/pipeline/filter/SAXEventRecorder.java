@@ -16,36 +16,38 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.shared.Rec;
+import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.SteppingFilter;
+import stroom.util.shared.Indicators;
+import stroom.util.shared.OutputState;
+import stroom.util.shared.Severity;
+import stroom.util.shared.TextRange;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.shared.Record;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.pipeline.shared.XPathFilter;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.stepping.Recorder;
-import stroom.pipeline.stepping.SteppingFilter;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
-import stroom.util.shared.OutputState;
-import stroom.util.shared.Severity;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, SteppingFilter {
+
     private final NamespaceContextImpl namespaceContext = new NamespaceContextImpl();
 
     private final MetaHolder metaHolder;
@@ -109,9 +111,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             if (settings.getSkipToSeverity() != null || settings.getSkipToOutput() != null) {
                 return true;
             }
-            if (settings.getXPathFilters() != null) {
-                for (final XPathFilter xPathFilter : settings.getXPathFilters()) {
-                    if (xPathFilter.getMatchType() != null && xPathFilter.getXPath() != null) {
+            if (settings.getFilters() != null) {
+                for (final XPathFilter xPathFilter : settings.getFilters()) {
+                    if (xPathFilter.getMatchType() != null && xPathFilter.getPath() != null) {
                         if (xPathFilter.getMatchType().isNeedsValue()) {
                             if (xPathFilter.getValue() != null && xPathFilter.getValue().length() > 0) {
                                 return true;
@@ -170,10 +172,10 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
         }
 
-        if (xPathFilters == null && settings.getXPathFilters() != null && settings.getXPathFilters().size() > 0) {
+        if (xPathFilters == null && settings.getFilters() != null && settings.getFilters().size() > 0) {
             // Compile the XPath filters.
             xPathFilters = new HashSet<>();
-            for (final XPathFilter xPathFilter : settings.getXPathFilters()) {
+            for (final XPathFilter xPathFilter : settings.getFilters()) {
                 try {
                     // Only add filters that check for uniqueness or that have
                     // had a valid value specified.
@@ -215,7 +217,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                             case EQUALS:
                                 for (int i = 0; i < nodes.size(); i++) {
                                     final NodeInfo node = nodes.get(i);
-                                    if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                                    if (equals(node.getStringValue(),
+                                            xPathFilter.getValue(),
+                                            xPathFilter.isIgnoreCase())) {
                                         return true;
                                     }
                                 }
@@ -233,7 +237,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
 
                                     // See if we previously found a matching record
                                     // for this filter.
-                                    Record record = xPathFilter.getUniqueRecord(value);
+                                    Rec record = xPathFilter.getUniqueRecord(value);
                                     if (record != null) {
                                         // We did so see if this is the same record.
                                         // If it is then we can return this record
@@ -243,7 +247,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                         }
 
                                     } else {
-                                        record = new Record(streamId, recordNo);
+                                        record = new Rec(streamId, recordNo);
                                         xPathFilter.addUniqueValue(value, record);
                                         return true;
                                     }
@@ -297,7 +301,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public Object getData(final Highlight highlight) {
+    public Object getData(final TextRange textRange) {
         final NodeInfo events = getEvents();
         if (events == null) {
             return null;
@@ -307,7 +311,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public void clear(final Highlight highlight) {
+    public void clear(final TextRange textRange) {
         // Clear the event buffer as this is a new record.
         clearBuffer();
 
@@ -334,6 +338,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     public static class CompiledXPathFilter {
+
         private final XPathFilter xPathFilter;
         private final XPathExpression xPathExpression;
 
@@ -341,7 +346,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                    final NamespaceContext namespaceContext) throws XPathExpressionException {
             this.xPathFilter = xPathFilter;
 
-            final String path = xPathFilter.getXPath();
+            final String path = xPathFilter.getPath();
             final XPathEvaluator xPathEvaluator = new XPathEvaluator(configuration);
 
             final String defaultNamespaceURI = namespaceContext.getNamespaceURI("");

@@ -16,20 +16,21 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.SearchBusPollRequest;
+import stroom.dispatch.client.ApplicationInstanceIdProvider;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.security.client.api.event.LogoutEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
-import stroom.dispatch.client.ApplicationInstanceIdProvider;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.security.client.api.event.LogoutEvent;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import java.util.Set;
 
 @Singleton
 public class SearchBus {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private static final int ONE_SECOND = 1000;
@@ -103,20 +105,20 @@ public class SearchBus {
 
     private void doPoll() {
         polling = true;
-        final Set<SearchRequest> searchRequests = new HashSet<>();
+        final Set<DashboardSearchRequest> searchRequests = new HashSet<>();
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
             final SearchModel searchModel = entry.getValue();
-            final SearchRequest searchRequest = searchModel.getCurrentRequest();
+            final DashboardSearchRequest searchRequest = searchModel.getCurrentRequest();
             if (searchRequest != null) {
                 searchRequests.add(searchRequest);
             }
         }
 
-        final Rest<Set<SearchResponse>> rest = restFactory.create();
+        final Rest<Set<DashboardSearchResponse>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     try {
-                        for (final SearchResponse searchResponse : result) {
+                        for (final DashboardSearchResponse searchResponse : result) {
                             final DashboardQueryKey queryKey = searchResponse.getQueryKey();
                             final SearchModel searchModel = activeSearchMap.get(queryKey);
                             if (searchModel != null) {

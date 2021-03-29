@@ -13,18 +13,19 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.util.shared.PermissionException;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class AnnotationService implements Searchable, AnnotationCreator {
+
     private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
 
     private final AnnotationDao annotationDao;
@@ -54,10 +55,12 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         checkPermission();
 
-        final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+        final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                 .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
                 .build();
 

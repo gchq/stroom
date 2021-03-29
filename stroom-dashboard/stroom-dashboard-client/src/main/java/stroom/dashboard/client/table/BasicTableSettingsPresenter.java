@@ -16,9 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -28,10 +25,14 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsBuilder;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BasicTableSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView> {
@@ -109,56 +110,63 @@ public class BasicTableSettingsPresenter
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());
-        setMaxResults(fromArray(settings.getMaxResults()));
+        setMaxResults(fromList(settings.getMaxResults()));
         setShowDetail(settings.showDetail());
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        super.write(componentData);
+    public ComponentConfig write(final ComponentConfig componentConfig) {
+        ComponentConfig result = super.write(componentConfig);
+        final TableComponentSettings oldSettings = (TableComponentSettings) result.getSettings();
+        final TableComponentSettings newSettings = writeSettings(oldSettings);
+        return result.copy().settings(newSettings).build();
+    }
 
-        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
-        settings.setQueryId(getQueryId());
-        settings.setExtractValues(extractValues());
-        settings.setExtractionPipeline(getPipeline());
-        settings.setMaxResults(toArray(getMaxResults()));
-        settings.setShowDetail(showDetail());
+    private TableComponentSettings writeSettings(final TableComponentSettings settings) {
+        return settings
+                .copy()
+                .queryId(getQueryId())
+                .extractValues(extractValues())
+                .extractionPipeline(getPipeline())
+                .maxResults(toList(getMaxResults()))
+                .showDetail(showDetail())
+                .build();
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
-        if (super.isDirty(componentData)) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
+        if (super.isDirty(componentConfig)) {
             return true;
         }
 
-        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
+        final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
+        final TableComponentSettings newSettings = writeSettings(oldSettings);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(settings.getQueryId(), getQueryId());
-        builder.append(settings.extractValues(), extractValues());
-        builder.append(settings.getExtractionPipeline(), getPipeline());
-        builder.append(settings.getMaxResults(), getMaxResults());
-        builder.append(settings.showDetail(), showDetail());
+        final boolean equal = Objects.equals(oldSettings.getQueryId(), newSettings.getQueryId()) &&
+                Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
+                Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
+                Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
+                Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
 
-        return !builder.isEquals();
+        return !equal;
     }
 
-    private String fromArray(final int[] maxResults) {
-        if (maxResults == null || maxResults.length == 0) {
+    private String fromList(final List<Integer> maxResults) {
+        if (maxResults == null || maxResults.size() == 0) {
             return "";
         }
 
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < maxResults.length; i++) {
-            sb.append(maxResults[i]);
-            if (i < maxResults.length - 1) {
+        for (int i = 0; i < maxResults.size(); i++) {
+            sb.append(maxResults.get(i));
+            if (i < maxResults.size() - 1) {
                 sb.append(",");
             }
         }
         return sb.toString();
     }
 
-    private int[] toArray(final String string) {
+    private List<Integer> toList(final String string) {
         if (string == null || string.length() == 0) {
             return null;
         }
@@ -169,15 +177,11 @@ public class BasicTableSettingsPresenter
             try {
                 list.add(Integer.parseInt(part.trim()));
             } catch (final RuntimeException e) {
+                // Ignore.
             }
         }
 
-        final int[] array = new int[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            array[i] = list.get(i);
-        }
-
-        return array;
+        return list;
     }
 
     public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {

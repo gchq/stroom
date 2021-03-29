@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 
 /*
@@ -17,7 +17,7 @@ import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/
  * limitations under the License.
  */
 export default {
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "Single Element",
   type: "Pipeline",
   description: "Pipeline with a single element",

@@ -17,6 +17,19 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.lmdb.LmdbUtils;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
+import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.Dbi;
@@ -24,18 +37,7 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -56,19 +58,16 @@ import static org.assertj.core.api.Assertions.fail;
 class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
-
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
     private MapDefinitionUIDStore mapDefinitionUIDStore = null;
     private MapUidForwardDb mapUidForwardDb;
     private MapUidReverseDb mapUidReverseDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
-        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
         mapUidForwardDb = new MapUidForwardDb(lmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
         mapUidReverseDb = new MapUidReverseDb(lmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
 
@@ -84,7 +83,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
      */
     @Test
     void testSmallDbKey() {
-        Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
+        final Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
         String keyStr = "greeting";
         final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
         final ByteBuffer value = ByteBuffer.allocateDirect(20);
@@ -131,11 +130,14 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 "MyMapName");
 
         final UID uid1 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                    writeTxn,
+                    mapDefinition,
+                    mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
-            long id = UnsignedBytes.get(uid.getBackingBuffer());
+            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);
@@ -149,18 +151,22 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         // now try again with the same mapDefinition, which should give the same UID
         final UID uid2 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                    writeTxn,
+                    mapDefinition,
+                    mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
-            long id = UnsignedBytes.get(uid.getBackingBuffer());
+            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);
             return uid;
         });
 
-        assertThat(uid1).isEqualTo(uid2);
+        assertThat(uid1.getBackingBuffer())
+                .isEqualByComparingTo(uid2.getBackingBuffer());
     }
 
     @Test
@@ -201,16 +207,18 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         // now try and call get() for each mapDefinition and check it gives us the right UID
 
-        loadedEntries.entrySet().forEach(entry -> {
-            UID uidLoaded = entry.getKey();
-            MapDefinition mapDefinitionLoaded = entry.getValue();
-            UID uidFromGet = mapDefinitionUIDStore.getUid(mapDefinitionLoaded)
-                    .orElseGet(() -> {
-                        fail("Expecting to get a value back but didn't");
-                        return null;
-                    });
-            assertThat(uidFromGet).isEqualTo(uidLoaded);
-        });
+        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            loadedEntries.entrySet().forEach(entry -> {
+                UID uidLoaded = entry.getKey();
+                MapDefinition mapDefinitionLoaded = entry.getValue();
+                UID uidFromGet = mapDefinitionUIDStore.getUid(mapDefinitionLoaded, uidPooledBuffer.getByteBuffer())
+                        .orElseGet(() -> {
+                            fail("Expecting to get a value back but didn't");
+                            return null;
+                        });
+                assertThat(uidFromGet).isEqualTo(uidLoaded);
+            });
+        }
     }
 
     @Test
@@ -226,10 +234,13 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         loadEntries(Collections.singletonList(new MapDefinition(refStreamDefinition, "MyMapName")));
 
-        Optional<UID> optUid = mapDefinitionUIDStore.getUid(
-                new MapDefinition(refStreamDefinition, "DifferentMapName"));
+        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            Optional<UID> optUid = mapDefinitionUIDStore.getUid(
+                    new MapDefinition(refStreamDefinition, "DifferentMapName"),
+                    uidPooledBuffer.getByteBuffer());
 
-        assertThat(optUid).isEmpty();
+            assertThat(optUid).isEmpty();
+        }
     }
 
     @Test
@@ -246,10 +257,14 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         loadEntries(Collections.singletonList(mapDefinition));
 
-        Optional<UID> optUid = mapDefinitionUIDStore.getUid(mapDefinition);
+        try (PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            Optional<UID> optUid = mapDefinitionUIDStore.getUid(
+                    mapDefinition,
+                    uidPooledBuffer.getByteBuffer());
 
-        assertThat(optUid).isNotEmpty();
-        assertThat(optUid.get()).isNotNull();
+            assertThat(optUid).isNotEmpty();
+            assertThat(optUid.get()).isNotNull();
+        }
     }
 
     @Test
@@ -376,11 +391,14 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             mapDefinitions.stream()
                     .forEach(mapDefinition -> {
-                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                                writeTxn,
+                                mapDefinition,
+                                mapDefinitionUIDStore.getUidPooledByteBuffer());
                         assertThat(uid).isNotNull();
 
                         // we are going to leave the txn so need to clone the UIDs
-                        loadedEntries.put(uid.clone(), mapDefinition);
+                        loadedEntries.put(uid.cloneToNewBuffer(), mapDefinition);
                     });
         });
 

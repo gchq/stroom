@@ -19,17 +19,20 @@ package stroom.data.retention.shared;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.List;
-import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
 @JsonInclude(Include.NON_NULL)
@@ -37,6 +40,7 @@ import java.util.Objects;
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataRetentionPolicy")
 public class DataRetentionRules extends Doc {
+
     public static final String DOCUMENT_TYPE = "DataRetentionRules";
 
     @JsonProperty
@@ -67,15 +71,33 @@ public class DataRetentionRules extends Doc {
         return rules;
     }
 
+    @JsonIgnore
+    public List<DataRetentionRule> getActiveRules() {
+        if (rules == null) {
+            return Collections.emptyList();
+        } else {
+            return rules.stream()
+                    .filter(DataRetentionRule::isEnabled)
+                    .collect(Collectors.toList());
+        }
+    }
+
     public void setRules(final List<DataRetentionRule> rules) {
         this.rules = rules;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final DataRetentionRules that = (DataRetentionRules) o;
         return Objects.equals(rules, that.rules);
     }

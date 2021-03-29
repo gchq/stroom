@@ -18,21 +18,22 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.lmdb.BasicLmdbDb;
+import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.Serde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.util.PooledByteBufferPair;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.BasicLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.util.io.ByteSize;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,20 +47,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferReusePerformance.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
+    private static final LambdaLogger LAMBDA_LOGGER =
+            LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(100);
     private static final int VALUE_BUFFER_SIZE = 1_000;
     private final int recCount = 1_000_000;
-    private Serde<String> stringSerde = new StringSerde();
+    private final Serde<String> stringSerde = new StringSerde();
     private BasicLmdbDb<String, String> basicLmdbDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
-        basicLmdbDb = new BasicLmdbDb<>(lmdbEnv, new ByteBufferPool(), stringSerde, stringSerde, "basicDb");
+    void setup() {
+        basicLmdbDb = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                stringSerde,
+                stringSerde,
+                "basicDb");
 
         //just to ensure the DB is created and ready to use
         basicLmdbDb.get("xxx");
@@ -76,26 +80,36 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-                for (int i = 0; i < recCount; i++) {
-                    final ByteBuffer keyBuffer = stringSerde.serialize("key" + i);
-                    final ByteBuffer valueBuffer = stringSerde.serialize("value" + i);
+            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
+                LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                    for (int i = 0; i < recCount; i++) {
+                        stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
+                        stringSerde.serialize(pooledByteBufferPair.getValueBuffer(), "value" + i);
 
-                    basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
-                }
-            });
+                        basicLmdbDb.put(
+                                writeTxn,
+                                pooledByteBufferPair.getKeyBuffer(),
+                                pooledByteBufferPair.getValueBuffer(),
+                                false);
+                    }
+                });
+            }
 
         }, "testNoReuse-put");
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            for (int i = 0; i < recCount; i++) {
-                final ByteBuffer keyBuffer = stringSerde.serialize("key" + i);
+            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
+                for (int i = 0; i < recCount; i++) {
+                    stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
 
-                LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
-                    Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(txn, keyBuffer);
+                    LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+                        Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(
+                                txn,
+                                pooledByteBufferPair.getKeyBuffer());
 //                        assertThat(optValue).isPresent();
-                });
+                    });
+                }
             }
 
         }, "testNoReuse-get");

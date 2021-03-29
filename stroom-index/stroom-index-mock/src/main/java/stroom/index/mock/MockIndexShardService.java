@@ -25,10 +25,9 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.Clearable;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,22 +36,28 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
-public class MockIndexShardService
-        implements IndexShardService, Clearable {
+public class MockIndexShardService implements IndexShardService {
 
     protected final Map<Object, IndexShard> map = new ConcurrentHashMap<>();
     private final AtomicInteger indexShardsCreated;
     private final AtomicLong indexShardId;
+    private final TempDirProvider tempDirProvider;
 
-    public MockIndexShardService() {
+    @Inject
+    public MockIndexShardService(final TempDirProvider tempDirProvider) {
+        this.tempDirProvider = tempDirProvider;
         this.indexShardsCreated = new AtomicInteger(0);
         this.indexShardId = new AtomicLong(0);
     }
 
     public MockIndexShardService(final AtomicInteger indexShardsCreated,
-                                 final AtomicLong indexShardId) {
+                                 final AtomicLong indexShardId,
+                                 final TempDirProvider tempDirProvider) {
+        this.tempDirProvider = tempDirProvider;
         this.indexShardsCreated = indexShardsCreated;
         this.indexShardId = indexShardId;
     }
@@ -63,10 +68,12 @@ public class MockIndexShardService
 
         // checkedLimit.increment();
         final IndexShard indexShard = new IndexShard();
-        indexShard.setVolume(new IndexVolume.Builder()
-                .nodeName(ownerNodeName)
-                .path(FileUtil.getCanonicalPath(FileUtil.getTempDir()))
-                .build());
+        indexShard.setVolume(
+                IndexVolume
+                        .builder()
+                        .nodeName(ownerNodeName)
+                        .path(FileUtil.getCanonicalPath(tempDirProvider.get()))
+                        .build());
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -140,11 +147,6 @@ public class MockIndexShardService
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
-
-    }
-
-    @Override
-    public void clear() {
 
     }
 }

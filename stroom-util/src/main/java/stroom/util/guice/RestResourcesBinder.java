@@ -24,6 +24,7 @@ import com.google.inject.multibindings.MapBinder;
 import java.util.Objects;
 
 public final class RestResourcesBinder {
+
     private final MapBinder<ResourceType, RestResource> mapBinder;
 
     private RestResourcesBinder(final Binder binder) {
@@ -40,6 +41,7 @@ public final class RestResourcesBinder {
     }
 
     public static class ResourceType {
+
         private final Class<?> resourceClass;
 
         <T extends RestResource> ResourceType(final Class<T> resourceClass) {
@@ -50,10 +52,15 @@ public final class RestResourcesBinder {
             return resourceClass;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final ResourceType that = (ResourceType) o;
             return Objects.equals(resourceClass, that.resourceClass);
         }

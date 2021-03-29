@@ -20,48 +20,87 @@ import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.SecurityContext;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.storedquery.api.StoredQueryService;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.Term;
+import event.logging.TermCondition;
 
+import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class StoredQueryResourceImpl implements StoredQueryResource {
-    private final StoredQueryServiceImpl storedQueryService;
-    private final DocumentEventLog documentEventLog;
-    private final SecurityContext securityContext;
+
+    private final Provider<StoredQueryService> storedQueryServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
-    StoredQueryResourceImpl(final StoredQueryServiceImpl storedQueryService,
-                            final DocumentEventLog documentEventLog,
-                            final SecurityContext securityContext) {
-        this.storedQueryService = storedQueryService;
-        this.documentEventLog = documentEventLog;
-        this.securityContext = securityContext;
+    StoredQueryResourceImpl(final Provider<StoredQueryService> storedQueryServiceProvider,
+                            final Provider<DocumentEventLog> documentEventLogProvider) {
+        this.storedQueryServiceProvider = storedQueryServiceProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
         ResultPage<StoredQuery> result;
+        final And.Builder<Void> andBuilder = And.builder();
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        addCriteria(andBuilder, "Favorite", criteria::getFavourite);
+        addCriteria(andBuilder, "ComponentId", criteria::getComponentId);
+        addCriteria(andBuilder, "UserId", criteria::getUserId);
+        addCriteria(andBuilder, "DashboardUuid", criteria::getDashboardUuid);
+
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
 
         try {
-            result = storedQueryService.find(criteria);
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), result.getPageResponse(), null);
+            result = storedQueryServiceProvider.get().find(criteria);
+
+            documentEventLogProvider.get().search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    StoredQuery.class.getSimpleName(),
+                    result.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), null, e);
+            documentEventLogProvider.get().search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    StoredQuery.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
 
         return result;
+    }
+
+    private <T> void addCriteria(final And.Builder<Void> andBuilder,
+                                 final String name,
+                                 final Supplier<T> valueSupplier) {
+        if (valueSupplier != null) {
+            final T value = valueSupplier.get();
+            if (value != null) {
+                andBuilder.addTerm(Term.builder()
+                        .withName(name)
+                        .withCondition(TermCondition.EQUALS)
+                        .withValue(value.toString())
+                        .build());
+            }
+        }
     }
 
     @Override
@@ -69,10 +108,10 @@ class StoredQueryResourceImpl implements StoredQueryResource {
         StoredQuery result;
 
         try {
-            result = storedQueryService.create(storedQuery);
-            documentEventLog.create(result, null);
+            result = storedQueryServiceProvider.get().create(storedQuery);
+            documentEventLogProvider.get().create(result, null);
         } catch (final RuntimeException e) {
-            documentEventLog.create(new StoredQuery(), e);
+            documentEventLogProvider.get().create(new StoredQuery(), e);
             throw e;
         }
 
@@ -80,13 +119,13 @@ class StoredQueryResourceImpl implements StoredQueryResource {
     }
 
     @Override
-    public StoredQuery read(final StoredQuery storedQuery) {
+    public StoredQuery fetch(final StoredQuery storedQuery) {
         StoredQuery result;
         try {
-            result = storedQueryService.fetch(storedQuery.getId());
-            documentEventLog.view(result, null);
+            result = storedQueryServiceProvider.get().fetch(storedQuery.getId());
+            documentEventLogProvider.get().view(result, null);
         } catch (final RuntimeException e) {
-            documentEventLog.view(storedQuery, e);
+            documentEventLogProvider.get().view(storedQuery, e);
             throw e;
         }
 
@@ -95,32 +134,30 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery update(final StoredQuery storedQuery) {
-        return securityContext.secureResult(() -> {
-            StoredQuery result;
-            StoredQuery before = null;
+        StoredQuery result;
+        StoredQuery before = null;
 
-            try {
-                // Get the before version.
-                before = storedQueryService.fetch(storedQuery.getId());
-                result = storedQueryService.update(storedQuery);
-                documentEventLog.update(before, result, null);
-            } catch (final RuntimeException e) {
-                // Get the before version.
-                documentEventLog.update(before, storedQuery, e);
-                throw e;
-            }
+        try {
+            // Get the before version.
+            before = storedQueryServiceProvider.get().fetch(storedQuery.getId());
+            result = storedQueryServiceProvider.get().update(storedQuery);
+            documentEventLogProvider.get().update(before, result, null);
+        } catch (final RuntimeException e) {
+            // Get the before version.
+            documentEventLogProvider.get().update(before, storedQuery, e);
+            throw e;
+        }
 
-            return result;
-        });
+        return result;
     }
 
     @Override
     public Boolean delete(final StoredQuery storedQuery) {
         try {
-            storedQueryService.delete(storedQuery.getId());
-            documentEventLog.delete(storedQuery, null);
+            storedQueryServiceProvider.get().delete(storedQuery.getId());
+            documentEventLogProvider.get().delete(storedQuery, null);
         } catch (final RuntimeException e) {
-            documentEventLog.delete(storedQuery, e);
+            documentEventLogProvider.get().delete(storedQuery, e);
             throw e;
         }
         return true;

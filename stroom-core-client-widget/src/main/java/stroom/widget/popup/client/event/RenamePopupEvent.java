@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
     private final String caption;
@@ -31,7 +32,9 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
         this.caption = caption;
     }
 
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget, final String caption) {
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final String caption) {
         handlers.fireEvent(new RenamePopupEvent(presenterWidget, caption));
     }
 
@@ -61,6 +64,7 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onRename(RenamePopupEvent event);
     }
 }

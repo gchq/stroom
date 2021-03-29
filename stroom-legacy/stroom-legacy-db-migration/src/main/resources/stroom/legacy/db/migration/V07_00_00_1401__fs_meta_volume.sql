@@ -21,10 +21,10 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_meta_volume table
 --
 CREATE TABLE IF NOT EXISTS fs_meta_volume (
-    meta_id           bigint(20) NOT NULL,
-    fs_volume_id      int(11) NOT NULL,
+    meta_id           bigint NOT NULL,
+    fs_volume_id      int NOT NULL,
     PRIMARY KEY       (meta_id, fs_volume_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the fs_meta_volume table
@@ -36,7 +36,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_VOL') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_VOL') THEN
 
         RENAME TABLE STRM_VOL TO OLD_STRM_VOL;
     END IF;
@@ -45,7 +46,8 @@ BEGIN
     IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_STRM_VOL') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_VOL') THEN
 
         INSERT INTO fs_meta_volume (
             meta_id,

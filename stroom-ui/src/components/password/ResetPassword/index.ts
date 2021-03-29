@@ -1,3 +1,3 @@
 import useResetPassword from "./useResetPassword";
-export { default as ResetPassword } from "./ResetPasswordContainer";
+export { ResetPasswordContainer } from "./ResetPasswordContainer";
 export { useResetPassword };

@@ -16,21 +16,6 @@
 
 package stroom.query.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
@@ -42,11 +27,28 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.InputEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class TermEditor extends Composite {
+
     private static final int WIDE_VALUE = 400;
     private static final int NARROW_VALUE = 175;
 
@@ -73,10 +75,9 @@ public class TermEditor extends Composite {
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
 
-    private AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
+    private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
-    public TermEditor(final EntityDropDownPresenter docRefPresenter,
-                      final EntityDropDownPresenter dictionaryPresenter) {
+    public TermEditor(final EntityDropDownPresenter docRefPresenter) {
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
@@ -180,7 +181,7 @@ public class TermEditor extends Composite {
         }
 
         fieldListBox.setSelectedItem(termField);
-        changeField(termField);
+        changeField(termField, false);
 
         reading = false;
     }
@@ -220,7 +221,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final AbstractField field) {
+    private void changeField(final AbstractField field, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
@@ -228,9 +229,16 @@ public class TermEditor extends Composite {
         conditionListBox.addItems(conditions);
 
         // Set the condition.
-        Condition selected = conditions.get(0);
-        if (term.getCondition() != null && conditions.contains(term.getCondition())) {
+        Condition selected;
+
+        if (!useDefaultCondition && term.getCondition() != null && conditions.contains(term.getCondition())) {
             selected = term.getCondition();
+        } else if (conditions.contains(Condition.IS_DOC_REF)) {
+            selected = Condition.IS_DOC_REF;
+        } else if (conditions.contains(Condition.EQUALS)) {
+            selected = Condition.EQUALS;
+        } else {
+            selected = conditions.get(0);
         }
 
         conditionListBox.setSelectedItem(selected);
@@ -492,21 +500,21 @@ public class TermEditor extends Composite {
                 }
             }
         };
-        final KeyPressHandler keyPressHandler = event -> fireDirty();
 
         registerHandler(value.addKeyDownHandler(keyDownHandler));
-        registerHandler(value.addKeyPressHandler(keyPressHandler));
         registerHandler(valueFrom.addKeyDownHandler(keyDownHandler));
-        registerHandler(valueFrom.addKeyPressHandler(keyPressHandler));
         registerHandler(valueTo.addKeyDownHandler(keyDownHandler));
-        registerHandler(valueTo.addKeyPressHandler(keyPressHandler));
 
         registerHandler(date.addKeyDownHandler(keyDownHandler));
-        registerHandler(date.addKeyPressHandler(keyPressHandler));
         registerHandler(dateFrom.addKeyDownHandler(keyDownHandler));
-        registerHandler(dateFrom.addKeyPressHandler(keyPressHandler));
         registerHandler(dateTo.addKeyDownHandler(keyDownHandler));
-        registerHandler(dateTo.addKeyPressHandler(keyPressHandler));
+
+        registerHandler(value.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(valueFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(valueTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(date.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(dateFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(dateTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
 
         registerHandler(date.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
@@ -526,7 +534,7 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addSelectionHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getSelectedItem());
+                changeField(event.getSelectedItem(), true);
                 fireDirty();
             }
         }));
@@ -603,6 +611,7 @@ public class TermEditor extends Composite {
     }
 
     public interface Style extends CssResource {
+
         String layout();
 
         String item();
@@ -611,6 +620,7 @@ public class TermEditor extends Composite {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("TermEditor.css")
         Style style();
     }

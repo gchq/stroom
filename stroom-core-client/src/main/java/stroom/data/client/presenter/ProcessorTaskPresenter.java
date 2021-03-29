@@ -16,21 +16,21 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
-
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<Object> {
+
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
@@ -59,13 +59,13 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+                final ExpressionOperator.Builder root = ExpressionOperator.builder();
                 if (row.getPipeline() != null) {
                     root.addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }
-//                if (row.getFeed() != null) {
-//                    root.addTerm(ProcessorTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, row.getFeed());
-//                }
+                if (row.getFeed() != null) {
+                    root.addTerm(ProcessorTaskFields.FEED_NAME, Condition.EQUALS, row.getFeed());
+                }
                 if (row.getStatus() != null) {
                     root.addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
                 }
@@ -78,9 +78,10 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
     @Override
     public void read(final DocRef docRef, final Object entity) {
         processorTaskSummaryPresenter.read(docRef, entity);
-        processorTaskListPresenter.read(docRef, entity);
+//        processorTaskListPresenter.read(docRef, entity);
     }
 
     public interface StreamTaskView extends View {
+
     }
 }

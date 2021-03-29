@@ -17,24 +17,22 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
 
 import java.nio.ByteBuffer;
 
 public class FastInfosetValueConsumer implements RefDataValueConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetValueConsumer.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(FastInfosetValueConsumer.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FastInfosetValueConsumer.class);
 
     private final Receiver receiver;
     private final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer;
@@ -47,7 +45,7 @@ public class FastInfosetValueConsumer implements RefDataValueConsumer {
     @Override
     public void consume(final RefDataValue refDataValue) {
         ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+        LOGGER.trace(() -> LogUtil.message(
                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 
         fastInfosetByteBufferConsumer.consumeBytes(receiver, valueByteBuffer);

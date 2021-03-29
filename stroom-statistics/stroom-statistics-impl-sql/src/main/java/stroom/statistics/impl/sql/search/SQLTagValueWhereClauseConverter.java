@@ -87,13 +87,23 @@ public class SQLTagValueWhereClauseConverter {
         }
 
         if (oldNode.getFilterOperationMode().equals(FilterOperationMode.NOT)) {
+            String sqlOp = OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode());
             if (oldNode.getChildren().size() > 1) {
-                throw new RuntimeException("NOT node has more than one children");
+                // Stroom supports NOT() with multiple children. This is treated as NOT( child1 OR child2 )
+                sql.append(" " + sqlOp + " (");
+                for (int i = 0; i < oldNode.getChildren().size(); i++) {
+                    convertNode(oldNode.getChildren().get(i), sql);
+                    if (i < oldNode.getChildren().size() - 1) {
+                        sql.append(" OR");
+                    }
+                }
+                sql.append(")");
+            } else {
+                // should get something like ' NOT (.......) '
+                sql.append(" " + sqlOp + " (");
+                convertNode(oldNode.getChildren().get(0), sql);
+                sql.append(")");
             }
-            // should get something like ' NOT (.......) '
-            sql.append(" " + OPERATOR_TO_SQL_TERM_MAP.get(oldNode.getFilterOperationMode()) + " (");
-            convertNode(oldNode.getChildren().get(0), sql);
-            sql.append(")");
 
         } else {
             // OR or AND

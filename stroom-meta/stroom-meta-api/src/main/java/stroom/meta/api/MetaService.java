@@ -7,7 +7,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
+
     /**
      * Get the current maximum id of any data.
      *
@@ -47,7 +47,8 @@ public interface MetaService {
      *
      * @param id        The id of the meta data to retrieve.
      * @param anyStatus Whether to allow locked or deleted meta data records to be returned.
-     * @return An unlocked meta data for the supplied id or null if no unlocked meta data records can be found unless anyStatus is true.
+     * @return An unlocked meta data for the supplied id or null if no unlocked meta data records
+     * can be found unless anyStatus is true.
      */
     Meta getMeta(final long id, final boolean anyStatus);
 
@@ -82,7 +83,8 @@ public interface MetaService {
 
     /**
      * Delete meta data by id. Note that this method will only delete unlocked meta data records.
-     * Note that this method only changes the status of meta data to be deleted and does not actually delete the meta data.
+     * Note that this method only changes the status of meta data to be deleted and does not actually delete
+     * the meta data.
      *
      * @param id The id of the meta data to delete.
      * @return The number of meta data records deleted.
@@ -94,7 +96,8 @@ public interface MetaService {
 
     /**
      * Delete meta data by id with an option to delete regardless of lock status.
-     * Note that this method only changes the status of meta data to be deleted and does not actually delete the meta data.
+     * Note that this method only changes the status of meta data to be deleted and does not actually delete
+     * the meta data.
      *
      * @param id        The id of the meta data to delete.
      * @param lockCheck Choose if the service should only delete unlocked meta data records.
@@ -110,18 +113,18 @@ public interface MetaService {
     int getLockCount();
 
     /**
-     * Get a list of all unique feed names used by meta data records.
+     * Get a set of all unique feed names used by meta data records.
      *
      * @return A list of all unique feed names used by meta data records.
      */
-    List<String> getFeeds();
+    Set<String> getFeeds();
 
     /**
-     * Get a list of all unique type names used by meta data records.
+     * Get a set of all unique type names used by meta data records.
      *
      * @return A list of all unique type names used by meta data records.
      */
-    List<String> getTypes();
+    Set<String> getTypes();
 
     /**
      * Find meta data records that match the specified criteria.
@@ -140,7 +143,8 @@ public interface MetaService {
     ResultPage<MetaRow> findRows(final FindMetaCriteria criteria);
 
     /**
-     * Find meta data records and attributes that match the specified criteria and are decorated with data retention information.
+     * Find meta data records and attributes that match the specified criteria and are decorated with data
+     * retention information.
      *
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
@@ -176,7 +180,8 @@ public interface MetaService {
      * Get a summary of the parent items of the current selection for reprocessing purposes.
      *
      * @param criteria The selection criteria.
-     * @return An object that provides a summary of the parent items of the current selection for reprocessing purposes.
+     * @return An object that provides a summary of the parent items of the current selection for
+     * reprocessing purposes.
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
@@ -188,14 +193,6 @@ public interface MetaService {
      * @return the list of matches
      */
     Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
-
-    /**
-     * Get more detailed meta data for a specific item.
-     *
-     * @param id The id of the item.
-     * @return More detailed meta data.
-     */
-    List<MetaInfoSection> fetchFullMetaInfo(long id);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.

@@ -17,7 +17,6 @@
 
 package stroom.search.solr;
 
-import org.apache.solr.client.solrj.SolrServerException;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
@@ -27,14 +26,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.apache.solr.client.solrj.SolrServerException;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SolrIndexOptimiseExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexOptimiseExecutor.class);
 
     private static final String TASK_NAME = "Solr Index Optimise Executor";

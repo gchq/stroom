@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.resources.client.ClientBundle;
 
 public interface VisResources extends ClientBundle {
+
     @Source("vis.css")
     VisStyle style();
 }

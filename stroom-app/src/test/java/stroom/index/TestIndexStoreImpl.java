@@ -29,15 +29,16 @@ import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -48,8 +49,8 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     private DocRef testIndex;
     private DocRef refIndex;
 
-    @Override
-    protected void onBefore() {
+    @BeforeEach
+    void setup() {
         refIndex = indexStore.createDocument("Ref index");
         testIndex = indexStore.createDocument("Test index");
 
@@ -67,14 +68,23 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         List<DocRef> list = indexStore.list();
         assertThat(list.size()).isEqualTo(2);
 
-        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Test index")).
-                collect(Collectors.toList()).size()).isEqualTo(1);
-        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Ref index")).
-                collect(Collectors.toList()).size()).isEqualTo(1);
+        assertThat(list.stream()
+                .filter(docRef ->
+                        docRef.getName().equals("Test index"))
+                .count())
+                .isEqualTo(1);
+        assertThat((int) list.stream()
+                .filter(docRef ->
+                        docRef.getName().equals("Ref index"))
+                .count())
+                .isEqualTo(1);
 
-        final IndexDoc index = indexStore.readDocument(list.stream().
-                filter(docRef -> docRef.getName().equals("Test index")).findFirst().get());
-        
+        final IndexDoc index = indexStore.readDocument(list.stream()
+                .filter(docRef ->
+                        docRef.getName().equals("Test index"))
+                .findFirst()
+                .get());
+
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 

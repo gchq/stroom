@@ -46,18 +46,18 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictFromObjectPool.class, builder -> builder
-                        .withName("Evict from object pool")
-                        .withDescription("Evict from SQL Statistics event store object pool")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "1m"))
+                        .name("Evict from object pool")
+                        .description("Evict from SQL Statistics event store object pool")
+                        .managed(false)
+                        .schedule(PERIODIC, "1m"))
                 .bindJobTo(SQLStatsFlush.class, builder -> builder
-                        .withName("SQL Stats In Memory Flush")
-                        .withDescription("SQL Stats In Memory Flush (Cache to DB)")
-                        .withSchedule(CRON, "0,10,20,30,40,50 * *"))
+                        .name("SQL Stats In Memory Flush")
+                        .description("SQL Stats In Memory Flush (Cache to DB)")
+                        .schedule(CRON, "0,10,20,30,40,50 * *"))
                 .bindJobTo(SQLStatsAggregation.class, builder -> builder
-                        .withName("SQL Stats Database Aggregation")
-                        .withDescription("Run SQL stats database aggregation")
-                        .withSchedule(CRON, "5,15,25,35,45,55 * *"));
+                        .name("SQL Stats Database Aggregation")
+                        .description("Run SQL stats database aggregation")
+                        .schedule(CRON, "5,15,25,35,45,55 * *"));
 
         // We need it to shutdown quite late so anything that is generating stats has had
         // a chance to finish generating

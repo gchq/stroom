@@ -17,6 +17,16 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.LmdbUtils;
+import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.shared.Range;
+
 import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -27,17 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.shared.Range;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -57,19 +57,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRangeStoreDb extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
-    final UID uid1 = UID.of(0, 0, 0, 1);
-    final UID uid2 = UID.of(0, 0, 0, 2);
-    final UID uid3 = UID.of(0, 0, 0, 3);
+    final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);
+    final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 2);
+    final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 3);
     private RangeStoreDb rangeStoreDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         rangeStoreDb = new RangeStoreDb(
                 lmdbEnv,
-                new ByteBufferPool(),
+                new ByteBufferPoolFactory().getByteBufferPool(),
                 new RangeStoreKeySerde(),
                 new ValueStoreKeySerde());
     }
@@ -115,7 +112,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     void testContainsMapDefinition() {
 
         final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
-        final UID uid4 = UID.of(0, 0, 0, 4);
+        final UID uid4 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 4);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
         for (int i = 0; i < uids.size(); i++) {
@@ -191,9 +188,9 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     @Test
     void forEachEntry() {
 
-        final UID uid1 = UID.of(1, 0, 0, 1);
-        final UID uid2 = UID.of(2, 0, 0, 2);
-        final UID uid3 = UID.of(3, 0, 0, 3);
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
 
         final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
         final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));
@@ -336,8 +333,9 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     private static class Obj {
-        private String key;
-        private AtomicInteger atomicInteger = new AtomicInteger();
+
+        private final String key;
+        private final AtomicInteger atomicInteger = new AtomicInteger();
 
         Obj(final String key) {
             this.key = key;

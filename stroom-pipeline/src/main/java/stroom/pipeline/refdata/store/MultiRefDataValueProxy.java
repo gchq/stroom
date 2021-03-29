@@ -17,9 +17,10 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,14 +30,18 @@ import java.util.function.Consumer;
 /**
  * A wrapper for multiple {@link RefDataValueProxy} objects. A lookup (consumeBytes or supplyValue)
  * will perform a lookup against each sub-proxy in turn until a value is found.
+ *
+ * This is used when we have multiple ref loaders attached to an XSLT. Any one of them may be
+ * able to provide the value. This means the order of ref loaders is important for performance.
+ * The one most likely to yield results should be at the top.
  */
 public class MultiRefDataValueProxy implements RefDataValueProxy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiRefDataValueProxy.class);
 
-    private final List<RefDataValueProxy> refDataValueProxies;
+    private final List<SingleRefDataValueProxy> refDataValueProxies;
 
-    public MultiRefDataValueProxy(List<RefDataValueProxy> refDataValueProxies) {
+    public MultiRefDataValueProxy(final List<SingleRefDataValueProxy> refDataValueProxies) {
         this.refDataValueProxies = Objects.requireNonNull(refDataValueProxies);
     }
 
@@ -57,40 +62,35 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     }
 
     @Override
-    public RefDataStore.StorageType getStorageType() {
-        throw new UnsupportedOperationException("Not valid for this implementation");
-    }
-
-    @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         // try each of our proxies in turn and as soon as one finds a result break out
-        boolean result = false;
+        boolean foundValue = false;
         // We could construct this object with a pipeline scoped object to hold a
         // map of mapName to refDataValueProxy which we could populate when we find a
         // result. Thus for any future lookups we could try that one first before looping over
         // the rest.  For pipelines with a lot of ref loaders this should speed things up.
         // The downside of this is that it would change the behavior in the event that two
         // ref streams can supply a value for the same map/key
-        for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
+        for (SingleRefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
-            result = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
-            if (result) {
+            foundValue = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
+            if (foundValue) {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;
             }
         }
-        if (result) {
+        if (foundValue) {
             LOGGER.trace("Result found for proxy {}", this);
         } else {
             LOGGER.trace("No result found for proxy {}", this);
         }
-        return result;
+        return foundValue;
     }
 
     @Override
     public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
         // try each of our proxies in turn and as soon as one finds a result break out
-        boolean result = false;
+        boolean foundValue = false;
         // We could construct this object with a pipeline scoped object to hold a
         // map of mapName to refDataValueProxy which we could populate when we find a
         // result. Thus for any future lookups we could try that one first before looping over
@@ -99,20 +99,21 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // ref streams can supply a value for the same map/key
         for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
-            result = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
-            if (result) {
+            foundValue = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
+            if (foundValue) {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;
             }
         }
-        if (result) {
+        if (foundValue) {
             LOGGER.trace("Result found for proxy {}", this);
         } else {
             LOGGER.trace("No result found for proxy {}", this);
         }
-        return result;
+        return foundValue;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

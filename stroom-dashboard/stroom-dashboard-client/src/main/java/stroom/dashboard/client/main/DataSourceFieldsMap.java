@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DataSourceFieldsMap extends HashMap<String, AbstractField> {
+
     private static final long serialVersionUID = -7687167987530520359L;
 
     public DataSourceFieldsMap() {

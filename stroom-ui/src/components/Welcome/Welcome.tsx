@@ -16,11 +16,11 @@
 
 import * as React from "react";
 
-import BuildInfo from "components/SessionInfo";
+import { SessionInfo } from "components/SessionInfo";
 import IconHeader from "components/IconHeader";
 import useWelcomeHtml from "./api/useWelcomeHtml";
 
-const Welcome: React.FunctionComponent = () => {
+export const Welcome: React.FunctionComponent = () => {
   const welcomeData = useWelcomeHtml();
   return (
     <div className="page">
@@ -57,10 +57,8 @@ const Welcome: React.FunctionComponent = () => {
             </tbody>
           </table>
         </div>
-        <BuildInfo />
+        <SessionInfo />
       </div>
     </div>
   );
 };
-
-export default Welcome;

@@ -17,16 +17,17 @@
 package stroom.cell.valuespinner.shared;
 
 public class EditableInteger extends Number implements Comparable<EditableInteger>, Editable {
+
     private static final long serialVersionUID = -6502263322370395720L;
 
-    private Integer _integer;
+    private Integer value;
     private boolean editable = true;
 
     public EditableInteger() {
     }
 
-    public EditableInteger(final Integer _integer) {
-        this._integer = _integer;
+    public EditableInteger(final Integer value) {
+        this.value = value;
     }
 
     @Override
@@ -40,36 +41,36 @@ public class EditableInteger extends Number implements Comparable<EditableIntege
     }
 
     public Integer getInteger() {
-        return _integer;
+        return value;
     }
 
-    public void setInteger(final Integer _integer) {
-        this._integer = _integer;
+    public void setInteger(final Integer value) {
+        this.value = value;
     }
 
     @Override
     public int intValue() {
-        return _integer.intValue();
+        return value.intValue();
     }
 
     @Override
     public long longValue() {
-        return _integer.longValue();
+        return value.longValue();
     }
 
     @Override
     public float floatValue() {
-        return _integer.floatValue();
+        return value.floatValue();
     }
 
     @Override
     public double doubleValue() {
-        return _integer.doubleValue();
+        return value.doubleValue();
     }
 
     @Override
     public int hashCode() {
-        return _integer.hashCode();
+        return value.hashCode();
     }
 
     @Override
@@ -79,7 +80,7 @@ public class EditableInteger extends Number implements Comparable<EditableIntege
         }
 
         if (obj instanceof EditableInteger) {
-            return ((EditableInteger) obj)._integer.equals(_integer);
+            return ((EditableInteger) obj).value.equals(value);
         }
 
         return false;
@@ -87,11 +88,11 @@ public class EditableInteger extends Number implements Comparable<EditableIntege
 
     @Override
     public int compareTo(final EditableInteger sharedInteger) {
-        return _integer.compareTo(sharedInteger._integer);
+        return value.compareTo(sharedInteger.value);
     }
 
     @Override
     public String toString() {
-        return String.valueOf(_integer);
+        return String.valueOf(value);
     }
 }

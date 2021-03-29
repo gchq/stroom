@@ -17,8 +17,6 @@
 
 package stroom.test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -28,13 +26,16 @@ import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,9 +45,15 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
+import java.util.Optional;
 
 public class DataLoader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     private static final String INPUT_EXTENSION = ".in";
@@ -54,6 +61,8 @@ public class DataLoader {
 
     private final FeedProperties feedProperties;
     private final Store streamStore;
+
+    public static final DateTimeFormatter EFFECTIVE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     public DataLoader(final FeedProperties feedProperties, final Store streamStore) {
         this.feedProperties = feedProperties;
@@ -66,23 +75,29 @@ public class DataLoader {
 
     private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fileName = file.getFileName().toString().toLowerCase();
-                        if (fileName.endsWith(INPUT_EXTENSION)) {
-                            loadInputFile(file, mandateEffectiveDate, effectiveMs);
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fileName = file.getFileName().toString().toLowerCase();
+                                final long applicableEffectiveMs = getEffectiveTimeMsFromFileName(file)
+                                        .orElse(effectiveMs);
 
-                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                            loadZipFile(file, mandateEffectiveDate, effectiveMs);
+                                if (fileName.endsWith(INPUT_EXTENSION)) {
+                                    loadInputFile(file, mandateEffectiveDate, applicableEffectiveMs);
+
+                                } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                                    loadZipFile(file, mandateEffectiveDate, applicableEffectiveMs);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -101,14 +116,14 @@ public class DataLoader {
                                 final boolean mandateEffectiveDate, final Long effectiveMs) {
         final boolean isReference = feedProperties.isReference(feedName);
         if (isReference == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + info);
+            final String effDateStr = effectiveMs != null
+                    ? Instant.ofEpochMilli(effectiveMs).toString()
+                    : "null";
+            LOGGER.info("Loading data: " + info + " with eff. date " + effDateStr);
 
-            String streamTypeName = StreamTypeNames.RAW_EVENTS;
-            if (isReference) {
-                streamTypeName = StreamTypeNames.RAW_REFERENCE;
-            }
+            final String streamTypeName = feedProperties.getStreamTypeName(feedName);
 
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(streamTypeName)
                     .effectiveMs(effectiveMs)
@@ -141,8 +156,14 @@ public class DataLoader {
             try {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
-                final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName));
+                final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler =
+                        new StreamTargetStroomStreamHandler(
+                                streamStore,
+                                feedProperties,
+                                null,
+                                feedName,
+                                feedProperties.getStreamTypeName(feedName),
+                                false);
 
                 final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");
@@ -158,7 +179,9 @@ public class DataLoader {
                     }
                     streamTargetStroomStreamHandler.handleEntryEnd();
 
-                    streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Data));
+                    streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null,
+                            baseName,
+                            StroomZipFileType.Data));
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
@@ -204,16 +227,42 @@ public class DataLoader {
 
     private String getFeedName(final Path file) {
         // Get the stem of the file name.
-        String stem = file.getFileName().toString();
-        int index = stem.indexOf('.');
-        if (index != -1) {
-            stem = stem.substring(0, index);
-        }
-        index = stem.indexOf('~');
+        String stem = getBaseName(file);
+
+        int index = stem.indexOf('~');
         if (index != -1) {
             stem = stem.substring(0, index);
         }
 
         return stem;
+    }
+
+    private String getBaseName(final Path file) {
+        String baseName = file.getFileName().toString();
+        int index = baseName.indexOf('.');
+        if (index != -1) {
+            return baseName.substring(0, index);
+        } else {
+            return baseName;
+        }
+    }
+
+    private Optional<Long> getEffectiveTimeMsFromFileName(final Path file) {
+        try {
+            final String baseName = getBaseName(file);
+            final String[] parts = baseName.split("~");
+            if (parts.length == 3) {
+                final String effectiveDateStr = parts[2];
+
+                return Optional.of(DataLoader.EFFECTIVE_DATE_FORMATTER
+                        .parse(effectiveDateStr, LocalDateTime::from)
+                        .toInstant(ZoneOffset.UTC)
+                        .toEpochMilli());
+            } else {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to parse effective date from " + file.toString(), e);
+        }
     }
 }

@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
@@ -72,6 +73,7 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onHide(HidePopupEvent event);
     }
 }

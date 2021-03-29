@@ -16,7 +16,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   annotation:
     db:
       connection:
@@ -32,54 +32,22 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     statusValues:
     - "New"
     - "Assigned"
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
-  authentication:
-    certificateCnCaptureGroupIndex: 1
-    certificateCnPattern: ".*\\((.*)\\)"
-    email:
-      fromAddress: "noreply@stroom"
-      fromName: "Stroom User Accounts"
-      passwordResetSubject: "Password reset for Stroom"
-      passwordResetText: "A password reset has been requested for this email address.\
-        \ Please visit the following URL to reset your password: %s."
-      passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
-      allowPasswordResets: false
-      smtp:
-        host: "localhost"
-        port: 2525
-        transport: "plain"
-        username: "username"
-        password: "password"
-        transportStrategy: "SMTP_PLAIN"
-    failedLoginLockThreshold: 3
-    oauth2:
-      accessCodeCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-    passwordIntegrityChecks:
-      forcePasswordChangeOnFirstLogin: true
-      mandatoryPasswordChangeDuration: "P90D"
-      minimumPasswordLength: 0
-      neverUsedAccountDeactivationThreshold: "P30D"
-      passwordComplexityRegex: ".*"
-      unusedAccountDeactivationThreshold: "P90D"
-    token:
-      algorithm: "RS256"
-      jwsIssuer: "stroom"
-      timeUntilExpirationForEmailResetToken: "PT5M"
-      timeUntilExpirationForUserToken: "P30D"
-    useDefaultOpenIdCredentials: true
-  benchmark:
-    streamCount: 1000
-    recordCount: 10000
-    concurrentWriters: 10
+  byteBufferPool:
+    pooledByteBufferCounts:
+      1: 50
+      10: 50
+      100: 50
+      1000: 50
+      10000: 50
+      100000: 10
+      1000000: 3
   cluster:
     clusterCallUseLocal: true
     clusterCallReadTimeout: "PT30S"
@@ -100,12 +68,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
-  clusterTask:
-    clusterResultCollectorCache:
-      maximumSize: 1000000
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
+        maxPoolSize: 30
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
@@ -120,10 +83,10 @@ appConfig:
       idleTimeout: "PT10M"
       maxLifetime: "PT30M"
       minimumIdle: 10
-      maxPoolSize: 10
+      maxPoolSize: 30
   contentPackImport:
     enabled: false
-    importDirectory: null
+    importDirectory: "content_pack_import"
   core:
     db:
       connection:
@@ -139,7 +102,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   dashboard:
     activeQueriesCache:
       maximumSize: 100
@@ -159,6 +122,7 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
       db:
         connection:
           jdbcDriverClassName: null
@@ -173,12 +137,12 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
       metaValue:
         addAsync: true
         deleteAge: "P30D"
-        deleteBatchSize: 1000
-        flushBatchSize: 1000
+        deleteBatchSize: 500
+        flushBatchSize: 500
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -202,10 +166,11 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
     filesystemVolume:
       volumeSelector: "RoundRobin"
-      defaultStreamVolumePaths: "volumes/defaultStreamVolume"
+      defaultStreamVolumePaths:
+      - "volumes/default_stream_volume"
       defaultStreamVolumeFilesystemUtilisation: 0.9
       createDefaultStreamVolumesOnStart: true
       feedPathCache:
@@ -236,7 +201,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   explorer:
     db:
       connection:
@@ -252,7 +217,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     docRefInfoCache:
       maximumSize: 1000
       expireAfterAccess: "PT10M"
@@ -286,7 +251,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     writer:
       cache:
         timeToLive: "PT0S"
@@ -311,7 +276,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     enableDistributedJobsOnBootstrap: true
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
@@ -363,7 +328,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -376,7 +341,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    temp: "/tmp"
+    home: "."
+    temp: "/tmp/stroom"
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -399,8 +365,9 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "${stroom.temp}/refDataOffHeapStore"
-      maxPutsBeforeCommit: 1000
+      localDir: "reference_data"
+      lmdbSystemLibraryPath: null
+      maxPutsBeforeCommit: 0
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"
@@ -457,7 +424,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   properties:
     db:
       connection:
@@ -473,9 +440,9 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "${stroom.temp}/proxy"
+    proxyDir: "proxy_repo"
     proxyThreads: 10
     maxFileScan: 100000
     maxConcurrentMappedFiles: 100000
@@ -496,10 +463,15 @@ appConfig:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
     storeSize: "1000000,100,10,1"
+    resultStoreCache:
+      maximumSize: 100
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
     extraction:
       maxStoredDataQueueSize: 1000
       maxThreads: 4
       maxThreadsPerTask: 2
+      maxStreamEventMapSize: 1000000
     shard:
       maxDocIdQueueSize: 1000000
       maxThreads: 4
@@ -512,6 +484,21 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
+    lmdb:
+      localDir: "search_results"
+      lmdbSystemLibraryPath: null
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      maxDbs: 1000
+      purgeAge: "P30D"
+      readAheadEnabled: true
+      offHeapResults: true
+      payloadLimit: "0B"
+    remoteSearchResultCache:
+      maximumSize: 100
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
@@ -519,33 +506,20 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
   security:
-    db:
-      connection:
-        jdbcDriverClassName: null
-        jdbcDriverUrl: null
-        jdbcDriverUsername: null
-        jdbcDriverPassword: null
-      connectionPool:
-        cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
-        connectionTimeout: "PT30S"
-        idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
-        minimumIdle: 10
-        maxPoolSize: 10
     authentication:
       authenticationRequired: true
       openId:
         useInternal: true
-        issuer: "accounts.google.com"
-        authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
-        tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
-        jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+        openIdConfigurationEndpoint: null
+        issuer: null
+        authEndpoint: null
+        tokenEndpoint: null
+        jwksUri: null
+        formTokenRequest: false
+        jwtClaimsResolver: null
         clientId: null
         clientSecret: null
       preventLogin: false
-      userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
     authorisation:
       userGroupsCache:
         maximumSize: 1000
@@ -563,6 +537,21 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 30
     webContent:
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
@@ -570,6 +559,63 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
+    identity:
+      certificateCnCaptureGroupIndex: 1
+      certificateCnPattern: ".*\\((.*)\\)"
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 30
+      email:
+        fromAddress: "noreply@stroom"
+        fromName: "Stroom User Accounts"
+        passwordResetSubject: "Password reset for Stroom"
+        passwordResetText: "A password reset has been requested for this email address.\
+          \ Please visit the following URL to reset your password: %s."
+        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
+        allowPasswordResets: false
+        smtp:
+          host: "localhost"
+          port: 2525
+          transport: "plain"
+          username: "username"
+          password: "password"
+      failedLoginLockThreshold: 3
+      openid:
+        accessCodeCache:
+          maximumSize: 1000
+          expireAfterAccess: "PT10M"
+          expireAfterWrite: null
+      passwordPolicy:
+        allowPasswordResets: true
+        forcePasswordChangeOnFirstLogin: true
+        mandatoryPasswordChangeDuration: "P90D"
+        minimumPasswordLength: 8
+        minimumPasswordStrength: 3
+        neverUsedAccountDeactivationThreshold: "P30D"
+        passwordComplexityRegex: ".*"
+        passwordPolicyMessage: "To conform with our Strong Password policy, you are\
+          \ required to use a sufficiently strong password. Password must be more\
+          \ than 8 characters."
+        unusedAccountDeactivationThreshold: "P90D"
+      token:
+        algorithm: "RS256"
+        defaultApiKeyExpiryInMinutes: 525600
+        jwsIssuer: "stroom"
+        timeUntilExpirationForEmailResetToken: "PT5M"
+        timeUntilExpirationForUserToken: "P30D"
+      useDefaultOpenIdCredentials: false
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"
@@ -603,6 +649,7 @@ appConfig:
         maxStoredDataQueueSize: 1000
         maxThreads: 4
         maxThreadsPerTask: 2
+        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"
@@ -626,10 +673,9 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
       search:
         storeSize: "1000000,100,10,1"
-        resultHandlerBatchSize: 5000
         maxResults: 100000
         fetchSize: 5000
         searchResultCache:
@@ -740,7 +786,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
@@ -767,6 +813,10 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    source:
+      maxCharactersInPreviewFetch: 30000
+      maxCharactersPerFetch: 80000
+      maxCharactersToCompleteLine: 10000
     splash:
       enabled: false
       title: "Splash Screen"
@@ -784,9 +834,7 @@ appConfig:
       tubeOpacity: "0.6"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
-      allowPasswordResets: true
-      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
-      defaultApiKeyExpiryInMinutes: 525600
+      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
     url:
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"
@@ -799,11 +847,16 @@ appConfig:
     port: 443
     pathPrefix: null
   volumes:
-    resilientReplicationCount: 1
-    preferLocalVolumes: false
     volumeSelector: "RoundRobin"
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeGroupName: "Default Volume Group"
-    defaultIndexVolumeGroupPaths: "volumes/defaultIndexVolume"
-    defaultIndexVolumeGroupNodes: "node1a"
+    defaultIndexVolumeGroupPaths:
+    - "volumes/default_index_volume"
+    defaultIndexVolumeGroupNodes:
+    - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
+  logging:
+    logEveryRestCallEnabled: false
+    omitRecordDetailsLoggingEnabled: true
+    maxListElements: 5
+    maxDataElementStringLength: 500

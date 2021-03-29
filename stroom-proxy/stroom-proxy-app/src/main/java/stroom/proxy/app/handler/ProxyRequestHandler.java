@@ -1,9 +1,7 @@
 package stroom.proxy.app.handler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StreamHandler;
@@ -14,13 +12,16 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.ByteCountInputStream;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Main entry point to handling proxy requests.
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dynamic mini proxy.
  */
 public class ProxyRequestHandler implements RequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRequestHandler.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);
@@ -84,7 +86,8 @@ public class ProxyRequestHandler implements RequestHandler {
                         }
 
                         final byte[] buffer = bufferFactory.create();
-                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedServlet");
+                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                                attributeMap, handlers, buffer, "DataFeedServlet");
 
                         stroomStreamProcessor.processRequestHeader(request);
 
@@ -111,7 +114,14 @@ public class ProxyRequestHandler implements RequestHandler {
                     }
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, attributeMap, "RECEIVE", request.getRequestURI(), returnCode, inputStream.getCount(), duration);
+                    logStream.log(
+                            RECEIVE_LOG,
+                            attributeMap,
+                            "RECEIVE",
+                            request.getRequestURI(),
+                            returnCode,
+                            inputStream.getCount(),
+                            duration);
 
                 } else {
                     // Just read the stream in and ignore it
@@ -123,20 +133,43 @@ public class ProxyRequestHandler implements RequestHandler {
                     LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(attributeMap));
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, attributeMap, "DROP", request.getRequestURI(), returnCode, inputStream.getCount(), duration);
+                    logStream.log(
+                            RECEIVE_LOG,
+                            attributeMap,
+                            "DROP",
+                            request.getRequestURI(),
+                            returnCode,
+                            inputStream.getCount(),
+                            duration);
                 }
             }
         } catch (final StroomStreamException e) {
             StroomStreamException.sendErrorResponse(response, e);
             returnCode = e.getStroomStatusCode().getCode();
 
-            LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(attributeMap), CSVFormatter.escape(e.getMessage()));
+            LOGGER.warn("\"handleException()\",{},\"{}\"",
+                    CSVFormatter.format(attributeMap),
+                    CSVFormatter.escape(e.getMessage()));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
             if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(e.getStroomStatusCode())) {
-                logStream.log(RECEIVE_LOG, attributeMap, "REJECT", request.getRequestURI(), returnCode, -1, duration);
+                logStream.log(
+                        RECEIVE_LOG,
+                        attributeMap,
+                        "REJECT",
+                        request.getRequestURI(),
+                        returnCode,
+                        -1,
+                        duration);
             } else {
-                logStream.log(RECEIVE_LOG, attributeMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
+                logStream.log(
+                        RECEIVE_LOG,
+                        attributeMap,
+                        "ERROR",
+                        request.getRequestURI(),
+                        returnCode,
+                        -1,
+                        duration);
             }
 
         } catch (final IOException | RuntimeException e) {
@@ -145,7 +178,14 @@ public class ProxyRequestHandler implements RequestHandler {
 
             LOGGER.error("\"handleException()\",{}", CSVFormatter.format(attributeMap), e);
             final long duration = System.currentTimeMillis() - startTimeMs;
-            logStream.log(RECEIVE_LOG, attributeMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
+            logStream.log(
+                    RECEIVE_LOG,
+                    attributeMap,
+                    "ERROR",
+                    request.getRequestURI(),
+                    returnCode,
+                    -1,
+                    duration);
         }
 
         response.setStatus(returnCode);

@@ -24,6 +24,7 @@ import java.io.InputStream;
  * Used for tests to simulate an error during IO.
  */
 public class CorruptInputStream extends FilterInputStream {
+
     private final int errorAtByte;
     private int count;
 

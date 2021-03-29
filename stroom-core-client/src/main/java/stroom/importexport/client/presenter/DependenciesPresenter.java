@@ -94,7 +94,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private void initColumns() {
 
         // From (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder( false, (Dependency row) ->
+        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                         getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
@@ -148,7 +148,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // To (UUID)
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getFrom))
+                        getUUID(row, Dependency::getTo))
                         .build(),
                 DependencyCriteria.FIELD_TO_UUID,
                 COL_WIDTH_UUID);
@@ -200,7 +200,9 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                              final Function<Dependency, DocRef> docRefExtractor) {
 
         final DocRef docRef = docRefExtractor.apply(row);
-        final String uuid = docRef != null ? docRef.getUuid() : null;
+        final String uuid = docRef != null
+                ? docRef.getUuid()
+                : null;
 
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant("<span style=\"color:grey\">");

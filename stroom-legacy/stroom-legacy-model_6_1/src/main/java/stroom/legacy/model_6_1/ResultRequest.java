@@ -16,61 +16,56 @@
 
 package stroom.legacy.model_6_1;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlType(name = "ResultRequest", propOrder = {"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@ApiModel(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
+@Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
         "e.g. sorted, grouped, limited, etc.")
 @Deprecated
 public final class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The ID of the component that will receive the results corresponding to this ResultRequest",
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
     private String componentId;
 
     @XmlElementWrapper(name = "mappings")
     @XmlElement(name = "mappings")
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private List<TableSettings> mappings;
 
     @XmlElement
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private OffsetRange requestedRange;
 
     @XmlElementWrapper(name = "openGroups")
     @XmlElement(name = "key")
     //TODO complete documentation
-    @ApiModelProperty(
-            value = "TODO",
+    @Schema(description = "TODO",
             required = true)
     private List<String> openGroups;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
+    @Schema(description = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
                     "provide a TableResult object",
             required = true)
     private ResultStyle resultStyle;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The fetch mode for the query. NONE means fetch no data, ALL means fetch all known results, " +
+    @Schema(description = "The fetch mode for the query. NONE means fetch no data, ALL means fetch all known results, " +
                     "CHANGES means fetch only those records not see in previous requests",
             required = false)
     private Fetch fetch;

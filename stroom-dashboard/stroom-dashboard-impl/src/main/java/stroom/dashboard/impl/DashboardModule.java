@@ -16,6 +16,7 @@
 
 package stroom.dashboard.impl;
 
+import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -27,9 +28,13 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class DashboardModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DashboardStore.class).to(DashboardStoreImpl.class);
+        bind(DashboardService.class).to(DashboardServiceImpl.class);
+        bind(FunctionFactory.class).asEagerSingleton();
+        bind(FunctionService.class).to(FunctionServiceImpl.class).asEagerSingleton();
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ActiveQueriesManager.class);
 

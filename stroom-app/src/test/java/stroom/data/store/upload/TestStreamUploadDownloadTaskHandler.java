@@ -17,9 +17,12 @@
 package stroom.data.store.upload;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.*;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.data.store.impl.DataUploadTaskHandler;
@@ -38,16 +41,19 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -120,7 +126,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -181,12 +187,15 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 for (int i = 1; i <= streamSource.count(); i++) {
                     try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
                         assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
-                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT), false)).isEqualTo("CONTEXT" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT),
+                                false)).isEqualTo("CONTEXT" + i);
 
                         if (originalMeta.equals(meta)) {
-                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "META:" + i, "X:" + i);
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
+                                    false), "META:" + i, "X:" + i);
                         } else {
-                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META), false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                            assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
+                                    false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
                         }
                     }
                 }

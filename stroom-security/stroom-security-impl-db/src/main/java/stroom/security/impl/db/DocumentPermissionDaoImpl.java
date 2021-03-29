@@ -4,15 +4,16 @@ import stroom.db.util.JooqUtil;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
+
     private final SecurityDbConnProvider securityDbConnProvider;
 
     @Inject
@@ -42,7 +43,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
                 .fetch()
                 .forEach(r -> {
-                    permissions.computeIfAbsent(r.get(DOC_PERMISSION.USER_UUID), k -> new HashSet<>()).add(r.get(DOC_PERMISSION.PERMISSION));
+                    permissions.computeIfAbsent(r.get(DOC_PERMISSION.USER_UUID), k -> new HashSet<>()).add(r.get(
+                            DOC_PERMISSION.PERMISSION));
                 })
         );
 
@@ -58,7 +60,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .from(DOC_PERMISSION)
                 .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
                 .fetch()
-                .forEach(r -> userDocumentPermissions.addPermission(r.get(DOC_PERMISSION.DOC_UUID), r.get(DOC_PERMISSION.PERMISSION)))
+                .forEach(r -> userDocumentPermissions.addPermission(r.get(DOC_PERMISSION.DOC_UUID),
+                        r.get(DOC_PERMISSION.PERMISSION)))
         );
 
         return userDocumentPermissions;

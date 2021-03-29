@@ -16,12 +16,13 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.util.client.RandomId;
+import stroom.util.shared.RandomId;
 
 public class DashboardUUID {
-    private String dashboardUuid;
-    private String dashboardName;
-    private String componentId;
+
+    private final String dashboardUuid;
+    private final String dashboardName;
+    private final String componentId;
 
     public DashboardUUID(String dashboardUuid, final String dashboardName, final String componentId) {
         this.dashboardUuid = dashboardUuid;

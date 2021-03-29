@@ -17,18 +17,20 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineDoc;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 public class PipelineSettingsPresenter
         extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>
         implements PipelineSettingsUiHandlers {
+
     @Inject
     public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view) {
         super(eventBus, view);
@@ -54,6 +56,7 @@ public class PipelineSettingsPresenter
     }
 
     public interface PipelineSettingsView extends View, HasUiHandlers<PipelineSettingsUiHandlers> {
+
         String getDescription();
 
         void setDescription(String description);

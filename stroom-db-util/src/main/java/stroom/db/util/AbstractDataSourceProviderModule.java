@@ -1,39 +1,41 @@
 package stroom.db.util;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.config.common.HasDbConfig;
-import stroom.util.db.ForceCoreMigration;
+import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @param <T_Config>       A config class that implements {@link HasDbConfig}
- * @param <T_ConnProvider> A class that extends {@link DataSource}
+ * @param <T_CONFIG>    A config class that implements {@link HasDbConfig}
+ * @param <T_CONN_PROV> A class that extends {@link DataSource}
  */
-public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource> extends AbstractModule {
+public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
+        extends AbstractModule {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
     protected abstract String getModuleName();
 
-    protected abstract Class<T_ConnProvider> getConnectionProviderType();
+    protected abstract Class<T_CONN_PROV> getConnectionProviderType();
 
-    protected abstract T_ConnProvider createConnectionProvider(DataSource dataSource);
+    protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
-    private static final Set<String> COMPLETED_MIGRATIONS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
     @Override
     protected void configure() {
         super.configure();
-        
+
         LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
 
         // MultiBind the connection provider so we can see status for all databases.
@@ -41,35 +43,48 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
     }
 
     /**
-     * We inject {@link ForceCoreMigration} to ensure that the the core DB migration has happened before all
+     * We inject {@link ForceLegacyMigration} to ensure that the the core DB migration has happened before all
      * other migrations
      */
     @Provides
     @Singleton
+    public T_CONN_PROV getConnectionProvider(
+            final Provider<T_CONFIG> configProvider,
+            final DataSourceFactory dataSourceFactory,
+            @SuppressWarnings("unused") final ForceLegacyMigration forceLegacyMigration) {
 
-    public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final DataSourceFactory dataSourceFactory,
-                                                @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
         // Prevent migrations from being re-run for each test
-        if (!COMPLETED_MIGRATIONS.contains(getModuleName())) {
+        Set<String> set = COMPLETED_MIGRATIONS.get();
+        if (set == null) {
+            set = new HashSet<>();
+            COMPLETED_MIGRATIONS.set(set);
+        }
+        final boolean required = set.add(getModuleName());
+
+//        final boolean required = COMPLETED_MIGRATIONS
+//                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+//                .add(getModuleName());
+
+        if (required) {
             performMigration(dataSource);
-            COMPLETED_MIGRATIONS.add(getModuleName());
         }
 
         return createConnectionProvider(dataSource);
     }
 
-    protected abstract void performMigration(final DataSource dataSource);
+    protected abstract void performMigration(DataSource dataSource);
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

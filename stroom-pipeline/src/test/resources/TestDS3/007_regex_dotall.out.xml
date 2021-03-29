@@ -1,0 +1,52 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message"
+            value="Found: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/003_multiline_regex.ds3"/>
+   </record>
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message" value="stem: 003_multiline_regex"/>
+   </record>
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message"
+            value="Found: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/002_csv_without_header.ds3"/>
+   </record>
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message" value="stem: 002_csv_without_header"/>
+   </record>
+   <record>
+      <data name="logLevel" value="DEBUG"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message"
+            value="Creating reader for /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/003_multiline_regex.ds3"/>
+   </record>
+   <record>
+      <data name="logLevel" value="DEBUG"/>
+      <data name="logger" value="s.pipeline.cache.SchemaLoaderImpl"/>
+      <data name="message"
+            value="Creating schema: &lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;&#xA;&lt;xsd:schema xmlns:xsd=&#34;http://www.w3.org/2001/XMLSchema&#34; xmlns=&#34;data-splitter:3&#34;&gt;&#xA;&lt;xsd:import namespace=&#34;data-splitter:3&#34; schemaLocation=&#34;file://data-splitter-v3.0.xsd&#34;/&gt;&#xA;&lt;/xsd:schema&gt;"/>
+   </record>
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message"
+            value="Testing: 002_csv_without_header, expecting errors: false"/>
+   </record>
+   <record>
+      <data name="logLevel" value="INFO"/>
+      <data name="logger" value="s.pipeline.xml.converter.ds3.TestDS3"/>
+      <data name="message"
+            value="Data Splitter config: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/002_csv_without_header.ds3"/>
+   </record>
+</records>

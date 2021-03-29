@@ -16,6 +16,10 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.tab.client.presenter.CurveTabLayoutView;
+import stroom.widget.tab.client.presenter.TabBar;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -23,11 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
-import stroom.widget.tab.client.presenter.CurveTabLayoutView;
-import stroom.widget.tab.client.presenter.TabBar;
 
 public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutView {
+
     private final Widget widget;
     @UiField
     ResizeSimplePanel tabBarOuter;
@@ -35,6 +37,7 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
+
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -61,5 +64,6 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
     }
 
     public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {
+
     }
 }

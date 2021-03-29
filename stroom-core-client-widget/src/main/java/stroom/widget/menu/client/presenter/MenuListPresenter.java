@@ -16,12 +16,6 @@
 
 package stroom.widget.menu.client.presenter;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -31,10 +25,18 @@ import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MenuListPresenter extends MenuPresenter {
+
     private final Provider<MenuListPresenter> menuListPresenterProvider;
     private MenuListPresenter currentMenu;
     private MenuItem currentItem;
@@ -129,11 +131,21 @@ public class MenuListPresenter extends MenuPresenter {
                         presenter.setAutoHidePartners(autoHidePartners);
                         final Element[] partners = autoHidePartners.toArray(new Element[0]);
 
-                        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteRight(),
-                                element.getAbsoluteLeft(), element.getAbsoluteTop(), element.getAbsoluteTop(),
-                                HorizontalLocation.RIGHT, null);
-                        ShowPopupEvent.fire(MenuListPresenter.this, presenter, PopupType.POPUP, popupPosition,
-                                popupUiHandlers, partners);
+                        final PopupPosition popupPosition = new PopupPosition(
+                                element.getAbsoluteRight(),
+                                element.getAbsoluteLeft(),
+                                element.getAbsoluteTop(),
+                                element.getAbsoluteTop(),
+                                HorizontalLocation.RIGHT,
+                                null);
+
+                        ShowPopupEvent.fire(
+                                MenuListPresenter.this,
+                                presenter,
+                                PopupType.POPUP,
+                                popupPosition,
+                                popupUiHandlers,
+                                partners);
                     }
                 });
             }

@@ -16,14 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.view.FileData;
 import stroom.data.client.view.FileData.Status;
@@ -43,7 +35,17 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
+
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     private DocRef feedRef;
@@ -88,6 +90,9 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                             hide();
                             AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
                             metaPresenter.refresh();
+                        })
+                        .onFailure(throwable -> {
+                            error("Error uploading file: " + throwable.getMessage());
                         })
                         .call(DATA_RESOURCE)
                         .upload(request);
@@ -177,6 +182,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
     }
 
     public interface DataUploadView extends View {
+
         FormPanel getForm();
 
         StringListBox getType();

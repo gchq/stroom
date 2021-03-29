@@ -4,7 +4,7 @@ import DocRefImage from "../DocRefImage";
 import { Props } from "./types";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 
-let DocRefListingEntry: React.FunctionComponent<Props> = ({
+const DocRefListingEntry: React.FunctionComponent<Props> = ({
   docRef,
   dndIsOver,
   dndCanDrop,
@@ -15,7 +15,7 @@ let DocRefListingEntry: React.FunctionComponent<Props> = ({
   highlightedDocRef,
 }) => {
   const onSelect: React.MouseEventHandler<HTMLDivElement> = React.useCallback(
-    e => {
+    (e) => {
       toggleSelection(docRef.uuid);
       e.preventDefault();
       e.stopPropagation();
@@ -23,10 +23,8 @@ let DocRefListingEntry: React.FunctionComponent<Props> = ({
     [toggleSelection, docRef],
   );
 
-  const onOpenDocRef: React.MouseEventHandler<
-    HTMLDivElement
-  > = React.useCallback(
-    e => {
+  const onOpenDocRef: React.MouseEventHandler<HTMLDivElement> = React.useCallback(
+    (e) => {
       openDocRef(docRef);
       e.preventDefault();
       e.stopPropagation();

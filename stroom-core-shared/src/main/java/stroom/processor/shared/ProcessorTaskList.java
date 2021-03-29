@@ -9,6 +9,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ProcessorTaskList {
+
     @JsonProperty
     private final String nodeName;
     @JsonProperty
@@ -27,5 +28,13 @@ public class ProcessorTaskList {
 
     public List<ProcessorTask> getList() {
         return list;
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessorTaskList{" +
+                "nodeName='" + nodeName + '\'' +
+                ", list=" + list +
+                '}';
     }
 }

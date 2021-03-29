@@ -16,11 +16,12 @@
 
 package stroom.data.store.impl.fs;
 
-import com.google.common.base.Strings;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
+
+import com.google.common.base.Strings;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -41,8 +42,7 @@ abstract class ManualCheckStreamPerformance {
     private static int testSize = 100000;
 
     static Path getTempFile() throws IOException {
-        final Path tempFile = Files.createTempFile(
-                FileUtil.getTempDir(), ManualCheckStreamPerformance.class.getSimpleName(), "test");
+        final Path tempFile = Files.createTempFile(ManualCheckStreamPerformance.class.getSimpleName(), "test");
         FileUtil.deleteFile(tempFile);
         return tempFile;
     }

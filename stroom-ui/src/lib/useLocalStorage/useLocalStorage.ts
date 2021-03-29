@@ -18,24 +18,24 @@ interface StringConversion<T> {
  * Pre-made utility string conversion for storing boolean
  */
 export const storeBoolean: StringConversion<boolean> = {
-  toString: v => (v ? "true" : "false"),
-  fromString: s => s === "true",
+  toString: (v) => (v ? "true" : "false"),
+  fromString: (s) => s === "true",
 };
 
 /**
  * Pre-made utility string conversion for storing string (no transform)
  */
 export const storeString: StringConversion<string> = {
-  toString: v => v,
-  fromString: s => s,
+  toString: (v) => v,
+  fromString: (s) => s,
 };
 
 /**
  * Pre-made utility string conversion for storing number
  */
 export const storeNumber: StringConversion<number> = {
-  toString: n => `${n}`,
-  fromString: v => Number.parseInt(v),
+  toString: (n) => `${n}`,
+  fromString: (v) => Number.parseInt(v),
 };
 
 /**
@@ -51,7 +51,7 @@ export const useStoreObjectFactory = <T>(): StringConversion<T> => {
   );
 };
 
-const useLocalStorage = function<T>(
+const useLocalStorage = function <T>(
   stateName: string,
   noLocalStorageInitialState: T,
   stringConversion: StringConversion<T>,

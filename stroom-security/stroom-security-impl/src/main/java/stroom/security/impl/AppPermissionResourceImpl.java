@@ -1,7 +1,7 @@
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -12,41 +12,48 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
-import javax.inject.Inject;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class AppPermissionResourceImpl implements AppPermissionResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionResourceImpl.class);
 
-    private final SecurityContext securityContext;
-    private final UserService userService;
-    private final UserAppPermissionService userAppPermissionService;
-    private final UserAndPermissionsHelper userAndPermissionsHelper;
-    private final AuthenticationConfig authenticationConfig;
-    private final AuthorisationEventLog authorisationEventLog;
-    private final UserGroupsCache userGroupsCache;
-    private final UserAppPermissionsCache userAppPermissionsCache;
+    private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<UserService> userServiceProvider;
+    private final Provider<UserAppPermissionService> userAppPermissionServiceProvider;
+    private final Provider<UserAndPermissionsHelper> userAndPermissionsHelperProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final Provider<AuthorisationEventLog> authorisationEventLogProvider;
+    private final Provider<UserGroupsCache> userGroupsCacheProvider;
+    private final Provider<UserAppPermissionsCache> userAppPermissionsCacheProvider;
 
     @Inject
-    AppPermissionResourceImpl(final SecurityContext securityContext,
-                              final UserService userService,
-                              final UserAppPermissionService userAppPermissionService,
-                              final UserAndPermissionsHelper userAndPermissionsHelper,
-                              final AuthenticationConfig authenticationConfig,
-                              final AuthorisationEventLog authorisationEventLog,
-                              final UserGroupsCache userGroupsCache,
-                              final UserAppPermissionsCache userAppPermissionsCache) {
-        this.securityContext = securityContext;
-        this.userService = userService;
-        this.userAppPermissionService = userAppPermissionService;
-        this.userAndPermissionsHelper = userAndPermissionsHelper;
-        this.authenticationConfig = authenticationConfig;
-        this.authorisationEventLog = authorisationEventLog;
-        this.userGroupsCache = userGroupsCache;
-        this.userAppPermissionsCache = userAppPermissionsCache;
+    AppPermissionResourceImpl(final Provider<SecurityContext> securityContextProvider,
+                              final Provider<UserService> userServiceProvider,
+                              final Provider<UserAppPermissionService> userAppPermissionServiceProvider,
+                              final Provider<UserAndPermissionsHelper> userAndPermissionsHelperProvider,
+                              final Provider<AuthenticationConfig> authenticationConfigProvider,
+                              final Provider<AuthorisationEventLog> authorisationEventLogProvider,
+                              final Provider<UserGroupsCache> userGroupsCacheProvider,
+                              final Provider<UserAppPermissionsCache> userAppPermissionsCacheProvider) {
+        this.securityContextProvider = securityContextProvider;
+        this.userServiceProvider = userServiceProvider;
+        this.userAppPermissionServiceProvider = userAppPermissionServiceProvider;
+        this.userAndPermissionsHelperProvider = userAndPermissionsHelperProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
+        this.authorisationEventLogProvider = authorisationEventLogProvider;
+        this.userGroupsCacheProvider = userGroupsCacheProvider;
+        this.userAppPermissionsCacheProvider = userAppPermissionsCacheProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public UserAndPermissions getUserAndPermissions() {
         final UserIdentity userIdentity = CurrentUserState.current();
         if (userIdentity == null) {
@@ -60,27 +67,31 @@ class AppPermissionResourceImpl implements AppPermissionResource {
             return null;
         }
 
-        final boolean preventLogin = authenticationConfig.isPreventLogin();
+        final boolean preventLogin = authenticationConfigProvider.get().isPreventLogin();
         if (preventLogin) {
-            if (!securityContext.isAdmin()) {
+            if (!securityContextProvider.get().isAdmin()) {
                 throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
             }
         }
 
-        return new UserAndPermissions(identity.getId(), userAndPermissionsHelper.get(identity.getUserUuid()));
+        return new UserAndPermissions(identity.getId(),
+                userAndPermissionsHelperProvider.get().get(identity.getUserUuid()));
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public UserAndPermissions fetchUserAppPermissions(final User user) {
-        return new UserAndPermissions(user.getName(), userAndPermissionsHelper.get(user.getUuid()));
+        return new UserAndPermissions(user.getName(), userAndPermissionsHelperProvider.get().get(user.getUuid()));
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public List<String> fetchAllPermissions() {
         return List.of(PermissionNames.PERMISSIONS);
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean changeUser(final ChangeUserRequest action) {
         final User user = action.getUser();
         if (user != null) {
@@ -101,7 +112,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                         }
 
                         // Clear cached user groups for this user.
-                        userGroupsCache.remove(add.getUuid());
+                        userGroupsCacheProvider.get().remove(add.getUuid());
                     }
                 }
 
@@ -118,12 +129,12 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                         }
 
                         // Clear cached user groups for this user.
-                        userGroupsCache.remove(remove.getUuid());
+                        userGroupsCacheProvider.get().remove(remove.getUuid());
                     }
                 }
 
                 // Clear cached user groups for this user.
-                userGroupsCache.remove(user.getUuid());
+                userGroupsCacheProvider.get().remove(user.getUuid());
             }
 
             // Modify user/user group feature permissions.
@@ -142,7 +153,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                 }
 
                 // Clear cached application permissions for this user.
-                userAppPermissionsCache.remove(user.getUuid());
+                userAppPermissionsCacheProvider.get().remove(user.getUuid());
             }
         }
 
@@ -151,37 +162,45 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     private void addUserToGroup(final User user, final User userGroup) {
         try {
-            userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
-            authorisationEventLog.addUserToGroup(user.getName(), userGroup.getName(), true, null);
+            userServiceProvider.get().addUserToGroup(user.getUuid(), userGroup.getUuid());
+            authorisationEventLogProvider.get()
+                    .addUserToGroup(user.getName(), userGroup.getName(), true, null);
         } catch (final RuntimeException e) {
-            authorisationEventLog.addUserToGroup(user.getName(), userGroup.getName(), false, e.getMessage());
+            authorisationEventLogProvider.get()
+                    .addUserToGroup(user.getName(), userGroup.getName(), false, e.getMessage());
         }
     }
 
     private void removeUserFromGroup(final User user, final User userGroup) {
         try {
-            userService.removeUserFromGroup(user.getUuid(), userGroup.getUuid());
-            authorisationEventLog.removeUserFromGroup(user.getName(), userGroup.getName(), true, null);
+            userServiceProvider.get().removeUserFromGroup(user.getUuid(), userGroup.getUuid());
+            authorisationEventLogProvider.get()
+                    .removeUserFromGroup(user.getName(), userGroup.getName(), true, null);
         } catch (final RuntimeException e) {
-            authorisationEventLog.removeUserFromGroup(user.getName(), userGroup.getName(), false, e.getMessage());
+            authorisationEventLogProvider.get()
+                    .removeUserFromGroup(user.getName(), userGroup.getName(), false, e.getMessage());
         }
     }
 
     private void addPermission(User user, String permission) {
         try {
-            userAppPermissionService.addPermission(user.getUuid(), permission);
-            authorisationEventLog.addUserToGroup(user.getName(), permission, true, null);
+            userAppPermissionServiceProvider.get().addPermission(user.getUuid(), permission);
+            authorisationEventLogProvider.get()
+                    .addUserToGroup(user.getName(), permission, true, null);
         } catch (final RuntimeException e) {
-            authorisationEventLog.addUserToGroup(user.getName(), permission, false, e.getMessage());
+            authorisationEventLogProvider.get()
+                    .addUserToGroup(user.getName(), permission, false, e.getMessage());
         }
     }
 
     private void removePermission(User user, String permission) {
         try {
-            userAppPermissionService.removePermission(user.getUuid(), permission);
-            authorisationEventLog.removeUserFromGroup(user.getName(), permission, true, null);
+            userAppPermissionServiceProvider.get().removePermission(user.getUuid(), permission);
+            authorisationEventLogProvider.get()
+                    .removeUserFromGroup(user.getName(), permission, true, null);
         } catch (final RuntimeException e) {
-            authorisationEventLog.removeUserFromGroup(user.getName(), permission, false, e.getMessage());
+            authorisationEventLogProvider.get()
+                    .removeUserFromGroup(user.getName(), permission, false, e.getMessage());
         }
     }
 }

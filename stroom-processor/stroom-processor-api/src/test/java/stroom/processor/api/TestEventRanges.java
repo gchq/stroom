@@ -17,8 +17,9 @@
 package stroom.processor.api;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEventRanges {
+
     @Test
     void bigTest() {
         for (int i = 0; i < 100; i++) {

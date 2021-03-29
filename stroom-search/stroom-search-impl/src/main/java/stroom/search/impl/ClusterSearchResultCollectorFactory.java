@@ -16,56 +16,39 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ClusterSearchResultCollectorFactory {
+
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
-    private final Provider<ClusterTaskTerminator> clusterTaskTerminatorProvider;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     @Inject
     private ClusterSearchResultCollectorFactory(final Executor executor,
                                                 final TaskContextFactory taskContextFactory,
-                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                                final Provider<ClusterTaskTerminator> clusterTaskTerminatorProvider,
-                                                final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
-        this.clusterTaskTerminatorProvider = clusterTaskTerminatorProvider;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
                                                final String nodeName,
                                                final Set<String> highlights,
-                                               final ResultHandler resultHandler,
-                                               final Sizes defaultMaxResultsSizes,
-                                               final Sizes storeSize,
-                                               final CompletionState completionState) {
+                                               final Coprocessors coprocessors) {
         return new ClusterSearchResultCollector(executor,
                 taskContextFactory,
                 asyncSearchTaskHandlerProvider,
-                clusterTaskTerminatorProvider.get(),
                 task,
                 nodeName,
                 highlights,
-                clusterResultCollectorCache,
-                resultHandler,
-                defaultMaxResultsSizes,
-                storeSize,
-                completionState);
+                coprocessors);
     }
 }

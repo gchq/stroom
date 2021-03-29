@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface QueryUiHandlers extends UiHandlers {
+
     void start();
 
     void stop();

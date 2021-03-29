@@ -16,17 +16,24 @@
 
 package stroom.test.common.util.test;
 
-import stroom.util.io.FileUtil;
+import stroom.content.ContentPack;
+import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
-    private static final String CONFIG_PATH = "../stroom-config";
 
-    private static final Path configDir = Paths.get(CONFIG_PATH);
-    private static final Path configXSDDir = configDir.resolve("xsd");
+    // These zips are downloaded by the gradle task downloadStroomContent
+    // Ought to be the same as in ContentPackDownloader
+    private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get(
+            System.getProperty("user.home"),
+            "/.stroom/contentPackDownload");
+    private static final Path EXPLODED_DIR = CONTENT_PACK_DOWNLOADS_DIR.resolve("exploded");
+
     private static final long TEST_PREFIX = System.currentTimeMillis();
     private static long testSuffix = 0;
 
@@ -42,10 +49,62 @@ public abstract class FileSystemTestUtil {
         return TEST_PREFIX + "_" + testSuffix;
     }
 
-    public static Path getConfigXSDDir() {
-        if (!Files.isDirectory(configXSDDir)) {
-            throw new RuntimeException("Directory not found: " + FileUtil.getCanonicalPath(configXSDDir));
+    /**
+     * @return The directory where content pack zips are downloaded to.
+     * It will ensure it exists.
+     */
+    public static Path getContentPackDownloadsDir() {
+        try {
+            Files.createDirectories(CONTENT_PACK_DOWNLOADS_DIR);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error ensuring directory {}",
+                    CONTENT_PACK_DOWNLOADS_DIR.toAbsolutePath()), e);
         }
-        return configXSDDir;
+        return CONTENT_PACK_DOWNLOADS_DIR;
+    }
+
+    /**
+     * @return The directory where content pack zips are unzipped to.
+     * It will ensure it exists.
+     */
+    public static Path getExplodedContentPacksDir() {
+        try {
+            Files.createDirectories(EXPLODED_DIR);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error ensuring directory {}",
+                    EXPLODED_DIR.toAbsolutePath()), e);
+        }
+        return EXPLODED_DIR;
+    }
+
+    /**
+     * @return The directory of the unziped content pack. If it has not already
+     * been unziped then it will unzip the pack first, which is assumed to exist.
+     */
+    public static Path getExplodedContentPackDir(final ContentPack contentPack) {
+
+        final Path explodedPackDir = getExplodedContentPacksDir()
+                .resolve(contentPack.toString());
+
+        if (!Files.exists(explodedPackDir)) {
+            final Path downloadsDir = getContentPackDownloadsDir();
+            final Path packZip = downloadsDir.resolve(contentPack.toFileName());
+
+            if (!Files.exists(packZip)) {
+                ContentPackDownloader.downloadContentPack(contentPack, downloadsDir);
+            }
+
+            // Unzip the zip file.
+            try {
+                ZipUtil.unzip(packZip, explodedPackDir);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error unzipping {} into {}",
+                        packZip.toAbsolutePath().normalize(),
+                        explodedPackDir.toAbsolutePath().normalize()));
+            }
+        }
+        return explodedPackDir;
     }
 }

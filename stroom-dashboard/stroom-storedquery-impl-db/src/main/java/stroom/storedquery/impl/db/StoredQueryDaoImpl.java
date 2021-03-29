@@ -1,10 +1,5 @@
 package stroom.storedquery.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.GenericDao;
@@ -13,17 +8,24 @@ import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.ResultPage;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
 class StoredQueryDaoImpl implements StoredQueryDao {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(stroom.storedquery.impl.StoredQueryDao.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -162,12 +164,5 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 //        }
 
         return optional.orElse(null);
-    }
-
-    @Override
-    public void clear() {
-        JooqUtil.context(storedQueryDbConnProvider, context -> context
-                .deleteFrom(QUERY)
-                .execute());
     }
 }

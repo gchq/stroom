@@ -1,0 +1,13 @@
+----
+node=artix2 type=DAEMON_ROTATE msg=audit(06/07/20 14:10:01.787:6069) : op=rotate-logs auid=unset pid=-1 subj=?
+----
+node=artix2 type=USER_END msg=audit(06/07/20 14:10:06.885:337) : pid=104859 uid=root auid=unset ses=unset msg='op=PAM:session_close grantors=pam_limits,pam_unix acct=root exe=/usr/bin/crond hostname=? addr=? terminal=cron res=success'
+----
+node=artix type=PROCTITLE msg=audit(06/07/20 14:11:35.793:10591) : proctitle=/proc/self/exe --type=utility --field-trial-handle=14965002579265685713,8315097743634133468,131072 --disable-features=SpareRende
+node=artix type=PATH msg=audit(06/07/20 14:11:35.793:10591) : item=1 name=/lib64/ld-linux-x86-64.so.2 inode=265206 dev=08:02 mode=file,755 ouid=root ogid=root rdev=00:00 nametype=NORMAL cap_fp=none cap_fi=none cap_fe=0 cap_fver=0 cap_frootid=0
+node=artix type=PATH msg=audit(06/07/20 14:11:35.793:10591) : item=0 name=/proc/self/exe inode=310083 dev=08:02 mode=file,755 ouid=root ogid=root rdev=00:00 nametype=NORMAL cap_fp=none cap_fi=none cap_fe=0 cap_fver=0 cap_frootid=0
+node=artix type=CWD msg=audit(06/07/20 14:11:35.793:10591) : cwd=/home/dave
+node=artix type=EXECVE msg=audit(06/07/20 14:11:35.793:10591) : argc=8 a0=/proc/self/exe a1=--type=utility a2=--field-trial-handle=14965002579265685713,8315097743634133468,131072 a3=--disable-features=SpareRendererForSitePerProcess,WebRtcHideLocalIpsWithMdns a4=--lang=en-GB a5=--service-sandbox-type=audio a6=--service-request-channel-token=9331621691371633224 a7=--shared-files=v8_context_snapshot_data:100,v8_natives_data:101
+node=artix type=SYSCALL msg=audit(06/07/20 14:11:35.793:10591) : arch=x86_64 syscall=execve success=yes exit=0 a0=0x9ab9bb200c0 a1=0x9ab9b860b40 a2=0x9ab99d9e640 a3=0x0 items=2 ppid=3089 pid=64556 auid=dave uid=dave gid=dave euid=dave suid=dave fsuid=dave egid=dave sgid=dave fsgid=dave tty=(none) ses=1 comm=exe exe=/usr/lib/slack/slack key=(null)
+----
+node=artix2 type=USER_START msg=audit(06/07/20 14:20:01.912:338) : pid=107564 uid=root auid=unset ses=unset msg='op=PAM:session_open grantors=pam_limits,pam_unix acct=root exe=/usr/bin/crond hostname=? addr=? terminal=cron res=success'

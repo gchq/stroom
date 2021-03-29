@@ -2,8 +2,8 @@ ext.moduleName = 'stroom.searchable.api'
 
 dependencies {
     compile project(':stroom-core-shared')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
 
-    compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile project(':stroom-docref')
 }

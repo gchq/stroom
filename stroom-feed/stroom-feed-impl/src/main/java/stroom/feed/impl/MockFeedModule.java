@@ -16,11 +16,13 @@
 
 package stroom.feed.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 
+import com.google.inject.AbstractModule;
+
 public class MockFeedModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(FeedStore.class).to(FeedStoreImpl.class);

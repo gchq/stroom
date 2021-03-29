@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { BaseProps as UserPickerBaseProps } from "../UserPicker/types";
 import UserPicker, { usePicker } from "../UserPicker";
-import ThemedModal from "components/ThemedModal";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import IconHeader from "components/IconHeader";
 import DialogActionButtons from "components/DialogActionButtons";
 
@@ -38,18 +38,19 @@ export const UserPickerDialog: React.FunctionComponent<Props> = ({
   }, [userGroupUuid, onConfirm, onClose]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      header={<IconHeader icon="user" text="Choose User" />}
-      content={
-        <div>
-          <UserPicker {...pickerProps} />
-        </div>
-      }
-      actions={
-        <DialogActionButtons onConfirm={onConfirmLocal} onCancel={onClose} />
-      }
-    />
+    <ThemedModal isOpen={isOpen}>
+      <DialogContent
+        header={<IconHeader icon="user" text="Choose User" />}
+        content={
+          <div>
+            <UserPicker {...pickerProps} />
+          </div>
+        }
+        actions={
+          <DialogActionButtons onConfirm={onConfirmLocal} onCancel={onClose} />
+        }
+      />
+    </ThemedModal>
   );
 };
 

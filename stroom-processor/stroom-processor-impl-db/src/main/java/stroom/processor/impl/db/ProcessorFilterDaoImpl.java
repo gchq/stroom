@@ -13,9 +13,9 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
@@ -24,26 +24,29 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
+
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
-    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
-    private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER = new RecordToProcessorFilterTrackerMapper();
+    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
+            new RecordToProcessorFilterMapper();
+    private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER =
+            new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
@@ -56,7 +59,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                            final ProcessorFilterMarshaller marshaller) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = marshaller;
-        this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR_FILTER,
+                PROCESSOR_FILTER.ID,
+                ProcessorFilter.class,
+                processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
@@ -85,7 +91,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     public ProcessorFilter create(final ProcessorFilter processorFilter,
                                   final Long minMetaCreateMs,
                                   final Long maxMetaCreateMs) {
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
@@ -93,7 +99,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             tracker.setMinMetaCreateMs(minMetaCreateMs);
             tracker.setMaxMetaCreateMs(maxMetaCreateMs);
 
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, tracker);
+            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(
+                    PROCESSOR_FILTER_TRACKER, tracker);
             processorFilterTrackerRecord.store();
             tracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
@@ -117,20 +124,21 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        final ProcessorFilter stored = JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
-            final ProcessorFilterRecord processorFilterRecord =
-                    context.newRecord(PROCESSOR_FILTER, marshalled);
+        final ProcessorFilter stored = JooqUtil.contextResultWithOptimisticLocking(
+                processorDbConnProvider, context -> {
+                    final ProcessorFilterRecord processorFilterRecord =
+                            context.newRecord(PROCESSOR_FILTER, marshalled);
 
 //            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
 //            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
-            processorFilterRecord.update();
+                    processorFilterRecord.update();
 
-            final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
-            result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
-            result.setProcessor(marshalled.getProcessor());
+                    final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
+                    result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
+                    result.setProcessor(marshalled.getProcessor());
 
-            return result;
-        });
+                    return result;
+                });
         return marshaller.unmarshal(stored);
     }
 
@@ -154,14 +162,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 context
                         .select()
                         .from(PROCESSOR_FILTER)
-                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                        PROCESSOR_FILTER_TRACKER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(PROCESSOR_FILTER.ID.eq(id))
                         .fetchOptional()
                         .map(record -> {
                             final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
                             final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                            final ProcessorFilterTracker processorFilterTracker = RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+                            final ProcessorFilterTracker processorFilterTracker =
+                                    RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
 
                             processorFilter.setProcessor(processor);
                             processorFilter.setProcessorFilterTracker(processorFilterTracker);
@@ -183,7 +193,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final List<ProcessorFilter> list = context
                 .select()
                 .from(PROCESSOR_FILTER)
-                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                        PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
                 .orderBy(orderFields)
@@ -193,7 +204,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .map(record -> {
                     final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
                     final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                    final ProcessorFilterTracker processorFilterTracker = RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+                    final ProcessorFilterTracker processorFilterTracker =
+                            RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
 
                     processorFilter.setProcessor(processor);
                     processorFilter.setProcessorFilterTracker(processorFilterTracker);

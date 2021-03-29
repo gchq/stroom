@@ -16,16 +16,18 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.value.StringValue;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.value.StringValue;
+
 abstract class AbstractLocationFunction extends StroomExtensionFunctionCall {
+
     private final LocationHolder locationHolder;
 
     AbstractLocationFunction(final LocationHolder locationHolder) {

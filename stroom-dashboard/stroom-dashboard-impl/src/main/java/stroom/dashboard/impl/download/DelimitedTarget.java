@@ -16,15 +16,17 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Field;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 public class DelimitedTarget implements SearchResultWriter.Target {
+
     private final OutputStream outputStream;
     private final String delimiter;
 
@@ -36,8 +38,8 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void start() throws IOException {
-        final Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+    public void start() {
+        final Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
         delimitedWriter = new DelimitedWriter(delimiter, writer);
     }
 

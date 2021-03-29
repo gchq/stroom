@@ -26,7 +26,6 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 
 import com.google.gwt.core.client.GWT;
@@ -38,6 +37,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
+
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
     private final EditExpressionPresenter editExpressionPresenter;
     private DataRetentionRule originalRule;
@@ -66,7 +66,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
@@ -89,6 +89,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
     }
 
     public interface DataRetentionRuleView extends View {
+
         void setExpressionView(View view);
 
         String getName();

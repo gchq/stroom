@@ -19,12 +19,12 @@ export const useApi = (): Api => {
 
   const fetchTrackers = React.useCallback(
     ({
-       pageSize,
-       pageOffset,
-       sortBy,
-       sortDirection,
-       searchCriteria,
-     }: FetchParameters): Promise<StreamTasksResponseType> => {
+      pageSize,
+      pageOffset,
+      sortBy,
+      sortDirection,
+      searchCriteria,
+    }: FetchParameters): Promise<StreamTasksResponseType> => {
       let url = `${resource}/?`;
       url += `pageSize=${pageSize}`;
       url += `&offset=${pageOffset}`;
@@ -44,12 +44,12 @@ export const useApi = (): Api => {
 
   const fetchMore = React.useCallback(
     ({
-       pageSize,
-       pageOffset,
-       sortBy,
-       sortDirection,
-       searchCriteria,
-     }: FetchParameters): Promise<StreamTasksResponseType> => {
+      pageSize,
+      pageOffset,
+      sortBy,
+      sortDirection,
+      searchCriteria,
+    }: FetchParameters): Promise<StreamTasksResponseType> => {
       const nextPageOffset = pageOffset + 1;
 
       let url = `${resource}/?`;

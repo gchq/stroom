@@ -16,6 +16,20 @@
 
 package stroom.data.store.util;
 
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.meta.api.MetaProperties;
+import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.db.DbTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.TempDirProviderImpl;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,55 +39,59 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
-import stroom.data.store.api.TargetUtil;
-import stroom.meta.impl.db.MetaDbConnProvider;
-import stroom.meta.api.MetaProperties;
-import stroom.test.common.util.db.DbTestModule;
-import stroom.test.common.util.db.DbTestUtil;
-import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.io.FileUtil;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.List;
+import javax.inject.Inject;
 
 @ExtendWith({MockitoExtension.class})
 class TestStreamDumpTool {
 
     @Inject
-    private MetaDbConnProvider metaDbConnProvider;
-
-    @Inject
     private Store streamStore;
+    @Inject
+    private FsVolumeConfig volumeConfig;
+    @Inject
+    private FsVolumeService fsVolumeService;
+    @Inject
+    private HomeDirProviderImpl homeDirProvider;
+    @Inject
+    private TempDirProviderImpl tempDirProvider;
 
     @Mock
     private ToolInjector toolInjector;
 
+    @TempDir
+    static Path tempDir;
+
     @BeforeEach
     void setup() {
         final Injector injector = Guice.createInjector(
-            new DbTestModule(),
-            new ToolModule());
+                new DbTestModule(),
+                new ToolModule());
         injector.injectMembers(this);
+
+        // Clear any lingering volumes or data.
+        homeDirProvider.setHomeDir(tempDir);
+        tempDirProvider.setTempDir(tempDir);
+        final String path = tempDir
+                .resolve("volumes/defaultStreamVolume")
+                .toAbsolutePath()
+                .toString();
+        volumeConfig.setDefaultStreamVolumePaths(List.of(path));
+        fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);
 
-        try (final Connection connection = metaDbConnProvider.getConnection()) {
-            DbTestUtil.clearAllTables(connection);
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        // Clear the current DB.
+        DbTestUtil.clear();
     }
 
     @Test
-    void test(@TempDir Path tempDir) {
+    void test() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         try {
@@ -83,7 +101,7 @@ class TestStreamDumpTool {
 
             final StreamDumpTool streamDumpTool = new StreamDumpTool(toolInjector);
             streamDumpTool.setFeed(feedName);
-            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(tempDir));
+            streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(tempDir.resolve("output")));
             streamDumpTool.run();
 
         } catch (final RuntimeException e) {
@@ -92,7 +110,7 @@ class TestStreamDumpTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();

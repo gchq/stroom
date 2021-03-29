@@ -9,6 +9,7 @@ import stroom.job.impl.JobSystemConfig;
 import javax.sql.DataSource;
 
 public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbConnProvider> {
+
     private static final String MODULE = "stroom-job";
     private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db/migration";
     private static final String FLYWAY_TABLE = "job_schema_history";
@@ -47,6 +48,7 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbCo
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements JobDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

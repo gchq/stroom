@@ -16,15 +16,18 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.function.Consumer;
 
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
+
     private final TaskContextFactory taskContextFactory;
     private final Provider<ReferenceDataLoadTaskHandler> taskHandlerProvider;
 
@@ -36,12 +39,17 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
     }
 
     @Override
-    public void load(final RefStreamDefinition refStreamDefinition) {
-        final Consumer<TaskContext> consumer = tc ->
+    public StoredErrorReceiver load(final RefStreamDefinition refStreamDefinition) {
+        final Function<TaskContext, StoredErrorReceiver> consumer = taskContext ->
                 taskHandlerProvider
                         .get()
-                        .exec(refStreamDefinition);
-        final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(), "Load Reference Data", consumer);
-        runnable.run();
+                        .exec(taskContext, refStreamDefinition);
+
+        final Supplier<StoredErrorReceiver> supplier = taskContextFactory.contextResult(
+                taskContextFactory.currentContext(),
+                "Load Reference Data",
+                consumer);
+
+        return supplier.get();
     }
 }

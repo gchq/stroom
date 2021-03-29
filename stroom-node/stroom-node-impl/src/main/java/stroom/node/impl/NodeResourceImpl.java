@@ -17,7 +17,10 @@
 package stroom.node.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -31,50 +34,53 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.client.SyncInvoker;
 
-// TODO : @66 add event logging
+@AutoLogged
 class NodeResourceImpl implements NodeResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
-    private final NodeServiceImpl nodeService;
-    private final NodeInfo nodeInfo;
-    private final ClusterNodeManager clusterNodeManager;
-    private final WebTargetFactory webTargetFactory;
-    private final DocumentEventLog documentEventLog;
+    private final Provider<NodeServiceImpl> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
-    NodeResourceImpl(final NodeServiceImpl nodeService,
-                     final NodeInfo nodeInfo,
-                     final ClusterNodeManager clusterNodeManager,
-                     final WebTargetFactory webTargetFactory,
-                     final DocumentEventLog documentEventLog) {
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.clusterNodeManager = clusterNodeManager;
-        this.webTargetFactory = webTargetFactory;
-        this.documentEventLog = documentEventLog;
+    NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
+                     final Provider<NodeInfo> nodeInfoProvider,
+                     final Provider<ClusterNodeManager> clusterNodeManagerProvider,
+                     final Provider<WebTargetFactory> webTargetFactoryProvider,
+                     final Provider<DocumentEventLog> documentEventLogProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.clusterNodeManagerProvider = clusterNodeManagerProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public List<String> listAllNodes() {
-        return find().getValues()
-                .stream()
-                .map(NodeStatusResult::getNode)
-                .map(Node::getName)
-                .collect(Collectors.toList());
+        FetchNodeStatusResponse response = find();
+        if (response != null && response.getValues() != null) {
+            return response.getValues()
+                    .stream()
+                    .map(NodeStatusResult::getNode)
+                    .map(Node::getName)
+                    .collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     @Override
@@ -91,77 +97,87 @@ class NodeResourceImpl implements NodeResource {
     public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(And.builder()
+                                .build())
+                        .build())
+                .build();
 
         try {
-            final List<Node> nodes = nodeService.find(new FindNodeCriteria()).getValues();
-            Node master = null;
-            for (final Node node : nodes) {
-                if (node.isEnabled()) {
-                    if (master == null || master.getPriority() < node.getPriority()) {
-                        master = node;
-                    }
-                }
-            }
+            final List<Node> nodes = nodeServiceProvider.get()
+                    .find(new FindNodeCriteria())
+                    .getValues();
 
-            final List<NodeStatusResult> resultList = new ArrayList<>();
-            for (final Node node : nodes) {
-                resultList.add(new NodeStatusResult(node, node.equals(master)));
-            }
+            final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
+            final String masterNodeName = clusterState.getMasterNodeName();
+
+            final List<NodeStatusResult> resultList = nodes.stream()
+                    .sorted(Comparator.comparing(Node::getName))
+                    .map(node ->
+                            new NodeStatusResult(node, node.getName().equals(masterNodeName)))
+                    .collect(Collectors.toList());
             response = new FetchNodeStatusResponse(resultList);
 
-            documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
+            documentEventLogProvider.get().search(
+                    "List Nodes",
+                    query,
+                    Node.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), null, e);
+            documentEventLogProvider.get().search(
+                    "List Nodes",
+                    query,
+                    Node.class.getSimpleName(),
+                    null,
+                    e);
+            throw e;
         }
 
         return response;
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
-        String nodeUrl = null;
+
+        final Supplier<String> pathSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
+                NodeResource.BASE_PATH,
+                NodeResource.INFO_PATH_PART,
+                nodeName);
+
+
         try {
             final long now = System.currentTimeMillis();
 
-            // If this is the node that was contacted then just return our local info.
-            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
+            clusterNodeInfo = nodeServiceProvider.get().remoteRestResult(
+                    nodeName,
+                    ClusterNodeInfo.class,
+                    pathSupplier,
+                    () ->
+                            clusterNodeManagerProvider.get().getClusterNodeInfo(),
+                    SyncInvoker::get);
 
-            } else {
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                        + ResourcePaths.buildAuthenticatedApiPath(
-                        NodeResource.BASE_PATH,
-                        NodeResource.INFO_PATH_PART,
-                        nodeName);
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
-                if (clusterNodeInfo == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
-                }
+            if (clusterNodeInfo == null) {
+                final String url = NodeCallUtil.getBaseEndpointUrl(
+                        nodeInfoProvider.get(),
+                        nodeServiceProvider.get(),
+                        nodeName) + pathSupplier.get();
+                throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
 
-            documentEventLog.view(clusterNodeInfo, null);
+            documentEventLogProvider.get().view(clusterNodeInfo, null);
 
-        } catch (final RuntimeException e) {
-            documentEventLog.view(clusterNodeInfo, e);
+        } catch (Exception e) {
+            documentEventLogProvider.get().view(clusterNodeInfo, e);
 
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
-            clusterNodeInfo.setEndpointUrl(nodeUrl);
+            clusterNodeInfo.setEndpointUrl(null);
             clusterNodeInfo.setError(e.getMessage());
         }
 
@@ -169,34 +185,26 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
-        // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return System.currentTimeMillis() - now;
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    NodeResource.BASE_PATH,
-                    NodeResource.PING_PATH_PART,
-                    nodeName);
+        final Long ping = nodeServiceProvider.get().remoteRestResult(
+                nodeName,
+                Long.class,
+                () -> ResourcePaths.buildAuthenticatedApiPath(
+                        NodeResource.BASE_PATH,
+                        NodeResource.PING_PATH_PART,
+                        nodeName),
+                () ->
+                        // If this is the node that was contacted then just return the latency
+                        // we have incurred within this method.
+                        System.currentTimeMillis() - now,
+                SyncInvoker::get);
 
-            try {
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                final Long ping = response.readEntity(Long.class);
-                Objects.requireNonNull(ping, "Null ping");
-                return System.currentTimeMillis() - now;
-            } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
+        Objects.requireNonNull(ping, "Null ping");
+
+        return System.currentTimeMillis() - now;
     }
 
     @Override
@@ -214,6 +222,8 @@ class NodeResourceImpl implements NodeResource {
         Node node = null;
         Node before = null;
         Node after = null;
+        final NodeServiceImpl nodeService = nodeServiceProvider.get();
+        final DocumentEventLog documentEventLog = documentEventLogProvider.get();
 
         try {
             // Get the before version.

@@ -19,8 +19,10 @@ package stroom.data.store.api;
 import java.io.InputStream;
 
 public abstract class SizeAwareInputStream extends InputStream {
+
     /**
      * Get the size in bytes of the input stream.
+     *
      * @return The size in bytes of the input stream.
      */
     public abstract long size();

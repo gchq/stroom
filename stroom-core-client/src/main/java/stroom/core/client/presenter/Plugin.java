@@ -16,13 +16,15 @@
 
 package stroom.core.client.presenter;
 
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 
 public abstract class Plugin extends HandlerContainerImpl implements HasHandlers, BeforeRevealMenubarEvent.Handler {
+
     private final EventBus eventBus;
 
     public Plugin(final EventBus eventBus) {
@@ -49,4 +51,17 @@ public abstract class Plugin extends HandlerContainerImpl implements HasHandlers
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Override to act on menu bar reveal.
     }
+
+    /**
+     * Sort a native integer array numerically.
+     *
+     * @param array the array to sort
+     */
+    public static native void postMessage(String msg) /*-{
+        window.top.postMessage(
+            JSON.stringify({
+                message: msg
+             }
+        ), '*');
+    }-*/;
 }

@@ -17,11 +17,10 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import PipelineDisplay from "./PipelineDisplay";
+import { PipelineDisplay } from "./PipelineDisplay";
 import { testPipelines } from "testing/data/pipelines";
 
 import usePipelineState from "../usePipelineState/usePipelineState";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 interface TestProps {
   pipelineId: string;
@@ -39,7 +38,7 @@ const TestHarness: React.FunctionComponent<TestProps> = ({
   );
 };
 
-Object.entries(testPipelines).forEach(k => {
-  const s = storiesOf(`Document Editors/Pipeline/Display/${k[0]}`, module);
-  addThemedStories(s, () => <TestHarness pipelineId={k[1].uuid} />);
+const stories = storiesOf("Document Editors/Pipeline/Display", module);
+Object.entries(testPipelines).forEach((k) => {
+  stories.add(k[0], () => <TestHarness pipelineId={k[1].uuid} />);
 });

@@ -1,1 +1,1 @@
-export { default } from "./ElasticIndexEditor";
+export { ElasticIndexEditor } from "./ElasticIndexEditor";

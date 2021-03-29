@@ -17,10 +17,6 @@
 
 package stroom.index;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.FieldTypeFactory;
 import stroom.index.impl.IndexShardKeyUtil;
@@ -41,13 +37,20 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 
-import javax.inject.Inject;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -63,8 +66,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    @BeforeEach
+    void onBefore() {
         indexShardWriterCache.shutdown();
     }
 
@@ -211,7 +214,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final Document document = new Document();
         document.add(field);
 
-        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010", commonTestScenarioCreator.createIndexFields(), 10);
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                10);
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 

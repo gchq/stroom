@@ -30,10 +30,7 @@ ACTIVITY2.id = "2";
 
 const ACTIVITIES: Activity[] = [ACTIVITY, ACTIVITY2];
 
-const resourceBuilder: ResourceBuilder = (
-  server: any,
-  apiUrl: any,
-) => {
+const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
   const resource = apiUrl("/activity/v1");
 
   server
@@ -42,11 +39,9 @@ const resourceBuilder: ResourceBuilder = (
       res.json(ACTIVITY);
     });
 
-  server
-    .get(resource)
-    .intercept((req: HttpRequest, res: HttpResponse) => {
-      res.json(ACTIVITIES);
-    });
+  server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(ACTIVITIES);
+  });
 };
 
 export default resourceBuilder;

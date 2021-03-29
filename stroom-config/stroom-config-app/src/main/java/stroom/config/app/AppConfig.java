@@ -3,20 +3,18 @@ package stroom.config.app;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.alert.impl.AlertConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.authentication.config.AuthenticationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -29,11 +27,11 @@ import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
-import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -51,6 +49,7 @@ import javax.validation.constraints.AssertTrue;
 @JsonRootName(AppConfig.NAME)
 @Singleton
 public class AppConfig extends AbstractConfig {
+
     public static final String NAME = "stroom";
 
     public static final String PROP_NAME_ACTIVITY = "activity";
@@ -58,6 +57,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_ALERTING = "alerting";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
+    public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -86,6 +86,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -102,11 +103,9 @@ public class AppConfig extends AbstractConfig {
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private AlertConfig alertConfig = new AlertConfig();
-    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
-    private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
+    private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
-    private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
     private CommonDbConfig commonDbConfig = new CommonDbConfig();
     private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
     private LegacyDbConfig legacyDbConfig = new LegacyDbConfig();
@@ -130,6 +129,7 @@ public class AppConfig extends AbstractConfig {
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+    private LoggingConfig loggingConfig = new LoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -189,24 +189,14 @@ public class AppConfig extends AbstractConfig {
         this.annotationConfig = annotationConfig;
     }
 
-    @JsonProperty(PROP_NAME_AUTHENTICATION)
-    public AuthenticationConfig getAuthenticationConfig() {
-        return authenticationConfig;
+    @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
+    public ByteBufferPoolConfig getByteBufferPoolConfig() {
+        return byteBufferPoolConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
-    }
-
-    @JsonProperty(PROP_NAME_BENCHMARK)
-    public BenchmarkClusterConfig getBenchmarkClusterConfig() {
-        return benchmarkClusterConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setBenchmarkClusterConfig(final BenchmarkClusterConfig benchmarkClusterConfig) {
-        this.benchmarkClusterConfig = benchmarkClusterConfig;
+    public void setByteBufferPoolConfig(final ByteBufferPoolConfig byteBufferPoolConfig) {
+        this.byteBufferPoolConfig = byteBufferPoolConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)
@@ -229,20 +219,10 @@ public class AppConfig extends AbstractConfig {
         this.clusterLockConfig = clusterLockConfig;
     }
 
-    @JsonProperty(PROP_NAME_CLUSTER_TASK)
-    public ClusterTaskConfig getClusterTaskConfig() {
-        return clusterTaskConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterTaskConfig(final ClusterTaskConfig clusterTaskConfig) {
-        this.clusterTaskConfig = clusterTaskConfig;
-    }
-
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
-    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
-            "defined for a service area in stroom, e.g. core or config. This means you can have all service areas " +
-            "running in a single database, have each in their own database or a mixture.")
+    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details " +
+            "are defined for a service area in stroom, e.g. core or config. This means you can have all service " +
+            "areas running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }
@@ -458,7 +438,8 @@ public class AppConfig extends AbstractConfig {
         this.proxyAggregationConfig = proxyAggregationConfig;
     }
 
-    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if behind a proxy")
+    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +
+            "behind a proxy")
     @JsonProperty(PROP_NAME_PUBLIC_URI)
     public PublicUriConfig getPublicUri() {
         return publicUri;
@@ -486,6 +467,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
         this.receiveDataConfig = receiveDataConfig;
+    }
+
+    @JsonProperty(PROP_NAME_LOGGING)
+    public LoggingConfig getRequestLoggingConfig() {
+        return loggingConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRequestLoggingConfig(final LoggingConfig loggingConfig) {
+        this.loggingConfig = loggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)
@@ -569,7 +560,8 @@ public class AppConfig extends AbstractConfig {
         this.uiConfig = uiConfig;
     }
 
-    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
+    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the " +
+            "server, e.g. during development or some other deployments")
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;

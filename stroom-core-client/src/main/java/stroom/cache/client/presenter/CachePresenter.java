@@ -16,14 +16,16 @@
 
 package stroom.cache.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
+
     public static final String LIST = "LIST";
     public static final String NODE_LIST = "NODE_LIST";
 
@@ -63,5 +65,6 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     }
 
     public interface CacheView extends View {
+
     }
 }

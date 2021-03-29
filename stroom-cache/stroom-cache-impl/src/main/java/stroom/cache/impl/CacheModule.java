@@ -29,6 +29,7 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 public class CacheModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(CacheManager.class).to(CacheManagerImpl.class);
@@ -39,10 +40,10 @@ public class CacheModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .withName("Evict expired elements")
-                        .withDescription("Evicts expired cache entries")
-                        .withManagedState(false)
-                        .withSchedule(Schedule.ScheduleType.PERIODIC, "1m"));
+                        .name("Evict expired elements")
+                        .description("Evicts expired cache entries")
+                        .managed(false)
+                        .schedule(Schedule.ScheduleType.PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(CacheManagerClose.class);
@@ -50,6 +51,7 @@ public class CacheModule extends AbstractModule {
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {
+
         @Inject
         EvictExpiredElements(final CacheManagerService stroomCacheManager) {
             super(stroomCacheManager::evictExpiredElements);
@@ -57,6 +59,7 @@ public class CacheModule extends AbstractModule {
     }
 
     private static class CacheManagerClose extends RunnableWrapper {
+
         @Inject
         CacheManagerClose(final CacheManagerImpl cacheManager) {
             super(cacheManager::close);

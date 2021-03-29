@@ -16,14 +16,19 @@
 
 package stroom.test;
 
+import java.nio.file.Path;
+
 /**
  * Common Test Utility that among other things tears down things before the
  * tests run.
  */
 public interface CommonTestControl {
-    void setup();
 
-    void teardown();
+    void setup(Path tempDir);
+
+    void cleanup();
+
+    void clear();
 
     void createRequiredXMLSchemas();
 }

@@ -17,19 +17,21 @@
 
 package stroom.feed.impl;
 
-import event.logging.BaseObject;
-import event.logging.Object;
-import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.feed.shared.FeedDoc;
 
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class FeedDocObjectInfoProvider implements ObjectInfoProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedDocObjectInfoProvider.class);
 
     @Override
-    public BaseObject createBaseObject(final java.lang.Object obj) {
+    public BaseObject createBaseObject(final Object obj) {
         final FeedDoc feed = (FeedDoc) obj;
 
         String description = null;
@@ -41,30 +43,28 @@ class FeedDocObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get feed description!", e);
         }
 
-        final Object object = new Object();
-        object.setType(feed.getType());
-        object.setId(feed.getUuid());
-        object.setName(feed.getName());
-        object.setDescription(description);
+        final OtherObject.Builder<Void> builder = OtherObject.builder()
+                .withType(feed.getType())
+                .withId(feed.getUuid())
+                .withName(feed.getName())
+                .withDescription(description);
 
         try {
-            object.getData()
-                    .add(EventLoggingUtil.createData("FeedStatus", feed.getStatus().getDisplayValue()));
+            builder.addData(EventLoggingUtil.createData("FeedStatus", feed.getStatus().getDisplayValue()));
             // Stream type is now lazy
             if (feed.getStreamType() != null) {
-                object.getData().add(EventLoggingUtil.createData("StreamType", feed.getStreamType()));
+                builder.addData(EventLoggingUtil.createData("StreamType", feed.getStreamType()));
             }
-            object.getData().add(EventLoggingUtil.createData("DataEncoding", feed.getEncoding()));
-            object.getData().add(EventLoggingUtil.createData("ContextEncoding", feed.getContextEncoding()));
-            object.getData().add(EventLoggingUtil.createData("RetentionDayAge",
+            builder.addData(EventLoggingUtil.createData("DataEncoding", feed.getEncoding()));
+            builder.addData(EventLoggingUtil.createData("ContextEncoding", feed.getContextEncoding()));
+            builder.addData(EventLoggingUtil.createData("RetentionDayAge",
                     String.valueOf(feed.getRetentionDayAge())));
-            object.getData()
-                    .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
+            builder.addData(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to add unknown but useful data!", e);
         }
 
-        return object;
+        return builder.build();
     }
 
     @Override

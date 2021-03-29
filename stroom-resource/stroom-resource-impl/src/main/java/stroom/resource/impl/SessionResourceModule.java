@@ -18,11 +18,13 @@
 
 package stroom.resource.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.resource.api.ResourceStore;
 import stroom.util.guice.ServletBinder;
 
+import com.google.inject.AbstractModule;
+
 public class SessionResourceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ResourceStore.class).to(SessionResourceStoreImpl.class);

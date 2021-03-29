@@ -33,8 +33,9 @@ public class ExplorerTreeFilter {
 
     public static FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
     public static FilterFieldDefinition FIELD_DEF_TYPE = FilterFieldDefinition.qualifiedField("Type");
+    public static FilterFieldDefinition FIELD_DEF_UUID = FilterFieldDefinition.qualifiedField("UUID");
     public static List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
-            FIELD_DEF_NAME, FIELD_DEF_TYPE);
+            FIELD_DEF_NAME, FIELD_DEF_TYPE, FIELD_DEF_UUID);
 
     @JsonProperty
     private final Set<String> includedTypes;
@@ -80,10 +81,15 @@ public class ExplorerTreeFilter {
         return nameFilterChange;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ExplorerTreeFilter that = (ExplorerTreeFilter) o;
         return nameFilterChange == that.nameFilterChange &&
                 Objects.equals(includedTypes, that.includedTypes) &&

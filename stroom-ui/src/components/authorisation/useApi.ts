@@ -23,20 +23,16 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-    const { httpPostJsonResponse } = useHttpClient();
-    const { apiUrl } = useUrlFactory();
-    const resource = apiUrl("/users/v1");
-    const createUser = useCallback(
-      (userEmail: string) =>
-        httpPostJsonResponse(
-          `${resource}/create/${userEmail}/false`,
-          {},
-        ),
-      [resource, httpPostJsonResponse],
-    );
+  const { httpPostJsonResponse } = useHttpClient();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/users/v1");
+  const createUser = useCallback(
+    (userEmail: string) =>
+      httpPostJsonResponse(`${resource}/create/${userEmail}/false`, {}),
+    [resource, httpPostJsonResponse],
+  );
 
-    return { createUser };
-  }
-;
+  return { createUser };
+};
 
 export default useApi;

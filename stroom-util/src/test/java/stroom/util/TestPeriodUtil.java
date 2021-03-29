@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPeriodUtil {
+
     private static final int N2000 = 2000;
     private static final int N2001 = 2001;
     private static final int N2002 = 2002;

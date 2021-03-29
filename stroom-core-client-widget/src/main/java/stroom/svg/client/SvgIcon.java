@@ -17,6 +17,7 @@
 package stroom.svg.client;
 
 public class SvgIcon implements Icon {
+
     private final String url;
     private final int width;
     private final int height;

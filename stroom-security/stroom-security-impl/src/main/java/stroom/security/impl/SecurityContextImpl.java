@@ -9,15 +9,16 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
+
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
@@ -85,7 +86,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        return processingUserIdentityProvider.get().equals(userIdentity);
+        return processingUserIdentityProvider.isProcessingUser(userIdentity);
     }
 
     String getUserUuid(final UserIdentity userIdentity) {
@@ -122,7 +123,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (processingUserIdentityProvider.get().equals(userIdentity)) {
+        if (processingUserIdentityProvider.isProcessingUser(userIdentity)) {
             return true;
         }
 
@@ -179,7 +180,8 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationException("No user is currently logged in");
         }
 
-        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then test for `Use` instead of `Read`.
+        // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
+        // test for `Use` instead of `Read`.
         String perm = permission;
         if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
             perm = DocumentPermissionNames.USE;
@@ -207,7 +209,9 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
+    private boolean hasUserDocumentPermission(final String userUuid,
+                                              final String documentUuid,
+                                              final String permission) {
         final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
         if (userDocumentPermissions != null) {
             return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);

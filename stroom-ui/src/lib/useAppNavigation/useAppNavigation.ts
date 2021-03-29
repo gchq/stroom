@@ -6,7 +6,7 @@ import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base
 import useUrlGenerator from "./useUrlGenerator";
 import { WithChromeContext } from "lib/useRouter/BrowserRouter";
 
-const useAppNavigation = (): NavigateApp => {
+export const useAppNavigation = (): NavigateApp => {
   const { history: h } = useRouter();
   const { urlPrefix } = React.useContext(WithChromeContext);
   const u = useUrlGenerator(urlPrefix); // just to make all the following rote lines short
@@ -55,5 +55,3 @@ const useAppNavigation = (): NavigateApp => {
     [h, u],
   );
 };
-
-export default useAppNavigation;

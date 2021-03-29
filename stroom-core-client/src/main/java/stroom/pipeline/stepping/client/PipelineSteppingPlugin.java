@@ -17,8 +17,6 @@
 package stroom.pipeline.stepping.client;
 
 
-import com.google.gwt.core.client.GWT;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
@@ -38,10 +36,14 @@ import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
+import com.google.gwt.core.client.GWT;
+import com.google.web.bindery.event.shared.EventBus;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -77,7 +79,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                     .onSuccess(result ->
                             choosePipeline(result, event.getStepLocation(), event.getChildStreamType()))
                     .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(event.getStreamId(), event.getChildStreamId()));
+                    .getPipelineForStepping(new GetPipelineForMetaRequest(event.getStreamId(),
+                            event.getChildStreamId()));
         }
     }
 

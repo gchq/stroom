@@ -1,5 +1,5 @@
 import * as React from "react";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import {
   StroomUser,
   useGroupsForUser,
@@ -35,7 +35,9 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
   } = useThemedConfirm({
     onConfirm: React.useCallback(
       () =>
-        selectedItems.map(g => g.uuid).forEach(gUuid => removeFromGroup(gUuid)),
+        selectedItems
+          .map((g) => g.uuid)
+          .forEach((gUuid) => removeFromGroup(gUuid)),
       [removeFromGroup, selectedItems],
     ),
     getQuestion: React.useCallback(
@@ -43,7 +45,7 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedItems.map(s => s.name).join(", "),
+      () => selectedItems.map((s) => s.name).join(", "),
       [selectedItems],
     ),
   });
@@ -62,24 +64,25 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
       addToGroup,
     ]),
     pickerBaseProps: {
-      valuesToFilterOut: React.useMemo(() => groups.map(g => g.uuid), [groups]),
+      valuesToFilterOut: React.useMemo(() => groups.map((g) => g.uuid), [
+        groups,
+      ]),
     },
   });
 
   return (
     <div>
       <h2>Groups for User {user.name}</h2>
-      <Button text="Add to Group" onClick={showUserGroupPicker} />
+      <Button onClick={showUserGroupPicker}>Add to Group</Button>
       <Button
-        text="Remove from Group"
         disabled={selectedItems.length === 0}
         onClick={showDeleteGroupMembershipDialog}
-      />
-      <Button
-        text="View/Edit"
-        disabled={selectedItems.length !== 1}
-        onClick={goToSelectedUser}
-      />
+      >
+        Remove from Group
+      </Button>
+      <Button disabled={selectedItems.length !== 1} onClick={goToSelectedUser}>
+        View/Edit
+      </Button>
       <ThemedConfirm {...deleteGroupMembershipComponentProps} />
       <UsersTable {...tableProps} />
       <UserPickerDialog {...userGroupPickerProps} />

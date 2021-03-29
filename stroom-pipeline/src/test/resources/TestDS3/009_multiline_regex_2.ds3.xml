@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter
+        xmlns="data-splitter:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+        version="3.0">
+
+  <!-- Match each record, with the query and results sections captured as two groups -->
+  <regex pattern="((?>\n*|^)(?>.*\n)+?)\n((?>\n*|^)(?>.*\n)+?(?>\n|$))">
+
+    <!-- Create a data element to output query data -->
+    <data name="query">
+      <group id="query" value="$1">
+
+        <!-- We only want to output the date and time from the first line. -->
+        <regex pattern="(\n?[^\s]*)\s+([^\s]*)\s+([^=:]*)[=:]+\s+(.*)" maxMatch="1">
+          <data name="date" value="$1" />
+          <data name="time" value="$2" />
+          <data name="$3" value="$4" />
+        </regex>
+
+        <!-- Output all other values -->
+        <regex pattern="(\n?[^\s]*)\s+([^\s]*)\s+([^=:]*)[=:]+\s+(.*)">
+          <data name="$3" value="$4" />
+        </regex>
+
+      </group>
+    </data>
+
+    <!-- Create a data element to output result data -->
+    <data name="results">
+      <group id="results" value="$2">
+
+        <!-- We only want to output the date and time from the first line. -->
+        <regex pattern="(\n?[^\s]*)\s+([^\s]*)\s+([^=:]*):+" maxMatch="1">
+          <data name="date" value="$1" />
+          <data name="time" value="$2" />
+        </regex>
+
+        <!-- Output all other values -->
+        <regex pattern="(\n?[^\s]*)\s+([^\s]*)\s+([^=:]*)[=:]+\s+(.*)">
+          <data name="$3" value="$4" />
+        </regex>
+
+      </group>
+    </data>
+  </regex>
+</dataSplitter>

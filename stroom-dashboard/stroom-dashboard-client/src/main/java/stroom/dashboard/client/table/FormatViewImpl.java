@@ -16,6 +16,16 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.dashboard.client.table.FormatPresenter.FormatView;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.TimeZone;
+import stroom.query.api.v2.TimeZone.Use;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
+
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,20 +38,12 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.TimeZone;
-import stroom.dashboard.shared.TimeZone.Use;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> implements FormatView {
+
     public static final List<String> STANDARD_FORMATS = Arrays
             .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
@@ -75,7 +77,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     TextBox text;
     @UiField
-    ItemListBox<TimeZone.Use> timeZoneUse;
+    ItemListBox<Use> timeZoneUse;
     @UiField
     StringListBox timeZoneId;
     @UiField
@@ -288,5 +290,6 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     }
 
     public interface Binder extends UiBinder<Widget, FormatViewImpl> {
+
     }
 }

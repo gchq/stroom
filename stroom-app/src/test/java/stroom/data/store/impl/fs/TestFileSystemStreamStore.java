@@ -17,10 +17,6 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.lmdbjava.Stat;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
@@ -34,28 +30,31 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.meta.impl.db.MetaValueConfig;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.PageRequest;
-import stroom.util.Period;
+import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -69,12 +68,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
+
     private static final int N1 = 1;
     private static final int N13 = 13;
 
@@ -112,7 +113,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         // Make sure stream attributes get flushed straight away.
         metaValueConfig.setAddAsync(false);
-        volumeConfig.setResilientReplicationCount(2);
 
         final Optional<ExplorerNode> system = explorerNodeService.getRoot();
         final DocRef root = system.get().getDocRef();
@@ -130,7 +130,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         metaValueConfig.setAddAsync(true);
-        volumeConfig.setResilientReplicationCount(1);
     }
 
     /**
@@ -146,7 +145,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testBasic() throws IOException {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
@@ -170,8 +169,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFeedFindAll() throws IOException {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED2)
                         .build())
@@ -182,8 +181,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFeedFindSome() throws IOException {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED2)
                         .build())
@@ -196,9 +195,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFeedFindNone() throws IOException {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
-                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
                         .build())
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
@@ -208,7 +207,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFeedFindOne() throws IOException {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED2)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
@@ -217,7 +216,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFolder() throws Exception {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
@@ -241,7 +240,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testParentChild() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -251,7 +250,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             TargetUtil.write(streamTarget, testString);
         }
 
-        final MetaProperties childProperties = new MetaProperties.Builder()
+        final MetaProperties childProperties = MetaProperties.builder()
                 .feedName(rootMeta.getFeedName())
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(rootMeta)
@@ -262,7 +261,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             TargetUtil.write(childTarget, testString);
         }
 
-        final MetaProperties grandChildProperties = new MetaProperties.Builder()
+        final MetaProperties grandChildProperties = MetaProperties.builder()
                 .feedName(childMeta.getFeedName())
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(childMeta)
@@ -320,7 +319,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private Meta createMeta(final String feedName, final Long parentStreamId) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parentId(parentStreamId)
@@ -334,10 +333,16 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testFindWithAllCriteria() {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.STATUS_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(MetaFields.CREATE_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(MetaFields.EFFECTIVE_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(MetaFields.STATUS_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
                 .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
                 .addTerm(MetaFields.ID, Condition.EQUALS, 1)
@@ -358,7 +363,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testBasicImportExportList() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -383,11 +388,14 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             assertThat(streamSource.getMeta().getFeedName()).isNotNull();
         }
 
-        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
+        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
 
         boolean foundOne = false;
         for (final Meta result : list) {
-            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""), result, StreamTypeNames.RAW_EVENTS)).isNotNull();
+            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""),
+                    result,
+                    StreamTypeNames.RAW_EVENTS)).isNotNull();
             assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
             if (fileSystemStreamPathHelper.getBaseName(result)
                     .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
@@ -397,21 +405,24 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         assertThat(foundOne).as("Expecting to find at least that one file " + exactMetaData).isTrue();
 
-        assertThat(metaService.find(new FindMetaCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
+        assertThat(metaService.find(new FindMetaCriteria()).size() >= 1).as(
+                "Expecting to find at least 1 with no criteria").isTrue();
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
+        assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as(
+                "Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
         final FindDataVolumeCriteria volumeCriteria = FindDataVolumeCriteria.create(exactMetaData);
-        assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
+        assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as(
+                "Expecting to find at least 1 with day old criteria").isTrue();
     }
 
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -452,7 +463,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void doTestDeleteTarget(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -526,7 +537,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     // TODO : FIX PIPELINE FILTERING
 //    @Test
 //    public void testDeletePipleineFilters() throws IOException {
-//        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+//        final ExpressionOperator expression = ExpressionOperator.builder()
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "Test")
 ////                .addTerm(StreamDataSource., Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
 //                .build();
@@ -540,7 +551,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFileSystem() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -574,7 +585,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testWriteNothing() throws IOException {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -661,13 +672,21 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private Meta buildRefData(final String feed, final int year, final int month, final String type, final boolean lock) throws IOException {
+    private Meta buildRefData(final String feed,
+                              final int year,
+                              final int month,
+                              final String type,
+                              final boolean lock)
+            throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(type)
-                .effectiveMs(ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli())
+                .effectiveMs(
+                        ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC)
+                                .toInstant()
+                                .toEpochMilli())
                 .build();
 
         final Target streamTarget = streamStore.openTarget(metaProperties);
@@ -684,7 +703,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDeleteStreamTarget() throws IOException {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -721,7 +740,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String testString5 = FileSystemTestUtil.getUniqueTestString();
         final String testString6 = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -786,7 +805,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testIOErrors() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -797,18 +816,27 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 TargetUtil.write(streamTarget, testString);
 
                 dir = ((FsTarget) streamTarget).getFile().getParent();
-                FileUtil.removeFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+                FileUtil.removeFilePermission(dir,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.GROUP_WRITE,
+                        PosixFilePermission.OTHERS_WRITE);
             }
 
             fail("Expecting an error");
         } catch (final RuntimeException e) {
             // Expected.
         } finally {
-            FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+            FileUtil.addFilePermission(dir,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_WRITE,
+                    PosixFilePermission.OTHERS_WRITE);
         }
     }
 
     private enum DeleteTestStyle {
-        META, OPEN, OPEN_TOUCHED, OPEN_TOUCHED_CLOSED
+        META,
+        OPEN,
+        OPEN_TOUCHED,
+        OPEN_TOUCHED_CLOSED
     }
 }

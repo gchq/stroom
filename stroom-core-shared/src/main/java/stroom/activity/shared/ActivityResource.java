@@ -16,16 +16,18 @@
 
 package stroom.activity.shared;
 
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -36,79 +38,79 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
-@Api(value = "activity - /v1")
+@Tag(name = "Activities")
 @Path("/activity" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ActivityResource extends RestResource, DirectRestService {
+public interface ActivityResource extends RestResource, DirectRestService, FetchWithIntegerId<Activity> {
 
     @GET
-    @ApiOperation(
-            value = "Lists activities",
-            response = ResultPage.class)
+    @Operation(
+            summary = "Lists activities",
+            operationId = "listActivities")
     ResultPage<Activity> list(@QueryParam("filter") String filter);
 
     @GET
     @Path("/fields")
-    @ApiOperation(
-            value = "Lists activity field definitions",
-            response = List.class)
+    @Operation(
+            summary = "Lists activity field definitions",
+            operationId = "listActivityFieldDefinitions")
     List<FilterFieldDefinition> listFieldDefinitions();
 
     @POST
-    @ApiOperation(
-            value = "Create an Activity",
-            response = Activity.class)
+    @Operation(
+            summary = "Create an Activity",
+            operationId = "createActivity")
     Activity create();
 
+    @Override
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Get an Activity",
-            response = Activity.class)
-    Activity read(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Fetch an Activity",
+            operationId = "fetchActivity")
+    Activity fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Update an Activity",
-            response = Activity.class)
-    Activity update(@PathParam("id") Integer id, Activity activity);
+    @Operation(
+            summary = "Update an Activity",
+            operationId = "updateActivity")
+    Activity update(@PathParam("id") final Integer id, final Activity activity);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Delete an activity",
-            response = Boolean.class)
-    Boolean delete(@PathParam("id") Integer id);
+    @Operation(
+            summary = "Delete an activity",
+            operationId = "deleteActivity")
+    Boolean delete(@PathParam("id") final Integer id);
 
     @POST
     @Path("/validate")
-    @ApiOperation(
-            value = "Create an Activity",
-            response = ActivityValidationResult.class)
-    ActivityValidationResult validate(@ApiParam("activity") Activity activity);
+    @Operation(
+            summary = "Create an Activity",
+            operationId = "validateActivity")
+    ActivityValidationResult validate(@Parameter(description = "activity", required = true) final Activity activity);
 
     @GET
     @Path("/current")
-    @ApiOperation(
-            value = "Gets the current activity",
-            response = Activity.class)
+    @Operation(
+            summary = "Gets the current activity",
+            operationId = "getCurrentActivity")
     Activity getCurrentActivity();
 
     @PUT
     @Path("/current")
-    @ApiOperation(
-            value = "Gets the current activity",
-            response = Activity.class)
+    @Operation(
+            summary = "Gets the current activity",
+            operationId = "setCurrentActivity")
     Activity setCurrentActivity(Activity activity);
 
     @POST
     @Path("/acknowledge")
-    @ApiOperation(
-            value = "Acknowledge the slash screen",
-            response = Boolean.class)
-    Boolean acknowledgeSplash(@ApiParam("request") AcknowledgeSplashRequest request);
+    @Operation(
+            summary = "Acknowledge the slash screen",
+            operationId = "acknowledgeSplash")
+    Boolean acknowledgeSplash(@Parameter(description = "request", required = true) AcknowledgeSplashRequest request);
 }

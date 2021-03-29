@@ -1,19 +1,21 @@
 package stroom.explorer.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.inject.Singleton;
 
 @Singleton
 public class ExplorerConfig extends AbstractConfig implements HasDbConfig {
+
     private DbConfig dbConfig = new DbConfig();
 
-    private CacheConfig docRefInfoCache = new CacheConfig.Builder()
+    private CacheConfig docRefInfoCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

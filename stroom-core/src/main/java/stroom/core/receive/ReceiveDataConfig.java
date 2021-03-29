@@ -1,14 +1,16 @@
 package stroom.core.receive;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class ReceiveDataConfig extends AbstractConfig {
+
     /**
      * Same size as JDK's Buffered Output Stream.
      */

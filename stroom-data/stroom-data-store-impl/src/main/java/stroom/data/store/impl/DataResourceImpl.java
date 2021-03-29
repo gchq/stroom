@@ -16,164 +16,186 @@
 
 package stroom.data.store.impl;
 
+import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;
-import stroom.data.store.api.Store;
-import stroom.feed.api.FeedProperties;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.factory.PipelineDataCache;
-import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.resource.api.ResourceStore;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataResult;
+import stroom.util.shared.Count;
+import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.Severity;
 
+import event.logging.ComplexLoggedOutcome;
+import event.logging.ExportEventAction;
+import event.logging.ImportEventAction;
+import event.logging.MultiObject;
+import event.logging.ViewEventAction;
+
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.nio.file.Path;
-import java.util.ArrayList;
 
-class DataResourceImpl implements DataResource {
-    private final DataFetcher dataFetcher;
-    private final ResourceStore resourceStore;
-    private final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider;
-    private final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider;
-    private final StreamEventLog streamEventLog;
-    private final SecurityContext securityContext;
+@AutoLogged
+class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSection>> {
+
+    private final Provider<DataService> dataServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    DataResourceImpl(final Store streamStore,
-                     final FeedProperties feedProperties,
-                     final Provider<FeedHolder> feedHolderProvider,
-                     final Provider<MetaDataHolder> metaDataHolderProvider,
-                     final Provider<PipelineHolder> pipelineHolderProvider,
-                     final Provider<MetaHolder> metaHolderProvider,
-                     final PipelineStore pipelineStore,
-                     final Provider<PipelineFactory> pipelineFactoryProvider,
-                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                     final PipelineDataCache pipelineDataCache,
-                     final PipelineScopeRunnable pipelineScopeRunnable,
-                     final ResourceStore resourceStore,
-                     final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider,
-                     final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider,
-                     final StreamEventLog streamEventLog,
-                     final SecurityContext securityContext) {
-        dataFetcher = new DataFetcher(streamStore,
-                feedProperties,
-                feedHolderProvider,
-                metaDataHolderProvider,
-                pipelineHolderProvider,
-                metaHolderProvider,
-                pipelineStore,
-                pipelineFactoryProvider,
-                errorReceiverProxyProvider,
-                pipelineDataCache,
-                streamEventLog,
-                securityContext,
-                pipelineScopeRunnable);
-        this.resourceStore = resourceStore;
-        this.dataUploadTaskHandlerProvider = dataUploadTaskHandlerProvider;
-        this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandlerProvider;
-        this.streamEventLog = streamEventLog;
-        this.securityContext = securityContext;
+    DataResourceImpl(final Provider<DataService> dataServiceProvider,
+                     final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+        this.dataServiceProvider = dataServiceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration download(final FindMetaCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.EXPORT_DATA_PERMISSION, () -> {
-            ResourceKey resourceKey;
-            try {
-                // Import file.
-                resourceKey = resourceStore.createTempFile("StroomData.zip");
-                final Path file = resourceStore.getTempFile(resourceKey);
-                String fileName = file.getFileName().toString();
-                int index = fileName.lastIndexOf(".");
-                if (index != -1) {
-                    fileName = fileName.substring(0, index);
-                }
 
-                final DataDownloadSettings settings = new DataDownloadSettings();
-                final DataDownloadResult result = dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
+        final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-                streamEventLog.exportStream(criteria, null);
+        final ExportEventAction exportEventAction = ExportEventAction.builder()
+                .withSource(MultiObject.builder()
+                        .addCriteria(stroomEventLoggingService.convertExpressionCriteria(
+                                "Meta",
+                                criteria))
+                        .build())
+                .build();
 
-                if (result.getRecordsWritten() == 0) {
-                    return null;
-                }
+        final ResourceGeneration resourceGeneration = stroomEventLoggingServiceProvider.get()
+                .loggedResult(
+                        StroomEventLoggingUtil.buildTypeId(this, "download"),
+                        "Downloading stream data",
+                        exportEventAction,
+                        () -> {
+                            try {
+                                return dataServiceProvider.get().download(criteria);
+                            } catch (final RuntimeException e) {
+                                throw EntityServiceExceptionUtil.create(e);
+                            }
+                        });
 
-            } catch (final RuntimeException e) {
-                streamEventLog.exportStream(criteria, e);
-                throw EntityServiceExceptionUtil.create(e);
-            }
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
-        });
+        return resourceGeneration;
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceKey upload(final UploadDataRequest request) {
-        return securityContext.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
-            try {
-                // Import file.
-                final Path file = resourceStore.getTempFile(request.getKey());
 
-                dataUploadTaskHandlerProvider.get().uploadData(
-                        request.getFileName(),
-                        file,
-                        request.getFeedName(),
-                        request.getStreamTypeName(),
-                        request.getEffectiveMs(),
-                        request.getMetaData());
+        final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-//            } catch (final RuntimeException e) {
-//                throw e;//EntityServiceExceptionUtil.create(e);
-            } finally {
-                // Delete the import if it was successful
-                resourceStore.deleteTempFile(request.getKey());
-            }
+        final ResourceKey resourceKey = stroomEventLoggingService.loggedResult(
+                StroomEventLoggingUtil.buildTypeId(this, "upload"),
+                "Uploading stream data",
+                ImportEventAction.builder()
+                        .withSource(stroomEventLoggingService.convertToMulti(request))
+                        .build(),
+                () -> {
+                    try {
+                        return dataServiceProvider.get().upload(request);
+                    } catch (final RuntimeException e) {
+                        throw EntityServiceExceptionUtil.create(e);
+                    }
+                });
 
-            return request.getKey();
-        });
+        return resourceKey;
     }
 
     @Override
-    public AbstractFetchDataResult fetchData( final long streamId,
-                                              final Long streamsOffset,
-                                              final Long streamsLength,
-                                              final Long pageOffset,
-                                              final Long pageSize) {
+    public List<DataInfoSection> viewInfo(final long id) {
+        final List<DataInfoSection> result;
+        try {
+            result = dataServiceProvider.get().info(id);
+        } catch (final RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
+        }
 
-        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
-        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
+        return result;
+    }
 
-        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
-        final boolean showAsHtml = false; // Used for dashboards so false here.
-        final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AbstractFetchDataResult fetch(final FetchDataRequest request) {
 
-        //TODO Used for child streams. Needs implementing.
-        String childStreamTypeName = null;
+        final String idStr = request.getSourceLocation() != null
+                ? request.getSourceLocation().getIdentifierString()
+                : "?";
 
-        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-            dataFetcher.reset();
-            return dataFetcher.getData(
-                    streamId,
-                    childStreamTypeName,
-                    streamRange,
-                    pageRange,
-                    isMarkerMode,
-                    null,
-                    showAsHtml,
-                    expandedSeverities);
-        });
+        final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
+
+        return stroomEventLoggingService.loggedResult(
+                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
+                "Viewing stream " + idStr,
+                ViewEventAction.builder()
+                        .build(),
+                eventAction -> {
+                    ComplexLoggedOutcome<AbstractFetchDataResult, ViewEventAction> outcome;
+                    try {
+                        // Do the fetch
+                        final AbstractFetchDataResult fetchDataResult = dataServiceProvider.get()
+                                .fetch(request);
+
+                        outcome = ComplexLoggedOutcome.success(
+                                fetchDataResult,
+                                ViewEventAction.builder()
+                                        .withObjects(stroomEventLoggingService.convert(fetchDataResult))
+                                        .build());
+
+                    } catch (ViewDataException vde) {
+                        // Convert an ex into a fetch result
+                        final AbstractFetchDataResult fetchDataResult = createErrorResult(vde);
+                        outcome = ComplexLoggedOutcome.failure(
+                                fetchDataResult,
+                                ViewEventAction.builder()
+                                        .withObjects(stroomEventLoggingService.convert(fetchDataResult))
+                                        .build(),
+                                vde.getMessage());
+                    }
+                    return outcome;
+                },
+                null);
+    }
+
+
+    @AutoLogged(OperationType.UNLOGGED) // Not an explicit user action
+    @Override
+    public Set<String> getChildStreamTypes(final long id, final long partNo) {
+
+        final Set<String> childStreamTypes = dataServiceProvider.get()
+                .getChildStreamTypes(id, partNo);
+
+        return childStreamTypes;
+    }
+
+    private FetchDataResult createErrorResult(final ViewDataException viewDataException) {
+        return new FetchDataResult(
+                null,
+                StreamTypeNames.RAW_EVENTS,
+                null,
+                viewDataException.getSourceLocation(),
+                OffsetRange.zero(),
+                Count.of(0L, true),
+                Count.of(0L, true),
+                0L,
+                null,
+                viewDataException.getMessage(),
+                false,
+                null);
+    }
+
+    @Override
+    public List<DataInfoSection> fetch(final Long id) {
+        // Provide the info when failing to read the info
+        return viewInfo(id);
     }
 }

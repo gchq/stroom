@@ -51,6 +51,9 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 ## Reference data storage
 Reference data uses a memory-mapped disk-based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
 
+## Search result storage
+Search results are stored on disk rather than in memory during creation to reduce the memory overhead incurred by search.
+
 ## Modularisation
 Separation of Stroom components into discreet modules that have clear APIs and separate persistence where required to reduce coupling.
 
@@ -95,7 +98,4 @@ Stroom exposes the use of Apache Kafka Streams for performing certain complex an
 
 ## Query fusion
 Stroom allows multiple data sources to be queried at the same time and the results of the queries to be fused. This might be for fusing data from multiple search indexes, e.g. events and annotations, or to effectively decorate results with additional data at search time.
-
-## Search result storage
-Search results are stored on disk rather than in memory during creation to reduce the memory overhead incurred by search.
 

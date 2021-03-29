@@ -13,19 +13,21 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -33,18 +35,17 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.collections.BatchingIterator;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -54,19 +55,18 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Operator;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
-import org.jooq.SelectConditionStep;
+import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,10 +86,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-//import static org.jooq.impl.DSL.max;
-//import static org.jooq.impl.DSL.select;
-//import static org.jooq.impl.DSL.selectDistinct;
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
@@ -97,7 +96,8 @@ import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaDaoImpl implements MetaDao {
+class MetaDaoImpl implements MetaDao, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
     // This is currently only used for testing so no need to put it in config,
@@ -110,14 +110,13 @@ class MetaDaoImpl implements MetaDao {
     private static final MetaFeed metaFeed = META_FEED.as("f");
     private static final MetaType metaType = META_TYPE.as("t");
     private static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
-    private static final MetaVal metaVal = META_VAL.as("v");
 
     private static final stroom.meta.impl.db.jooq.tables.Meta parent = META.as("parent");
     private static final MetaFeed parentFeed = META_FEED.as("parentFeed");
     private static final MetaType parentType = META_TYPE.as("parentType");
     private static final MetaProcessor parentProcessor = META_PROCESSOR.as("parentProcessor");
 
-    private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> new Meta.Builder()
+    private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> Meta.builder()
             .id(record.get(meta.ID))
             .feedName(record.get(metaFeed.NAME))
             .typeName(record.get(metaType.NAME))
@@ -130,7 +129,7 @@ class MetaDaoImpl implements MetaDao {
             .effectiveMs(record.get(meta.EFFECTIVE_TIME))
             .build();
 
-    private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> new Meta.Builder()
+    private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> Meta.builder()
             .id(record.get(parent.ID))
             .feedName(record.get(parentFeed.NAME))
             .typeName(record.get(parentType.NAME))
@@ -149,6 +148,7 @@ class MetaDaoImpl implements MetaDao {
     private final MetaProcessorDaoImpl metaProcessorDao;
     private final MetaKeyDaoImpl metaKeyDao;
     private final DataRetentionConfig dataRetentionConfig;
+    private final DocRefInfoService docRefInfoService;
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -166,13 +166,15 @@ class MetaDaoImpl implements MetaDao {
                 final DataRetentionConfig dataRetentionConfig,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final WordListProvider wordListProvider,
-                final CollectionService collectionService) {
+                final CollectionService collectionService,
+                final DocRefInfoService docRefInfoService) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
         this.metaKeyDao = metaKeyDao;
         this.dataRetentionConfig = dataRetentionConfig;
+        this.docRefInfoService = docRefInfoService;
 
 
         // Extended meta fields.
@@ -203,15 +205,23 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
-        expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString);;
+        expressionMapper.map(MetaFields.STATUS,
+                meta.STATUS,
+                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME,
+                meta.EFFECTIVE_TIME,
+                value -> getDate(MetaFields.EFFECTIVE_TIME, value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
-        expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.PARENT_STATUS,
+                parent.STATUS,
+                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME,
+                parent.CREATE_TIME,
+                value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
 
@@ -221,7 +231,7 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
-        valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, ValString::create);
+        valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
@@ -230,6 +240,29 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+    }
+
+    private long getDate(final DateField field, final String value) {
+        try {
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
+                    ZoneOffset.UTC.getId(),
+                    System.currentTimeMillis());
+
+            return optional.orElseThrow(() ->
+                    new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                            + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+        } catch (final Exception e) {
+            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                    + "\" but was given string \"" + value + "\"", e);
+        }
+    }
+
+    private Val getPipelineName(final String uuid) {
+        String val = uuid;
+        if (docRefInfoService != null) {
+            val = docRefInfoService.name(new DocRef("Pipeline", uuid)).orElse(uuid);
+        }
+        return ValString.create(val);
     }
 
     private List<Integer> getFeedIds(final String feedName) {
@@ -302,7 +335,9 @@ class MetaDaoImpl implements MetaDao {
                 .getId()
         );
 
-        return new Meta.Builder().id(id)
+        return Meta
+                .builder()
+                .id(id)
                 .feedName(metaProperties.getFeedName())
                 .typeName(metaProperties.getTypeName())
                 .processorUuid(metaProperties.getProcessorUuid())
@@ -343,36 +378,35 @@ class MetaDaoImpl implements MetaDao {
         byte statusId = MetaStatusId.getPrimitiveValue(status);
 
         // Create a batch of insert stmts, each with n value sets
-        JooqUtil.context(metaDbConnProvider, context -> {
-            context.batch(
-                    BatchingIterator.batchedStreamOf(metaPropertiesList, MAX_VALUES_PER_INSERT)
-                            .map(metaPropertiesBatch -> {
-                                final var insertStep = context
-                                        .insertInto(META,
-                                                META.CREATE_TIME,
-                                                META.EFFECTIVE_TIME,
-                                                META.PARENT_ID,
-                                                META.STATUS,
-                                                META.STATUS_TIME,
-                                                META.FEED_ID,
-                                                META.TYPE_ID,
-                                                META.PROCESSOR_ID);
+        JooqUtil.context(metaDbConnProvider, context -> context
+                .batch(
+                        BatchingIterator.batchedStreamOf(metaPropertiesList, MAX_VALUES_PER_INSERT)
+                                .map(metaPropertiesBatch -> {
+                                    final var insertStep = context
+                                            .insertInto(META,
+                                                    META.CREATE_TIME,
+                                                    META.EFFECTIVE_TIME,
+                                                    META.PARENT_ID,
+                                                    META.STATUS,
+                                                    META.STATUS_TIME,
+                                                    META.FEED_ID,
+                                                    META.TYPE_ID,
+                                                    META.PROCESSOR_ID);
 
-                                metaPropertiesBatch.forEach(metaProperties ->
-                                        insertStep.values(
-                                                metaProperties.getCreateMs(),
-                                                metaProperties.getEffectiveMs(),
-                                                metaProperties.getParentId(),
-                                                statusId,
-                                                metaProperties.getStatusMs(),
-                                                feedIds.get(metaProperties.getFeedName()),
-                                                typeIds.get(metaProperties.getTypeName()),
-                                                processorIds.get(metaProperties.getProcessorUuid())));
-                                return insertStep;
-                            })
-                            .collect(Collectors.toList()))
-                    .execute();
-        });
+                                    metaPropertiesBatch.forEach(metaProperties ->
+                                            insertStep.values(
+                                                    metaProperties.getCreateMs(),
+                                                    metaProperties.getEffectiveMs(),
+                                                    metaProperties.getParentId(),
+                                                    statusId,
+                                                    metaProperties.getStatusMs(),
+                                                    feedIds.get(metaProperties.getFeedName()),
+                                                    typeIds.get(metaProperties.getTypeName()),
+                                                    processorIds.get(metaProperties.getProcessorUuid())));
+                                    return insertStep;
+                                })
+                                .collect(Collectors.toList()))
+                .execute());
     }
 
     @Override
@@ -408,9 +442,10 @@ class MetaDaoImpl implements MetaDao {
                         .collect(Collectors.toList());
             }
 
-            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                    new HashSet<>());
 
-            if (usedValKeys.isEmpty()) {
+            if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -419,12 +454,17 @@ class MetaDaoImpl implements MetaDao {
                                 .where(conditions)
                                 .execute());
             } else {
-                Condition extendedAttrCond = meta.ID.in(metaExpressionMapper.addJoins(
-                        DSL.select(meta.ID).from(meta),
+                Select ids = metaExpressionMapper.addJoins(
+                        DSL
+                                .select(meta.ID)
+                                .from(meta)
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
                         usedValKeys)
-                                .where(conditions).getResult()
-                        );
+                        .where(conditions);
+
+                Condition extendedAttrCond = meta.ID.in(ids);
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -437,11 +477,38 @@ class MetaDaoImpl implements MetaDao {
         return updateCount;
     }
 
+    private boolean containsPipelineCondition(final ExpressionOperator expr) {
+        if (expr == null || expr.getChildren() == null) {
+            return false;
+        }
+        for (ExpressionItem child : expr.getChildren()) {
+            if (child instanceof ExpressionTerm) {
+                ExpressionTerm term = (ExpressionTerm) child;
+
+                if (MetaFields.PIPELINE.getName().equals(term.getField())) {
+                    return true;
+                }
+            } else if (child instanceof ExpressionOperator) {
+                if (containsPipelineCondition((ExpressionOperator) child)) {
+                    return true;
+                }
+            } else {
+                //Don't know what this is!
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " " +
+                        "unable to optimise meta query");
+                //Allow search to succeed without optimisation
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
         final Condition filterCondition;
         if (criteria != null
                 && criteria.getExpression() != null
-                && !criteria.getExpression().equals(new ExpressionOperator.Builder(Op.AND).build())) {
+                && !criteria.getExpression().equals(ExpressionOperator.builder().build())) {
 
             filterCondition = expressionMapper.apply(criteria.getExpression());
         } else {
@@ -499,7 +566,7 @@ class MetaDaoImpl implements MetaDao {
 
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
-            final List<DataRetentionDeleteSummary> deleteSummaries = JooqUtil.contextResult(
+            return JooqUtil.contextResult(
                     metaDbConnProvider, context -> {
 
                         final String ruleNoFieldName = "rule_no";
@@ -533,7 +600,7 @@ class MetaDaoImpl implements MetaDao {
                                         detailTable.field(ruleNoFieldName),
                                         DSL.count())
                                 .from(detailTable)
-                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not impacted by a rule
+                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not hit by a rule
                                 .groupBy(
                                         detailTable.field(ruleNoFieldName),
                                         detailTable.field(feedNameFieldName),
@@ -550,7 +617,6 @@ class MetaDaoImpl implements MetaDao {
                                             (int) record.get(DSL.count().getName()));
                                 });
                     });
-            result = deleteSummaries;
         } else {
             // No rules so no point running a query
             result = Collections.emptyList();
@@ -582,7 +648,7 @@ class MetaDaoImpl implements MetaDao {
             conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
             conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
 
-            int lastUpdateCount = -1;
+            int lastUpdateCount;
             AtomicInteger iteration = new AtomicInteger(1);
             Duration totalSelectDuration = Duration.ZERO;
             Duration totalUpdateDuration = Duration.ZERO;
@@ -604,7 +670,8 @@ class MetaDaoImpl implements MetaDao {
 
                 startTime = Instant.now();
                 final Optional<TimePeriod> optSubPeriod = getTimeSlice(startTimeInc, batchSize, conditions);
-                totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
+                totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime,
+                        Instant.now().plusMillis(1)));
 
                 if (optSubPeriod.isEmpty()) {
                     LOGGER.debug("No time slice found");
@@ -623,9 +690,13 @@ class MetaDaoImpl implements MetaDao {
                                 .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
                                 .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()))
                                 .execute()),
-                        cnt -> LogUtil.message("Logically deleted {} meta records with approx. limit of {}. Iteration {}",
-                                cnt, batchSize, iteration));
-                totalUpdateDuration = totalUpdateDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
+                        cnt -> LogUtil.message(
+                                "Logically deleted {} meta records with approx. limit of {}. Iteration {}",
+                                cnt,
+                                batchSize,
+                                iteration));
+                totalUpdateDuration = totalUpdateDuration.plus(Duration.between(startTime,
+                        Instant.now().plusMillis(1)));
 
                 // Advance the start time
                 startTimeInc = subPeriod.getFrom();
@@ -639,8 +710,12 @@ class MetaDaoImpl implements MetaDao {
                     totalUpdateCount.get(),
                     batchSize,
                     iteration.decrementAndGet(),
-                    iteration.get() != 0 ? totalSelectDuration.dividedBy(iteration.get()) : Duration.ZERO,
-                    iteration.get() != 0 ? totalUpdateDuration.dividedBy(iteration.get()) : Duration.ZERO);
+                    iteration.get() != 0
+                            ? totalSelectDuration.dividedBy(iteration.get())
+                            : Duration.ZERO,
+                    iteration.get() != 0
+                            ? totalUpdateDuration.dividedBy(iteration.get())
+                            : Duration.ZERO);
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.error("Thread interrupted");
@@ -692,8 +767,9 @@ class MetaDaoImpl implements MetaDao {
                                 if (min == null || max == null) {
                                     return Optional.empty();
                                 } else {
+                                    // Add one to make it exclusive
                                     return Optional.of(
-                                            TimePeriod.between((long) min, (long) max + 1)); // Add one to make it exclusive
+                                            TimePeriod.between((long) min, (long) max + 1));
                                 }
                             }),
                     () -> LogUtil.message("Selecting time slice starting at {}, with batch size {}",
@@ -788,30 +864,35 @@ class MetaDaoImpl implements MetaDao {
 
         final Object result = JooqUtil.contextResult(metaDbConnProvider, context ->
                 metaExpressionMapper.addJoins(
-                    context
-                        .selectCount()
-                        .from(meta)
-                        .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                        .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                        .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                    meta.ID,
-                    usedValKeys)
-                .where(conditions)
-                .fetchOne().get(0));
+                        context
+                                .selectCount()
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .fetchOne().get(0));
 
         return (Integer) result;
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
-        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED, MetaFields.FEED_NAME)::contains);
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(),
+                Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
+        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED,
+                MetaFields.FEED_NAME)::contains);
         final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
         final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
         final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
         final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
-//        final int extendedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.getExtendedFields());
+//        final int extendedTermCount = ExpressionUtil.termCount(
+//        criteria.getExpression(), MetaFields.getExtendedFields());
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
@@ -952,7 +1033,8 @@ class MetaDaoImpl implements MetaDao {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields (criteria.getExpression(), new HashSet<>());
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         final List<Meta> list = find(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
@@ -963,27 +1045,31 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(f -> f.getName()).collect(Collectors.toList());
+            MetaFields.getExtendedFields().stream().map(AbstractField::getName).collect(Collectors.toList());
 
-    private Set<Integer> identifyExtendedAttributesFields (final ExpressionOperator expr, final Set<Integer> identified){
+    private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
+                                                          final Set<Integer> identified) {
 
-        if (expr == null || expr.getChildren() == null)
+        if (expr == null || expr.getChildren() == null) {
             return identified;
-        for (ExpressionItem child : expr.getChildren()){
+        }
+        for (ExpressionItem child : expr.getChildren()) {
             if (child instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) child;
 
                 if (extendedFieldNames.contains(term.getField())) {
                     Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
-                    key.ifPresent(i -> identified.add(i));
+                    key.ifPresent(identified::add);
                 }
-            } else if (child instanceof ExpressionOperator){
-               identified.addAll(identifyExtendedAttributesFields((ExpressionOperator)child, identified));
+            } else if (child instanceof ExpressionOperator) {
+                identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
             } else {
                 //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
+                        " unable to optimise meta query");
                 //Allow search to succeed without optimisation
-                return IntStream.range(metaKeyDao.getMinId(),metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
+                return IntStream.range(metaKeyDao.getMinId(),
+                        metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
             }
         }
         return identified;
@@ -997,7 +1083,7 @@ class MetaDaoImpl implements MetaDao {
                             final Set<Integer> usedValKeys) {
 
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                    metaExpressionMapper.addJoins(context
+                metaExpressionMapper.addJoins(context
                                 .select(
                                         meta.ID,
                                         metaFeed.NAME,
@@ -1014,13 +1100,13 @@ class MetaDaoImpl implements MetaDao {
                                 .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                            meta.ID,
-                            usedValKeys)
-                    .where(conditions)
-                    .orderBy(orderFields)
-                    .limit(offset, numberOfRows)
-                    .fetch()
-                    .map(RECORD_TO_META_MAPPER::apply));
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .limit(offset, numberOfRows)
+                        .fetch()
+                        .map(RECORD_TO_META_MAPPER::apply));
     }
 
 
@@ -1028,14 +1114,14 @@ class MetaDaoImpl implements MetaDao {
     public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields (criteria.getExpression(), new HashSet<>());
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
-        final List<Meta> list = findReprocess(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
+        final List<Meta> list = findReprocess(conditions, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
             LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
         }
@@ -1044,42 +1130,41 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private List<Meta> findReprocess(final Collection<Condition> conditions,
-                                     final Collection<OrderField<?>> orderFields,
                                      final int offset,
                                      final int numberOfRows,
                                      final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                 metaExpressionMapper.addJoins(
-                (context
-                .select(
-                        parent.ID,
-                        parentFeed.NAME,
-                        parentType.NAME,
-                        parentProcessor.PROCESSOR_UUID,
-                        parentProcessor.PIPELINE_UUID,
-                        parent.PARENT_ID,
-                        parent.STATUS,
-                        parent.STATUS_TIME,
-                        parent.CREATE_TIME,
-                        parent.EFFECTIVE_TIME
-                )
-                .from(meta)
-                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
-                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
-                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                        (context
+                                .select(
+                                        parent.ID,
+                                        parentFeed.NAME,
+                                        parentType.NAME,
+                                        parentProcessor.PROCESSOR_UUID,
+                                        parentProcessor.PIPELINE_UUID,
+                                        parent.PARENT_ID,
+                                        parent.STATUS,
+                                        parent.STATUS_TIME,
+                                        parent.CREATE_TIME,
+                                        parent.EFFECTIVE_TIME
+                                )
+                                .from(meta)
+                                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
+                                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
                         meta.ID,
                         usedValKeys)
-                .where(conditions)
-                .and(parent.ID.isNotNull())
-                .groupBy(parent.ID)
-                .orderBy(orderFields)
-                .limit(offset, numberOfRows)
-                .fetch()
-                .map(RECORD_TO_PARENT_META_MAPPER::apply));
+                        .where(conditions)
+                        .and(parent.ID.isNotNull())
+                        .groupBy(parent.ID)
+                        .orderBy(parent.ID)
+                        .limit(offset, numberOfRows)
+                        .fetch()
+                        .map(RECORD_TO_PARENT_META_MAPPER::apply));
     }
 
     @Override
@@ -1091,45 +1176,44 @@ class MetaDaoImpl implements MetaDao {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
 
-        SelectionSummary summary = getSelectionSummary(conditions, offset, numberOfRows, usedValKeys);
-        return  summary;
+        return getSelectionSummary(conditions, offset, numberOfRows, usedValKeys);
     }
 
     private SelectionSummary getSelectionSummary(final Collection<Condition> conditions,
                                                  final int offset,
                                                  final int numberOfRows,
-                                                 final Set <Integer> usedValKeys) {
+                                                 final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                 metaExpressionMapper.addJoins(
-                context
-                .select(
-                        DSL.count(),
-                        DSL.countDistinct(metaFeed.NAME),
-                        DSL.countDistinct(metaType.NAME),
-                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
-                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
-                        DSL.countDistinct(meta.STATUS),
-                        DSL.min(meta.CREATE_TIME),
-                        DSL.max(meta.CREATE_TIME)
-                )
-                .from(meta)
-                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                meta.ID,
-                usedValKeys)
-                .where(conditions)
-                .limit(offset, numberOfRows)
-                .fetchOptional()
-                .map(record -> new SelectionSummary(
-                        (Integer) record.get(0),
-                        (Integer) record.get(1),
-                        (Integer) record.get(2),
-                        (Integer) record.get(3),
-                        (Integer) record.get(4),
-                        (Integer) record.get(5),
-                        new Range<>((Long)record.get(6), (Long)record.get(7))))
-                .orElse(null));
+                        context
+                                .select(
+                                        DSL.count(),
+                                        DSL.countDistinct(metaFeed.NAME),
+                                        DSL.countDistinct(metaType.NAME),
+                                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
+                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                                        DSL.countDistinct(meta.STATUS),
+                                        DSL.min(meta.CREATE_TIME),
+                                        DSL.max(meta.CREATE_TIME)
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .limit(offset, numberOfRows)
+                        .fetchOptional()
+                        .map(record -> new SelectionSummary(
+                                (Integer) record.get(0),
+                                (Integer) record.get(1),
+                                (Integer) record.get(2),
+                                (Integer) record.get(3),
+                                (Integer) record.get(4),
+                                (Integer) record.get(5),
+                                new Range<>((Long) record.get(6), (Long) record.get(7))))
+                        .orElse(null));
     }
 
     @Override
@@ -1150,39 +1234,38 @@ class MetaDaoImpl implements MetaDao {
                                                           final int numberOfRows,
                                                           final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                metaExpressionMapper.addJoins(
-                context
-                .select(
-                        DSL.countDistinct(parent.ID),
-                        DSL.countDistinct(parent.FEED_ID),
-                        DSL.countDistinct(parent.TYPE_ID),
-                        DSL.countDistinct(meta.PROCESSOR_ID),
-                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
-                        DSL.countDistinct(parent.STATUS),
-                        DSL.min(parent.CREATE_TIME),
-                        DSL.max(parent.CREATE_TIME)
-                )
-                .from(meta)
-                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
+                metaExpressionMapper.addJoins(context
+                                .select(
+                                        DSL.countDistinct(parent.ID),
+                                        DSL.countDistinct(parent.FEED_ID),
+                                        DSL.countDistinct(parent.TYPE_ID),
+                                        DSL.countDistinct(meta.PROCESSOR_ID),
+                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                                        DSL.countDistinct(parent.STATUS),
+                                        DSL.min(parent.CREATE_TIME),
+                                        DSL.max(parent.CREATE_TIME)
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
                         meta.ID,
                         usedValKeys)
-                .where(conditions)
-                .and(parent.ID.isNotNull())
-                .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
-                .limit(offset, numberOfRows)
-                .fetchOptional()
-                .map(record -> new SelectionSummary(
-                        (Integer)record.get(0),
-                        (Integer)record.get(1),
-                        (Integer)record.get(2),
-                        (Integer)record.get(3),
-                        (Integer)record.get(4),
-                        (Integer)record.get(5),
-                        new Range<>((Long)record.get(6), (Long)record.get(7))))
-                .orElse(null));
+                        .where(conditions)
+                        .and(parent.ID.isNotNull())
+                        .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
+                        .limit(offset, numberOfRows)
+                        .fetchOptional()
+                        .map(record -> new SelectionSummary(
+                                (Integer) record.get(0),
+                                (Integer) record.get(1),
+                                (Integer) record.get(2),
+                                (Integer) record.get(3),
+                                (Integer) record.get(4),
+                                (Integer) record.get(5),
+                                new Range<>((Long) record.get(6), (Long) record.get(7))))
+                        .orElse(null));
     }
 
 
@@ -1195,13 +1278,15 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public Optional<Long> getMaxId(final FindMetaCriteria criteria) {
+    public Optional<Long> getLatestIdByEffectiveDate(final FindMetaCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(DSL.max(meta.ID))
+                .select(meta.ID)
                 .from(meta)
                 .where(condition)
+                .orderBy(meta.EFFECTIVE_TIME.desc())
+                .limit(1)
                 .fetchOptional()
                 .map(Record1::value1));
     }
@@ -1219,7 +1304,6 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public void clear() {
-        JooqUtil.truncateTable(metaDbConnProvider, META);
         feedIdCache.clear();
         typeIdCache.clear();
     }
@@ -1241,24 +1325,24 @@ class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (MetaFields.ID.getName().equals(sort.getField())) {
+            if (MetaFields.ID.getName().equals(sort.getId())) {
                 field = meta.ID;
-            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getField())) {
+            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getId())) {
                 field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED_NAME.getName().equals(sort.getField())) {
+            } else if (MetaFields.FEED_NAME.getName().equals(sort.getId())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getField())) {
+            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getId())) {
                 field = metaType.NAME;
-            } else if (MetaFields.PARENT_ID.getName().equals(sort.getField())) {
+            } else if (MetaFields.PARENT_ID.getName().equals(sort.getId())) {
                 field = meta.PARENT_ID;
-            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getField())) {
+            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getId())) {
                 field = parent.CREATE_TIME;
             } else {
                 field = meta.ID;
             }
 
             OrderField<?> orderField = field;
-            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+            if (sort.isDesc()) {
                 orderField = field.desc();
             }
 

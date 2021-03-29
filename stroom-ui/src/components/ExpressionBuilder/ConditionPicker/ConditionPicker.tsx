@@ -1,6 +1,12 @@
-import InlineSelect, { SelectOption } from "components/InlineSelect/InlineSelect";
+import InlineSelect, {
+  SelectOption,
+} from "components/InlineSelect/InlineSelect";
 import * as React from "react";
-import { ConditionDisplayValues, ConditionType, conditionTypes } from "../types";
+import {
+  ConditionDisplayValues,
+  ConditionType,
+  conditionTypes,
+} from "../types";
 
 interface Props {
   conditionOptions?: ConditionType[];
@@ -15,18 +21,20 @@ const ConditionPicker: React.FunctionComponent<Props> = ({
 }) => {
   const options: SelectOption[] = React.useMemo(
     () =>
-      conditionOptions.map(c => ({
+      conditionOptions.map((c) => ({
         value: c,
         label: ConditionDisplayValues[c],
       })),
     [conditionOptions],
   );
 
-  const selected = options.find(option => option.value === value);
+  const selected = options.find((option) => option.value === value);
   return (
     <InlineSelect
       selected={!!selected ? selected.value : undefined}
-      onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onChange(event.target.value as ConditionType)}
+      onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+        onChange(event.target.value as ConditionType)
+      }
       options={options}
     />
   );

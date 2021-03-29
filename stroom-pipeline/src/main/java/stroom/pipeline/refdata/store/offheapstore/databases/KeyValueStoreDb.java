@@ -17,29 +17,32 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.function.BiConsumer;
+import javax.inject.Inject;
 
 public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
 
@@ -69,29 +72,34 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-             PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
-            // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
-            // when both the start and end key are used in the keyRange
-            // see https://github.com/lmdbjava/lmdbjava/issues/98
-            // As a work around will have to use an AT_LEAST cursor and manually
-            // test entries to see when I have gone too far.
+            // TODO there appears to be a bug in lmdbjava that prevents closedOpen key ranges working
+            //   see https://github.com/lmdbjava/lmdbjava/issues/169
+            //   As a work around will have to use an AT_LEAST cursor and manually
+            //   test entries to see when I have gone too far.
 //            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-//                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
+//                    mapUid,
+//                    startKeyIncPooledBuffer.getByteBuffer(),
+//                    endKeyExcPooledBuffer.getByteBuffer());
 
             final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
             final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
             keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
 
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LAMBDA_LOGGER.trace(() -> LogUtil.message(
                     "startKeyIncBuffer {}", ByteBufferUtils.byteBufferInfo(startKeyIncBuffer)));
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
+//            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, singleMapUidKeyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
                 int cnt = 0;
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-                    LAMBDA_LOGGER.trace(LambdaLogUtil.message("Found entry {} {}",
+
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                while (iterator.hasNext()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
                             ByteBufferUtils.byteBufferInfo(keyVal.key()),
                             ByteBufferUtils.byteBufferInfo(keyVal.val())));
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
@@ -102,7 +110,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                         // consumer MUST not hold on to the key/value references as they can change
                         // once the cursor is closed or moves position
                         entryConsumer.accept(keyVal.key(), keyVal.val());
-                        cursorIterator.remove();
+                        iterator.remove();
                         cnt++;
                     } else {
                         // passed out UID so break out
@@ -120,21 +128,27 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                                                            final ByteBuffer endKeyExcBuffer) {
         final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
 
+        // serialise the startKeyInc to both start and end buffers, then
+        // we will mutate the uid of the end buffer
         keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
+        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, startKeyInc);
 
-        UID nextMapUid = mapUid.nextUid();
-        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
+        // Increment the UID part of the end key buffer to give us an exclusive key
+        UID.incrementUid(endKeyExcBuffer);
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("Using range {} (inc) {} (exc)",
+//        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
+
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 
-        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
+//        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
 
         return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
     }
 
     public interface Factory {
+
         KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

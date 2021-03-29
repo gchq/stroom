@@ -1,12 +1,13 @@
 package stroom.dispatch.client;
 
-import stroom.util.client.RandomId;
+import stroom.util.shared.RandomId;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class ApplicationInstanceIdProvider {
+
     private final String applicationInstanceId;
 
     @Inject

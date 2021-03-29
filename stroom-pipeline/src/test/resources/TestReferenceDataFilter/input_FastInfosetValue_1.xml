@@ -23,6 +23,7 @@
         <map>map1</map>
         <key>key11</key>
         <value>
+            <!-- evt prefix is declared outside our fragment so will need adding in -->
             <evt:Location>
                 <evt:Room>room11</evt:Room>
                 <evt:Desk>desk11</evt:Desk>

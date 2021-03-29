@@ -19,6 +19,7 @@ package stroom.data.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface TextUiHandlers extends UiHandlers {
+
     void clear();
 
     void beginStepping();

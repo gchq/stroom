@@ -16,14 +16,16 @@
 
 package stroom.config.global.shared;
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.PropertyPath;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.PropertyPath;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -50,7 +52,7 @@ import java.util.Optional;
  */
 @JsonIgnoreProperties(value = {"source"}, allowGetters = true)
 @JsonInclude(Include.NON_NULL)
-public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<ConfigProperty> {
 
     @JsonProperty
     private Integer id;
@@ -161,6 +163,7 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.dataTypeName = dataTypeName;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -218,7 +221,9 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
      */
     @JsonIgnore
     public String getNameAsString() {
-        return name == null ? null : name.toString();
+        return name == null
+                ? null
+                : name.toString();
     }
 
     public PropertyPath getName() {
@@ -460,10 +465,15 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConfigProperty that = (ConfigProperty) o;
         return editable == that.editable &&
                 password == that.password &&
@@ -485,7 +495,23 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, defaultValue, databaseOverrideValue, yamlOverrideValue, description, editable, password, requireRestart, requireUiRestart, dataTypeName);
+        return Objects.hash(
+                id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                name,
+                defaultValue,
+                databaseOverrideValue,
+                yamlOverrideValue,
+                description,
+                editable,
+                password,
+                requireRestart,
+                requireUiRestart,
+                dataTypeName);
     }
 
     /**

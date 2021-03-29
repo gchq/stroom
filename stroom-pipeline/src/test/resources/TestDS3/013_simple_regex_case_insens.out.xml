@@ -1,0 +1,22 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="level" value="INFO"/>
+      <data name="text" value="some info"/>
+   </record>
+   <record>
+      <data name="level" value="ERROR"/>
+      <data name="text" value="an error"/>
+   </record>
+   <record>
+      <data name="level" value="info"/>
+      <data name="text" value="more info"/>
+   </record>
+   <record>
+      <data name="level" value="error"/>
+      <data name="text" value="another error"/>
+   </record>
+</records>

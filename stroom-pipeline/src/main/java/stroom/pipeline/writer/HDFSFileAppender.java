@@ -16,12 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -30,8 +24,15 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +40,7 @@ import java.io.UncheckedIOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 /**
  * Creates an output stream for a file on an Hadoop Distributed File System
@@ -55,6 +57,7 @@ import java.util.function.Consumer;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.HADOOP)
 public class HDFSFileAppender extends AbstractAppender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);
 
     private static final String LOCK_EXTENSION = ".lock";
@@ -283,13 +286,15 @@ public class HDFSFileAppender extends AbstractAppender {
      * @param outputPaths the outputPaths to set
      */
     @PipelineProperty(
-            description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            description = "One or more destination paths for output files separated with commas. Replacement " +
+                    "variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
-    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. hdfs://mynamenode.mydomain.com:8020",
+    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. " +
+            "hdfs://mynamenode.mydomain.com:8020",
             displayPriority = 2)
     public void setFileSystemUri(final String hdfsUri) {
         this.hdfsUri = hdfsUri;
@@ -302,7 +307,8 @@ public class HDFSFileAppender extends AbstractAppender {
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed " +
+            "and a new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);

@@ -16,6 +16,8 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,9 +27,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 
 public class AddEventLinkViewImpl extends ViewImpl implements AddEventLinkView {
+
     private final Widget widget;
 
     @UiField
@@ -59,5 +61,6 @@ public class AddEventLinkViewImpl extends ViewImpl implements AddEventLinkView {
     }
 
     public interface Binder extends UiBinder<Widget, AddEventLinkViewImpl> {
+
     }
 }

@@ -18,27 +18,27 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 CREATE TABLE IF NOT EXISTS index_shard (
-    id                    bigint(20) NOT NULL AUTO_INCREMENT,
+    id                    bigint NOT NULL AUTO_INCREMENT,
     node_name             varchar(255) NOT NULL,
-    fk_volume_id          int(11) NOT NULL,
+    fk_volume_id          int NOT NULL,
     index_uuid            varchar(255) NOT NULL,
-    commit_document_count int(11) DEFAULT NULL,
-    commit_duration_ms    bigint(20) DEFAULT NULL,
-    commit_ms             bigint(20) DEFAULT NULL,
-    document_count        int(11) DEFAULT 0,
-    file_size             bigint(20) DEFAULT 0,
-    status                tinyint(4) NOT NULL,
+    commit_document_count int DEFAULT NULL,
+    commit_duration_ms    bigint DEFAULT NULL,
+    commit_ms             bigint DEFAULT NULL,
+    document_count        int DEFAULT 0,
+    file_size             bigint DEFAULT 0,
+    status                tinyint NOT NULL,
     index_version         varchar(255) DEFAULT NULL,
     partition_name        varchar(255) NOT NULL,
-    partition_from_ms     bigint(20) DEFAULT NULL,
-    partition_to_ms       bigint(20) DEFAULT NULL,
+    partition_from_ms     bigint DEFAULT NULL,
+    partition_to_ms       bigint DEFAULT NULL,
     PRIMARY KEY (id),
     KEY index_shard_fk_volume_id (fk_volume_id),
     KEY index_shard_index_uuid (index_uuid),
     CONSTRAINT index_shard_fk_volume_id
         FOREIGN KEY (fk_volume_id)
         REFERENCES index_volume (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the index table
@@ -51,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX_SHRD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX_SHRD') THEN
 
         RENAME TABLE IDX_SHRD TO OLD_IDX_SHRD;
     END IF;
@@ -60,7 +61,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'ND') THEN
 
         RENAME TABLE ND TO OLD_ND;
     END IF;
@@ -69,7 +71,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_IDX_SHRD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_IDX_SHRD') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --

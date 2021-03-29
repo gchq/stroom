@@ -16,17 +16,7 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
@@ -58,8 +48,8 @@ import stroom.svg.client.SvgIcon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ImageUtil;
-import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -68,6 +58,18 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -75,6 +77,7 @@ import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
+
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -151,7 +154,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
     private void addWidgetLeft(final Widget widget) {
@@ -215,7 +218,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             if (dashboardConfig != null) {
                 if (null == currentParams) {
                     currentParams = "";
-                    if (dashboardConfig.getParameters() != null && dashboardConfig.getParameters().trim().length() > 0) {
+                    if (dashboardConfig.getParameters() != null
+                            && dashboardConfig.getParameters().trim().length() > 0) {
                         currentParams = dashboardConfig.getParameters().trim();
                     }
                 }
@@ -327,9 +331,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
-            final ComponentConfig componentData = new ComponentConfig();
-            component.write(componentData);
-            componentDataList.add(componentData);
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
         }
 
         final DashboardConfig dashboardConfig = new DashboardConfig();
@@ -377,13 +380,30 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabConfig) {
-        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
-            if (ok) {
-                layoutPresenter.closeTab(tabConfig);
-                components.remove(tabConfig.getId(), true);
+    public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        // Figure out what tabs would remain after removal.
+        int hiddenCount = 0;
+        int totalCount = 0;
+        for (final TabConfig tab : tabLayoutConfig.getTabs()) {
+            if (tab != tabConfig) {
+                if (!tab.visible()) {
+                    hiddenCount++;
+                }
+                totalCount++;
             }
-        });
+        }
+
+        // If all remaining tabs are hidden the we can't allow removal.
+        if (totalCount > 0 && totalCount == hiddenCount) {
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
+        } else {
+            ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+                if (ok) {
+                    layoutPresenter.closeTab(tabConfig);
+                    components.remove(tabConfig.getId(), true);
+                }
+            });
+        }
     }
 
     @Override
@@ -468,6 +488,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
+
         void addWidgetLeft(Widget widget);
 
         void addWidgetRight(Widget widget);
@@ -482,6 +503,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+
         private final ComponentAddPresenter presenter;
         private HandlerRegistration handlerRegistration;
 
@@ -504,10 +526,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     id = type.getId() + "-" + RandomId.createId(5);
                 }
 
-                final ComponentConfig componentData = new ComponentConfig();
-                componentData.setType(type.getId());
-                componentData.setId(id);
-                componentData.setName(type.getName());
+                final ComponentConfig componentData = ComponentConfig
+                        .builder()
+                        .type(type.getId())
+                        .id(id)
+                        .name(type.getName())
+                        .build();
 
                 final Component componentPresenter = addComponent(componentData.getType(), componentData);
                 if (componentPresenter != null) {

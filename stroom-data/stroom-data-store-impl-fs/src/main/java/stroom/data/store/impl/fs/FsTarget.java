@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ import java.util.Map;
  * A file system implementation of Target.
  */
 final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsTarget.class);
 
     private final MetaService metaService;
@@ -61,7 +63,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private Meta meta;
     private boolean closed;
     private boolean deleted;
-    private boolean append;
+    private final boolean append;
     private long index;
 
     private FsTarget(final MetaService metaService,
@@ -150,13 +152,16 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private void writeManifest() {
         try {
             boolean doneManifest = false;
-            final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(), InternalStreamTypeNames.MANIFEST);
+            final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(),
+                    InternalStreamTypeNames.MANIFEST);
 
             // Are we appending?
             if (isAppend()) {
                 // Does the manifest exist ... overwrite it
                 if (Files.isRegularFile(manifestFile)) {
-                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, manifestFile)) {
+                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+                            InternalStreamTypeNames.MANIFEST,
+                            manifestFile)) {
                         AttributeMapUtil.write(getAttributes(), outputStream);
                     }
                     doneManifest = true;
@@ -166,7 +171,9 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             if (!doneManifest) {
                 // No manifest done yet ... output one if the parent dir's exist
                 if (Files.isDirectory(getFile().getParent())) {
-                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, manifestFile)) {
+                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+                            InternalStreamTypeNames.MANIFEST,
+                            manifestFile)) {
                         AttributeMapUtil.write(getAttributes(), outputStream);
                     }
                 } else {
@@ -220,6 +227,10 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                     // closes kids (the caller can also close the kid off if they like).
                     childMap.forEach((k, v) -> v.close());
                     childMap.clear();
+                } catch (final ClosedByInterruptException e) {
+                    // WE expect these exceptions if a user is trying to terminate.
+                    LOGGER.debug("closeStreamTarget() - Error on closing stream {}", this, e);
+                    streamCloseException = e;
                 } catch (final IOException e) {
                     LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
                     streamCloseException = e;

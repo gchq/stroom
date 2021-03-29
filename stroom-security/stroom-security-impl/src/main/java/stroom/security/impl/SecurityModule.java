@@ -25,11 +25,11 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+import org.apache.http.impl.client.CloseableHttpClient;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -41,9 +41,12 @@ public class SecurityModule extends AbstractModule {
         install(new PermissionChangeEventModule());
         install(new PermissionChangeEventLifecycleModule());
 
+        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(TokenVerifier.class).to(JWTService.class);
+        bind(TokenVerifier.class).to(TokenVerifierImpl.class);
+        bind(JwtContextFactory.class).to(JwtContextFactoryImpl.class);
+        bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -66,19 +69,14 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
-            .addBinding(UserDocumentPermissionsCache.class);
-
-        HasHealthCheckBinder.create(binder())
-                .bind(JWTService.class);
+                .addBinding(UserDocumentPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)
-                .bind(AuthenticationResourceImpl.class)
-                .bind(AuthorisationResource.class)
+                .bind(StroomSessionResourceImpl.class)
+                .bind(GwtStroomSessionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
-                .bind(DocumentPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
-                .bind(UserAppPermissionResourceImpl.class)
                 .bind(UserResourceImpl.class);
     }
 }

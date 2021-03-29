@@ -36,11 +36,11 @@ const usePipelineSearch = (): UsePipelineSearch => {
     results,
     criteria,
     updateCriteria: React.useCallback(
-      updates => setCriteria({ ...criteria, ...updates }),
+      (updates) => setCriteria({ ...criteria, ...updates }),
       [criteria, setCriteria],
     ),
     searchPipelines: React.useCallback(() => {
-      searchPipelines(criteria).then(s => setResults);
+      searchPipelines(criteria).then((s) => setResults);
     }, [searchPipelines, setResults]),
   };
 };

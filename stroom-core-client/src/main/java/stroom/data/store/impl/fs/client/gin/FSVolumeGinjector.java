@@ -16,11 +16,13 @@
 
 package stroom.data.store.impl.fs.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter;
 import stroom.data.store.impl.fs.client.presenter.ManageFSVolumesPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface FSVolumeGinjector {
+
     AsyncProvider<ManageFSVolumesPresenter> getManageFileVolumesPresenter();
 
     AsyncProvider<FSVolumeEditPresenter> getFileVolumeEditPresenter();

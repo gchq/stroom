@@ -19,6 +19,7 @@ package stroom.widget.util.client;
 import java.util.function.Consumer;
 
 public class FutureImpl<T> implements Future<T> {
+
     private T result;
     private Throwable throwable;
     private Consumer<T> resultConsumer;

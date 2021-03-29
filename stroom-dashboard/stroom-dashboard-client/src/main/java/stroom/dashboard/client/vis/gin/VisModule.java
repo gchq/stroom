@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.vis.gin;
 
-import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
 import stroom.dashboard.client.vis.BasicVisSettingsViewImpl;
@@ -27,7 +25,11 @@ import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.dashboard.client.vis.VisViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 
+import com.google.inject.Singleton;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public class VisModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bind(VisPlugin.class).asEagerSingleton();

@@ -1,20 +1,26 @@
 package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
-import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.search.api.EventSearch;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.EventRef;
+import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.EventSearch;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 class EventSearchImpl implements EventSearch {
-    private static final int POLL_INTERVAL_MS = 10000;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchImpl.class);
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -30,15 +36,45 @@ class EventSearchImpl implements EventSearch {
     }
 
     @Override
-    public void search(final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams, final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency, final Consumer<EventRefs> consumer) {
-        final EventSearchTask eventSearchTask = new EventSearchTask(query,
-                minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
-        final Supplier<EventRefs> supplier = taskContextFactory.contextResult("Event Search", taskContext -> {
-            final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
-            return eventSearchTaskHandler.exec(eventSearchTask);
-        });
-        CompletableFuture
+    public CompletableFuture<EventRefs> search(final Query query,
+                                               final EventRef minEvent,
+                                               final EventRef maxEvent,
+                                               final long maxStreams,
+                                               final long maxEvents,
+                                               final long maxEventsPerStream,
+                                               final int resultSendFrequency,
+                                               final Consumer<EventRefs> consumer) {
+
+        final QueryKey key = new QueryKey(UUID.randomUUID().toString());
+        final EventSearchTask eventSearchTask = new EventSearchTask(
+                key,
+                query,
+                minEvent,
+                maxEvent,
+                maxStreams,
+                maxEvents,
+                maxEventsPerStream);
+
+        final Supplier<EventRefs> supplier = taskContextFactory.contextResult(
+                "Event Search",
+                taskContext -> {
+                    final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
+                    return eventSearchTaskHandler.exec(eventSearchTask);
+                });
+
+        // The downside to doing this async is that we may end up creating more tasks than the number
+        // required
+
+        return CompletableFuture
                 .supplyAsync(supplier, executor)
-                .whenComplete((r, t) -> consumer.accept(r));
+                .whenComplete((eventRefs, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.error("Error supplying eventRefs for query " + query, throwable);
+                    } else if (eventRefs == null) {
+                        LOGGER.debug("eventRefs is null for query " + query);
+                    } else {
+                        consumer.accept(eventRefs);
+                    }
+                });
     }
 }

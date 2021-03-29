@@ -20,14 +20,11 @@ import ElementPalette from "./ElementPalette";
 
 import { fullTestData } from "testing/data";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const showDeleteElementDialog = () =>
   console.error("Deleting Elements Not Supported in this Story");
 
-const stories = storiesOf("Document Editors/Pipeline/Element Palette", module);
-
-addThemedStories(stories, () => {
+storiesOf("Document Editors/Pipeline", module).add("Element Palette", () => {
   return (
     <ElementPalette
       pipeline={

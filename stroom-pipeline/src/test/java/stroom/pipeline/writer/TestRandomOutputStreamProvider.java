@@ -17,9 +17,12 @@
 package stroom.pipeline.writer;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,9 +31,10 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRandomOutputStreamProvider extends StroomUnitTest {
+
     @Test
-    void testCycleDirs() throws IOException {
-        final FileAppender provider = buildTestObject();
+    void testCycleDirs(@TempDir Path tempDir) throws IOException {
+        final FileAppender provider = buildTestObject(tempDir);
 
         boolean found1 = false;
         boolean found2 = false;
@@ -58,13 +62,14 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
         assertThat(found1 && found2 && found3).isTrue();
     }
 
-    private FileAppender buildTestObject() {
+    private FileAppender buildTestObject(final Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(null, null, null, null, null);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final FileAppender provider = new FileAppender(null, pathCreator);
         provider.setOutputPaths(
-                FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir())
-                        + "/t2" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t3" + name);
+                FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," +
+                        FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t2" + name + "," +
+                        FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t3" + name);
         return provider;
     }
 }

@@ -4,6 +4,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
 public class ExpressionCopier {
+
     public ExpressionOperator copy(final ExpressionOperator expressionOperator) {
         final ExpressionOperator.Builder builder = copyOperator(expressionOperator);
         if (builder != null) {
@@ -50,14 +51,14 @@ public class ExpressionCopier {
     }
 
     public static ExpressionOperator.Builder createOperatorBuilder(final ExpressionOperator expressionOperator) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.op(expressionOperator.op());
         builder.enabled(expressionOperator.enabled());
         return builder;
     }
 
     public static ExpressionTerm.Builder createTermBuilder(final ExpressionTerm expressionTerm) {
-        final ExpressionTerm.Builder builder = new ExpressionTerm.Builder();
+        final ExpressionTerm.Builder builder = ExpressionTerm.builder();
         builder.enabled(expressionTerm.enabled());
         builder.field(expressionTerm.getField());
         builder.condition(expressionTerm.getCondition());

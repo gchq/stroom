@@ -18,7 +18,6 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -44,7 +43,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.api.ResourceStore;
@@ -54,15 +52,18 @@ import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportDashboards extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -145,44 +146,53 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE, "Test Dictionary", folder1, null);
+        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
+                "Test Dictionary",
+                folder1,
+                null);
         final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
-        final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
-        queryComponentSettings.setDataSource(indexRef);
-        queryComponentSettings.setExpression(createExpression(dictionary).build());
+        final QueryComponentSettings queryComponentSettings = QueryComponentSettings.builder()
+                .dataSource(indexRef)
+                .expression(createExpression(dictionary).build())
+                .build();
 
-        final ComponentConfig query = new ComponentConfig();
-        query.setId("query-1234");
-        query.setName("Query");
-        query.setType("query");
-        query.setSettings(queryComponentSettings);
+        final ComponentConfig query = ComponentConfig.builder()
+                .id("query-1234")
+                .name("Query")
+                .type("query")
+                .settings(queryComponentSettings)
+                .build();
 
         // Create table.
-        final TableComponentSettings tableSettings = new TableComponentSettings();
-        tableSettings.setExtractValues(true);
-        tableSettings.setExtractionPipeline(pipelineRef);
+        final TableComponentSettings tableSettings = TableComponentSettings.builder()
+                .extractValues(true)
+                .extractionPipeline(pipelineRef)
+                .build();
 
-        final ComponentConfig table = new ComponentConfig();
-        table.setId("table-1234");
-        table.setName("Table");
-        table.setType("table");
-        table.setSettings(tableSettings);
+        final ComponentConfig table = ComponentConfig.builder()
+                .id("table-1234")
+                .name("Table")
+                .type("table")
+                .settings(tableSettings)
+                .build();
 
         // Create visualisation.
-        final VisComponentSettings visSettings = new VisComponentSettings();
-        visSettings.setTableId("table-1234");
-        visSettings.setTableSettings(tableSettings);
-        visSettings.setVisualisation(visRef);
+        final VisComponentSettings visSettings = VisComponentSettings.builder()
+                .tableId("table-1234")
+                .tableSettings(tableSettings)
+                .visualisation(visRef)
+                .build();
 
-        final ComponentConfig visualisation = new ComponentConfig();
-        visualisation.setId("visualisation-1234");
-        visualisation.setName("Visualisation");
-        visualisation.setType("vis");
-        visualisation.setSettings(visSettings);
+        final ComponentConfig visualisation = ComponentConfig.builder()
+                .id("visualisation-1234")
+                .name("Visualisation")
+                .type("vis")
+                .settings(visSettings)
+                .build();
 
         // Create component list.
         final List<ComponentConfig> components = new ArrayList<>();
@@ -259,12 +269,16 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        assertThat(loadedQueryData.getDataSource()).isEqualTo(loadedIndex);
-        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
-        assertThat(loadedTableSettings.getExtractionPipeline()).isEqualTo(loadedPipeline);
+        assertThat(loadedQueryData.getDataSource())
+                .isEqualTo(loadedIndex);
+        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef())
+                .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
+        assertThat(loadedTableSettings.getExtractionPipeline())
+                .isEqualTo(loadedPipeline);
 
         if (!skipVisExport || skipVisCreation) {
-            assertThat(loadedVisSettings.getVisualisation()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
+            assertThat(loadedVisSettings.getVisualisation())
+                    .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
         } else {
             assertThat(loadedVisSettings.getVisualisation()).isNotNull();
             assertThat(loadedVisSettings.getVisualisation().getType()).isNotNull();
@@ -281,7 +295,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     }
 
     private void deleteAllAndCheck() {
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(visualisationStore.list().size()).isEqualTo(0);
         assertThat(pipelineStore.list().size()).isEqualTo(0);
@@ -291,7 +305,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
-        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder root = ExpressionOperator.builder();
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
         root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;

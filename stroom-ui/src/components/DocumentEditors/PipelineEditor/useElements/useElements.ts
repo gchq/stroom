@@ -12,7 +12,7 @@ interface UseElements {
  * Convenience hook for using the Element Definitions and the Element Property Definitions
  * from the server. Handles the link between the REST API and the Redux state.
  */
-const useElements = (): UseElements => {
+export const useElements = (): UseElements => {
   const { fetchElements, fetchElementProperties } = useApi();
   const [elementDefinitions, setElementDefinitions] = React.useState<
     ElementDefinition[]
@@ -36,5 +36,3 @@ const useElements = (): UseElements => {
     elementProperties,
   };
 };
-
-export default useElements;

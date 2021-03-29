@@ -1,0 +1,15 @@
+ext.moduleName = 'stroom.event.logging.mock'
+
+dependencies {
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+
+    compile libs.eventLogging
+    compile libs.slf4j_api
+
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+
+}

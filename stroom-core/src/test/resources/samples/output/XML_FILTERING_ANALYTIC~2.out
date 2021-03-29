@@ -17,14 +17,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
             <Data Name="Designation" Value="alpha mu"/>
             <Data Name="Zone1" Value="Zone1"/>
             <Data Name="Zone2" Value="Zone2"/>

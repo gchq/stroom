@@ -17,6 +17,7 @@
 package stroom.data.client.view;
 
 public class FileData {
+
     private String fileName;
     private Long effectiveMs;
     private Status status = Status.UPLOADING;
@@ -55,7 +56,9 @@ public class FileData {
     }
 
     public enum Status {
-        UPLOADING("Uploading"), COMPLETE("Complete"), FAILED("Failed");
+        UPLOADING("Uploading"),
+        COMPLETE("Complete"),
+        FAILED("Failed");
 
         private final String displayValue;
 

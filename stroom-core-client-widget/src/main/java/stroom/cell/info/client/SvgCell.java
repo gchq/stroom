@@ -38,6 +38,7 @@ import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 
 public class SvgCell extends AbstractCell<SvgPreset> {
+
     private static Resources resources;
     private static Template template;
 
@@ -46,8 +47,11 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     public SvgCell() {
         this(true);
     }
+
     public SvgCell(final boolean isButton) {
-        super(isButton ? "click" : null);
+        super(isButton
+                ? "click"
+                : null);
         this.isButton = isButton;
 
         if (resources == null) {
@@ -126,6 +130,7 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "SvgCell.css";
 
         String icon();
@@ -138,11 +143,13 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_CSS)
         Style style();
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
         SafeHtml icon(String className, SafeStyles style, SafeUri url);
 

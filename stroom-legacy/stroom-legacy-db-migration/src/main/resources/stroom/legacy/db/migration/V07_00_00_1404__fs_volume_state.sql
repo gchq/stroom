@@ -21,14 +21,14 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_volume_state table
 --
 CREATE TABLE IF NOT EXISTS fs_volume_state (
-  id                        int(11) NOT NULL AUTO_INCREMENT,
-  version                   int(11) NOT NULL,
-  bytes_used                bigint(20) DEFAULT NULL,
-  bytes_free                bigint(20) DEFAULT NULL,
-  bytes_total               bigint(20) DEFAULT NULL,
-  update_time_ms            bigint(20) DEFAULT NULL,
+  id                        int NOT NULL AUTO_INCREMENT,
+  version                   int NOT NULL,
+  bytes_used                bigint DEFAULT NULL,
+  bytes_free                bigint DEFAULT NULL,
+  bytes_total               bigint DEFAULT NULL,
+  update_time_ms            bigint DEFAULT NULL,
   PRIMARY KEY       (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 
 --
@@ -41,7 +41,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'VOL_STATE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'VOL_STATE') THEN
 
         RENAME TABLE VOL_STATE TO OLD_VOL_STATE;
     END IF;
@@ -50,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_VOL_STATE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_VOL_STATE') THEN
 
         INSERT INTO fs_volume_state (
             id,

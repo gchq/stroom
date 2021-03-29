@@ -16,7 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.RestFactory;
@@ -27,12 +26,11 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -40,14 +38,15 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
+
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 
@@ -75,18 +74,18 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
             refresh();
 
         } else {
-            final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder();
             if (!showSystemFiles) {
                 builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
             builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             getCriteria().setExpression(builder.build());
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
             getCriteria().setFetchRelationships(true);
             refresh();
         }
@@ -155,12 +154,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     protected void addColumns(final boolean allowSelectAll) {
         addSelectedColumn(allowSelectAll);
 
-        expanderColumn = new Column<MetaRow, Expander>(new ExpanderCell()) {
-            @Override
-            public Expander getValue(final MetaRow row) {
-                return buildExpander(row);
-            }
-        };
+        expanderColumn = DataGridUtil.expanderColumn(this::buildExpander);
         getView().addColumn(expanderColumn, "<br/>", 0);
 
         addInfoColumn();
@@ -170,15 +164,49 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", MetaFields.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", MetaFields.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", MetaFields.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", MetaFields.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", MetaFields.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Retention", DataRetentionFields.RETENTION_AGE_FIELD, Function.identity(), ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Raw",
+                MetaFields.RAW_SIZE,
+                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Disk",
+                MetaFields.FILE_SIZE,
+                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Read",
+                MetaFields.REC_READ,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Write",
+                MetaFields.REC_WRITE,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Fatal",
+                MetaFields.REC_FATAL,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Error",
+                MetaFields.REC_ERROR,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Warn", MetaFields.REC_WARN,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Info", MetaFields.REC_INFO,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addAttributeColumn(
+                "Retention",
+                DataRetentionFields.RETENTION_AGE_FIELD,
+                Function.identity(),
+                ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }

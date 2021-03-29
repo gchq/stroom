@@ -21,6 +21,7 @@ import java.io.Reader;
 import java.nio.CharBuffer;
 
 public class WrappedReader extends Reader {
+
     private final Reader reader;
 
     public WrappedReader(final Reader reader) {
@@ -77,6 +78,7 @@ public class WrappedReader extends Reader {
         return reader.skip(n);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         return reader.equals(obj);

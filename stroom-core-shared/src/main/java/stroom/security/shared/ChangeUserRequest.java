@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"user", "changedLinkedUsers", "changedAppPermissions"})
 @JsonInclude(Include.NON_NULL)
 public class ChangeUserRequest {
+
     @JsonProperty
     private final User user;
     @JsonProperty

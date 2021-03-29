@@ -16,17 +16,19 @@
 
 package stroom.query.client;
 
+import stroom.item.client.ItemListBox;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.client.TermEditor.Resources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.item.client.ItemListBox;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {
+
     private static Resources resources;
     private final FlowPanel layout;
     private final ItemListBox<Op> listBox;

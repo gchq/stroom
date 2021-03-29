@@ -16,21 +16,34 @@
 
 package stroom.script.shared;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.HasData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
-import stroom.util.shared.HasData;
 
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies", "data"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "dependencies",
+        "data"})
 @JsonInclude(Include.NON_NULL)
 public class ScriptDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "Script";
 
     @JsonProperty
@@ -87,11 +100,18 @@ public class ScriptDoc extends Doc implements HasData {
         this.data = data;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final ScriptDoc scriptDoc = (ScriptDoc) o;
         return Objects.equals(description, scriptDoc.description) &&
                 Objects.equals(dependencies, scriptDoc.dependencies) &&

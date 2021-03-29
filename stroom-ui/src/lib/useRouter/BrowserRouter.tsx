@@ -37,7 +37,7 @@ interface Props {
 /**
  * Determine whether or not we want to show the chrome, based on either:
  *  - the requested path from history
- *  - a redirect stored earlier as part of the authentication flow
+ *  - a redirect stored earlier as part of the Oldauthentication flow
  *
  * Which we need depends on whether or not we're already authenticated.
  *
@@ -50,12 +50,10 @@ interface Props {
 const showChrome = (pathname: string) => {
   let prefix: string;
   let includeSidebar = false;
-  // If we're handling an authentication redirect then we need to get the path
+  // If we're handling an Oldauthentication redirect then we need to get the path
   // from local storage.
   const referrer = localStorage.getItem("preAuthenticationRequestReferrer");
-  const actualPath = referrer
-      ? referrer
-      : pathname;
+  const actualPath = referrer ? referrer : pathname;
 
   const parts = actualPath.split("/");
   prefix = parts[1];
@@ -81,7 +79,7 @@ const CustomRouter: React.FunctionComponent<Props> = ({
   return (
     <Router history={history}>
       <Route>
-        {routeProps => (
+        {(routeProps) => (
           <WithChromeContext.Provider
             value={{
               urlPrefix,

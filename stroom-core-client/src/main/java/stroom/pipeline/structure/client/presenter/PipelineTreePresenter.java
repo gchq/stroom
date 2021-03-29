@@ -17,13 +17,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.view.client.SelectionModel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -36,11 +29,21 @@ import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.view.client.SelectionModel;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
         implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
+
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
         super(eventBus, view);
@@ -142,6 +145,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     }
 
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
+
         void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
 
         void setSelectionModel(SelectionModel<PipelineElement> selectionModel);

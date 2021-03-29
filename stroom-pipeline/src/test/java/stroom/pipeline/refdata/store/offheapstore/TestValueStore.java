@@ -18,26 +18,34 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.lmdb.LmdbUtils;
+import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream.Factory;
 
-import java.io.IOException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,21 +53,28 @@ class TestValueStore extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStore.class);
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
-    private final ByteBufferPool byteBufferPool = new ByteBufferPool();
+    private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
+    private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
+        @Override
+        public PooledByteBufferOutputStream create(final int initialCapacity) {
+            return new PooledByteBufferOutputStream(byteBufferPool, initialCapacity);
+        }
+    };
     private ValueStore valueStore = null;
     private ValueStoreDb valueStoreDb = null;
     private ValueStoreMetaDb valueStoreMetaDb = null;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
-                new GenericRefDataValueSerde(refDataValueSerdeFactory));
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                xxHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
 
 
         valueStoreMetaDb = new ValueStoreMetaDb(
@@ -67,6 +82,18 @@ class TestValueStore extends AbstractLmdbDbTest {
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new ValueStoreMetaSerde());
+
+        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+    }
+
+    private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        valueStoreDb = new ValueStoreDb(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new ValueStoreKeySerde(),
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
 
         valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
@@ -86,13 +113,18 @@ class TestValueStore extends AbstractLmdbDbTest {
     @Test
     void testGetOrCreate() {
 
+        // We have to set up the DB with the basic hash func so we can be assured of hash clashes
+        setupValueStoreDb(basicHashAlgorithm);
+
+        ValueStoreHashAlgorithm hashAlgorithm = valueStoreDb.getValueStoreHashAlgorithm();
+
         // 1 & 2 have the same hashcode, 3 has a different hashcode
         final String stringValueStr1 = "Aa";
         final String stringValueStr2 = "BB";
         final String stringValueStr3 = "SomethingDifferent";
 
-        assertThat(stringValueStr1.hashCode()).isEqualTo(stringValueStr2.hashCode());
-        assertThat(stringValueStr1.hashCode()).isNotEqualTo(stringValueStr3.hashCode());
+        assertThat(hashAlgorithm.hash(stringValueStr1)).isEqualTo(hashAlgorithm.hash(stringValueStr2));
+        assertThat(hashAlgorithm.hash(stringValueStr1)).isNotEqualTo(hashAlgorithm.hash(stringValueStr3));
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
         assertThat(valueStoreMetaDb.getEntryCount()).isEqualTo(0);
@@ -201,71 +233,128 @@ class TestValueStore extends AbstractLmdbDbTest {
         StringValue value1 = StringValue.of("1111");
         StringValue value2 = StringValue.of("2222");
 
-        // ensure hashcode don't clash
-        assertThat(value1.getValue().hashCode()).isNotEqualTo(value2.getValue().hashCode());
+        // ensure hashcodes don't clash
+        assertThat(value1.getValue().hashCode())
+                .isNotEqualTo(value2.getValue().hashCode());
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            StringValue stringValue;
-            ValueStoreKey valueStoreKey1a = getOrCreate(writeTxn, value1);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey1a).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey1a)).isEqualTo(1);
-            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+        final int iterations = 10;
 
-            // getOrCreate same value, should no new records, but ref count will have increased
-            ValueStoreKey valueStoreKey1b = getOrCreate(writeTxn, value1);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
-            assertThat(valueStoreKey1b).isEqualTo(valueStoreKey1a);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey1b).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey1b)).isEqualTo(2);
-            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+        final AtomicReference<ValueStoreKey> valueStoreKey1aRef = new AtomicReference<>();
+        final AtomicReference<ValueStoreKey> valueStoreKey2aRef = new AtomicReference<>();
 
-            // getOrCreate same value, should no new records, but ref count will have increased
-            ValueStoreKey valueStoreKey1c = getOrCreate(writeTxn, value1);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
-            assertThat(valueStoreKey1c).isEqualTo(valueStoreKey1a);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey1c).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey1c)).isEqualTo(3);
-            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+        // insert 10 of the same values, should have one entry with a ref count going up to 10
+        for (int i = 1; i <= iterations; i++) {
+            final int expectedRefCount = i;
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                final ValueStoreKey valueStoreKey1a = getOrCreate(writeTxn, value1);
 
-            // getOrCreate a different value, so 1 new entry, ref count is 1
-            ValueStoreKey valueStoreKey2a = getOrCreate(writeTxn, value2);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey2a).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey2a)).isEqualTo(1);
-            assertThat(stringValue.getValue()).isEqualTo(value2.getValue());
+                // value should always be the same
+                valueStoreKey1aRef.accumulateAndGet(valueStoreKey1a, (currVal, newVal) -> {
+                    if (currVal != null) {
 
-            valueStoreDb.logRawDatabaseContents();
-            valueStoreDb.logDatabaseContents();
+                        assertThat(newVal)
+                                .isEqualTo(currVal);
+                    }
+                    return newVal;
+                });
 
-            LOGGER.info("-----------------------------------------------------------------");
+                assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
 
-            // now dereference value1
-            deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey1a).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey1a)).isEqualTo(2);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
-
-            // now dereference value1 again
-            deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
-            stringValue = (StringValue) valueStore.get(writeTxn, valueStoreKey1a).get();
-            assertThat(getRefCount(writeTxn, valueStoreKey1a)).isEqualTo(1);
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
-
-            // now dereference value1 again, entry is deleted
-            deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
-            assertThat(valueStoreDb.get(writeTxn, valueStoreKey1a)).isEmpty();
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
-
-            // now dereference value2, entry is deleted
-            deReferenceOrDeleteValue(writeTxn, valueStoreKey2a);
-            assertThat(valueStoreDb.get(writeTxn, valueStoreKey2a)).isEmpty();
-            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(0);
-
-        });
+                final StringValue stringValue1 = (StringValue) valueStore.get(writeTxn, valueStoreKey1a).get();
+                assertThat(getRefCount(writeTxn, valueStoreKey1a))
+                        .isEqualTo(expectedRefCount);
+                assertThat(stringValue1.getValue())
+                        .isEqualTo(value1.getValue());
+            });
+        }
 
         valueStoreDb.logRawDatabaseContents();
         valueStoreDb.logDatabaseContents();
+
+        // insert 10 of the same values, should now have one entry (plus the one from above)
+        // with a ref count going up to 10
+        for (int i = 1; i <= iterations; i++) {
+            final int expectedRefCount = i;
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                final ValueStoreKey valueStoreKey2a = getOrCreate(writeTxn, value2);
+                valueStoreKey2aRef.accumulateAndGet(valueStoreKey2a, (currVal, newVal) -> {
+                    if (currVal != null) {
+
+                        assertThat(newVal)
+                                .isEqualTo(currVal);
+                    }
+                    return newVal;
+                });
+                assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
+                final StringValue stringValue2 = (StringValue) valueStore.get(writeTxn, valueStoreKey2a).get();
+                assertThat(getRefCount(writeTxn, valueStoreKey2a))
+                        .isEqualTo(expectedRefCount);
+                assertThat(stringValue2.getValue())
+                        .isEqualTo(value2.getValue());
+            });
+        }
+
+        valueStoreDb.logRawDatabaseContents();
+        valueStoreDb.logDatabaseContents();
+
+        // Now keep trying to delete value 1, ref count should go down until the delete happens
+        for (int i = iterations; i >= 1; i--) {
+            final int expectedPreDeleteRefCount = i;
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                assertThat(getRefCount(writeTxn, valueStoreKey1aRef.get()))
+                        .isEqualTo(expectedPreDeleteRefCount);
+                // now dereference value1
+                deReferenceOrDeleteValue(writeTxn, valueStoreKey1aRef.get());
+
+                final Optional<RefDataValue> optValue = valueStore.get(writeTxn, valueStoreKey1aRef.get());
+                if (expectedPreDeleteRefCount == 1) {
+                    // entry should actually be deleted here
+                    assertThat(optValue)
+                            .isEmpty();
+                    assertThat(valueStoreDb.getEntryCount(writeTxn))
+                            .isEqualTo(1);
+                } else {
+                    assertThat(optValue)
+                            .isPresent();
+                    assertThat(getRefCount(writeTxn, valueStoreKey1aRef.get()))
+                            .isEqualTo(expectedPreDeleteRefCount - 1);
+
+                    assertThat(valueStoreDb.getEntryCount(writeTxn))
+                            .isEqualTo(2);
+                }
+            });
+        }
+
+        valueStoreDb.logRawDatabaseContents();
+        valueStoreDb.logDatabaseContents();
+
+        // Now keep trying to delete value 2, ref count should go down until the delete happens
+        for (int i = iterations; i >= 1; i--) {
+            final int expectedPreDeleteRefCount = i;
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                assertThat(getRefCount(writeTxn, valueStoreKey2aRef.get()))
+                        .isEqualTo(expectedPreDeleteRefCount);
+                // now dereference value1
+                deReferenceOrDeleteValue(writeTxn, valueStoreKey2aRef.get());
+
+                final Optional<RefDataValue> optValue = valueStore.get(writeTxn, valueStoreKey2aRef.get());
+                if (expectedPreDeleteRefCount == 1) {
+                    // entry should actually be deleted here
+                    assertThat(optValue)
+                            .isEmpty();
+                    assertThat(valueStoreDb.getEntryCount(writeTxn))
+                            .isEqualTo(0);
+                } else {
+                    assertThat(optValue)
+                            .isPresent();
+                    assertThat(getRefCount(writeTxn, valueStoreKey2aRef.get()))
+                            .isEqualTo(expectedPreDeleteRefCount - 1);
+
+                    assertThat(valueStoreDb.getEntryCount(writeTxn))
+                            .isEqualTo(1);
+                }
+            });
+        }
     }
 
     private void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
@@ -280,7 +369,9 @@ class TestValueStore extends AbstractLmdbDbTest {
 
     private int getRefCount(Txn<ByteBuffer> txn, ValueStoreKey valueStoreKey) {
         ValueStoreMeta valueStoreMeta = valueStoreMetaDb.get(txn, valueStoreKey).get();
-        return valueStoreMeta.getReferenceCount();
+        final int referenceCount = valueStoreMeta.getReferenceCount();
+        LOGGER.info("Ref count: {}", referenceCount);
+        return referenceCount;
     }
 
     private void assertRefCount(Txn<ByteBuffer> txn, final ValueStoreKey valueStoreKey, final int expectedRefCount) {

@@ -34,10 +34,10 @@ import java.util.stream.Collector;
 /**
  * Collects elements in the stream and calls the supplied batch processor
  * after the configured batch size is reached.
- *
+ * <p>
  * In case of a parallel stream, the batch processor may be called with
  * elements less than the batch size.
- *
+ * <p>
  * The elements are not kept in memory, and the final result will be an
  * empty list.
  *
@@ -47,13 +47,13 @@ public class BatchingCollector<T> implements Collector<T, List<T>, List<T>> {
 
     private final int batchSize;
     private final Consumer<List<T>> batchProcessor;
-    private AtomicLong recordsProcessed = new AtomicLong(0);
+    private final AtomicLong recordsProcessed = new AtomicLong(0);
 
 
     /**
      * Constructs the batch collector
      *
-     * @param batchSize the batch size after which the batchProcessor should be called
+     * @param batchSize      the batch size after which the batchProcessor should be called
      * @param batchProcessor the batch processor which accepts batches of records to process
      */
     BatchingCollector(final int batchSize, final Consumer<List<T>> batchProcessor) {
@@ -63,9 +63,10 @@ public class BatchingCollector<T> implements Collector<T, List<T>, List<T>> {
 
     /**
      * Creates a new batch collector
-     * @param batchSize the batch size after which the batchProcessor should be called
+     *
+     * @param batchSize      the batch size after which the batchProcessor should be called
      * @param batchProcessor the batch processor which accepts batches of records to process
-     * @param <T> the type of elements being processed
+     * @param <T>            the type of elements being processed
      * @return a batch collector instance
      */
     public static <T> BatchingCollector<T> of(final int batchSize, final Consumer<List<T>> batchProcessor) {

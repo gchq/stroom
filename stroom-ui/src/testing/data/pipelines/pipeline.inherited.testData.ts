@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 
 /*
@@ -19,11 +19,11 @@ import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/
 
 export default {
   parentPipeline: {
-    uuid: uuidv4(),
+    uuid: v4(),
     type: "Pipeline",
     name: "Simple",
   },
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "Inherited",
   type: "Pipeline",
   description: "This demonstrates an inherited pipeline",

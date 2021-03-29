@@ -16,8 +16,9 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 
 public interface ReferenceDataLoader {
-    void load(RefStreamDefinition refStreamDefinition);
+    StoredErrorReceiver load(RefStreamDefinition refStreamDefinition);
 }

@@ -16,6 +16,10 @@
 
 package stroom.visualisation.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -25,11 +29,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class VisualisationSettingsViewImpl extends ViewImpl implements VisualisationSettingsView, ReadOnlyChangeHandler {
+public class VisualisationSettingsViewImpl extends ViewImpl
+        implements VisualisationSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -78,5 +81,6 @@ public class VisualisationSettingsViewImpl extends ViewImpl implements Visualisa
     }
 
     public interface Binder extends UiBinder<Widget, VisualisationSettingsViewImpl> {
+
     }
 }

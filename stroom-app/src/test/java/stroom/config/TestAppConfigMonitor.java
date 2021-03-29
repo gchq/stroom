@@ -1,10 +1,5 @@
 package stroom.config;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
@@ -13,10 +8,13 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.GlobalConfigService;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
-import javax.validation.Validator;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,32 +24,26 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.validation.Validator;
 
 class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
-    private final Path tmpDir = FileUtil.createTempDir(this.getClass().getSimpleName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
     @Inject
     private Validator validator;
     @Inject
     private GlobalConfigService globalConfigService;
 
-    @AfterEach
-    void afterEach() throws IOException {
-        FileUtil.deleteContents(tmpDir);
-        Files.deleteIfExists(tmpDir);
-    }
-
     @Test
     void test() throws Exception {
-
         final Path devYamlFile = Paths.get(System.getProperty("user.dir"))
                 .getParent()
                 .resolve("stroom-app")
                 .resolve("dev.yml");
 
-        final Path devYamlCopyPath = tmpDir.resolve(devYamlFile.getFileName());
+        final Path devYamlCopyPath = getCurrentTestDir().resolve(devYamlFile.getFileName());
 
         // Make a copy of dev.yml so we can hack about with it
         Files.copy(devYamlFile, devYamlCopyPath);
@@ -64,7 +56,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final ConfigValidator configValidator = new ConfigValidator(validator);
 
         final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(
-            appConfig, configLocation, configMapper, configValidator, globalConfigService);
+                appConfig, configLocation, configMapper, configValidator, globalConfigService);
 
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();
@@ -96,21 +88,21 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         LOGGER.info("Updating value in file to {}", newPathValue);
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
-            .isNotEqualTo(newPathValue);
+                .isNotEqualTo(newPathValue);
 
         final Pattern pattern = Pattern.compile("temp:\\s*\"[^\"]+\"");
         final String devYamlStr = Files.readString(devYamlCopyPath);
         final Optional<MatchResult> optMatchResult = pattern.matcher(devYamlStr)
-            .results()
-            .findFirst();
+                .results()
+                .findFirst();
 
         final Runnable grepFile = () -> {
             try {
                 String str = pattern.matcher(Files.readString(devYamlCopyPath))
-                    .results()
-                    .findFirst()
-                    .orElseThrow()
-                    .group(0);
+                        .results()
+                        .findFirst()
+                        .orElseThrow()
+                        .group(0);
                 LOGGER.debug("Found str [{}] in file {}", str, devYamlCopyPath);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -118,14 +110,19 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         };
 
         // Make sure the temp prop is in the file
-        Assertions.assertThat(optMatchResult).isPresent();
+        Assertions.assertThat(optMatchResult)
+                .withFailMessage(LogUtil.message(
+                        "Can't find pattern {} in file {}",
+                        pattern.toString(),
+                        devYamlCopyPath.toAbsolutePath().normalize()))
+                .isPresent();
 
         // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
         Thread.sleep(3000);
 
         // Update the config file with our new value
         final String updatedDevYamlStr = pattern.matcher(devYamlStr)
-            .replaceAll("temp: \"" + newPathValue + "\"");
+                .replaceAll("temp: \"" + newPathValue + "\"");
 
         // Ensure the replace worked by compare old file content to new
         Assertions.assertThat(updatedDevYamlStr).isNotEqualTo(devYamlStr);
@@ -141,7 +138,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         Instant startTime = Instant.now();
         Instant timeOutTime = startTime.plusSeconds(10);
         while (!appConfig.getPathConfig().getTemp().equals(newPathValue)
-            && Instant.now().isBefore(timeOutTime)) {
+                && Instant.now().isBefore(timeOutTime)) {
 
             LOGGER.debug("value {}", appConfig.getPathConfig().getTemp());
             Thread.sleep(200);
@@ -149,5 +146,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isEqualTo(newPathValue);
+
+        Files.deleteIfExists(Path.of(newPathValue));
     }
 }

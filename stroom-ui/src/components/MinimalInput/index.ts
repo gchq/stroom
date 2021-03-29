@@ -1,3 +1,3 @@
-import MinimalInput from "./MinimalInput"
+import MinimalInput from "./MinimalInput";
 
-export default MinimalInput
+export default MinimalInput;

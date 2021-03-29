@@ -48,7 +48,7 @@ export function getBinItems(
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
 
   return thisConfigStack.elements.remove
-    ? thisConfigStack.elements.remove.map(e => ({
+    ? thisConfigStack.elements.remove.map((e) => ({
         recycleData: e,
         element: elementsByType[e.type],
       }))
@@ -74,7 +74,7 @@ export function getPipelineAsTree(
 
   // Put all the elements into an object, keyed on id
   if (pipeline.merged.elements.add) {
-    pipeline.merged.elements.add.forEach(e => {
+    pipeline.merged.elements.add.forEach((e) => {
       elements[e.id] = {
         uuid: e.id,
         type: e.type,
@@ -86,8 +86,8 @@ export function getPipelineAsTree(
   // Create the tree using links
   if (pipeline.merged.links.add) {
     pipeline.merged.links.add
-      .filter(l => !!elements[l.from])
-      .forEach(l => {
+      .filter((l) => !!elements[l.from])
+      .forEach((l) => {
         elements[l.from].children.push(elements[l.to]);
       });
   }
@@ -101,9 +101,9 @@ export function getPipelineAsTree(
   } else {
     // if a link doesn't have anything going to it then it may be a root.
     const rootLinks = pipeline.merged.links.add
-      ? pipeline.merged.links.add.filter(fromLink => {
+      ? pipeline.merged.links.add.filter((fromLink) => {
           const toLinks = pipeline.merged.links.add!.filter(
-            l => fromLink.from === l.to,
+            (l) => fromLink.from === l.to,
           );
           return toLinks.length === 0;
         })
@@ -169,7 +169,7 @@ export function getPipelineLayoutGrid(
     rows: [],
   };
   for (let row = 0; row <= highestRow; row++) {
-    let rowData: PipelineLayoutRow = {
+    const rowData: PipelineLayoutRow = {
       columns: [],
     };
     for (let column = 0; column <= highestColumn; column++) {
@@ -179,7 +179,7 @@ export function getPipelineLayoutGrid(
   }
 
   Object.entries(layoutInformation)
-    .map(k => ({
+    .map((k) => ({
       uuid: k[0],
       layoutInfo: k[1],
     }))
@@ -200,15 +200,15 @@ export function getAllElementNames(pipeline: PipelineDocumentType): string[] {
 
   pipeline.merged.elements.add &&
     pipeline.merged.elements.add
-      .map(e => e.id)
-      .map(id => id.toLowerCase())
-      .forEach(id => names.push(id));
-  pipeline.configStack.forEach(cs => {
+      .map((e) => e.id)
+      .map((id) => id.toLowerCase())
+      .forEach((id) => names.push(id));
+  pipeline.configStack.forEach((cs) => {
     cs.elements.add &&
       cs.elements.add
-        .map(e => e.id)
-        .map(id => id.toLowerCase())
-        .forEach(id => names.push(id));
+        .map((e) => e.id)
+        .map((id) => id.toLowerCase())
+        .forEach((id) => names.push(id));
   });
 
   return names;
@@ -249,7 +249,7 @@ export function createNewElementInPipeline(
 
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
       properties: stackItem.properties,
       elements: {
         ...stackItem.elements,
@@ -290,7 +290,7 @@ function addPropertyToStackItem(
       add: stackItem.properties.add
         ? stackItem.properties.add
             .filter(
-              p =>
+              (p) =>
                 !(p.element === property.element && p.name === property.name),
             )
             .concat([property])
@@ -335,7 +335,7 @@ export function setElementPropertyValueInPipeline(
 
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem =>
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) =>
       addPropertyToStackItem(stackItem, property),
     ),
     merged: addPropertyToStackItem(pipeline.merged, property),
@@ -362,15 +362,15 @@ export function revertPropertyToParent(
   const mergedAdd: PipelinePropertyType[] =
     pipeline.merged.properties.add || [];
 
-  const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
-  const parentProperty = parentAdd.find(addItem => addItem.name === name)!;
+  const indexToRemove = childAdd.findIndex((addItem) => addItem.name === name);
+  const parentProperty = parentAdd.find((addItem) => addItem.name === name)!;
   const indexToRemoveFromMerged = mergedAdd.findIndex(
-    addItem => addItem.name === name,
+    (addItem) => addItem.name === name,
   );
 
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
       ...stackItem,
       properties: {
         ...stackItem.properties,
@@ -460,17 +460,17 @@ export function revertPropertyToDefault(
   const mergedAdd: PipelinePropertyType[] =
     pipeline.merged.properties.add || [];
   const indexToRemoveFromMerged = mergedAdd.findIndex(
-    addItem => addItem.name === name,
+    (addItem) => addItem.name === name,
   );
 
   // We might be removing something that has an override on a child, in which case we
   // need to make sure we remove the child add too.
-  const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
+  const indexToRemove = childAdd.findIndex((addItem) => addItem.name === name);
   if (indexToRemove !== -1) {
-    const propertyForRemove = childAdd.find(addItem => addItem.name === name);
+    const propertyForRemove = childAdd.find((addItem) => addItem.name === name);
     return {
       ...pipeline,
-      configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
         ...stackItem,
         properties: {
           ...stackItem.properties,
@@ -512,7 +512,7 @@ export function revertPropertyToDefault(
   );
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
       ...stackItem,
       properties: {
         ...stackItem.properties,
@@ -561,7 +561,7 @@ export function reinstateElementToPipeline(
 
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
       properties: stackItem.properties,
       elements: {
         add: stackItem.elements.add.concat([recycleData]),
@@ -582,7 +582,9 @@ export function reinstateElementToPipeline(
           : []
         ).concat([recycleData]),
         remove: pipeline.merged.elements.remove
-          ? pipeline.merged.elements.remove.filter(e => e.id !== recycleData.id)
+          ? pipeline.merged.elements.remove.filter(
+              (e) => e.id !== recycleData.id,
+            )
           : [],
       },
       links: {
@@ -612,15 +614,15 @@ export function removeElementFromPipeline(
   // Find the element in the merged picture (it should be there)
   const elementFromMerged: PipelineElementType | undefined =
     pipeline.merged.elements.add &&
-    pipeline.merged.elements.add.find(e => e.id === itemToDelete)!;
+    pipeline.merged.elements.add.find((e) => e.id === itemToDelete)!;
   const linkFromMerged: PipelineLinkType | undefined =
     pipeline.merged.links.add &&
-    pipeline.merged.links.add.find(l => l.to === itemToDelete)!;
+    pipeline.merged.links.add.find((l) => l.to === itemToDelete)!;
 
   // Find the element and link from our config stack (they may not be from our stack)
   const linkIsOurs =
     configStackThis.links.add &&
-    configStackThis.links.add.find(l => l.to === itemToDelete);
+    configStackThis.links.add.find((l) => l.to === itemToDelete);
 
   // Determine the behaviour for removing the link, based on if it was ours or not
   let calcNewLinks: (
@@ -628,15 +630,15 @@ export function removeElementFromPipeline(
   ) => AddRemove<PipelineLinkType>;
   if (linkIsOurs) {
     // we can simply filter out the add
-    calcNewLinks = ourStackLinks => ({
+    calcNewLinks = (ourStackLinks) => ({
       add: ourStackLinks.add
-        ? ourStackLinks.add.filter(l => l.to !== itemToDelete)
+        ? ourStackLinks.add.filter((l) => l.to !== itemToDelete)
         : undefined,
       remove: ourStackLinks.remove,
     });
   } else {
     // we will need to shadow the link we inherited
-    calcNewLinks = ourStackLinks => ({
+    calcNewLinks = (ourStackLinks) => ({
       add: ourStackLinks.add,
       remove:
         ourStackLinks.remove && linkFromMerged
@@ -647,7 +649,7 @@ export function removeElementFromPipeline(
 
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+    configStack: mapLastItemInArray(pipeline.configStack, (stackItem) => ({
       properties: stackItem.properties,
       elements: {
         add: stackItem.elements.add.filter(
@@ -663,13 +665,13 @@ export function removeElementFromPipeline(
         ...pipeline.merged.elements,
         add:
           pipeline.merged.elements.add &&
-          pipeline.merged.elements.add.filter(e => e.id !== itemToDelete), // simply remove itemToDelete
+          pipeline.merged.elements.add.filter((e) => e.id !== itemToDelete), // simply remove itemToDelete
       },
       links: {
         ...pipeline.merged.links,
         add:
           pipeline.merged.links.add &&
-          pipeline.merged.links.add.filter(l => l.to !== itemToDelete), // simply remove the link where to=itemToDelete
+          pipeline.merged.links.add.filter((l) => l.to !== itemToDelete), // simply remove the link where to=itemToDelete
       },
     },
   };
@@ -713,8 +715,8 @@ export function canMovePipelineElement(
   // Does this item appear in the destination folder already?
   return (
     destinationNode.children
-      .map(c => c.uuid)
-      .filter(u => u === itemToMoveNode.uuid).length === 0
+      .map((c) => c.uuid)
+      .filter((u) => u === itemToMoveNode.uuid).length === 0
   );
 }
 
@@ -744,7 +746,7 @@ export function moveElementInPipeline(
           pipeline.merged.links.add &&
           pipeline.merged.links.add
             // Remove any existing link that goes into the moving item
-            .filter(l => l.to !== itemToMove)
+            .filter((l) => l.to !== itemToMove)
             // add the new link
             .concat([
               {
@@ -772,7 +774,9 @@ export function getAllChildren(
   const getAllChildren = (pipeline: PipelineDocumentType, element: string) => {
     const thisElementsChildren =
       pipeline.merged.links.add &&
-      pipeline.merged.links.add.filter(p => p.from === element).map(p => p.to);
+      pipeline.merged.links.add
+        .filter((p) => p.from === element)
+        .map((p) => p.to);
     if (thisElementsChildren) {
       allChildren = allChildren.concat(thisElementsChildren);
       for (const childIndex in thisElementsChildren) {
@@ -803,11 +807,13 @@ export function getChildValue(
   const elementPropertiesInChild =
     lastStackItem.properties.add &&
     lastStackItem.properties.add.filter(
-      property => property.element === elementId,
+      (property) => property.element === elementId,
     );
   const childValue =
     elementPropertiesInChild &&
-    elementPropertiesInChild.find(element => element.name === elementTypeName);
+    elementPropertiesInChild.find(
+      (element) => element.name === elementTypeName,
+    );
   return childValue;
 }
 
@@ -826,11 +832,11 @@ export function getElementValue(
   const elementProperties =
     pipeline.merged.properties.add &&
     pipeline.merged.properties.add.filter(
-      property => property.element === elementId,
+      (property) => property.element === elementId,
     );
   const value =
     elementProperties &&
-    elementProperties.find(element => element.name === elementTypeName);
+    elementProperties.find((element) => element.name === elementTypeName);
   return value;
 }
 
@@ -935,9 +941,9 @@ export const getInitialValues = (
   elementProperties: PipelinePropertyType[],
 ) => {
   const initialValues = {};
-  Object.keys(elementTypeProperties).map(key => {
+  Object.keys(elementTypeProperties).map((key) => {
     const elementsProperty: PipelinePropertyType = elementProperties.find(
-      element => element.name === key,
+      (element) => element.name === key,
     )!;
     initialValues[key] = getActualValue(
       elementsProperty!,

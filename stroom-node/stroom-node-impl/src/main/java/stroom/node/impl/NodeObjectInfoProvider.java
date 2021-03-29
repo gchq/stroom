@@ -17,39 +17,38 @@
 
 package stroom.node.impl;
 
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.node.shared.Node;
+
 import event.logging.BaseObject;
-import event.logging.Object;
+import event.logging.OtherObject;
+import event.logging.OtherObject.Builder;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.job.shared.Job;
-import stroom.node.shared.Node;
 
 class NodeObjectInfoProvider implements ObjectInfoProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeObjectInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final Node node = (Node) obj;
 
-        final Object object = new Object();
-        object.setType("Node");
-        object.setId(String.valueOf(node.getId()));
-        object.setName(node.getName());
+        final Builder<Void> builder = OtherObject.builder()
+                .withId(String.valueOf(node.getId()))
+                .withType("Node")
+                .withName(node.getName());
 
         try {
-            object.getData()
-                    .add(EventLoggingUtil.createData("Url", String.valueOf(node.getUrl())));
-            object.getData()
-                    .add(EventLoggingUtil.createData("Priority", String.valueOf(node.getPriority())));
-            object.getData()
-                    .add(EventLoggingUtil.createData("Enabled", String.valueOf(node.isEnabled())));
+            builder.addData(EventLoggingUtil.createData("Url", String.valueOf(node.getUrl())));
+            builder.addData(EventLoggingUtil.createData("Priority", String.valueOf(node.getPriority())));
+            builder.addData(EventLoggingUtil.createData("Enabled", String.valueOf(node.isEnabled())));
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to add unknown but useful data!", e);
         }
 
-        return object;
+        return builder.build();
     }
 
     @Override

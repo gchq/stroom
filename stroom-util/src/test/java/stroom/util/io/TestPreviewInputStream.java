@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPreviewInputStream {
+
     @Test
     void test() throws IOException {
         final StringBuilder sb = new StringBuilder();

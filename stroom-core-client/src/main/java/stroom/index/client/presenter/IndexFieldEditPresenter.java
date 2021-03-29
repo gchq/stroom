@@ -16,14 +16,9 @@
 
 package stroom.index.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.Builder;
 import stroom.index.shared.IndexFieldType;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -31,10 +26,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import javax.validation.ValidationException;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.Set;
+import javax.validation.ValidationException;
 
 public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditView> {
+
     private Set<String> otherFieldNames;
 
     @Inject
@@ -64,7 +65,8 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
             throw new ValidationException("An index field with this name already exists");
         }
 
-        return new Builder()
+        return IndexField
+                .builder()
                 .fieldType(getView().getFieldUse())
                 .fieldName(name)
                 .stored(getView().isStored())
@@ -85,6 +87,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
     }
 
     public interface IndexFieldEditView extends View {
+
         IndexFieldType getFieldUse();
 
         void setFieldUse(IndexFieldType fieldUse);

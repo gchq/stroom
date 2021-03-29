@@ -23,6 +23,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResultPage;
 
 public class MockIndexVolumeService implements IndexVolumeService {
+
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         return null;
@@ -39,7 +40,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume update(IndexVolume updateVolumeDTO) {
+    public IndexVolume update(IndexVolume indexVolume) {
         return null;
     }
 

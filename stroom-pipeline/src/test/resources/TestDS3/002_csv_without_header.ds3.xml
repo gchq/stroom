@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter 
+  xmlns="data-splitter:3" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" 
+  version="3.0">
+
+  <split delimiter="\n">
+    <group value="$1">
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;" escape="\">
+        <!-- Use group $2 to strip the escape chars from the output, $1 will not. -->
+        <data value="$2" />
+      </split>
+    </group>
+  </split>
+</dataSplitter>

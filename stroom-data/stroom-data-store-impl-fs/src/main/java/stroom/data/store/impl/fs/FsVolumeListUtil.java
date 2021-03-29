@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FsVolumeListUtil {
+
     public static List<FsVolume> removeFullVolumes(final List<FsVolume> list) {
         final List<FsVolume> newList = new ArrayList<>(list.size());
         for (final FsVolume volume : list) {

@@ -37,7 +37,6 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.impl.LuceneSearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,10 +46,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
+
     @Inject
     private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 
@@ -60,13 +61,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 new SearchResponseCreatorCache.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
-        try {
-            while (!response.complete()) {
-                response = searchResponseCreator.create(searchRequest);
-            }
-        } finally {
-            searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
+        if (!response.complete()) {
+            throw new RuntimeException("NOT COMPLETE");
         }
+        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
 
         return response;
     }
@@ -78,8 +76,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final int maxShardTasks,
-            final int maxExtractionTasks,
             final IndexStore indexStore,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
@@ -92,13 +88,22 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                    Collections.singletonList(tableSettings),
+                    null,
+                    null,
+                    ResultRequest.ResultStyle.TABLE,
+                    Fetch.CHANGES);
             resultRequests.add(tableResultRequest);
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(indexRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
@@ -146,11 +151,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final int maxShardTasks,
-            final int maxExtractionTasks,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, maxShardTasks,
-                maxExtractionTasks, indexStore, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
     }
 }

@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.annotation.pipeline;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.impl.AnnotationService;
-import stroom.annotation.shared.*;
-import stroom.event.logging.api.DocumentEventLog;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -30,39 +28,39 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
+import javax.inject.Inject;
 
 /**
  * This class processes XML documents that conform to annotation:1 schema, and creates corresponding Stroom annotations.
  * Example follows:
-
- <?xml version="1.1" encoding="UTF-8"?>
- <annotations xmlns="annotation:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="annotation:1 file://annotation-v1.0.xsd">
- <annotation>
-     <createTime>2020-01-23 11:11:11.111Z</createTime>
-     <title>Something important happened</title>
-     <description>The important thing detector noticed a HOLE in object BUCKET1 </description>
-     <associateEvents>
-       <associatedEvent>
-         <streamId>1234</streamId>
-         <eventId>56</eventId>
-       </associatedEvent>
-       <associatedEvent>
-         <streamId>9876</streamId>
-         <eventId>54</eventId>
-       </associatedEvent>
-     </associateEvents>
-     <data Name="object" Value="BUCKET1" />
-     <data Name="importance" Value="Rather Insignificant" />
-   </annotation>
- </annotations>
-
-
+ * <p>
+ * <?xml version="1.1" encoding="UTF-8"?>
+ * <annotations xmlns="annotation:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="annotation:1 file://annotation-v1.0.xsd">
+ * <annotation>
+ * <createTime>2020-01-23 11:11:11.111Z</createTime>
+ * <title>Something important happened</title>
+ * <description>The important thing detector noticed a HOLE in object BUCKET1 </description>
+ * <associateEvents>
+ * <associatedEvent>
+ * <streamId>1234</streamId>
+ * <eventId>56</eventId>
+ * </associatedEvent>
+ * <associatedEvent>
+ * <streamId>9876</streamId>
+ * <eventId>54</eventId>
+ * </associatedEvent>
+ * </associateEvents>
+ * <data Name="object" Value="BUCKET1" />
+ * <data Name="importance" Value="Rather Insignificant" />
+ * </annotation>
+ * </annotations>
  */
 
 
@@ -74,6 +72,7 @@ import java.util.ArrayList;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.TEXT)
 class AnnotationWriter extends AbstractXMLFilter {
+
     private static final String ANNOTATION_TAG = "annotation";
     private static final String TITLE_TAG = "title";
     private static final String DESCRIPTION_TAG = "description";
@@ -99,7 +98,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     AnnotationWriter(final AnnotationCreator annotationCreator,
                      final ErrorReceiverProxy errorReceiverProxy,
                      final LocationFactoryProxy locationFactory
-                     ) {
+    ) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.annotationCreator = annotationCreator;
@@ -133,35 +132,35 @@ class AnnotationWriter extends AbstractXMLFilter {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        String val = new String (ch, start, length);
+        String val = new String(ch, start, length);
 
-        if (TITLE_TAG.equals(lastTag))
+        if (TITLE_TAG.equals(lastTag)) {
             currentAnnotation.setTitle(val);
-        else if (DESCRIPTION_TAG.equals(lastTag))
+        } else if (DESCRIPTION_TAG.equals(lastTag)) {
             currentAnnotation.setSubject(val);
-        else if (EVENTID_TAG.equals(lastTag))
+        } else if (EVENTID_TAG.equals(lastTag)) {
             lastEventId = val;
-        else if (STREAMID_TAG.equals(lastTag))
+        } else if (STREAMID_TAG.equals(lastTag)) {
             lastStreamId = val;
+        }
 
         super.characters(ch, start, length);
     }
 
-
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
 
-        if (EVENT_TAG.equals(localName)){
-            if (lastStreamId == null){
-                log (Severity.ERROR, "StreamId must be a long integer, but none provided ", null);
-            }else if (lastEventId == null){
-                log (Severity.ERROR, "EventId must be a long integer, but none provided ", null);
-            }else {
+        if (EVENT_TAG.equals(localName)) {
+            if (lastStreamId == null) {
+                log(Severity.ERROR, "StreamId must be a long integer, but none provided ", null);
+            } else if (lastEventId == null) {
+                log(Severity.ERROR, "EventId must be a long integer, but none provided ", null);
+            } else {
                 long streamId = 0;
                 try {
                     streamId = Long.parseLong(lastStreamId);
-                } catch (NumberFormatException ex){
-                    log (Severity.ERROR, "StreamId must be a long integer.  Got " + lastStreamId, null);
+                } catch (NumberFormatException ex) {
+                    log(Severity.ERROR, "StreamId must be a long integer.  Got " + lastStreamId, null);
                 }
                 if (streamId > 0) {
                     try {
@@ -173,14 +172,20 @@ class AnnotationWriter extends AbstractXMLFilter {
                     }
                 }
             }
-        }else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null){
-            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation, Annotation.COMMENT, null, currentEventIds );
+        } else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null) {
+            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation,
+                    Annotation.COMMENT,
+                    null,
+                    currentEventIds);
 
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation, Annotation.COMMENT, null, currentEventIds));
+                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation,
+                        Annotation.COMMENT,
+                        null,
+                        currentEventIds));
 
             } catch (final RuntimeException e) {
-                log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject() , e);
+                log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject(), e);
             }
             currentAnnotation = null;
             currentEventIds = null;
@@ -192,7 +197,7 @@ class AnnotationWriter extends AbstractXMLFilter {
 
     private void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
-        switch (severity){
+        switch (severity) {
             case FATAL_ERROR:
                 LOGGER.error(message, e);
                 break;
@@ -203,8 +208,10 @@ class AnnotationWriter extends AbstractXMLFilter {
                 LOGGER.warn(message, e);
                 break;
             case INFO:
-                LOGGER.info(message,e);
+                LOGGER.info(message, e);
                 break;
+            default:
+                throw new RuntimeException("Unknown severity " + severity);
         }
     }
 }

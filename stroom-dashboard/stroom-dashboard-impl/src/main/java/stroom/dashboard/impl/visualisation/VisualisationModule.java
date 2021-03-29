@@ -26,6 +26,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 import com.google.inject.AbstractModule;
 
 public class VisualisationModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(VisualisationStore.class).to(VisualisationStoreImpl.class);

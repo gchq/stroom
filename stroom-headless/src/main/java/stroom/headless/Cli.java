@@ -16,10 +16,6 @@
 
 package stroom.headless;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
@@ -30,18 +26,19 @@ import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.IgnoreCloseInputStream;
-import stroom.util.io.PathConfig;
 import stroom.util.io.StreamUtil;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,11 +52,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Command line tool to process some files from a proxy stroom.
  */
 public class Cli extends AbstractCommandLineTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
     private String input;
@@ -75,7 +78,9 @@ public class Cli extends AbstractCommandLineTool {
     private Path tmpDir;
 
     @Inject
-    private PathConfig pathConfig;
+    private HomeDirProviderImpl homeDirProvider;
+    @Inject
+    private TempDirProviderImpl tempDirProvider;
     @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
@@ -136,17 +141,20 @@ public class Cli extends AbstractCommandLineTool {
         tmpDir = getPath(tmp);
 
         if (!Files.isDirectory(inputDir)) {
-            throw new RuntimeException("Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
+            throw new RuntimeException(
+                    "Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
         }
         if (!Files.isDirectory(errorFile.getParent())) {
             throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(errorFile.getParent())
                     + "\" parent directory cannot be found!");
         }
 //        if (!Files.isRegularFile(configFile)) {
-//            throw new RuntimeException("Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
+//            throw new RuntimeException(
+//            "Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
 //        }
         if (!Files.isDirectory(contentDir)) {
-            throw new RuntimeException("Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
+            throw new RuntimeException(
+                    "Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
         }
 
         // Make sure tmp dir exists and is empty.
@@ -173,7 +181,8 @@ public class Cli extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
-            pathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+            homeDirProvider.setHomeDir(tempDir);
+            tempDirProvider.setTempDir(tempDir);
 
             process();
         } finally {
@@ -230,19 +239,22 @@ public class Cli extends AbstractCommandLineTool {
         try {
             // Loop over all of the data files in the repository.
             try {
-                Files.walkFileTree(inputDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                        try {
-                            if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
-                                process(errorWriter, file);
+                Files.walkFileTree(inputDir,
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                                try {
+                                    if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                        process(errorWriter, file);
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
+                                return super.visitFile(file, attrs);
                             }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-                        return super.visitFile(file, attrs);
-                    }
-                });
+                        });
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

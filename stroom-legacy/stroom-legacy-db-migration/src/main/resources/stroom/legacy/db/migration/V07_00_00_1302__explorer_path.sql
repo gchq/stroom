@@ -21,16 +21,16 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the explorer_path table
 --
 CREATE TABLE IF NOT EXISTS `explorer_path` (
-  `ancestor` int(11) NOT NULL,
-  `descendant` int(11) NOT NULL,
-  `depth` int(11) NOT NULL,
-  `order_index` int(11) NOT NULL,
+  `ancestor` int NOT NULL,
+  `descendant` int NOT NULL,
+  `depth` int NOT NULL,
+  `order_index` int NOT NULL,
   PRIMARY KEY (`ancestor`,`descendant`),
   KEY `explorer_path_descendant` (`descendant`),
   KEY `explorer_path_descendant_depth` (`descendant`,`depth`),
   KEY `explorer_path_ancestor_depth_order_index` (`ancestor`,`depth`,`order_index`),
   KEY `explorer_path_depth` (`depth`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the explorer table
@@ -42,7 +42,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'explorerTreePath') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'explorerTreePath') THEN
 
         RENAME TABLE explorerTreePath TO OLD_explorertreepath;
     END IF;
@@ -51,7 +52,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_explorerTreePath') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_explorerTreePath') THEN
 
         INSERT INTO explorer_path (
             ancestor, 

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.alert.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.alert.api.AlertManager;
+
+import com.google.inject.AbstractModule;
 
 public class AlertModule  extends AbstractModule {
     @Override

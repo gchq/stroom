@@ -27,7 +27,7 @@ enum AllSelectState {
 
 type Props = ControlledInput<string[]>;
 
-let DocRefTypeFilters: React.FunctionComponent<Props> = ({
+const DocRefTypeFilters: React.FunctionComponent<Props> = ({
   onChange,
   value,
 }) => {
@@ -67,7 +67,7 @@ let DocRefTypeFilters: React.FunctionComponent<Props> = ({
         ;
       </div>
       {docRefTypes
-        .map(docRefType => ({
+        .map((docRefType) => ({
           docRefType,
           isSelected: value.includes(docRefType),
         }))
@@ -80,7 +80,7 @@ let DocRefTypeFilters: React.FunctionComponent<Props> = ({
               checked={isSelected}
               onChange={() => {
                 if (isSelected) {
-                  onChange(value.filter(v => v !== docRefType));
+                  onChange(value.filter((v) => v !== docRefType));
                 } else {
                   onChange(value.concat([docRefType]));
                 }

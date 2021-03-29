@@ -17,13 +17,19 @@
 package stroom.data.store.impl;
 
 
+import stroom.util.shared.Message;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataDownloadResult {
+
     private static final long serialVersionUID = -5012089569913789389L;
 
     private long recordsWritten = 0;
     private boolean hitMaxFileSize = false;
     private boolean hitMaxFileParts = false;
+    private List<Message> messageList = null;
 
     public DataDownloadResult() {
     }
@@ -56,4 +62,14 @@ public class DataDownloadResult {
         this.hitMaxFileParts = hitMaxFileParts;
     }
 
+    public List<Message> getMessageList() {
+        return messageList;
+    }
+
+    public void addMessage(Message message) {
+        if (messageList == null) {
+            messageList = new ArrayList<>();
+        }
+        messageList.add(message);
+    }
 }

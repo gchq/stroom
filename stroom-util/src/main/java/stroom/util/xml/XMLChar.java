@@ -43,7 +43,6 @@ package stroom.util.xml;
  * @author Eric Ye, IBM
  * @author Arnaud  Le Hors, IBM
  * @author Rahul Srivastava, Sun Microsystems Inc.
- *
  */
 public class XMLChar {
 
@@ -51,22 +50,34 @@ public class XMLChar {
     // Constants
     //
 
-    /** Character flags. */
+    /**
+     * Character flags.
+     */
     private static final byte[] CHARS = new byte[1 << 16];
 
-    /** Valid character mask. */
+    /**
+     * Valid character mask.
+     */
     public static final int MASK_VALID = 0x01;
 
-    /** Space character mask. */
+    /**
+     * Space character mask.
+     */
     public static final int MASK_SPACE = 0x02;
 
-    /** Name start character mask. */
+    /**
+     * Name start character mask.
+     */
     public static final int MASK_NAME_START = 0x04;
 
-    /** Name character mask. */
+    /**
+     * Name character mask.
+     */
     public static final int MASK_NAME = 0x08;
 
-    /** Pubid character mask. */
+    /**
+     * Pubid character mask.
+     */
     public static final int MASK_PUBID = 0x10;
 
     /**
@@ -79,10 +90,14 @@ public class XMLChar {
      */
     public static final int MASK_CONTENT = 0x20;
 
-    /** NCName start character mask. */
+    /**
+     * NCName start character mask.
+     */
     public static final int MASK_NCNAME_START = 0x40;
 
-    /** NCName character mask. */
+    /**
+     * NCName character mask.
+     */
     public static final int MASK_NCNAME = 0x80;
 
     //
@@ -96,7 +111,7 @@ public class XMLChar {
         //              [#xE000-#xFFFD] | [#x10000-#x10FFFF]
         //
 
-        int charRange[] = {
+        int[] charRange = {
                 0x0009, 0x000A, 0x000D, 0x000D, 0x0020, 0xD7FF, 0xE000, 0xFFFD,
         };
 
@@ -104,7 +119,7 @@ public class XMLChar {
         // [3] S ::= (#x20 | #x9 | #xD | #xA)+
         //
 
-        int spaceChar[] = {
+        int[] spaceChar = {
                 0x0020, 0x0009, 0x000D, 0x000A,
         };
 
@@ -113,7 +128,7 @@ public class XMLChar {
         //                  CombiningChar | Extender
         //
 
-        int nameChar[] = {
+        int[] nameChar = {
                 0x002D, 0x002E, // '-' and '.'
         };
 
@@ -121,7 +136,7 @@ public class XMLChar {
         // [5] Name ::= (Letter | '_' | ':') (NameChar)*
         //
 
-        int nameStartChar[] = {
+        int[] nameStartChar = {
                 0x003A, 0x005F, // ':' and '_'
         };
 
@@ -129,12 +144,12 @@ public class XMLChar {
         // [13] PubidChar ::= #x20 | 0xD | 0xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
         //
 
-        int pubidChar[] = {
+        int[] pubidChar = {
                 0x000A, 0x000D, 0x0020, 0x0021, 0x0023, 0x0024, 0x0025, 0x003D,
                 0x005F
         };
 
-        int pubidRange[] = {
+        int[] pubidRange = {
                 0x0027, 0x003B, 0x003F, 0x005A, 0x0061, 0x007A
         };
 
@@ -142,7 +157,7 @@ public class XMLChar {
         // [84] Letter ::= BaseChar | Ideographic
         //
 
-        int letterRange[] = {
+        int[] letterRange = {
                 // BaseChar
                 0x0041, 0x005A, 0x0061, 0x007A, 0x00C0, 0x00D6, 0x00D8, 0x00F6,
                 0x00F8, 0x0131, 0x0134, 0x013E, 0x0141, 0x0148, 0x014A, 0x017E,
@@ -185,7 +200,7 @@ public class XMLChar {
                 // Ideographic
                 0x3021, 0x3029, 0x4E00, 0x9FA5,
         };
-        int letterChar[] = {
+        int[] letterChar = {
                 // BaseChar
                 0x0386, 0x038C, 0x03DA, 0x03DC, 0x03DE, 0x03E0, 0x0559, 0x06D5,
                 0x093D, 0x09B2, 0x0A5E, 0x0A8D, 0x0ABD, 0x0AE0, 0x0B3D, 0x0B9C,
@@ -202,7 +217,7 @@ public class XMLChar {
         // [87] CombiningChar ::= ...
         //
 
-        int combiningCharRange[] = {
+        int[] combiningCharRange = {
                 0x0300, 0x0345, 0x0360, 0x0361, 0x0483, 0x0486, 0x0591, 0x05A1,
                 0x05A3, 0x05B9, 0x05BB, 0x05BD, 0x05C1, 0x05C2, 0x064B, 0x0652,
                 0x06D6, 0x06DC, 0x06DD, 0x06DF, 0x06E0, 0x06E4, 0x06E7, 0x06E8,
@@ -222,7 +237,7 @@ public class XMLChar {
                 0x20D0, 0x20DC, 0x302A, 0x302F,
         };
 
-        int combiningCharChar[] = {
+        int[] combiningCharChar = {
                 0x05BF, 0x05C4, 0x0670, 0x093C, 0x094D, 0x09BC, 0x09BE, 0x09BF,
                 0x09D7, 0x0A02, 0x0A3C, 0x0A3E, 0x0A3F, 0x0ABC, 0x0B3C, 0x0BD7,
                 0x0D57, 0x0E31, 0x0EB1, 0x0F35, 0x0F37, 0x0F39, 0x0F3E, 0x0F3F,
@@ -233,7 +248,7 @@ public class XMLChar {
         // [88] Digit ::= ...
         //
 
-        int digitRange[] = {
+        int[] digitRange = {
                 0x0030, 0x0039, 0x0660, 0x0669, 0x06F0, 0x06F9, 0x0966, 0x096F,
                 0x09E6, 0x09EF, 0x0A66, 0x0A6F, 0x0AE6, 0x0AEF, 0x0B66, 0x0B6F,
                 0x0BE7, 0x0BEF, 0x0C66, 0x0C6F, 0x0CE6, 0x0CEF, 0x0D66, 0x0D6F,
@@ -244,11 +259,11 @@ public class XMLChar {
         // [89] Extender ::= ...
         //
 
-        int extenderRange[] = {
+        int[] extenderRange = {
                 0x3031, 0x3035, 0x309D, 0x309E, 0x30FC, 0x30FE,
         };
 
-        int extenderChar[] = {
+        int[] extenderChar = {
                 0x00B7, 0x02D0, 0x02D1, 0x0387, 0x0640, 0x0E46, 0x0EC6, 0x3005,
         };
 
@@ -256,7 +271,7 @@ public class XMLChar {
         // SpecialChar ::= '<', '&', '\n', '\r', ']'
         //
 
-        int specialChar[] = {
+        int[] specialChar = {
                 '<', '&', '\n', '\r', ']',
         };
 
@@ -273,7 +288,7 @@ public class XMLChar {
 
         // remove special characters
         for (int i = 0; i < specialChar.length; i++) {
-            CHARS[specialChar[i]] = (byte)(CHARS[specialChar[i]] & ~MASK_CONTENT);
+            CHARS[specialChar[i]] = (byte) (CHARS[specialChar[i]] & ~MASK_CONTENT);
         }
 
         // set space characters
@@ -511,6 +526,7 @@ public class XMLChar {
     /*
      * [5] Name ::= (Letter | '_' | ':') (NameChar)*
      */
+
     /**
      * Check to see if a string is a valid Name according to [5]
      * in the XML 1.0 Recommendation
@@ -519,14 +535,16 @@ public class XMLChar {
      * @return true if name is a valid Name
      */
     public static boolean isValidName(String name) {
-        if (name.length() == 0)
+        if (name.length() == 0) {
             return false;
+        }
         char ch = name.charAt(0);
-        if( isNameStart(ch) == false)
+        if (isNameStart(ch) == false) {
             return false;
-        for (int i = 1; i < name.length(); i++ ) {
+        }
+        for (int i = 1; i < name.length(); i++) {
             ch = name.charAt(i);
-            if( isName( ch ) == false ){
+            if (isName(ch) == false) {
                 return false;
             }
         }
@@ -538,6 +556,7 @@ public class XMLChar {
      * from the namespace rec
      * [4] NCName ::= (Letter | '_') (NCNameChar)*
      */
+
     /**
      * Check to see if a string is a valid NCName according to [4]
      * from the XML Namespaces 1.0 Recommendation
@@ -546,14 +565,16 @@ public class XMLChar {
      * @return true if name is a valid NCName
      */
     public static boolean isValidNCName(String ncName) {
-        if (ncName.length() == 0)
+        if (ncName.length() == 0) {
             return false;
+        }
         char ch = ncName.charAt(0);
-        if( isNCNameStart(ch) == false)
+        if (isNCNameStart(ch) == false) {
             return false;
-        for (int i = 1; i < ncName.length(); i++ ) {
+        }
+        for (int i = 1; i < ncName.length(); i++) {
             ch = ncName.charAt(i);
-            if( isNCName( ch ) == false ){
+            if (isNCName(ch) == false) {
                 return false;
             }
         }
@@ -563,6 +584,7 @@ public class XMLChar {
     /*
      * [7] Nmtoken ::= (NameChar)+
      */
+
     /**
      * Check to see if a string is a valid Nmtoken according to [7]
      * in the XML 1.0 Recommendation
@@ -571,19 +593,17 @@ public class XMLChar {
      * @return true if nmtoken is a valid Nmtoken
      */
     public static boolean isValidNmtoken(String nmtoken) {
-        if (nmtoken.length() == 0)
+        if (nmtoken.length() == 0) {
             return false;
-        for (int i = 0; i < nmtoken.length(); i++ ) {
+        }
+        for (int i = 0; i < nmtoken.length(); i++) {
             char ch = nmtoken.charAt(i);
-            if(  ! isName( ch ) ){
+            if (!isName(ch)) {
                 return false;
             }
         }
         return true;
     } // isValidName(String):boolean
-
-
-
 
 
     // encodings
@@ -657,11 +677,10 @@ public class XMLChar {
         }
 
         if (colon > 0) {
-            final String prefix = str.substring(0,colon);
-            final String localPart = str.substring(colon+1);
+            final String prefix = str.substring(0, colon);
+            final String localPart = str.substring(colon + 1);
             return isValidNCName(prefix) && isValidNCName(localPart);
-        }
-        else {
+        } else {
             return isValidNCName(str);
         }
     }

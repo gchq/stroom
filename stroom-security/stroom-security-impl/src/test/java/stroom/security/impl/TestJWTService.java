@@ -15,6 +15,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.lang.JoseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +53,8 @@ class TestJWTService {
     void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
-        final JWTService jwtService = new JWTService(resolvedOpenIdConfig, openIdPublicKeysSupplier);
+        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(resolvedOpenIdConfig,
+                openIdPublicKeysSupplier);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
 
@@ -62,13 +64,10 @@ class TestJWTService {
         Mockito.when(resolvedOpenIdConfig.getClientId())
                 .thenReturn(defaultOpenIdCredentials.getOauth2ClientId());
 
-        final JwtClaims jwtClaims;
-        try {
-            jwtClaims= jwtService.extractTokenClaims(apiKey);
-        } catch (InvalidJwtException e) {
-            throw new RuntimeException("Token failed verification", e);
-        }
-
+        final JwtClaims jwtClaims = jwtService
+                .getJwtContext(apiKey)
+                .map(JwtContext::getJwtClaims)
+                .orElseThrow(() -> new RuntimeException("Token failed verification"));
         try {
             LOGGER.info("Claims: \n{}", jwtClaims.toJson());
 
@@ -97,24 +96,24 @@ class TestJWTService {
 
         LOGGER.info("Public key: {}", publicJsonWebKey.getPublicKey().toString());
 
-        LOGGER.info("Public key Base64: \n\n{}\n", new String(Base64.encode(publicJsonWebKey.getPublicKey().getEncoded())));
+        LOGGER.info("Public key Base64: \n\n{}\n", Base64.encode(publicJsonWebKey.getPublicKey().getEncoded()));
 
         LOGGER.info("private key: {}", publicJsonWebKey.getPrivateKey().toString());
 
-        LOGGER.info("Private key Base64: \n\n{}\n", new String(Base64.encode(publicJsonWebKey.getPrivateKey().getEncoded())));
+        LOGGER.info("Private key Base64: \n\n{}\n", Base64.encode(publicJsonWebKey.getPrivateKey().getEncoded()));
     }
 
     /**
      * Copied from https://bitbucket.org/b_c/jose4j/wiki/JWT Examples
-     *
+     * <p>
      * Not really a test, just a handy reference for how to create a token and verify it in jose4j
      */
     @Test
     void testJose4jExample() throws InvalidJwtException, JoseException {
 
         //
-        // JSON Web Token is a compact URL-safe means of representing claims/attributes to be transferred between two parties.
-        // This example demonstrates producing and consuming a signed JWT
+        // JSON Web Token is a compact URL-safe means of representing claims/attributes to be transferred
+        // between two parties. This example demonstrates producing and consuming a signed JWT
         //
 
         // Generate an RSA key pair, which will be used for signing and verification of the JWT, wrapped in a JWK
@@ -132,9 +131,11 @@ class TestJWTService {
         claims.setIssuedAtToNow();  // when the token was issued/created (now)
         claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
         claims.setSubject("subject"); // the subject/principal is whom the token is about
-        claims.setClaim("email","mail@example.com"); // additional claims/attributes about the subject can be added
+        // additional claims/attributes about the subject can be added
+        claims.setClaim("email", "mail@example.com");
         List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
-        claims.setStringListClaim("groups", groups); // multi-valued claims work too and will end up as a JSON array
+        // multi-valued claims work too and will end up as a JSON array
+        claims.setStringListClaim("groups", groups);
 
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS so we create a JsonWebSignature object.
@@ -175,23 +176,25 @@ class TestJWTService {
         // decryption key resolver to the builder.
         JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime() // the JWT must have an expiration time
-                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to
+                //                                   account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setExpectedIssuer("Issuer") // whom the JWT needs to have been issued by
                 .setExpectedAudience("Audience") // to whom the JWT is intended for
                 .setVerificationKey(rsaJsonWebKey.getKey()) // verify the signature with the public key
-                .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
-                                AlgorithmConstraints.ConstraintType.WHITELIST, AlgorithmIdentifiers.RSA_USING_SHA256)) // which is only RS256 here
+                                AlgorithmConstraints.ConstraintType.WHITELIST,
+                                AlgorithmIdentifiers.RSA_USING_SHA256)) // which is only RS256 here
                 .build(); // create the JwtConsumer instance
 
         LOGGER.info("Public key: {}", rsaJsonWebKey.getPublicKey().toString());
 
-        LOGGER.info("Base64: \n{}\n", new String(Base64.encode(rsaJsonWebKey.getPublicKey().getEncoded())));
+        LOGGER.info("Base64: \n{}\n", Base64.encode(rsaJsonWebKey.getPublicKey().getEncoded()));
 
         LOGGER.info("private key: {}", rsaJsonWebKey.getPrivateKey().toString());
 
-        LOGGER.info("Base64: \n{}\n", new String(Base64.encode(rsaJsonWebKey.getPrivateKey().getEncoded())));
+        LOGGER.info("Base64: \n{}\n", Base64.encode(rsaJsonWebKey.getPrivateKey().getEncoded()));
 
 
         //  Validate the JWT and process it to the Claims
@@ -201,7 +204,6 @@ class TestJWTService {
     }
 
     private JsonWebKeySet getPublicKeys() throws JoseException {
-
         final PublicJsonWebKey publicJsonWebKey = RsaJsonWebKey.Factory
                 .newPublicJwk(defaultOpenIdCredentials.getPublicKeyJson());
 

@@ -1,5 +1,8 @@
 package stroom.explorer.client.view;
 
+import stroom.explorer.shared.ExplorerNode;
+import stroom.util.client.ImageUtil;
+
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -14,10 +17,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.util.client.ImageUtil;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
+
     private static Template template;
     private static Resources resources;
 
@@ -48,11 +50,17 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
+                        expanderIcon = template.icon(
+                                resources.style().expanderIcon(),
+                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
+                        expanderIcon = template.icon(
+                                resources.style().expanderIcon(),
+                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
                         break;
+                    default:
+                        throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             }
 //            else {
@@ -102,6 +110,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
     public interface Style extends CssResource {
+
         /**
          * The path to the default CSS styles used by this resource.
          */
@@ -119,6 +128,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
     interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_CSS)
         Style style();
     }

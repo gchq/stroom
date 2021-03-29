@@ -17,10 +17,12 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
-public class ExplorerTreeNode {
+public class ExplorerTreeNode implements HasIntegerId {
+
     private Integer id;
     private String type;
     private String uuid;
@@ -30,7 +32,11 @@ public class ExplorerTreeNode {
     public ExplorerTreeNode() {
     }
 
-    public ExplorerTreeNode(final Integer id, final String type, final String uuid, final String name, final String tags) {
+    public ExplorerTreeNode(final Integer id,
+                            final String type,
+                            final String uuid,
+                            final String name,
+                            final String tags) {
         this.id = id;
         this.type = type;
         this.uuid = uuid;
@@ -50,6 +56,7 @@ public class ExplorerTreeNode {
         return explorerTreeNode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -104,10 +111,15 @@ public class ExplorerTreeNode {
         return clone;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ExplorerTreeNode that = (ExplorerTreeNode) o;
         return Objects.equals(id, that.id);
     }

@@ -25,23 +25,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled // TODO no idea why we would want to serialise this class
+@Disabled
+        // TODO no idea why we would want to serialise this class
 class TestTimeAgnosticStatisticEvent {
+
     @Test
     void serialiseTest() {
         final List<StatisticTag> tagList = new ArrayList<>();
         tagList.add(new StatisticTag("tag1", "val1"));
         tagList.add(new StatisticTag("tag2", "val2"));
 
-        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent = TimeAgnosticStatisticEvent.createCount("MtStatName",
-                tagList, 42L);
+        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent =
+                TimeAgnosticStatisticEvent.createCount("MtStatName", tagList, 42L);
 
         // if we can't serialise the object then we should get an exception here
         final byte[] serializedForm = SerializationUtils.serialize(timeAgnosticStatisticEvent);
 
-        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent2 = (TimeAgnosticStatisticEvent) SerializationUtils
-                .deserialize(serializedForm);
+        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent2 = SerializationUtils.deserialize(serializedForm);
 
-        assertThat(timeAgnosticStatisticEvent2).isEqualTo(timeAgnosticStatisticEvent);
+        assertThat(timeAgnosticStatisticEvent2)
+                .isEqualTo(timeAgnosticStatisticEvent);
     }
 }

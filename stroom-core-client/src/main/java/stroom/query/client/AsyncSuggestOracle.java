@@ -16,9 +16,6 @@
 
 package stroom.query.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -26,10 +23,15 @@ import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
+import com.google.gwt.user.client.ui.SuggestOracle;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class AsyncSuggestOracle extends SuggestOracle {
+
     private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
 
     private RestFactory restFactory;

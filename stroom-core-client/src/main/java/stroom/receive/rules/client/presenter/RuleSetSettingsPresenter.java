@@ -27,7 +27,6 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -55,7 +54,8 @@ import java.util.List;
 
 public class RuleSetSettingsPresenter
         extends MyPresenterWidget<RuleSetSettingsView>
-        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
+        ReadOnlyChangeHandler {
 
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -64,13 +64,13 @@ public class RuleSetSettingsPresenter
     private List<AbstractField> fields;
     private List<ReceiveDataRule> rules;
 
-    private ButtonView addButton;
-    private ButtonView editButton;
-    private ButtonView copyButton;
-    private ButtonView disableButton;
-    private ButtonView deleteButton;
-    private ButtonView moveUpButton;
-    private ButtonView moveDownButton;
+    private final ButtonView addButton;
+    private final ButtonView editButton;
+    private final ButtonView copyButton;
+    private final ButtonView disableButton;
+    private final ButtonView deleteButton;
+    private final ButtonView moveUpButton;
+    private final ButtonView moveDownButton;
 
     private boolean dirty;
     private boolean readOnly = true;
@@ -254,7 +254,7 @@ public class RuleSetSettingsPresenter
                 System.currentTimeMillis(),
                 "",
                 true,
-                new ExpressionOperator.Builder(Op.AND).build(),
+                ExpressionOperator.builder().build(),
                 RuleAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
@@ -401,6 +401,7 @@ public class RuleSetSettingsPresenter
     }
 
     public interface RuleSetSettingsView extends View {
+
         void setTableView(View view);
 
         void setExpressionView(View view);

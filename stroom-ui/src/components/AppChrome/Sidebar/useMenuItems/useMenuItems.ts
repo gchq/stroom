@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import useLocalStorage, { useStoreObjectFactory } from "lib/useLocalStorage";
 import {
   MenuItemsOpenState,
@@ -10,7 +10,7 @@ import {
 } from "../MenuItem/types";
 import useDocumentMenu from "./useDocumentMenu";
 import useAdminMenu from "./useAdminMenu";
-import useWelcomeMenu from "./useWelcomeMenu";
+import { useWelcomeMenu } from "./useWelcomeMenu";
 import useIndexingMenu from "./useIndexingMenu";
 import { SubMenuProps } from "./types";
 import useDataViewerMenu from "./useDataViewerMenu";
@@ -29,11 +29,11 @@ interface OutProps {
   menuItemOpened: MenuItemOpened;
 }
 
-const iterateMenuItems = function(
+const iterateMenuItems = function (
   menuItems: MenuItemType[],
   callback: (menuItem: MenuItemType) => void,
 ) {
-  menuItems.forEach(menuItem => {
+  menuItems.forEach((menuItem) => {
     callback(menuItem);
     if (!!menuItem.children) {
       iterateMenuItems(menuItem.children, callback);
@@ -43,7 +43,7 @@ const iterateMenuItems = function(
 
 const DEFAULT_MENU_OPEN_STATE: MenuItemsOpenState = {};
 
-const useMenuItems = (): OutProps => {
+export const useMenuItems = (): OutProps => {
   const navigateApp = useAppNavigation();
 
   const {
@@ -56,7 +56,7 @@ const useMenuItems = (): OutProps => {
   );
   const menuItemOpened: MenuItemOpened = React.useCallback(
     (name: string, isOpen: boolean) => {
-      modifyOpenMenuItems(existing => ({
+      modifyOpenMenuItems((existing) => ({
         ...existing,
         [name]: isOpen,
       }));
@@ -66,7 +66,7 @@ const useMenuItems = (): OutProps => {
 
   const menuItemToggled: MenuItemToggled = React.useCallback(
     (name: string) => {
-      modifyOpenMenuItems(existing => ({
+      modifyOpenMenuItems((existing) => ({
         ...existing,
         [name]: !existing[name],
       }));
@@ -90,8 +90,8 @@ const useMenuItems = (): OutProps => {
   const openMenuItemKeys: string[] = React.useMemo(
     () =>
       Object.entries(menuItemIsOpenByKey)
-        .filter(k => k[1])
-        .map(k => k[0]),
+        .filter((k) => k[1])
+        .map((k) => k[0]),
     [menuItemIsOpenByKey],
   );
 
@@ -100,7 +100,7 @@ const useMenuItems = (): OutProps => {
 
     iterateMenuItems(
       menuItems,
-      menuItem => (itemsByKey[menuItem.key] = menuItem),
+      (menuItem) => (itemsByKey[menuItem.key] = menuItem),
     );
 
     return itemsByKey;
@@ -115,5 +115,3 @@ const useMenuItems = (): OutProps => {
     menuItemsByKey,
   };
 };
-
-export default useMenuItems;

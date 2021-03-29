@@ -16,9 +16,6 @@
 
 package stroom.index.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -28,11 +25,18 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class ManageIndexVolumesPlugin extends NodeToolsPlugin {
+
     private final Provider<IndexVolumeGroupPresenter> manageVolumesPresenter;
 
     @Inject
-    public ManageIndexVolumesPlugin(final EventBus eventBus, final ClientSecurityContext securityContext, final Provider<IndexVolumeGroupPresenter> manageVolumesPresenter) {
+    public ManageIndexVolumesPlugin(final EventBus eventBus,
+                                    final ClientSecurityContext securityContext,
+                                    final Provider<IndexVolumeGroupPresenter> manageVolumesPresenter) {
         super(eventBus, securityContext);
         this.manageVolumesPresenter = manageVolumesPresenter;
     }

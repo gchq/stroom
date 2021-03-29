@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data value="fred"/>
+   </record>
+   <record>
+      <data value="bob"/>
+   </record>
+   <record>
+      <data value="george"/>
+   </record>
+   <record>
+      <data value="frank"/>
+   </record>
+   <record>
+      <data value="john"/>
+   </record>
+   <record>
+      <data value="jane"/>
+   </record>
+   <record>
+      <data value="sandra"/>
+   </record>
+   <record>
+      <data value="jane"/>
+   </record>
+</records>

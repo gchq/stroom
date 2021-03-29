@@ -17,10 +17,6 @@
 
 package stroom.security.client;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -35,7 +31,13 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class ManageUserPlugin extends NodeToolsPlugin {
+
     private final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider;
 
     @Inject

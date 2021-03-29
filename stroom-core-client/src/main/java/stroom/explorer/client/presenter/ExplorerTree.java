@@ -16,21 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.cellview.client.AbstractCellTable;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
-import com.google.gwt.view.client.CellPreviewEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
@@ -46,17 +31,34 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
+
 import java.util.List;
 import java.util.Set;
 
 public class ExplorerTree extends AbstractExplorerTree {
+
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
     private final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
-    private String expanderClassName;
+    private final String expanderClassName;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
@@ -286,16 +288,19 @@ public class ExplorerTree extends AbstractExplorerTree {
 
     @CssResource.ImportedWithPrefix("gwt-CellTable")
     public interface ExplorerTreeStyle extends CellTable.Style {
+
         String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTree.css";
     }
 
     public interface ExplorerTreeResources extends CellTable.Resources {
+
         @Override
         @Source(ExplorerTreeStyle.DEFAULT_CSS)
         ExplorerTreeStyle cellTableStyle();
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
+
         MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
             super(table);
         }
@@ -318,7 +323,12 @@ public class ExplorerTree extends AbstractExplorerTree {
                     // If the item clicked is already selected then don't change the selection.
                     if (!selectionModel.isSelected(selectedItem)) {
                         // Change the selection.
-                        doSelect(selectedItem, new SelectionType(false, true, false, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                        doSelect(selectedItem,
+                                new SelectionType(false,
+                                        true,
+                                        false,
+                                        event.getNativeEvent().getCtrlKey(),
+                                        event.getNativeEvent().getShiftKey()));
                     }
 
                     ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
@@ -328,20 +338,32 @@ public class ExplorerTree extends AbstractExplorerTree {
                     if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
                         if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             final boolean doubleClick = doubleClickTest.test(selectedItem);
-                            doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                            doSelect(selectedItem,
+                                    new SelectionType(doubleClick,
+                                            false,
+                                            allowMultiSelect,
+                                            event.getNativeEvent().getCtrlKey(),
+                                            event.getNativeEvent().getShiftKey()));
                             super.onCellPreview(event);
                         } else {
                             final Element element = event.getNativeEvent().getEventTarget().cast();
                             final String className = element.getClassName();
 
                             // Expander
-                            if ((className != null && className.equals(expanderClassName)) || (element.getParentElement().getClassName() != null && element.getParentElement().getClassName().equals(expanderClassName))) {
+                            if ((className != null && className.equals(expanderClassName))
+                                    || (element.getParentElement().getClassName() != null
+                                    && element.getParentElement().getClassName().equals(expanderClassName))) {
                                 super.onCellPreview(event);
 
                                 treeModel.toggleOpenState(selectedItem);
                             } else {
                                 final boolean doubleClick = doubleClickTest.test(selectedItem);
-                                doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                                doSelect(selectedItem,
+                                        new SelectionType(doubleClick,
+                                                false,
+                                                allowMultiSelect,
+                                                event.getNativeEvent().getCtrlKey(),
+                                                event.getNativeEvent().getShiftKey()));
                                 super.onCellPreview(event);
                             }
                         }

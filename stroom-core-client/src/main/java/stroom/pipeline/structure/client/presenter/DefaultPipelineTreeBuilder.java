@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
+
     @Override
     public DefaultTreeForTreeLayout<PipelineElement> getTree(final PipelineModel model) {
         if (model.getChildMap() == null) {

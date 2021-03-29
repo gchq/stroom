@@ -17,19 +17,20 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView> {
+
     private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
 
@@ -50,7 +51,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         if (expression != null) {
             editExpressionPresenter.read(expression);
         } else {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         }
     }
 
@@ -59,6 +60,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     public interface ExpressionView extends View {
+
         void setExpressionView(View view);
     }
 }

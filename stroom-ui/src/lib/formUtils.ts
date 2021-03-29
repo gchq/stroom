@@ -9,6 +9,6 @@ export const truncate = (text: string, limit: number) =>
 
 export function onlyUnique<VALUE>(value: VALUE, index: number, self: VALUE[]) {
   return (
-    self.map(m => JSON.stringify(m)).indexOf(JSON.stringify(value)) === index
+    self.map((m) => JSON.stringify(m)).indexOf(JSON.stringify(value)) === index
   );
 }

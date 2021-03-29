@@ -55,7 +55,7 @@ const IndexFieldsTable: React.FunctionComponent<Props> = ({
 export const useTable = (fields: IndexField[]): UseTable => {
   const selectableTableProps = useSelectableReactTable<IndexField>(
     {
-      getKey: React.useCallback(v => v.fieldName, []),
+      getKey: React.useCallback((v) => v.fieldName, []),
       items: fields,
       selectionBehaviour: SelectionBehaviour.MULTIPLE,
     },

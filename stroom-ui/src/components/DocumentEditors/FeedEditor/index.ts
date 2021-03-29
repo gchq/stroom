@@ -1,5 +1,5 @@
-import FeedEditor from './FeedEditor';
+import FeedEditor from "./FeedEditor";
 
-export {FeedEditor}
+export { FeedEditor };
 
 export default FeedEditor;

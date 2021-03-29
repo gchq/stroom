@@ -16,10 +16,11 @@
 
 package stroom.core.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,6 +37,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public class BackupConfig {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BackupConfig.class);
 
     public static void main(final String[] args) throws IOException {
@@ -55,8 +57,8 @@ public class BackupConfig {
 
         try (LineNumberReader inputStreamReader = new LineNumberReader(
                 new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
-             PrintWriter printWriter = new PrintWriter(
-                     new OutputStreamWriter(System.out, StreamUtil.DEFAULT_CHARSET))) {
+                PrintWriter printWriter = new PrintWriter(
+                        new OutputStreamWriter(System.out, StreamUtil.DEFAULT_CHARSET))) {
             String line = null;
             while ((line = inputStreamReader.readLine()) != null) {
                 final String[] parts = line.split("\\s+");
@@ -79,7 +81,10 @@ public class BackupConfig {
                                         if (Files.isDirectory(sourcePath)) {
                                             final Path targetPath = targetDir.resolve(backupPath);
                                             printWriter.println(
-                                                    FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
+                                                    FileUtil.getCanonicalPath(sourcePath) +
+                                                            "/\t" +
+                                                            FileUtil.getCanonicalPath(targetPath) +
+                                                            "/");
                                         }
                                     }
                                 } catch (final RuntimeException e) {

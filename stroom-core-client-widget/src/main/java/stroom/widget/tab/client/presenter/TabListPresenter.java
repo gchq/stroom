@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class TabListPresenter extends MenuPresenter implements HasSelectionHandlers<TabData> {
+
     public TabListPresenter() {
         super(new SimpleEventBus());
     }
@@ -80,9 +81,13 @@ public class TabListPresenter extends MenuPresenter implements HasSelectionHandl
     }
 
     private static class TabDataIconMenuItem extends IconMenuItem {
+
         private final TabData tabData;
 
-        public TabDataIconMenuItem(final int priority, final TabData tabData, final Icon enabledIcon, final String text) {
+        public TabDataIconMenuItem(final int priority,
+                                   final TabData tabData,
+                                   final Icon enabledIcon,
+                                   final String text) {
             super(priority, enabledIcon, null, text, null, true, null);
             this.tabData = tabData;
         }
@@ -93,6 +98,7 @@ public class TabListPresenter extends MenuPresenter implements HasSelectionHandl
     }
 
     private static class TabItemComparator implements Comparator<TabData> {
+
         @Override
         public int compare(final TabData o1, final TabData o2) {
             return o1.getLabel().compareTo(o2.getLabel());

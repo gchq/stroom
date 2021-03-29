@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class HikariUtil {
+
     private HikariUtil() {
         // Utility class.
     }
@@ -33,26 +34,28 @@ public class HikariUtil {
         final HikariConfig config = new HikariConfig();
 
         // Pool properties
-        copyAndMapProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, StroomDuration::toMillis);
+        copyAndMapProp(connectionPoolConfig::getConnectionTimeout,
+                config::setConnectionTimeout,
+                StroomDuration::toMillis);
         copyAndMapProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, StroomDuration::toMillis);
         copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, StroomDuration::toMillis);
         copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
         copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 
-        copyAndMapProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
-        copyAndMapProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
-        copyAndMapProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
+        copyAndMapProp(connectionConfig::getUrl, config::setJdbcUrl, Function.identity());
+        copyAndMapProp(connectionConfig::getUser, config::setUsername, Function.identity());
+        copyAndMapProp(connectionConfig::getPassword, config::setPassword, Function.identity());
 
         // JDBC Driver properties
         copyAndMapProp(connectionPoolConfig::getCachePrepStmts,
-            val -> config.addDataSourceProperty("cachePrepStmts", val),
-            String::valueOf);
+                val -> config.addDataSourceProperty("cachePrepStmts", val),
+                String::valueOf);
         copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSize,
-            val -> config.addDataSourceProperty("prepStmtCacheSize", val),
-            String::valueOf);
+                val -> config.addDataSourceProperty("prepStmtCacheSize", val),
+                String::valueOf);
         copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSqlLimit,
-            val -> config.addDataSourceProperty("prepStmtCacheSqlLimit", val),
-            String::valueOf);
+                val -> config.addDataSourceProperty("prepStmtCacheSqlLimit", val),
+                String::valueOf);
 
         return config;
     }

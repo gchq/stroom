@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { loremIpsum } from "lorem-ipsum";
 import {
   IndexField,
@@ -17,7 +17,7 @@ export const generateTestField = (): IndexField => ({
 
 export const generate = (): IndexDoc => ({
   type: "Index",
-  uuid: uuidv4(),
+  uuid: v4(),
   name: loremIpsum({ count: 2, units: "words" }),
   fields: [
     {

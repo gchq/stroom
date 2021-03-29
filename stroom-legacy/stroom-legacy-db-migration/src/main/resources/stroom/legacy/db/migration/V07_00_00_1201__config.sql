@@ -21,17 +21,17 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the config table
 --
 CREATE TABLE IF NOT EXISTS config (
-    id                    int(11) NOT NULL AUTO_INCREMENT,
-    version               int(11) NOT NULL,
-    create_time_ms        bigint(20) NOT NULL,
+    id                    int NOT NULL AUTO_INCREMENT,
+    version               int NOT NULL,
+    create_time_ms        bigint NOT NULL,
     create_user           varchar(255) NOT NULL,
-    update_time_ms        bigint(20) NOT NULL,
+    update_time_ms        bigint NOT NULL,
     update_user           varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     val                   longtext NOT NULL,
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the config table
@@ -45,7 +45,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'GLOB_PROP') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'GLOB_PROP') THEN
 
         RENAME TABLE GLOB_PROP TO OLD_GLOB_PROP;
     END IF;
@@ -55,7 +56,8 @@ BEGIN
     IF EXISTS (
             SELECT COUNT(*)
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_GLOB_PROP') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_GLOB_PROP') THEN
 
         INSERT INTO config (
             id,

@@ -19,6 +19,7 @@ package stroom.statistics.impl.hbase.pipeline;
 import stroom.pipeline.factory.PipelineElementModule;
 
 public class StatisticsElementModule extends PipelineElementModule {
+
     @Override
     protected void configureElements() {
         bindElement(StroomStatsAppender.class);

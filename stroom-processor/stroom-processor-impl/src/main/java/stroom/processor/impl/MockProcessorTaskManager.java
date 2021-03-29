@@ -22,19 +22,23 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.*;
-import stroom.util.shared.Clearable;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
+import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
-public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable {
+public class MockProcessorTaskManager implements ProcessorTaskManager {
+
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 
@@ -43,11 +47,6 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
                              final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
-    }
-
-    @Override
-    public void clear() {
-        // NA
     }
 
     @Override

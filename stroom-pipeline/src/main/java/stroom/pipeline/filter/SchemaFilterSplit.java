@@ -21,8 +21,8 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.security.api.SecurityContext;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
@@ -30,10 +30,12 @@ import javax.xml.XMLConstants;
 /**
  * An XML filter for performing inline schema validation of XML.
  */
-@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
+
     private final SchemaFilter schemaFilter;
     private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
     private String schemaLanguage = XMLConstants.W3C_XML_SCHEMA_NS_URI;
@@ -103,7 +105,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Limits the schemas that can be used to validate data to those with a matching schema group name.",
+            description = "Limits the schemas that can be used to validate data to those with a matching " +
+                    "schema group name.",
             displayPriority = 1)
     public void setSchemaGroup(final String schemaGroup) {
         if (schemaGroup != null && schemaGroup.trim().length() > 0) {
@@ -113,7 +116,9 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching namespace URI.",
+    @PipelineProperty(
+            description = "Limits the schemas that can be used to validate data to those with a matching " +
+                    "namespace URI.",
             displayPriority = 3)
     public void setNamespaceURI(final String namespaceURI) {
         if (namespaceURI != null && namespaceURI.trim().length() > 0) {
@@ -123,7 +128,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching system id.",
+    @PipelineProperty(
+            description = "Limits the schemas that can be used to validate data to those with a matching system id.",
             displayPriority = 2)
     public void setSystemId(final String systemId) {
         if (systemId != null && systemId.trim().length() > 0) {

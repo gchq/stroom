@@ -26,20 +26,21 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class SteppingController {
-    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
-            new DefaultLocation(1, 0),
-            new DefaultLocation(1, 0));
+
+    private static final TextRange DEFAULT_TEXT_RANGE = new TextRange(
+            new DefaultLocation(1, 1),
+            new DefaultLocation(1, 1));
 
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
@@ -131,11 +132,12 @@ public class SteppingController {
 
         // Update the progress monitor.
         if (getTaskContext() != null) {
-            getTaskContext().info(LambdaLogUtil.message("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo));
+            getTaskContext().info(() ->
+                    "Stepping {" + streamInfo + "} [" + currentStreamNo + ":" + currentRecordNo + "]");
         }
 
         // Figure out what the highlighted portion of the input stream should be.
-        Highlight highlight = DEFAULT_HIGHLIGHT;
+        TextRange highlight = DEFAULT_TEXT_RANGE;
         if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
             highlight = locationHolder.getCurrentLocation().getHighlight();
         }
@@ -172,12 +174,16 @@ public class SteppingController {
 
                 // Create a location for each monitoring filter to store data
                 // against.
-                foundLocation = new StepLocation(metaHolder.getMeta().getId(), currentStreamNo, currentRecordNo);
+                foundLocation = new StepLocation(
+                        metaHolder.getMeta().getId(),
+                        currentStreamNo,
+                        currentRecordNo);
                 steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
                 // stepping first, forward or refreshing.
-                if (!StepType.BACKWARD.equals(request.getStepType()) && !StepType.LAST.equals(request.getStepType())) {
+                if (!StepType.BACKWARD.equals(request.getStepType())
+                        && !StepType.LAST.equals(request.getStepType())) {
                     return true;
                 }
             }
@@ -188,19 +194,30 @@ public class SteppingController {
 
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
-        return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
-                && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
+        return StepType.BACKWARD.equals(request.getStepType())
+                && stepLocation != null
+                && currentStreamNo == stepLocation.getPartNo()
+                && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
     }
 
-    StepData createStepData(final Highlight highlight) {
+    StepData createStepData(final TextRange textRange) {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
-            sourceLocation = new SourceLocation(stepLocation.getId(),
-                    metaHolder.getChildDataType(),
-                    stepLocation.getPartNo(),
-                    stepLocation.getRecordNo(),
-                    highlight);
+
+            // Will rely on SourcePresenter to adjust the data range to fit the
+            // highlight
+            // TODO @AT PartNo/StreamNo is a mix of one and zero based depending on where it is used.
+            //   Similar for SegmentNo/RecordNo/EventId.
+            //   Always one based for the user.  Need a consistent approach, or VERY clear
+            //   comments/javadoc saying what base is in use.
+            sourceLocation = SourceLocation.builder(stepLocation.getId())
+                    .withChildStreamType(metaHolder.getChildDataType())
+                    .withPartNo(stepLocation.getPartNo() - 1) // convert to zero based
+                    .withSegmentNumber(stepLocation.getRecordNo() - 1) // convert to zero based
+                    .withDataRange(DataRange.fromLocation(DefaultLocation.of(1, 1)))
+                    .withHighlight(textRange)
+                    .build();
         }
 
         final StepData stepData = new StepData();
@@ -209,7 +226,7 @@ public class SteppingController {
         // Store the current data and reset for each filter.
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
         for (final ElementMonitor monitor : monitors) {
-            final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
+            final ElementData elementData = monitor.getElementData(errorReceiver, textRange);
             stepData.getElementMap().put(monitor.getElementId(), elementData);
         }
 
@@ -219,7 +236,7 @@ public class SteppingController {
     /**
      * This method resets all filters so they are ready for the next record.
      */
-    void clearAllFilters(final Highlight highlight) {
+    void clearAllFilters(final TextRange highlight) {
         // Store the current data for each filter.
         monitors.forEach(elementMonitor -> elementMonitor.clear(highlight));
 

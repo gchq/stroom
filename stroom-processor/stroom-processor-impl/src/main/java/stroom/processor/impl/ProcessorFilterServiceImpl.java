@@ -38,8 +38,6 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
@@ -53,8 +51,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,9 +59,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterServiceImpl.class);
 
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
@@ -173,8 +172,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        return securityContext.secureResult(PERMISSION, () ->
+        ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.create(ensureValid(processorFilter)));
+        createdFilter.setProcessor(processorFilter.getProcessor());
+        return createdFilter;
     }
 
     @Override
@@ -243,7 +244,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             // If the user is not an admin then only show them filters that were created by them.
             if (!securityContext.isAdmin()) {
-                final ExpressionOperator.Builder builder = new Builder(Op.AND)
+                final ExpressionOperator.Builder builder = ExpressionOperator.builder()
                         .addTerm(ProcessorFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
                         .addOperator(criteria.getExpression());
                 criteria.setExpression(builder.build());
@@ -263,10 +264,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
 
-            final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+            final ExpressionOperator processorExpression = ExpressionOperator.builder()
                     .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
-                     .build();
-            final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(processorExpression));
+                    .build();
+            final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(
+                    processorExpression));
 
             // Get unique processors.
             final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
@@ -355,17 +357,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         // First try to find the associated processors
-        final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+        final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
-        if (processorResultPage.size() == 0)
+        if (processorResultPage.size() == 0) {
             return new ResultPage<>(new ArrayList<>());
+        }
 
         final ArrayList<ProcessorFilter> filters = new ArrayList<>();
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
-            final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
-                    .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
+            final ExpressionOperator filterExpression = ExpressionOperator.builder()
+                    .addTerm(ProcessorFilterFields.PROCESSOR_ID,
+                            ExpressionTerm.Condition.EQUALS,
+                            processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
             filters.addAll(filterResultPage.getValues());
         }
@@ -374,7 +379,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     private ExpressionOperator decorate(final ExpressionOperator operator) {
-        final ExpressionOperator.Builder builder = new Builder()
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .op(operator.op())
                 .enabled(operator.enabled());
 
@@ -391,7 +396,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         if (docRef != null) {
                             final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
                             if (optionalDocRefInfo.isPresent()) {
-                                term = new ExpressionTerm.Builder()
+                                term = ExpressionTerm.builder()
                                         .enabled(term.enabled())
                                         .field(term.getField())
                                         .condition(term.getCondition())
@@ -424,12 +429,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             try {
                 // We want to find all processors that need reprocessing filters.
-                final List<String> processorUuidList = metaService.getProcessorUuidList(new FindMetaCriteria(queryData.getExpression()));
+                final List<String> processorUuidList = metaService.getProcessorUuidList(
+                        new FindMetaCriteria(queryData.getExpression()));
                 processorUuidList.forEach(processorUuid -> {
                     try {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
                             // Check the user has read permissions on the pipeline.
-                            if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+                            if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(),
+                                    DocumentPermissionNames.READ)) {
                                 throw new PermissionException(securityContext.getUserId(),
                                         "You do not have permission to create this processor filter");
                             }
@@ -481,11 +488,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         int priority = defaultPriority;
 
-        final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
+        final ExpressionOperator filterExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
                 .addTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
-        final List<ProcessorFilter> list = processorFilterDao.find(new ExpressionCriteria(filterExpression)).getValues();
+        final List<ProcessorFilter> list = processorFilterDao.find(
+                new ExpressionCriteria(filterExpression)).getValues();
         for (final ProcessorFilter filter : list) {
             // Ignore reprocess filters.
             if (!filter.isReprocess()) {

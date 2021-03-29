@@ -17,5 +17,6 @@
 package stroom.security.impl.event;
 
 public interface PermissionChangeEventBus {
+
     void fire(PermissionChangeEvent event);
 }

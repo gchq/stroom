@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.shared.ComponentConfig;
 
 public interface ComponentDataModifier {
+
     boolean validate();
 
     boolean isDirty(ComponentConfig componentData);
@@ -29,5 +30,5 @@ public interface ComponentDataModifier {
 
     void read(ComponentConfig componentConfig);
 
-    void write(ComponentConfig componentConfig);
+    ComponentConfig write(ComponentConfig componentConfig);
 }

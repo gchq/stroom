@@ -19,7 +19,6 @@ import * as React from "react";
 import Button from "components/Button";
 import fullTestData from "testing/data";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { StroomUser } from "../api/userGroups";
 import UserPicker, { usePicker } from "./UserPicker";
 
@@ -29,11 +28,11 @@ interface Props {
 
 const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
   const { userNamesToFilterOut, valuesToFilterOut } = React.useMemo(() => {
-    let usersToFilterOut = fullTestData.usersAndGroups.users
+    const usersToFilterOut = fullTestData.usersAndGroups.users
       .filter((u: StroomUser) => u.group === isGroup)
       .slice(0, 3);
-    let valuesToFilterOut = usersToFilterOut.map(u => u.uuid);
-    let userNamesToFilterOut = usersToFilterOut.map(u => u.name);
+    const valuesToFilterOut = usersToFilterOut.map((u) => u.uuid);
+    const userNamesToFilterOut = usersToFilterOut.map((u) => u.name);
     return {
       userNamesToFilterOut,
       valuesToFilterOut,
@@ -48,17 +47,16 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
 
   return (
     <div>
-      <Button text="reset" onClick={reset} />
+      <Button onClick={reset}>reset</Button>
       <UserPicker {...pickerProps} />
       <JsonDebug value={{ value, userNamesToFilterOut }} />
     </div>
   );
 };
 
-[true, false].forEach(isGroup => {
-  const stories = storiesOf(
-    `Sections/Authorisation Manager/User Picker/${isGroup ? "Group" : "User"}`,
-    module,
+[true, false].forEach((isGroup) => {
+  storiesOf("Sections/Authorisation Manager/User Picker", module).add(
+    `${isGroup ? "Group" : "User"}`,
+    () => <TestHarness {...{ isGroup }} />,
   );
-  addThemedStories(stories, () => <TestHarness {...{ isGroup }} />);
 });

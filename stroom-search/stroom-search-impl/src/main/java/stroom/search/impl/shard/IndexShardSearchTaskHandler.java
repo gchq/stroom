@@ -16,13 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.util.Version;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.index.impl.IndexShardService;
@@ -30,24 +23,32 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.Receiver;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.util.Version;
+
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.inject.Inject;
 
 public class IndexShardSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
     private final IndexShardWriterCache indexShardWriterCache;
@@ -77,8 +78,9 @@ public class IndexShardSearchTaskHandler {
 
                     try {
                         if (!Thread.currentThread().isInterrupted()) {
-                            taskContext.info(() -> "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
-                                    + task.getIndexShardId() + ")");
+                            taskContext.info(() ->
+                                    "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() +
+                                            " (id=" + task.getIndexShardId() + ")");
 
 
                             final IndexWriter indexWriter = getWriter(indexShardId);
@@ -95,7 +97,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e::getMessage, e);
-                        error(task, e.getMessage(), e);
+                        error(task.getReceiver(), e.getMessage(), e);
 
                     } finally {
                         taskContext.info(() -> "Closing searcher for index shard " + indexShardId);
@@ -104,7 +106,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     }
                 },
-                LambdaLogUtil.message("exec() for shard {}", task.getShardNumber()));
+                () -> LogUtil.message("exec() for shard {}", task.getShardNumber()));
     }
 
     private IndexWriter getWriter(final Long indexShardId) {
@@ -119,7 +121,9 @@ public class IndexShardSearchTaskHandler {
         return indexWriter;
     }
 
-    private void searchShard(final TaskContext parentTaskContext, final IndexShardSearchTask task, final IndexShardSearcher indexShardSearcher) {
+    private void searchShard(final TaskContext parentTaskContext,
+                             final IndexShardSearchTask task,
+                             final IndexShardSearcher indexShardSearcher) {
         // Get the index shard that this searcher uses.
         final IndexShard indexShard = indexShardSearcher.getIndexShard();
         // Get the Lucene version being used.
@@ -134,32 +138,42 @@ public class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext, docIdStore, task.getTracker());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext,
+                    docIdStore,
+                    task.getHitCount());
+
+            // Get the receiver.
+            final Receiver receiver = task.getReceiver();
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.context(parentTaskContext, "Index Searcher", taskContext ->
-                            LOGGER.logDurationIfDebugEnabled(
-                                    () -> {
-                                        try {
-                                            searcher.search(query, collector);
-                                        } catch (final IOException e) {
-                                            error(task, e.getMessage(), e);
-                                        }
+                    final Runnable runnable = taskContextFactory.context(parentTaskContext,
+                            "Index Searcher",
+                            taskContext ->
+                                    LOGGER.logDurationIfDebugEnabled(
+                                            () -> {
+                                                try {
+                                                    searcher.search(query, collector);
+                                                } catch (final IOException e) {
+                                                    error(receiver, e.getMessage(), e);
+                                                }
 
-                                        try {
-                                            docIdStore.put(OptionalInt.empty());
-                                        } catch (final InterruptedException e) {
-                                            error(task, e.getMessage(), e);
+                                                try {
+                                                    docIdStore.put(OptionalInt.empty());
+                                                } catch (final InterruptedException e) {
+                                                    error(receiver, e.getMessage(), e);
 
-                                            // Continue to interrupt this thread.
-                                            Thread.currentThread().interrupt();
-                                        }
-                                    },
-                                    () -> "searcher.search()"));
+                                                    // Continue to interrupt this thread.
+                                                    Thread.currentThread().interrupt();
+                                                }
+                                            },
+                                            () -> "searcher.search()"));
                     CompletableFuture.runAsync(runnable, executor);
+
+                    // Get an array of field names.
+                    final String[] storedFieldNames = task.getStoredFieldNames();
 
                     // Start converting found docIds into stored data values
                     boolean complete = false;
@@ -168,23 +182,23 @@ public class IndexShardSearchTaskHandler {
                         final OptionalInt optDocId = docIdStore.take();
                         if (optDocId.isPresent()) {
                             // If we have a doc id then retrieve the stored data for it.
-                            getStoredData(task, searcher, optDocId.getAsInt());
+                            getStoredData(storedFieldNames, receiver, searcher, optDocId.getAsInt());
                         } else {
                             complete = true;
                         }
                     }
                 } catch (final RuntimeException e) {
-                    error(task, e.getMessage(), e);
+                    error(receiver, e.getMessage(), e);
                 } finally {
                     searcherManager.release(searcher);
                 }
             } catch (final InterruptedException e) {
-                error(task, e.getMessage(), e);
+                error(receiver, e.getMessage(), e);
 
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } catch (final RuntimeException | IOException e) {
-                error(task, e.getMessage(), e);
+                error(receiver, e.getMessage(), e);
             }
         }
     }
@@ -195,57 +209,47 @@ public class IndexShardSearchTaskHandler {
      * only want to get stream and event ids, in these cases no values are
      * retrieved, only stream and event ids.
      */
-    private void getStoredData(final IndexShardSearchTask task, final IndexSearcher searcher, final int docId) {
+    private void getStoredData(final String[] storedFieldNames,
+                               final Receiver receiver,
+                               final IndexSearcher searcher,
+                               final int docId) {
         try {
-            final String[] fieldNames = task.getFieldNames();
-            final Val[] values = new Val[fieldNames.length];
+            final Val[] values = new Val[storedFieldNames.length];
             final Document document = searcher.doc(docId);
 
-            for (int i = 0; i < fieldNames.length; i++) {
-                final String storedField = fieldNames[i];
-                final IndexableField indexableField = document.getField(storedField);
+            for (int i = 0; i < storedFieldNames.length; i++) {
+                final String storedField = storedFieldNames[i];
 
-                // If the field is not in fact stored then it will be null here.
-                if (indexableField != null) {
-                    final String value = indexableField.stringValue();
-                    if (value != null) {
-                        final String trimmed = value.trim();
-                        if (trimmed.length() > 0) {
-                            values[i] = ValString.create(trimmed);
+                // If the field is null then it isn't stored.
+                if (storedField != null) {
+                    final IndexableField indexableField = document.getField(storedField);
+
+                    // If the field is not in fact stored then it will be null here.
+                    if (indexableField != null) {
+                        final String value = indexableField.stringValue();
+                        if (value != null) {
+                            final String trimmed = value.trim();
+                            if (trimmed.length() > 0) {
+                                values[i] = ValString.create(trimmed);
+                            }
                         }
                     }
                 }
             }
 
-            task.getReceiver().getValuesConsumer().accept(new Values(values));
-            task.getReceiver().getCompletionCountConsumer().accept(1L);
+            receiver.getValuesConsumer().accept(values);
         } catch (final IOException | RuntimeException e) {
-            error(task, e.getMessage(), e);
-            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
+            error(receiver, e.getMessage(), e);
         }
     }
 
-    private void error(final IndexShardSearchTask task, final String message, final Throwable t) {
-        if (task == null) {
+    private void error(final Receiver receiver,
+                       final String message,
+                       final Throwable t) {
+        if (receiver == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getReceiver().getErrorConsumer().accept(new Error(message, t));
+            receiver.getErrorConsumer().accept(new Error(message, t));
         }
     }
-
-//    private int getIntProperty(final String propertyName, final int defaultValue) {
-//        int value = defaultValue;
-//
-//        final String string = propertyService.getProperty(propertyName);
-//        if (string != null && string.length() > 0) {
-//            try {
-//                value = Integer.parseInt(string);
-//            } catch (final NumberFormatException e) {
-//                LOGGER.error(() -> "Unable to parse property '" + propertyName + "' value '" + string
-//                        + "', using default of '" + defaultValue + "' instead", e);
-//            }
-//        }
-//
-//        return value;
-//    }
 }

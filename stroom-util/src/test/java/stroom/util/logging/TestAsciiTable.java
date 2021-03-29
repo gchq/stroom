@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.IntStream;
 
 class TestAsciiTable {
 
@@ -18,14 +19,14 @@ class TestAsciiTable {
     void test() {
 
         final List<Pojo> sourceData = List.of(
-               new Pojo("Mr", "Joe", "Bloggs",
-                       LocalDate.of(1971, 3, 23), 180),
+                new Pojo("Mr", "Joe", "Bloggs",
+                        LocalDate.of(1971, 3, 23), 180),
                 new Pojo("Mrs", "Joanna", "Bloggs",
                         LocalDate.of(1972, 4, 1), 170),
                 new Pojo("Mr", "No Surname", null,
                         LocalDate.of(1972, 4, 1), 170),
-        new Pojo("Mrs", "Magdalena Clementine", "Fotherington-Smythe",
-                LocalDate.of(1971, 3, 6), 166)
+                new Pojo("Mrs", "Magdalena Clementine", "Fotherington-Smythe",
+                        LocalDate.of(1971, 3, 6), 166)
         );
 
         final String table = AsciiTable.builder(sourceData)
@@ -64,7 +65,30 @@ class TestAsciiTable {
         LOGGER.info("table:\n{}", table);
     }
 
+    @Test
+    void testAsciiBar1() {
+
+        final int min = 0;
+        final int max = 64;
+        IntStream.rangeClosed(min, max)
+                .boxed()
+                .map(i -> AsciiTable.asciiBar(i, min, max, 8))
+                .forEach(System.out::println);
+    }
+
+    @Test
+    void testAsciiBar2() {
+
+        final int min = 10;
+        final int max = 74;
+        IntStream.rangeClosed(min, max)
+                .boxed()
+                .map(i -> AsciiTable.asciiBar(i, min, max, 8))
+                .forEach(System.out::println);
+    }
+
     private static class Pojo {
+
         private final String title;
         private final String firstName;
         private final String surname;

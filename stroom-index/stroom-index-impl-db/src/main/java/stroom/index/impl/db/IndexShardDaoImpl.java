@@ -1,13 +1,10 @@
 package stroom.index.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
+import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.selection.RoundRobinVolumeSelector;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -16,10 +13,14 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.util.shared.Selection;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 
-import javax.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -27,11 +28,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexShardDaoImpl implements IndexShardDao {
+
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
         indexShard.setId(record.get(INDEX_SHARD.ID));
@@ -42,7 +45,8 @@ class IndexShardDaoImpl implements IndexShardDao {
         indexShard.setCommitMs(record.get(INDEX_SHARD.COMMIT_MS));
         indexShard.setCommitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS));
         indexShard.setCommitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT));
-        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(INDEX_SHARD.STATUS)));
+        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                record.get(INDEX_SHARD.STATUS)));
         indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
         indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
         indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
@@ -50,26 +54,27 @@ class IndexShardDaoImpl implements IndexShardDao {
         return indexShard;
     };
 
-    private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER = (indexShard, record) -> {
-        record.from(indexShard);
-        record.set(INDEX_SHARD.ID, indexShard.getId());
-        record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
-        record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());
-        record.set(INDEX_SHARD.PARTITION_TO_MS, indexShard.getPartitionToTime());
-        record.set(INDEX_SHARD.DOCUMENT_COUNT, indexShard.getDocumentCount());
-        record.set(INDEX_SHARD.COMMIT_MS, indexShard.getCommitMs());
-        record.set(INDEX_SHARD.COMMIT_DURATION_MS, indexShard.getCommitDurationMs());
-        record.set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, indexShard.getCommitDocumentCount());
-        record.set(INDEX_SHARD.STATUS, indexShard.getStatus().getPrimitiveValue());
-        record.set(INDEX_SHARD.FILE_SIZE, indexShard.getFileSize());
-        record.set(INDEX_SHARD.INDEX_VERSION, indexShard.getIndexVersion());
-        record.set(INDEX_SHARD.FK_VOLUME_ID, indexShard.getVolume().getId());
-        record.set(INDEX_SHARD.NODE_NAME, indexShard.getNodeName());
-        record.set(INDEX_SHARD.INDEX_UUID, indexShard.getIndexUuid());
-        return record;
-    };
+    private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER =
+            (indexShard, record) -> {
+                record.from(indexShard);
+                record.set(INDEX_SHARD.ID, indexShard.getId());
+                record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
+                record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());
+                record.set(INDEX_SHARD.PARTITION_TO_MS, indexShard.getPartitionToTime());
+                record.set(INDEX_SHARD.DOCUMENT_COUNT, indexShard.getDocumentCount());
+                record.set(INDEX_SHARD.COMMIT_MS, indexShard.getCommitMs());
+                record.set(INDEX_SHARD.COMMIT_DURATION_MS, indexShard.getCommitDurationMs());
+                record.set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, indexShard.getCommitDocumentCount());
+                record.set(INDEX_SHARD.STATUS, indexShard.getStatus().getPrimitiveValue());
+                record.set(INDEX_SHARD.FILE_SIZE, indexShard.getFileSize());
+                record.set(INDEX_SHARD.INDEX_VERSION, indexShard.getIndexVersion());
+                record.set(INDEX_SHARD.FK_VOLUME_ID, indexShard.getVolume().getId());
+                record.set(INDEX_SHARD.NODE_NAME, indexShard.getNodeName());
+                record.set(INDEX_SHARD.INDEX_UUID, indexShard.getIndexUuid());
+                return record;
+            };
 
-    private static Map<String, Field<?>> FIELD_MAP = new HashMap<>();
+    private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
 
     static {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
@@ -78,14 +83,17 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final IndexVolumeDao indexVolumeDao;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
     private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
-                      final IndexVolumeDao indexVolumeDao) {
+                      final IndexVolumeDao indexVolumeDao,
+                      final IndexVolumeGroupService indexVolumeGroupService) {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_SHARD_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_SHARD_TO_RECORD_MAPPER);
@@ -143,7 +151,9 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, Selection.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
+                        Selection.convert(criteria.getIndexShardStatusSet(),
+                                IndexShard.IndexShardStatus::getPrimitiveValue)),
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
         );
 
@@ -186,9 +196,20 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String ownerNodeName,
                              final String indexVersion) {
         // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
-        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
         if (indexVolumes == null || indexVolumes.size() == 0) {
-            throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName);
+            //Could be due to default volume groups not having been created - but this will force as side effect
+            List<String> groupNames = indexVolumeGroupService.getNames();
+            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+
+            //Check again.
+            if (indexVolumes == null || indexVolumes.size() == 0) {
+                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
+                        ((groupNames == null || groupNames.size() == 0)
+                                ? " No index groups defined."
+                                :
+                                        " Available index volume groups: " + String.join(", ", groupNames)));
+            }
         }
 
         // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
@@ -283,6 +304,9 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.COMMIT_MS, commitMs)
                 .set(INDEX_SHARD.FILE_SIZE, fileSize)
                 .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.DOCUMENT_COUNT.ne(documentCount)
+                        .or(INDEX_SHARD.FILE_SIZE.ne(fileSize))
+                )
                 .execute());
     }
 

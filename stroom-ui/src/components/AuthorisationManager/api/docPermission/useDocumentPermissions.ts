@@ -49,7 +49,7 @@ const reducer = (
         [action.userUuid]: [],
       };
     case "clearedForUser":
-      let { [action.userUuid]: omit, ...newState } = state;
+      const { [action.userUuid]: omit, ...newState } = state;
       return newState;
     default:
       return state;
@@ -69,7 +69,7 @@ const useDocumentPermissions = (
 
   React.useEffect(() => {
     if (!!docRefUuid) {
-      getPermissionForDoc(docRefUuid).then(documentPermissions =>
+      getPermissionForDoc(docRefUuid).then((documentPermissions) =>
         dispatch({
           type: "received",
           documentPermissions,

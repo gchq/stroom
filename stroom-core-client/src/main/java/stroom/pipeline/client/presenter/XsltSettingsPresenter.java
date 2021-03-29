@@ -17,19 +17,21 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.shared.XsltDoc;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSettingsView, XsltDoc> {
+
     @Inject
     public XsltSettingsPresenter(final EventBus eventBus, final XsltSettingsView view) {
         super(eventBus, view);
@@ -62,6 +64,7 @@ public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSetting
     }
 
     public interface XsltSettingsView extends View {
+
         TextArea getDescription();
     }
 }

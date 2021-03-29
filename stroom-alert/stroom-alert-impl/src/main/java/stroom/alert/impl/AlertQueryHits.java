@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.alert.impl;
 
 import stroom.docref.DocRef;
@@ -33,34 +34,34 @@ public class AlertQueryHits {
     public AlertQueryHits() {
     }
 
-    public final Collection<DocRef> getExtractionPipelines (){
+    public final Collection<DocRef> getExtractionPipelines() {
         return pipelineRulesMap.keySet();
     }
 
-    public final Collection <RuleConfig> getRulesForPipeline (final DocRef pipeline) {
+    public final Collection<RuleConfig> getRulesForPipeline(final DocRef pipeline) {
         return pipelineRulesMap.get(pipeline);
     }
 
-    public long [] getSortedQueryHitsForRule(final RuleConfig ruleConfig){
+    public long [] getSortedQueryHitsForRule(final RuleConfig ruleConfig) {
         Set<Long> hitSet = queryHitsMap.get(ruleConfig.getQueryId());
         return hitSet.stream().mapToLong(i -> i).toArray();
     }
 
-    public synchronized void addQueryHitForRule (final RuleConfig rule, final Long eventId) {
-        addRuleForPipeline (rule.getPipeline(), rule);
+    public synchronized void addQueryHitForRule(final RuleConfig rule, final Long eventId) {
+        addRuleForPipeline(rule.getPipeline(), rule);
         final String queryId = rule.getQueryId();
-        if (!queryHitsMap.containsKey(queryId)){
-            queryHitsMap.put(queryId,new HashSet<>());
+        if (!queryHitsMap.containsKey(queryId)) {
+            queryHitsMap.put(queryId, new HashSet<>());
         }
         queryHitsMap.get(queryId).add(eventId);
     }
 
-    public synchronized void clearHits(){
+    public synchronized void clearHits() {
         queryHitsMap.clear();
     }
 
-    private void addRuleForPipeline (final DocRef pipeline, final RuleConfig ruleConfig){
-        if (!pipelineRulesMap.containsKey(pipeline)){
+    private void addRuleForPipeline(final DocRef pipeline, final RuleConfig ruleConfig) {
+        if (!pipelineRulesMap.containsKey(pipeline)) {
             pipelineRulesMap.put(pipeline, new HashSet<>());
         }
         pipelineRulesMap.get(pipeline).add(ruleConfig);

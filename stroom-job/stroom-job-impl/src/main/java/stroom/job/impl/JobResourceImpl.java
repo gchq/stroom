@@ -17,51 +17,62 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
-import javax.inject.Inject;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobResourceImpl implements JobResource {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobResourceImpl.class);
-
-    private final JobService jobService;
-    private final DocumentEventLog documentEventLog;
+    private final Provider<JobService> jobServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
-    JobResourceImpl(final JobService jobService,
-                    final DocumentEventLog documentEventLog) {
-        this.jobService = jobService;
-        this.documentEventLog = documentEventLog;
+    JobResourceImpl(final Provider<JobService> jobServiceProvider,
+                    final Provider<DocumentEventLog> documentEventLogProvider) {
+        this.jobServiceProvider = jobServiceProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public ResultPage<Job> list() {
         ResultPage<Job> response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(And.builder()
+                                .build())
+                        .build())
+                .build();
 
         try {
             final FindJobCriteria findJobCriteria = new FindJobCriteria();
             findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
             findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
 
-            response = jobService.find(findJobCriteria);
-            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), response.getPageResponse(), null);
+            response = jobServiceProvider.get().find(findJobCriteria);
+            documentEventLogProvider.get().search(
+                    "ListJobs",
+                    query,
+                    Job.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), null, e);
+            documentEventLogProvider.get().search(
+                    "ListJobs",
+                    query,
+                    Job.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
         return response;
@@ -78,6 +89,7 @@ class JobResourceImpl implements JobResource {
         Job after = null;
 
         try {
+            final JobService jobService = jobServiceProvider.get();
             // Get the before version.
             before = jobService.fetch(id).orElse(null);
             job = jobService.fetch(id).orElse(null);
@@ -87,10 +99,10 @@ class JobResourceImpl implements JobResource {
             mutation.accept(job);
             after = jobService.update(job);
 
-            documentEventLog.update(before, after, null);
+            documentEventLogProvider.get().update(before, after, null);
 
         } catch (final RuntimeException e) {
-            documentEventLog.update(before, after, e);
+            documentEventLogProvider.get().update(before, after, e);
             throw e;
         }
     }

@@ -1,0 +1,12 @@
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - Found: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/003_multiline_regex.ds3
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - stem: 003_multiline_regex
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - Found: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/002_csv_without_header.ds3
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - stem: 002_csv_without_header
+DEBUG s.pipeline.xml.converter.ds3.TestDS3 - Creating reader for /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/003_multiline_regex.ds3
+DEBUG s.pipeline.cache.SchemaLoaderImpl - Creating schema: <?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="data-splitter:3">
+<xsd:import namespace="data-splitter:3" schemaLocation="file://data-splitter-v3.0.xsd"/>
+</xsd:schema>
+
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - Testing: 002_csv_without_header, expecting errors: false
+INFO  s.pipeline.xml.converter.ds3.TestDS3 - Data Splitter config: /home/dev/git_work/v7stroom/stroom-pipeline/src/test/resources/TestDS3/002_csv_without_header.ds3

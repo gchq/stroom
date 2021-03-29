@@ -31,7 +31,7 @@ interface Props {
   showAddElementDialog: ShowAddElementDialog;
 }
 
-export const Pipeline: React.FunctionComponent<Props> = ({
+export const PipelineDisplay: React.FunctionComponent<Props> = ({
   pipelineStateProps,
   showAddElementDialog,
 }) => {
@@ -41,7 +41,7 @@ export const Pipeline: React.FunctionComponent<Props> = ({
       editorProps: { docRefContents: pipeline },
     },
   } = pipelineStateProps;
-    /* const { elementDefinitions, elementProperties } = useElements(); */
+  /* const { elementDefinitions, elementProperties } = useElements(); */
 
   if (!pipeline) {
     return <Loader message="Loading pipeline..." />;
@@ -60,7 +60,7 @@ export const Pipeline: React.FunctionComponent<Props> = ({
       {pipeline &&
         pipeline.merged.links &&
         pipeline.merged.links.add &&
-        pipeline.merged.links.add.map(l => (
+        pipeline.merged.links.add.map((l) => (
           <LineTo key={`${l.from}-${l.to}`} fromId={l.from} toId={l.to} />
         ))}
       {layoutGrid.rows.map((row, r) => (
@@ -77,10 +77,10 @@ export const Pipeline: React.FunctionComponent<Props> = ({
                 pipeline.merged.elements.add
                   .filter((e: PipelineElementType) => e.id === column.uuid)
                   .map((element: PipelineElementType) => {
-                      /* let elementDefinition = Object.values(
+                    /* let elementDefinition = Object.values(
                           elementDefinitions,
                          ).find(e => e.type === element.type)!; */
-                      /* let elementPropertiesThis = elementProperties[element.type]; */
+                    /* let elementPropertiesThis = elementProperties[element.type]; */
 
                     return (
                       <LineEndpoint
@@ -105,5 +105,3 @@ export const Pipeline: React.FunctionComponent<Props> = ({
     </LineContainer>
   );
 };
-
-export default Pipeline;

@@ -17,6 +17,12 @@
 package stroom.pipeline.xsltfunctions;
 
 class Bitmap {
+
+    /**
+     * @param bitmap The value to convert to a set of bit positions. It is converted to a bitmap
+     *               and the position of each bit that has has a value of 1 is added to the return array.
+     * @return The value represented as the bit positions that are set to 1.
+     */
     static int[] getBits(final int bitmap) {
         int[] bits = new int[10];
 

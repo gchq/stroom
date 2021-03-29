@@ -1,5 +1,5 @@
 import * as JsSearch from "js-search";
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import {
@@ -68,13 +68,13 @@ const resourceBuilder: ResourceBuilder = (
         }
 
         if (docRefTypeValid) {
-          searchResults = searchResults.filter(d => d.type === docRefType);
+          searchResults = searchResults.filter((d) => d.type === docRefType);
         }
       }
 
       res.json(
         searchResults
-          .map(s => ({
+          .map((s) => ({
             name: s.name,
             type: s.type,
             uuid: s.uuid,
@@ -115,7 +115,7 @@ const resourceBuilder: ResourceBuilder = (
       );
 
       const newDocRef = {
-        uuid: uuidv4(),
+        uuid: v4(),
         type: docRefType,
         name: docRefName,
         children: docRefType === "Folder" ? ([] as DocRefType[]) : undefined,
@@ -130,9 +130,9 @@ const resourceBuilder: ResourceBuilder = (
     });
   // Copies need to be deep
   const copyDocRef = (docRef: DocRefTree): DocRefTree => ({
-    uuid: uuidv4(),
+    uuid: v4(),
     type: docRef.type,
-    name: `${docRef.name}-copy-${uuidv4()}`,
+    name: `${docRef.name}-copy-${v4()}`,
     children: docRef.children ? docRef.children.map(copyDocRef) : undefined,
   });
 
@@ -189,7 +189,7 @@ const resourceBuilder: ResourceBuilder = (
     .delete(`${resource}/delete`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const docRefsToDelete: DocRefType[] = JSON.parse(req.body);
-      const docRefUuidsToDelete = docRefsToDelete.map(d => d.uuid);
+      const docRefUuidsToDelete = docRefsToDelete.map((d) => d.uuid);
 
       testCache.data!.documentTree = deleteItemsFromTree(
         testCache.data!.documentTree,

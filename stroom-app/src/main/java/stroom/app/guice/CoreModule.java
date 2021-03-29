@@ -1,27 +1,27 @@
 package stroom.app.guice;
 
-import stroom.core.db.DbStatusModule;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.alert.impl.AlertModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
-        install(new stroom.authentication.AuthModule());
-        install(new stroom.authentication.impl.db.AuthDbModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
-        install(new DbStatusModule());
-        install(new stroom.core.entity.cluster.EntityClusterModule());
-        install(new stroom.core.entity.event.EntityEventModule());
+        install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
@@ -35,7 +35,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
-        install(new stroom.data.store.impl.DataStoreHandlerModule());
+        install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
@@ -44,6 +44,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
+        install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());
         install(new stroom.explorer.impl.db.ExplorerDbModule());
         install(new stroom.feed.impl.FeedModule());
@@ -61,7 +62,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.legacy.db.LegacyDbModule());
         install(new stroom.legacy.impex_6_1.LegacyImpexModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.node.impl.NodeModule());
         install(new stroom.node.impl.db.NodeDbModule());
@@ -83,6 +83,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());
+        install(new stroom.security.identity.IdentityModule());
+        install(new stroom.security.identity.db.IdentityDbModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.session.SessionSecurityModule());
@@ -102,5 +104,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
+
+        // Bind the directory providers.
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 }

@@ -1,17 +1,19 @@
 package stroom.node.client;
 
-import com.google.gwt.core.client.GWT;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.NodeResource;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.google.gwt.core.client.GWT;
+
 import java.util.List;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class NodeCache {
+
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
 
     private final RestFactory restFactory;
@@ -28,25 +30,33 @@ public class NodeCache {
                              final Consumer<Throwable> throwableConsumer) {
         if (nodeNames == null) {
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(nodeNames -> {
-                // Store node list for future queries.
-                this.nodeNames = nodeNames;
-                nodeListConsumer.accept(nodeNames);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).listAllNodes();
+            rest
+                    .onSuccess(nodeNames -> {
+                        // Store node list for future queries.
+                        this.nodeNames = nodeNames;
+                        nodeListConsumer.accept(nodeNames);
+                    })
+                    .onFailure(throwableConsumer)
+                    .call(NODE_RESOURCE)
+                    .listAllNodes();
         } else {
             nodeListConsumer.accept(nodeNames);
         }
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
-                             final Consumer<Throwable> throwableConsumer) {
+                                 final Consumer<Throwable> throwableConsumer) {
         if (enabledNodeNames == null) {
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(nodeNames -> {
-                // Store node list for future queries.
-                this.enabledNodeNames = nodeNames;
-                nodeListConsumer.accept(nodeNames);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).listEnabledNodes();
+            rest
+                    .onSuccess(nodeNames -> {
+                        // Store node list for future queries.
+                        this.enabledNodeNames = nodeNames;
+                        nodeListConsumer.accept(nodeNames);
+                    })
+                    .onFailure(throwableConsumer)
+                    .call(NODE_RESOURCE)
+                    .listEnabledNodes();
         } else {
             nodeListConsumer.accept(enabledNodeNames);
         }

@@ -2,7 +2,11 @@ import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
 import { SearchProps } from "./types";
-import { DocRefInfoType, DocRefTree, DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
+import {
+  DocRefInfoType,
+  DocRefTree,
+  DocRefType,
+} from "components/DocumentEditors/useDocumentApi/types/base";
 import useUrlFactory from "lib/useUrlFactory";
 
 const stripDocRef = (docRef: DocRefType) => ({
@@ -48,10 +52,10 @@ export const useApi = (): Api => {
   } = useHttpClient();
 
   return {
-    fetchDocTree: React.useCallback(
-      () => httpGetJson(`${resource}/all`),
-      [resource, httpGetJson],
-    ),
+    fetchDocTree: React.useCallback(() => httpGetJson(`${resource}/all`), [
+      resource,
+      httpGetJson,
+    ]),
 
     fetchDocRefTypes: React.useCallback(
       () => httpGetJson(`${resource}/docRefTypes`),

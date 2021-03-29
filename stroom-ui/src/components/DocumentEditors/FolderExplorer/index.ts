@@ -10,7 +10,7 @@ export {
   FolderExplorer,
   RenameDocRefDialog,
   CopyMoveDocRefDialog,
-  DeleteDocRefDialog
+  DeleteDocRefDialog,
 };
 
 export default FolderExplorer;

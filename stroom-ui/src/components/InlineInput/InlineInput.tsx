@@ -42,7 +42,7 @@ const InlineInput: FunctionComponent<InputHTMLAttributes<HTMLInputElement>> = ({
         onChange={onChange}
         type="text"
         value={value}
-        onKeyDown={event => {
+        onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
             // 'Enter' sets the value

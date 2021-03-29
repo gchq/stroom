@@ -20,8 +20,8 @@ import stroom.docref.DocRef;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 
 public interface StatisticStoreCache {
+
     StatisticStoreDoc getStatisticsDataSource(String statisticName);
 
     StatisticStoreDoc getStatisticsDataSource(DocRef docRef);
-
 }

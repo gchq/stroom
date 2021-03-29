@@ -27,7 +27,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -38,13 +37,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorTaskManager2.class);
 
     @Inject
@@ -69,23 +69,61 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         final List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
         assertThat(streams.size()).isEqualTo(1);
 
-        ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
+        ExpressionOperator expression = ExpressionOperator.builder().build();
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
+        expression = ExpressionOperator.builder().addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName).build();
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(0);
+        expression = ExpressionOperator.builder().addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "otherFed").build();
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(0);
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(0);
+        expression = ExpressionOperator.builder().addTerm(MetaFields.PIPELINE,
+                Condition.EQUALS,
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(0);
 
         // Check DB cleanup.
-        expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
+        expression = ExpressionOperator.builder().build();
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+                0,
+                null,
+                null,
+                null,
+                false,
+                100).size()).isEqualTo(1);
     }
 
 //    @Test
@@ -118,7 +156,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////        stroomEntityManager.executeNativeUpdate(new SqlBuilder("delete from insert_test3"));
 ////
 ////        SqlBuilder singleStmt = new SqlBuilder();
-////        singleStmt.append("insert into insert_test (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11)")
+////        singleStmt.append(
+// "insert into insert_test (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11)")
 ////                .append(" values (")
 ////                .arg(1).append(",")
 ////                .arg("col2 text").append(",")
@@ -153,7 +192,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////        LOGGER.info("Batch size: {}", batchSize);
 ////
 ////        SqlBuilder multiStmt = null;
-////        String header = "insert into insert_test2 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
+////        String header =
+// "insert into insert_test2 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
 ////
 ////        int qryCnt = 0;
 ////        startTime = Instant.now();
@@ -192,7 +232,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////            }
 ////        }
 ////
-////        String header3 = "insert into insert_test3 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
+////        String header3 =
+// "insert into insert_test3 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
 ////        qryCnt = 0;
 ////        StringBuilder stringBuilder = null;
 ////        List<Object> args = null;

@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UrlParameters {
+
     private final String type;
     private final String uuid;
     private final String title;

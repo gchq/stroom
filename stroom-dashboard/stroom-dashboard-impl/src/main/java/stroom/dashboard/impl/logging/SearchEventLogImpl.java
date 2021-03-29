@@ -19,21 +19,18 @@ package stroom.dashboard.impl.logging;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.api.SecurityContext;
 
 import event.logging.Criteria;
-import event.logging.Criteria.DataSources;
-import event.logging.Event;
-import event.logging.Export;
+import event.logging.DataSources;
+import event.logging.ExportEventAction;
 import event.logging.MultiObject;
 import event.logging.Purpose;
-import event.logging.Query;
-import event.logging.Query.Advanced;
-import event.logging.Search;
+import event.logging.SearchEventAction;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public class SearchEventLogImpl implements SearchEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -104,7 +102,11 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final ExpressionOperator expression,
                                 final String queryInfo,
                                 final Exception e) {
-        securityContext.insecure(() -> downloadResults("Download search results", dataSourceRef, expression, queryInfo, e));
+        securityContext.insecure(() -> downloadResults("Download search results",
+                dataSourceRef,
+                expression,
+                queryInfo,
+                e));
     }
 
     @Override
@@ -117,26 +119,22 @@ public class SearchEventLogImpl implements SearchEventLog {
             try {
                 final String dataSourceName = getDataSourceName(dataSourceRef);
 
-                final DataSources dataSources = new DataSources();
-                dataSources.getDataSource().add(dataSourceName);
+                eventLoggingService.log(
+                        type,
+                        type + "ing data source \"" + dataSourceRef.toInfoString(),
+                        getPurpose(queryInfo),
+                        ExportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .addCriteria(Criteria.builder()
+                                                .withDataSources(DataSources.builder()
+                                                        .addDataSource(dataSourceName)
+                                                        .build())
+                                                .withQuery(StroomEventLoggingUtil.convertExpression(expression))
+                                                .build())
+                                        .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
+                                .build());
 
-                final Criteria criteria = new Criteria();
-                criteria.setDataSources(dataSources);
-                criteria.setQuery(getQuery(expression));
-
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(criteria);
-
-                final Export exp = new Export();
-                exp.setSource(multiObject);
-                exp.setOutcome(EventLoggingUtil.createOutcome(e));
-
-                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
-
-                event.getEventDetail().setExport(exp);
-                event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
-
-                eventLoggingService.log(event);
             } catch (final RuntimeException e2) {
                 LOGGER.error(e.getMessage(), e2);
             }
@@ -156,19 +154,17 @@ public class SearchEventLogImpl implements SearchEventLog {
                     dataSourceName = "NULL";
                 }
 
-                final DataSources dataSources = new DataSources();
-                dataSources.getDataSource().add(dataSourceName);
-
-                final Search search = new Search();
-                search.setDataSources(dataSources);
-                search.setQuery(getQuery(expression));
-                search.setOutcome(EventLoggingUtil.createOutcome(e));
-
-                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
-                event.getEventDetail().setSearch(search);
-                event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
-
-                eventLoggingService.log(event);
+                eventLoggingService.log(
+                        type,
+                        type + "ing data source \"" + dataSourceRef.toInfoString(),
+                        getPurpose(queryInfo),
+                        SearchEventAction.builder()
+                                .withDataSources(DataSources.builder()
+                                        .addDataSource(dataSourceName)
+                                        .build())
+                                .withQuery(StroomEventLoggingUtil.convertExpression(expression))
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
+                                .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error(e.getMessage(), e2);
             }
@@ -191,23 +187,11 @@ public class SearchEventLogImpl implements SearchEventLog {
         return docRef.getName();
     }
 
-    private Purpose getPurpose(Purpose purpose, final String queryInfo) {
-        if (null != queryInfo) {
-            if (purpose == null) {
-                purpose = new Purpose();
-            }
-
-            purpose.setJustification(queryInfo);
-        }
-
-        return purpose;
-    }
-
-    private Query getQuery(final ExpressionOperator expression) {
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), wordListProvider, collectionService, expression);
-        return query;
+    private Purpose getPurpose(final String queryInfo) {
+        return queryInfo != null
+                ? Purpose.builder()
+                .withJustification(queryInfo)
+                .build()
+                : null;
     }
 }

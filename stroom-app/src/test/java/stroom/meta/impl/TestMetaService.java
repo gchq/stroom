@@ -23,6 +23,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
+import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -41,19 +42,17 @@ import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
 import stroom.test.AppConfigTestModule;
-import stroom.test.IntegrationTestSetupUtil;
+import stroom.test.StroomIntegrationTest;
 import stroom.test.common.util.db.DbTestModule;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +68,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-class TestMetaService {
+@IncludeModule(MockIndexShardWriterExecutorModule.class)
+class TestMetaService extends StroomIntegrationTest {
+
     private static final String TEST_USER = "test_user";
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";
     private static final String FEED_USE_PERMISSION = "FEED_USE_PERMISSION";
@@ -77,8 +78,6 @@ class TestMetaService {
 
     private static final List<String> FEED_FIELDS = List.of(MetaFields.FIELD_FEED);
 
-    @Inject
-    private IntegrationTestSetupUtil integrationTestSetupUtil;
     @Inject
     private UserService userService;
     @Inject
@@ -91,16 +90,6 @@ class TestMetaService {
     private DocumentPermissionServiceImpl documentPermissionService;
     @Inject
     private SecurityContext securityContext;
-
-    @BeforeAll
-    public static void beforeAll() {
-        IntegrationTestSetupUtil.reset();
-    }
-
-    @BeforeEach
-    public void beforeEach() {
-        integrationTestSetupUtil.cleanup(() -> false);
-    }
 
     @Test
     void testFindWithMetaSecurityFilter() {
@@ -115,8 +104,12 @@ class TestMetaService {
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.USE,
+                        FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();
                 assertThat(useExpression.get().getChildren().size() == 1);
@@ -131,8 +124,12 @@ class TestMetaService {
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
-                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.USE,
+                            FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.READ,
+                            FEED_FIELDS);
 
                     assertThat(useExpression2).isNotEmpty();
                     assertThat(useExpression2.get().getChildren().size() == 2);
@@ -159,8 +156,12 @@ class TestMetaService {
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.USE,
+                        FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();
                 assertThat(useExpression.get().getChildren().size() == 1);
@@ -175,8 +176,12 @@ class TestMetaService {
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
-                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
-                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.USE,
+                            FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(
+                            DocumentPermissionNames.READ,
+                            FEED_FIELDS);
 
                     assertThat(useExpression2).isNotEmpty();
                     assertThat(useExpression2.get().getChildren().size() == 2);
@@ -197,10 +202,14 @@ class TestMetaService {
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
-            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
@@ -223,7 +232,9 @@ class TestMetaService {
                 readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(0);
 
-                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                final Meta readPermissionChild2 = createMeta(readPermissionParent,
+                        FEED_READ_PERMISSION,
+                        "Cooked Events");
                 readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
             });
@@ -237,10 +248,14 @@ class TestMetaService {
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
-            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
 
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
@@ -263,7 +278,9 @@ class TestMetaService {
                 selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(0);
 
-                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                final Meta readPermissionChild2 = createMeta(readPermissionParent,
+                        FEED_READ_PERMISSION,
+                        "Cooked Events");
                 selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
             });
@@ -284,7 +301,7 @@ class TestMetaService {
 
     private MetaProperties createProps(final Meta parent, final String feedName, final String typeName) {
         final long now = System.currentTimeMillis();
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .parent(parent)
                 .feedName(feedName)
                 .typeName(typeName)

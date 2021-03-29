@@ -16,6 +16,7 @@
 
 package stroom.util.io;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,6 +39,7 @@ import java.util.stream.Stream;
  * Helper class for resources.
  */
 public final class StreamUtil {
+
     /**
      * Buffer size to use.
      */
@@ -221,7 +223,7 @@ public final class StreamUtil {
             }
             Files.createDirectories(file.getParent());
 
-            try (final OutputStream fos = Files.newOutputStream(file)) {
+            try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(file))) {
                 streamToStream(inputStream, fos);
             }
         } catch (final IOException ioEx) {
@@ -373,7 +375,7 @@ public final class StreamUtil {
         final PrintWriter printWriter = new PrintWriter(byteArrayOutputStream);
         throwable.printStackTrace(printWriter);
         printWriter.close();
-        return new String(byteArrayOutputStream.toByteArray(), StreamUtil.DEFAULT_CHARSET);
+        return byteArrayOutputStream.toString(StreamUtil.DEFAULT_CHARSET);
 
     }
 
@@ -409,6 +411,7 @@ public final class StreamUtil {
      * charset name.
      */
     private static class MyByteArrayOutputStream extends ByteArrayOutputStream {
+
         public synchronized String toString(final Charset charset) {
             return new String(buf, 0, count, charset);
         }

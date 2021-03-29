@@ -16,8 +16,9 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.apache.commons.text.StringEscapeUtils;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
+
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Set;
 
@@ -28,11 +29,26 @@ public class SplitFactory extends ExpressionFactory {
     private final char[] containerEnd;
 
     public SplitFactory(final NodeFactory parent, final String id, final String delimiter) {
-        this(parent, id, 0, -1, null, delimiter, null, null, null);
+        this(
+                parent,
+                id,
+                0,
+                -1,
+                null,
+                delimiter,
+                null,
+                null,
+                null);
     }
 
-    public SplitFactory(final NodeFactory parent, final String id, final int minMatch, final int maxMatch,
-                        final Set<Integer> onlyMatch, final String delimiter, final String escape, final String containerStart,
+    public SplitFactory(final NodeFactory parent,
+                        final String id,
+                        final int minMatch,
+                        final int maxMatch,
+                        final Set<Integer> onlyMatch,
+                        final String delimiter,
+                        final String escape,
+                        final String containerStart,
                         final String containerEnd) {
         super(parent, id, minMatch, maxMatch, onlyMatch, -1);
         if (delimiter != null) {

@@ -16,7 +16,11 @@
 
 package stroom.task.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 class TaskThreadInfoUtil {
     public static String getInfo(final Collection<TaskContextImpl> taskContexts) {

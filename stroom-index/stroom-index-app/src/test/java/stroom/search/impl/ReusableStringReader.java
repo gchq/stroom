@@ -40,6 +40,7 @@ import java.io.Reader;
  * new string; we use this when tokenizing the string value from a Field.
  */
 final class ReusableStringReader extends Reader {
+
     int upto;
     int left;
     String s;

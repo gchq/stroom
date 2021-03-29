@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Regex extends Expression implements ExecutionProfiler, Match {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Regex.class);
 
     private final Pattern pattern;

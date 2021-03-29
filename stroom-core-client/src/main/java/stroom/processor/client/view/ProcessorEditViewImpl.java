@@ -17,6 +17,8 @@
 
 package stroom.processor.client.view;
 
+import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -24,9 +26,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 
 public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView {
+
     private final Widget widget;
 
     @UiField
@@ -48,5 +50,6 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     }
 
     public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
+
     }
 }

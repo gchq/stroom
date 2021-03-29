@@ -17,12 +17,14 @@
 package stroom.util.shared;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.shared.StringCriteria.MatchStyle;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStringCriteria {
+
     @Test
     void testSimple() {
         final StringCriteria criteria = new StringCriteria();

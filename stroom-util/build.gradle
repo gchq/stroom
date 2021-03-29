@@ -6,12 +6,13 @@ ext.moduleName = 'stroom.util'
 dependencies {
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
-    
+    compile project(':stroom-docref')
+
+    compile libs.assertj_core // needed for DiffUtil
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind
@@ -21,12 +22,14 @@ dependencies {
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api
-    compile libs.vavr
+//    compile libs.vavr
+    compile libs.validation_api
     compile libs.ws_rs_api
 
     testCompile libs.assertj_core
     testCompile libs.commons_lang
     testCompile libs.junit_jupiter_api
+    testCompile libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

@@ -16,21 +16,24 @@
 
 package stroom.meta.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.util.shared.ResultPage;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 
-// TODO : @66 Add event logging
+@AutoLogged
 class MetaResourceImpl implements MetaResource {
+
     private final Provider<MetaService> metaServiceProvider;
 
     @Inject
@@ -51,19 +54,25 @@ class MetaResourceImpl implements MetaResource {
         return metaServiceProvider.get().findDecoratedRows(criteria);
     }
 
+    @AutoLogged(OperationType.SEARCH)
     @Override
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
         return metaServiceProvider.get().getSelectionSummary(criteria);
     }
 
+    @AutoLogged(OperationType.SEARCH)
     @Override
     public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
         return metaServiceProvider.get().getReprocessSelectionSummary(criteria);
     }
 
     @Override
-    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
-        return metaServiceProvider.get().fetchFullMetaInfo(id);
+    public List<String> getTypes() {
+        return metaServiceProvider
+                .get()
+                .getTypes()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
-
 }

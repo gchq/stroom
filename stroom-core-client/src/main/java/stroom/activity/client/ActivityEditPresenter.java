@@ -16,19 +16,6 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.dom.client.TextAreaElement;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
@@ -46,11 +33,26 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.TextAreaElement;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final RestFactory restFactory;
@@ -76,7 +78,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     activityEditorTitle = activityConfig.getEditorTitle();
                     activityEditorBody = activityConfig.getEditorBody();
                 })
-                .onFailure(caught -> AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
+                .onFailure(caught ->
+                        AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
     }
 
     public void show(final Activity activity, final Consumer<Activity> consumer) {
@@ -136,7 +139,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 if (value != null) {
                     final InputElement inputElement = element.cast();
 
-                    if ("checkbox".equalsIgnoreCase(inputElement.getType()) || "radio".equalsIgnoreCase(inputElement.getType())) {
+                    if ("checkbox".equalsIgnoreCase(inputElement.getType())
+                            || "radio".equalsIgnoreCase(inputElement.getType())) {
                         try {
                             inputElement.setChecked(Boolean.valueOf(value));
                         } catch (final RuntimeException e) {
@@ -198,7 +202,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             final String tagName = element.getTagName();
             if ("input".equalsIgnoreCase(tagName)) {
                 final InputElement inputElement = element.cast();
-                if ("checkbox".equalsIgnoreCase(inputElement.getType()) || "radio".equalsIgnoreCase(inputElement.getType())) {
+                if ("checkbox".equalsIgnoreCase(inputElement.getType())
+                        || "radio".equalsIgnoreCase(inputElement.getType())) {
                     properties.add(createProp(element, Boolean.toString(inputElement.isChecked())));
                 } else {
                     properties.add(createProp(element, inputElement.getValue()));
@@ -226,9 +231,15 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 .validate(activity);
     }
 
-    private void afterValidation(final ActivityValidationResult validationResult, final ActivityDetails details, final Consumer<Activity> consumer) {
+    private void afterValidation(final ActivityValidationResult validationResult,
+                                 final ActivityDetails details,
+                                 final Consumer<Activity> consumer) {
         if (!validationResult.isValid()) {
-            AlertEvent.fireWarn(ActivityEditPresenter.this, "Validation Error", validationResult.getMessages(), null);
+            AlertEvent.fireWarn(
+                    ActivityEditPresenter.this,
+                    "Validation Error",
+                    validationResult.getMessages(),
+                    null);
 
         } else {
             // Save the activity.
@@ -396,6 +407,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     }
 
     public interface ActivityEditView extends View {
+
         HTML getHtml();
     }
 }

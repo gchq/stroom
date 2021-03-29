@@ -22,6 +22,7 @@ import stroom.util.shared.ResourceKey;
 import java.nio.file.Path;
 
 public class MockResourceStore implements ResourceStore {
+
     @Override
     public ResourceKey createTempFile(String name) {
         return null;

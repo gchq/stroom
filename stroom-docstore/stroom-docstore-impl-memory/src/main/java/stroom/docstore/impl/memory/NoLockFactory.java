@@ -5,6 +5,7 @@ import stroom.docstore.api.RWLockFactory;
 import java.util.function.Supplier;
 
 class NoLockFactory implements RWLockFactory {
+
     @Override
     public void lock(final String uuid, final Runnable runnable) {
         runnable.run();

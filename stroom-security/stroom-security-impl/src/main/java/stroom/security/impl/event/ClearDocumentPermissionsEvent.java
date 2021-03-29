@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClearDocumentPermissionsEvent implements PermissionChangeEvent {
+
     @JsonProperty
     private final String documentUuid;
 

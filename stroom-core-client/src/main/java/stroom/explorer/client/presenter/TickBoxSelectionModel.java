@@ -16,10 +16,11 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.user.cellview.client.HasSelection;
-import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.shared.ExplorerNode;
+
+import com.google.gwt.user.cellview.client.HasSelection;
+import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,13 +30,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> implements HasSelection<ExplorerNode> {
+
     // Ensure one value per key
     private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
     private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
     private List<ExplorerNode> roots;
     private Map<ExplorerNode, ExplorerNode> parents;
-    private Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
+    private final Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
 
     public TickBoxSelectionModel() {
         super(null);
@@ -199,7 +201,10 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
         }
     }
 
-    private void addChildren(final ExplorerNode parent, final List<ExplorerNode> children, final boolean select, final Set<ExplorerNode> selected) {
+    private void addChildren(final ExplorerNode parent,
+                             final List<ExplorerNode> children,
+                             final boolean select,
+                             final Set<ExplorerNode> selected) {
         if (children == null) {
             return;
         }

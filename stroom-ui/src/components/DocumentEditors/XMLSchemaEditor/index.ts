@@ -1,1 +1,1 @@
-export { default } from "./XMLSchemaEditor";
+export { XMLSchemaEditor } from "./XMLSchemaEditor";

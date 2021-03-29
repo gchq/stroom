@@ -17,7 +17,6 @@
 package stroom.index.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.index.impl.selection.MostFreePercentVolumeSelector;
 import stroom.index.impl.selection.MostFreeVolumeSelector;
 import stroom.index.impl.selection.RandomVolumeSelector;
@@ -31,11 +30,14 @@ import stroom.index.shared.IndexVolume;
 import stroom.node.shared.Node;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVolumeSelector extends StroomUnitTest {
+
     @Test
     void testMostFree() {
         test(new MostFreeVolumeSelector());
@@ -87,9 +89,9 @@ class TestVolumeSelector extends StroomUnitTest {
         final Node node1 = Node.create("node1");
         final Node node2 = Node.create("node2");
 
-        final IndexVolume v1 = new IndexVolume.Builder()
+        final IndexVolume v1 = IndexVolume.builder()
                 .nodeName(node1.getName()).path("path1").bytesUsed(1000L).bytesTotal(10000L).build();
-        final IndexVolume v2 = new IndexVolume.Builder()
+        final IndexVolume v2 = IndexVolume.builder()
                 .nodeName(node2.getName()).path("path2").bytesUsed(5000L).bytesTotal(10000L).build();
 
         return List.of(v1, v2);

@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 
 import Button from "../Button";
 import IconHeader from "../IconHeader";
@@ -56,15 +56,18 @@ const ThemedConfirm: React.FunctionComponent<Props> = ({
         </header>
         {details && <div className="themed-modal__content">{details}</div>}
         <div className="themed-modal__footer__actions">
-          <Button icon="times" text="Cancel" onClick={onCloseDialog} />
+          <Button icon="times" onClick={onCloseDialog}>
+            Cancel
+          </Button>
           <Button
             onClick={() => {
               onConfirm();
               onCloseDialog();
             }}
             icon="check"
-            text="Confirm"
-          />
+          >
+            Confirm
+          </Button>
         </div>
       </div>
     </ReactModal>

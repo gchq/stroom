@@ -1,9 +1,13 @@
 import { FormikBag } from "formik";
 import { useCallback } from "react";
-import { ChangePasswordResponse, ResetPasswordRequest } from "components/authentication/types";
-import useApi from "components/authentication";
 import { useRouter } from "lib/useRouter";
 import * as queryString from "query-string";
+import { useStroomApi } from "lib/useStroomApi";
+import {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+  ResetPasswordRequest,
+} from "api/stroom";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (
@@ -13,26 +17,27 @@ const useResetPassword = (): {
   resetPassword: (resetPasswordRequest: ResetPasswordRequest) => void;
 } => {
   const { history } = useRouter();
-  const {
-    submitPasswordChangeRequest: submitPasswordChangeRequestUsingApi,
-    resetPassword: resetPasswordUsingApi,
-  } = useApi();
-  const submitPasswordChangeRequest = useCallback(
-    (formData: any, formikBag: FormikBag<any, any>) => {
-      submitPasswordChangeRequestUsingApi(formData, formikBag).then(() =>
-        history.push("/s/confirmPasswordResetEmail"),
-      );
-    },
-    [history, submitPasswordChangeRequestUsingApi],
-  );
+  const { exec } = useStroomApi();
+  const submitPasswordChangeRequest = useCallback(() => {
+    const request: ChangePasswordRequest = {
+      userId: "sf",
+      currentPassword: "sdf",
+      newPassword: "szdf",
+      confirmNewPassword: "\fe",
+    };
+    exec(
+      (api) => api.authentication.changePassword(request),
+      () => history.push("/s/confirmPasswordResetEmail"),
+    );
+  }, [history, exec]);
 
   const { router } = useRouter();
   const resetPassword = useCallback(
     (resetPasswordRequest: ResetPasswordRequest) => {
-      resetPasswordUsingApi(resetPasswordRequest).then(
+      exec(
+        (api) => api.authentication.resetPassword(resetPasswordRequest),
         (response: ChangePasswordResponse) => {
           if (response.changeSucceeded) {
-
             let redirectUri: string;
 
             if (!!router && !!router.location) {
@@ -47,22 +52,21 @@ const useResetPassword = (): {
             } else {
               console.error("No redirect URI available for redirect!");
             }
-
           } else {
-            const errorMessage = [];
-            if (response.failedOn.includes("COMPLEXITY")) {
-              errorMessage.push(
-                "Your new password does not meet the complexity requirements",
-              );
-            }
-            if (response.failedOn.includes("LENGTH")) {
-              errorMessage.push("Your new password is too short");
-            }
+            // const errorMessage = [];
+            // if (response.failedOn.includes("COMPLEXITY")) {
+            //   errorMessage.push(
+            //     "Your new password does not meet the complexity requirements",
+            //   );
+            // }
+            // if (response.failedOn.includes("LENGTH")) {
+            //   errorMessage.push("Your new password is too short");
+            // }
           }
         },
       );
     },
-    [resetPasswordUsingApi, router],
+    [exec, router],
   );
 
   return { submitPasswordChangeRequest, resetPassword };

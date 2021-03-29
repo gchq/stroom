@@ -17,16 +17,9 @@
 
 package stroom.search.impl.shard;
 
-import stroom.util.shared.Clearable;
+public interface IndexShardSearcherCache {
 
-public interface IndexShardSearcherCache extends Clearable {
     IndexShardSearcher get(Long indexShardId);
-
-//    boolean isCached(Long indexShardId);
-//
-//    long getMaxOpenShards();
-//
-//    void setMaxOpenShards(long maxOpenShards);
 
     void refresh();
 }

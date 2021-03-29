@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { LineType, LineElementCreator, LineDefinition } from "./types";
-import useInterval from "lib/useInterval";
+import { useInterval } from "lib/useInterval";
 import LineContext from "./LineContext";
 
 interface Props {
@@ -27,7 +27,7 @@ function calculateLine({ fromId, toId }: LineType): LineDefinition | undefined {
 }
 
 export const useRefreshCounter = () => {
-  let [count, setCount] = React.useState(0);
+  const [count, setCount] = React.useState(0);
 
   useInterval({
     callback: () => {
@@ -62,8 +62,8 @@ const LinesSvg: React.FunctionComponent<Props> = ({ LineElementCreator }) => {
           toId: getEndpointId(toId),
         }))
         .map(calculateLine)
-        .filter(e => e !== undefined)
-        .map(e => e as LineDefinition),
+        .filter((e) => e !== undefined)
+        .map((e) => e as LineDefinition),
     [rawLines, getEndpointId],
   );
 
@@ -76,7 +76,7 @@ const LinesSvg: React.FunctionComponent<Props> = ({ LineElementCreator }) => {
   return (
     <svg className="LineContainer-svg" id={lineContextId}>
       <g transform={transform}>
-        {lines.map(l => (
+        {lines.map((l) => (
           <LineElementCreator key={l.lineId} {...l} />
         ))}
       </g>

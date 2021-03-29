@@ -14,6 +14,7 @@ import java.util.function.Function;
  * from an instance of T_ROW.
  */
 public class FilterFieldMapper<T_ROW> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterFieldMapper.class);
 
     private final FilterFieldDefinition fieldDefinition;
@@ -24,7 +25,6 @@ public class FilterFieldMapper<T_ROW> {
         this.fieldDefinition = Objects.requireNonNull(fieldDefinition);
         this.valueExtractor = Objects.requireNonNull(valueExtractor);
     }
-
 
     public static <T_ROW> FilterFieldMapper<T_ROW> of(
             final FilterFieldDefinition fieldDefinition,

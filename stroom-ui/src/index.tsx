@@ -5,20 +5,20 @@ import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 
 import { Routes } from "components/AppChrome";
-import setupFontAwesome from "./lib/setupFontAwesome";
+import setupFontAwesome from "lib/setupFontAwesome";
 
-import { ThemeContextProvider } from "./lib/useTheme/useTheme";
-import { CustomRouter } from "./lib/useRouter";
+import { ThemeContextProvider } from "lib/useTheme/useTheme";
+import { CustomRouter } from "lib/useRouter";
 
 import { createBrowserHistory as createHistory } from "history";
 import ConfigProvider from "startup/config/ConfigProvider";
 
-import "react-table/react-table.css";
-import "./styles/main.css";
+import "styles/main.scss";
 import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
+import { PromptDisplayBoundary } from "./components/Prompt/PromptDisplayBoundary";
 
 export const history = createHistory();
 
@@ -28,19 +28,21 @@ setupFontAwesome();
 
 const App: React.FunctionComponent = () => (
   <ErrorReportingContextProvider>
-    <ConfigProvider>
-      <AuthenticationContextProvider>
-        <AuthorisationContextProvider>
-          <ThemeContextProvider>
-            <CustomRouter history={history}>
-              <DocumentTreeContextProvider>
-                <DndRoutes />
-              </DocumentTreeContextProvider>
-            </CustomRouter>
-          </ThemeContextProvider>
-        </AuthorisationContextProvider>
-      </AuthenticationContextProvider>
-    </ConfigProvider>
+    <PromptDisplayBoundary>
+      <ConfigProvider>
+        <AuthenticationContextProvider>
+          <AuthorisationContextProvider>
+            <ThemeContextProvider>
+              <CustomRouter history={history}>
+                <DocumentTreeContextProvider>
+                  <DndRoutes />
+                </DocumentTreeContextProvider>
+              </CustomRouter>
+            </ThemeContextProvider>
+          </AuthorisationContextProvider>
+        </AuthenticationContextProvider>
+      </ConfigProvider>
+    </PromptDisplayBoundary>
   </ErrorReportingContextProvider>
 );
 

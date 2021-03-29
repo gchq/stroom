@@ -16,10 +16,6 @@
 
 package stroom.util;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -29,12 +25,11 @@ import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -43,8 +38,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 public class UniqueXMLEvents {
+
     private static final SAXParserFactory PARSER_FACTORY;
 
     static {
@@ -60,7 +62,7 @@ public class UniqueXMLEvents {
         final Path outputXsd = Paths.get(args[1]);
 
         try (final Reader reader = Files.newBufferedReader(inputXsd, StreamUtil.DEFAULT_CHARSET);
-             final Writer writer = Files.newBufferedWriter(outputXsd, StreamUtil.DEFAULT_CHARSET)) {
+                final Writer writer = Files.newBufferedWriter(outputXsd, StreamUtil.DEFAULT_CHARSET)) {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
@@ -88,6 +90,7 @@ public class UniqueXMLEvents {
     }
 
     private static class UniqueEventFilter extends BufferFilter {
+
         private final StringBuilder content = new StringBuilder();
         private final Set<String> idSet = new HashSet<>();
         private boolean duplicate = false;

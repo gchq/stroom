@@ -16,16 +16,18 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.PrimitiveValueConverter;
 
 /**
  * Some path on the network where we can store stuff.
@@ -48,7 +50,8 @@ import stroom.util.shared.PrimitiveValueConverter;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasAuditInfo {
+public class IndexVolume implements HasAuditInfo, HasIntegerId {
+
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;
@@ -120,6 +123,7 @@ public class IndexVolume implements HasAuditInfo {
         this.indexVolumeGroupId = indexVolumeGroupId;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -178,70 +182,6 @@ public class IndexVolume implements HasAuditInfo {
 
     public void setIndexVolumeGroupId(final Integer indexVolumeGroupId) {
         this.indexVolumeGroupId = indexVolumeGroupId;
-    }
-
-    public static class Builder {
-        private final IndexVolume instance;
-
-        public Builder(final IndexVolume instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new IndexVolume());
-        }
-
-        // Replaces the copy function
-        public Builder fromOriginal(final IndexVolume original) {
-            instance.path = original.path;
-            instance.nodeName = original.nodeName;
-            instance.bytesLimit = original.bytesLimit;
-            return this;
-        }
-
-        public Builder nodeName(final String value) {
-            instance.setNodeName(value);
-            return this;
-        }
-
-        public Builder path(final String value) {
-            instance.setPath(value);
-            return this;
-        }
-
-        public Builder status(final VolumeUseState value) {
-            instance.setState(value);
-            return this;
-        }
-
-        public Builder bytesUsed(final Long value) {
-            instance.setBytesUsed(value);
-            return this;
-        }
-
-        public Builder bytesFree(final Long value) {
-            instance.setBytesFree(value);
-            return this;
-        }
-
-        public Builder bytesTotal(final Long value) {
-            instance.setBytesTotal(value);
-            return this;
-        }
-
-        public Builder statusMs(final Long value) {
-            instance.setStatusMs(value);
-            return this;
-        }
-
-        public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
-            instance.setIndexVolumeGroupId(indexVolumeGroupId);
-            return this;
-        }
-
-        public IndexVolume build() {
-            return instance;
-        }
     }
 
     public String getNodeName() {
@@ -344,13 +284,21 @@ public class IndexVolume implements HasAuditInfo {
         return percent;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
         ACTIVE("Active", 0), // Currently being written to.
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                VolumeUseState.values());
+        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER =
+                new PrimitiveValueConverter<>(VolumeUseState.values());
 
         private final String displayValue;
         private final byte primitiveValue;
@@ -368,6 +316,113 @@ public class IndexVolume implements HasAuditInfo {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+    }
+
+    public static final class Builder {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String path;
+        private String nodeName;
+        private VolumeUseState state = VolumeUseState.ACTIVE;
+        private Long bytesLimit;
+        private Long bytesUsed;
+        private Long bytesFree;
+        private Long bytesTotal;
+        private Long statusMs;
+        private Integer indexVolumeGroupId;
+
+        private Builder() {
+        }
+
+        private Builder(final IndexVolume indexVolume) {
+            this.id = indexVolume.id;
+            this.version = indexVolume.version;
+            this.createTimeMs = indexVolume.createTimeMs;
+            this.createUser = indexVolume.createUser;
+            this.updateTimeMs = indexVolume.updateTimeMs;
+            this.updateUser = indexVolume.updateUser;
+            this.path = indexVolume.path;
+            this.nodeName = indexVolume.nodeName;
+            this.state = indexVolume.state;
+            this.bytesLimit = indexVolume.bytesLimit;
+            this.bytesUsed = indexVolume.bytesUsed;
+            this.bytesFree = indexVolume.bytesFree;
+            this.bytesTotal = indexVolume.bytesTotal;
+            this.statusMs = indexVolume.statusMs;
+            this.indexVolumeGroupId = indexVolume.indexVolumeGroupId;
+        }
+
+        // Replaces the copy function
+        public Builder fromOriginal(final IndexVolume original) {
+            path = original.path;
+            nodeName = original.nodeName;
+            bytesLimit = original.bytesLimit;
+            return this;
+        }
+
+        public Builder nodeName(final String nodeName) {
+            this.nodeName = nodeName;
+            return this;
+        }
+
+        public Builder path(final String path) {
+            this.path = path;
+            return this;
+        }
+
+        public Builder state(final VolumeUseState state) {
+            this.state = state;
+            return this;
+        }
+
+        public Builder bytesUsed(final Long bytesUsed) {
+            this.bytesUsed = bytesUsed;
+            return this;
+        }
+
+        public Builder bytesFree(final Long bytesFree) {
+            this.bytesFree = bytesFree;
+            return this;
+        }
+
+        public Builder bytesTotal(final Long bytesTotal) {
+            this.bytesTotal = bytesTotal;
+            return this;
+        }
+
+        public Builder statusMs(final Long statusMs) {
+            this.statusMs = statusMs;
+            return this;
+        }
+
+        public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
+            this.indexVolumeGroupId = indexVolumeGroupId;
+            return this;
+        }
+
+        public IndexVolume build() {
+            return new IndexVolume(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    path,
+                    nodeName,
+                    state,
+                    bytesLimit,
+                    bytesUsed,
+                    bytesFree,
+                    bytesTotal,
+                    statusMs,
+                    indexVolumeGroupId);
         }
     }
 }

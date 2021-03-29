@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-import ChangePasswordFields from "../ChangePasswordFields";
 
 const ResetPassword: React.FunctionComponent<{
   isTokenMissing: boolean;
@@ -28,49 +27,51 @@ const ResetPassword: React.FunctionComponent<{
     verifyPassword: string,
     email: string,
   ) => Promise<string>;
-}> = ({
-  isTokenExpired,
-  isTokenInvalid,
-  isTokenMissing,
-  onSubmit,
-  onValidate,
-}) => {
-  const failure = (
-    <div>
-      <h4>Unable to reset password!</h4>
-      {isTokenMissing || isTokenInvalid ? (
-        <p>I&apos;m afraid this password reset link is broken.</p>
-      ) : (
-        undefined
-      )}
-      {isTokenExpired ? (
-        <p>I&apos;m afraid this password reset link has expired.</p>
-      ) : (
-        undefined
-      )}
-    </div>
-  );
-
-  const showFailure = isTokenMissing || isTokenInvalid || isTokenExpired;
-  const showChangePasswordFields = !showFailure;
+}> = () => {
+  // TODO : @66 FIX THIS
+  // ({
+  // isTokenExpired,
+  // isTokenInvalid,
+  // isTokenMissing,
+  // onSubmit,
+  // onValidate,
+  // }) => {
+  // const failure = (
+  //   <div>
+  //     <h4>Unable to reset password!</h4>
+  //     {isTokenMissing || isTokenInvalid ? (
+  //       <p>I&apos;m afraid this password reset link is broken.</p>
+  //     ) : (
+  //       undefined
+  //     )}
+  //     {isTokenExpired ? (
+  //       <p>I&apos;m afraid this password reset link has expired.</p>
+  //     ) : (
+  //       undefined
+  //     )}
+  //   </div>
+  // );
+  //
+  // const showFailure = isTokenMissing || isTokenInvalid || isTokenExpired;
+  // const showChangePasswordFields = !showFailure;
   return (
     <div className="container">
       <div className="section">
         <div className="section__title">
           <h3>Reset your password</h3>
         </div>
-        {showFailure ? failure : undefined}
-        {showChangePasswordFields ? (
-          <ChangePasswordFields
-            showOldPasswordField={false}
-            onSubmit={onSubmit}
-            onValidate={(password, oldPassword, verifyPassword, email) =>
-              onValidate(oldPassword, password, verifyPassword, email)
-            }
-          />
-        ) : (
-          undefined
-        )}
+        {/*{showFailure ? failure : undefined}*/}
+        {/*{showChangePasswordFields ? (*/}
+        {/*  <ChangePasswordFields*/}
+        {/*    showOldPasswordField={false}*/}
+        {/*    onSubmit={onSubmit}*/}
+        {/*    onValidate={(password, oldPassword, verifyPassword, email) =>*/}
+        {/*      onValidate(oldPassword, password, verifyPassword, email)*/}
+        {/*    }*/}
+        {/*  />*/}
+        {/*) : (*/}
+        {/*  undefined*/}
+        {/*)}*/}
       </div>
     </div>
   );

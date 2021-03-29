@@ -1,0 +1,184 @@
+/* Customisations to standard bootstrap styles */
+@import "themes";
+
+.badge-success {
+    background-color: var(--valid);
+}
+
+.badge-warning {
+    background-color: var(--warn);
+}
+
+.badge-danger {
+    background-color: var(--error);
+}
+
+.dropdown-menu {
+  margin: 0;
+  font-size: inherit;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  border: 1px solid var(--dialog__border-color);
+  -webkit-box-shadow: 0 5px 10px var(--dialog__border-color);
+  box-shadow: 0 5px 10px var(--dialog__border-color);
+}
+
+.dropdown-item {
+  transition: none;
+}
+
+.dropdown-item:active {
+  background-color: var(--primary);
+}
+
+.form-control {
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border-color: var(--control__border-color);
+}
+
+.form-control:focus {
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
+  border-color: var(--control__border-color);
+  outline: 0;
+  box-shadow: none;
+}
+
+
+
+.allow-focus:focus {
+  outline: 0;
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-shadow);
+}
+
+.allow-focus:focus:not(:focus-visible) {
+  outline: 0;
+  border-color: var(--control__border-color);
+  box-shadow: none;
+}
+
+.allow-focus:focus-visible {
+}
+
+
+
+.form-control.is-invalid {
+  // border-color: #dc354;
+  border-color: var(--invalid);
+}
+
+.form-control.is-invalid:focus {
+  outline: 0;
+  border-color: var(--focus-border--invalid);
+  box-shadow: var(--focus-shadow--invalid);
+}
+
+.form-control.is-valid {
+    border-color: var(--valid);
+}
+
+.form-control.is-valid:focus {
+  outline: 0;
+  border-color: var(--focus-border--valid);
+  box-shadow: var(--focus-shadow--valid);
+}
+
+.form-check > input:focus {
+  outline: 0;
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-shadow);
+}
+
+.invalid-feedback {
+    color: var(--feedback);
+}
+
+label {
+    color: var(--page__text-color);
+}
+
+.modal {
+  z-index: 1040;
+}
+
+.modal-dialog {
+  //max-width: 100%;
+  //max-height: 100%;
+  //min-width: 10rem;
+  //min-height: 10rem;
+  //
+  //width: 100%;
+  //height: 100%;
+  //margin: 0;
+
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+.modal-content {
+  //width: auto;
+  //@include page($themes)
+
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  //align-items: stretch;
+  overflow: visible;
+  border: none;
+}
+
+.modal-header {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  border-bottom: none;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  align-items: flex-end;
+  border-top: none;
+  padding: 1rem;
+}
+
+.modal-footer > * {
+  margin: 0;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+}
+
+.invalid-feedback {
+  display: block;
+  min-height: 16px;
+}
+
+.label,label,.form-label {
+  margin-bottom: .25rem;
+}
+
+.col {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}

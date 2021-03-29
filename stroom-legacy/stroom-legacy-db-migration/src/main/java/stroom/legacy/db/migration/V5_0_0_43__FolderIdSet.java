@@ -28,6 +28,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_0_0_43__FolderIdSet extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_43__FolderIdSet.class);
 
     @Override
@@ -54,7 +55,8 @@ public class V5_0_0_43__FolderIdSet extends BaseJavaMigration {
                         if (!newData.equals(data)) {
                             LOGGER.info("Modifying stream processor filter");
 
-                            try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE STRM_PROC_FILT SET DAT = ? WHERE ID = ?")) {
+                            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                                    "UPDATE STRM_PROC_FILT SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();

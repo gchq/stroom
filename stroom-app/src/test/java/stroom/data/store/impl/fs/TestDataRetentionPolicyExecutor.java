@@ -17,7 +17,6 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -35,18 +34,19 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Create some old files and make sure they get archived.
  */
 class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
+
     private static final int REPLICATION_COUNT = 1;
     private static final int SIXTY = 60;
     private static final int FIFTY_FIVE = 55;
@@ -82,19 +83,6 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private DataStoreServiceConfig dataStoreServiceConfig;
 
-    private int initialReplicationCount = 1;
-
-    @Override
-    protected void onBefore() {
-        initialReplicationCount = volumeConfig.getResilientReplicationCount();
-        volumeConfig.setResilientReplicationCount(REPLICATION_COUNT);
-    }
-
-    @Override
-    protected void onAfter() {
-        volumeConfig.setResilientReplicationCount(initialReplicationCount);
-    }
-
     @Test
     void testCheckArchive() throws IOException {
         dataStoreServiceConfig.setFileSystemCleanOldAge(StroomDuration.ZERO);
@@ -110,12 +98,12 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         setupDataRetentionRules(feedName);
 
-        final MetaProperties oldFile = new MetaProperties.Builder()
+        final MetaProperties oldFile = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(oldDate.toInstant().toEpochMilli())
                 .build();
-        final MetaProperties newFile = new MetaProperties.Builder()
+        final MetaProperties newFile = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(newDate.toInstant().toEpochMilli())
@@ -162,14 +150,24 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         final DocRef docRef = dataRetentionRulesService.createDocument("test");
         DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
         dataRetentionRules.setRules(Collections.singletonList(rule));
         dataRetentionRulesService.writeDocument(dataRetentionRules);
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return new DataRetentionRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit,
+                false);
     }
 }

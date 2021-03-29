@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as Cookies from "cookies-js";
+// TODO : @66 FIX THIS
 import * as queryString from "query-string";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { validateAsync } from "components/users/validation";
 import useRouter from "lib/useRouter";
 import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
-import useUrlFactory from "lib/useUrlFactory";
 
 const ChangePasswordContainer = () => {
-  const { changePassword, showChangeConfirmation } = usePassword();
+  const {
+    changePassword,
+    showChangeConfirmation,
+    isSubmitting,
+  } = usePassword();
   const { router } = useRouter();
   const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");
-  const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  // const { apiUrl } = useUrlFactory();
+  // const resource = apiUrl("/Oldauthentication/v1");
 
   useEffect(() => {
     if (!!router.location) {
@@ -40,11 +41,6 @@ const ChangePasswordContainer = () => {
       if (!!redirectUri) {
         const decodedRedirectUri: string = decodeURIComponent(redirectUri);
         setRedirectUri(decodedRedirectUri);
-      }
-
-      let email: string = query.email as string;
-      if (email === undefined) {
-        email = Cookies.get("username");
       }
 
       if (email) {
@@ -57,30 +53,31 @@ const ChangePasswordContainer = () => {
     }
 
     // Try and get the user's email from the query string, and fall back on a cookie.
-  }, [router.location, setRedirectUri, setEmail]);
+  }, [router.location, setRedirectUri, email, setEmail]);
 
-  const handleValidate = (
-    oldPassword: string,
-    newPassword: string,
-    verifyPassword: string,
-    email: string,
-  ) => {
-    return validateAsync(
-      email,
-      newPassword,
-      verifyPassword,
-      resource,
-      oldPassword,
-    );
-  };
+  // const handleValidate = (
+  //   oldPassword: string,
+  //   newPassword: string,
+  //   verifyPassword: string,
+  //   email: string,
+  // ) => {
+  //   return validateAsync(
+  //     email,
+  //     newPassword,
+  //     verifyPassword,
+  //     resource,
+  //     oldPassword,
+  //   );
+  // };
 
   return (
     <ChangePasswordForm
+      isSubmitting={isSubmitting}
       onSubmit={changePassword}
       redirectUri={redirectUri}
       email={email}
       showChangeConfirmation={showChangeConfirmation}
-      onValidate={handleValidate}
+      // onValidate={handleValidate}
     />
   );
 };

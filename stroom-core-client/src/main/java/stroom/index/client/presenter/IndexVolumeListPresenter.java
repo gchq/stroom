@@ -16,11 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -28,9 +23,16 @@ import stroom.index.shared.IndexVolume;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
 
 public class IndexVolumeListPresenter extends MyPresenterWidget<DataGridView<IndexVolume>> {
+
     @Inject
     public IndexVolumeListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, true));

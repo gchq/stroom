@@ -1,18 +1,20 @@
 package stroom.pipeline.filter;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class XsltConfig extends AbstractConfig {
+
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
-    private CacheConfig cacheConfig = new CacheConfig.Builder()
+    private CacheConfig cacheConfig = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
@@ -28,7 +30,9 @@ public class XsltConfig extends AbstractConfig {
         this.cacheConfig = cacheConfig;
     }
 
-    @JsonPropertyDescription("The maximum number of elements that the XSLT filter will expect to receive before it errors. This protects Stroom from running out of memory in cases where an appropriate XML splitter has not been used in a pipeline.")
+    @JsonPropertyDescription("The maximum number of elements that the XSLT filter will expect to receive before " +
+            "it errors. This protects Stroom from running out of memory in cases where an appropriate XML splitter " +
+            "has not been used in a pipeline.")
     public int getMaxElements() {
         return maxElements;
     }

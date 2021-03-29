@@ -18,7 +18,6 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import DataVolumesSection from "./DataVolumesSection";
 import FsVolume from "./types/FsVolume";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import JsonDebug from "testing/JsonDebug";
 
 import { useCallback } from "react";
@@ -83,35 +82,34 @@ const volume03: FsVolume = {
   createUser: "Creating user",
 };
 
-const stories = storiesOf("Sections/Data Volumes/DataVolumesSection", module);
-
 const TestHarness: React.FunctionComponent = () => {
-  var initialVolumes = [volume01, volume02, volume03];
+  const initialVolumes = [volume01, volume02, volume03];
 
   const [volumes, setVolumes] = React.useState<FsVolume[]>(initialVolumes);
-  const handleAddVolume = useCallback(() => {
-    // const newVolumeId = -1;
-    // const newVolume: FsVolume = {
-    //   id: newVolumeId,
-    //   volumePath: "",
-    //   createTimeMs: -1,
-    //   createUser: "",
-    //   updateTimeMs: -1,
-    //   updateUser: "",
-    // };
-    // setVolumes([...volumes, newVolume]);
-  }, [setVolumes, volumes]);
+  const handleAddVolume = useCallback(() => {}, []);
+  // {
+  // const newVolumeId = -1;
+  // const newVolume: FsVolume = {
+  //   id: newVolumeId,
+  //   volumePath: "",
+  //   createTimeMs: -1,
+  //   createUser: "",
+  //   updateTimeMs: -1,
+  //   updateUser: "",
+  // };
+  // setVolumes([...volumes, newVolume]);
+  // }, [setVolumes, volumes]);
 
   const handleDeleteVolume = useCallback(
     (volume: FsVolume) => {
-      setVolumes(volumes.filter(v => v.id !== volume.id));
+      setVolumes(volumes.filter((v) => v.id !== volume.id));
     },
     [setVolumes, volumes],
   );
 
   const handleVolumeChange = useCallback(
     (fsVolume: FsVolume) => {
-      const otherVolumes = volumes.filter(v => v.id !== fsVolume.id);
+      const otherVolumes = volumes.filter((v) => v.id !== fsVolume.id);
       setVolumes([...otherVolumes, fsVolume]);
     },
     [volumes],
@@ -132,4 +130,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Sections/Data Volumes", module).add("DataVolumesSection", () => (
+  <TestHarness />
+));

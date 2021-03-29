@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class PreviewInputStream extends InputStream {
+
     private final InputStream inputStream;
     private byte[] buffer;
     private int bufOffset;
@@ -35,13 +36,14 @@ public class PreviewInputStream extends InputStream {
             b = inputStream.read();
         } else {
             if (bufOffset < bufLength) {
-                b = buffer[bufOffset++];
+                // the byte is a signed int so convert to unsigned to meet the contract for read()
+                b = buffer[bufOffset++] & 0xff;
             } else {
                 buffer = null;
                 b = inputStream.read();
             }
         }
-        return b & 0xff;
+        return b;
     }
 
     public int read(final byte[] b, final int off, final int len) throws IOException {

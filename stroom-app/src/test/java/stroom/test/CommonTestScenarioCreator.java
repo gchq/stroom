@@ -28,10 +28,10 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
@@ -39,11 +39,11 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Help class to create some basic scenarios for testing.
  */
 public class CommonTestScenarioCreator {
+
     private final Store streamStore;
     private final ProcessorService streamProcessorService;
     private final ProcessorFilterService processorFilterService;
@@ -68,9 +69,9 @@ public class CommonTestScenarioCreator {
     }
 
     public void createBasicTranslateStreamProcessor(final String feed) {
-        final QueryData findStreamQueryData = new QueryData.Builder()
+        final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                .expression(ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
                         .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
@@ -120,7 +121,7 @@ public class CommonTestScenarioCreator {
      * @return a basic raw file
      */
     public Meta createSample2LineRawFile(final String feed, final String streamType) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
@@ -134,7 +135,7 @@ public class CommonTestScenarioCreator {
     }
 
     public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceMeta) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
                 .parent(sourceMeta)

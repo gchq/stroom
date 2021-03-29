@@ -21,7 +21,10 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-FROM adoptopenjdk/openjdk12:x86_64-alpine-jre-12.0.2_10 as stroom-base-stage
+# Using 'openjdk' on apline is not fully supported so using AdoptOpenJdk
+# to ensure we have a known jdk version
+# See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
+FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -32,15 +35,6 @@ RUN echo "http_proxy: $http_proxy" && \
         curl \
         su-exec \
         tini
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-# ~~~ fat jar stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Intermediate build stage to copy the stroom fat jar to allow stroom 
-# and proxy builds to re-use the same cached layer with the fat jar in it
-FROM scratch as fat-jar-stage
-COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -66,6 +60,9 @@ EXPOSE 8081
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 
+# Create Docker volume for the content_pack_import dir as this will be mutated on 
+VOLUME /stroom/content_pack_import/
+
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
 
@@ -73,7 +70,13 @@ VOLUME /stroom/logs/
 VOLUME /stroom/output/
 
 # Create Docker volume for the proxy aggregation repo location
-VOLUME /stroom/proxy-repo/
+VOLUME /stroom/proxy_repo/
+
+# Create Docker volume for Stroom's off-heap reference data
+VOLUME /stroom/reference_data/
+
+# Create Docker volume for Stroom's off-heap search result data
+VOLUME /stroom/search_results/
 
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
@@ -98,29 +101,33 @@ RUN \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
     mkdir -p /stroom && \
     mkdir -p /stroom/config && \
-    mkdir -p /stroom/config-fallback && \
-    mkdir -p /stroom/contentPackImport && \
+    mkdir -p /stroom/config_fallback && \
+    mkdir -p /stroom/content_pack_import && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
+    mkdir -p /stroom/logs/migration && \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
-    mkdir -p /stroom/proxy-repo && \
+    mkdir -p /stroom/proxy_repo && \
+    mkdir -p /stroom/reference_data && \
+    mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
 # Those that are most likely to have changed get copied last to speed up build
 
-# Copy in all the content packs downloaded in the intermediate build stage
-COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
+# Copy in the content packs downloaded by gradle
+COPY --chown=stroom:stroom ./build/content_packs /stroom/content_pack_import
 
-# Copy all the fat jars for the application and connectors
+# Copy all the distribution scripts
 COPY --chown=stroom:stroom *.sh /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
-COPY --chown=stroom:stroom build/prod.yml /stroom/config-fallback/config.yml
+COPY --chown=stroom:stroom build/config.yml /stroom/config_fallback/config.yml
 
-COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
+# The application fat jar
+COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/
 
 # Label the image so we can see what commit/tag it came from
 ARG GIT_COMMIT=unspecified

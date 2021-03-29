@@ -17,10 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -31,6 +27,7 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.PipelineDoc;
@@ -39,15 +36,21 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
     private static final String TEST_FEED_1 = "TEST_FEED_1";
     private static final String TEST_FEED_2 = "TEST_FEED_2";
@@ -95,8 +98,12 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final DocRef pipeline1Ref = pipelineStore.createDocument(TEST_PIPELINE_1);
             final DocRef pipeline2Ref = pipelineStore.createDocument(TEST_PIPELINE_2);
 
-            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref, feed1, StreamTypeNames.REFERENCE);
-            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref, feed2, StreamTypeNames.REFERENCE);
+            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref,
+                    feed1,
+                    StreamTypeNames.REFERENCE);
+            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref,
+                    feed2,
+                    StreamTypeNames.REFERENCE);
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference1);
@@ -110,7 +117,11 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             streamSet.add(EFFECTIVE_STREAM_3);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
+                        null,
+                        null,
+                        null,
+                        new ReferenceDataConfig()) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -142,44 +153,52 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         EffectiveStream effectiveStream = EFFECTIVE_STREAM_1;
         RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
 
-        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1, effectiveStream.getEffectiveMs(), refDataLoader -> {
-            refDataLoader.initialise(false);
-            for (final String mapName : mapNames) {
-                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
-                refDataLoader.put(mapDefinition, "user1", StringValue.of("1111"));
-                refDataLoader.put(mapDefinition, "user2", StringValue.of("2222"));
-            }
-            refDataLoader.completeProcessing();
-        });
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1,
+                effectiveStream.getEffectiveMs(),
+                refDataLoader -> {
+                    refDataLoader.initialise(false);
+                    for (final String mapName : mapNames) {
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
+                        refDataLoader.put(mapDefinition, "user1", StringValue.of("1111"));
+                        refDataLoader.put(mapDefinition, "user2", StringValue.of("2222"));
+                    }
+                    refDataLoader.completeProcessing();
+                });
 
         effectiveStream = EFFECTIVE_STREAM_2;
         RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
 
-        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2, effectiveStream.getEffectiveMs(), refDataLoader -> {
-            refDataLoader.initialise(false);
-            for (final String mapName : mapNames) {
-                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
-                refDataLoader.put(mapDefinition, "user1", StringValue.of("A1111"));
-                refDataLoader.put(mapDefinition, "user2", StringValue.of("A2222"));
-            }
-            refDataLoader.completeProcessing();
-        });
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2,
+                effectiveStream.getEffectiveMs(),
+                refDataLoader -> {
+                    refDataLoader.initialise(false);
+                    for (final String mapName : mapNames) {
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
+                        refDataLoader.put(mapDefinition, "user1", StringValue.of("A1111"));
+                        refDataLoader.put(mapDefinition, "user2", StringValue.of("A2222"));
+                    }
+                    refDataLoader.completeProcessing();
+                });
 
         effectiveStream = EFFECTIVE_STREAM_3;
         RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
 
-        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3, effectiveStream.getEffectiveMs(), refDataLoader -> {
-            refDataLoader.initialise(false);
-            for (final String mapName : mapNames) {
-                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
-                refDataLoader.put(mapDefinition, "user1", StringValue.of("B1111"));
-                refDataLoader.put(mapDefinition, "user2", StringValue.of("B2222"));
-            }
-            refDataLoader.completeProcessing();
-        });
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3,
+                effectiveStream.getEffectiveMs(),
+                refDataLoader -> {
+                    refDataLoader.initialise(false);
+                    for (final String mapName : mapNames) {
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
+                        refDataLoader.put(mapDefinition, "user1", StringValue.of("B1111"));
+                        refDataLoader.put(mapDefinition, "user2", StringValue.of("B2222"));
+                    }
+                    refDataLoader.completeProcessing();
+                });
     }
 
-    private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences, final String mapName) {
+    private void checkData(final ReferenceData data,
+                           final List<PipelineReference> pipelineReferences,
+                           final String mapName) {
         assertThat(lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1")).isEqualTo("B1111");
         assertThat(lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("B1111");
         assertThat(lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1")).isEqualTo("A1111");
@@ -218,7 +237,11 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             streamSet.add(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
+                        null,
+                        null,
+                        null,
+                        new ReferenceDataConfig()) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -226,26 +249,36 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 };
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
 
-                RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+                RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef,
+                        effectiveStream.getStreamId());
 
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
-                    refDataLoader.initialise(false);
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition,
+                        effectiveStream.getEffectiveMs(),
+                        refDataLoader -> {
+                            refDataLoader.initialise(false);
 
-                    // load the ref data
-                    // cardNo => username => payrollNo => location
-                    for (int i = 1; i <= 3; i++) {
-                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "CARD_NUMBER_TO_USERNAME");
-                        refDataLoader.put(mapDefinition, addSuffix("cardNo", i), StringValue.of(addSuffix("user", i)));
+                            // load the ref data
+                            // cardNo => username => payrollNo => location
+                            for (int i = 1; i <= 3; i++) {
+                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
+                                        "CARD_NUMBER_TO_USERNAME");
+                                refDataLoader.put(mapDefinition,
+                                        addSuffix("cardNo", i),
+                                        StringValue.of(addSuffix("user", i)));
 
-                        mapDefinition = new MapDefinition(refStreamDefinition, "USERNAME_TO_PAYROLL_NUMBER");
-                        refDataLoader.put(mapDefinition, addSuffix("user", i), StringValue.of(addSuffix("payrollNo", i)));
+                                mapDefinition = new MapDefinition(refStreamDefinition, "USERNAME_TO_PAYROLL_NUMBER");
+                                refDataLoader.put(mapDefinition,
+                                        addSuffix("user", i),
+                                        StringValue.of(addSuffix("payrollNo", i)));
 
-                        mapDefinition = new MapDefinition(refStreamDefinition, "PAYROLL_NUMBER_TO_LOCATION");
-                        refDataLoader.put(mapDefinition, addSuffix("payrollNo", i), StringValue.of(addSuffix("location", i)));
-                    }
+                                mapDefinition = new MapDefinition(refStreamDefinition, "PAYROLL_NUMBER_TO_LOCATION");
+                                refDataLoader.put(mapDefinition,
+                                        addSuffix("payrollNo", i),
+                                        StringValue.of(addSuffix("location", i)));
+                            }
 
-                    refDataLoader.completeProcessing();
-                });
+                            refDataLoader.completeProcessing();
+                        });
 
 
                 for (int i = 1; i <= 3; i++) {
@@ -260,11 +293,19 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                             .isEqualTo(addSuffix("user", i));
 
                     assertThat(
-                            lookup(referenceData, pipelineReferences, 0, "USERNAME_TO_PAYROLL_NUMBER", addSuffix("user", i)))
+                            lookup(referenceData,
+                                    pipelineReferences,
+                                    0,
+                                    "USERNAME_TO_PAYROLL_NUMBER",
+                                    addSuffix("user", i)))
                             .isEqualTo(addSuffix("payrollNo", i));
 
                     assertThat(
-                            lookup(referenceData, pipelineReferences, 0, "PAYROLL_NUMBER_TO_LOCATION", addSuffix("payrollNo", i)))
+                            lookup(referenceData,
+                                    pipelineReferences,
+                                    0,
+                                    "PAYROLL_NUMBER_TO_LOCATION",
+                                    addSuffix("payrollNo", i)))
                             .isEqualTo(addSuffix("location", i));
 
                     // now do a nested lookup
@@ -303,7 +344,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         if (result.getRefDataValueProxy() == null) {
             return null;
         }
-        RefDataValue refDataValue = result.getRefDataValueProxy().supplyValue().orElse(null);
+        RefDataValue refDataValue = result.getRefDataValueProxy()
+                .flatMap(RefDataValueProxy::supplyValue)
+                .orElse(null);
         if (refDataValue == null) {
             return null;
         } else {

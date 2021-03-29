@@ -5,6 +5,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.ResultPage;
 
 public interface FsVolumeDao {
+
     FsVolume create(FsVolume fileVolume);
 
     FsVolume fetch(int id);

@@ -17,12 +17,13 @@
 package stroom.dashboard.impl.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Field;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class FieldFormatter {
+
     private final FormatterFactory formatterFactory;
     private final Map<Field, Formatter> formatterCache = new HashMap<>();
 

@@ -1,15 +1,19 @@
 package stroom.index.shared;
 
+import stroom.docref.HasNameMutable;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo {
+public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable {
+
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -45,6 +49,7 @@ public class IndexVolumeGroup implements HasAuditInfo {
         this.name = name;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -97,6 +102,7 @@ public class IndexVolumeGroup implements HasAuditInfo {
         this.updateUser = updateUser;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -118,10 +124,15 @@ public class IndexVolumeGroup implements HasAuditInfo {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final IndexVolumeGroup that = (IndexVolumeGroup) o;
         return Objects.equals(id, that.id);
     }

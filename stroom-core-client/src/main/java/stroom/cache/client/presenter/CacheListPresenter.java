@@ -16,13 +16,6 @@
 
 package stroom.cache.client.presenter;
 
-import com.google.gwt.cell.client.ButtonCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cache.shared.CacheResource;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -34,13 +27,22 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
 import java.util.function.Consumer;
 
 public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
+
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private RestDataProvider<String, ResultPage<String>> dataProvider;
+    private final RestDataProvider<String, ResultPage<String>> dataProvider;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
@@ -73,7 +75,8 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
 
         dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<String>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<String>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<List<String>> rest = restFactory.create();
                 rest
                         .onSuccess(list -> {

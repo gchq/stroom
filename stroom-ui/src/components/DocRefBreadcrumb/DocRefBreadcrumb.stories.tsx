@@ -21,7 +21,6 @@ import DocRefBreadcrumb from "./DocRefBreadcrumb";
 import fullTestData from "testing/data";
 
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 
 const testDocRef = fullTestData.documentTree.children![0].children![0];
@@ -43,6 +42,4 @@ const BreadcrumbOpen = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Breadcrumb", module);
-
-addThemedStories(stories, () => <BreadcrumbOpen />);
+storiesOf("Doc Ref", module).add("Breadcrumb", () => <BreadcrumbOpen />);

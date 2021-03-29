@@ -14,8 +14,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -33,6 +31,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
@@ -51,7 +51,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
-    private AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
@@ -121,7 +121,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
             LOGGER.info("Starting config file modification watcher for {}", configFile.toAbsolutePath().normalize());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath().normalize());
+                    LOGGER.debug("Thread interrupted, stopping watching directory {}",
+                            dirToWatch.toAbsolutePath().normalize());
                     break;
                 }
 
@@ -140,8 +141,12 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                         if (event == null) {
                             LOGGER.debug("Event is null");
                         } else {
-                            String name = event.kind() != null ? event.kind().name() : "kind==null";
-                            String type = event.kind() != null ? event.kind().type().getSimpleName() : "kind==null";
+                            String name = event.kind() != null
+                                    ? event.kind().name()
+                                    : "kind==null";
+                            String type = event.kind() != null
+                                    ? event.kind().type().getSimpleName()
+                                    : "kind==null";
                             LOGGER.debug("Dir watch event {}, {}, {}", name, type, event.context());
                         }
                     }
@@ -193,13 +198,13 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         if (isFileReadScheduled.compareAndSet(false, true)) {
             LOGGER.info("Scheduling update of application config from file in {}ms", DELAY_BEFORE_FILE_READ_MS);
             CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
-                .execute(() -> {
-                    try {
-                        updateAppConfigFromFile();
-                    } finally {
-                        isFileReadScheduled.set(false);
-                    }
-                });
+                    .execute(() -> {
+                        try {
+                            updateAppConfigFromFile();
+                        } finally {
+                            isFileReadScheduled.set(false);
+                        }
+                    });
         }
     }
 
@@ -213,19 +218,20 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
             if (result.hasErrors()) {
                 LOGGER.error("Unable to update application config from file {} because it failed validation. " +
-                    "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
+                        "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
-                    // Don't have to worry about the DBV config merging that goes on in DataSourceFactoryImpl
+                    // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
                     // as that doesn't mutate the config objects
 
                     final AtomicInteger updateCount = new AtomicInteger(0);
-                    final FieldMapper.UpdateAction updateAction = (destParent, prop, sourcePropValue, destPropValue) -> {
-                        final String fullPath = ((AbstractConfig)destParent).getFullPath(prop.getName());
-                        LOGGER.info("  Updating config value of {} from [{}] to [{}]",
-                            fullPath, destPropValue, sourcePropValue);
-                        updateCount.incrementAndGet();
-                    };
+                    final FieldMapper.UpdateAction updateAction =
+                            (destParent, prop, sourcePropValue, destPropValue) -> {
+                                final String fullPath = ((AbstractConfig) destParent).getFullPath(prop.getName());
+                                LOGGER.info("  Updating config value of {} from [{}] to [{}]",
+                                        fullPath, destPropValue, sourcePropValue);
+                                updateCount.incrementAndGet();
+                            };
 
                     LOGGER.info("Updating application config from file.");
                     // Copy changed values from the newly modified appConfig into the guice bound one
@@ -234,35 +240,35 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                     // Update the config objects using the DB as the removal of a yaml value may trigger
                     // a DB value to be effective
                     LOGGER.info("Completed updating application config from file. Changes: {}", updateCount.get());
-                    globalConfigService.updateConfigObjects();
+                    globalConfigService.updateConfigObjects(newAppConfig);
 
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",
-                        configFile.toAbsolutePath().normalize(), e);
+                            configFile.toAbsolutePath().normalize(), e);
                 }
             }
         } catch (Throwable e) {
             // Swallow error as we don't want to break the app because the file is bad.
             LOGGER.error("Error parsing configuration from file {}",
-                configFile.toAbsolutePath().normalize(), e);
+                    configFile.toAbsolutePath().normalize(), e);
         }
     }
 
     private ConfigValidator.Result validateNewConfig(final AppConfig newAppConfig) {
-        // Initialise a ConfigMapper on the new config tree so it will decorate all the paths,
+        // Decorate the new config tree so it has all the paths,
         // i.e. call setBasePath on each branch in the newAppConfig tree so if we get any violations we
         // can log their locations with full paths.
-        new ConfigMapper(newAppConfig);
+        ConfigMapper.decorateWithPropertyPaths(newAppConfig);
 
         LOGGER.info("Validating modified config file");
-        final ConfigValidator.Result result = configValidator.validate(newAppConfig);
+        final ConfigValidator.Result result = configValidator.validateRecursively(newAppConfig);
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
-            result.getErrorCount(),
-            result.getWarningCount());
+                result.getErrorCount(),
+                result.getWarningCount());
         return result;
     }
 
@@ -310,8 +316,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
         return resultBuilder
                 .withDetail("configFilePath", configFile != null
-                    ? configFile.toAbsolutePath().normalize().toString()
-                    : null)
+                        ? configFile.toAbsolutePath().normalize().toString()
+                        : null)
                 .withDetail("isRunning", isRunning)
                 .withDetail("isValidFile", isValidFile)
                 .build();

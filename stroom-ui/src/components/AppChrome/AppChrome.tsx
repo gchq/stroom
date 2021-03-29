@@ -16,12 +16,10 @@
 import * as React from "react";
 
 import "simplebar";
-import "simplebar/dist/simplebar.css";
 
 import { ActiveMenuItem } from "./types";
-import { useTheme } from "lib/useTheme/useTheme";
 import { useIncludeSidebar } from "lib/useRouter/BrowserRouter";
-import Sidebar from "./Sidebar";
+import { Sidebar } from "./Sidebar";
 
 export interface AppChromeProps {
   content: React.ReactNode;
@@ -35,16 +33,13 @@ const AppChrome: React.FunctionComponent<AppChromeProps> = ({
   content,
 }) => {
   const includeSidebar = useIncludeSidebar(urlPrefix);
-  const { theme } = useTheme();
 
   return (
-    <div className={theme}>
-      <div className="app-chrome page">
-        {includeSidebar && <Sidebar {...{ activeMenuItem }} />}
-        <div className="app-chrome__content">
-          <div className="content-tabs">
-            <div className="content-tabs__content">{content}</div>
-          </div>
+    <div className="app-chrome page">
+      {includeSidebar && <Sidebar {...{ activeMenuItem }} />}
+      <div className="app-chrome__content">
+        <div className="content-tabs">
+          <div className="content-tabs__content">{content}</div>
         </div>
       </div>
     </div>

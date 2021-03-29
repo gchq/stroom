@@ -16,13 +16,15 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.shared.DownloadSearchResultFileType;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 
 public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.DownloadView> {
+
     @Inject
     public DownloadPresenter(final EventBus eventBus, final DownloadView view) {
         super(eventBus, view);
@@ -41,6 +43,7 @@ public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.Downl
     }
 
     public interface DownloadView extends View {
+
         DownloadSearchResultFileType getFileType();
 
         boolean isSample();

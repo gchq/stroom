@@ -15,16 +15,16 @@
  */
 
 import * as React from "react";
-import { validateAsync } from "components/users/validation";
+import { validateAsync } from "components/Account/validation";
 import ResetPassword from "./ResetPassword";
 import useResetPassword from "./useResetPassword";
 import { useTokenValidityCheck } from "./useTokenValidityCheck";
 import useUrlFactory from "lib/useUrlFactory";
 
-const ResetPasswordContainer = () => {
+export const ResetPasswordContainer = () => {
   const { resetPassword } = useResetPassword();
   const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
 
   const {
     isTokenMissing,
@@ -57,5 +57,3 @@ const ResetPasswordContainer = () => {
     />
   );
 };
-
-export default ResetPasswordContainer;

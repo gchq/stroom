@@ -12,11 +12,10 @@ const TestHarness: React.FunctionComponent = () => {
   const [lastUrl, setLastUrl] = React.useState<string | undefined>(undefined);
   const urlGenerator = useUrlGenerator(prefix);
 
-  const onPrefixChange: React.ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(({ target: { value } }) => setPrefix(value), [
-    setPrefix,
-  ]);
+  const onPrefixChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
+    ({ target: { value } }) => setPrefix(value),
+    [setPrefix],
+  );
 
   const onButtonClick = React.useCallback(
     (name, navigationFn: () => string) => {
@@ -33,7 +32,7 @@ const TestHarness: React.FunctionComponent = () => {
         <input value={prefix} onChange={onPrefixChange} />
       </form>
       {Object.entries(urlGenerator)
-        .map(k => ({
+        .map((k) => ({
           name: k[0],
           navigationFn: k[1],
         }))

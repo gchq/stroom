@@ -33,17 +33,15 @@ import stroom.data.store.impl.fs.SegmentInputStreamProvider;
 import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
 import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
 import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
-import stroom.meta.mock.MockMetaService;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.mock.MockMetaService;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,9 +51,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockStore implements Store, Clearable {
+
     /**
      * Our stream data.
      */
@@ -381,6 +382,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
+
         SeekableByteArrayInputStream(final byte[] bytes) {
             super(bytes);
         }
@@ -402,6 +404,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
+
         private final Meta meta;
         private boolean closed;
         private boolean deleted;
@@ -610,6 +613,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockSource implements InternalSource, SegmentInputStreamProviderFactory {
+
         private final Map<String, MockSource> childMap = new HashMap<>();
         private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
         private final String streamType;
@@ -617,7 +621,7 @@ public class MockStore implements Store, Clearable {
         private AttributeMap attributeMap;
         private InputStream inputStream;
 
-        private Meta meta;
+        private final Meta meta;
         private boolean closed;
 
         MockSource(final Meta meta) {
@@ -645,6 +649,11 @@ public class MockStore implements Store, Clearable {
         @Override
         public InputStreamProvider get(final long index) {
             return new InputStreamProviderImpl(meta, this, index);
+        }
+
+        @Override
+        public Set<String> getChildTypes() {
+            throw new UnsupportedOperationException("TODO");
         }
 
         @Override
@@ -763,6 +772,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockBoundaryStreamSource extends MockSource {
+
         MockBoundaryStreamSource(final Source parent) {
             super(parent, InternalStreamTypeNames.BOUNDARY_INDEX);
         }
@@ -796,7 +806,8 @@ public class MockStore implements Store, Clearable {
 //                    throw new IOException("Output stream already provided for index " + index);
 //                }
 //
-//                // Move up to the right index if this OS is behind, i.e. it hasn't been requested for a certain data type before.
+//                // Move up to the right index if this OS is behind, i.e. it hasn't been requested
+//                for a certain data type before.
 //                while (this.index < index - 1) {
 //                    LOGGER.debug("Fast forwarding for " + dataTypeName);
 //                    this.index++;

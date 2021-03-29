@@ -5,7 +5,6 @@ dependencies {
     compile project(':stroom-annotation:stroom-annotation-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-alert:stroom-alert-impl')
-    compile project(':stroom-authentication:stroom-authentication-impl')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-api')
@@ -20,6 +19,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-retention-impl')
     compile project(':stroom-data:stroom-data-store-impl-fs')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
+    compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-explorer:stroom-explorer-impl-db')
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-impl')
@@ -39,6 +39,7 @@ dependencies {
     compile project(':stroom-search:stroom-search-impl')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-search:stroom-searchable-impl')
+    compile project(':stroom-security:stroom-security-identity')
     compile project(':stroom-security:stroom-security-impl')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
@@ -48,20 +49,22 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.commons_text
-    compile libs.guice4
+    compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_databind
     compile libs.jackson_dataformat_yaml
     compile libs.javax_inject
 
+    testCompile project(':stroom-test-common')
+
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mbknor_jackson_jsonSchema
     testCompile libs.java_diff_utils
-    
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

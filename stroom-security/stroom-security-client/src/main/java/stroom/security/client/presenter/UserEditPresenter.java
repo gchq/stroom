@@ -16,11 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.shared.User;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -29,13 +24,23 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         implements UserEditUiHandlers {
+
     private final UserEditAddRemoveUsersPresenter userListAddRemovePresenter;
     private final AppPermissionsPresenter appPermissionsPresenter;
 
     @Inject
-    public UserEditPresenter(final EventBus eventBus, final UserEditView view, final UserEditAddRemoveUsersPresenter userListAddRemovePresenter, final AppPermissionsPresenter appPermissionsPresenter) {
+    public UserEditPresenter(final EventBus eventBus,
+                             final UserEditView view,
+                             final UserEditAddRemoveUsersPresenter userListAddRemovePresenter,
+                             final AppPermissionsPresenter appPermissionsPresenter) {
         super(eventBus, view);
         this.userListAddRemovePresenter = userListAddRemovePresenter;
         this.appPermissionsPresenter = appPermissionsPresenter;
@@ -77,6 +82,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
     }
 
     public interface UserEditView extends View, HasUiHandlers<UserEditUiHandlers> {
+
         void setUserGroupsView(View view);
 
         void setAppPermissionsView(View view);

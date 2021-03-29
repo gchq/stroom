@@ -17,8 +17,6 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 import useForm from "lib/useForm";
 import JsonDebug from "testing/JsonDebug";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
@@ -31,11 +29,12 @@ interface Props {
 interface FormValues {
   chosenDocRef?: DocRefType;
 }
+
 const defaultValues: FormValues = {
   chosenDocRef: undefined,
 };
 
-let AppSearchAsForm: React.FunctionComponent<Props> = ({ typeFilter }) => {
+const AppSearchAsForm: React.FunctionComponent<Props> = ({ typeFilter }) => {
   const { value, useControlledInputProps } = useForm<FormValues>({
     initialValues: defaultValues,
   });
@@ -69,16 +68,8 @@ const AppSearchAsNavigator: React.FunctionComponent<Props> = () => {
   );
 };
 
-const globalSearch = storiesOf(`App Search Bar/Global Search`, module);
-addThemedStories(globalSearch, () => <AppSearchAsNavigator />);
-
-const asForm = storiesOf(`App Search Bar/In Form`, module);
-addThemedStories(asForm, () => <AppSearchAsForm />);
-
-const asFormSpecificType = storiesOf(`App Search Bar/Specific Type`, module);
-addThemedStories(asFormSpecificType, () => (
-  <AppSearchAsForm typeFilter="Pipeline" />
-));
-
-const asFormFolder = storiesOf(`App Search Bar/Find Folder`, module);
-addThemedStories(asFormFolder, () => <AppSearchAsForm typeFilter="Folder" />);
+const stories = storiesOf(`App Search Bar`, module);
+stories.add("Global Search", () => <AppSearchAsNavigator />);
+stories.add("In Form", () => <AppSearchAsForm />);
+stories.add("Specific Type", () => <AppSearchAsForm typeFilter="Pipeline" />);
+stories.add("Find Folder", () => <AppSearchAsForm typeFilter="Folder" />);

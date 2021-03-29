@@ -23,12 +23,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- processor_id comes from the processor table in stroom-process but there is no FK
 -- between them
 CREATE TABLE IF NOT EXISTS meta_processor (
-    id              int(11) NOT NULL AUTO_INCREMENT,
+    id              int NOT NULL AUTO_INCREMENT,
     processor_uuid  varchar(255) DEFAULT NULL,
     pipeline_uuid   varchar(255) DEFAULT NULL,
     PRIMARY KEY     (id),
     UNIQUE KEY      processor_uuid (processor_uuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the meta_processor table
@@ -41,7 +41,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_PROC') THEN
 
         RENAME TABLE STRM_PROC TO OLD_STRM_PROC;
     END IF;
@@ -50,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'PIPE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'PIPE') THEN
 
         RENAME TABLE PIPE TO OLD_PIPE;
     END IF;
@@ -58,7 +60,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL 
             FROM INFORMATION_SCHEMA.TABLES 
-            where TABLE_NAME = 'OLD_STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_PROC') THEN
 
         -- Copy data into the meta_processor table, use ID predicate to make it re-runnable
         INSERT

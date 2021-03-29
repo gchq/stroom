@@ -21,11 +21,11 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta_feed table
 --
 CREATE TABLE IF NOT EXISTS meta_feed (
-    id           int(11) NOT NULL AUTO_INCREMENT,
+    id           int NOT NULL AUTO_INCREMENT,
     name         varchar(255) NOT NULL,
     PRIMARY KEY  (id),
     UNIQUE KEY   name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy meta into the meta_feed table
@@ -37,7 +37,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'FD') THEN
 
         RENAME TABLE FD TO OLD_FD;
     END IF;
@@ -45,7 +46,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_FD') THEN
 
         INSERT INTO meta_feed (
             id, 

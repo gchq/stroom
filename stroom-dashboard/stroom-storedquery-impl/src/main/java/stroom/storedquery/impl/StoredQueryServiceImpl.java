@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
+
     private final SecurityContext securityContext;
     private final StoredQueryDao dao;
 
@@ -27,16 +28,19 @@ public class StoredQueryServiceImpl implements StoredQueryService {
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 
-    StoredQuery update(@Nonnull final StoredQuery storedQuery) {
+    @Override
+    public StoredQuery update(@Nonnull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext.getUserId(), storedQuery);
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }
 
-    boolean delete(int id) {
+    @Override
+    public boolean delete(int id) {
         return securityContext.secureResult(() -> dao.delete(id));
     }
 
-    StoredQuery fetch(int id) {
+    @Override
+    public StoredQuery fetch(int id) {
         final StoredQuery storedQuery = securityContext.secureResult(() ->
                 dao.fetch(id)).orElse(null);
 
@@ -48,7 +52,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
         return storedQuery;
     }
 
-    ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    @Override
+    public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
         final String userId = securityContext.getUserId();
         criteria.setUserId(userId);
 

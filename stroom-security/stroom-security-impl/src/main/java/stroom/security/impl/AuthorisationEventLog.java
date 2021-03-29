@@ -16,14 +16,18 @@
 
 package stroom.security.impl;
 
-import event.logging.Authorisation;
+import stroom.event.logging.api.StroomEventLoggingService;
+
+import event.logging.AddGroups;
+import event.logging.AuthorisationActionType;
+import event.logging.AuthoriseEventAction;
 import event.logging.Event;
 import event.logging.Group;
 import event.logging.Outcome;
+import event.logging.RemoveGroups;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.event.logging.api.StroomEventLoggingService;
 
 import javax.inject.Inject;
 
@@ -37,45 +41,73 @@ public class AuthorisationEventLog {
         this.eventLoggingService = eventLoggingService;
     }
 
-    public void addUserToGroup(final String userName, final String groupName, final boolean success, final String outcomeDescription) {
-        final Event.EventDetail.Authorise.AddGroups addGroups = new Event.EventDetail.Authorise.AddGroups();
-        addGroups.getGroup().add(createGroup(groupName));
-        authorisationEvent("addUserToGroup", "Adding user to group", userName, addGroups, null, success, outcomeDescription);
+    public void addUserToGroup(final String userName,
+                               final String groupName,
+                               final boolean success,
+                               final String outcomeDescription) {
+        final AddGroups addGroups = AddGroups.builder()
+                .addGroups(Group.builder()
+                        .withName(groupName)
+                        .build())
+                .build();
+
+        authorisationEvent(
+                "addUserToGroup",
+                "Adding user to group",
+                userName,
+                addGroups,
+                null,
+                success,
+                outcomeDescription);
     }
 
-    public void removeUserFromGroup(final String userName, final String groupName, final boolean success, final String outcomeDescription) {
-        final Event.EventDetail.Authorise.RemoveGroups removeGroups = new Event.EventDetail.Authorise.RemoveGroups();
-        removeGroups.getGroup().add(createGroup(groupName));
-        authorisationEvent("removeUserFromGroup", "Removing user from group", userName, null, removeGroups, success, outcomeDescription);
+    public void removeUserFromGroup(final String userName,
+                                    final String groupName,
+                                    final boolean success,
+                                    final String outcomeDescription) {
+        final RemoveGroups removeGroups = RemoveGroups.builder()
+                .withGroups(Group.builder()
+                        .withName(groupName)
+                        .build())
+                .build();
+
+        authorisationEvent(
+                "removeUserFromGroup",
+                "Removing user from group",
+                userName,
+                null,
+                removeGroups,
+                success,
+                outcomeDescription);
     }
 
-    private Group createGroup(final String groupName) {
-        final Group group = new Group();
-        group.setName(groupName);
-        return group;
-    }
-
-    private void authorisationEvent(final String typeId, final String description, final String userName,
-                                    final Event.EventDetail.Authorise.AddGroups addGroups, final Event.EventDetail.Authorise.RemoveGroups removeGroups, final boolean success, final String outcomeDescription) {
+    private void authorisationEvent(final String typeId,
+                                    final String description,
+                                    final String userName,
+                                    final AddGroups addGroups,
+                                    final RemoveGroups removeGroups,
+                                    final boolean success,
+                                    final String outcomeDescription) {
         try {
-            final Event event = eventLoggingService.createAction(typeId, description);
+            final Outcome outcome = success
+                    ? null
+                    : Outcome.builder()
+                    .withSuccess(success)
+                    .withDescription(outcomeDescription)
+                    .build();
 
-            final User user = new User();
-            user.setName(userName);
-
-            final Event.EventDetail.Authorise authorise = new Event.EventDetail.Authorise();
-            authorise.getObjects().add(user);
-            authorise.setAction(Authorisation.MODIFY);
-            authorise.setAddGroups(addGroups);
-            authorise.setRemoveGroups(removeGroups);
-            event.getEventDetail().setAuthorise(authorise);
-
-            if (!success) {
-                final Outcome outcome = new Outcome();
-                outcome.setSuccess(success);
-                outcome.setDescription(outcomeDescription);
-                authorise.setOutcome(outcome);
-            }
+            final Event event = eventLoggingService.createEvent(
+                    typeId,
+                    description,
+                    AuthoriseEventAction.builder()
+                            .addUser(User.builder()
+                                    .withName(userName)
+                                    .build())
+                            .withAction(AuthorisationActionType.MODIFY)
+                            .withAddGroups(addGroups)
+                            .withRemoveGroups(removeGroups)
+                            .withOutcome(outcome)
+                            .build());
 
             eventLoggingService.log(event);
         } catch (final RuntimeException e) {

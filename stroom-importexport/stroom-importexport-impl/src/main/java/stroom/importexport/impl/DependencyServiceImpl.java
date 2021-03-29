@@ -4,22 +4,20 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +28,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
@@ -65,7 +65,7 @@ public class DependencyServiceImpl implements DependencyService {
             .thenComparing(TO_TYPE_COMPARATOR)
             .thenComparing(TO_NAME_COMPARATOR);
 
-    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = new ExpressionOperator.Builder(Op.AND).build();
+    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = ExpressionOperator.builder().build();
 
     private static final FilterFieldMappers<Dependency> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),
@@ -74,8 +74,19 @@ public class DependencyServiceImpl implements DependencyService {
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_TYPE, Dependency::getTo, DocRef::getType),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_NAME, Dependency::getTo, DocRef::getName),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_UUID, Dependency::getTo, DocRef::getUuid),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS, Dependency::isOk, bool -> bool ? "OK" : "Missing")
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS,
+                    Dependency::isOk,
+                    bool -> bool
+                            ? "OK"
+                            : "Missing")
     );
+
+    //todo maybe better to introduce dependencies between packages in order to avoid this duplication
+    private static final DocRef[] ALL_PSEUDO_DOCREFS = {
+            new DocRef("Searchable", "Annotations", "Annotations"),
+            new DocRef("Searchable", "Meta Store", "Meta Store"),
+            new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
+            new DocRef("Searchable", "Task Manager", "Task Manager")};
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
@@ -111,6 +122,7 @@ public class DependencyServiceImpl implements DependencyService {
         // Flatten the dependency map
         final List<Dependency> flatDependencies = buildFlatDependencies(
                 allDependencies,
+                Arrays.stream(ALL_PSEUDO_DOCREFS).collect(Collectors.toSet()),
                 sortListComparator,
                 filterPredicate);
 
@@ -121,7 +133,9 @@ public class DependencyServiceImpl implements DependencyService {
                         .orElse(new PageRequest()));
     }
 
+
     private List<Dependency> buildFlatDependencies(final Map<DocRef, Set<DocRef>> allDependencies,
+                                                   final Set<DocRef> pseudoDocRefs,
                                                    final Comparator<Dependency> sortListComparator,
                                                    final Predicate<Dependency> filterPredicate) {
         return allDependencies.entrySet().stream()
@@ -132,7 +146,8 @@ public class DependencyServiceImpl implements DependencyService {
                             .map(childDocRef -> new Dependency(
                                     parentDocRef,
                                     childDocRef,
-                                    allDependencies.containsKey(childDocRef)));
+                                    pseudoDocRefs.contains(childDocRef) ||
+                                            allDependencies.containsKey(childDocRef)));
                 })
                 .filter(filterPredicate)
                 .sorted(sortListComparator)
@@ -238,10 +253,10 @@ public class DependencyServiceImpl implements DependencyService {
         if (dependencyCriteria != null && !dependencyCriteria.getSortList().isEmpty()) {
             Comparator<Dependency> compositeComparator = null;
 
-            for (final Sort sort : dependencyCriteria.getSortList()) {
-                Comparator<Dependency> comparator = COMPARATOR_MAP.get(sort.getField());
+            for (final CriteriaFieldSort sort : dependencyCriteria.getSortList()) {
+                Comparator<Dependency> comparator = COMPARATOR_MAP.get(sort.getId());
                 if (comparator != null) {
-                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    if (sort.isDesc()) {
                         comparator = comparator.reversed();
                     }
                     compositeComparator = compositeComparator != null

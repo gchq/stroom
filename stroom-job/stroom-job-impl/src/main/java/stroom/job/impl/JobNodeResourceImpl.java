@@ -17,6 +17,8 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
@@ -27,59 +29,87 @@ import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.Term;
+import event.logging.TermCondition;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.function.Consumer;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobNodeResourceImpl implements JobNodeResource {
-    private final JobNodeService jobNodeService;
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final DocumentEventLog documentEventLog;
+
+    private final Provider<JobNodeService> jobNodeServiceProvider;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<WebTargetFactory> webTargetFactoryProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
-    JobNodeResourceImpl(final JobNodeService jobNodeService,
-                        final NodeService nodeService,
-                        final NodeInfo nodeInfo,
-                        final WebTargetFactory webTargetFactory,
-                        final DocumentEventLog documentEventLog) {
-        this.jobNodeService = jobNodeService;
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
-        this.documentEventLog = documentEventLog;
+    JobNodeResourceImpl(final Provider<JobNodeService> jobNodeServiceProvider,
+                        final Provider<NodeService> nodeServiceProvider,
+                        final Provider<NodeInfo> nodeInfoProvider,
+                        final Provider<WebTargetFactory> webTargetFactoryProvider,
+                        final Provider<DocumentEventLog> documentEventLogProvider) {
+        this.jobNodeServiceProvider = jobNodeServiceProvider;
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.webTargetFactoryProvider = webTargetFactoryProvider;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public JobNodeListResponse list(final String jobName, final String nodeName) {
         JobNodeListResponse response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        And.Builder<Void> andBuilder = And.builder();
 
+        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+        if (jobName != null && !jobName.isEmpty()) {
+            findJobNodeCriteria.getJobName().setString(jobName);
+            andBuilder.addTerm(Term.builder()
+                    .withName("Job")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(jobName)
+                    .build());
+        }
+        if (nodeName != null && !nodeName.isEmpty()) {
+            findJobNodeCriteria.getNodeName().setString(nodeName);
+            andBuilder.addTerm(Term.builder()
+                    .withName("NodeName")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(nodeName)
+                    .build());
+        }
+
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
         try {
-            final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-            if (jobName != null && !jobName.isEmpty()) {
-                findJobNodeCriteria.getJobName().setString(jobName);
-            }
-            if (nodeName != null && !nodeName.isEmpty()) {
-                findJobNodeCriteria.getNodeName().setString(nodeName);
-            }
 
-            response = jobNodeService.find(findJobNodeCriteria);
-            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), response.getPageResponse(), null);
+            response = jobNodeServiceProvider.get().find(findJobNodeCriteria);
+            documentEventLogProvider.get().search(
+                    "ListJobNodes",
+                    query,
+                    JobNode.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), null, e);
+            documentEventLogProvider.get().search(
+                    "ListJobNodes",
+                    query,
+                    JobNode.class.getSimpleName(),
+                    null,
+                    e);
+            throw e;
         }
         return response;
     }
@@ -87,15 +117,16 @@ class JobNodeResourceImpl implements JobNodeResource {
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
         JobNodeInfo jobNodeInfo;
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
-        try {
-            // If this is the node that was contacted then just return our local info.
-            if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                jobNodeInfo = jobNodeService.getInfo(jobName);
+        // If this is the node that was contacted then just return our local info.
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            jobNodeInfo = jobNodeServiceProvider.get().getInfo(jobName);
 
-            } else {
-                final Response response = webTargetFactory
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
+                    nodeServiceProvider.get(), nodeName) +
+                    ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
+            try {
+                final Response response = webTargetFactoryProvider.get()
                         .create(url)
                         .queryParam("jobName", jobName)
                         .queryParam("nodeName", nodeName)
@@ -108,10 +139,9 @@ class JobNodeResourceImpl implements JobNodeResource {
                 if (jobNodeInfo == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-
-        } catch (final Throwable e) {
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
 
         return jobNodeInfo;
@@ -138,6 +168,7 @@ class JobNodeResourceImpl implements JobNodeResource {
         JobNode after = null;
 
         try {
+            final JobNodeService jobNodeService = jobNodeServiceProvider.get();
             // Get the before version.
             before = jobNodeService.fetch(id).orElse(null);
             jobNode = jobNodeService.fetch(id).orElse(null);
@@ -147,10 +178,10 @@ class JobNodeResourceImpl implements JobNodeResource {
             mutation.accept(jobNode);
             after = jobNodeService.update(jobNode);
 
-            documentEventLog.update(before, after, null);
+            documentEventLogProvider.get().update(before, after, null);
 
         } catch (final RuntimeException e) {
-            documentEventLog.update(before, after, e);
+            documentEventLogProvider.get().update(before, after, e);
             throw e;
         }
     }

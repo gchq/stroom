@@ -19,6 +19,8 @@ package stroom.config.global.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ManageGlobalPropertyEditUiHandlers extends UiHandlers {
+
     void onChangeUseOverride();
+
     void onChangeOverrideValue();
 }

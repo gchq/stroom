@@ -15,12 +15,11 @@
  */
 
 import * as React from "react";
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { storiesOf } from "@storybook/react";
 import { Color } from "csstype";
 
 import HorizontalMainDetails from "./HorizontalMainDetails";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { loremIpsum } from "lorem-ipsum";
 
 const EnabledCheckbox = () => (
@@ -113,7 +112,7 @@ const PanelPart: React.FunctionComponent<PanelPartProps> = ({
   backgroundColor,
   children,
 }) => {
-  const uuid = React.useMemo(() => uuidv4(), []);
+  const uuid = React.useMemo(() => v4(), []);
 
   return (
     <div style={{ backgroundColor }}>
@@ -149,8 +148,7 @@ const PanelTest = () => {
   );
 };
 
-const stories = storiesOf(
-  "General Purpose/Horizontal Main Details/Mounting Issue",
+storiesOf(
+  "General Purpose/Horizontal Main Details",
   module,
-);
-addThemedStories(stories, () => <PanelTest />);
+).add("Mounting Issue", () => <PanelTest />);

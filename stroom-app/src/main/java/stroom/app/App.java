@@ -16,23 +16,31 @@
 
 package stroom.app;
 
+import stroom.app.commands.CreateAccountCommand;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.commands.ManageUsersCommand;
+import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.StroomConfigurationSourceProvider;
+import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
-import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
+import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
@@ -53,19 +61,22 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.EnumSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.logging.Level;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Objects;
-import java.util.logging.Level;
+import javax.sql.DataSource;
+import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
@@ -83,29 +94,42 @@ public class App extends Application<Config> {
     @Inject
     private SessionListeners sessionListeners;
     @Inject
-    private DelegatingExceptionMapper delegatingExceptionMapper;
-    @Inject
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
     @Inject
     private BuildInfo buildInfo;
-    
+    @Inject
+    private HomeDirProvider homeDirProvider;
+    @Inject
+    private TempDirProvider tempDirProvider;
+    @Inject
+    private RestResourceAutoLogger resourceAutoLogger;
+    @Inject
+    private Provider<Set<DataSource>> dataSourcesProvider;
 
     private final Path configFile;
+
+    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // of the yaml file before our main injector has been created and also so we can use our custom
+    // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
+    // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
     public App() {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
+        validationOnlyInjector = createValidationInjector();
     }
 
+
     App(final Path configFile) {
-        super();
         this.configFile = configFile;
+        validationOnlyInjector = createValidationInjector();
     }
 
     public static void main(final String[] args) throws Exception {
-        final Path yamlConfigFile = getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
@@ -117,9 +141,12 @@ public class App extends Application<Config> {
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
-                bootstrap.getConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false)));
+        bootstrap.setConfigurationSourceProvider(
+                new StroomConfigurationSourceProvider(
+                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                                new EnvironmentVariableSubstitutor(false))
+                )
+        );
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new AssetsBundle(
@@ -128,8 +155,9 @@ public class App extends Application<Config> {
                 "index.html",
                 "ui"));
 
-        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
-        // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
+        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React
+        // BrowserRouter. This always needs the root page to be served regardless of the path requested so we
+        // need to use a special asset bundle to achieve this.
         bootstrap.addBundle(new BrowserRouterAssetsBundle(
                 "/new-ui",
                 "/",
@@ -137,20 +165,31 @@ public class App extends Application<Config> {
                 "new-ui",
                 ResourcePaths.SINGLE_PAGE_PREFIX));
 
+        addCliCommands(bootstrap);
+
+        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // create one just for the REST validation
+        bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
+    }
+
+    private void addCliCommands(final Bootstrap<Config> bootstrap) {
         // Add a DW Command so we can run the full migration without running the
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
-
-        // If we want to use javax.validation on our rest resources with our own custom validation annotations
-        // then we will need to do something with bootstrap.setValidatorFactory()
-        // and our CustomConstraintValidatorFactory
+        bootstrap.addCommand(new CreateAccountCommand(configFile));
+        bootstrap.addCommand(new ResetPasswordCommand(configFile));
+        bootstrap.addCommand(new ManageUsersCommand(configFile));
     }
-
-
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+        Objects.requireNonNull(configFile, () ->
+                LogUtil.message("No config YAML file supplied in arguments"));
+
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        validateAppConfig(configuration, configFile);
 
         // Turn on Jersey logging of request/response payloads
         // I can't seem to get this to work unless Level is SEVERE
@@ -181,18 +220,19 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
+        LOGGER.info("Starting Stroom Application");
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
-        final Injector injector = Guice.createInjector(appModule);
 
-        // Ideally we would do the validation before all the guice binding but the validation
-        // relies on ConfigMapper and the various custom validator impls being injected by guice.
-        // As long as we do this as the first thing after the injector is created then it is
-        // only eager singletons that will have been spun up.
-        validateAppConfig(injector, configuration.getAppConfig());
+        Guice.createInjector(appModule).injectMembers(this);
 
-        injector.injectMembers(this);
+        //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
+        //Note that if autologger is not required, and the next line removed, then it will be necessary to
+        //register a DelegatingExceptionMapper directly instead.
+        environment.jersey().register(resourceAutoLogger);
+
+        // Force all datasources to be created so we can force migrations to run.
+        dataSourcesProvider.get();
 
         // Add health checks
         healthChecks.register();
@@ -209,27 +249,29 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Add jersey exception mappers.
-        environment.jersey().register(delegatingExceptionMapper);
-
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
         warnAboutDefaultOpenIdCreds(configuration);
 
-        showBuildInfo();
-        
+        showInfo(configuration);
     }
-    
-    private void showBuildInfo() {
+
+    private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
-        LOGGER.info("Build version: {}, date: {}",
-                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
+
+        LOGGER.info(""
+                + "\n  Build version: " + buildInfo.getBuildVersion()
+                + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Node name:     " + getNodeName(configuration.getAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
+        if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
+            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath(
+                    "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
@@ -252,15 +294,13 @@ public class App extends Application<Config> {
                 : null;
     }
 
-    private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+    private void validateAppConfig(final Config config, final Path configFile) {
 
-        // Inject this way rather than using injectMembers so we can avoid instantiating
-        // too many classes before running our validation
+        final AppConfig appConfig = config.getAppConfig();
 
-        // We need to get an unused instance of ConfigMapper so it decorates the AppConfig tree.
-        injector.getInstance(ConfigMapper.class);
+        ConfigMapper.decorateWithPropertyPaths(appConfig);
 
-        final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
+        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
@@ -279,29 +319,6 @@ public class App extends Application<Config> {
                     appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
-    }
-
-    private static Path getYamlFileFromArgs(final String[] args) {
-        // This is not ideal as we are duplicating what dropwizard is doing but there appears to be
-        // no way of getting the yaml file location from the dropwizard classes
-
-        for (String arg : args) {
-            if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
-                Path yamlFile = Path.of(arg);
-                if (Files.isRegularFile(yamlFile)) {
-                    return yamlFile;
-                } else {
-                    // NOTE if you are getting here while running in IJ then you have probable not run
-                    // local.yaml.sh
-                    throw new IllegalArgumentException(LogUtil.message(
-                            "YAML config file [{}] from arguments [{}] is not a valid file.\n" +
-                                    "You need to supply a valid stroom configuration YAML file.",
-                            yamlFile, Arrays.asList(args)));
-                }
-            }
-        }
-        throw new IllegalArgumentException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
-                Arrays.asList(args)));
     }
 
     private static void configureSessionHandling(final Environment environment) {
@@ -346,6 +363,7 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
         // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'
@@ -408,5 +426,9 @@ public class App extends Application<Config> {
 
         LOGGER.warn(msg);
         contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
+    }
+
+    private Injector createValidationInjector() {
+        return Guice.createInjector(new ValidationModule());
     }
 }

@@ -16,12 +16,14 @@
 
 package stroom.item.client;
 
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import stroom.docref.HasDisplayValue;
+
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 
 import java.util.Collection;
 
 public interface ItemListBoxDisplay<T extends HasDisplayValue> extends HasSelectionHandlers<T> {
+
     void addItem(T item);
 
     void addItems(Collection<T> list);

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PipelineImpl implements Pipeline {
+
     private final ProcessorFactory processorFactory;
     private final Map<String, Element> elementInstances;
     private final TakesInput rootElement;
@@ -121,8 +122,8 @@ public class PipelineImpl implements Pipeline {
                     // To fix this some sort of synchronisation needs to occur between
                     // all threads when a step is detected and before IO is captured or
                     // cleaned. This will be difficult to fix so leaving for now.
-                    throw new ProcessException(
-                            "Stepping mode is not currently supported on forked pipelines that require piped IO to process them");
+                    throw new ProcessException("Stepping mode is not currently supported on forked pipelines " +
+                            "that require piped IO to process them");
                 }
 
                 processor.process();

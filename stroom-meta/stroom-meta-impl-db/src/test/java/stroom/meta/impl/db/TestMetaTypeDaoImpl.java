@@ -17,44 +17,52 @@
 
 package stroom.meta.impl.db;
 
-import com.google.inject.Guice;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
+
+import com.google.inject.Guice;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaTypeDaoImpl {
+
     @Inject
     private Cleanup cleanup;
     @Inject
     private MetaTypeDaoImpl metaTypeDao;
+    @Inject
+    private MetaDbConnProvider metaDbConnProvider;
 
     @BeforeEach
     void setup() {
         Guice.createInjector(
-            new MetaTestModule(),
-            new MetaDbModule(),
-            new MockClusterLockModule(),
-            new MockSecurityContextModule(),
-            new MockCollectionModule(),
-            new MockWordListProviderModule(),
-            new CacheModule(),
-            new DbTestModule())
-            .injectMembers(this);
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
+                .injectMembers(this);
         // Delete everything`
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test
     void test() {
+        assertThat(metaTypeDao.list().size()).isEqualTo(0);
+
         String typeName = "TEST";
         Integer id1 = metaTypeDao.getOrCreate(typeName);
         Integer id2 = metaTypeDao.getOrCreate(typeName);

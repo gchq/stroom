@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { loremIpsum } from "lorem-ipsum";
 
 export interface Animal {
@@ -10,7 +10,7 @@ export interface Animal {
 }
 
 const generateAnimal = (): Animal => ({
-  uuid: uuidv4(),
+  uuid: v4(),
   species: loremIpsum({ units: "words", count: 1 }),
   name: loremIpsum({ units: "words", count: 3 }),
 });
@@ -37,11 +37,7 @@ const useTestAnimals = (): OutProps => {
   const preFocusWrap = React.useCallback((): boolean => {
     if (animals.length < MAX_ANIMALS) {
       setAnimals(
-        animals.concat(
-          Array(AMOUNT_TO_FETCH)
-            .fill(1)
-            .map(generateAnimal),
-        ),
+        animals.concat(Array(AMOUNT_TO_FETCH).fill(1).map(generateAnimal)),
       );
       return false;
     }
@@ -54,7 +50,7 @@ const useTestAnimals = (): OutProps => {
       setAnimals(
         animals.concat([
           {
-            uuid: uuidv4(),
+            uuid: v4(),
             species,
             name,
           },

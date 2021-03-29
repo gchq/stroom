@@ -33,12 +33,4 @@ final class UserDocRefUtil {
 
         return new DocRef(USER, userUuid, null);
     }
-
-    static User createUser(final DocRef docRef) {
-        if (docRef == null || !USER.equals(docRef.getType())) {
-            return null;
-        }
-
-        return new User.Builder().uuid(docRef.getUuid()).name(docRef.getName()).build();
-    }
 }

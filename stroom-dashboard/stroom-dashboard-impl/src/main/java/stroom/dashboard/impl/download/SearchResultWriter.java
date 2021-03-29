@@ -17,13 +17,14 @@
 package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
-import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Row;
 
 import java.io.IOException;
 import java.util.List;
 
 public class SearchResultWriter {
+
     private final List<Field> fields;
     private final List<Row> rows;
     private final SampleGenerator sampleGenerator;
@@ -80,6 +81,7 @@ public class SearchResultWriter {
     }
 
     public interface Target {
+
         void start() throws IOException;
 
         void end() throws IOException;

@@ -17,8 +17,42 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.lmdb.PutOutcome;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.filter.TestFilter;
+import stroom.pipeline.filter.TestSAXEventFilter;
+import stroom.pipeline.refdata.store.ByteBufferConsumerId;
+import stroom.pipeline.refdata.store.FastInfosetValue;
+import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.RefDataLoader;
+import stroom.pipeline.refdata.store.RefDataStore.StorageType;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.pipeline.util.ProcessorUtil;
+import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
+
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.serialize.XMLEmitter;
+import net.sf.saxon.trans.XPathException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jvnet.fastinfoset.FastInfosetException;
@@ -33,31 +67,19 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.filter.TestFilter;
-import stroom.pipeline.filter.TestSAXEventFilter;
-import stroom.pipeline.refdata.store.FastInfosetValue;
-import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
-import stroom.pipeline.util.ProcessorUtil;
-import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.shared.Range;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -67,6 +89,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestReferenceDataFilter extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataFilter.class);
 
     private static final String BASE_PATH = "TestReferenceDataFilter/";
@@ -75,11 +98,18 @@ class TestReferenceDataFilter extends StroomUnitTest {
     private static final String INPUT_FAST_INFOSET_VALUE_1 = BASE_PATH + "input_FastInfosetValue_1.xml";
     private static final String INPUT_FAST_INFOSET_VALUE_2 = BASE_PATH + "input_FastInfosetValue_2.xml";
     private static final String INPUT_FAST_INFOSET_VALUE_3 = BASE_PATH + "input_FastInfosetValue_3.xml";
+    private static final String INPUT_FAST_INFOSET_VALUE_4 = BASE_PATH + "input_FastInfosetValue_4.xml";
+    private static final String INPUT_FAST_INFOSET_VALUE_5 = BASE_PATH + "input_FastInfosetValue_5.xml";
+    private static final String INPUT_FAST_INFOSET_VALUE_6 = BASE_PATH + "input_FastInfosetValue_6.xml";
 
     private static final int BUF_SIZE = 4096;
 
     @Mock
     private RefDataLoader refDataLoader;
+
+    private ByteBufferPool getByteBufferPool() {
+        return new ByteBufferPoolFactory().getByteBufferPool();
+    }
 
     @Test
     void testStringKeyValues() {
@@ -124,7 +154,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     @Test
-    void testFastInfosetKeyValues() {
+    void testFastInfoset_1_KeyValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_1, null);
 
@@ -134,10 +164,15 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         loadedRefDataValues.keyValueValues.stream()
                 .map(refDataValue -> (FastInfosetValue) refDataValue)
-                .map(this::deserialise)
-                .forEach(str -> {
-                    LOGGER.info("Dumping deserialised output");
-                    System.out.println(str);
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -155,8 +190,9 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .containsExactly("room11", "room12", "room13", "room21", "room22", "room23");
     }
 
+
     @Test
-    void testFastInfosetKeyValues_localPrefixes() {
+    void testFastInfoset_2_KeyValues_localPrefixes() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_2, null);
 
@@ -166,14 +202,19 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
         loadedRefDataValues.keyValueValues.stream()
                 .map(refDataValue -> (FastInfosetValue) refDataValue)
-                .map(this::deserialise)
-                .forEach(str -> {
-                    LOGGER.info("Dumping deserialised output");
-                    System.out.println(str);
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
-        List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
                 .map(refDataValue -> (FastInfosetValue) refDataValue)
                 .map(this::deserialise)
                 .map(str -> {
@@ -187,8 +228,9 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .containsExactly("room11", "room12", "room13", "room21", "room22", "room23");
     }
 
+
     @Test
-    void testFastInfosetRangeValues() {
+    void testFastInfoset_3_RangeValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_3, null);
 
@@ -230,6 +272,120 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .containsExactly("room11", "room12", "room13", "room21", "room22", "room23");
     }
 
+    @Test
+    void testFastInfoset_4_KeyValues_defaultNamespace() {
+
+        LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_4, null);
+
+        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
+        assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
+
+        loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room>" +
+                            "<Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                });
+        Pattern pattern = Pattern.compile("room[0-9]+");
+
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(this::deserialise)
+                .map(str -> {
+                    Matcher matcher = pattern.matcher(str);
+                    assertThat(matcher.find()).isTrue();
+                    return matcher.group();
+                })
+                .collect(Collectors.toList());
+
+        assertThat(roomList)
+                .containsExactly("room11");
+    }
+
+    @Test
+    void testFastInfoset_5_KeyValues_sameNamespaceAsOuter() {
+
+        LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_5, null);
+
+        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
+        assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
+
+        loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                            "<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                });
+        Pattern pattern = Pattern.compile("room[0-9]+");
+
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(this::deserialise)
+                .map(str -> {
+                    Matcher matcher = pattern.matcher(str);
+                    assertThat(matcher.find())
+                            .isTrue();
+                    return matcher.group();
+                })
+                .collect(Collectors.toList());
+
+        assertThat(roomList)
+                .containsExactly("room11");
+    }
+
+    @Test
+    void testFastInfoset_6_KeyValues_sameNamespaceAsOuter() {
+
+        LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_6, null);
+
+        assertThat(loadedRefDataValues.keyValueValues).hasOnlyElementsOfType(FastInfosetValue.class);
+        assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
+        assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
+
+        loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
+                            "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
+                            "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
+                            "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
+                });
+        Pattern pattern = Pattern.compile("room[0-9]+");
+
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+                .map(refDataValue -> (FastInfosetValue) refDataValue)
+                .map(this::deserialise)
+                .map(str -> {
+                    Matcher matcher = pattern.matcher(str);
+                    assertThat(matcher.find()).isTrue();
+                    return matcher.group();
+                })
+                .collect(Collectors.toList());
+
+        assertThat(roomList)
+                .containsExactly("room11");
+    }
+
     private LoadedRefDataValues doTest(String inputPath, String expectedOutputPath) {
         final LoadedRefDataValues loadedRefDataValues = new LoadedRefDataValues();
 
@@ -237,7 +393,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .thenReturn(buildUniqueRefStreamDefinition());
 
         Mockito.when(refDataLoader.initialise(Mockito.anyBoolean()))
-                .thenReturn(true);
+                .thenReturn(PutOutcome.success());
 
         // capture the args passed to the two put methods. Have to use doAnswer
         // so we can copy the buffer that is reused and therefore mutates.
@@ -245,7 +401,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
             loadedRefDataValues.addKeyValue(
                     invocation.getArgument(1),
                     invocation.getArgument(2));
-            return true;
+            return PutOutcome.newEntry();
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.any(String.class),
@@ -255,7 +411,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
             loadedRefDataValues.addRangeValue(
                     invocation.getArgument(1), // mockito can infer the type
                     invocation.getArgument(2));
-            return true;
+            return PutOutcome.newEntry();
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.<Range<Long>>any(),
@@ -270,8 +426,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
         final ReferenceDataFilter referenceDataFilter = new ReferenceDataFilter(
                 errorReceiverProxy,
                 refDataLoaderHolder,
-                cap ->
-                        new PooledByteBufferOutputStream(new ByteBufferPool(), cap));
+                capacity ->
+                        new PooledByteBufferOutputStream(getByteBufferPool(), capacity));
 
         final TestFilter testFilter = new TestFilter(null, null);
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
@@ -299,6 +455,93 @@ class TestReferenceDataFilter extends StroomUnitTest {
         LOGGER.info("Actual SAX: \n {}", actualSax);
 
         return loadedRefDataValues;
+    }
+
+    /**
+     * Consume the fastInfosetValue using the various classes used in ref data lookup
+     */
+    private void consumeFastInfoset(final FastInfosetValue fastInfosetValue, final String expectedXMLRegex) {
+        LOGGER.info("Consuming fastInfosetValue");
+        final Configuration configuration = new Configuration();
+        final PipelineConfiguration pipelineConfiguration = new PipelineConfiguration(configuration);
+
+        final StringWriter stringWriter = new StringWriter();
+        final XMLEmitter xmlEmitter = new XMLEmitter();
+        xmlEmitter.setPipelineConfiguration(pipelineConfiguration);
+        try {
+            xmlEmitter.setWriter(stringWriter);
+        } catch (XPathException e) {
+            throw new RuntimeException(e);
+        }
+        final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer = new FastInfosetByteBufferConsumer(
+                xmlEmitter, pipelineConfiguration);
+
+        final RefDataValueByteBufferConsumer.Factory refDataValueByteBufferConsumerFactory =
+                (receiver, pipelineConfiguration1)
+                        -> fastInfosetByteBufferConsumer;
+
+        final OffHeapRefDataValueProxyConsumer offHeapRefDataValueProxyConsumer = new OffHeapRefDataValueProxyConsumer(
+                xmlEmitter,
+                pipelineConfiguration,
+                Map.of(new ByteBufferConsumerId(FastInfosetValue.TYPE_ID), refDataValueByteBufferConsumerFactory));
+
+        final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory =
+                (receiver, pipelineConfiguration12)
+                        -> offHeapRefDataValueProxyConsumer;
+
+        final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory = new RefDataValueProxyConsumerFactory(
+                xmlEmitter,
+                pipelineConfiguration,
+                null,
+                offHeapRefDataValueProxyConsumerFactory);
+
+        final GenericRefDataValueProxyConsumer genericRefDataValueProxyConsumer = new GenericRefDataValueProxyConsumer(
+                xmlEmitter, pipelineConfiguration, refDataValueProxyConsumerFactory);
+
+        final RefDataValueProxy refDataValueProxy = new RefDataValueProxy() {
+            @Override
+            public Optional<RefDataValue> supplyValue() {
+                return Optional.of(fastInfosetValue);
+            }
+
+            @Override
+            public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
+                final TypedByteBuffer typedByteBuffer = new TypedByteBuffer(FastInfosetValue.TYPE_ID,
+                        fastInfosetValue.getByteBuffer());
+                typedByteBufferConsumer.accept(typedByteBuffer);
+                return true;
+            }
+
+            @Override
+            public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
+                final RefDataValueProxyConsumer refDataValueProxyConsumer = refDataValueProxyConsumerFactory
+                        .getConsumer(StorageType.OFF_HEAP);
+                try {
+                    return refDataValueProxyConsumer.consume(this);
+                } catch (XPathException e) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Error handling reference data value: {}", e.getMessage()), e);
+                }
+            }
+        };
+
+        try {
+            genericRefDataValueProxyConsumer.startDocument();
+            genericRefDataValueProxyConsumer.consume(refDataValueProxy);
+            genericRefDataValueProxyConsumer.endDocument();
+        } catch (XPathException e) {
+            e.printStackTrace();
+        }
+
+        final String xml = stringWriter.toString();
+        LOGGER.info("==================");
+        LOGGER.info("Output:\n{}", xml);
+
+        Assertions.assertThat(xml)
+                .matches(expectedXMLRegex);
+
+        // Flip the buffer for the next reader
+        fastInfosetValue.getByteBuffer().flip();
     }
 
     private String getString(final String resourceName) {
@@ -379,7 +622,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
         }
 
         @Override
-        public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+        public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
+                throws SAXException {
 
         }
 
@@ -410,6 +654,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     private static class LoadedRefDataValues {
+
         List<String> keyValueKeys;
         List<RefDataValue> keyValueValues;
         List<Range<Long>> rangeValueKeys;
@@ -452,4 +697,45 @@ class TestReferenceDataFilter extends StroomUnitTest {
             }
         }
     }
+
+//    @Test
+//    void buildXml() {
+//        Configuration configuration = Configuration.newConfiguration();
+//        final DocumentBuilder documentBuilder = new Processor(configuration).newDocumentBuilder();
+//
+//        final Builder builder = documentBuilder.getTreeModel().makeBuilder(new PipelineConfiguration(configuration));
+//        final String uri = "event-logging:3";
+//        final String prefix = "evt";
+//
+//        try {
+//            builder.startDocument(0);
+//            builder.startPrefixMapping(prefix, uri);
+//            builder.startElement((uri, "Events", "Events", null);
+//            builder.endElement(uri, "Events", "Events");
+//            builder.endPrefixMapping(prefix);
+//            builder.endDocument();
+//        } catch (XPathException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        documentBuilder.setTreeModel(TreeModel.TINY_TREE);
+//        try {
+//            final BuildingContentHandler buildingContentHandler = documentBuilder.newBuildingContentHandler();
+//
+//            buildingContentHandler.startDocument();
+//            buildingContentHandler.startPrefixMapping(prefix, uri);
+//            buildingContentHandler.startElement(uri, "Events", "Events", null);
+//            buildingContentHandler.endElement(uri, "Events", "Events");
+//            buildingContentHandler.endPrefixMapping(prefix);
+//            buildingContentHandler.endDocument();
+//            buildingContentHandler
+//            final XdmNode documentNode = buildingContentHandler.getDocumentNode();
+//
+//        } catch (SaxonApiException e) {
+//            throw new RuntimeException(e);
+//        } catch (SAXException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
 }

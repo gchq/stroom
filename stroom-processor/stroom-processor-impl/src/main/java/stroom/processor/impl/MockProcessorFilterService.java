@@ -12,10 +12,10 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
@@ -32,7 +32,11 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean autoPriority, boolean enabled) {
+    public ProcessorFilter create(DocRef pipelineRef,
+                                  QueryData queryData,
+                                  int priority,
+                                  boolean autoPriority,
+                                  boolean enabled) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setPipelineUuid(pipelineRef.getUuid());
         filter.setQueryData(queryData);
@@ -45,12 +49,17 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     //    @Override
-//    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
+//    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority,
+//    boolean enabled, Long trackerStartMs) {
 //        return create (pipelineRef, queryData, priority, enabled, null);
 //    }
 //
     @Override
-    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean autoPriority, boolean enabled) {
+    public ProcessorFilter create(Processor processor,
+                                  QueryData queryData,
+                                  int priority,
+                                  boolean autoPriority,
+                                  boolean enabled) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setProcessor(processor);
         filter.setQueryData(queryData);
@@ -60,7 +69,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public List<ReprocessDataInfo> reprocess(final QueryData criteria, final int priority, final boolean autoPriority, final boolean enabled) {
+    public List<ReprocessDataInfo> reprocess(final QueryData criteria,
+                                             final int priority,
+                                             final boolean autoPriority,
+                                             final boolean enabled) {
         return null;
     }
 

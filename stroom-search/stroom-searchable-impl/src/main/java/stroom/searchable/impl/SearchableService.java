@@ -1,15 +1,9 @@
 package stroom.searchable.impl;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
@@ -24,20 +18,22 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 // Used by DI
 class SearchableService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchableService.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableService.class);
 
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchableService.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableService.class);
     private final SearchableProvider searchableProvider;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final SecurityContext securityContext;
@@ -51,7 +47,7 @@ class SearchableService {
         this.securityContext = securityContext;
     }
 
-     DataSource getDataSource(final DocRef docRef) {
+    DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             LOGGER.debug("getDataSource called for docRef {}", docRef);
             final Searchable searchable = searchableProvider.get(docRef);
@@ -67,21 +63,17 @@ class SearchableService {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
 
             // Replace expression parameters.
-            final Query query = searchRequest.getQuery();
-            if (query != null) {
-                ExpressionOperator expression = query.getExpression();
-                final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
-                expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
-                query.setExpression(expression);
-            }
+            ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
                             Preconditions.checkNotNull(searchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                    "searchRequest must have at least one resultRequest");
+            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                    "searchRequest must have at least one resultRequest");
 
             final Searchable searchable = searchableProvider.get(docRef);
             if (searchable == null) {
@@ -94,7 +86,7 @@ class SearchableService {
         });
     }
 
-     Boolean destroy(final QueryKey queryKey) {
+    Boolean destroy(final QueryKey queryKey) {
         LOGGER.debug("destroy called for queryKey {}", queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
         // which will call destroy on the store

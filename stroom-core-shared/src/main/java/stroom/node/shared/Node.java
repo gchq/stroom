@@ -17,21 +17,34 @@
 package stroom.node.shared;
 
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
 /**
  * Represents a node for storage and processing.
  */
-@JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
+@JsonPropertyOrder({
+        "id",
+        "version",
+        "createTimeMs",
+        "createUser",
+        "updateTimeMs",
+        "updateUser",
+        "name",
+        "url",
+        "priority",
+        "enabled"})
 @JsonInclude(Include.NON_NULL)
-public class Node implements HasAuditInfo {
+public class Node implements HasAuditInfo, HasIntegerId {
+
     public static final String ENTITY_TYPE = "Node";
 
     @JsonProperty
@@ -98,6 +111,7 @@ public class Node implements HasAuditInfo {
         return node;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -208,42 +222,55 @@ public class Node implements HasAuditInfo {
 //    }
 
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Node node = (Node) o;
         return priority == node.priority &&
-            enabled == node.enabled &&
-            Objects.equals(id, node.id) &&
-            Objects.equals(version, node.version) &&
-            Objects.equals(createTimeMs, node.createTimeMs) &&
-            Objects.equals(createUser, node.createUser) &&
-            Objects.equals(updateTimeMs, node.updateTimeMs) &&
-            Objects.equals(updateUser, node.updateUser) &&
-            Objects.equals(name, node.name) &&
-            Objects.equals(url, node.url);
+                enabled == node.enabled &&
+                Objects.equals(id, node.id) &&
+                Objects.equals(version, node.version) &&
+                Objects.equals(createTimeMs, node.createTimeMs) &&
+                Objects.equals(createUser, node.createUser) &&
+                Objects.equals(updateTimeMs, node.updateTimeMs) &&
+                Objects.equals(updateUser, node.updateUser) &&
+                Objects.equals(name, node.name) &&
+                Objects.equals(url, node.url);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, url, priority, enabled);
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                name,
+                url,
+                priority,
+                enabled);
     }
 
     @Override
-    public String
-    toString() {
+    public String toString() {
         return "Node{" +
-            "id=" + id +
-            ", version=" + version +
-            ", createTimeMs=" + createTimeMs +
-            ", createUser='" + createUser + '\'' +
-            ", updateTimeMs=" + updateTimeMs +
-            ", updateUser='" + updateUser + '\'' +
-            ", name='" + name + '\'' +
-            ", url='" + url + '\'' +
-            ", priority=" + priority +
-            ", enabled=" + enabled +
-            '}';
+                "id=" + id +
+                ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", name='" + name + '\'' +
+                ", url='" + url + '\'' +
+                ", priority=" + priority +
+                ", enabled=" + enabled +
+                '}';
     }
 }

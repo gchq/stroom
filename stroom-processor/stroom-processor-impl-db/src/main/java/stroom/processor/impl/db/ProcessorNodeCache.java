@@ -24,16 +24,15 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 
 @Singleton
 class ProcessorNodeCache implements Clearable {
+
     private static final String CACHE_NAME = "Processor Node Cache";
 
     private final ICache<String, Integer> cache;
@@ -65,16 +64,11 @@ class ProcessorNodeCache implements Clearable {
     }
 
     public Integer getOrCreate(final String name) {
+        if (name == null) {
+            return null;
+        }
         return cache.get(name);
     }
-
-//    @Override
-//    public List<String> list() {
-//        return JooqUtil.contextResult(connectionProvider, context -> context
-//                .select(PROCESSOR_NODE.NAME)
-//                .from(PROCESSOR_NODE)
-//                .fetch(PROCESSOR_NODE.NAME));
-//    }
 
     private Optional<Integer> get(final String name) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
@@ -96,13 +90,6 @@ class ProcessorNodeCache implements Clearable {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    int deleteAll() {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .delete(PROCESSOR_NODE)
-                .execute());
     }
 }

@@ -1,5 +1,5 @@
 import * as React from "react";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import Button from "components/Button";
 import ThemedConfirm, {
   useDialog as useThemedConfirm,
@@ -31,7 +31,9 @@ const UsersInGroup = ({ group }: Props) => {
   } = useThemedConfirm({
     onConfirm: React.useCallback(
       () =>
-        selectedItems.map(s => s.uuid).forEach(uUuid => removeFromGroup(uUuid)),
+        selectedItems
+          .map((s) => s.uuid)
+          .forEach((uUuid) => removeFromGroup(uUuid)),
       [removeFromGroup, selectedItems],
     ),
     getQuestion: React.useCallback(
@@ -39,7 +41,7 @@ const UsersInGroup = ({ group }: Props) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedItems.map(s => s.name).join(", "),
+      () => selectedItems.map((s) => s.name).join(", "),
       [selectedItems],
     ),
   });
@@ -61,17 +63,16 @@ const UsersInGroup = ({ group }: Props) => {
   return (
     <div>
       <h2>Users in Group {group.name}</h2>
-      <Button text="Add" onClick={showUserPicker} />
+      <Button onClick={showUserPicker}>Add</Button>
       <Button
-        text="Remove Users"
         disabled={selectedItems.length === 0}
         onClick={showDeleteGroupMembershipDialog}
-      />
-      <Button
-        text="View/Edit"
-        disabled={selectedItems.length !== 1}
-        onClick={goToSelectedUser}
-      />
+      >
+        Remove Users
+      </Button>
+      <Button disabled={selectedItems.length !== 1} onClick={goToSelectedUser}>
+        View/Edit
+      </Button>
       <UsersTable {...tableProps} />
       <UserPickerDialog {...userPickerProps} />
       <ThemedConfirm {...deleteGroupMembershipComponentProps} />

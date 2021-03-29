@@ -18,7 +18,7 @@ const reducer = (
   };
 };
 
-const useKeyIsDown = function(
+const useKeyIsDown = function (
   filters: string[] = DEFAULT_FILTERS,
 ): KeyDownState {
   const [keysDown, dispatch] = React.useReducer(

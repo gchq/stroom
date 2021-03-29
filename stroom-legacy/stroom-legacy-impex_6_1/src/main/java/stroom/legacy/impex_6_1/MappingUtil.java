@@ -3,7 +3,9 @@ package stroom.legacy.impex_6_1;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
+import stroom.query.api.v2.ConditionalFormattingRule;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -164,13 +166,37 @@ public final class MappingUtil {
             return null;
         }
 
+        List<Integer> maxResults = null;
+        if (value.getMaxResults() != null) {
+            maxResults = new ArrayList<>();
+            for (int results : value.getMaxResults()) {
+                maxResults.add(results);
+            }
+        }
+
         return new stroom.dashboard.shared.TableComponentSettings(
                 value.getQueryId(),
                 mapList(value.getFields(), MappingUtil::map),
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),
-                value.getMaxResults(),
-                value.getShowDetail());
+                maxResults,
+                value.getShowDetail(),
+                mapList(value.getConditionalFormattingRules(), MappingUtil::map),
+                value.getModelVersion());
+    }
+
+    public static ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new ConditionalFormattingRule(
+                value.getId(),
+                map(value.getExpression()),
+                value.isHide(),
+                value.getBackgroundColor(),
+                value.getTextColor(),
+                value.isEnabled());
     }
 
     public static stroom.dashboard.shared.VisComponentSettings map(stroom.legacy.model_6_1.VisComponentSettings value) {
@@ -201,7 +227,8 @@ public final class MappingUtil {
                 map(value.getColToField()),
                 map(value.getPipeline()),
                 value.isShowAsHtml(),
-                value.isShowStepping());
+                value.isShowStepping(),
+                value.getModelVersion());
     }
 
     public static stroom.query.api.v2.ExpressionItem map(stroom.legacy.model_6_1.ExpressionItem value) {
@@ -223,7 +250,12 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.ExpressionOperator(value.getEnabled(), map(value.getOp()), mapList(value.getChildren(), MappingUtil::map));
+        return stroom.query.api.v2.ExpressionOperator
+                .builder()
+                .enabled(value.getEnabled())
+                .op(map(value.getOp()))
+                .children(mapList(value.getChildren(), MappingUtil::map))
+                .build();
     }
 
     public static stroom.query.api.v2.ExpressionOperator.Op map(stroom.legacy.model_6_1.ExpressionOperator.Op value) {
@@ -239,7 +271,14 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.ExpressionTerm(value.getEnabled(), value.getField(), map(value.getCondition()), value.getValue(), map(value.getDocRef()));
+        return stroom.query.api.v2.ExpressionTerm
+                .builder()
+                .enabled(value.getEnabled())
+                .field(value.getField())
+                .condition(map(value.getCondition()))
+                .value(value.getValue())
+                .docRef(map(value.getDocRef()))
+                .build();
     }
 
     public static stroom.query.api.v2.ExpressionTerm.Condition map(stroom.legacy.model_6_1.ExpressionTerm.Condition value) {
@@ -258,12 +297,12 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.Automate(value.isOpen(), value.isRefresh(), value.getRefreshInterval());
     }
 
-    public static stroom.dashboard.shared.Field map(stroom.legacy.model_6_1.Field value) {
+    public static stroom.query.api.v2.Field map(stroom.legacy.model_6_1.Field value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.dashboard.shared.Field(
+        return new stroom.query.api.v2.Field(
                 value.getId(),
                 value.getName(),
                 value.getExpression(),
@@ -276,74 +315,74 @@ public final class MappingUtil {
                 false);
     }
 
-    public static stroom.dashboard.shared.Sort map(stroom.legacy.model_6_1.Sort value) {
+    public static stroom.query.api.v2.Sort map(stroom.legacy.model_6_1.Sort value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.dashboard.shared.Sort(
+        return new stroom.query.api.v2.Sort(
                 value.getOrder(), map(value.getDirection()));
     }
 
-    public static stroom.dashboard.shared.Sort.SortDirection map(stroom.legacy.model_6_1.Sort.SortDirection value) {
+    public static stroom.query.api.v2.Sort.SortDirection map(stroom.legacy.model_6_1.Sort.SortDirection value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.dashboard.shared.Sort.SortDirection.valueOf(value.name());
+        return stroom.query.api.v2.Sort.SortDirection.valueOf(value.name());
     }
 
-    public static stroom.dashboard.shared.Filter map(stroom.legacy.model_6_1.Filter value) {
+    public static stroom.query.api.v2.Filter map(stroom.legacy.model_6_1.Filter value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.dashboard.shared.Filter(value.getIncludes(), value.getExcludes());
+        return new stroom.query.api.v2.Filter(value.getIncludes(), value.getExcludes());
     }
 
-    public static stroom.dashboard.shared.Format map(stroom.legacy.model_6_1.Format value) {
+    public static stroom.query.api.v2.Format map(stroom.legacy.model_6_1.Format value) {
         if (value == null) {
             return null;
         }
 
-        stroom.dashboard.shared.FormatSettings formatSettings = null;
+        stroom.query.api.v2.FormatSettings formatSettings = null;
         if (stroom.legacy.model_6_1.Format.Type.NUMBER.equals(value.getType())) {
             if (value.getNumberFormat() != null) {
                 final stroom.legacy.model_6_1.NumberFormat numberFormat = value.getNumberFormat();
-                formatSettings = new stroom.dashboard.shared.NumberFormatSettings(numberFormat.getDecimalPlaces(), numberFormat.getUseSeparator());
+                formatSettings = new stroom.query.api.v2.NumberFormatSettings(numberFormat.getDecimalPlaces(), numberFormat.getUseSeparator());
             }
         } else if (stroom.legacy.model_6_1.Format.Type.DATE_TIME.equals(value.getType())) {
             if (value.getDateTimeFormat() != null) {
                 final stroom.legacy.model_6_1.DateTimeFormat dateTimeFormat = value.getDateTimeFormat();
-                formatSettings = new stroom.dashboard.shared.DateTimeFormatSettings(dateTimeFormat.getPattern(), map(dateTimeFormat.getTimeZone()));
+                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(dateTimeFormat.getPattern(), map(dateTimeFormat.getTimeZone()));
             }
         }
 
-        return new stroom.dashboard.shared.Format(map(value.getType()), formatSettings, false);
+        return new stroom.query.api.v2.Format(map(value.getType()), formatSettings, false);
     }
 
-    public static stroom.dashboard.shared.Format.Type map(stroom.legacy.model_6_1.Format.Type value) {
+    public static stroom.query.api.v2.Format.Type map(stroom.legacy.model_6_1.Format.Type value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.dashboard.shared.Format.Type.valueOf(value.name());
+        return stroom.query.api.v2.Format.Type.valueOf(value.name());
     }
 
-    public static stroom.dashboard.shared.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
+    public static stroom.query.api.v2.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.dashboard.shared.TimeZone(map(value.getUse()), value.getId(), value.getOffsetHours(), value.getOffsetMinutes());
+        return new stroom.query.api.v2.TimeZone(map(value.getUse()), value.getId(), value.getOffsetHours(), value.getOffsetMinutes());
     }
 
-    public static stroom.dashboard.shared.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
+    public static stroom.query.api.v2.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.dashboard.shared.TimeZone.Use.valueOf(value.name());
+        return stroom.query.api.v2.TimeZone.Use.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.LayoutConfig map(stroom.legacy.model_6_1.LayoutConfig value) {

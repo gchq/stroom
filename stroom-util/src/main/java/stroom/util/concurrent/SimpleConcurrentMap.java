@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Simple map that minimising locking
  */
 public abstract class SimpleConcurrentMap<K, V> {
+
     private final Map<K, V> map = new ConcurrentHashMap<>();
 
     public V get(final K key) {
@@ -51,5 +52,5 @@ public abstract class SimpleConcurrentMap<K, V> {
         return map.values();
     }
 
-    abstract protected V initialValue(K key);
+    protected abstract V initialValue(K key);
 }

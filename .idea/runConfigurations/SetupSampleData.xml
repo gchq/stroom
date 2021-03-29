@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SetupSampleData" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="stroom.test.SetupSampleData" />
+    <module name="stroom.stroom-app.test" />
+    <option name="PROGRAM_PARAMETERS" value="local.yml" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

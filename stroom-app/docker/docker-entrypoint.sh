@@ -11,10 +11,13 @@ if [ "$(id -u)" = '0' ]; then
     # change ownership of docker volume directories
     # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
     # contain MANY files, resulting in a big delay on container start
+    chown stroom:stroom /stroom/content_pack_import
     chown stroom:stroom /stroom/logs
     chown stroom:stroom /stroom/logs/extra_headers.txt
     chown stroom:stroom /stroom/output
-    chown stroom:stroom /stroom/proxy-repo
+    chown stroom:stroom /stroom/proxy_repo
+    chown stroom:stroom /stroom/reference_data
+    chown stroom:stroom /stroom/search_results
     chown stroom:stroom /stroom/volumes
     
     # This is a bit of a cludge to get round "Text file in use" errors

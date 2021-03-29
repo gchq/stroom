@@ -1,13 +1,14 @@
 package stroom.security.impl;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import stroom.security.impl.session.SessionDetails;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.shared.ResourcePaths;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
     @Override
     public SessionResource getRestResource() {
-        return new SessionResourceImpl(authenticationEventLog, sessionListService, null, null);
+        return new SessionResourceImpl(authenticationEventLog, sessionListService, null);
     }
 
     @Override
@@ -37,18 +38,18 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-            new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-            new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
+                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
 
         when(sessionListService.listSessions(Mockito.anyString()))
-            .thenReturn(expectedResponse);
+                .thenReturn(expectedResponse);
 
 
         final SessionListResponse response = doGetTest(
-            subPath,
-            SessionListResponse.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("nodeName", "node1"));
+                subPath,
+                SessionListResponse.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("nodeName", "node1"));
 
         verify(sessionListService).listSessions(Mockito.anyString());
     }
@@ -59,11 +60,11 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-            new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
-            new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
+                new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
+                new SessionDetails("user1", 123L, 456L, "agent1", "node1")));
 
         when(sessionListService.listSessions())
-            .thenReturn(expectedResponse);
+                .thenReturn(expectedResponse);
 
         final SessionListResponse response = doGetTest(subPath, SessionListResponse.class, expectedResponse);
 

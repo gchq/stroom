@@ -9,7 +9,7 @@ import useApi from "./useApi";
  *
  * @param userUuid The UUID of the user or group
  */
-const useAllAppPermissions = (): string[] => {
+export const useAllAppPermissions = (): string[] => {
   const [allAppPermissions, setAllAppPermissions] = React.useState<string[]>(
     [],
   );
@@ -21,5 +21,3 @@ const useAllAppPermissions = (): string[] => {
 
   return allAppPermissions;
 };
-
-export default useAllAppPermissions;

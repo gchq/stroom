@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import ThemedModal from "components/ThemedModal";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import DialogActionButtons from "components/DialogActionButtons";
 import NewUserForm, { useThisForm } from "./NewUserForm";
 
@@ -30,14 +30,15 @@ const NewUserDialog: React.FunctionComponent<Props> = ({
   }, [onCreateUser, onCloseDialog, name, isGroup]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      header={<h2>Create {isGroup ? "User" : "Group"}</h2>}
-      content={<NewUserForm {...componentProps} />}
-      actions={
-        <DialogActionButtons onCancel={onCloseDialog} onConfirm={onConfirm} />
-      }
-    />
+    <ThemedModal isOpen={isOpen}>
+      <DialogContent
+        header={<h2>Create {isGroup ? "User" : "Group"}</h2>}
+        content={<NewUserForm {...componentProps} />}
+        actions={
+          <DialogActionButtons onCancel={onCloseDialog} onConfirm={onConfirm} />
+        }
+      />
+    </ThemedModal>
   );
 };
 

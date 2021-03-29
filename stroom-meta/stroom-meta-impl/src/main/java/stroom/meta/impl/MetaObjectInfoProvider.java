@@ -17,27 +17,31 @@
 
 package stroom.meta.impl;
 
-import event.logging.BaseObject;
-import event.logging.Object;
-import event.logging.util.EventLoggingUtil;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.meta.shared.Meta;
 
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import event.logging.OtherObject.Builder;
+import event.logging.util.EventLoggingUtil;
+
 class MetaObjectInfoProvider implements ObjectInfoProvider {
+
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final Meta meta = (Meta) obj;
 
-        final Object object = new Object();
-        object.setType("Data");
-        object.setId(String.valueOf(meta.getId()));
+        final Builder<Void> builder = OtherObject.builder()
+                .withType("Data")
+                .withId(String.valueOf(meta.getId()));
+
         if (meta.getFeedName() != null) {
-            EventLoggingUtil.createData("Feed", meta.getFeedName());
+            builder.addData(EventLoggingUtil.createData("Feed", meta.getFeedName()));
         }
         if (meta.getTypeName() != null) {
-            object.getData().add(EventLoggingUtil.createData("Type", meta.getTypeName()));
+            builder.addData(EventLoggingUtil.createData("Type", meta.getTypeName()));
         }
-        return object;
+        return builder.build();
     }
 
     @Override

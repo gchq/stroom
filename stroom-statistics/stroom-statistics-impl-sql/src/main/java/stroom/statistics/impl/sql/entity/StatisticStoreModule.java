@@ -28,6 +28,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class StatisticStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(StatisticStoreStore.class).to(StatisticStoreStoreImpl.class);
@@ -35,7 +36,8 @@ public class StatisticStoreModule extends AbstractModule {
         bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(StatisticsDataSourceCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(StatisticsDataSourceCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(StatisticsDataSourceCacheImpl.class);

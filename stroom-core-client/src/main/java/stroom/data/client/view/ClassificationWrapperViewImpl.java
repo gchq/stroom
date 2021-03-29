@@ -16,20 +16,23 @@
 
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class ClassificationWrapperViewImpl extends ViewImpl implements ClassificationWrapperView {
+
     private final Widget widget;
     @UiField
     ResizeSimplePanel content;
     @UiField(provided = true)
     ClassificationLabel classification;
+
     @Inject
     public ClassificationWrapperViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
@@ -54,5 +57,6 @@ public class ClassificationWrapperViewImpl extends ViewImpl implements Classific
     }
 
     public interface Binder extends UiBinder<Widget, ClassificationWrapperViewImpl> {
+
     }
 }

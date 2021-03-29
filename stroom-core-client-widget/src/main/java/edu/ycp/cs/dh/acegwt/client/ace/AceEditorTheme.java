@@ -65,7 +65,7 @@ public enum AceEditorTheme {
 
     private final String name;
 
-    private AceEditorTheme(String name) {
+    AceEditorTheme(String name) {
         this.name = name;
     }
 

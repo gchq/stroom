@@ -24,14 +24,15 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 
 @Singleton
 class ProcessorFeedCache implements Clearable {
+
     private static final String CACHE_NAME = "Processor Feed Cache";
 
     private final ICache<String, Integer> cache;
@@ -63,16 +64,11 @@ class ProcessorFeedCache implements Clearable {
     }
 
     public Integer getOrCreate(final String name) {
+        if (name == null) {
+            return null;
+        }
         return cache.get(name);
     }
-
-//    @Override
-//    public List<String> list() {
-//        return JooqUtil.contextResult(connectionProvider, context -> context
-//                .select(PROCESSOR_NODE.NAME)
-//                .from(PROCESSOR_NODE)
-//                .fetch(PROCESSOR_NODE.NAME));
-//    }
 
     private Optional<Integer> get(final String name) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
@@ -94,13 +90,6 @@ class ProcessorFeedCache implements Clearable {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    int deleteAll() {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .delete(PROCESSOR_FEED)
-                .execute());
     }
 }

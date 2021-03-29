@@ -17,30 +17,33 @@
 
 package stroom.search.solr.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 
-public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIndexSettingsView, SolrIndexDoc> implements SolrIndexSettingsUiHandlers {
+public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIndexSettingsView, SolrIndexDoc>
+        implements SolrIndexSettingsUiHandlers {
+
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
@@ -74,9 +77,15 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         final SolrIndexDoc index = new SolrIndexDoc();
         onWrite(index);
 
-        final Rest<String> rest = restFactory.create();
+        final Rest<SolrConnectionTestResponse> rest = restFactory.create();
         rest
-                .onSuccess(result -> AlertEvent.fireInfo(this, "Success", result.toString(), null))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                    }
+                })
                 .call(SOLR_INDEX_RESOURCE)
                 .solrConnectionTest(index);
     }
@@ -101,7 +110,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         getView().setCollection(index.getCollection());
 
         if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
+            index.setRetentionExpression(ExpressionOperator.builder().build());
         }
         editExpressionPresenter.init(restFactory, docRef, SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());
@@ -126,7 +135,9 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         index.setRetentionExpression(editExpressionPresenter.write());
     }
 
-    public interface SolrIndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
+    public interface SolrIndexSettingsView
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
+
         String getDescription();
 
         void setDescription(String description);

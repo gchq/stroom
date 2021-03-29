@@ -18,26 +18,28 @@ package stroom.data.shared;
 
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
+import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "data - /v1")
+@Tag(name = "Data")
 @Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,27 +47,37 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("download")
-    @ApiOperation(
-            value = "Download matching data",
-            response = ResourceGeneration.class)
-    ResourceGeneration download(@ApiParam("criteria") FindMetaCriteria criteria);
+    @Operation(
+            summary = "Download matching data",
+            operationId = "downloadData")
+    ResourceGeneration download(@Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
-    @ApiOperation(
-            value = "Upload data",
-            response = ResourceGeneration.class)
-    ResourceKey upload(@ApiParam("request") UploadDataRequest request);
+    @Operation(
+            summary = "Upload data",
+            operationId = "uploadData")
+    ResourceKey upload(@Parameter(description = "request", required = true) UploadDataRequest request);
 
     @GET
-    @Path("/{streamId}")
-    @ApiOperation(
-            value = "Fetch data",
-            response = AbstractFetchDataResult.class)
-    AbstractFetchDataResult fetchData(
-            final @PathParam("streamId") long streamId,
-            final @QueryParam("streamsOffset") Long streamsOffset,
-            final @QueryParam("streamsLength") Long streamsLength,
-            final @QueryParam("pageOffset") Long pageOffset,
-            final @QueryParam("pageSize") Long pageSize);
+    @Path("{id}/info")
+    @Operation(
+            summary = "Find full info about a data item",
+            operationId = "viewDataInfo")
+    List<DataInfoSection> viewInfo(@PathParam("id") long id);
+
+    @POST
+    @Path("fetch")
+    @Operation(
+            summary = "Fetch matching data",
+            operationId = "fetchData")
+    AbstractFetchDataResult fetch(@Parameter(description = "request", required = true) FetchDataRequest request);
+
+    @GET
+    @Path("{id}/parts/{partNo}/child-types")
+    @Operation(
+            summary = "List child types for a stream",
+            operationId = "getChildStreamTypes")
+    Set<String> getChildStreamTypes(@PathParam("id") final long id,
+                                    @PathParam("partNo") final long partNo);
 }

@@ -7,6 +7,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import org.jooq.Condition;
@@ -32,6 +33,7 @@ import static org.jooq.impl.DSL.and;
 import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Condition> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonExpressionMapper.class);
 
     private static final String LIST_DELIMITER = ",";
@@ -43,9 +45,10 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     private final Set<String> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
-    public CommonExpressionMapper(){
+    public CommonExpressionMapper() {
         this.delegateItemHandler = null;
     }
+
     public CommonExpressionMapper(final Function<ExpressionItem, Condition> delegateItemHandler) {
         this.delegateItemHandler = delegateItemHandler;
     }
@@ -81,10 +84,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (termHandler != null) {
                     result = termHandler.apply(term);
 
-                } else if (delegateItemHandler != null){
+                } else if (delegateItemHandler != null) {
                     result = delegateItemHandler.apply(term);
-                }
-                else if (!ignoredFields.contains(term.getField())) {
+                } else if (!ignoredFields.contains(term.getField())) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 
@@ -105,12 +107,15 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                             break;
                         case NOT:
                             result = buildNotConditions(simplifyConditions, children);
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown operator " + operator.op());
                     }
                 }
 
                 // AND {}, OR {}, equal true, so don't need to do anything with them
                 if (result == null) {
-                    if (ExpressionOperator.Op.NOT.equals(operator.op())) {
+                    if (Op.NOT.equals(operator.op())) {
                         result = DSL.falseCondition();
                     } else {
                         result = DSL.trueCondition();
@@ -214,6 +219,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     }
 
     public static final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
+
         private final AbstractField dataSourceField;
         private final Field<T> field;
         private final ExpressionMapper.MultiConverter<T> converter;

@@ -9,7 +9,7 @@ public interface KafkaProducerFactory {
      * {@link org.apache.kafka.clients.producer.KafkaProducer} will be wrapped in a
      * {@link SharedKafkaProducer}. If no config can be found an empty {@link SharedKafkaProducer}
      * will be returned.
-     *
+     * <p>
      * The {@link SharedKafkaProducer} should either be used with a try-with-resources block
      * or  {@link KafkaProducerFactory#returnSharedKafkaProducer} should be called when it is finished with.
      */

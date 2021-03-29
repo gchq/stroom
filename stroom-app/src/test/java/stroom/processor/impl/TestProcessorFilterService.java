@@ -25,11 +25,11 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -39,40 +39,40 @@ import stroom.util.shared.ResultPage;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorFilterService extends AbstractCoreIntegrationTest {
+
     @Inject
     private ProcessorService processorService;
     @Inject
     private ProcessorFilterService processorFilterService;
 
-    @Override
-    protected void onBefore() {
-        super.onBefore();
-        deleteAll();
-    }
-
-    @Override
-    protected void onAfter() {
-        super.onAfter();
-        deleteAll();
-    }
-
-    private void deleteAll() {
-        final List<ProcessorFilter> filters = processorFilterService
-                .find(new ExpressionCriteria()).getValues();
-        for (final ProcessorFilter filter : filters) {
-            processorFilterService.delete(filter.getId());
-        }
-
-        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
-        for (final Processor processor : streamProcessors) {
-            processorService.delete(processor.getId());
-        }
-    }
+//    @Override
+//    protected void onBefore() {
+//        super.onBefore();
+//        deleteAll();
+//    }
+//
+//    @Override
+//    protected void onAfter() {
+//        super.onAfter();
+//        deleteAll();
+//    }
+//
+//    private void deleteAll() {
+//        final List<ProcessorFilter> filters = processorFilterService
+//                .find(new ExpressionCriteria()).getValues();
+//        for (final ProcessorFilter filter : filters) {
+//            processorFilterService.delete(filter.getId());
+//        }
+//
+//        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
+//        for (final Processor processor : streamProcessors) {
+//            processorService.delete(processor.getId());
+//        }
+//    }
 
     @Test
     void testBasic() {
@@ -87,14 +87,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
-        final ExpressionOperator expression1 = new ExpressionOperator.Builder()
+        final ExpressionOperator expression1 = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
                 .build();
         findProcessorFilterCriteria.setExpression(expression1);
         //PriorityRange(new Range<>(10, null));
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
-        final ExpressionOperator expression2 = new ExpressionOperator.Builder()
+        final ExpressionOperator expression2 = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .build();
         findProcessorFilterCriteria.setExpression(expression2);
@@ -109,16 +109,21 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-        final QueryData findStreamQueryData = new QueryData.Builder()
+        final QueryData findStreamQueryData = QueryData
+                .builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(MetaFields.TYPE_NAME,
+                                        ExpressionTerm.Condition.EQUALS,
+                                        StreamTypeNames.RAW_EVENTS)
+                                .addTerm(MetaFields.TYPE_NAME,
+                                        ExpressionTerm.Condition.EQUALS,
+                                        StreamTypeNames.RAW_REFERENCE)
                                 .build())
                         .build())
                 .build();
@@ -209,7 +214,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     @Test
     void testApplyAllCriteria() {
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
                 .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)

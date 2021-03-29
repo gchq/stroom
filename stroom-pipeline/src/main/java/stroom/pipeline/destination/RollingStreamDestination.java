@@ -78,17 +78,19 @@ public class RollingStreamDestination extends RollingDestination {
 
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
+        // Clear interrupted flag if set.
+        final boolean interrupted = Thread.interrupted();
         try {
-    //        // Write meta data to stream target.
-    //        final AttributeMap attributeMap = new AttributeMap();
-    //        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
-
-            // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-    //        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
             streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), recordCount.toString());
             streamTarget.close();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
+
+        } finally {
+            // Keep interrupting if we previously cleared the flag.
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

@@ -1,0 +1,26 @@
+openapi: 3.0.1
+
+info:
+  version: 'v1/v2'
+  title: Stroom API
+  description: 'Various APIs for interacting with Stroom and its data'
+  contact:
+    name: stroom
+    url: 'https://github.com/gchq/stroom'
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: /api
+
+components:
+  securitySchemes:
+    ApiKeyAuth: # arbitrary name for the security scheme
+      type: apiKey
+      in: header
+      name: "Authorization" # name of the header
+
+# Apply the API key globally to all operations
+security:
+  - ApiKeyAuth: [] # use the same name as under securitySchemes

@@ -1,15 +1,20 @@
 package stroom.search.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class SearchConfig extends AbstractConfig {
+
     /**
      * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -23,8 +28,19 @@ public class SearchConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
     private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
+    private LmdbConfig lmdbConfig = new LmdbConfig();
 
-    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
+    private CacheConfig resultStoreCache = CacheConfig.builder()
+            .maximumSize(100L)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
+            .build();
+    private CacheConfig remoteSearchResultCache = CacheConfig.builder()
+            .maximumSize(100L)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
+            .build();
+
+    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
@@ -67,6 +83,32 @@ public class SearchConfig extends AbstractConfig {
 
     public void setShardConfig(final IndexShardSearchConfig shardConfig) {
         this.shardConfig = shardConfig;
+    }
+
+    public CacheConfig getResultStoreCache() {
+        return resultStoreCache;
+    }
+
+    public void setResultStoreCache(final CacheConfig resultStoreCache) {
+        this.resultStoreCache = resultStoreCache;
+    }
+
+    @JsonProperty("remoteSearchResultCache")
+    public CacheConfig getRemoteSearchResultCache() {
+        return remoteSearchResultCache;
+    }
+
+    public void setRemoteSearchResultCache(final CacheConfig remoteSearchResultCache) {
+        this.remoteSearchResultCache = remoteSearchResultCache;
+    }
+
+    @JsonProperty("lmdb")
+    public LmdbConfig getLmdbConfig() {
+        return lmdbConfig;
+    }
+
+    public void setLmdbConfig(final LmdbConfig lmdbConfig) {
+        this.lmdbConfig = lmdbConfig;
     }
 
     @Override

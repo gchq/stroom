@@ -2,10 +2,8 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExtractionTaskProducer.ExtractionRunnable;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskExecutor;
@@ -14,12 +12,11 @@ import stroom.task.api.TaskProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import javax.inject.Provider;
 
 class AlertExtractionSingleTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(AlertExtractionSingleTaskProducer.class);
@@ -33,7 +30,7 @@ class AlertExtractionSingleTaskProducer extends TaskProducer {
     AlertExtractionSingleTaskProducer(final long streamId,
                                       final long[] sortedEventIds,
                                       final DocRef extractionPipeline,
-                                      final Receiver receiver,
+                                      final ExtractionReceiver receiver,
                                       final List<AlertDefinition> alertDefinitions,
                                       final Map<String, String> params,
                                       final TaskExecutor taskExecutor,
@@ -46,7 +43,7 @@ class AlertExtractionSingleTaskProducer extends TaskProducer {
         task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, receiver, alertDefinitions, params);
     }
 
-    Receiver process (){
+    Receiver process() {
         // Attach to the supplied executor.
         attach();
 
@@ -60,12 +57,17 @@ class AlertExtractionSingleTaskProducer extends TaskProducer {
     protected synchronized Consumer<TaskContext> getNext() {
         if (taskSupplied.get() == false) {
             LOGGER.trace("Supplying task for stream " + task.getStreamId());
-            incrementTasksTotal();
+//            incrementTasksTotal();
             taskSupplied.set(true);
-            finishedAddingTasks();
+//            finishedAddingTasks();
             return new ExtractionRunnable(task, handlerProvider);
         }
         return null;
+    }
+
+    @Override
+    protected boolean isComplete() {
+        return taskSupplied.get();
     }
 
     @Override
@@ -74,23 +76,23 @@ class AlertExtractionSingleTaskProducer extends TaskProducer {
         super.attach();
     }
 
-    @Override
-    protected void incrementTasksCompleted() {
-        LOGGER.trace("Marking task is complete for stream " + task.getStreamId());
-        super.incrementTasksCompleted();
-    }
-
-    @Override
-    public int compareTo(final TaskProducer o) {
-        if (! (o instanceof AlertExtractionSingleTaskProducer)){
-            return super.compareTo(o);
-        }
-        AlertExtractionSingleTaskProducer other = (AlertExtractionSingleTaskProducer) o;
-        int timeBased = super.compareTo(other);
-        if (timeBased != 0){
-            return timeBased;
-        } else {
-            return hashCode() - other.hashCode();
-        }
-    }
+//    @Override
+//    protected void incrementTasksCompleted() {
+//        LOGGER.trace("Marking task is complete for stream " + task.getStreamId());
+//        super.incrementTasksCompleted();
+//    }
+//
+//    @Override
+//    public int compareTo(final TaskProducer o) {
+//        if (! (o instanceof AlertExtractionSingleTaskProducer)){
+//            return super.compareTo(o);
+//        }
+//        AlertExtractionSingleTaskProducer other = (AlertExtractionSingleTaskProducer) o;
+//        int timeBased = super.compareTo(other);
+//        if (timeBased != 0){
+//            return timeBased;
+//        } else {
+//            return hashCode() - other.hashCode();
+//        }
+//    }
 }

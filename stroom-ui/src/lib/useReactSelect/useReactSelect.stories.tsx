@@ -1,7 +1,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import Select from "react-select";
-import useReactSelect from "./useReactSelect";
+import { useReactSelect } from "./useReactSelect";
 import JsonDebug from "testing/JsonDebug";
 
 const OPTIONS: string[] = ["Dog", "Cat", "Rat", "Snake", "Badger", "Lion"];

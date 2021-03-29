@@ -21,9 +21,9 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the meta_val table
 --
 CREATE TABLE IF NOT EXISTS `meta_retention_tracker` (
-    `last_run_time`            bigint(20)   NOT NULL,
+    `last_run_time`            bigint   NOT NULL,
     `retention_rules_version`  varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -17,16 +17,17 @@
 package stroom.pipeline.shared;
 
 
+import stroom.util.shared.Count;
+import stroom.util.shared.OffsetRange;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
 
-import java.util.List;
+import java.util.Set;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -38,36 +39,47 @@ import java.util.List;
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractFetchDataResult {
+
+    @JsonProperty
+    private final String feedName;
     @JsonProperty
     private final String streamTypeName;
     @JsonProperty
     private final String classification;
     @JsonProperty
-    private final OffsetRange<Long> streamRange;
+    private final SourceLocation sourceLocation;
     @JsonProperty
-    private final RowCount<Long> streamRowCount;
+    private final OffsetRange itemRange; // part/segment/marker
     @JsonProperty
-    private final OffsetRange<Long> pageRange;
+    private final Count<Long> totalItemCount; // part/segment/marker
     @JsonProperty
-    private final RowCount<Long> pageRowCount;
+    private final Count<Long> totalCharacterCount; // Total chars in part/segment
     @JsonProperty
-    private final List<String> availableChildStreamTypes;
+    private final Set<String> availableChildStreamTypes;
 
     @JsonCreator
-    public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
-                                   @JsonProperty("classification") final String classification,
-                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
-                                   @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
+    public AbstractFetchDataResult(
+            @JsonProperty("feedName") final String feedName,
+            @JsonProperty("streamTypeName") final String streamTypeName,
+            @JsonProperty("classification") final String classification,
+            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+            @JsonProperty("itemRange") final OffsetRange itemRange,
+            @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+            @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
+            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+
+        this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.classification = classification;
-        this.streamRange = streamRange;
-        this.streamRowCount = streamRowCount;
-        this.pageRange = pageRange;
-        this.pageRowCount = pageRowCount;
+        this.sourceLocation = sourceLocation;
+        this.itemRange = itemRange;
+        this.totalItemCount = totalItemCount;
+        this.totalCharacterCount = totalCharacterCount;
         this.availableChildStreamTypes = availableChildStreamTypes;
+    }
+
+    public String getFeedName() {
+        return feedName;
     }
 
     public String getStreamTypeName() {
@@ -78,23 +90,23 @@ public abstract class AbstractFetchDataResult {
         return classification;
     }
 
-    public OffsetRange<Long> getStreamRange() {
-        return streamRange;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
-    public RowCount<Long> getStreamRowCount() {
-        return streamRowCount;
+    public OffsetRange getItemRange() {
+        return itemRange;
     }
 
-    public OffsetRange<Long> getPageRange() {
-        return pageRange;
+    public Count<Long> getTotalItemCount() {
+        return totalItemCount;
     }
 
-    public RowCount<Long> getPageRowCount() {
-        return pageRowCount;
+    public Count<Long> getTotalCharacterCount() {
+        return totalCharacterCount;
     }
 
-    public List<String> getAvailableChildStreamTypes() {
+    public Set<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
     }
 }

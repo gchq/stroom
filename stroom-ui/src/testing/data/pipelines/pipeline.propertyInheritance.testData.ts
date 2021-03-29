@@ -1,8 +1,8 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 
 export const noParent = {
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "No Parent",
   type: "Pipeline",
   description: "Demonstrates properties with no parent pipeline",

@@ -16,14 +16,6 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-
 import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
 import stroom.docref.DocRef;
@@ -48,8 +40,16 @@ import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import java.util.Optional;
+import javax.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
@@ -57,6 +57,7 @@ import java.util.Optional;
 @ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 class IndexingFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);
 
     private static final String RECORD = "record";
@@ -285,11 +286,13 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    private void checkAlerts (){
+    private void checkAlerts() {
         try {
             if (alertProcessor == null) {
                 final Optional<AlertProcessor> processor =
-                        alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                        alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE,
+                                indexShardKey.getIndexUuid()));
+
                 if (processor.isPresent()) {
                     alertProcessor = processor.get();
                 }
@@ -307,15 +310,20 @@ class IndexingFilter extends AbstractXMLFilter {
 
     //For debug purposes, todo remove at some point
     private int numberOfEndProcessingCalls = 0;
+
     @Override
     public void endProcessing() {
         if (alertProcessor != null) {
             alertProcessor.createAlerts();
         }
+
         super.endProcessing();
+
         numberOfEndProcessingCalls++;
+
         if (numberOfEndProcessingCalls > 1) {
-            LOGGER.warn("Indexing filter in " + indexRef.getName() + " finish processing number " + numberOfEndProcessingCalls);
+            LOGGER.warn("Indexing filter in " + indexRef.getName() +
+                    " finish processing number " + numberOfEndProcessingCalls);
         }
     }
 

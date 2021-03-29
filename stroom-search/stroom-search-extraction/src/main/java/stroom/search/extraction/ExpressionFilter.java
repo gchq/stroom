@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class ExpressionFilter extends ExpressionCopier {
+
     private final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions;
 
     private ExpressionFilter(final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions) {
@@ -31,8 +32,24 @@ public class ExpressionFilter extends ExpressionCopier {
         return null;
     }
 
-    public static class Builder {
-        private final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions = new ArrayList<>();
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        private Builder(final ExpressionFilter expressionFilter) {
+            functions = new ArrayList<>(expressionFilter.functions);
+        }
 
         public Builder addPrefixIncludeFilter(final String fieldPrefix) {
             final Function<ExpressionTerm.Builder, ExpressionTerm.Builder> function = builder -> {

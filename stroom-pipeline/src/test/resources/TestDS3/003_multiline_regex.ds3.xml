@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- maxBuffer needs setting as some records are very long -->
+<dataSplitter
+    bufferSize="5000000"
+    xmlns="data-splitter:3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+    version="3.0">
+
+  <split delimiter="\n----\n">
+    <group value="$1">
+      <split delimiter="\n">
+        <group>
+          <regex pattern="^(\s*node=)?([^ ]+) type=([^ ]+) msg=audit\(([^\)]+)(\) :)?(.+)">
+            <data name="type" value="$3">
+              <data name="type" value="$3" />
+              <data name="node" value="$2" />
+              <group value="$4">
+                <regex pattern="^(.+):(.+)">
+                  <data name="eventTime" value="$1" />
+                  <data name="eventId" value="$2" />
+                </regex>
+              </group>
+              <group value="$6" ignoreErrors="true">
+                <regex pattern="argc=(.+) a0=([^\s]+) (.+)">
+                  <data name="argc" value="$1" />
+                  <data name="a0" value="$2" />
+                  <data name="a1" value="$3" />
+                </regex>
+                <regex pattern="\(?([^= ]+)=([^ \(]+(\([^\)]+\))?|\([^\)]+\))">
+                  <data name="$1" value="$2" />
+                </regex>
+              </group>
+            </data>
+          </regex>
+          <!-- Include this just to discard the initial record delimiter -->
+          <regex pattern="^----\n"/>
+        </group>
+      </split>
+    </group>
+  </split>
+</dataSplitter>

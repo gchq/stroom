@@ -17,12 +17,14 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUniqueInt extends StroomUnitTest {
+
     @Test
     void test() {
         final UniqueInt uniqueInt = new UniqueInt();

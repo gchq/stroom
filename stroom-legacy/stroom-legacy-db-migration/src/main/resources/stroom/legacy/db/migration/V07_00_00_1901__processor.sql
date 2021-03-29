@@ -19,21 +19,21 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `create_time_ms` bigint(20) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `version` int NOT NULL,
+  `create_time_ms` bigint NOT NULL,
   `create_user` varchar(255) NOT NULL,
-  `update_time_ms` bigint(20) NOT NULL,
+  `update_time_ms` bigint NOT NULL,
   `update_user` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `task_type` varchar(255) DEFAULT NULL,
   `pipeline_uuid` varchar(255) NOT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `enabled` tinyint NOT NULL DEFAULT '0',
+  `deleted` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `processor_uuid` (`uuid`),
   UNIQUE KEY `processor_pipeline_uuid` (`pipeline_uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS copy_processor;
 DELIMITER //
@@ -43,7 +43,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_PROC') THEN
 
         RENAME TABLE STRM_PROC TO OLD_STRM_PROC;
     END IF;
@@ -52,7 +53,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'PIPE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'PIPE') THEN
 
         RENAME TABLE PIPE TO OLD_PIPE;
     END IF;
@@ -61,7 +63,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_PROC') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --

@@ -16,39 +16,63 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.editor.client.event.HasFormatHandlers;
+import stroom.editor.client.view.IndicatorLines;
+import stroom.util.shared.TextRange;
+import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
+
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-import stroom.editor.client.event.HasFormatHandlers;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
-import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
 import java.util.List;
+import java.util.function.Function;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
-        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String> {
-    void setText(String text);
+        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String>, RequiresResize {
+
+    String getEditorId();
+
+    void focus();
+
+    void setText(final String text);
+
+    void setText(final String text, final boolean format);
+
+    void insertTextAtCursor(final String text);
+
+    void replaceSelectedText(final String text);
+
+    void insertSnippet(final String snippet);
 
     void setFirstLineNumber(int firstLineNumber);
 
-    void setIndicators(IndicatorLines indicators);
+    void setIndicators(final IndicatorLines indicators);
 
-    void setHighlights(List<Highlight> highlights);
+    void setHighlights(final List<TextRange> highlights);
 
-    void setReadOnly(boolean readOnly);
+    /**
+     * If the text is being formatted by this view then you can provide a function to generate
+     * highlights on the formatted text as the line/col positions in the formatted text may
+     * differ to those in the original input. Should be called before setText is called.
+     *
+     * @param highlightsFunction A function to return a list of highlight ranges from the formatted text.
+     */
+    void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction);
 
-    void setMode(AceEditorMode mode);
+    void setReadOnly(final boolean readOnly);
 
-    void setTheme(AceEditorTheme theme);
+    void setMode(final AceEditorMode mode);
 
-    void format();
+    void setTheme(final AceEditorTheme theme);
+
+    Action getFormatAction();
 
     Option getStylesOption();
 
@@ -57,6 +81,18 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getIndicatorsOption();
 
     Option getLineWrapOption();
+
+    Option getShowInvisiblesOption();
+
+    Option getUseVimBindingsOption();
+
+    Option getBasicAutoCompletionOption();
+
+    Option getSnippetsOption();
+
+    Option getLiveAutoCompletionOption();
+
+    Option getHighlightActiveLineOption();
 
     void showFilterButton(boolean show);
 

@@ -1,6 +1,0 @@
-ext.moduleName = 'stroom.authentication.api'
-
-dependencies {
-    compile libs.jose4j
-    compile libs.ws_rs_api
-}

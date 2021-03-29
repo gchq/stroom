@@ -9,65 +9,58 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Param;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "queryInfo"})
+@JsonPropertyOrder({
+        "dataSourceRef",
+        "expression",
+        "componentSettingsMap",
+        "params",
+        "incremental",
+        "storeHistory",
+        "queryInfo"})
 @JsonInclude(Include.NON_NULL)
-public class Search implements Serializable {
-    private static final long serialVersionUID = 9055582579670841979L;
+public class Search {
 
-    @XmlElement
     @JsonProperty
-    private DocRef dataSourceRef;
-    @XmlElement
+    private final DocRef dataSourceRef;
     @JsonProperty
-    private ExpressionOperator expression;
-    @XmlElement
+    private final ExpressionOperator expression;
     @JsonProperty
-    private Map<String, ComponentSettings> componentSettingsMap;
-    @XmlElement
+    private final Map<String, ComponentSettings> componentSettingsMap;
     @JsonProperty
-    private Map<String, String> paramMap;
-    @XmlElement
+    private final List<Param> params;
     @JsonProperty
-    private boolean incremental;
-    @XmlElement
+    private final boolean incremental;
     @JsonProperty
-    private boolean storeHistory;
-    @XmlElement
+    private final boolean storeHistory;
     @JsonProperty
-    private String queryInfo;
-
-    public Search() {
-        paramMap = Collections.emptyMap();
-    }
+    private final String queryInfo;
 
     @JsonCreator
     public Search(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                   @JsonProperty("expression") final ExpressionOperator expression,
                   @JsonProperty("componentSettingsMap") final Map<String, ComponentSettings> componentSettingsMap,
-                  @JsonProperty("paramMap") final Map<String, String> paramMap,
+                  @JsonProperty("params") final List<Param> params,
                   @JsonProperty("incremental") final boolean incremental,
                   @JsonProperty("storeHistory") final boolean storeHistory,
                   @JsonProperty("queryInfo") final String queryInfo) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
-        this.paramMap = paramMap;
+        this.params = params;
         this.incremental = incremental;
         this.storeHistory = storeHistory;
         this.queryInfo = queryInfo;
@@ -85,12 +78,8 @@ public class Search implements Serializable {
         return componentSettingsMap;
     }
 
-    public Map<String, String> getParamMap() {
-        return paramMap;
-    }
-
-    public void setParamMap(final Map<String, String> paramMap) {
-        this.paramMap = paramMap;
+    public List<Param> getParams() {
+        return params;
     }
 
     public boolean isIncremental() {
@@ -105,78 +94,125 @@ public class Search implements Serializable {
         return queryInfo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Search search = (Search) o;
-
-        if (incremental != search.incremental) return false;
-        if (storeHistory != search.storeHistory) return false;
-        if (dataSourceRef != null ? !dataSourceRef.equals(search.dataSourceRef) : search.dataSourceRef != null)
-            return false;
-        if (expression != null ? !expression.equals(search.expression) : search.expression != null) return false;
-        if (componentSettingsMap != null ? !componentSettingsMap.equals(search.componentSettingsMap) : search.componentSettingsMap != null)
-            return false;
-        return paramMap != null ? paramMap.equals(search.paramMap) : search.paramMap == null;
+        return incremental == search.incremental &&
+                storeHistory == search.storeHistory &&
+                Objects.equals(dataSourceRef, search.dataSourceRef) &&
+                Objects.equals(expression, search.expression) &&
+                Objects.equals(componentSettingsMap, search.componentSettingsMap) &&
+                Objects.equals(params, search.params) &&
+                Objects.equals(queryInfo, search.queryInfo);
     }
 
     @Override
     public int hashCode() {
-        int result = dataSourceRef != null ? dataSourceRef.hashCode() : 0;
-        result = 31 * result + (expression != null ? expression.hashCode() : 0);
-        result = 31 * result + (componentSettingsMap != null ? componentSettingsMap.hashCode() : 0);
-        result = 31 * result + (paramMap != null ? paramMap.hashCode() : 0);
-        result = 31 * result + (incremental ? 1 : 0);
-        result = 31 * result + (storeHistory ? 1 : 0);
-        return result;
+        return Objects.hash(
+                dataSourceRef,
+                expression,
+                componentSettingsMap,
+                params,
+                incremental,
+                storeHistory,
+                queryInfo);
     }
 
-    public static class Builder {
-        private final Search instance;
+    @Override
+    public String toString() {
+        return "Search{" +
+                "dataSourceRef=" + dataSourceRef +
+                ", expression=" + expression +
+                ", componentSettingsMap=" + componentSettingsMap +
+                ", params=" + params +
+                ", incremental=" + incremental +
+                ", storeHistory=" + storeHistory +
+                ", queryInfo='" + queryInfo + '\'' +
+                '}';
+    }
 
-        public Builder() {
-            this.instance = new Search();
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private DocRef dataSourceRef;
+        private ExpressionOperator expression;
+        private Map<String, ComponentSettings> componentSettingsMap;
+        private List<Param> params;
+        private boolean incremental;
+        private boolean storeHistory;
+        private String queryInfo;
+
+        private Builder() {
+        }
+
+        private Builder(final Search search) {
+            this.dataSourceRef = search.dataSourceRef;
+            this.expression = search.expression;
+            this.componentSettingsMap = search.componentSettingsMap;
+            this.params = search.params;
+            this.incremental = search.incremental;
+            this.storeHistory = search.storeHistory;
+            this.queryInfo = search.queryInfo;
         }
 
         public Builder dataSourceRef(final DocRef dataSourceRef) {
-            this.instance.dataSourceRef = dataSourceRef;
+            this.dataSourceRef = dataSourceRef;
             return this;
         }
 
         public Builder expression(final ExpressionOperator expression) {
-            this.instance.expression = expression;
+            this.expression = expression;
             return this;
         }
 
         public Builder componentSettingsMap(final Map<String, ComponentSettings> componentSettingsMap) {
-            this.instance.componentSettingsMap = componentSettingsMap;
+            this.componentSettingsMap = componentSettingsMap;
             return this;
         }
 
-        public Builder paramMap(final Map<String, String> paramMap) {
-            this.instance.paramMap = paramMap;
+        public Builder params(final List<Param> params) {
+            this.params = params;
             return this;
         }
 
         public Builder incremental(final boolean incremental) {
-            this.instance.incremental = incremental;
+            this.incremental = incremental;
             return this;
         }
 
         public Builder storeHistory(final boolean storeHistory) {
-            this.instance.storeHistory = storeHistory;
+            this.storeHistory = storeHistory;
             return this;
         }
 
         public Builder queryInfo(final String queryInfo) {
-            this.instance.queryInfo = queryInfo;
+            this.queryInfo = queryInfo;
             return this;
         }
 
         public Search build() {
-            return this.instance;
+            return new Search(
+                    dataSourceRef,
+                    expression,
+                    componentSettingsMap,
+                    params,
+                    incremental,
+                    storeHistory,
+                    queryInfo);
         }
     }
 }

@@ -15,9 +15,10 @@ interface Props {
   userUuid: string;
 }
 
-export const DocumentPermissionForUserEditor: React.FunctionComponent<
-  Props
-> = ({ docRefUuid, userUuid }) => {
+export const DocumentPermissionForUserEditor: React.FunctionComponent<Props> = ({
+  docRefUuid,
+  userUuid,
+}) => {
   const { history } = useRouter();
   const { findDocRefWithLineage } = useDocumentTree();
 
@@ -33,10 +34,10 @@ export const DocumentPermissionForUserEditor: React.FunctionComponent<
 
   return (
     <div>
-      <h2>{`Document Permissions for Doc ${docRef.type}-${
-        docRef.name
-      }, user ${user && user.name}`}</h2>
-      <Button text="Back" onClick={history.goBack} />
+      <h2>{`Document Permissions for Doc ${docRef.type}-${docRef.name}, user ${
+        user && user.name
+      }`}</h2>
+      <Button onClick={history.goBack}>Back</Button>
 
       <CheckboxSeries
         allValues={permissionsForType}

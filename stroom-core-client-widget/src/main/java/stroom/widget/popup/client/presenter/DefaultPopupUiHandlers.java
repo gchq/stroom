@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.presenter;
 
 public class DefaultPopupUiHandlers implements PopupUiHandlers {
+
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         // Do nothing by default.

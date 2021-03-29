@@ -28,11 +28,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVersionSortComparator {
+
     @Test
     void testSplit() {
-        Assertions.assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1"))).isEqualTo(Arrays.asList("app", "3", "1", "1"));
+        Assertions.assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1"))).isEqualTo(Arrays.asList("app",
+                "3",
+                "1",
+                "1"));
 
-        assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1-abc"))).isEqualTo(Arrays.asList("app", "3", "1", "1", "abc"));
+        assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1-abc"))).isEqualTo(Arrays.asList("app",
+                "3",
+                "1",
+                "1",
+                "abc"));
     }
 
     @Test

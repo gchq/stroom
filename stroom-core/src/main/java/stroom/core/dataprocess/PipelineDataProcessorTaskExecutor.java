@@ -82,7 +82,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -91,14 +90,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
+    private static final String SUPERCEDED = "Superceded:";
     private static final int PREVIEW_SIZE = 100;
     private static final int MIN_STREAM_SIZE = 1;
-    private static final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern XML_DECL_PATTERN = Pattern.compile(
+            "<\\?\\s*xml[^>]*>",
+            Pattern.CASE_INSENSITIVE);
 
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
@@ -189,20 +193,23 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
-        // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
+        // Initialise the helper class that will ensure we only keep the latest output for this stream source and
+        // processor.
         final Meta meta = streamSource.getMeta();
         supersededOutputHelper.init(meta, processor, processorTask, startTime);
 
         // Setup the process info writer.
-        try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore,
-                metaData,
-                meta,
-                processor,
-                processorFilter,
-                processorTask,
-                recordCount,
-                errorReceiverProxy,
-                supersededOutputHelper)) {
+        try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
+                new ProcessInfoOutputStreamProvider(
+                        streamStore,
+                        metaData,
+                        meta,
+                        processor,
+                        processorFilter,
+                        processorTask,
+                        recordCount,
+                        errorReceiverProxy,
+                        supersededOutputHelper)) {
 
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
@@ -213,6 +220,11 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             } catch (final Exception e) {
                 outputError(e);
+            } finally {
+                // Ensure we are no longer interrupting if necessary.
+                if (Thread.interrupted()) {
+                    LOGGER.debug("Cleared interrupt flag");
+                }
             }
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
@@ -242,7 +254,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             metaData.put("Source Stream", String.valueOf(meta.getId()));
 
             // Set the search id to be the id of the stream processor filter.
-            // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
+            // Only do this where the task has specific data ranges that need extracting as this is only the case
+            // with a batch search.
             if (processorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
@@ -255,7 +268,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
             // Set the pipeline so it can be used by a filter if needed.
-            pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+            pipelineDoc = pipelineStore.readDocument(
+                    new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
 
             // Create some processing info.
@@ -284,12 +298,21 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             processNestedStreams(pipeline, meta, streamSource);
 
-            // Create processing finished message.
-            final String finishedInfo = "" +
-                    FINISHED +
-                    info +
-                    ", finished in " +
-                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            final String finishedInfo;
+            //Calling isSuperceded() now always ensures that it is called, even in cases when there is no output.
+            if (supersededOutputHelper.isSuperseded()) {
+                finishedInfo =
+                        SUPERCEDED +
+                                info +
+                                ", finished in " +
+                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            } else {
+                finishedInfo =
+                        FINISHED +
+                                info +
+                                ", finished in  " +
+                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            }
 
             // Log that we have finished processing.
             taskContext.info(() -> finishedInfo);
@@ -386,7 +409,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(meta.getFeedName(), meta.getTypeName());
+                    final String encoding = feedProperties.getEncoding(
+                            meta.getFeedName(), meta.getTypeName(), null);
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.
@@ -501,6 +525,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
             implements DestinationProvider, Destination, AutoCloseable {
+
         private final Store streamStore;
         private final MetaData metaData;
         private final Meta meta;
@@ -569,7 +594,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
                 // Create a processing info stream to write all processing
                 // information to.
-                final MetaProperties dataProperties = new MetaProperties.Builder()
+                final MetaProperties dataProperties = MetaProperties.builder()
                         .feedName(meta.getFeedName())
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)
@@ -577,7 +602,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .pipelineUuid(pipelineUuid)
                         .build();
 
-                processInfoStreamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(dataProperties));
+                processInfoStreamTarget = supersededOutputHelper.addTarget(() ->
+                        streamStore.openTarget(dataProperties));
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
@@ -595,7 +621,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 try {
                                     // Write statistics meta data.
                                     // Get current process statistics
-                                    final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+                                    final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(
+                                            recordCount, errorReceiverProxy);
                                     processStatistics.write(processInfoStreamTarget.getAttributes());
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
@@ -609,8 +636,10 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                         processInfoStreamTarget.close();
                                     }
 //                                } catch (final OptimisticLockException e) {
-//                                    // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-//                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+//                                    // This exception will be thrown is the stream target has already been deleted
+//                                    by another thread if it was superseded.
+//                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target
+//                                    (see trace for details)");
 //                                    LOGGER.trace(e.getMessage(), e);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);

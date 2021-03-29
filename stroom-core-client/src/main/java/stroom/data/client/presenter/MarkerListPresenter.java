@@ -16,17 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.DataGridView;
@@ -43,13 +32,26 @@ import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
-    private static HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
+
+    private static final HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
@@ -100,16 +102,16 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
             public SvgPreset getValue(final Marker marker) {
                 switch (marker.getSeverity()) {
                     case FATAL_ERROR:
-                        return SvgPresets.FATAL;
+                        return SvgPresets.FATAL.title("Fatal Error");
                     case ERROR:
                         return SvgPresets.ERROR;
                     case WARNING:
-                        return SvgPresets.ALERT;
+                        return SvgPresets.ALERT.title("Warning");
                     case INFO:
                         return SvgPresets.INFO;
+                    default:
+                        return null;
                 }
-
-                return SvgPresets.ALERT;
             }
         }, "", ColumnSizeConstants.ICON_COL);
     }

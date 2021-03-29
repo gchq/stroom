@@ -17,4 +17,5 @@
 package stroom.widget.popup.client.gin;
 
 public interface PopupGinjector {
+
 }

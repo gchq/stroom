@@ -18,23 +18,24 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 
 import java.util.List;
 import java.util.Map;
 
 class ExtractionTask {
+
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;
-    private final Receiver receiver;
+    private final ExtractionReceiver receiver;
     private final List<AlertDefinition> alertDefinitions;
     private final Map<String, String> paramMapForAlerting;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final Receiver receiver) {
+                   final ExtractionReceiver receiver) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
@@ -46,7 +47,7 @@ class ExtractionTask {
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final Receiver receiver,
+                   final ExtractionReceiver receiver,
                    final List<AlertDefinition> alertTableSettings,
                    final Map<String, String> paramMap) {
         this.streamId = streamId;
@@ -69,19 +70,19 @@ class ExtractionTask {
         return pipelineRef;
     }
 
-    Receiver getReceiver() {
+    ExtractionReceiver getReceiver() {
         return receiver;
     }
 
-    boolean isAlerting(){
+    boolean isAlerting() {
         return alertDefinitions != null;
     }
 
-    final List<AlertDefinition> getAlertTableSettings(){
+    final List<AlertDefinition> getAlertTableSettings() {
         return alertDefinitions;
     }
 
-    final Map<String, String> getParamMapForAlerting(){
+    final Map<String, String> getParamMapForAlerting() {
         return paramMapForAlerting;
     }
 

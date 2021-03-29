@@ -16,8 +16,6 @@
 
 package stroom.test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
@@ -30,24 +28,34 @@ import stroom.processor.shared.ProcessorTaskList;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CommonTranslationTestHelper {
+
     public static final String FEED_NAME = "TEST_FEED";
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTestHelper.class);
     private static final String DIR = "CommonTranslationTest/";
-    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
+    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(
+            DIR + "Invalid.in");
     private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     //    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
-    private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
+    private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(
+            DIR + "CSVWithHeading.ds");
     private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.xsl");
     private static final Path XSLT_HOST_NAME_TO_IP = StroomPipelineTestFileUtil

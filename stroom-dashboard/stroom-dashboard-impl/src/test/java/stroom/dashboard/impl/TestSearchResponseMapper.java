@@ -17,14 +17,16 @@
 package stroom.dashboard.impl;
 
 
-import org.junit.jupiter.api.Test;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,26 +34,40 @@ import java.util.Collections;
 import java.util.List;
 
 class TestSearchResponseMapper {
+
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(null, getSearchResponse());
+        final DashboardSearchResponse result = mapper.mapResponse(null, getSearchResponse());
         System.out.println(result);
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(new Field.Builder().id("test").name("test").expression("${test}").build());
-        final List<Row> rows = Collections.singletonList(new Row("groupKey", Arrays.asList("test"), 5));
-        final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
-        return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Arrays.asList("some error"), false);
+        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression(
+                "${test}").build());
+        final List<Row> rows = Collections.singletonList(Row.builder()
+                .groupKey("groupKey")
+                .values(Collections.singletonList("test"))
+                .depth(5)
+                .build());
+        final TableResult tableResult = new TableResult("table-1234",
+                fields,
+                rows,
+                new OffsetRange(1, 2),
+                1,
+                "tableResultError");
+        return new SearchResponse(Arrays.asList("highlight1", "highlight2"),
+                Arrays.asList(tableResult, getVisResult1()),
+                Collections.singletonList("some error"),
+                false);
     }
 
     private FlatResult getVisResult1() {
         List<Field> structure = new ArrayList<>();
-        structure.add(new Field.Builder().name("val1").format(Type.GENERAL).build());
-        structure.add(new Field.Builder().name("val2").format(Type.NUMBER).build());
-        structure.add(new Field.Builder().name("val3").format(Type.NUMBER).build());
-        structure.add(new Field.Builder().name("val4").format(Type.GENERAL).build());
+        structure.add(Field.builder().name("val1").format(Format.GENERAL).build());
+        structure.add(Field.builder().name("val2").format(Format.NUMBER).build());
+        structure.add(Field.builder().name("val3").format(Format.NUMBER).build());
+        structure.add(Field.builder().name("val4").format(Format.GENERAL).build());
 
         List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));
@@ -62,16 +78,16 @@ class TestSearchResponseMapper {
         data.add(Arrays.asList("test5", 0.33, 3244, "this5"));
         data.add(Arrays.asList("test6", 34.66, 44, "this6"));
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
-        FlatResult visResult = new FlatResult("vis-1234", structure, data, 200L, "visResultError");
 
-        return visResult;
+        return new FlatResult("vis-1234", structure, data, 200L, "visResultError");
     }
 
 //    private VisResult getVisResult2() {
 //        Field[][] structure = new Field[3][];
 //        structure[0] = new Field[]{new Field("key1", Type.GENERAL)};
 //        structure[1] = new Field[]{new Field("key2", Type.GENERAL)};
-//        structure[2] = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+//        structure[2] = new Field[]{new Field("val1", Type.GENERAL),
+//        new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 //
 //        Object[][] data = new Object[8][];
 //        data[0] = new Object[]{"test0", 0.4, 234, "this0"};

@@ -16,9 +16,6 @@
 
 package stroom.monitoring.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
@@ -29,7 +26,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTablesMonitoringPresenter> {
+
     @Inject
     public DatabaseTablesMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
                                           final Provider<DatabaseTablesMonitoringPresenter> presenterProvider,
@@ -41,7 +43,13 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_DB_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(7, SvgPresets.DATABASE, SvgPresets.DATABASE, "Database Tables", null, true, () -> open()));
+                    new IconMenuItem(7,
+                            SvgPresets.DATABASE,
+                            SvgPresets.DATABASE,
+                            "Database Tables",
+                            null,
+                            true,
+                            () -> open()));
         }
     }
 }

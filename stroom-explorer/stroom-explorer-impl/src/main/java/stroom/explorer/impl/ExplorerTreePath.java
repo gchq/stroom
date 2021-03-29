@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 public class ExplorerTreePath {
+
     private final Integer ancestor;
     private final Integer descendant;
     private final int depth;

@@ -4,11 +4,12 @@ import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.api.WordListProvider;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class ExpressionMatcherFactory {
+
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
 
@@ -19,6 +20,10 @@ public class ExpressionMatcherFactory {
     }
 
     public ExpressionMatcher create(final Map<String, AbstractField> fieldMap) {
-        return new ExpressionMatcher(fieldMap, wordListProvider, collectionService, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+        return new ExpressionMatcher(fieldMap,
+                wordListProvider,
+                collectionService,
+                ZoneOffset.UTC.getId(),
+                System.currentTimeMillis());
     }
 }

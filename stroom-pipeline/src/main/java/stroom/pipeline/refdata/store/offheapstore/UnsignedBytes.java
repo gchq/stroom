@@ -1,119 +1,75 @@
-/*
- * Copyright 2018 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package stroom.pipeline.refdata.store.offheapstore;
-
-import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
-public class UnsignedBytes {
-    private static final byte[] ZERO_BYTES = new byte[0];
+/**
+ * Family of classes for reading/writing unsigned longs from/to bytes.
+ */
+public interface UnsignedBytes {
 
-    public static byte[] toBytes(final int len, final long val) {
-        if (len == 0 && val == 0) {
-            return ZERO_BYTES;
-        } else if (len < 1) {
-            throw new IllegalArgumentException("You cannot use less than 1 byte to store a value.");
-        }
+    byte[] toBytes(long val);
 
-        final byte[] bytes = new byte[len];
-        put(bytes, 0, len, val);
-        return bytes;
-    }
+    /**
+     * Puts val as unsigned bytes into arr using a length of len bytes
+     */
+    void put(byte[] arr, int off, long val);
 
-    public static void put(final byte[] bytes, final int off, final int len, final long val) {
-        validateValue(len, val);
+    /**
+     * Puts val as unsigned bytes into destByteBuffer using a length of len bytes
+     */
+    void put(ByteBuffer destByteBuffer, long val);
 
-        for (int i = 0; i < len; i++) {
-            final int shift = (len - i - 1) * 8;
-            bytes[off + i] = (byte) (val >> shift);
-        }
-    }
+    long get(byte[] bytes, int off);
 
-    public static void put(final ByteBuffer destByteBuffer, final int len, final long val) {
-        validateValue(len, val);
+    /**
+     * Reads the unsigned bytes from the supplied index and for len bytes.
+     * The position of the byteBuffer is unchanged.
+     */
+    long get(ByteBuffer byteBuffer, int index);
 
-        for (int i = 0; i < len; i++) {
-            final int shift = (len - i - 1) * 8;
-            destByteBuffer.put((byte) (val >> shift));
-        }
-    }
+    /**
+     * Reads the unsigned bytes for len bytes.
+     * The position of the byteBuffer is advanced
+     */
+    long get(ByteBuffer byteBuffer);
 
-    private static void validateValue(final int len, final long val) {
-        if (val < 0) {
-            throw new IllegalArgumentException("Negative values are not permitted.");
-        }
-        if (len > 8) {
-            throw new IllegalArgumentException(
-                    "You cannot use more than 8 bytes to store a value as only long values are supported.");
-        }
-        if (len < 1) {
-            throw new IllegalArgumentException("You cannot use less than 1 byte to store a value.");
-        }
-        final long max = maxValue(len);
-        if (val > max) {
-            throw new IllegalArgumentException(
-                    LogUtil.message(
-                            "Value {} exceeds max value of {} that can be stored in {} bytes(s)",
-                            val, max, len));
-        }
-    }
+    long getMaxVal();
 
-    public static long get(final byte[] bytes, final int off, final int len) {
-        long val = 0;
-        for (int i = 0; i < len; i++) {
-            final int shift = (len - i - 1) * 8;
-            val = val | ((long) bytes[off + i] & 0xff) << shift;
-        }
-        return val;
-    }
+    /**
+     * Treating the content of the passed byteBuffer (from its current position)
+     * as an unsigned long, increments the value by one.
+     * The byteBuffer's position, limit, marks are unchanged.
+     */
+    void increment(ByteBuffer byteBuffer);
 
-    public static long get(final ByteBuffer byteBuffer) {
-        long val = 0;
-        int pos = byteBuffer.position();
-        int len = byteBuffer.remaining();
+    /**
+     * Treating the content of the passed byteBuffer (from position index)
+     * as an unsigned long, increments the value by one.
+     * The byteBuffer's position, limit, marks are unchanged.
+     */
+    void increment(ByteBuffer byteBuffer, int index);
 
-        for (int i = 0; i < len; i++) {
-            final int shift = (len - i - 1) * 8;
-            val = val | ((long) byteBuffer.get(pos + i) & 0xff) << shift;
-        }
-        return val;
-    }
+    /**
+     * Treating the content of the passed byteBuffer (from its current position)
+     * as an unsigned long, decrements the value by one.
+     * The byteBuffer's position, limit, marks are unchanged.
+     */
+    void decrement(ByteBuffer byteBuffer);
 
-    public static long maxValue(final int len) {
-        if (len >= 8) {
-            return Long.MAX_VALUE;
-        }
+    /**
+     * Treating the content of the passed byteBuffer (from position index)
+     * as an unsigned long, decrements the value by one.
+     * The byteBuffer's position, limit, marks are unchanged.
+     */
+    void decrement(ByteBuffer byteBuffer, int index);
 
-        return (1L << (8 * len)) - 1;
-    }
+    /**
+     * @return The number of bytes that the unsigned value occupies
+     */
+    int length();
 
-    public static int requiredLength(final long val) {
-        if (val < 0) {
-            throw new IllegalArgumentException("You must supply a positive value");
-        } else if (val == 0) {
-            return 0;
-        }
-
-        final long pos = 64 - Long.numberOfLeadingZeros(val) - 1;
-        final double l = pos / 8D;
-        final int len = (int) Math.ceil(l);
-
-        return len;
-    }
+    /**
+     * @return The maximum unsigned value that can be written out as bytes.
+     */
+    long maxValue();
 }

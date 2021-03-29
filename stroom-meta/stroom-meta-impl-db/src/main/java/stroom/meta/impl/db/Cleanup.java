@@ -2,42 +2,20 @@ package stroom.meta.impl.db;
 
 import stroom.util.shared.Clearable;
 
+import java.util.Set;
 import javax.inject.Inject;
 
-public class Cleanup implements Clearable {
-    private final MetaValueDaoImpl metaValueDao;
-    private final MetaKeyDaoImpl metaKeyDao;
-    private final MetaDaoImpl metaDao;
-    private final MetaProcessorDaoImpl metaProcessorDao;
-    private final MetaTypeDaoImpl metaTypeDao;
-    private final MetaFeedDaoImpl metaFeedDao;
-    private final MetaRetentionTrackerDaoImpl metaRetentionTrackerDao;
+public class Cleanup {
+
+    private final Set<Clearable> clearables;
 
     @Inject
-    Cleanup(final MetaValueDaoImpl metaValueDao,
-            final MetaKeyDaoImpl metaKeyDao,
-            final MetaDaoImpl metaDao,
-            final MetaProcessorDaoImpl metaProcessorDao,
-            final MetaTypeDaoImpl metaTypeDao,
-            final MetaFeedDaoImpl metaFeedDao,
-            final MetaRetentionTrackerDaoImpl metaRetentionTrackerDao) {
-        this.metaValueDao = metaValueDao;
-        this.metaKeyDao = metaKeyDao;
-        this.metaDao = metaDao;
-        this.metaProcessorDao = metaProcessorDao;
-        this.metaTypeDao = metaTypeDao;
-        this.metaFeedDao = metaFeedDao;
-        this.metaRetentionTrackerDao = metaRetentionTrackerDao;
+    Cleanup(final Set<Clearable> clearables) {
+        this.clearables = clearables;
     }
 
-    @Override
-    public void clear() {
-        metaDao.clear();
-        metaValueDao.clear();
-        metaKeyDao.clear();
-        metaProcessorDao.clear();
-        metaTypeDao.clear();
-        metaFeedDao.clear();
-        metaRetentionTrackerDao.clear();
+    public void cleanup() {
+        // Clear all caches or files that might have been created by previous tests.
+        clearables.forEach(Clearable::clear);
     }
 }

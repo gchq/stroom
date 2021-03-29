@@ -1,13 +1,7 @@
 package stroom.users.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -18,7 +12,11 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class UsersPlugin extends NodeToolsPlugin {
+
     private final UiConfigCache clientPropertyCache;
 
     @Inject
@@ -41,6 +39,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                     .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
         }
     }
+
     private void addManageUsers(final BeforeRevealMenubarEvent event,
                                 final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
@@ -48,13 +47,15 @@ public class UsersPlugin extends NodeToolsPlugin {
         final String usersUiUrl = uiConfig.getUrl().getUsers();
         if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
             usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
-                final Hyperlink hyperlink = new Builder()
-                        .text("Users")
-                        .href(usersUiUrl)
-                        .type(HyperlinkType.TAB + "|Users")
-                        .icon(icon)
-                        .build();
-                HyperlinkEvent.fire(this, hyperlink);
+                postMessage("manageUsers");
+
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("Users")
+//                        .href(usersUiUrl)
+//                        .type(HyperlinkType.TAB + "|Users")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
             });
         } else {
             usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);

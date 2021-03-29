@@ -16,11 +16,6 @@
 
 package stroom.explorer;
 
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
 import stroom.cluster.impl.MockClusterModule;
 import stroom.explorer.api.ExplorerService;
@@ -41,13 +36,19 @@ import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Disabled
         // manual testing only
 class TestExplorerTreePerformance {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;
     private static final int MAX_TREE_DEPTH = 2;
@@ -116,8 +118,12 @@ class TestExplorerTreePerformance {
             final User user = userService.createUser("testuser");
             final User userGroup = userService.createUserGroup("testusergroup");
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), user.getUuid(), DocumentPermissionNames.READ);
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), userGroup.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+                    userGroup.getUuid(),
+                    DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
@@ -148,7 +154,9 @@ class TestExplorerTreePerformance {
         return lastChild.get();
     }
 
-    private void count(final List<ExplorerNode> parents, final AtomicInteger count, final AtomicReference<ExplorerNode> lastChild) {
+    private void count(final List<ExplorerNode> parents,
+                       final AtomicInteger count,
+                       final AtomicReference<ExplorerNode> lastChild) {
         if (parents != null) {
             for (final ExplorerNode parent : parents) {
                 lastChild.set(parent);
@@ -159,7 +167,9 @@ class TestExplorerTreePerformance {
         }
     }
 
-    private ExplorerNode openAll(final ExplorerNode parent, final FetchExplorerNodeResult result, final FindExplorerNodeCriteria findExplorerNodeCriteria) {
+    private ExplorerNode openAll(final ExplorerNode parent,
+                                 final FetchExplorerNodeResult result,
+                                 final FindExplorerNodeCriteria findExplorerNodeCriteria) {
         ExplorerNode lastChild = null;
 
         final List<ExplorerNode> children = parent.getChildren();

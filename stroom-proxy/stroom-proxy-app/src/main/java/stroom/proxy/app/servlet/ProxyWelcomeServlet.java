@@ -3,17 +3,18 @@ package stroom.proxy.app.servlet;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Set;
 
 public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
+
     private static final Set<String> PATH_SPECS = Set.of("/ui");
 
     private final Provider<BuildInfo> buildInfoProvider;
@@ -25,7 +26,8 @@ public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
 
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
+            throws ServletException, IOException {
         final BuildInfo buildInfo = buildInfoProvider.get();
         final Writer writer = response.getWriter();
         writer.write("<html>\n" +

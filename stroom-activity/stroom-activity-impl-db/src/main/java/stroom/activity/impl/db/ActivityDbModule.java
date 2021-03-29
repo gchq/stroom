@@ -8,6 +8,7 @@ import stroom.db.util.DataSourceProxy;
 import javax.sql.DataSource;
 
 public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnProvider> {
+
     private static final String MODULE = "stroom-activity";
     private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db/migration";
     private static final String FLYWAY_TABLE = "activity_schema_history";
@@ -46,6 +47,7 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, Act
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements ActivityDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

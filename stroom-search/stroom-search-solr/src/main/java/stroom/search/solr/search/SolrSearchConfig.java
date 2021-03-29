@@ -1,16 +1,18 @@
 package stroom.search.solr.search;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import javax.inject.Singleton;
 
 @Singleton
 public class SolrSearchConfig extends AbstractConfig {
+
     /**
      * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -23,12 +25,13 @@ public class SolrSearchConfig extends AbstractConfig {
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
-    private CacheConfig searchResultCache = new CacheConfig.Builder()
+    private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
-    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
+    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }

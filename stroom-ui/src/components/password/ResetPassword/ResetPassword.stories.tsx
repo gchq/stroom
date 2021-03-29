@@ -2,7 +2,7 @@ import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import ResetPassword from "./ResetPassword";
-import ChangePasswordFormData from "../ChangePassword/ChangePasswordFormData";
+// import ChangePasswordFormData from "../ChangePassword/ChangePasswordFormData";
 
 const onValidate = (
   oldPassword: string,

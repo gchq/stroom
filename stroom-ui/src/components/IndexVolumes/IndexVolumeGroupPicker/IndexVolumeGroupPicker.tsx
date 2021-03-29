@@ -4,7 +4,7 @@ import CreatableSelect from "react-select/creatable";
 
 import { useIndexVolumeGroups } from "../indexVolumeGroupApi";
 import { PickerProps, UsePickerProps, PickerBaseProps } from "./types";
-import useReactSelect from "lib/useReactSelect";
+import { useReactSelect } from "lib/useReactSelect";
 
 const IndexVolumeGroupPicker: React.FunctionComponent<PickerProps> = ({
   value,
@@ -14,7 +14,8 @@ const IndexVolumeGroupPicker: React.FunctionComponent<PickerProps> = ({
   const { groups, createIndexVolumeGroup } = useIndexVolumeGroups();
 
   const options: string[] = React.useMemo(
-    () => groups.map(g => g.name).filter(n => !valuesToFilterOut.includes(n)),
+    () =>
+      groups.map((g) => g.name).filter((n) => !valuesToFilterOut.includes(n)),
     [groups, valuesToFilterOut],
   );
   const { _options, _onChange, _value } = useReactSelect({

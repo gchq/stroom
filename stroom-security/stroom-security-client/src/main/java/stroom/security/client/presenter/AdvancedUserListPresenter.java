@@ -16,14 +16,15 @@
 
 package stroom.security.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
-import stroom.util.shared.StringCriteria;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class AdvancedUserListPresenter extends AbstractUserListPresenter {
+
     private final RestFactory restFactory;
     private UserDataProvider dataProvider;
     private FindUserCriteria findUserCriteria;
@@ -42,7 +43,11 @@ public class AdvancedUserListPresenter extends AbstractUserListPresenter {
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
                 if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
-                    HidePopupEvent.fire(AdvancedUserListPresenter.this, AdvancedUserListPresenter.this, false, true);
+                    HidePopupEvent.fire(
+                            AdvancedUserListPresenter.this,
+                            AdvancedUserListPresenter.this,
+                            false,
+                            true);
                 }
             }
         }));
@@ -60,14 +65,12 @@ public class AdvancedUserListPresenter extends AbstractUserListPresenter {
                 }
             }
 
-            if ((filter == null && findUserCriteria.getName() == null) ||
-                    (filter != null && filter.equals(findUserCriteria.getName().getString()))) {
+            if ((filter == null && findUserCriteria.getQuickFilterInput() == null) ||
+                    (filter != null && filter.equals(findUserCriteria.getQuickFilterInput()))) {
                 return;
             }
 
-            findUserCriteria.getName().setString(filter);
-            findUserCriteria.getName().setMatchStyle(StringCriteria.MatchStyle.WildStartAndEnd);
-
+            findUserCriteria.setQuickFilterInput(filter);
             dataProvider.refresh();
         }
     }

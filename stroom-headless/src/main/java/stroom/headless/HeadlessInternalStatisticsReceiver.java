@@ -22,6 +22,7 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import java.util.List;
 
 public class HeadlessInternalStatisticsReceiver implements InternalStatisticsReceiver {
+
     @Override
     public void putEvent(final InternalStatisticEvent internalStatisticEvent) {
         // Do nothing.

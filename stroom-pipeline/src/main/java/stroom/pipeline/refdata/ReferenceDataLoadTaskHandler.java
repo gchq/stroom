@@ -17,8 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
@@ -44,11 +42,15 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
+import javax.inject.Inject;
 
 /**
  * Processes reference data that meets some supplied criteria (feed names,
@@ -58,6 +60,7 @@ import java.io.InputStream;
  */
 
 class ReferenceDataLoadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final Store streamStore;
@@ -112,16 +115,17 @@ class ReferenceDataLoadTaskHandler {
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    public void exec(final RefStreamDefinition refStreamDefinition) {
+    public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+        final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
+            // on can be read.
             securityContext.useAsRead(() -> {
-//            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
-                final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                 LOGGER.debug("Loading reference data: {}", refStreamDefinition);
+                taskContext.info(() -> "Loading " + refStreamDefinition);
 
                 // Open the stream source.
                 try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
@@ -149,23 +153,23 @@ class ReferenceDataLoadTaskHandler {
                                 meta,
                                 source,
                                 feedName,
-                                meta.getTypeName(),
                                 refStreamDefinition);
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
+                        taskContext.info(() -> "Finished " + refStreamDefinition);
                     }
                 } catch (final IOException | RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
                 }
             });
         });
+        return storedErrorReceiver;
     }
 
     private void populateMaps(final Pipeline pipeline,
                               final Meta meta,
                               final Source source,
                               final String feedName,
-                              final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
         // Set the source meta.
         metaHolder.setMeta(meta);
@@ -180,7 +184,8 @@ class ReferenceDataLoadTaskHandler {
 
         try {
             // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+            final String encoding = feedProperties.getEncoding(
+                    feedName, meta.getTypeName(), null);
 
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
             locationFactory.setLocationFactory(streamLocationFactory);

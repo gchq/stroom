@@ -29,15 +29,16 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Helper class to validate XML based resources are valid.
  */
 public class XMLValidator {
+
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
 
     private final Provider<PipelineFactory> pipelineFactoryProvider;
@@ -88,12 +89,16 @@ public class XMLValidator {
                     // PropertyType(
                     // schemaFilterElementType, "schemaValidation", "Boolean",
                     // false);
-                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
+                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                            "schemaValidation",
+                            false));
                     // final PropertyType schemaGroupPropertyType = new
                     // PropertyType(
                     // schemaFilterElementType, "schemaGroup", "String", false);
                     pipelineData
-                            .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
+                            .addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                                    "schemaGroup",
+                                    "DATA_SPLITTER"));
                     pipelineStore.writeDocument(pipelineDoc);
 
                     final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);

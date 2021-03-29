@@ -30,6 +30,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
+
     @JsonProperty
     private String type;
     @JsonProperty
@@ -149,13 +150,13 @@ public class ExplorerNode implements HasDisplayValue {
         this.children = children;
     }
 
-    public ExplorerNode copy() {
-        final ExplorerNode copy = new ExplorerNode(type, uuid, name, tags);
-        copy.depth = depth;
-        copy.iconUrl = iconUrl;
-        copy.nodeState = nodeState;
-        return copy;
-    }
+//    public ExplorerNode copy() {
+//        final ExplorerNode copy = new ExplorerNode(type, uuid, name, tags);
+//        copy.depth = depth;
+//        copy.iconUrl = iconUrl;
+//        copy.nodeState = nodeState;
+//        return copy;
+//    }
 
     @JsonIgnore
     public DocRef getDocRef() {
@@ -168,10 +169,15 @@ public class ExplorerNode implements HasDisplayValue {
         return name;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ExplorerNode that = (ExplorerNode) o;
         return uuid.equals(that.uuid);
     }
@@ -187,53 +193,94 @@ public class ExplorerNode implements HasDisplayValue {
     }
 
     public enum NodeState {
-        OPEN, CLOSED, LEAF
+        OPEN,
+        CLOSED,
+        LEAF
     }
 
-    public static class Builder {
-        private final ExplorerNode instance;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public Builder() {
-            this.instance = new ExplorerNode();
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String type;
+        private String uuid;
+        private String name;
+        private String tags;
+        private int depth;
+        private String iconUrl;
+        private NodeState nodeState;
+        private List<ExplorerNode> children;
+
+        private Builder() {
+        }
+
+        private Builder(final ExplorerNode explorerNode) {
+            this.type = explorerNode.type;
+            this.uuid = explorerNode.uuid;
+            this.name = explorerNode.name;
+            this.tags = explorerNode.tags;
+            this.depth = explorerNode.depth;
+            this.iconUrl = explorerNode.iconUrl;
+            this.nodeState = explorerNode.nodeState;
+            this.children = explorerNode.children;
         }
 
         public Builder type(final String type) {
-            this.instance.type = type;
+            this.type = type;
             return this;
         }
 
         public Builder uuid(final String uuid) {
-            this.instance.uuid = uuid;
+            this.uuid = uuid;
             return this;
         }
 
         public Builder name(final String name) {
-            this.instance.name = name;
+            this.name = name;
             return this;
         }
 
         public Builder tags(final String tags) {
-            this.instance.tags = tags;
+            this.tags = tags;
             return this;
         }
 
         public Builder depth(final int depth) {
-            this.instance.depth = depth;
+            this.depth = depth;
             return this;
         }
 
         public Builder iconUrl(final String iconUrl) {
-            this.instance.iconUrl = iconUrl;
+            this.iconUrl = iconUrl;
             return this;
         }
 
         public Builder nodeState(final NodeState nodeState) {
-            this.instance.nodeState = nodeState;
+            this.nodeState = nodeState;
+            return this;
+        }
+
+        public Builder children(final List<ExplorerNode> children) {
+            this.children = children;
             return this;
         }
 
         public ExplorerNode build() {
-            return instance;
+            return new ExplorerNode(
+                    type,
+                    uuid,
+                    name,
+                    tags,
+                    depth,
+                    iconUrl,
+                    nodeState,
+                    children);
         }
     }
 }

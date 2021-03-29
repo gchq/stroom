@@ -18,65 +18,43 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.pipeline.shared.XsltDTO;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
-import stroom.security.api.SecurityContext;
+import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class XsltResourceImpl implements XsltResource {
-    private final XsltStore xsltStore;
-    private final DocumentResourceHelper documentResourceHelper;
-    private SecurityContext securityContext;
+
+    private final Provider<XsltStore> xsltStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    XsltResourceImpl(final XsltStore xsltStore,
-                     final DocumentResourceHelper documentResourceHelper,
-                     final SecurityContext securityContext) {
-        this.xsltStore = xsltStore;
-        this.documentResourceHelper = documentResourceHelper;
-        this.securityContext = securityContext;
+    XsltResourceImpl(final Provider<XsltStore> xsltStoreProvider,
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.xsltStoreProvider = xsltStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
-    public XsltDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(xsltStore, docRef);
+    public XsltDoc fetch(final String uuid) {
+        return documentResourceHelperProvider.get().read(xsltStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
-    public XsltDoc update(final XsltDoc doc) {
-        return documentResourceHelper.update(xsltStore, doc);
+    public XsltDoc update(final String uuid, final XsltDoc doc) {
+        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
+            throw new EntityServiceException("The document UUID must match the update UUID");
+        }
+        return documentResourceHelperProvider.get().update(xsltStoreProvider.get(), doc);
     }
 
-    public XsltDoc fetch(final String xsltId) {
-        return securityContext.secureResult(() -> {
-            final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
-            if (null != xsltDoc) {
-                return xsltDoc;
-            } else {
-                return null;
-            }
-        });
-    }
-
-    public void save(final String xsltId,
-                     final XsltDTO xsltDto) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        securityContext.useAsRead(() -> {
-            final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
-
-            if (xsltDoc != null) {
-                xsltDoc.setDescription(xsltDto.getDescription());
-                xsltDoc.setData(xsltDto.getData());
-                xsltStore.writeDocument(xsltDoc);
-            }
-        });
-    }
-
-    private DocRef getDocRef(final String xsltId) {
-        return new DocRef.Builder()
-                .uuid(xsltId)
+    private DocRef getDocRef(final String uuid) {
+        return DocRef.builder()
+                .uuid(uuid)
                 .type(XsltDoc.DOCUMENT_TYPE)
                 .build();
     }

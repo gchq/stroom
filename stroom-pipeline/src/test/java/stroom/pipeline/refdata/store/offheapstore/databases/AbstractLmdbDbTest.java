@@ -17,14 +17,16 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
+import stroom.util.shared.ModelStringUtil;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,14 +35,14 @@ import java.nio.file.Path;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
     protected Env<ByteBuffer> lmdbEnv = null;
     private Path dbDir = null;
 
     @BeforeEach
-    protected void setup() throws IOException {
+    final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
         lmdbEnv = Env.create()
@@ -50,12 +52,24 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     }
 
     @AfterEach
-    public void teardown() throws IOException {
+    final void teardown() throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
         lmdbEnv = null;
         if (Files.isDirectory(dbDir)) {
+            Files.list(dbDir)
+                    .filter(path -> path.endsWith("data.mdb"))
+                    .forEach(path -> {
+                        try {
+                            long fileSizeBytes = Files.size(path);
+                            LOGGER.info("LMDB file size: {}",
+                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
             FileUtil.deleteDir(dbDir);
         }
     }

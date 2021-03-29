@@ -17,15 +17,11 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
+import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -33,10 +29,16 @@ import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
@@ -59,8 +61,8 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
                                 final ByteBuffer mapDefinitionKeyBuffer,
                                 final ByteBuffer uidValueBuffer) {
 
-        boolean didPutSuceed = put(writeTxn, mapDefinitionKeyBuffer, uidValueBuffer, false);
-        if (!didPutSuceed) {
+        final PutOutcome putOutcome = put(writeTxn, mapDefinitionKeyBuffer, uidValueBuffer, false);
+        if (!putOutcome.isSuccess()) {
             throw new RuntimeException(LogUtil.message("Failed to put mapDefinition {}, uid {}",
                     ByteBufferUtils.byteBufferInfo(mapDefinitionKeyBuffer),
                     ByteBufferUtils.byteBufferInfo(uidValueBuffer)));
@@ -80,8 +82,8 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part
                     // so ensure the key we get back from the cursor is prefixed with that
@@ -103,9 +105,8 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         return optMatchedMapUid;
     }
 
-
-
     public interface Factory {
+
         MapUidForwardDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

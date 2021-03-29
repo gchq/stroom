@@ -23,6 +23,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.Set;
 
 public class ComponentChangedEvent extends GwtEvent<ComponentChangedEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final String componentId;
     private final String streamId;
@@ -76,6 +77,7 @@ public class ComponentChangedEvent extends GwtEvent<ComponentChangedEvent.Handle
     }
 
     public interface Handler extends EventHandler {
+
         void onChange(ComponentChangedEvent event);
     }
 }

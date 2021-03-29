@@ -15,6 +15,7 @@
  */
 
 package stroom.security.impl.session;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,11 +37,11 @@ public class SessionDetails {
     private String nodeName;
 
     @JsonCreator
-    public SessionDetails(@JsonProperty("username") final String userName,
-                   @JsonProperty("createMs") final long createMs,
-                   @JsonProperty("lastAccessedMss") final long lastAccessedMs,
-                   @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
-                   @JsonProperty("nodeName") final String nodeName) {
+    public SessionDetails(@JsonProperty("userName") final String userName,
+                          @JsonProperty("createMs") final long createMs,
+                          @JsonProperty("lastAccessedMs") final long lastAccessedMs,
+                          @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
+                          @JsonProperty("nodeName") final String nodeName) {
         this.userName = userName;
         this.createMs = createMs;
         this.lastAccessedMs = lastAccessedMs;
@@ -68,6 +69,7 @@ public class SessionDetails {
         return lastAccessedAgent;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

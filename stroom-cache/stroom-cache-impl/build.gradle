@@ -2,8 +2,9 @@ ext.moduleName = 'stroom.cache.impl'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-cluster:stroom-cluster-task-api')
+//    compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-core-shared')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
@@ -13,10 +14,12 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.caffeine
-    compile libs.guava
-    compile libs.guice4
+//    compile libs.guava
+    compile libs.guice5
+    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.slf4j_api
+    compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core

@@ -34,12 +34,16 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A file system implementation of Source.
  */
 final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsSource.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -52,7 +56,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     private InputStream inputStream;
     private Path file;
 
-    private Meta meta;
+    private final Meta meta;
     private boolean closed;
     private Long count;
 
@@ -118,10 +122,20 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     }
 
     private void readManifest(final AttributeMap attributeMap) {
-        final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(), InternalStreamTypeNames.MANIFEST);
+        final Path file = getFile();
+        final Path manifestFile = fileSystemStreamPathHelper.getChildPath(file, InternalStreamTypeNames.MANIFEST);
         if (Files.isRegularFile(manifestFile)) {
             try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                 AttributeMapUtil.read(inputStream, attributeMap);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+            try {
+                final List<Path> files = fileSystemStreamPathHelper.getFiles(file);
+                attributeMap.put("Files", files.stream()
+                        .map(FileUtil::getCanonicalPath)
+                        .collect(Collectors.joining("\n")));
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -193,6 +207,27 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
             }
             return new SegmentInputStreamProvider(source, k);
         });
+    }
+
+    @Override
+    public Set<String> getChildTypes() {
+
+        // You may have files like this:
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.mf.dat
+        // We wan't to ignore the internal .bdy., .seg. and .mf. ones
+        // and boil it down to (in this case) Raw Events, Meta & Context
+
+        final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(
+                getFile());
+        return allDescendantStreamFileList.stream()
+                .map(fileSystemStreamPathHelper::decodeStreamType)
+                .collect(Collectors.toSet());
     }
 
     private InternalSource getChild(final String streamTypeName) {

@@ -40,18 +40,19 @@ import org.jooq.Record1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskDeleteExecutorImpl.class);
 
     private static final String TASK_NAME = "Processor Task Delete Executor";
@@ -126,10 +127,10 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private int deleteOldTasks(final Instant deleteThreshold) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 Optional.of(PROCESSOR_TASK.STATUS.in(
-                    TaskStatus.COMPLETE.getPrimitiveValue(),
-                    TaskStatus.FAILED.getPrimitiveValue())),
+                        TaskStatus.COMPLETE.getPrimitiveValue(),
+                        TaskStatus.FAILED.getPrimitiveValue())),
                 Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
-                    .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
+                        .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
 
         return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
@@ -141,11 +142,11 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private int deleteDeletedTasksAndProcessors() {
         // Get deleted processors.
         List<Integer> deletedProcessors = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select(PROCESSOR.ID)
-                        .from(PROCESSOR)
-                        .where(PROCESSOR.DELETED.eq(true))
-                        .fetch()
-                        .map(Record1::value1));
+                .select(PROCESSOR.ID)
+                .from(PROCESSOR)
+                .where(PROCESSOR.DELETED.eq(true))
+                .fetch()
+                .map(Record1::value1));
 
         List<Integer> deletedProcessorFilters = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select(PROCESSOR_FILTER.ID)
@@ -195,11 +196,11 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private void deleteOldFilters(final Instant deleteThreshold) {
         try {
             // Get all filters that have not been polled for a while.
-            final ExpressionOperator expression = new ExpressionOperator.Builder()
+            final ExpressionOperator expression = ExpressionOperator.builder()
                     .addTerm(
-                        ProcessorFilterFields.LAST_POLL_MS,
-                        ExpressionTerm.Condition.LESS_THAN,
-                        deleteThreshold.toEpochMilli())
+                            ProcessorFilterFields.LAST_POLL_MS,
+                            ExpressionTerm.Condition.LESS_THAN,
+                            deleteThreshold.toEpochMilli())
                     .build();
             final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //            criteria.setLastPollPeriod(new Period(null, age));

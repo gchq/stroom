@@ -1,15 +1,12 @@
 package stroom.docstore.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
-import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,9 +15,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 @Singleton
-public class DBPersistence implements Persistence, Clearable {
+public class DBPersistence implements Persistence {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
@@ -256,7 +257,11 @@ public class DBPersistence implements Persistence, Clearable {
         }
     }
 
-    private void update(final Connection connection, final Long id, final DocRef docRef, final String ext, final byte[] bytes) {
+    private void update(final Connection connection,
+                        final Long id,
+                        final DocRef docRef,
+                        final String ext,
+                        final byte[] bytes) {
         final String sql = "" +
                 "UPDATE doc " +
                 "SET " +
@@ -275,21 +280,6 @@ public class DBPersistence implements Persistence, Clearable {
             preparedStatement.setLong(6, id);
 
             preparedStatement.execute();
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void clear() {
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("TRUNCATE TABLE doc")) {
-                preparedStatement.execute();
-            } catch (final SQLException e) {
-                LOGGER.debug(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);

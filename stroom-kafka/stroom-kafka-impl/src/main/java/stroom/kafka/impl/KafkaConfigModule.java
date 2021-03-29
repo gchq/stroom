@@ -32,6 +32,7 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 public class KafkaConfigModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(KafkaProducerFactory.class).to(KafkaProducerFactoryImpl.class);
@@ -57,6 +58,7 @@ public class KafkaConfigModule extends AbstractModule {
     }
 
     private static class KafkaProducerFactoryShutdown extends RunnableWrapper {
+
         @Inject
         KafkaProducerFactoryShutdown(final KafkaProducerFactoryImpl kafkaProducerFactory) {
             super(kafkaProducerFactory::shutdown);

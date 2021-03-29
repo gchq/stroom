@@ -16,11 +16,12 @@
 
 package stroom.security.impl;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Inject;
 
 class UserAndPermissionsHelper {
+
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
 

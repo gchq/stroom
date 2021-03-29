@@ -33,17 +33,17 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DataProcessorTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
 
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
@@ -88,7 +88,11 @@ public class DataProcessorTaskHandler {
         boolean complete = false;
         ProcessorResult processorResult = new ProcessorResultImpl(0, 0, Collections.emptyMap());
         final long startTime = System.currentTimeMillis();
-        LOGGER.trace(LambdaLogUtil.message("Executing processor task: {}", processorTask.getId()));
+
+        // Have to do the if as processorTask is not final so can't use a lambda
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Executing processor task: {}", processorTask.getId());
+        }
 
         // Open the stream source.
         try (Source source = streamStore.openSource(processorTask.getMetaId())) {
@@ -98,7 +102,8 @@ public class DataProcessorTaskHandler {
                 Processor destStreamProcessor = null;
                 ProcessorFilter destProcessorFilter = null;
                 if (processorTask.getProcessorFilter() != null) {
-                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(null);
+                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
+                            null);
                     if (destProcessorFilter != null) {
                         destStreamProcessor = processorCache
                                 .get(destProcessorFilter.getProcessor().getId()).orElse(null);
@@ -113,8 +118,11 @@ public class DataProcessorTaskHandler {
                 // Don't process any streams that we have already created
                 if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
                     complete = true;
-                    LOGGER.warn(LambdaLogUtil.message("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
-                            destStreamProcessor));
+                    // Have to do the if as processorTask is not final so can't use a lambda
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
+                                meta, destStreamProcessor);
+                    }
 
                 } else {
                     // Change the task status.... and save
@@ -123,7 +131,8 @@ public class DataProcessorTaskHandler {
                     // Avoid having to do another fetch
                     processorTask.setProcessorFilter(destProcessorFilter);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
+                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(
+                            destStreamProcessor.getTaskType()));
                     final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
 
                     try {
@@ -136,7 +145,7 @@ public class DataProcessorTaskHandler {
                         }
 
                     } catch (final RuntimeException e) {
-                        LOGGER.error(LambdaLogUtil.message("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e));
+                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
                     }
                 }
             }
@@ -147,7 +156,10 @@ public class DataProcessorTaskHandler {
                 processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                         startTime, System.currentTimeMillis());
             } else {
-                processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                processorTaskDao.changeTaskStatus(processorTask,
+                        nodeInfo.getThisNodeName(),
+                        TaskStatus.FAILED,
+                        startTime,
                         System.currentTimeMillis());
             }
         }

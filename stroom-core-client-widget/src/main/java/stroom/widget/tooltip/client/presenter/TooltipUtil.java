@@ -17,21 +17,32 @@
 package stroom.widget.tooltip.client.presenter;
 
 
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class TooltipUtil {
+
     private static final SafeHtml BREAK = SafeHtmlUtils.fromSafeConstant("<br/>");
+    private static final SafeHtml SEPARATOR = SafeHtmlUtils.fromSafeConstant("<hr/>");
     private static final SafeHtml ITAlIC_OPEN = SafeHtmlUtils.fromSafeConstant("<i>");
     private static final SafeHtml ITAlIC_CLOSE = SafeHtmlUtils.fromSafeConstant("</i>");
     private static final SafeHtml BOLD_OPEN = SafeHtmlUtils.fromSafeConstant("<b>");
     private static final SafeHtml BOLD_CLOSE = SafeHtmlUtils.fromSafeConstant("</b>");
     private static final SafeHtml CODE_OPEN = SafeHtmlUtils.fromSafeConstant("<code>");
     private static final SafeHtml CODE_CLOSE = SafeHtmlUtils.fromSafeConstant("</code>");
+    private static final SafeHtml PARA_OPEN = SafeHtmlUtils.fromSafeConstant("<p>");
+    private static final SafeHtml PARA_CLOSE = SafeHtmlUtils.fromSafeConstant("</p>");
+    private static final SafeHtml DIV_OPEN = SafeHtmlUtils.fromSafeConstant("<div>");
+    private static final SafeHtml DIV_CLOSE = SafeHtmlUtils.fromSafeConstant("</div>");
+    private static final SafeHtml SPAN_CLOSE = SafeHtmlUtils.fromSafeConstant("</span>");
     private static final SafeHtml BLANK = SafeHtmlUtils.fromString("");
 
     private TooltipUtil() {
@@ -44,6 +55,55 @@ public final class TooltipUtil {
 
     public static SafeHtml boldText(final Object value) {
         return withFormatting(value, BOLD_OPEN, BOLD_CLOSE);
+    }
+
+    public static SafeHtml styledSpan(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledSpan(value, builder.toSafeStyles());
+    }
+
+    public static SafeHtml styledSpan(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<span style=\"" + safeStyles.asString() + "\">"),
+                SPAN_CLOSE);
+    }
+
+    public static SafeHtml styledParagraph(final Object value,
+                                           final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledParagraph(value, builder.toSafeStyles());
+    }
+
+    public static SafeHtml styledParagraph(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<p style=\"" + safeStyles.asString() + "\">"),
+                PARA_CLOSE);
+    }
+
+    public static SafeHtml styledDiv(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledDiv(value, builder.toSafeStyles());
+    }
+
+    public static SafeHtml styledDiv(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<div style=\"" + safeStyles.asString() + "\">"),
+                DIV_CLOSE);
     }
 
     public static SafeHtml boldItalicText(final Object value) {
@@ -65,16 +125,22 @@ public final class TooltipUtil {
 
     private static SafeHtml withFormatting(final Object value, final SafeHtml openTag, final SafeHtml closeTag) {
         if (value != null) {
-            String str = String.valueOf(value);
-            if (str.length() > 0) {
-                return new SafeHtmlBuilder()
-                        .append(openTag)
-                        .appendEscaped(str)
-                        .append(closeTag)
-                        .toSafeHtml();
+            SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
+                    .append(openTag);
+
+            if (value instanceof SafeHtml) {
+                safeHtmlBuilder.append((SafeHtml) value);
             } else {
-                return BLANK;
+                String str = String.valueOf(value);
+                if (str.length() > 0) {
+                    safeHtmlBuilder.appendEscaped(str);
+                } else {
+                    safeHtmlBuilder.append(BLANK);
+                }
             }
+            return safeHtmlBuilder
+                    .append(closeTag)
+                    .toSafeHtml();
         } else {
             return BLANK;
         }
@@ -84,11 +150,37 @@ public final class TooltipUtil {
         return new Builder();
     }
 
-    public static class Builder {
+    public static Builder builder(final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+        return new Builder(stylesBuilderConsumer);
+    }
+
+    private static SafeHtml objectToSafeHtml(final Object value) {
+        final SafeHtml safeHtml;
+        if (value == null) {
+            safeHtml = BLANK;
+        } else if (value instanceof SafeHtml) {
+            safeHtml = (SafeHtml) value;
+        } else {
+            safeHtml = SafeHtmlUtils.fromString(String.valueOf(value));
+        }
+        return safeHtml;
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static final class Builder {
+
         private final SafeHtmlBuilder buffer;
+        private final Consumer<SafeStylesBuilder> safeStylesBuilderConsumer;
 
         private Builder() {
-            buffer = new SafeHtmlBuilder();
+            this(null);
+        }
+
+        private Builder(final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+            this.buffer = new SafeHtmlBuilder();
+            this.safeStylesBuilderConsumer = stylesBuilderConsumer;
         }
 
         public Builder addHeading(final String heading) {
@@ -133,8 +225,27 @@ public final class TooltipUtil {
             return this;
         }
 
+        public Builder addParagraph(final String value) {
+            if (value != null && !value.isEmpty()) {
+                buffer.append(PARA_OPEN);
+                buffer.appendEscaped(value);
+                buffer.append(PARA_CLOSE);
+            }
+            return this;
+        }
+
         public Builder addBreak() {
             buffer.append(BREAK);
+            return this;
+        }
+
+        public Builder addSafeHtml(final SafeHtml safeHtml) {
+            buffer.append(safeHtml);
+            return this;
+        }
+
+        public Builder addSeparator() {
+            buffer.append(SEPARATOR);
             return this;
         }
 
@@ -166,29 +277,50 @@ public final class TooltipUtil {
             return this;
         }
 
-        public Builder addTable(Function<TableBuilder, SafeHtml> tableBuilderFunc) {
-            TableBuilder tableBuilder = new TableBuilder();
+        public Builder addTwoColTable(Function<TableBuilder2, SafeHtml> tableBuilderFunc) {
+            TableBuilder2 tableBuilder = new TableBuilder2();
+            buffer.append(tableBuilderFunc.apply(tableBuilder));
+            return this;
+        }
+
+        public Builder addThreeColTable(Function<TableBuilder3, SafeHtml> tableBuilderFunc) {
+            TableBuilder3 tableBuilder = new TableBuilder3();
             buffer.append(tableBuilderFunc.apply(tableBuilder));
             return this;
         }
 
         public SafeHtml build() {
-            return buffer.toSafeHtml();
+
+            final SafeHtml innerHtml = buffer.toSafeHtml();
+
+            final SafeStylesBuilder safeStylesBuilder = new SafeStylesBuilder();
+            if (safeStylesBuilderConsumer != null) {
+                safeStylesBuilderConsumer.accept(safeStylesBuilder);
+            }
+            final SafeHtmlBuilder outerHtml = new SafeHtmlBuilder();
+
+            outerHtml.append(styledDiv(innerHtml, safeStylesBuilder.toSafeStyles()));
+
+            return outerHtml.toSafeHtml();
         }
     }
 
-    public static class TableBuilder {
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class TableBuilder2 {
+
         private final SafeHtmlBuilder buffer;
 
-        public TableBuilder() {
+        public TableBuilder2() {
             buffer = new SafeHtmlBuilder()
-                    .appendHtmlConstant("<Table>");
+                    .appendHtmlConstant("<table>");
         }
-        public TableBuilder addHeaderRow(final String key) {
+
+        public TableBuilder2 addHeaderRow(final String key) {
             return addHeaderRow(key, "");
         }
 
-        public TableBuilder addHeaderRow(final String key, final String value) {
+        public TableBuilder2 addHeaderRow(final String key, final String value) {
             buffer
                     .appendHtmlConstant("<tr><th align=\"left\">")
                     .append(boldText(key))
@@ -198,11 +330,11 @@ public final class TooltipUtil {
             return this;
         }
 
-        public TableBuilder addHeaderRow(final SafeHtml key) {
+        public TableBuilder2 addHeaderRow(final SafeHtml key) {
             return addHeaderRow(key, BLANK);
         }
 
-        public TableBuilder addHeaderRow(final SafeHtml key, final SafeHtml value) {
+        public TableBuilder2 addHeaderRow(final SafeHtml key, final SafeHtml value) {
             buffer
                     .appendHtmlConstant("<tr><th align=\"left\">")
                     .append(key)
@@ -212,32 +344,44 @@ public final class TooltipUtil {
             return this;
         }
 
-        public TableBuilder addBlankRow() {
+        public TableBuilder2 addBlankRow() {
             buffer.appendHtmlConstant("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
             return this;
         }
 
-//        public TableBuilder addRow(final Object key) {
+//        public TableBuilder2 addRow(final Object key) {
 //            return addRow(key, null, true);
 //        }
 
-        public TableBuilder addRow(final Object key,
-                                   final Object value) {
-            return addRow(key, value, false);
+        public TableBuilder2 addRow(final Object key,
+                                    final Object value) {
+            return addRow(key, value, false, null);
         }
 
-        public TableBuilder addRow(final Object key,
-                                   final Object value,
-                                   final boolean showBlank) {
+        public TableBuilder2 addRow(final Object key,
+                                    final Object value,
+                                    final boolean showBlank) {
+            return addRow(key, value, showBlank, null);
+        }
+
+        public TableBuilder2 addRow(final Object key,
+                                    final Object value,
+                                    final boolean showBlank,
+                                    final SafeStyles safeStyles) {
             Objects.requireNonNull(key);
             final SafeHtml safeKey = objectToSafeHtml(key);
+            final String cellStyles = safeStyles != null
+                    ? safeStyles.asString()
+                    : "padding-right: 5px;";
 
             if (value != null) {
-                final SafeHtml safeValue = objectToSafeHtml(value);
+                final SafeHtml safeValue = value instanceof SafeHtml
+                        ? (SafeHtml) value
+                        : objectToSafeHtml(value);
 
                 if (safeValue.asString().length() > 0 || showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td>")
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td>")
@@ -247,7 +391,7 @@ public final class TooltipUtil {
             } else {
                 if (showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td>")
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td/></tr>");
@@ -258,18 +402,141 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
-            return buffer.appendHtmlConstant("<Table>")
+            buffer.appendHtmlConstant("</table>");
+
+            // Make the text selectable, e.g. for copy/pasting
+            return new SafeHtmlBuilder()
+                    .appendHtmlConstant("<div style=\"user-select: text;\">")
+                    .append(buffer.toSafeHtml())
+                    .appendHtmlConstant("</div>")
                     .toSafeHtml();
         }
+    }
 
-        private SafeHtml objectToSafeHtml(final Object value) {
-            SafeHtml safeHtml;
-            try {
-                safeHtml = (SafeHtml) value;
-            } catch (Exception e) {
-                safeHtml = SafeHtmlUtils.fromString(String.valueOf(value));
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class TableBuilder3 {
+
+        private final SafeHtmlBuilder buffer;
+
+        public TableBuilder3() {
+            buffer = new SafeHtmlBuilder()
+                    .appendHtmlConstant("<table>");
+        }
+
+        public TableBuilder3 addHeaderRow(final String col1) {
+            return addHeaderRow(col1, "", "");
+        }
+
+        public TableBuilder3 addHeaderRow(final String col1,
+                                          final String col2,
+                                          final String col3) {
+            return addHeaderRow(
+                    boldText(col1),
+                    boldText(col2),
+                    boldText(col3));
+        }
+
+        public TableBuilder3 addHeaderRow(final SafeHtml col1) {
+            return addHeaderRow(col1, BLANK, BLANK);
+        }
+
+        public TableBuilder3 addHeaderRow(final SafeHtml col1,
+                                          final SafeHtml col2,
+                                          final SafeHtml col3) {
+            buffer
+                    .appendHtmlConstant("<tr><th align=\"left\" style=\"padding-right: 8px;\">")
+                    .append(col1)
+                    .appendHtmlConstant("</th><th align=\"left\" style=\"padding-right: 8px;\">")
+                    .append(col2)
+                    .appendHtmlConstant("</th><th align=\"left\">")
+                    .append(col3)
+                    .appendHtmlConstant("</th></tr>");
+            return this;
+        }
+
+        public TableBuilder3 addBlankRow() {
+            buffer.appendHtmlConstant("<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>");
+            return this;
+        }
+
+//        public TableBuilder3 addRow(final Object key) {
+//            return addRow(key, null, true);
+//        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3) {
+            return addRow(col1, col2, col3, false, null);
+        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3,
+                                    final boolean showBlank) {
+            return addRow(col1, col2, col3, showBlank, null);
+        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3,
+                                    final boolean showBlank,
+                                    final SafeStyles safeStyles) {
+            Objects.requireNonNull(col1);
+            final SafeHtml safeCol1 = objectToSafeHtml(col1);
+
+            final SafeStylesBuilder cellStylesBuilder = new SafeStylesBuilder()
+                    .paddingRight(8, Unit.PX);
+
+            if (safeStyles != null) {
+                cellStylesBuilder.append(safeStyles);
             }
-            return safeHtml;
+
+            final String cellStyles = cellStylesBuilder.toSafeStyles().asString();
+
+            if (col2 != null || col3 != null) {
+                final SafeHtml safeCol2 = objectToSafeHtml(col2);
+                final SafeHtml safeCol3 = objectToSafeHtml(col3);
+
+                if (safeCol2.asString().length() > 0
+                        || safeCol3.asString().length() > 0
+                        || showBlank) {
+
+                    buffer
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
+                            .append(safeCol1)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles + "\">")
+                            .append(safeCol2)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles + "\">")
+                            .append(safeCol3)
+                            .appendHtmlConstant("</td></tr>");
+                }
+            } else {
+                if (showBlank) {
+                    buffer
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
+                            .append(safeCol1)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td/>") // empty col2
+                            .appendHtmlConstant("<td/>") // empty col3
+                            .appendHtmlConstant("</tr>");
+                }
+            }
+
+            return this;
+        }
+
+        public SafeHtml build() {
+            buffer.appendHtmlConstant("</table>");
+
+            // Make the text selectable, e.g. for copy/pasting
+            return new SafeHtmlBuilder()
+                    .appendHtmlConstant("<div style=\"user-select: text;\">")
+                    .append(buffer.toSafeHtml())
+                    .appendHtmlConstant("</div>")
+                    .toSafeHtml();
         }
     }
 }

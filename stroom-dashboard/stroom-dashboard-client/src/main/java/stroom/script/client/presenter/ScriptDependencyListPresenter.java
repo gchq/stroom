@@ -17,11 +17,6 @@
 
 package stroom.script.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -38,11 +33,18 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
         implements HasDocumentRead<ScriptDoc>, HasWrite<ScriptDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
     private final ButtonView addButton;

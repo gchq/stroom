@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 import stroom.docref.DocRef;
 
 class ActiveQuery {
+
     private final DocRef docRef;
     private final long creationTime;
 

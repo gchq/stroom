@@ -20,6 +20,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import org.junit.jupiter.api.Test;
@@ -29,21 +30,22 @@ import javax.xml.bind.JAXBException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXMLMarshallUtil {
+
     private static ProcessorFilterMarshaller marshaller;
 
     @Test
     void testSimple() {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
-        final QueryData queryData1 = new QueryData.Builder()
+        final QueryData queryData1 = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 999L)
                                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 7L)
                                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, 77L)
                                 .build())
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                                 .build())

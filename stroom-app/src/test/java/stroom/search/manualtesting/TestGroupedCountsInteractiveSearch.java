@@ -19,21 +19,15 @@
 package stroom.search.manualtesting;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
@@ -43,7 +37,13 @@ import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,12 +53,14 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 // This junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
 class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
     private static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";
@@ -88,13 +90,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void beforeTest() {
-
         LOGGER.info("Setting temp dir to {}", testDir.toAbsolutePath().toString());
-
-//        StroomProperties.setOverrideProperty(
-//                StroomProperties.STROOM_TEMP,
-//                testDir.toFile().getCanonicalPath(),
-//                StroomProperties.Source.TEST);
     }
 
     //    @Override
@@ -139,7 +135,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     @Disabled
     void testGroupedCounts() {
         //we want all data here
-        final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder();
         expressionBuilder.addTerm("UserId", ExpressionTerm.Condition.EQUALS, "*");
 
         final List<String> componentIds = Collections.singletonList("table-1");
@@ -170,8 +166,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                5,
-                5,
                 indexStore,
                 searchResponseCreatorManager);
 
@@ -186,38 +180,25 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
     private TableSettings createTableSettings(Boolean extractValues) {
 
-        final Field groupedUserId = new Field.Builder()
+        final Field groupedUserId = Field.builder()
                 .name("User")
                 .expression(ParamUtil.makeParam("User"))
                 .group(0)
                 .build();
 
-        final Field countField = new Field.Builder()
+        final Field countField = Field.builder()
                 .name("Count")
                 .expression("count()")
-                .format(new Format(Format.Type.NUMBER))
+                .format(Format.NUMBER)
                 .build();
 
         List<Field> fields = Arrays.asList(groupedUserId, countField);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
-        final TableSettings tableSettings = new TableSettings.Builder()
+        return TableSettings.builder()
                 .addFields(fields)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)
                 .build();
-
-        return tableSettings;
-    }
-
-
-    @Test
-    @Disabled
-    void tearDownAndSetupOnly() {
-        LOGGER.info("before() - commonTestControl.setup()");
-        commonTestControl.teardown();
-        commonTestControl.setup();
-
-        onAfterSetup();
     }
 }

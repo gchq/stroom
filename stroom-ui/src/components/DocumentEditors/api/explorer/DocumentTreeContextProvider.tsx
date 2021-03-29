@@ -56,7 +56,7 @@ const DocumentTreeContextProvider: React.FunctionComponent = ({ children }) => {
     ),
     renameDocument: React.useCallback(
       (docRef: DocRefType, name: string) => {
-        renameDocument(docRef, name).then(resultDocRef => {
+        renameDocument(docRef, name).then((resultDocRef) => {
           const newTree = updateItemInTree(
             documentTree,
             docRef.uuid,

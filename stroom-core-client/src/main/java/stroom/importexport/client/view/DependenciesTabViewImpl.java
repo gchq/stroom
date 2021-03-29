@@ -25,7 +25,7 @@ public class DependenciesTabViewImpl
     @UiField
     ResizeSimplePanel dataGrid;
 
-    private Widget widget;
+    private final Widget widget;
 
     @Inject
     public DependenciesTabViewImpl(final EventBus eventBus, final Binder binder) {
@@ -70,5 +70,6 @@ public class DependenciesTabViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, DependenciesTabViewImpl> {
+
     }
 }

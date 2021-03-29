@@ -5,10 +5,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 /**
  * Useful methods to create various {@link Predicate<String>}
@@ -33,7 +35,7 @@ public class StringPredicateFactory {
     // e.g. SQLScript or SomeSQLScript
     // Pattern also splits on a space to allow us to pre-split the string a bit
     private static final Pattern CAMEL_CASE_SPLIT_PATTERN = Pattern.compile(
-            "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| )");
+            "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| |\\.)");
     private static final Pattern CAMEL_CASE_ABBREVIATIONS_PATTERN = Pattern.compile("([A-Z]+)([A-Z][a-z0-9])");
 
     public static final String WILDCARD_STR = "*";
@@ -54,7 +56,7 @@ public class StringPredicateFactory {
     public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
                                                              final Function<T, String> valueExtractor) {
 
-        Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
+        final Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
         return toNullSafePredicate(false,
                 (T obj) -> {
                     final String valueUnderTest = valueExtractor.apply(obj);
@@ -71,7 +73,8 @@ public class StringPredicateFactory {
      * Null userInput results in an always true predicate.
      * Broadly it has five match modes:
      * Regex match: "/(wo|^)man" matches "a woman", "manly"
-     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
+     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not
+     * "the cat sat on there mat"
      * Starts with: "^prefix" matches "PrefixToSomeText" (case insensitive)
      * Ends with "suffix$" matches "TextWithSuffix" (case insensitive)
      * Exact match: "^sometext$" matches "sometext" (case insensitive)
@@ -96,7 +99,7 @@ public class StringPredicateFactory {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
-        }else {
+        } else {
             if (modifiedInput.startsWith(NOT_OPERATOR_STR)) {
                 modifiedInput = modifiedInput.substring(1);
                 LOGGER.debug("Input after NOT operator removal [{}]", modifiedInput);
@@ -117,7 +120,8 @@ public class StringPredicateFactory {
                 predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
             } else if (modifiedInput.endsWith("$")) {
                 // remove the $ marker char from the end
-                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0, modifiedInput.length() - 1));
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0,
+                        modifiedInput.length() - 1));
             } else if (modifiedInput.startsWith("^")) {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
@@ -158,7 +162,9 @@ public class StringPredicateFactory {
     public static Predicate<String> toLoggingPredicate(final Predicate<String> predicate) {
         return str -> {
             boolean result = predicate.test(str);
-            final ConsoleColour colour = result ? ConsoleColour.GREEN : ConsoleColour.RED;
+            final ConsoleColour colour = result
+                    ? ConsoleColour.GREEN
+                    : ConsoleColour.RED;
 
             String msg = ConsoleColour.colourise(LogUtil.message("String under test [{}], result: {}",
                     str, result), colour);
@@ -230,38 +236,48 @@ public class StringPredicateFactory {
 
         // We can use the separator based predicate for both camel case and separated
         // strings as long as we modify the camel case ones first.
+
         final Predicate<String> separatorPredicate = createSeparatedWordBoundaryPredicate(
                 userInput, separatorCharacterClass);
 
         return toNullSafePredicate(false, stringUnderTest -> {
-            final String cleanedString = cleanStringUnderTestForWordBoundaryMatching(stringUnderTest);
 
-            LOGGER.trace("cleaned stringUnderTest [{}] has word separators", stringUnderTest);
+            // First split the string being tested on the separators, then see if any of the
+            // parts are camel case and if so add spaces to split the camel case parts.
+            // e.g. stroom.someProp.maxFileSize => "stroom some prop max file size"
+            // This allows us to deal with strings that are a mix of delimited and camel case.
+            final String[] separatedParts = separatorCharacterClass.split(stringUnderTest);
+            final String cleanedString = Arrays.stream(separatedParts)
+                    .map(StringPredicateFactory::cleanStringForWordBoundaryMatching)
+                    .collect(Collectors.joining(" "));
+
+            LOGGER.trace("cleaned stringUnderTest [{}] => [{}] has word separators",
+                    stringUnderTest, cleanedString);
             return separatorPredicate.test(cleanedString);
         });
     }
 
-    private static String cleanStringUnderTestForWordBoundaryMatching(final String stringUnderTest) {
-        if (CAMEL_CASE_PATTERN.matcher(stringUnderTest).matches()) {
-            LOGGER.trace("stringUnderTest [{}] is (C|c)amelCase", stringUnderTest);
+    private static String cleanStringForWordBoundaryMatching(final String str) {
+        if (CAMEL_CASE_PATTERN.matcher(str).matches()) {
+            LOGGER.trace("str [{}] is (C|c)amelCase", str);
 
             // replace stuff like SQLScript with "SQL Script"
-            String separatedStringUnderTest = CAMEL_CASE_ABBREVIATIONS_PATTERN
-                    .matcher(stringUnderTest)
+            String separatedStr = CAMEL_CASE_ABBREVIATIONS_PATTERN
+                    .matcher(str)
                     .replaceAll("$1 $2");
 
-            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+            LOGGER.trace("separatedStr: [{}]", separatedStr);
 
             // Now split on camel case word boundaries (or spaces added above)
-            separatedStringUnderTest = CAMEL_CASE_SPLIT_PATTERN
-                    .matcher(separatedStringUnderTest)
+            separatedStr = CAMEL_CASE_SPLIT_PATTERN
+                    .matcher(separatedStr)
                     .replaceAll(" ");
 
-            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+            LOGGER.trace("separatedStr: [{}]", separatedStr);
 
-            return separatedStringUnderTest;
+            return separatedStr;
         } else {
-            return stringUnderTest;
+            return str;
         }
     }
 
@@ -273,12 +289,16 @@ public class StringPredicateFactory {
         // Has some uppercase so use word boundaries
         // An upper case letter means the start of a word
         // a lower case letter means the continuation of a word
+        // A digit after a letter means the start of a word
+        // A digit after a digit means the continuation of a word.
 
         final StringBuilder patternBuilder = new StringBuilder();
+        char lastChr = 0;
         for (int i = 0; i < userInput.length(); i++) {
             char chr = userInput.charAt(i);
 
-            if (Character.isUpperCase(chr)) {
+            if (Character.isUpperCase(chr)
+                    || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
                 if (i == 0) {
                     // First letter so is either preceded by ^ or by a separator
                     patternBuilder
@@ -303,6 +323,7 @@ public class StringPredicateFactory {
                 // Might be a special char so escape it
                 patternBuilder.append(Pattern.quote(String.valueOf(chr)));
             }
+            lastChr = chr;
         }
         final Pattern pattern = Pattern.compile(
                 patternBuilder.toString(), Pattern.CASE_INSENSITIVE);

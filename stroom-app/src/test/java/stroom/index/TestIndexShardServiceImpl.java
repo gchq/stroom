@@ -32,6 +32,7 @@ import stroom.util.date.DateUtil;
 import javax.inject.Inject;
 
 class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -43,10 +44,10 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexVolumeService indexVolumeService;
 
-    @Override
-    protected void onBefore() {
-        clean();
-    }
+//    @Override
+//    protected void onBefore() {
+//        clean();
+//    }
 
 //    /**
 //     * Test.
@@ -138,8 +139,8 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //
 //        final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
 //        // Order by partition name and key.
-//        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
-//        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
+//        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
+//        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
 //
 //        // Find data.
 //        final List<IndexShard> list = indexShardService.find(findIndexShardCriteria);

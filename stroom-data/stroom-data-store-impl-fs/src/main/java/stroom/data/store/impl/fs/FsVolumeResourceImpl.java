@@ -20,141 +20,141 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-// TODO : @66 add event logging
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class FsVolumeResourceImpl implements FsVolumeResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeResourceImpl.class);
 
     private final Provider<FsVolumeService> volumeServiceProvider;
-    private final DocumentEventLog documentEventLog;
-    private final SecurityContext securityContext;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
     FsVolumeResourceImpl(final Provider<FsVolumeService> volumeServiceProvider,
-                         final DocumentEventLog documentEventLog,
-                         final SecurityContext securityContext) {
+                         final Provider<DocumentEventLog> documentEventLogProvider) {
         this.volumeServiceProvider = volumeServiceProvider;
-        this.documentEventLog = documentEventLog;
-        this.securityContext = securityContext;
+        this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
-        // TODO : @66 fill out query
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query.Builder<Void> builder = Query.builder();
 
-        return securityContext.secureResult(() -> {
-            ResultPage<FsVolume> result = null;
+        StroomEventLoggingUtil.appendSelection(builder, criteria.getSelection());
 
-            try {
-                result = volumeServiceProvider.get().find(criteria);
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), result.getPageResponse(), null);
-            } catch (final RuntimeException e) {
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), null, e);
-                throw e;
-            }
+        final Query query = builder.build();
 
-            return result;
-        });
+        ResultPage<FsVolume> result = null;
+
+        try {
+            result = volumeServiceProvider.get().find(criteria);
+            documentEventLogProvider.get().search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    FsVolume.class.getSimpleName(),
+                    result.getPageResponse(),
+                    null);
+        } catch (final RuntimeException e) {
+            documentEventLogProvider.get().search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    FsVolume.class.getSimpleName(),
+                    null,
+                    e);
+            throw e;
+        }
+
+        return result;
     }
 
     @Override
     public FsVolume create(final FsVolume volume) {
-        return securityContext.secureResult(() -> {
-            FsVolume result;
+        FsVolume result;
 
-            try {
-                result = volumeServiceProvider.get().create(volume);
-                documentEventLog.create(result, null);
-            } catch (final RuntimeException e) {
-                documentEventLog.create(volume, e);
-                throw e;
-            }
+        try {
+            result = volumeServiceProvider.get().create(volume);
+            documentEventLogProvider.get().create(result, null);
+        } catch (final RuntimeException e) {
+            documentEventLogProvider.get().create(volume, e);
+            throw e;
+        }
 
-            return result;
-        });
+        return result;
     }
 
     @Override
-    public FsVolume read(final Integer id) {
-        return securityContext.secureResult(() -> {
-            FsVolume result;
+    public FsVolume fetch(final Integer id) {
+        FsVolume result;
 
-            try {
-                result = volumeServiceProvider.get().fetch(id);
-                documentEventLog.view(result, null);
-            } catch (final RuntimeException e) {
-                final FsVolume fsVolume = new FsVolume();
-                fsVolume.setId(id);
-                documentEventLog.view(fsVolume, e);
-                throw e;
-            }
+        try {
+            result = volumeServiceProvider.get().fetch(id);
+            documentEventLogProvider.get().view(result, null);
+        } catch (final RuntimeException e) {
+            final FsVolume fsVolume = new FsVolume();
+            fsVolume.setId(id);
+            documentEventLogProvider.get().view(fsVolume, e);
+            throw e;
+        }
 
-            return result;
-        });
+        return result;
     }
 
     @Override
     public FsVolume update(final Integer id, final FsVolume volume) {
-        return securityContext.secureResult(() -> {
-            FsVolume result = null;
+        FsVolume result = null;
 
-            if (volume.getId() == null) {
-                try {
-                    result = volumeServiceProvider.get().create(volume);
-                    documentEventLog.create(volume, null);
-                } catch (final RuntimeException e) {
-                    documentEventLog.create(volume, e);
-                    throw e;
-                }
-            } else {
-                try {
-                    result = volumeServiceProvider.get().update(volume);
-                    documentEventLog.update(volume, result, null);
-                } catch (final RuntimeException e) {
-                    documentEventLog.update(volume, result, e);
-                    throw e;
-                }
+        if (volume.getId() == null) {
+            try {
+                result = volumeServiceProvider.get().create(volume);
+                documentEventLogProvider.get().create(volume, null);
+            } catch (final RuntimeException e) {
+                documentEventLogProvider.get().create(volume, e);
+                throw e;
             }
+        } else {
+            try {
+                result = volumeServiceProvider.get().update(volume);
+                documentEventLogProvider.get().update(volume, result, null);
+            } catch (final RuntimeException e) {
+                documentEventLogProvider.get().update(volume, result, e);
+                throw e;
+            }
+        }
 
-            return result;
-        });
+        return result;
     }
 
     @Override
     public Boolean delete(final Integer id) {
-        return securityContext.secureResult(() -> {
-            final FsVolume fsVolume = new FsVolume();
-            fsVolume.setId(id);
+        final FsVolume fsVolume = new FsVolume();
+        fsVolume.setId(id);
 
-            try {
-                volumeServiceProvider.get().delete(id);
-                documentEventLog.delete(fsVolume, null);
-            } catch (final RuntimeException e) {
-                documentEventLog.delete(fsVolume, e);
-                throw e;
-            }
+        try {
+            volumeServiceProvider.get().delete(id);
+            documentEventLogProvider.get().delete(fsVolume, null);
+        } catch (final RuntimeException e) {
+            documentEventLogProvider.get().delete(fsVolume, e);
+            throw e;
+        }
 
-            return true;
-        });
+        return true;
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Flushing cache")
     public Boolean rescan() {
         volumeServiceProvider.get().flush();
         return true;

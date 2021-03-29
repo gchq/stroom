@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "f2f7fd2e-bcff-4892-b401-d81c9bbc0418",
+  "name" : "TEST_REFERENCE_DATA_EFF_DATE-EVENTS",
+  "version" : "94bfefef-631b-40a5-a7e1-3f7cce1b1075",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "bd7be478-632b-40fe-8fda-f578ec57e959",
+    "name" : "Common Test Event Pipeline"
+  }
+}

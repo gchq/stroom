@@ -36,14 +36,14 @@ function useSelectableReactTable<TItem>(
     (_: any, rowInfo: RowInfo | undefined) => {
       // We don't want to see a hover on a row without data.
       // If a row is selected we want to see the selected color.
-      let rowId =
+      const rowId =
         !!rowInfo && !!rowInfo.original ? getKey(rowInfo.original) : undefined;
       const isSelected =
-        selectedItems.findIndex(v => getKey(v) === rowId) !== -1;
+        selectedItems.findIndex((v) => getKey(v) === rowId) !== -1;
       const hasHighlight =
         !!highlightedItem && getKey(highlightedItem) === rowId;
       const hasData = rowId !== undefined;
-      let classNames = [];
+      const classNames = [];
       if (hasData) {
         classNames.push("hoverable-item");
         classNames.push("clickable-item");

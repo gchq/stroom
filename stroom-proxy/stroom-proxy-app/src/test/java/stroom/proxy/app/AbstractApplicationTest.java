@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.util.logging.LogUtil;
+
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -13,7 +15,6 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,17 +28,17 @@ public abstract class AbstractApplicationTest {
     private static final Config config;
 
     static {
-        config = loadYamlFile("proxy.yml");
+        config = loadYamlFile("proxy-dev.yml");
 
         // The key/trust store paths will not be available in travis so null them out
         config.getProxyConfig()
-            .getForwardStreamConfig()
-            .getForwardDestinations()
-            .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
+                .getForwardStreamConfig()
+                .getForwardDestinations()
+                .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
 
         config.getProxyConfig()
-            .getJerseyClientConfiguration()
-            .setTlsConfiguration(null);
+                .getJerseyClientConfiguration()
+                .setTlsConfiguration(null);
     }
 
 
@@ -47,24 +48,25 @@ public abstract class AbstractApplicationTest {
 
     private static Config readConfig(final Path configFile) {
         final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-            new FileConfigurationSourceProvider(),
-            new EnvironmentVariableSubstitutor(false));
+                new FileConfigurationSourceProvider(),
+                new EnvironmentVariableSubstitutor(false));
 
-        final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
+                new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
-            .create(
-                Config.class,
-                io.dropwizard.jersey.validation.Validators.newValidator(),
-                Jackson.newObjectMapper(),
-                "dw");
+                .create(
+                        Config.class,
+                        io.dropwizard.jersey.validation.Validators.newValidator(),
+                        Jackson.newObjectMapper(),
+                        "dw");
 
         Config config = null;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException | IOException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
-                configFile.toAbsolutePath()), e);
+                    configFile.toAbsolutePath()), e);
         }
 
         return config;

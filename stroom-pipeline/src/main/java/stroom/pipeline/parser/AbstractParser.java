@@ -16,10 +16,6 @@
 
 package stroom.pipeline.parser;
 
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -42,7 +38,11 @@ import stroom.pipeline.filter.XMLFilterForkFactory;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.xml.transform.TransformerException;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,8 +50,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.transform.TransformerException;
 
 public abstract class AbstractParser extends AbstractElement implements TakesInput, TakesReader, Target, HasTargets {
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
 

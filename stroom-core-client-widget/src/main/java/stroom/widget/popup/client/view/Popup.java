@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 
 public interface Popup {
+
     void setContent(Widget widget);
 
     void setPopupPosition(int left, int top);

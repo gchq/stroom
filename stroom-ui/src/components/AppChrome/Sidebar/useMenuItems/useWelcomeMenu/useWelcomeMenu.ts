@@ -2,7 +2,7 @@ import * as React from "react";
 import { SubMenuProps } from "../types";
 import { MenuItemType } from "../../MenuItem/types";
 
-const useWelcomeMenu = ({
+export const useWelcomeMenu = ({
   navigateApp: {
     nav: { goToWelcome },
   },
@@ -17,5 +17,3 @@ const useWelcomeMenu = ({
     }),
     [goToWelcome],
   );
-
-export default useWelcomeMenu;
