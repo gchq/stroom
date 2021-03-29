@@ -34,15 +34,15 @@ export interface ContentProps {
 }
 
 export interface PromptProps extends ContentProps {
-  type: PromptType;
+  type?: PromptType;
 }
 
-interface Props {
+export interface Props {
   promptProps: PromptProps;
-  onCloseDialog: () => void;
+  onCloseDialog?: () => void;
 }
 
-interface ConfirmProps {
+export interface ConfirmProps {
   promptProps: PromptProps;
   okCancelProps: OkCancelProps;
 }
@@ -117,7 +117,9 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
 
 export const Prompt: React.FunctionComponent<Props> = ({
   promptProps,
-  onCloseDialog,
+  onCloseDialog = () => {
+    return;
+  },
 }) => {
   return (
     <Dialog>
