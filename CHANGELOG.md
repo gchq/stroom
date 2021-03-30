@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2138** : Fixed error thrown when updating a property due to the property being updated twice as a result of new event logging code. 
+
 * Issue **#2150** : Added `topMenuTextColour` property to allow the top menu text colour to be changed. Renamed the `backgroundColor` property to `backgroundColour` for consistency. 
 
 * Issue **#2152** : Session list now only shows user authenticated sessions.
