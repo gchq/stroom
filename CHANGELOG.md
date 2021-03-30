@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.98] - 2021-03-30
+
 * Issue **#2138** : Fixed error thrown when updating a property due to the property being updated twice as a result of new event logging code. 
 
 * Issue **#2150** : Added `topMenuTextColour` property to allow the top menu text colour to be changed. Renamed the `backgroundColor` property to `backgroundColour` for consistency. 
@@ -3232,7 +3235,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.97...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.98...HEAD
+[v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
 [v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
 [v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
 [v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
