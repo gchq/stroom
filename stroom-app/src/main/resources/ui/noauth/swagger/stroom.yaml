@@ -7609,9 +7609,6 @@ components:
           type: string
         nodeName:
           type: string
-        oldIndexId:
-          type: integer
-          format: int32
         partition:
           type: string
         partitionFromTime:
@@ -10380,7 +10377,7 @@ components:
       properties:
         backgroundAttachment:
           type: string
-        backgroundColor:
+        backgroundColour:
           type: string
         backgroundImage:
           type: string
@@ -10391,6 +10388,8 @@ components:
         backgroundRepeat:
           type: string
         labelColours:
+          type: string
+        topMenuTextColour:
           type: string
         tubeOpacity:
           type: string

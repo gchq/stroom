@@ -15,13 +15,14 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder({
         "backgroundAttachment",
-        "backgroundColor",
+        "backgroundColour",
         "backgroundImage",
         "backgroundPosition",
         "backgroundRepeat",
         "backgroundOpacity",
         "tubeVisible",
         "tubeOpacity",
+        "topMenuTextColour",
         "labelColours"})
 @JsonInclude(Include.NON_NULL)
 public class ThemeConfig extends AbstractConfig {
@@ -32,7 +33,7 @@ public class ThemeConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundColor;
+    private String backgroundColour;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
@@ -59,6 +60,10 @@ public class ThemeConfig extends AbstractConfig {
     private String tubeOpacity;
 
     @JsonProperty
+    @JsonPropertyDescription("GUI")
+    private String topMenuTextColour;
+
+    @JsonProperty
     @JsonPropertyDescription("A comma separated list of KV pairs to provide colours for labels.")
     private String labelColours;
 
@@ -68,22 +73,24 @@ public class ThemeConfig extends AbstractConfig {
 
     @JsonCreator
     public ThemeConfig(@JsonProperty("backgroundAttachment") final String backgroundAttachment,
-                       @JsonProperty("backgroundColor") final String backgroundColor,
+                       @JsonProperty("backgroundColour") final String backgroundColour,
                        @JsonProperty("backgroundImage") final String backgroundImage,
                        @JsonProperty("backgroundPosition") final String backgroundPosition,
                        @JsonProperty("backgroundRepeat") final String backgroundRepeat,
                        @JsonProperty("backgroundOpacity") final String backgroundOpacity,
                        @JsonProperty("tubeVisible") final String tubeVisible,
                        @JsonProperty("tubeOpacity") final String tubeOpacity,
+                       @JsonProperty("topMenuTextColour") final String topMenuTextColour,
                        @JsonProperty("labelColours") final String labelColours) {
         this.backgroundAttachment = backgroundAttachment;
-        this.backgroundColor = backgroundColor;
+        this.backgroundColour = backgroundColour;
         this.backgroundImage = backgroundImage;
         this.backgroundPosition = backgroundPosition;
         this.backgroundRepeat = backgroundRepeat;
         this.backgroundOpacity = backgroundOpacity;
         this.tubeVisible = tubeVisible;
         this.tubeOpacity = tubeOpacity;
+        this.topMenuTextColour = topMenuTextColour;
         this.labelColours = labelColours;
 
         setDefaults();
@@ -93,8 +100,8 @@ public class ThemeConfig extends AbstractConfig {
         if (backgroundAttachment == null) {
             backgroundAttachment = "scroll";
         }
-        if (backgroundColor == null) {
-            backgroundColor = "#1E88E5";
+        if (backgroundColour == null) {
+            backgroundColour = "#1E88E5";
         }
         if (backgroundImage == null) {
             backgroundImage = "none";
@@ -114,6 +121,9 @@ public class ThemeConfig extends AbstractConfig {
         if (tubeOpacity == null) {
             tubeOpacity = "0.6";
         }
+        if (topMenuTextColour == null) {
+            topMenuTextColour = "#FFF";
+        }
         if (labelColours == null) {
             labelColours = "TEST1=#FF0000,TEST2=#FF9900";
         }
@@ -127,12 +137,12 @@ public class ThemeConfig extends AbstractConfig {
         this.backgroundAttachment = backgroundAttachment;
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
+    public String getBackgroundColour() {
+        return backgroundColour;
     }
 
-    public void setBackgroundColor(final String backgroundColor) {
-        this.backgroundColor = backgroundColor;
+    public void setBackgroundColour(final String backgroundColour) {
+        this.backgroundColour = backgroundColour;
     }
 
     public String getBackgroundImage() {
@@ -183,6 +193,14 @@ public class ThemeConfig extends AbstractConfig {
         this.tubeOpacity = tubeOpacity;
     }
 
+    public String getTopMenuTextColour() {
+        return topMenuTextColour;
+    }
+
+    public void setTopMenuTextColour(final String topMenuTextColour) {
+        this.topMenuTextColour = topMenuTextColour;
+    }
+
     public String getLabelColours() {
         return labelColours;
     }
@@ -195,13 +213,14 @@ public class ThemeConfig extends AbstractConfig {
     public String toString() {
         return "ThemeConfig{" +
                 "backgroundAttachment='" + backgroundAttachment + '\'' +
-                ", backgroundColor='" + backgroundColor + '\'' +
+                ", backgroundColour='" + backgroundColour + '\'' +
                 ", backgroundImage='" + backgroundImage + '\'' +
                 ", backgroundPosition='" + backgroundPosition + '\'' +
                 ", backgroundRepeat='" + backgroundRepeat + '\'' +
                 ", backgroundOpacity='" + backgroundOpacity + '\'' +
                 ", tubeVisible='" + tubeVisible + '\'' +
                 ", tubeOpacity='" + tubeOpacity + '\'' +
+                ", topMenuTextColour='" + topMenuTextColour + '\'' +
                 ", labelColours='" + labelColours + '\'' +
                 '}';
     }
@@ -217,26 +236,28 @@ public class ThemeConfig extends AbstractConfig {
         }
         final ThemeConfig that = (ThemeConfig) o;
         return Objects.equals(backgroundAttachment, that.backgroundAttachment) &&
-                Objects.equals(backgroundColor, that.backgroundColor) &&
+                Objects.equals(backgroundColour, that.backgroundColour) &&
                 Objects.equals(backgroundImage, that.backgroundImage) &&
                 Objects.equals(backgroundPosition, that.backgroundPosition) &&
                 Objects.equals(backgroundRepeat, that.backgroundRepeat) &&
                 Objects.equals(backgroundOpacity, that.backgroundOpacity) &&
                 Objects.equals(tubeVisible, that.tubeVisible) &&
                 Objects.equals(tubeOpacity, that.tubeOpacity) &&
+                Objects.equals(topMenuTextColour, that.topMenuTextColour) &&
                 Objects.equals(labelColours, that.labelColours);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(backgroundAttachment,
-                backgroundColor,
+                backgroundColour,
                 backgroundImage,
                 backgroundPosition,
                 backgroundRepeat,
                 backgroundOpacity,
                 tubeVisible,
                 tubeOpacity,
+                topMenuTextColour,
                 labelColours);
     }
 }
