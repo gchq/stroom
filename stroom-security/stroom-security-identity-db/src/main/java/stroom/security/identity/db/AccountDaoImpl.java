@@ -513,6 +513,28 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
+    public void resetPassword(final String userId, final String newPassword) {
+        final String newPasswordHash = PasswordHashUtil.hash(newPassword);
+
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
+                .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                        System.currentTimeMillis())
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.INACTIVE, false)
+                .set(ACCOUNT.ENABLED, true)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .execute());
+
+        if (count == 0) {
+            throw new NoSuchUserException("Cannot reset this password because this user does not exist!");
+        }
+    }
+
+    @Override
     public Boolean needsPasswordChange(final String userId,
                                        final Duration mandatoryPasswordChangeDuration,
                                        final boolean forcePasswordChangeOnFirstLogin) {

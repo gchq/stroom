@@ -31,6 +31,8 @@ public interface AccountDao {
 
     void changePassword(String userId, String newPassword);
 
+    void resetPassword(String userId, String newPassword);
+
     Boolean needsPasswordChange(String userId,
                                 Duration mandatoryPasswordChangeDuration,
                                 boolean forcePasswordChangeOnFirstLogin);
