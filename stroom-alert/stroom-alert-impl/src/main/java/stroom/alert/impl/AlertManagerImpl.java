@@ -112,13 +112,7 @@ public class AlertManagerImpl implements AlertManager {
     }
 
     private final List<String> findRulesPaths() {
-        String commaDelimitedRulesRoots = alertConfig.getRulesFolderList();
-        if (commaDelimitedRulesRoots == null) {
-            return List.of();
-        }
-
-        String[] allRulesRoots = commaDelimitedRulesRoots.split(",");
-        return Arrays.stream(allRulesRoots).map(s -> s.trim()).collect(Collectors.toList());
+        return alertConfig.getRulesFolderList();
     }
 
     private DocRef getFolderForPath(String folderPath) {

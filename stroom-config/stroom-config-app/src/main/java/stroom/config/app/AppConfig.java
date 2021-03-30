@@ -101,8 +101,8 @@ public class AppConfig extends AbstractConfig {
     private boolean haltBootOnConfigValidationFailure = true;
 
     private ActivityConfig activityConfig = new ActivityConfig();
-    private AnnotationConfig annotationConfig = new AnnotationConfig();
     private AlertConfig alertConfig = new AlertConfig();
+    private AnnotationConfig annotationConfig = new AnnotationConfig();
     private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
@@ -175,6 +175,7 @@ public class AppConfig extends AbstractConfig {
     }
 
     @SuppressWarnings("unused")
+    @JsonProperty(PROP_NAME_ALERTING)
     public void setAlertConfig(final AlertConfig alertConfig) {
         this.alertConfig = alertConfig;
     }
