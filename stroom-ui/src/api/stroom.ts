@@ -3140,12 +3140,13 @@ export interface TextRange {
 
 export interface ThemeConfig {
   backgroundAttachment?: string;
-  backgroundColor?: string;
+  backgroundColour?: string;
   backgroundImage?: string;
   backgroundOpacity?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
   labelColours?: string;
+  topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
 }

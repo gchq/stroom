@@ -14584,7 +14584,7 @@
           "backgroundAttachment" : {
             "type" : "string"
           },
-          "backgroundColor" : {
+          "backgroundColour" : {
             "type" : "string"
           },
           "backgroundImage" : {
@@ -14600,6 +14600,9 @@
             "type" : "string"
           },
           "labelColours" : {
+            "type" : "string"
+          },
+          "topMenuTextColour" : {
             "type" : "string"
           },
           "tubeOpacity" : {

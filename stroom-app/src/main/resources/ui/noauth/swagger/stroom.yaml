@@ -10377,7 +10377,7 @@ components:
       properties:
         backgroundAttachment:
           type: string
-        backgroundColor:
+        backgroundColour:
           type: string
         backgroundImage:
           type: string
@@ -10388,6 +10388,8 @@ components:
         backgroundRepeat:
           type: string
         labelColours:
+          type: string
+        topMenuTextColour:
           type: string
         tubeOpacity:
           type: string

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2150** : Added `topMenuTextColour` property to allow the top menu text colour to be changed. Renamed the `backgroundColor` property to `backgroundColour` for consistency. 
+
 * Issue **#2152** : Session list now only shows user authenticated sessions.
 
 * Issue **#2149** : Fixed index volume and index shard migration.
