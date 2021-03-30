@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2149** : Fixed index volume and index shard migration.
+
 
 ## [v7.0-beta.97] - 2021-03-26
 
