@@ -96,11 +96,11 @@ class SolrSearchStoreFactory implements StoreFactory {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
-        // Get the search.
-        final Query query = searchRequest.getQuery();
-
         // Replace expression parameters.
-        ExpressionUtil.replaceExpressionParameters(searchRequest);
+        final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+
+        // Get the search.
+        final Query query = modifiedSearchRequest.getQuery();
 
         // Load the index.
         final CachedSolrIndex index = securityContext.useAsReadResult(() -> solrIndexCache.get(query.getDataSource()));
@@ -109,26 +109,27 @@ class SolrSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(
                 index,
                 query.getExpression(),
-                searchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeLocale(),
                 nowEpochMilli);
 
         // Create a coprocessor settings list.
-        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory.createSettings(searchRequest);
+        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
+                .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
-                searchRequest.getKey().getUuid(),
+                modifiedSearchRequest.getKey().getUuid(),
                 coprocessorSettingsList,
-                searchRequest.getQuery().getParams());
+                modifiedSearchRequest.getQuery().getParams());
 
         // Create an asynchronous search task.
-        final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
+        final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
         final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
-                searchRequest.getKey(),
+                modifiedSearchRequest.getKey(),
                 searchName,
                 query,
                 coprocessorSettingsList,
-                searchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeLocale(),
                 nowEpochMilli);
 
         // Create the search result collector.

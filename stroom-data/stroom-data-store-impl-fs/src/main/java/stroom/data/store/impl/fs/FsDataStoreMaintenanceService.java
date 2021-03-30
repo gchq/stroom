@@ -249,7 +249,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         try {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
-            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamTypeName);
+            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, streamTypeName);
 
             final String fromDateString = parts[1] + "-" + parts[2] + "-" + parts[3];
             final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);

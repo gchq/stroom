@@ -3,6 +3,8 @@ package stroom.index.impl.db;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;
@@ -14,6 +16,7 @@ import com.google.inject.Provides;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.Mockito.mock;
@@ -67,6 +70,21 @@ class TestModule extends AbstractModule {
             @Override
             public String[] getWords(final DocRef dictionaryRef) {
                 return null;
+            }
+        };
+    }
+
+    @Provides
+    DocRefInfoService docRefInfoService() {
+        return new DocRefInfoService() {
+            @Override
+            public Optional<DocRefInfo> info(final DocRef docRef) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<String> name(final DocRef docRef) {
+                return Optional.ofNullable(docRef.getName());
             }
         };
     }

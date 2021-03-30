@@ -179,14 +179,19 @@ public class DataFetcher {
     }
 
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
+        LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
+                fetchDataRequest.getSourceLocation().getId(),
+                fetchDataRequest.getSourceLocation().getPartNo(),
+                fetchDataRequest.getSourceLocation().getSegmentNo()));
+
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
             Set<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;
-            String eventId = String.valueOf(fetchDataRequest.getSourceLocation().getId());
             Meta meta = null;
             final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
+
 
             // Get the stream source.
             try (final Source source = streamStore.openSource(
@@ -196,32 +201,28 @@ public class DataFetcher {
                 // If we have no stream then let the client know it has been
                 // deleted.
                 if (source == null) {
-                    final String msg = "## Stream has been deleted ## ";
-                    final Count<Long> totalItemCount = new Count<>(0L, true);
-                    final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
-                    final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
-
-                    return new FetchDataResult(
+                    return createEmptyResult(
+                            fetchDataRequest,
                             feedName,
                             null,
-                            null,
                             sourceLocation,
-                            itemRange,
-                            totalItemCount,
-                            totalCharCount,
-                            null,
-                            null,
-                            msg,
-                            fetchDataRequest.isShowAsHtml(),
-                            null);  // Don't really know segmented state as stream is gone
+                            "## Stream has been deleted ## ");
                 }
 
                 meta = source.getMeta();
                 feedName = meta.getFeedName();
                 streamTypeName = meta.getTypeName();
-                // See if a specific child stream type was requested
-//                String childStreamTypeName = sourceLocation.getOptChildType()
-//                        .orElse(null);
+
+//                if (sourceLocation.getPartNo() < 0 || sourceLocation.getSegmentNo() < 0) {
+                if (sourceLocation.getPartNo() < 0) {
+                    // Handle cases during stepping when we have not yet stepped
+                    return createEmptyResult(
+                            fetchDataRequest,
+                            feedName,
+                            streamTypeName,
+                            sourceLocation,
+                            "## No data ##");
+                }
 
                 long partNo = fetchDataRequest.getSourceLocation().getPartNo();
                 partCount = source.count();
@@ -235,18 +236,22 @@ public class DataFetcher {
                     // Find out which child stream types are available.
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
-                    String requestedChildStreamType = sourceLocation.getOptChildType().orElse(null);
+                    final String requestedChildStreamType = sourceLocation.getOptChildType()
+                            .orElse(null);
                     try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
                             requestedChildStreamType)) {
 
-                        // Get the event id.
-                        eventId = String.valueOf(meta.getId());
-                        if (partCount > 1) {
-                            eventId += ":" + partNo;
-                        }
-//                        final OffsetRange pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
-                        if (sourceLocation.getOptSegmentNo().isPresent()) {
-                            eventId = ":" + sourceLocation.getOptSegmentNo().getAsLong();
+                        final boolean isSegmented = segmentInputStream.count() > 1;
+
+                        // segment no doesn't matter for non-segmented data
+                        if (isSegmented && sourceLocation.getSegmentNo() < 0) {
+                            // Handle cases during stepping when we have not yet stepped
+                            return createEmptyResult(
+                                    fetchDataRequest,
+                                    feedName,
+                                    streamTypeName,
+                                    sourceLocation,
+                                    "## No data ##");
                         }
 
                         // If this is an error stream and the UI is requesting markers then
@@ -265,10 +270,7 @@ public class DataFetcher {
                                 feedName,
                                 streamTypeName,
                                 segmentInputStream,
-//                                pageRange,
                                 availableChildStreamTypes,
-//                                fetchDataRequest.getPipeline(),
-//                                fetchDataRequest.isShowAsHtml(),
                                 source,
                                 inputStreamProvider,
                                 fetchDataRequest);
@@ -290,7 +292,33 @@ public class DataFetcher {
 
                 throw new ViewDataException(sourceLocation, e.getMessage());
             }
+
         });
+    }
+
+    @NotNull
+    private FetchDataResult createEmptyResult(final FetchDataRequest fetchDataRequest,
+                                              final String feedName,
+                                              final String streamTypeName,
+                                              final SourceLocation sourceLocation,
+                                              final String message) {
+        final Count<Long> totalItemCount = new Count<>(0L, true);
+        final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
+        final Count<Long> totalCharCount = new Count<>((long) message.length(), true);
+
+        return new FetchDataResult(
+                feedName,
+                streamTypeName,
+                null,
+                sourceLocation,
+                itemRange,
+                totalItemCount,
+                totalCharCount,
+                null,
+                null,
+                message,
+                fetchDataRequest.isShowAsHtml(),
+                null);  // Don't really know segmented state as stream is gone
     }
 
     private FetchMarkerResult createErrorMarkerResult(final String feedName,

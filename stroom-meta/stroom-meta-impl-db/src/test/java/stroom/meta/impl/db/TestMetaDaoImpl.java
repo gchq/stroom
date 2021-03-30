@@ -128,8 +128,8 @@ class TestMetaDaoImpl {
                 .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.find(new FindMetaCriteria(expression));
         assertThat(resultPage.size())
@@ -160,10 +160,10 @@ class TestMetaDaoImpl {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, PROCESSED_STREAM_TYPE_NAME)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, PROCESSED_STREAM_TYPE_NAME)
                 .addTerm(MetaFields.REC_WRITE.getName(), Condition.EQUALS, "0")
                 .addTerm(MetaFields.REC_READ.getName(), Condition.GREATER_THAN_OR_EQUAL_TO, "0")
                 .build();
@@ -200,10 +200,10 @@ class TestMetaDaoImpl {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.findReprocess(new FindMetaCriteria(expression));
         assertThat(resultPage.size())
@@ -236,8 +236,8 @@ class TestMetaDaoImpl {
                 .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(expression));
         assertThat(selectionSummary.getItemCount())
@@ -270,8 +270,8 @@ class TestMetaDaoImpl {
                 .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(expression));
         assertThat(selectionSummary.getItemCount())

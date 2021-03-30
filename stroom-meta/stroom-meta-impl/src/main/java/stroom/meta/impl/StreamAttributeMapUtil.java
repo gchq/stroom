@@ -36,11 +36,11 @@ class StreamAttributeMapUtil {
                 map.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                map.put(MetaFields.TYPE_NAME.getName(), meta.getTypeName());
+                map.put(MetaFields.TYPE.getName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                map.put(MetaFields.FEED_NAME.getName(), feedName);
+                map.put(MetaFields.FEED.getName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
             if (pipelineUuid != null) {

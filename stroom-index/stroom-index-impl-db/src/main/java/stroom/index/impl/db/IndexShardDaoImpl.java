@@ -50,6 +50,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
         indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
         indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
+        indexShard.setOldIndexId(record.get(INDEX_SHARD.OLD_INDEX_ID));
         indexShard.setIndexUuid(record.get(INDEX_SHARD.INDEX_UUID));
         return indexShard;
     };

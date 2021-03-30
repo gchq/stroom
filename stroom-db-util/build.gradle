@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-explorer:stroom-collection-api')
+    compile project(':stroom-explorer:stroom-docrefinfo-api')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-util')

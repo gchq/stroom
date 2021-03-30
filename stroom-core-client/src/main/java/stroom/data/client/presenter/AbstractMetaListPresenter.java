@@ -335,7 +335,7 @@ public abstract class AbstractMetaListPresenter
                                 .map(MetaRow::getMeta)
                                 .map(Meta::getFeedName)
                                 .orElse(""))
-                        .withSorting(MetaFields.FEED_NAME)
+                        .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
                 ColumnSizeConstants.BIG_COL);
@@ -348,7 +348,7 @@ public abstract class AbstractMetaListPresenter
                                 .map(MetaRow::getMeta)
                                 .map(Meta::getTypeName)
                                 .orElse(""))
-                        .withSorting(MetaFields.TYPE_NAME)
+                        .withSorting(MetaFields.TYPE)
                         .build(),
                 "Type",
                 80);

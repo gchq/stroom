@@ -5,9 +5,8 @@ import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.test.common.util.db.DbTestUtil;
 
-import junit.framework.TestCase;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,14 +20,15 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-@Ignore("Temporarily ignore for auth migration")
+@Disabled("Temporarily ignore for auth migration")
 public class AccountDaoIT extends DatabaseIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountDaoIT.class);
 
     @Test
-    public void testNewButInactiveUserIsDisabled() {
+    void testNewButInactiveUserIsDisabled() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -60,12 +60,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers() {
+    void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -103,12 +103,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testReactivatedDateIsUsedInsteadOfLastLogin() {
+    void testReactivatedDateIsUsedInsteadOfLastLogin() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -142,12 +142,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testInactiveUserIsDeactivated() {
+    void testInactiveUserIsDeactivated() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -183,12 +183,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testLockedUserIsNeverMadeInactive() {
+    void testLockedUserIsNeverMadeInactive() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -213,12 +213,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testDisabledUserIsNeverMadeInactive() {
+    void testDisabledUserIsNeverMadeInactive() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -244,12 +244,12 @@ public class AccountDaoIT extends DatabaseIT {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testNeverExpiresUser() {
+    void testNeverExpiresUser() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -275,12 +275,12 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(accountDao.get(user02).get().isEnabled()).isTrue();
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 
     @Test
-    public void testNeedsPasswordChange() {
+    void testNeedsPasswordChange() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -319,7 +319,7 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(shouldNeedChangeBoundaryCase).isFalse();
         } catch (SQLException e) {
             e.printStackTrace();
-            TestCase.fail();
+            fail(e.getMessage());
         }
     }
 

@@ -13,9 +13,9 @@ import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenService;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.cert.CertificateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.net.URI;
 import java.util.Optional;
@@ -30,7 +30,7 @@ import javax.ws.rs.core.UriBuilder;
 
 class AuthenticationServiceImpl implements AuthenticationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final long MIN_CREDENTIAL_CONFIRMATION_INTERVAL = 600000;
     private static final String AUTH_STATE = "AUTH_STATE";
@@ -64,122 +64,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
-//    @Override
-//    public Response.ResponseBuilder handleAuthenticationRequest(
-//            final String sessionId,
-//            final String nonce,
-//            final String state,
-//            final String redirectUri,
-//            final String clientId,
-//            final String prompt,
-//            final Optional<String> optionalCn) {
-//
-//        boolean isAuthenticated = false;
-//
-//        LOGGER.info("Received an AuthenticationRequest for session " + sessionId);
-//
-//        // We need to make sure our understanding of the session is correct
-//        Optional<Session> optionalSession = sessionManager.get(sessionId);
-//        if (optionalSession.isPresent()) {
-//            // If we have an authenticated session then the user is logged in
-//            isAuthenticated = optionalSession.get().isAuthenticated();
-//        } else {
-//            // If we've not created a session then we need to create a new, unauthenticated one
-//            optionalSession = Optional.of(sessionManager.create(sessionId));
-//            optionalSession.get().setAuthenticated(false);
-//        }
-//
-//
-//        // We need to make sure we record this relying party against this session
-//        RelyingParty relyingParty = optionalSession.get().getOrCreateRelyingParty(clientId);
-//        relyingParty.setNonce(nonce);
-//        relyingParty.setState(state);
-//        relyingParty.setRedirectUrl(redirectUri);
-//
-//
-//        // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
-//        Response.ResponseBuilder responseBuilder;
-////        Optional<String> optionalCn = certificateManager.getCertificate(httpServletRequest);
-//
-//        // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-//        boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
-//        boolean loginUsingCertificate = optionalCn.isPresent() && !requireLoginPrompt;
-//        if (requireLoginPrompt) {
-//            LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
-//        }
-//
-//
-//        // Check for an authenticated session
-//        if (isAuthenticated) {
-//            LOGGER.debug("User has a session, sending them to the RP");
-//            String accessCode = SessionManager.createAccessCode();
-//            relyingParty.setAccessCode(accessCode);
-//            String subject = optionalSession.get().getUserEmail();
-//            String idToken = createIdToken(subject, nonce, state, sessionId);
-//            relyingParty.setIdToken(idToken);
-//            responseBuilder = seeOther(buildRedirectionUrl(redirectUri, accessCode, state));
-//        }
-//        // Check for a certificate
-//        else if (loginUsingCertificate) {
-//            String cn = optionalCn.get();
-//            LOGGER.debug("User has presented a certificate: {}", cn);
-//            Optional<String> optionalSubject = getIdFromCertificate(cn);
-//
-//            if (!optionalSubject.isPresent()) {
-//                String errorMessage = "User is presenting a certificate but this certificate cannot be processed!";
-//                LOGGER.error(errorMessage);
-//                responseBuilder = status(Response.Status.FORBIDDEN).entity(errorMessage);
-//            } else {
-//                String subject = optionalSubject.get();
-//                if (!accountDao.exists(subject)) {
-//                    LOGGER.debug("The user identified by the certificate does not exist in the auth database.");
-//                    // There's no user so we can't let them have access.
-//                    responseBuilder = seeOther(UriBuilder.fromUri(this.config.getUnauthorisedUrl()).build());
-//                } else {
-//                    User user = accountDao.get(subject).get();
-//                    if (user.getState().equals(User.UserState.ENABLED.getStateText())) {
-//                        LOGGER.info("Logging user in using DN with subject {}", subject);
-//                        optionalSession.get().setAuthenticated(true);
-//                        optionalSession.get().setUserEmail(subject);
-//                        String accessCode = SessionManager.createAccessCode();
-//                        relyingParty.setAccessCode(accessCode);
-//                        String idToken = createIdToken(subject, nonce, state, sessionId);
-//                        relyingParty.setIdToken(idToken);
-//                        responseBuilder = seeOther(buildRedirectionUrl(redirectUri, accessCode, state));
-//                        stroomEventLoggingService.createAction("Logon", "User logged in successfully");
-//                        // Reset last access, login failures, etc...
-//                        accountDao.recordSuccessfulLogin(subject);
-//                    } else {
-//                        LOGGER.debug("The user identified by the certificate is not enabled!");
-//                        stroomEventLoggingService.createAction(
-//                                "Logon",
-//                                "User attempted to log in but failed because the account is " +
-//                                User.UserState.LOCKED.getStateText() + ".");
-//                        String failureUrl = this.config.getUnauthorisedUrl() + "?reason=account_locked";
-//                        responseBuilder = seeOther(UriBuilder.fromUri(failureUrl).build());
-//                    }
-//                }
-//
-//            }
-//        }
-//        // There's no session and there's no certificate so we'll send them to the login page
-//        else {
-//            LOGGER.debug("User has no session and no certificate - sending them to login.");
-//            final UriBuilder uriBuilder = UriBuilder.fromUri(this.config.getLoginUrl())
-//                    .queryParam("error", "login_required")
-//                    .queryParam(OIDC.STATE, state)
-//                    .queryParam(OIDC.CLIENT_ID, clientId)
-//                    .queryParam(OIDC.REDIRECT_URI, redirectUri);
-//            responseBuilder = seeOther(uriBuilder.build());
-//        }
-//
-//        return responseBuilder;
-//    }
-
-//    private void setSessionUser(final HttpServletRequest request, final User user) {
-//        request.getSession(true).setAttribute(AUTHENTICATED_ACCOUNT, user);
-//    }
-
     public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
         final AuthStateImpl authState = getAuthState(request);
         String userId = null;
@@ -196,65 +80,79 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private AuthStateImpl getAuthState(final HttpServletRequest request) {
-        final HttpSession session = request.getSession(false);
-        if (session != null) {
-            return (AuthStateImpl) session.getAttribute(AUTH_STATE);
+        if (request == null) {
+            return null;
         }
-        return null;
+
+        final HttpSession session = request.getSession(false);
+        if (session == null) {
+            return null;
+        }
+
+        return (AuthStateImpl) session.getAttribute(AUTH_STATE);
     }
 
     @Override
     public Optional<AuthState> currentAuthState(final HttpServletRequest request) {
+        LOGGER.debug("currentAuthState");
         AuthStateImpl authState = getAuthState(request);
 
         // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
         if (authState != null) {
+            LOGGER.debug("Has current auth state");
             return Optional.of(authState);
 
+        } else if (config.isAllowCertificateAuthentication()) {
+            LOGGER.debug("Attempting login with certificate");
+            try {
+                loginWithCertificate(request);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage());
+            }
         } else {
-            loginWithCertificate(request);
+            LOGGER.debug("Certificate authentication is disabled");
         }
 
         return Optional.ofNullable(getAuthState(request));
     }
 
     private void loginWithCertificate(final HttpServletRequest request) {
-        String cn = null;
-        String dn = CertificateUtil.extractCertificateDN(request);
-        if (dn != null) {
-            cn = CertificateUtil.extractCNFromDN(dn);
-        }
-
-        if (cn != null) {
+        LOGGER.debug("loginWithCertificate");
+        final Optional<String> optionalCN = CertificateUtil.getCN(request);
+        optionalCN.ifPresent(cn -> {
             // Check for a certificate
-            LOGGER.debug("User has presented a certificate: {}", cn);
-            Optional<String> optionalSubject = getIdFromCertificate(cn);
+            LOGGER.debug(() -> "Got CN: " + cn);
+            Optional<String> optionalUserId = getIdFromCertificate(cn);
 
-            if (optionalSubject.isEmpty()) {
+            if (optionalUserId.isEmpty()) {
                 throw new RuntimeException(
-                        "User is presenting a certificate but this certificate cannot be processed!");
+                        "Found CN but the identity cannot be extracted (CN = " +
+                                cn +
+                                ")");
 
             } else {
-                final String subject = optionalSubject.get();
-                final Optional<Account> optionalAccount = accountDao.get(subject);
+                final String userId = optionalUserId.get();
+                final Optional<Account> optionalAccount = accountDao.get(userId);
                 if (optionalAccount.isEmpty()) {
                     // There's no user so we can't let them have access.
                     throw new BadRequestException(
-                            "The user identified by the certificate does not exist in the auth database.");
+                            "An account for the userId does not exist (userId = " +
+                                    userId +
+                                    ")");
 
                 } else {
                     final Account account = optionalAccount.get();
                     if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
-                        LOGGER.info("Logging user in using DN with subject {}", subject);
+                        LOGGER.info(() -> "Logging user in: " + userId);
                         setAuthState(request.getSession(true),
                                 new AuthStateImpl(account, false, System.currentTimeMillis()));
 
                         // Reset last access, login failures, etc...
-                        accountDao.recordSuccessfulLogin(subject);
+                        accountDao.recordSuccessfulLogin(userId);
                     }
                 }
             }
-        }
+        });
     }
 
     public LoginResponse handleLogin(final LoginRequest loginRequest,
@@ -288,24 +186,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return new LoginResponse(false, message, false);
     }
 
-
-//    public Boolean logout() {
-//        return securityContext.insecureResult(() -> {
-//            final HttpSession session = httpServletRequestProvider.get().getSession(false);
-//            final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
-//            if (session != null) {
-//                // Invalidate the current user session
-//                session.invalidate();
-//            }
-//            if (userIdentity != null) {
-//                // Create an event for logout
-//                stroomEventLoggingService.createAction("Logoff", "Logging off " + userIdentity.getId());
-//            }
-//
-//            return true;
-//        });
-//    }
-
     public String logout(final HttpServletRequest request) {
         final HttpSession httpSession = request.getSession(false);
         if (httpSession != null) {
@@ -338,10 +218,11 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     public String getUserIdFromRequest(final HttpServletRequest request) {
-        if (request == null || getAuthState(request) == null) {
+        final AuthState authState = getAuthState(request);
+        if (authState == null) {
             return null;
         }
-        return getAuthState(request).getSubject();
+        return authState.getSubject();
     }
 
     public ChangePasswordResponse changePassword(final HttpServletRequest request,
@@ -419,64 +300,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 config.getPasswordPolicyConfig().isForcePasswordChangeOnFirstLogin());
     }
 
-//    public PasswordValidationResponse isPasswordValid(PasswordValidationRequest passwordValidationRequest) {
-//        List<PasswordValidationFailureType> failedOn = new ArrayList<>();
-//
-//        if (passwordValidationRequest.getOldPassword() != null) {
-//            final LoginResult loginResult = accountDao.areCredentialsValid(
-//                    passwordValidationRequest.getEmail(),
-//                    passwordValidationRequest.getOldPassword());
-//
-//            PasswordValidator.validateAuthenticity(loginResult)
-//                    .ifPresent(failedOn::add);
-//
-//            PasswordValidator.validateReuse(
-//                    passwordValidationRequest.getOldPassword(),
-//                    passwordValidationRequest.getNewPassword())
-//                    .ifPresent(failedOn::add);
-//        }
-//
-//        PasswordValidator.validateLength(
-//                passwordValidationRequest.getNewPassword(),
-//                config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength())
-//                .ifPresent(failedOn::add);
-//        PasswordValidator.validateComplexity(
-//                passwordValidationRequest.getNewPassword(),
-//                config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex())
-//                .ifPresent(failedOn::add);
-//
-//        return new PasswordValidationResponse.PasswordValidationResponseBuilder()
-//                .withFailedOn(failedOn.toArray(new PasswordValidationFailureType[0]))
-//                .build();
-//    }
-
-//    public URI postAuthenticationRedirect(final HttpServletRequest request, final String redirectUri) {
-//        final Account account = getSessionUser(request);
-//        if (account == null) {
-//            throw new BadRequestException("User is not authenticated");
-//        }
-//
-//        final String username = account.getEmail();
-//
-//        boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
-//                username,
-//                config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
-//                config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
-//
-//        URI result;
-//
-//        if (userNeedsToChangePassword) {
-//            final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
-//            result = UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
-//                    .queryParam(OIDC.REDIRECT_URI, innerRedirectUri)
-//                    .build();
-//        } else {
-//            result = UriBuilder.fromUri(redirectUri).build();
-//        }
-//
-//        return result;
-//    }
-
     private LoginResponse processSuccessfulLogin(final HttpServletRequest request,
                                                  final Account account,
                                                  final String message) {
@@ -524,25 +347,18 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-    //    private String getPostAuthenticationCheckUrl(final String redirectUri) {
-//        final URI uri = UriBuilder
-//                .fromUri(uriFactory.publicUri(
-//                    ResourcePaths.API_ROOT_PATH +
-//                    AuthenticationResource.BASE_PATH +
-//                    AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
-//                .queryParam(OIDC.REDIRECT_URI, redirectUri)
-//                .build();
-//        return uri.toString();
-//    }
-
     private Optional<String> getIdFromCertificate(final String cn) {
+        LOGGER.debug("getIdFromCertificate");
+        LOGGER.debug(() -> "CertificateCnPattern = " + this.config.getCertificateCnPattern());
         final Pattern idExtractionPattern = Pattern.compile(this.config.getCertificateCnPattern());
         final Matcher idExtractionMatcher = idExtractionPattern.matcher(cn);
         if (idExtractionMatcher.find()) {
+            LOGGER.debug("Found id");
             final int captureGroupIndex = this.config.getCertificateCnCaptureGroupIndex();
             try {
                 if (idExtractionMatcher.groupCount() >= captureGroupIndex) {
                     final String id = idExtractionMatcher.group(captureGroupIndex);
+                    LOGGER.debug(() -> "id = " + id);
                     return Optional.of(id);
                 }
             } catch (final IllegalStateException ex) {
@@ -551,35 +367,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
+        LOGGER.debug("id not found");
         return Optional.empty();
     }
-
-//    private URI buildRedirectionUrl(final String redirectUri, final String code, final String state) {
-//        return UriBuilder
-//                .fromUri(redirectUri)
-//                .replaceQueryParam(OIDC.CODE, code)
-//                .replaceQueryParam(OIDC.STATE, state)
-//                .build();
-//    }
-//
-//    private String createIdToken(final String clientId,
-//                                 final String subject,
-//                                 final String nonce,
-//                                 final String state,
-//                                 final String sessionId) {
-//        TokenBuilder tokenBuilder = tokenBuilderFactory
-//                .newBuilder(Token.TokenType.USER)
-//                .clientId(clientId)
-//                .subject(subject)
-//                .nonce(nonce)
-//                .state(state)
-//                .authSessionId(sessionId);
-//        Instant expiresOn = tokenBuilder.getExpiryDate();
-//        String idToken = tokenBuilder.build();
-//
-//        tokenDao.createIdToken(idToken, subject, new Timestamp(expiresOn.toEpochMilli()));
-//        return idToken;
-//    }
 
     private void clearSession(final HttpServletRequest request) {
         setAuthState(request.getSession(false), null);

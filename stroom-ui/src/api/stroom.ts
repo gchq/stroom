@@ -566,12 +566,12 @@ export interface DataRange {
 export interface DataRetentionDeleteSummary {
   /** @format int32 */
   count?: number;
-  feedName?: string;
-  metaType?: string;
+  feed?: string;
   ruleName?: string;
 
   /** @format int32 */
   ruleNumber?: number;
+  type?: string;
 }
 
 export interface DataRetentionDeleteSummaryRequest {
@@ -1409,6 +1409,9 @@ export interface IndexShard {
   indexUuid?: string;
   indexVersion?: string;
   nodeName?: string;
+
+  /** @format int32 */
+  oldIndexId?: number;
   partition?: string;
 
   /** @format int64 */
@@ -2900,6 +2903,7 @@ export interface SteppingResult {
   currentStreamOffset?: number;
   foundRecord?: boolean;
   generalErrors?: string[];
+  segmentedData?: boolean;
   stepData?: SharedStepData;
   stepFilterMap?: Record<string, SteppingFilterSettings>;
   stepLocation?: StepLocation;

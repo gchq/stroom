@@ -78,7 +78,7 @@ public class IndexShardSearcher {
                 final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
                 if (!Files.isDirectory(dir)) {
-                    throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(
+                    throw new SearchException("Index shard directory not found: " + FileUtil.getCanonicalPath(
                             dir));
                 }
 

@@ -47,7 +47,7 @@ public class ExpressionUtil {
 
     public static ExpressionOperator equals(final DocRefField field, final DocRef value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addTerm(field, Condition.IS_DOC_REF, value)
                 .build();
     }
 
@@ -151,10 +151,14 @@ public class ExpressionUtil {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-                        if ((fields == null || fields.stream()
-                                .anyMatch(field -> field.getName().equals(expressionTerm.getField()))) &&
-                                expressionTerm.getValue() != null &&
-                                expressionTerm.getValue().length() > 0) {
+                        if (fields == null || fields.stream()
+                                .anyMatch(field ->
+                                        field.getName().equals(expressionTerm.getField()) &&
+                                                (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
+                                                        expressionTerm.getDocRef() != null &&
+                                                        expressionTerm.getDocRef().getUuid() != null) ||
+                                                (expressionTerm.getValue() != null &&
+                                                        expressionTerm.getValue().length() > 0))) {
                             terms.add(expressionTerm);
                         }
                     } else if (item instanceof ExpressionOperator) {
@@ -211,7 +215,7 @@ public class ExpressionUtil {
         return result;
     }
 
-    public static Query replaceExpressionParameters(Query query) {
+    public static Query replaceExpressionParameters(final Query query) {
         Query result = query;
         if (query != null) {
             ExpressionOperator expression = query.getExpression();

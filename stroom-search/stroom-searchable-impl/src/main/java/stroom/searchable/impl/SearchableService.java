@@ -63,25 +63,25 @@ class SearchableService {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
 
             // Replace expression parameters.
-            ExpressionUtil.replaceExpressionParameters(searchRequest);
+            final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(searchRequest)
+                            Preconditions.checkNotNull(modifiedSearchRequest)
                                     .getQuery())
                             .getDataSource());
-            Preconditions.checkNotNull(searchRequest.getResultRequests(),
+            Preconditions.checkNotNull(modifiedSearchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");
-            Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+            Preconditions.checkArgument(!modifiedSearchRequest.getResultRequests().isEmpty(),
                     "searchRequest must have at least one resultRequest");
 
             final Searchable searchable = searchableProvider.get(docRef);
             if (searchable == null) {
                 return buildEmptyResponse(
-                        searchRequest,
+                        modifiedSearchRequest,
                         "Searchable could not be found for uuid " + docRef.getUuid());
             } else {
-                return buildResponse(searchRequest, searchable);
+                return buildResponse(modifiedSearchRequest, searchable);
             }
         });
     }

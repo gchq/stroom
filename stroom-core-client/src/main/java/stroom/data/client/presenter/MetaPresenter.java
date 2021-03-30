@@ -431,7 +431,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             showStreamListButtons(true);
             showStreamRelationListButtons(true);
 
-            metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef.getName()));
+            metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef));
 
             refresh();
         }

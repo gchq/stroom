@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -148,13 +149,10 @@ public class AttributeMapUtil {
 
     private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
                                            final AttributeMap attributeMap) {
-        final X509Certificate[] certs = (X509Certificate[]) httpServletRequest
-                .getAttribute("javax.servlet.request.X509Certificate");
-
-        if (certs != null && certs.length > 0 && certs[0] != null) {
+        final X509Certificate cert = CertificateUtil.extractCertificate(httpServletRequest);
+        if (cert != null) {
             // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
             // from the certificate
-            final X509Certificate cert = certs[0];
             if (cert.getSubjectDN() != null) {
                 final String remoteDN = cert.getSubjectDN().toString();
                 attributeMap.put(StandardHeaderArguments.REMOTE_DN, remoteDN);

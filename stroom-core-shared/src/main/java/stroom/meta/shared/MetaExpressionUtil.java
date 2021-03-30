@@ -46,7 +46,7 @@ public final class MetaExpressionUtil {
 
     public static ExpressionOperator createTypeExpression(final String typeName, final Status status) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, typeName)
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, typeName)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
@@ -77,16 +77,23 @@ public final class MetaExpressionUtil {
 //        return builder.build();
 //    }
 
+    public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
+        return ExpressionOperator.builder()
+                .addTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedRef)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
+    }
+
     public static ExpressionOperator createFeedExpression(final String feedName) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedsExpression(final String... feedNames) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.IN, String.join(",", feedNames))
+                .addTerm(MetaFields.FEED, Condition.IN, String.join(",", feedNames))
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }

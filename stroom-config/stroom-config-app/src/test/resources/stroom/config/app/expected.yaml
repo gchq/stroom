@@ -565,6 +565,7 @@ appConfig:
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
     identity:
+      allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:

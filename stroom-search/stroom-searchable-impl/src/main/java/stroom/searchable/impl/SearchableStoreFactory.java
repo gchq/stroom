@@ -75,20 +75,17 @@ class SearchableStoreFactory implements StoreFactory {
 
             Preconditions.checkNotNull(searchable, "Searchable could not be found for " + docRef);
 
-            // Get the search.
-            final Query query = searchRequest.getQuery();
-
             // Replace expression parameters.
-            final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+            final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             // Create a handler for search results.
-            final Coprocessors coprocessors = coprocessorsFactory.create(updatedSearchRequest);
+            final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
 
             return buildStore(taskContext,
-                    updatedSearchRequest,
+                    modifiedSearchRequest,
                     searchable,
                     coprocessors,
-                    updatedSearchRequest.getQuery().getExpression());
+                    modifiedSearchRequest.getQuery().getExpression());
         }).get();
     }
 

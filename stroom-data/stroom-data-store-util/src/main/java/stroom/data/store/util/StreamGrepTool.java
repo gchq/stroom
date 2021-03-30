@@ -138,13 +138,13 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         final Store streamStore = injector.getInstance(Store.class);
 
         if (feed != null) {
-            builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feed);
+            builder.addTerm(MetaFields.FEED, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamType);
+            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store

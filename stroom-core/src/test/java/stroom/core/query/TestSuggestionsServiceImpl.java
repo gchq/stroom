@@ -133,7 +133,7 @@ class TestSuggestionsServiceImpl {
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
                 MetaFields.STREAM_STORE_DOC_REF,
-                MetaFields.FEED_NAME,
+                MetaFields.FEED,
                 userInput);
 
 

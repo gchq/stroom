@@ -38,7 +38,6 @@ public class ProcessorTaskFields {
     public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
     public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final TextField FEED_NAME = new TextField("Feed Name");
     public static final DocRefField FEED = new DocRefField("Feed", "Feed");
     public static final TextField STATUS = new TextField("Status");
     public static final IdField TASK_ID = new IdField("Task Id");
@@ -52,7 +51,6 @@ public class ProcessorTaskFields {
         FIELDS.add(PROCESSOR_FILTER_ID);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(FEED);
-        FIELDS.add(FEED_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
