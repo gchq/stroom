@@ -17,10 +17,11 @@
 
 package stroom.search.elastic.search;
 
-import stroom.dictionary.server.DictionaryStore;
-import stroom.query.api.v2.DocRef;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
@@ -44,16 +45,16 @@ import java.util.stream.Collectors;
 public class SearchExpressionQueryBuilder {
     private static final String DELIMITER = ",";
     private final Map<String, ElasticIndexField> indexFieldsMap;
-    private final DictionaryStore dictionaryStore;
+    private final WordListProvider wordListProvider;
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final DictionaryStore dictionaryStore,
+    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, ElasticIndexField> indexFieldsMap,
                                         final String timeZoneId,
                                         final long nowEpochMilli
     ) {
-        this.dictionaryStore = dictionaryStore;
+        this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.timeZoneId = timeZoneId;
         this.nowEpochMilli = nowEpochMilli;
@@ -76,8 +77,7 @@ public class SearchExpressionQueryBuilder {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term);
-            }
-            else if (item instanceof ExpressionOperator) {
+            } else if (item instanceof ExpressionOperator) {
                 // Create queries for expression tree nodes.
                 final ExpressionOperator operator = (ExpressionOperator) item;
                 if (operatorHasChildren(operator)) {
@@ -87,18 +87,14 @@ public class SearchExpressionQueryBuilder {
                         .collect(Collectors.toList());
 
                     BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-                    switch (operator.getOp()) {
-                        case AND:
-                            innerChildQueries.forEach(boolQueryBuilder::must);
-                            break;
-                        case OR:
-                            innerChildQueries.forEach(boolQueryBuilder::should);
-                            break;
-                        case NOT:
-                            innerChildQueries.forEach(boolQueryBuilder::mustNot);
-                            break;
+                    final Op op = operator.getOp();
+                    if (op == null || op.equals(Op.AND)) {
+                        innerChildQueries.forEach(boolQueryBuilder::must);
+                    } else if (op.equals(Op.OR)) {
+                        innerChildQueries.forEach(boolQueryBuilder::should);
+                    } else if (op.equals(Op.NOT)) {
+                        innerChildQueries.forEach(boolQueryBuilder::mustNot);
                     }
-
                     return boolQueryBuilder;
                 }
             }
@@ -177,7 +173,8 @@ public class SearchExpressionQueryBuilder {
                 case BETWEEN:
                     final Long[] between = getNumbers(fieldName, value);
                     if (between.length != 2) {
-                        throw new IllegalArgumentException("Two numbers needed for between query; " + between.length + " provided");
+                        throw new IllegalArgumentException("Two numbers needed for between query; " + between.length +
+                                " provided");
                     }
                     if (between[0] >= between[1]) {
                         throw new IllegalArgumentException("From number must be lower than to number");
@@ -222,7 +219,8 @@ public class SearchExpressionQueryBuilder {
                 case BETWEEN:
                     final long[] between = getDates(fieldName, value);
                     if (between.length != 2) {
-                        throw new IllegalArgumentException("Two dates needed for between query; " + between.length + " provided");
+                        throw new IllegalArgumentException("Two dates needed for between query; " + between.length +
+                                " provided");
                     }
                     if (between[0] >= between[1]) {
                         throw new IllegalArgumentException("From date must occur before to date");
@@ -274,7 +272,8 @@ public class SearchExpressionQueryBuilder {
     }
 
     /**
-     * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains" conditions
+     * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains"
+     * conditions
      * @param expression - Example: "1,2, 3"
      * @return - Array of terms. Example: [ "1", "2", "3" ]
      */
@@ -284,8 +283,7 @@ public class SearchExpressionQueryBuilder {
                 .map(String::trim)
                 .filter(token -> !token.isEmpty())
                 .toArray(String[]::new);
-        }
-        else {
+        } else {
             return new String[]{ };
         }
     }
@@ -333,7 +331,11 @@ public class SearchExpressionQueryBuilder {
      * For each line, constructs an AND query for all terms on that line.
      * All lines are combined into an OR query.
      */
-    private QueryBuilder buildDictionaryQuery(final String fieldName, final DocRef docRef, final ElasticIndexField indexField) {
+    private QueryBuilder buildDictionaryQuery(
+            final String fieldName,
+            final DocRef docRef,
+            final ElasticIndexField indexField
+    ) {
         final String[] lines = readDictLines(docRef);
 
         final BoolQueryBuilder builder = QueryBuilders.boolQuery();
@@ -348,16 +350,14 @@ public class SearchExpressionQueryBuilder {
                         QueryBuilders.termQuery(fieldName, number)
                     );
                 }
-            }
-            else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
+            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
                 final long[] dates = getDates(fieldName, line);
                 for (final Long date : dates) {
                     mustQuery.must(
                         QueryBuilders.termQuery(fieldName, date)
                     );
                 }
-            }
-            else {
+            } else {
                 final String[] terms = tokenizeExpression(line);
                 for (final String term : terms) {
                     mustQuery.must(
@@ -373,7 +373,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private String[] readDictLines(final DocRef docRef) {
-        final String words = dictionaryStore.getCombinedData(docRef);
+        final String words = wordListProvider.getCombinedData(docRef);
         if (words == null) {
             throw new ResourceNotFoundException("Dictionary \"" + docRef + "\" not found");
         }

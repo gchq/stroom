@@ -1,35 +1,30 @@
 import stroom.search.elastic.shared.ElasticIndexConstants;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-@RunWith(StroomJUnit4ClassRunner.class)
 public class TestElasticIndexFieldType {
     @Test
     public void testFromNativeType() {
         // ID fields
-        Assert.assertSame(ElasticIndexFieldType.ID, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.EVENT_ID, "long"));
-        Assert.assertNotSame("Non-ID field is not detected as an ID field",
-            ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.FEED_ID, "int")
-        );
+        Assertions.assertSame(ElasticIndexFieldType.ID, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.EVENT_ID, "long"));
+        Assertions.assertNotSame(ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.FEED_ID, "int"), "Non-ID field is not detected as an ID field");
 
-        Assert.assertSame(ElasticIndexFieldType.BOOLEAN, ElasticIndexFieldType.fromNativeType("name", "boolean"));
-        Assert.assertSame(ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType("name", "integer"));
-        Assert.assertSame(ElasticIndexFieldType.LONG, ElasticIndexFieldType.fromNativeType("name", "long"));
-        Assert.assertSame(ElasticIndexFieldType.FLOAT, ElasticIndexFieldType.fromNativeType("name", "float"));
-        Assert.assertSame(ElasticIndexFieldType.DOUBLE, ElasticIndexFieldType.fromNativeType("name", "double"));
-        Assert.assertSame(ElasticIndexFieldType.DATE, ElasticIndexFieldType.fromNativeType("name", "date"));
-        Assert.assertSame(ElasticIndexFieldType.TEXT, ElasticIndexFieldType.fromNativeType("name", "text"));
+        Assertions.assertSame(ElasticIndexFieldType.BOOLEAN, ElasticIndexFieldType.fromNativeType("name", "boolean"));
+        Assertions.assertSame(ElasticIndexFieldType.INTEGER, ElasticIndexFieldType.fromNativeType("name", "integer"));
+        Assertions.assertSame(ElasticIndexFieldType.LONG, ElasticIndexFieldType.fromNativeType("name", "long"));
+        Assertions.assertSame(ElasticIndexFieldType.FLOAT, ElasticIndexFieldType.fromNativeType("name", "float"));
+        Assertions.assertSame(ElasticIndexFieldType.DOUBLE, ElasticIndexFieldType.fromNativeType("name", "double"));
+        Assertions.assertSame(ElasticIndexFieldType.DATE, ElasticIndexFieldType.fromNativeType("name", "date"));
+        Assertions.assertSame(ElasticIndexFieldType.TEXT, ElasticIndexFieldType.fromNativeType("name", "text"));
     }
 
     @Test
     public void testIsNumeric() {
-        Assert.assertTrue(ElasticIndexFieldType.INTEGER.isNumeric());
-        Assert.assertTrue(ElasticIndexFieldType.LONG.isNumeric());
-        Assert.assertTrue(ElasticIndexFieldType.FLOAT.isNumeric());
-        Assert.assertTrue(ElasticIndexFieldType.DOUBLE.isNumeric());
+        Assertions.assertTrue(ElasticIndexFieldType.INTEGER.isNumeric());
+        Assertions.assertTrue(ElasticIndexFieldType.LONG.isNumeric());
+        Assertions.assertTrue(ElasticIndexFieldType.FLOAT.isNumeric());
+        Assertions.assertTrue(ElasticIndexFieldType.DOUBLE.isNumeric());
     }
 }

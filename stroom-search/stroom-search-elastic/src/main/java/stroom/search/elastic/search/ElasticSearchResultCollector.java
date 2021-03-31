@@ -16,19 +16,11 @@
 
 package stroom.search.elastic.search;
 
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
-import stroom.search.resultsender.NodeResult;
-import stroom.task.server.TaskCallback;
-import stroom.task.server.TaskManager;
-import stroom.task.server.TaskTerminatedException;
-import stroom.util.shared.Task;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,121 +28,107 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Provider;
 
-public class ElasticSearchResultCollector implements Store, TaskCallback<NodeResult> {
+public class ElasticSearchResultCollector implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchResultCollector.class);
-
-    public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
+    private static final String TASK_NAME = "ElasticSearchTask";
 
     private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final CompletionState completionState = new CompletionState();
-    private final TaskManager taskManager;
-    private final Task<VoidResult> task;
-    private final Set<String> highlights;
-    private final ResultHandler resultHandler;
-    private final Sizes defaultMaxResultsSizes;
-    private final Sizes storeSize;
+    private final Executor executor;
+    private final TaskContextFactory taskContextFactory;
+    private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
+    private final ElasticAsyncSearchTask task;
+    private final Coprocessors coprocessors;
 
-    private ElasticSearchResultCollector(final TaskManager taskManager,
-                                         final Task<VoidResult> task,
-                                         final Set<String> highlights,
-                                         final ResultHandler resultHandler,
-                                         final Sizes defaultMaxResultsSizes,
-                                         final Sizes storeSize) {
-        this.taskManager = taskManager;
+    private ElasticSearchResultCollector(
+            final Executor executor,
+            final TaskContextFactory taskContextFactory,
+            final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
+            final ElasticAsyncSearchTask task,
+            final Coprocessors coprocessors
+    ) {
+        this.executor = executor;
+        this.taskContextFactory = taskContextFactory;
+        this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
         this.task = task;
-        this.highlights = highlights;
-        this.resultHandler = resultHandler;
-        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
-        this.storeSize = storeSize;
+        this.coprocessors = coprocessors;
     }
 
-    public static ElasticSearchResultCollector create(final TaskManager taskManager,
-                                                   final Task<VoidResult> task,
-                                                   final Set<String> highlights,
-                                                   final ResultHandler resultHandler,
-                                                   final Sizes defaultMaxResultsSizes,
-                                                   final Sizes storeSize
+    public static ElasticSearchResultCollector create(
+            final Executor executor,
+            final TaskContextFactory taskContextFactory,
+            final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
+            final ElasticAsyncSearchTask task,
+            final Coprocessors coprocessors
     ) {
-        return new ElasticSearchResultCollector(taskManager, task, highlights, resultHandler, defaultMaxResultsSizes, storeSize);
+        return new ElasticSearchResultCollector(
+                executor,
+                taskContextFactory,
+                elasticAsyncSearchTaskHandlerProvider,
+                task,
+                coprocessors);
     }
 
     public void start() {
         // Start asynchronous search execution.
-        taskManager.execAsync(task, new TaskCallback<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
-                // Do nothing here as the results go into the collector
-            }
-
-            @Override
-            public void onFailure(final Throwable t) {
-                // We can expect some tasks to throw a task terminated exception
-                // as they may be terminated before we even try to execute them.
-                if (!(t instanceof TaskTerminatedException)) {
-                    LOGGER.error(t.getMessage(), t);
-                    getErrorSet().add(t.getMessage());
-                    complete();
-                    throw new RuntimeException(t.getMessage(), t);
-                }
-
-                complete();
+        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            // Don't begin execution if we have been asked to complete already.
+            if (!coprocessors.getCompletionState().isComplete()) {
+                final ElasticAsyncSearchTaskHandler searchHandler = elasticAsyncSearchTaskHandlerProvider.get();
+                searchHandler.exec(taskContext, task, coprocessors, this);
             }
         });
+        CompletableFuture
+                .runAsync(runnable, executor)
+                .whenComplete((result, t) -> {
+                    if (t != null) {
+                        while (t instanceof CompletionException) {
+                            t = t.getCause();
+                        }
+
+                        // We can expect some tasks to throw a task terminated exception
+                        // as they may be terminated before we even try to execute them.
+                        if (!(t instanceof TaskTerminatedException)) {
+                            LOGGER.error(t.getMessage(), t);
+                            coprocessors.getErrorConsumer().accept(t);
+                            coprocessors.getCompletionState().complete();
+                            throw new RuntimeException(t.getMessage(), t);
+                        }
+
+                        coprocessors.getCompletionState().complete();
+                    }
+                });
     }
 
     @Override
     public void destroy() {
-        task.terminate();
-        complete();
+        coprocessors.clear();
     }
 
     public void complete() {
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
+    }
+
+    @Override
+    public void awaitCompletion() throws InterruptedException {
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
-    }
-
-    @Override
-    public void onSuccess(final NodeResult result) {
-        final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
-        final List<String> errors = result.getErrors();
-
-        if (payloadMap != null) {
-            resultHandler.handle(payloadMap, task);
-        }
-        if (errors != null) {
-            getErrorSet().addAll(errors);
-        }
-        if (result.isComplete()) {
-            complete();
-        }
-    }
-
-    @Override
-    public void onFailure(final Throwable throwable) {
-        complete();
-        errors.add(throwable.getMessage());
-    }
-
-    public void terminate() {
-        complete();
-    }
-
-    public Set<String> getErrorSet() {
-        return errors;
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -169,32 +147,19 @@ public class ElasticSearchResultCollector implements Store, TaskCallback<NodeRes
 
     @Override
     public List<String> getHighlights() {
-        if (highlights == null || highlights.size() == 0) {
-            return null;
-        }
-        return new ArrayList<>(highlights);
+        return null;
     }
 
     @Override
-    public Sizes getDefaultMaxResultsSizes() {
-        return defaultMaxResultsSizes;
-    }
-
-    @Override
-    public Sizes getStoreSize() {
-        return storeSize;
-    }
-
-    @Override
-    public Data getData(final String componentId) {
-        return resultHandler.getResultStore(componentId);
+    public DataStore getData(final String componentId) {
+        return coprocessors.getData(componentId);
     }
 
     @Override
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", complete=" + completionState.isComplete() +
+                ", complete=" + coprocessors.getCompletionState() +
                 '}';
     }
 }

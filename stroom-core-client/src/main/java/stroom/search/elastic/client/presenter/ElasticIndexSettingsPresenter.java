@@ -18,51 +18,58 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.data.client.presenter.EditExpressionPresenter;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
-import stroom.search.elastic.shared.ElasticCluster;
-import stroom.search.elastic.shared.ElasticConnectionTestAction;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexResource;
+import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 
-import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndex> implements ElasticIndexSettingsUiHandlers {
+public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
+        implements ElasticIndexSettingsUiHandlers {
+
+    private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
+
     private final EntityDropDownPresenter clusterPresenter;
     private final EditExpressionPresenter editExpressionPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     @Inject
-    public ElasticIndexSettingsPresenter(final EventBus eventBus,
-                                         final ElasticIndexSettingsView view,
-                                         final EntityDropDownPresenter clusterPresenter,
-                                         final EditExpressionPresenter editExpressionPresenter,
-                                         final ClientDispatchAsync dispatcher
+    public ElasticIndexSettingsPresenter(
+            final EventBus eventBus,
+            final ElasticIndexSettingsView view,
+            final EntityDropDownPresenter clusterPresenter,
+            final EditExpressionPresenter editExpressionPresenter,
+            final RestFactory restFactory
     ) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
         this.editExpressionPresenter = editExpressionPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
-        clusterPresenter.setIncludedTypes(ElasticCluster.ENTITY_TYPE);
+        clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setUiHandlers(this);
         view.setClusterView(clusterPresenter.getView());
-        view.setRententionExpressionView(editExpressionPresenter.getView());
+        view.setRetentionExpressionView(editExpressionPresenter.getView());
     }
 
     @Override
@@ -83,34 +90,44 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     }
 
     @Override
-    public void onTestConnection() {
-        final ElasticIndex index = new ElasticIndex();
+    public void onTestIndex() {
+        final ElasticIndexDoc index = new ElasticIndexDoc();
         onWrite(index);
 
-        dispatcher.exec(new ElasticConnectionTestAction(index)).onSuccess(result -> AlertEvent.fireInfo(this, "Success", result.toString(), null));
+        final Rest<ElasticIndexTestResponse> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                    }
+                })
+                .call(ELASTIC_INDEX_RESOURCE)
+                .testIndex(index);
     }
 
     @Override
     public String getType() {
-        return ElasticIndex.ENTITY_TYPE;
+        return ElasticIndexDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticIndex index) {
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc index) {
         getView().setDescription(index.getDescription());
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
 
         if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
+            index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
         }
 
-        editExpressionPresenter.init(dispatcher, docRef, index.getDataSourceFields());
+        editExpressionPresenter.init(restFactory, docRef, index.getDataSourceFields());
         editExpressionPresenter.read(index.getRetentionExpression());
     }
 
     @Override
-    protected void onWrite(final ElasticIndex index) {
+    protected void onWrite(final ElasticIndexDoc index) {
         index.setDescription(getView().getDescription().trim());
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
 
@@ -124,7 +141,8 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         index.setRetentionExpression(editExpressionPresenter.write());
     }
 
-    public interface ElasticIndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
+    public interface ElasticIndexSettingsView
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
         String getDescription();
 
         void setDescription(String description);
@@ -135,6 +153,6 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         void setIndexName(String indexName);
 
-        void setRententionExpressionView(final View view);
+        void setRetentionExpressionView(final View view);
     }
 }

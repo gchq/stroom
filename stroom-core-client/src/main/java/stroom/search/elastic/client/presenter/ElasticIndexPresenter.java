@@ -17,13 +17,13 @@
 
 package stroom.search.elastic.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.security.client.ClientSecurityContext;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -31,11 +31,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticIndex> {
+public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticIndexDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
 
-    private final TabContentProvider<ElasticIndex> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<ElasticIndexDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public ElasticIndexPresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -63,7 +64,7 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticIndex index) {
+    public void onRead(final DocRef docRef, final ElasticIndexDoc index) {
         super.onRead(docRef, index);
         tabContentProvider.read(docRef, index);
     }
@@ -75,12 +76,12 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
-    protected void onWrite(final ElasticIndex index) {
+    protected void onWrite(final ElasticIndexDoc index) {
         tabContentProvider.write(index);
     }
 
     @Override
     public String getType() {
-        return ElasticIndex.ENTITY_TYPE;
+        return ElasticIndexDoc.DOCUMENT_TYPE;
     }
 }

@@ -28,6 +28,8 @@ public class ElasticClusterModule extends PluginModule {
     protected void configure() {
         bindPlugin(ElasticClusterPlugin.class);
         bind(ElasticClusterPresenter.class);
-        bindPresenterWidget(ElasticClusterSettingsPresenter.class, ElasticClusterSettingsView.class, ElasticClusterSettingsViewImpl.class);
+        bindPresenterWidget(ElasticClusterSettingsPresenter.class,
+                ElasticClusterSettingsView.class,
+                ElasticClusterSettingsViewImpl.class);
     }
 }

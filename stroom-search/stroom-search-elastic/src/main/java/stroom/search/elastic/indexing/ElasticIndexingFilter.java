@@ -16,32 +16,31 @@
 
 package stroom.search.elastic.indexing;
 
-import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ErrorStatistics;
-import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.factory.PipelinePropertyDocRef;
-import stroom.pipeline.server.filter.AbstractXMLFilter;
+import stroom.docref.DocRef;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ErrorStatistics;
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
-import stroom.search.elastic.shared.ElasticCluster;
+import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -49,26 +48,25 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.RequestOptions;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  * Takes index XML and sends documents to Elasticsearch for indexing
  */
-@Component
-@Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "ElasticIndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.ELASTIC_INDEX)
+@ConfigurableElement(type = "ElasticIndexingFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS,
+        PipelineElementType.VISABILITY_SIMPLE
+}, icon = ElementIcons.ELASTIC_INDEX)
 class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
 
@@ -85,7 +83,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticIndexService elasticIndexService;
 
     private Map<String, ElasticIndexField> fieldsMap;
-    private ElasticIndex elasticIndex;
+    private ElasticIndexDoc elasticIndex;
     private DocRef indexRef;
     private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
     private Map<String, Object> document = new HashMap<>();
@@ -98,12 +96,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private Locator locator;
 
     @Inject
-    ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
-                          final ErrorReceiverProxy errorReceiverProxy,
-                          final ElasticIndexCache elasticIndexCache,
-                          final ElasticClientCache elasticClientCache,
-                          final ElasticClusterStore elasticClusterStore,
-                          final ElasticIndexService elasticIndexService
+    ElasticIndexingFilter(
+            final LocationFactoryProxy locationFactory,
+            final ErrorReceiverProxy errorReceiverProxy,
+            final ElasticIndexCache elasticIndexCache,
+            final ElasticClientCache elasticClientCache,
+            final ElasticClusterStore elasticClusterStore,
+            final ElasticIndexService elasticIndexService
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -133,17 +132,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             fieldsMap = elasticIndexService.getFieldsMap(elasticIndex);
 
-            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
 
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 try {
                     final boolean pingSucceeded = elasticClient.ping(RequestOptions.DEFAULT);
                     if (pingSucceeded) {
-                        LOGGER.debug(() -> "Ping to Elasticsearch cluster: '" + connectionConfig.getConnectionUrls() + "' succeeded");
-                    }
-                    else {
-                        throw new IOException("Failed to ping Elasticsearch cluster: '" + connectionConfig.getConnectionUrls() + "'");
+                        LOGGER.debug(() ->
+                                "Ping to Elasticsearch cluster: '" + connectionConfig.getConnectionUrls() +
+                                "' succeeded");
+                    } else {
+                        throw new IOException("Failed to ping Elasticsearch cluster: '" +
+                                connectionConfig.getConnectionUrls() + "'");
                     }
                 } catch (final IOException | RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
@@ -151,6 +152,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     throw new LoggedException(e.getMessage(), e);
                 }
             });
+
         } finally {
             super.startProcessing();
         }
@@ -179,7 +181,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @Override
-    public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) throws SAXException {
+    public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
+            throws SAXException {
+
         if (DATA_ELEMENT_NAME.equals(localName) && document != null) {
             String name = attributes.getValue(NAME_ATTRIBUTE);
             String value = attributes.getValue(VALUE_ATTRIBUTE);
@@ -220,8 +224,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             processDocument();
             document = null;
 
-            // Reset the count of how many fields we have indexed for the
-            // current event.
+            // Reset the count of how many fields we have indexed for the current event
             fieldsIndexed = 0;
 
             if (errorReceiverProxy.getErrorReceiver() != null &&
@@ -235,8 +238,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void processDocument() {
-        // Write the document if we have dropped out of the record element and
-        // have indexed some fields.
+        // Write the document if we have dropped out of the record element and have indexed some fields
         if (fieldsIndexed > 0) {
             docsIndexed++;
             currentDocuments.add(document);
@@ -255,7 +257,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addDocuments(final Collection<Map<String, Object>> documents) {
         if (docsIndexed > 0) {
             final String indexName = elasticIndex.getIndexName();
-            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
 
             elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
                 try {
@@ -275,8 +277,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (refreshAfterEachBatch) {
                             // Refresh upon completion of the batch index request
                             bulkRequest.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
-                        }
-                        else {
+                        } else {
                             // Only refresh after all batches have been indexed
                             bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
                         }
@@ -284,8 +285,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
                         if (response.hasFailures()) {
                             throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
-                        }
-                        else {
+                        } else {
                             LOGGER.info(() -> "Indexed " + documents.size() + " items to '" + indexName + "' in " +
                                 response.getTook().getSecondsFrac() + " seconds");
                         }
@@ -356,24 +356,35 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             document.put(fieldName, value);
             fieldsIndexed++;
-        }
-        else {
+        } else {
             LOGGER.warn(() -> "Field '" + fieldName + "' already exists in document");
         }
     }
 
-    @PipelineProperty(description = "The index to send records to")
-    @PipelinePropertyDocRef(types = ElasticIndex.ENTITY_TYPE)
+    @PipelineProperty(
+            description = "The index to send records to",
+            displayPriority = 1
+    )
+    @PipelinePropertyDocRef(types = ElasticIndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }
 
-    @PipelineProperty(description = "How many documents to send to the index in a single post", defaultValue = "10000")
+    @PipelineProperty(
+            description = "How many documents to send to the index in a single post",
+            defaultValue = "10000",
+            displayPriority = 2
+    )
     public void setBatchSize(final int batchSize) {
         this.batchSize = batchSize;
     }
 
-    @PipelineProperty(description = "Refresh the index after each batch is processed, making the indexed documents visible to searches", defaultValue = "false")
+    @PipelineProperty(
+            description = "Refresh the index after each batch is processed, making the indexed documents visible to" +
+                    "searches",
+            defaultValue = "false",
+            displayPriority = 3
+    )
     public void setRefreshAfterEachBatch(final boolean refreshAfterEachBatch) {
         this.refreshAfterEachBatch = refreshAfterEachBatch;
     }

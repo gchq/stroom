@@ -1,11 +1,5 @@
 package stroom.crypto.shared;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -13,6 +7,12 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoUtils {
     private static final String CRYPTO_ALGORITHM = "AES/GCM/NoPadding";
@@ -36,7 +36,8 @@ public class CryptoUtils {
     /**
      * Generate an AES key from a secret
      */
-    public static SecretKey getAESKeyFromPassword(final String password, final byte[] salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static SecretKey getAESKeyFromPassword(final String password, final byte[] salt)
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, KEY_ITERATION_COUNT, KEY_LENGTH);
 
@@ -48,8 +49,9 @@ public class CryptoUtils {
      * @return Base-64 encoded cipher text
      */
     public static String encrypt(final String plainText, final String password) throws Exception {
-        if (plainText == null)
+        if (plainText == null) {
             return null;
+        }
 
         final byte[] salt = getRandomNonce(SALT_LENGTH);
         final byte[] iv = getRandomNonce(IV_LENGTH);
@@ -72,8 +74,9 @@ public class CryptoUtils {
      * @return Plain text
      */
     public static String decrypt(final String cipherText, final String password) throws Exception {
-        if (cipherText == null)
+        if (cipherText == null) {
             return null;
+        }
 
         final byte[] decodedCipherText = Base64.getDecoder().decode(cipherText.getBytes(StandardCharsets.UTF_8));
         final ByteBuffer byteBuffer = ByteBuffer.wrap(decodedCipherText);

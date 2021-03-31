@@ -17,165 +17,127 @@
 
 package stroom.search.elastic.search;
 
-import stroom.annotation.api.AnnotationDataSource;
-import stroom.pipeline.server.errorhandler.MessageUtil;
+import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.CompletionState;
-import stroom.search.coprocessor.Coprocessors;
-import stroom.search.coprocessor.CoprocessorsFactory;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.NewCoprocessor;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.api.v2.Query;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.Receiver;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
-import stroom.search.resultsender.NodeResult;
-import stroom.search.resultsender.ResultSender;
-import stroom.search.resultsender.ResultSenderFactory;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
-import stroom.task.server.TaskCallback;
-import stroom.task.server.TaskContext;
-import stroom.task.server.TaskTerminatedException;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasTerminate;
-import stroom.util.spring.StroomScope;
-import stroom.util.task.MonitorImpl;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
+import javax.inject.Inject;
 
-@Component
-@Scope(StroomScope.TASK)
-class ElasticClusterSearchTaskHandler implements Consumer<Error> {
+class ElasticClusterSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClusterSearchTaskHandler.class);
 
-    private final TaskContext taskContext;
-    private final CoprocessorsFactory coprocessorsFactory;
     private final ElasticSearchFactory elasticSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
-    private final ResultSenderFactory resultSenderFactory;
     private final SecurityContext securityContext;
-    private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final CompletionState searchCompletionState = new CompletionState();
-
-    private ElasticClusterSearchTask task;
 
     @Inject
-    ElasticClusterSearchTaskHandler(final TaskContext taskContext,
-                                    final CoprocessorsFactory coprocessorsFactory,
-                                    final ElasticSearchFactory elasticSearchFactory,
+    ElasticClusterSearchTaskHandler(final ElasticSearchFactory elasticSearchFactory,
                                     final ExtractionDecoratorFactory extractionDecoratorFactory,
-                                    final ResultSenderFactory resultSenderFactory,
-                                    final SecurityContext securityContext) {
-        this.taskContext = taskContext;
-        this.coprocessorsFactory = coprocessorsFactory;
+                                    final SecurityContext securityContext
+    ) {
         this.elasticSearchFactory = elasticSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
-        this.resultSenderFactory = resultSenderFactory;
         this.securityContext = securityContext;
     }
 
-    public void exec(final ElasticClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        final Consumer<NodeResult> resultConsumer = callback::onSuccess;
-        CompletionState sendingDataCompletionState = new CompletionState();
-        sendingDataCompletionState.complete();
-
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            if (!taskContext.isTerminated()) {
-                taskContext.info("Initialising...");
-
-                this.task = task;
-                final stroom.query.api.v2.Query query = task.getQuery();
+    public void exec(final TaskContext taskContext,
+                     final ElasticAsyncSearchTask task,
+                     final ElasticIndexDoc elasticIndex,
+                     final Query query,
+                     final String[] storedFields,
+                     final long now,
+                     final String dateTimeLocale,
+                     final Coprocessors coprocessors
+    ) {
+        securityContext.useAsRead(() -> {
+            if (!Thread.currentThread().isInterrupted()) {
+                taskContext.info(() -> "Initialising...");
 
                 try {
-                    final long frequency = task.getResultSendFrequency();
-
                     // Make sure we have been given a query.
                     if (query.getExpression() == null) {
                         throw new SearchException("Search expression has not been set");
                     }
 
                     // Get the stored fields that search is hoping to use.
-                    final String[] storedFields = task.getStoredFields();
                     if (storedFields == null || storedFields.length == 0) {
                         throw new SearchException("No stored fields have been requested");
                     }
 
-                    // Create coprocessors.
-                    final Coprocessors coprocessors = coprocessorsFactory.create(task.getCoprocessorMap(), storedFields, query.getParams(), this, task);
-
                     if (coprocessors.size() > 0) {
-                        // Start forwarding data to target node.
-                        final ResultSender resultSender = resultSenderFactory.create();
-                        sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
-
                         // Start searching.
-                        search(task, query, coprocessors);
+                        search(taskContext, task, elasticIndex, query, storedFields, now, dateTimeLocale, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(e);
+                        coprocessors.getErrorConsumer().accept(e);
                     } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
+                        // If we failed to send the result or the source node rejected the result because the
+                        // source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
-                        task.terminate();
+                        Thread.currentThread().interrupt();
                     }
                 } finally {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    searchCompletionState.complete();
-                }
-
-                // Now we must wait for results to be sent to the requesting node.
-                try {
-                    taskContext.info("Sending final results");
-                    while (!task.isTerminated() && !sendingDataCompletionState.isComplete()) {
-                        sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
-                    }
-                } catch (InterruptedException e) {
-                    //Don't want to reset interrupt status as this thread will go back into
-                    //the executor's pool. Throwing an exception will terminate the task
-                    throw new RuntimeException("Thread interrupted");
+                    coprocessors.getCompletionState().complete();
                 }
             }
-        }
+        });
     }
 
-    private void search(final ElasticClusterSearchTask task,
-                        final stroom.query.api.v2.Query query,
+    private void search(final TaskContext taskContext,
+                        final ElasticAsyncSearchTask task,
+                        final ElasticIndexDoc elasticIndex,
+                        final Query query,
+                        final String[] storedFields,
+                        final long now,
+                        final String dateTimeLocale,
                         final Coprocessors coprocessors) {
-        taskContext.info("Searching...");
+        taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            // Create a monitor to terminate all sub tasks on completion.
-            final HasTerminate hasTerminate = new MonitorImpl();
-
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(this, task.getStoredFields(), coprocessors, query, hasTerminate);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, coprocessors, query);
 
             // Search all index shards.
-            final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                    .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
+                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
-            final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
+            final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            elasticSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate);
+
+            elasticSearchFactory.search(
+                    task,
+                    elasticIndex,
+                    storedFields,
+                    now,
+                    expression,
+                    extractionReceiver,
+                    taskContext,
+                    hitCount,
+                    dateTimeLocale);
 
             // Wait for search completion.
             boolean allComplete = false;
             while (!allComplete) {
                 allComplete = true;
-                for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
-                    if (!task.isTerminated()) {
-                        taskContext.info("" +
+                for (final Coprocessor coprocessor : coprocessors) {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        taskContext.info(() -> "" +
                                 "Searching... " +
                                 "found " +
                                 hitCount.get() +
@@ -184,7 +146,8 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
                                 + coprocessor.getValuesCount().get() +
                                 " extractions");
 
-                        final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                        final boolean complete = coprocessor.getCompletionState()
+                                .awaitCompletion(1, TimeUnit.SECONDS);
                         if (!complete) {
                             allComplete = false;
                         }
@@ -193,24 +156,12 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
             }
 
             LOGGER.debug(() -> "Complete");
-            hasTerminate.terminate();
-        } catch (final Exception pEx) {
-            throw SearchException.wrap(pEx);
+        } catch (final InterruptedException e) {
+            // Continue to interrupt.
+            Thread.currentThread().interrupt();
+            LOGGER.debug(e::getMessage, e);
+        } catch (final RuntimeException e) {
+            throw SearchException.wrap(e);
         }
-    }
-
-    @Override
-    public void accept(final Error error) {
-        if (error != null) {
-            LOGGER.debug(error::getMessage, error.getThrowable());
-            if (!(error.getThrowable() instanceof TaskTerminatedException)) {
-                final String msg = MessageUtil.getMessage(error.getMessage(), error.getThrowable());
-                errors.offer(msg);
-            }
-        }
-    }
-
-    public ElasticClusterSearchTask getTask() {
-        return task;
     }
 }

@@ -37,8 +37,6 @@ public final class SvgPresets {
     public static final SvgPreset DOWN = disabled("down.svg", "Down");
     public static final SvgPreset DOWNLOAD = disabled("download.svg", "Download");
     public static final SvgPreset EDIT = disabled("edit.svg", "Edit");
-    public static final SvgPreset ELASTIC_CLUSTER = enabled("elastic-cluster.svg", "Elasticsearch Cluster");
-    public static final SvgPreset ELASTIC_INDEX = enabled("elastic-index.svg", "Elasticsearch Index");
     public static final SvgPreset ERROR = enabled("error.svg", "Error");
     public static final SvgPreset EXPLORER = enabled("explorer.svg", "Explorer");
     public static final SvgPreset FATAL = enabled("fatal.svg", "Fatal");

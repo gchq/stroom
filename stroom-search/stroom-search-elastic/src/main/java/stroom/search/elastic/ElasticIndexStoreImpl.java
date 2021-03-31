@@ -17,44 +17,38 @@
 
 package stroom.search.elastic;
 
-import stroom.docstore.server.JsonSerialiser;
-import stroom.docstore.server.Store;
+import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
+import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.DocRefInfo;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.Message;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-@Component
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexStoreImpl.class);
 
-    private final Store<ElasticIndex> store;
+    private final Store<ElasticIndexDoc> store;
     private final ElasticIndexService elasticIndexService;
 
     @Inject
-    public ElasticIndexStoreImpl(final Store<ElasticIndex> store,
-                                 final ElasticIndexService elasticIndexService
+    public ElasticIndexStoreImpl(
+            final StoreFactory storeFactory,
+            final ElasticIndexService elasticIndexService,
+            final ElasticIndexSerialiser serialiser
     ) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.class);
         this.elasticIndexService = elasticIndexService;
-
-        store.setType(ElasticIndex.ENTITY_TYPE, ElasticIndex.class);
-        store.setSerialiser(new JsonSerialiser<>());
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -62,21 +56,19 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name, final String parentFolderUUID) {
-        return store.createDocument(name, parentFolderUUID);
+    public DocRef createDocument(final String name) {
+        return store.createDocument(name);
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid,
-                               final String parentFolderUUID) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid, parentFolderUUID);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
-    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        return store.moveDocument(uuid, parentFolderUUID);
+    public DocRef moveDocument(final String uuid) {
+        return store.moveDocument(uuid);
     }
 
     @Override
@@ -94,6 +86,11 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         return store.info(uuid);
     }
 
+    @Override
+    public DocumentType getDocumentType() {
+        return new DocumentType(11, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.DOCUMENT_TYPE);
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
@@ -103,12 +100,12 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public ElasticIndex readDocument(final DocRef docRef) {
+    public ElasticIndexDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public ElasticIndex writeDocument(final ElasticIndex document) {
+    public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
         document.setDataSourceFields(elasticIndexService.getDataSourceFields(document));
         document.setFields(elasticIndexService.getFields(document));
 
@@ -117,6 +114,30 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(null);
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, null);
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, null);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
@@ -129,38 +150,36 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     }
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
+        if (omitAuditFields) {
+            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+        }
+        return store.exportDocument(docRef, messageList, d -> d);
+    }
+
+    @Override
+    public String getType() {
+        return ElasticIndexDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return ElasticIndex.ENTITY_TYPE;
-    }
-
-    @Override
-    public ElasticIndex read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public ElasticIndex update(final ElasticIndex dataReceiptPolicy) {
-        return store.update(dataReceiptPolicy);
-    }
 
     @Override
     public List<DocRef> list() {

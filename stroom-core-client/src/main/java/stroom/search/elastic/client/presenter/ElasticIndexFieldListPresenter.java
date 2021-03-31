@@ -20,13 +20,16 @@ package stroom.search.elastic.client.presenter;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexResource;
+import stroom.search.solr.shared.SolrIndexResource;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,7 +40,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListPresenter.ElasticIndexFieldListView> implements HasDocumentRead<ElasticIndex> {
+public class ElasticIndexFieldListPresenter
+        extends MyPresenterWidget<ElasticIndexFieldListPresenter.ElasticIndexFieldListView>
+        implements HasDocumentRead<ElasticIndexDoc> {
+
+    private static final SolrIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
+
     private final DataGridView<ElasticIndexField> dataGridView;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
@@ -72,7 +80,10 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         addStringColumn(name, 100, function);
     }
 
-    private void addStringColumn(final String name, final int width, final Function<ElasticIndexField, String> function) {
+    private void addStringColumn(final String name,
+                                 final int width,
+                                 final Function<ElasticIndexField, String> function
+    ) {
         dataGridView.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
@@ -112,7 +123,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     @Override
-    public void read(final DocRef docRef, final ElasticIndex index) {
+    public void read(final DocRef docRef, final ElasticIndexDoc index) {
 
         if (index != null) {
             fields = index.getFields();

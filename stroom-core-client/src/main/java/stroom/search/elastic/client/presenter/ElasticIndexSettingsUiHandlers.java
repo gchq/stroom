@@ -21,5 +21,5 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface ElasticIndexSettingsUiHandlers extends UiHandlers {
     void onChange();
 
-    void onTestConnection();
+    void onTestIndex();
 }

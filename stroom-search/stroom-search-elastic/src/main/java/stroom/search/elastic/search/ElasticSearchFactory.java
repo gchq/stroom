@@ -1,79 +1,81 @@
 package stroom.search.elastic.search;
 
-import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.elastic.ElasticIndexService;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.task.server.TaskContext;
-import stroom.util.config.PropertyUtil;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasTerminate;
-import stroom.util.spring.StroomScope;
 
 import org.elasticsearch.index.query.QueryBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
-@Component
-@Scope(StroomScope.TASK)
 public class ElasticSearchFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
 
-    private final DictionaryStore dictionaryStore;
-    private final ElasticIndexService elasticIndexService;
+    private final WordListProvider wordListProvider;
+    private final ElasticSearchConfig elasticSearchConfig;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
+    private final ElasticIndexService elasticIndexService;
 
     @Inject
-    public ElasticSearchFactory(final DictionaryStore dictionaryStore,
-                                final ElasticIndexService elasticIndexService,
-                                final ElasticSearchTaskHandler elasticSearchTaskHandler
+    public ElasticSearchFactory(final WordListProvider wordListProvider,
+                                final ElasticSearchConfig elasticSearchConfig,
+                                final ElasticSearchTaskHandler elasticSearchTaskHandler,
+                                final ElasticIndexService elasticIndexService
     ) {
-        this.dictionaryStore = dictionaryStore;
-        this.elasticIndexService = elasticIndexService;
+        this.wordListProvider = wordListProvider;
+        this.elasticSearchConfig = elasticSearchConfig;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
+        this.elasticIndexService = elasticIndexService;
     }
 
-    public void search(final ElasticClusterSearchTask task,
+    public void search(final ElasticAsyncSearchTask asyncSearchTask,
+                       final ElasticIndexDoc index,
+                       final String[] storedFields,
+                       final long now,
                        final ExpressionOperator expression,
                        final Receiver receiver,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
-                       final HasTerminate hasTerminate) {
-        // Reload the index.
-        final ElasticIndex index = task.getElasticIndex();
-
-        // Make sure we have a search index.
+                       final String dateTimeLocale
+    ) {
         if (index == null) {
             throw new SearchException("Search index has not been set");
         }
 
         // Create a map of index fields keyed by name.
         final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
-        final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
-
+        final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
         final Tracker tracker = new Tracker(hitCount);
-        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(index, queryBuilder, task.getStoredFields(), receiver, tracker);
-        elasticSearchTaskHandler.exec(elasticSearchTask);
+        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
+                asyncSearchTask, index, queryBuilder, storedFields, receiver, tracker);
+
+        elasticSearchTaskHandler.exec(taskContext, elasticSearchTask);
 
         // Wait until we finish.
-        while (!hasTerminate.isTerminated() && !tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-            taskContext.info("" +
-                    "Searching... " +
-                    "found " +
-                    hitCount.get() +
-                    " hits");
+        try {
+            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
+                taskContext.info(() -> "" +
+                        "Searching... " +
+                        "found " +
+                        hitCount.get() +
+                        " hits");
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.debug(this::toString);
+            // Keep interrupting
+            Thread.currentThread().interrupt();
         }
 
-        // Let the receiver know we are complete.
+        // Let the receiver know we are complete
         receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
@@ -82,7 +84,12 @@ public class ElasticSearchFactory {
                                   final String timeZoneId,
                                   final long nowEpochMilli
     ) {
-        final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(dictionaryStore, indexFieldsMap, timeZoneId, nowEpochMilli);
+        final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                wordListProvider,
+                indexFieldsMap,
+                timeZoneId,
+                nowEpochMilli);
+
         final QueryBuilder query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.

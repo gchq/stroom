@@ -17,66 +17,53 @@
 
 package stroom.search.elastic;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
-import stroom.util.cache.CacheManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.IdentityHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-
-@Component
-public class ElasticClientCacheImpl implements ElasticClientCache {
+@Singleton
+public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientCacheImpl.class);
+    private static final String CACHE_NAME = "Elastic Client Cache";
 
-    private static final int MAX_CACHE_ENTRIES = 100;
-
-    private final LoadingCache<ElasticConnectionConfig, RestHighLevelClient> cache;
-
+    private final ICache<ElasticConnectionConfig, RestHighLevelClient> cache;
     private final IdentityHashMap<RestHighLevelClient, State> useMap = new IdentityHashMap<>();
 
     @Inject
-    @SuppressWarnings("unchecked")
-    ElasticClientCacheImpl(
-        final CacheManager cacheManager
-    ) {
-        final CacheLoader<ElasticConnectionConfig, RestHighLevelClient> cacheLoader = CacheLoader.from(k -> {
-            if (k == null) {
-                throw new NullPointerException("Elasticsearch connection config not provided");
+    ElasticClientCacheImpl(final CacheManager cacheManager, final ElasticConfig elasticConfig) {
+        this.cache = cacheManager.create(CACHE_NAME, elasticConfig::getIndexClientCache, this::create, this::destroy);
+    }
+
+    private RestHighLevelClient create(ElasticConnectionConfig elasticConnectionConfig) {
+        if (elasticConnectionConfig == null) {
+            throw new NullPointerException("Elasticsearch connection config not provided");
+        }
+
+        // Create a new instance of `RestHighLevelClient`
+        return new ElasticClientFactory().create(elasticConnectionConfig);
+    }
+
+    private void destroy(final ElasticConnectionConfig key, final RestHighLevelClient value) {
+        synchronized (this) {
+            final State state = useMap.get(value);
+            state.stale = true;
+            if (state.useCount == 0) {
+                close(value);
+                useMap.remove(value);
             }
-
-            // Create a new instance of `RestHighLevelClient`
-            return new ElasticClientFactory().create(k);
-        });
-
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .removalListener(entry -> {
-                    synchronized (this) {
-                        final RestHighLevelClient client = (RestHighLevelClient) entry.getValue();
-                        final State state = useMap.get(client);
-                        state.stale = true;
-                        if (state.useCount == 0) {
-                            close(client);
-                            useMap.remove(client);
-                        }
-                    }
-                });
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Elasticsearch Client Cache", cacheBuilder, cache);
+        }
     }
 
     @Override
@@ -100,7 +87,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache {
     }
 
     private RestHighLevelClient borrowClient(final ElasticConnectionConfig key) {
-        final RestHighLevelClient client = cache.getUnchecked(key);
+        final RestHighLevelClient client = cache.get(key);
         synchronized (this) {
             useMap.computeIfAbsent(client, k -> new State()).increment();
         }
@@ -126,7 +113,13 @@ public class ElasticClientCacheImpl implements ElasticClientCache {
         }
     }
 
+    @Override
+    public void clear() {
+        cache.clear();
+    }
+
     private static class State {
+
         private int useCount;
         private boolean stale;
 

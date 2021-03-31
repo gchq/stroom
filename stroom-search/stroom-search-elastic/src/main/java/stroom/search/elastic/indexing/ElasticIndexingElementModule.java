@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.search.elastic;
+package stroom.search.elastic.indexing;
 
-import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.pipeline.factory.PipelineElementModule;
 
-public class FindElasticClusterCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = 1L;
-
-    public FindElasticClusterCriteria() {
-        // Default constructor necessary for GWT serialisation
+public class ElasticIndexingElementModule extends PipelineElementModule {
+    @Override
+    protected void configureElements() {
+        bindElement(ElasticIndexingFilter.class);
     }
 }

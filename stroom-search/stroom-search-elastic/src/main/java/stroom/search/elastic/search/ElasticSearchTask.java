@@ -16,23 +16,26 @@
 
 package stroom.search.elastic.search;
 
-import stroom.search.coprocessor.Receiver;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.query.common.v2.Receiver;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
-public class ElasticSearchTask {
-    private final ElasticIndex elasticIndex;
+class ElasticSearchTask {
+    private final ElasticAsyncSearchTask asyncSearchTask;
+    private final ElasticIndexDoc elasticIndex;
     private final QueryBuilder query;
     private final String[] fieldNames;
     private final Receiver receiver;
     private final Tracker tracker;
 
-    ElasticSearchTask(final ElasticIndex elasticIndex,
+    ElasticSearchTask(final ElasticAsyncSearchTask asyncSearchTask,
+                      final ElasticIndexDoc elasticIndex,
                       final QueryBuilder query,
                       final String[] fieldNames,
                       final Receiver receiver,
                       final Tracker tracker) {
+        this.asyncSearchTask = asyncSearchTask;
         this.elasticIndex = elasticIndex;
         this.query = query;
         this.fieldNames = fieldNames;
@@ -40,11 +43,17 @@ public class ElasticSearchTask {
         this.tracker = tracker;
     }
 
-    ElasticIndex getElasticIndex() {
+    ElasticAsyncSearchTask getAsyncSearchTask() {
+        return asyncSearchTask;
+    }
+
+    ElasticIndexDoc getElasticIndex() {
         return elasticIndex;
     }
 
-    QueryBuilder getQuery() { return query; }
+    QueryBuilder getQuery() {
+        return query;
+    }
 
     String[] getFieldNames() {
         return fieldNames;

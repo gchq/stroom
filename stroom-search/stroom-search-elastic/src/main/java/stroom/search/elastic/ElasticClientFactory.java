@@ -17,8 +17,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.net.ssl.SSLContext;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
@@ -53,8 +53,7 @@ public class ElasticClientFactory {
                 if (host.getSchemeName().equalsIgnoreCase("https")) {
                     useHttps = true;
                 }
-            }
-            else {
+            } else {
                 LOGGER.error("Invalid Elasticsearch URL format: '" + url + "'");
             }
         }
@@ -97,8 +96,9 @@ public class ElasticClientFactory {
     private SSLContext getSslContext(final ElasticConnectionConfig config) {
         final String cert = config.getCaCertificate();
 
-        if (cert == null || cert.isEmpty())
+        if (cert == null || cert.isEmpty()) {
             return null;
+        }
 
         try {
             final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
@@ -111,11 +111,9 @@ public class ElasticClientFactory {
 
             final SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
             return sslContextBuilder.build();
-        }
-        catch (CertificateException e) {
+        } catch (CertificateException e) {
             LOGGER.error("Failed to create a certificate factory", e);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.error("Failed to load CA certificate", e);
         }
 
@@ -130,8 +128,9 @@ public class ElasticClientFactory {
         final String apiKeyId = config.getApiKeyId();
         final String apiKeySecret = config.getApiKeySecret();
 
-        if (apiKeyId == null || apiKeyId.isEmpty() || apiKeySecret == null || apiKeySecret.isEmpty())
+        if (apiKeyId == null || apiKeyId.isEmpty() || apiKeySecret == null || apiKeySecret.isEmpty()) {
             return null;
+        }
 
         final String combinedSecret = apiKeyId + ":" + apiKeySecret;
         return Base64.getEncoder().encodeToString(combinedSecret.getBytes(StandardCharsets.UTF_8));
@@ -164,11 +163,9 @@ public class ElasticClientFactory {
 
                 return new HttpHost(host, port, scheme);
             }
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             LOGGER.error("Invalid port format in URL: '" + url + "'");
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             LOGGER.error("Elasticsearch connection URL could not be parsed: '" + url + "'. " + e.getMessage());
         }
 

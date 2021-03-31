@@ -18,15 +18,18 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
-import stroom.search.elastic.shared.ElasticCluster;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticClusterResource;
+import stroom.search.elastic.shared.ElasticClusterTestResponse;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
-import stroom.search.elastic.shared.ElasticConnectionTestAction;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -34,17 +37,22 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<ElasticClusterSettingsView, ElasticCluster> implements ElasticClusterSettingsUiHandlers {
-    private final ClientDispatchAsync dispatcher;
+public class ElasticClusterSettingsPresenter
+        extends DocumentSettingsPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
+        implements ElasticClusterSettingsUiHandlers {
+    private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
+
+    private final RestFactory restFactory;
 
     @Inject
-    public ElasticClusterSettingsPresenter(final EventBus eventBus,
-                                           final ElasticClusterSettingsView view,
-                                           final ClientDispatchAsync dispatcher
+    public ElasticClusterSettingsPresenter(
+            final EventBus eventBus,
+            final ElasticClusterSettingsView view,
+            final RestFactory restFactory
     ) {
         super(eventBus, view);
 
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         view.setUiHandlers(this);
     }
@@ -59,19 +67,29 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
 
     @Override
     public void onTestConnection() {
-        final ElasticCluster cluster = new ElasticCluster();
+        final ElasticClusterDoc cluster = new ElasticClusterDoc();
         onWrite(cluster);
 
-        dispatcher.exec(new ElasticConnectionTestAction(cluster)).onSuccess(result -> AlertEvent.fireInfo(this, "Success", result.toString(), null));
+        final Rest<ElasticClusterTestResponse> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                    }
+                })
+                .call(ELASTIC_CLUSTER_RESOURCE)
+                .testCluster(cluster);
     }
 
     @Override
     public String getType() {
-        return ElasticCluster.ENTITY_TYPE;
+        return ElasticClusterDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticCluster cluster) {
+    protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster) {
         final ElasticConnectionConfig connectionConfig = cluster.getConnectionConfig();
 
         if (connectionConfig != null) {
@@ -87,7 +105,7 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
     }
 
     @Override
-    protected void onWrite(final ElasticCluster cluster) {
+    protected void onWrite(final ElasticClusterDoc cluster) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
         connectionConfig.setCaCertificate(getView().getCaCertificate());
@@ -100,7 +118,9 @@ public class ElasticClusterSettingsPresenter extends DocumentSettingsPresenter<E
         cluster.setDescription(getView().getDescription().trim());
     }
 
-    public interface ElasticClusterSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
+    public interface ElasticClusterSettingsView
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
+
         String getDescription();
 
         void setDescription(String description);

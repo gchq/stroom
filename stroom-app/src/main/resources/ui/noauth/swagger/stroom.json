@@ -2162,6 +2162,192 @@
         "tags" : [ "Dictionaries (v1)" ]
       }
     },
+    "/elasticCluster/v1/testCluster" : {
+      "post" : {
+        "operationId" : "testElasticCluster",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticClusterDoc"
+              }
+            }
+          },
+          "description" : "elasticClusterDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticClusterTestResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Test connection to the Elasticsearch cluster",
+        "tags" : [ "Elastic Clusters" ]
+      }
+    },
+    "/elasticCluster/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchElasticCluster",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticClusterDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an Elasticsearch cluster doc by its UUID",
+        "tags" : [ "Elastic Clusters" ]
+      },
+      "put" : {
+        "operationId" : "updateElasticCluster",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticClusterDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticClusterDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an Elasticsearch cluster doc",
+        "tags" : [ "Elastic Clusters" ]
+      }
+    },
+    "/elasticIndex/v1/testIndex" : {
+      "post" : {
+        "operationId" : "testElasticIndex",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticIndexDoc"
+              }
+            }
+          },
+          "description" : "elasticIndexDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticIndexTestResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Test the Elasticsearch index",
+        "tags" : [ "Elastic Indices" ]
+      }
+    },
+    "/elasticIndex/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchElasticIndex",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticIndexDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an Elasticsearch index doc by its UUID",
+        "tags" : [ "Elastic Indices" ]
+      },
+      "put" : {
+        "operationId" : "updateElasticIndex",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticIndexDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticIndexDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an Elasticsearch index doc",
+        "tags" : [ "Elastic Indices" ]
+      }
+    },
     "/entityEvent/v1/{nodeName}" : {
       "put" : {
         "operationId" : "fireEntityEvent",
@@ -6426,6 +6612,96 @@
         "tags" : [ "Stored Queries" ]
       }
     },
+    "/stroom-elastic-index/v2/dataSource" : {
+      "post" : {
+        "operationId" : "getElasticIndexDataSource",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "DocRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DataSource"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
+        "tags" : [ "Elasticsearch Queries" ]
+      }
+    },
+    "/stroom-elastic-index/v2/destroy" : {
+      "post" : {
+        "operationId" : "destroyElasticIndexSearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Destroy a running query",
+        "tags" : [ "Elasticsearch Queries" ]
+      }
+    },
+    "/stroom-elastic-index/v2/search" : {
+      "post" : {
+        "operationId" : "searchElasticIndex",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "description" : "SearchRequest",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Submit a search request",
+        "tags" : [ "Elasticsearch Queries" ]
+      }
+    },
     "/stroom-index/v2/dataSource" : {
       "post" : {
         "operationId" : "getStroomIndexDataSource",
@@ -9435,6 +9711,187 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
+          }
+        }
+      },
+      "ElasticClusterDoc" : {
+        "type" : "object",
+        "properties" : {
+          "connection" : {
+            "$ref" : "#/components/schemas/ElasticConnectionConfig"
+          },
+          "createTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ElasticClusterTestResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ElasticConnectionConfig" : {
+        "type" : "object",
+        "properties" : {
+          "apiKeyId" : {
+            "type" : "string"
+          },
+          "apiKeySecret" : {
+            "type" : "string"
+          },
+          "caCertificate" : {
+            "type" : "string"
+          },
+          "connectionUrls" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "socketTimeoutMillis" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "useAuthentication" : {
+            "type" : "boolean"
+          }
+        },
+        "xml" : {
+          "name" : "connection"
+        }
+      },
+      "ElasticIndexDoc" : {
+        "type" : "object",
+        "properties" : {
+          "clusterRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "createTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "dataSourceFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AbstractField"
+            }
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticIndexField"
+            }
+          },
+          "indexName" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "retentionExpression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ElasticIndexField" : {
+        "type" : "object",
+        "properties" : {
+          "fieldName" : {
+            "type" : "string"
+          },
+          "fieldType" : {
+            "type" : "string"
+          },
+          "fieldUse" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT" ]
+          },
+          "indexed" : {
+            "type" : "boolean"
+          },
+          "stored" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ElasticIndexTestResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "ok" : {
+            "type" : "boolean"
           }
         }
       },

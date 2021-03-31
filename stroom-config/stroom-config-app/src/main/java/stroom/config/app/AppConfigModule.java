@@ -232,6 +232,10 @@ public class AppConfigModule extends AbstractModule {
                     SecurityConfig::setContentSecurityConfig,
                     ContentSecurityConfig.class);
             bindConfig(securityConfig,
+                    SecurityConfig::getCryptoConfig,
+                    SecurityConfig::setCryptoConfig,
+                    CryptoConfig.class);
+            bindConfig(securityConfig,
                     SecurityConfig::getAuthorisationConfig,
                     SecurityConfig::setAuthorisationConfig,
                     AuthorisationConfig.class);

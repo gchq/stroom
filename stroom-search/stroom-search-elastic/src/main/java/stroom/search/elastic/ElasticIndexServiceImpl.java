@@ -17,12 +17,14 @@
 
 package stroom.search.elastic;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.search.elastic.shared.ElasticCluster;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -30,10 +32,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMetadata;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,66 +40,79 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-@Component
 @Singleton
 public class ElasticIndexServiceImpl implements ElasticIndexService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexServiceImpl.class);
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
+    private final ElasticIndexStore elasticIndexStore;
+    private final SecurityContext securityContext;
 
     @Inject
     public ElasticIndexServiceImpl(
         final ElasticClientCache elasticClientCache,
-        final ElasticClusterStore elasticClusterStore
+        final ElasticClusterStore elasticClusterStore,
+        final ElasticIndexStore elasticIndexStore,
+        final SecurityContext securityContext
     ) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-    }
-
-    public List<DataSourceField> getDataSourceFields(ElasticIndex index) {
-        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
-
-        return fieldMappings.entrySet().stream()
-                .map(field -> {
-                    final Object properties = field.getValue().sourceAsMap().get(field.getKey());
-
-                    if (properties instanceof Map) {
-                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                        final String nativeType = (String) propertiesMap.get("type");
-
-                        try {
-                            final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
-                            return new DataSourceField.Builder()
-                                    .type(elasticFieldType.getDataSourceFieldType())
-                                    .name(field.getValue().fullName())
-                                    .queryable(true)
-                                    .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
-                                    .build();
-                        }
-                        catch (IllegalArgumentException e) {
-                            LOGGER.warn(e::getMessage);
-                            return null;
-                        }
-                    }
-                    else {
-                        LOGGER.debug(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        this.elasticIndexStore = elasticIndexStore;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public List<ElasticIndexField> getFields(final ElasticIndex index) {
+    public DataSource getDataSource(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+            return new DataSource(index.getDataSourceFields());
+        });
+    }
+
+    @Override
+    public List<AbstractField> getDataSourceFields(ElasticIndexDoc index) {
+        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+
+        return fieldMappings.entrySet().stream().map(field -> {
+            final Object properties = field.getValue().sourceAsMap().get(field.getKey());
+
+            if (properties instanceof Map) {
+                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                final String nativeType = (String) propertiesMap.get("type");
+
+                try {
+                    final String fieldName = field.getValue().fullName();
+                    final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fieldName,
+                            nativeType);
+
+                    return elasticFieldType.toDataSourceField(fieldName, true);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.warn(e::getMessage);
+                    return null;
+                }
+            } else {
+                LOGGER.debug(() ->
+                        "Mapping properties for field '" + field.getKey() +
+                        "' were in an unrecognised format. Field ignored.");
+                return null;
+            }
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ElasticIndexField> getFields(final ElasticIndexDoc index) {
         return new ArrayList<>(getFieldsMap(index).values());
     }
 
     @Override
-    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndex index) {
+    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
@@ -121,15 +133,13 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                             fieldName,
                             fieldType,
                             sourceFieldEnabled || stored,
-                            true
-                    ));
-                }
-                catch (Exception e) {
+                            true));
+                } catch (Exception e) {
                     LOGGER.error(e::getMessage, e);
                 }
-            }
-            else {
-                LOGGER.debug(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
+            } else {
+                LOGGER.debug(() ->
+                        "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
             }
         });
 
@@ -140,7 +150,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
      * Get a filtered list of any field mappings with `stored` equal to `true`
      */
     @Override
-    public List<String> getStoredFields(final ElasticIndex index) {
+    public List<String> getStoredFields(final ElasticIndexDoc index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
         final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
 
@@ -164,8 +174,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             if (!((Boolean) sourceField.sourceAsMap().get("enabled"))) {
                 return false;
             }
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
             // Source field mapping does not exist, so _source field is enabled
         }
 
@@ -182,15 +191,14 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             final Boolean stored = (Boolean) propertiesMap.get("store");
 
             return stored != null && stored;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
     }
 
-    private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndex elasticIndex) {
+    private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndexDoc elasticIndex) {
         try {
-            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
 
             return elasticClientCache.contextResult(elasticCluster.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
@@ -199,12 +207,12 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                 request.fields("*");
 
                 try {
-                    final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(request, RequestOptions.DEFAULT);
+                    final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(
+                            request, RequestOptions.DEFAULT);
                     final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
 
                     return allMappings.get(indexName);
-                }
-                catch (final IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                 }
 

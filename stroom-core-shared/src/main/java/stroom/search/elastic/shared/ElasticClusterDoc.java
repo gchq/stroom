@@ -18,33 +18,53 @@ package stroom.search.elastic.shared;
 
 import stroom.docstore.shared.Doc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "connection"})
-public class ElasticCluster extends Doc {
-    public static final String ENTITY_TYPE = "ElasticCluster";
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "connection"
+})
+@JsonInclude(Include.NON_NULL)
+public class ElasticClusterDoc extends Doc {
+    public static final String DOCUMENT_TYPE = "ElasticCluster";
 
-    private static final long serialVersionUID = 1L;
-
+    @JsonProperty
     private String description;
-    private ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
-
-    public ElasticCluster() { }
-
-    public String getDescription() { return description; }
-
-    public void setDescription(final String description) { this.description = description; }
 
     @JsonProperty("connection")
+    private ElasticConnectionConfig connectionConfig;
+
+    public ElasticClusterDoc() {
+        this.connectionConfig = new ElasticConnectionConfig();
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
+    }
+
     public ElasticConnectionConfig getConnectionConfig() {
         return connectionConfig;
     }
 
-    @JsonProperty("connection")
     public void setConnectionConfig(final ElasticConnectionConfig connectionConfig) {
         this.connectionConfig = connectionConfig;
     }
@@ -52,15 +72,21 @@ public class ElasticCluster extends Doc {
     @JsonIgnore
     @Override
     public final String getType() {
-        return ENTITY_TYPE;
+        return DOCUMENT_TYPE;
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ElasticCluster)) return false;
-        if (!super.equals(o)) return false;
-        final ElasticCluster elasticCluster = (ElasticCluster) o;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ElasticClusterDoc)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final ElasticClusterDoc elasticCluster = (ElasticClusterDoc) o;
         return Objects.equals(description, elasticCluster.description) &&
                 Objects.equals(connectionConfig, elasticCluster.connectionConfig);
     }

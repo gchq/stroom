@@ -1,32 +1,46 @@
 package stroom.search.elastic.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"connectionUrls,caCertificate,useAuthentication,apiKeyId,apiKeySecret,socketTimeoutMillis"})
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "connection")
-@XmlType(name = "ElasticConnectionConfig", propOrder = {"connectionUrls", "caCertificate", "useAuthentication", "apiKeyId", "apiKeySecret", "socketTimeoutMillis"})
+@XmlType(name = "ElasticConnectionConfig", propOrder = {
+        "connectionUrls",
+        "caCertificate",
+        "useAuthentication",
+        "apiKeyId",
+        "apiKeySecret",
+        "socketTimeoutMillis"})
 public class ElasticConnectionConfig implements Serializable {
+    @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();
 
     /**
      * DER or PEM-encoded CA certificate for X.509 verification
      */
+    @JsonProperty
     private String caCertificate;
 
+    @JsonProperty
     private boolean useAuthentication = false;
 
+    @JsonProperty
     private String apiKeyId;
 
     /**
@@ -45,42 +59,76 @@ public class ElasticConnectionConfig implements Serializable {
      * Socket timeout duration. Any Elasticsearch requests are expected to complete within this interval,
      * else the request is aborted and an `Error` is reported.
      */
+    @JsonProperty
     private int socketTimeoutMillis = -1;
 
-    public List<String> getConnectionUrls() { return connectionUrls; }
+    public ElasticConnectionConfig() { }
 
-    public void setConnectionUrls(final List<String> connectionUrls) { this.connectionUrls = connectionUrls; }
+    public List<String> getConnectionUrls() {
+        return connectionUrls;
+    }
 
-    public String getCaCertificate() { return caCertificate; }
+    public void setConnectionUrls(final List<String> connectionUrls) {
+        this.connectionUrls = connectionUrls;
+    }
 
-    public void setCaCertificate(final String caCertificate) { this.caCertificate = caCertificate; }
+    public String getCaCertificate() {
+        return caCertificate;
+    }
 
-    public boolean getUseAuthentication() { return useAuthentication; }
+    public void setCaCertificate(final String caCertificate) {
+        this.caCertificate = caCertificate;
+    }
 
-    public void setUseAuthentication(final boolean useAuthentication) { this.useAuthentication = useAuthentication; }
+    public boolean getUseAuthentication() {
+        return useAuthentication;
+    }
 
-    public String getApiKeyId() { return apiKeyId; }
+    public void setUseAuthentication(final boolean useAuthentication) {
+        this.useAuthentication = useAuthentication;
+    }
 
-    public void setApiKeyId(final String apiKeyId) { this.apiKeyId = apiKeyId; }
+    public String getApiKeyId() {
+        return apiKeyId;
+    }
 
-    public String getApiKeySecret() { return apiKeySecret; }
+    public void setApiKeyId(final String apiKeyId) {
+        this.apiKeyId = apiKeyId;
+    }
 
-    public void setApiKeySecret(final String apiKeySecret) { this.apiKeySecret = apiKeySecret; }
+    public String getApiKeySecret() {
+        return apiKeySecret;
+    }
 
-    public String getApiKeySecretEncrypted() { return apiKeySecretEncrypted; }
+    public void setApiKeySecret(final String apiKeySecret) {
+        this.apiKeySecret = apiKeySecret;
+    }
 
-    public void setApiKeySecretEncrypted(final String apiKeySecretEncrypted) { this.apiKeySecretEncrypted = apiKeySecretEncrypted; }
+    public String getApiKeySecretEncrypted() {
+        return apiKeySecretEncrypted;
+    }
 
-    public int getSocketTimeoutMillis() { return socketTimeoutMillis; }
+    public void setApiKeySecretEncrypted(final String apiKeySecretEncrypted) {
+        this.apiKeySecretEncrypted = apiKeySecretEncrypted;
+    }
 
-    public void setSocketTimeoutMillis(final int socketTimeoutMillis) { this.socketTimeoutMillis = socketTimeoutMillis; }
+    public int getSocketTimeoutMillis() {
+        return socketTimeoutMillis;
+    }
+
+    public void setSocketTimeoutMillis(final int socketTimeoutMillis) {
+        this.socketTimeoutMillis = socketTimeoutMillis;
+    }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ElasticConnectionConfig)) return false;
-        final ElasticConnectionConfig that = (ElasticConnectionConfig)o;
-
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ElasticConnectionConfig)) {
+            return false;
+        }
+        final ElasticConnectionConfig that = (ElasticConnectionConfig) obj;
         return Objects.equals(connectionUrls, that.connectionUrls) &&
                 Objects.equals(caCertificate, that.caCertificate) &&
                 Objects.equals(useAuthentication, that.useAuthentication) &&
@@ -98,11 +146,11 @@ public class ElasticConnectionConfig implements Serializable {
     public String toString() {
         return "ElasticConnectionConfig{" +
                 "connectionUrls='" + String.join(",", connectionUrls) + '\'' +
-                "caCertPath='" + caCertificate + '\'' +
-                "useAuthentication=" + useAuthentication +
-                "apiKeyId='" + apiKeyId + '\'' +
-                "apiKeySecret='<redacted>'" +
-                "socketTimeoutMillis=" + socketTimeoutMillis +
+                ", caCertPath='" + caCertificate + '\'' +
+                ", useAuthentication=" + useAuthentication +
+                ", apiKeyId='" + apiKeyId + '\'' +
+                ", apiKeySecret='<redacted>'" +
+                ", socketTimeoutMillis=" + socketTimeoutMillis +
                 '}';
     }
 }

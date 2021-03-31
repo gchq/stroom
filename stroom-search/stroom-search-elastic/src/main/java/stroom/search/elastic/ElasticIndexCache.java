@@ -16,11 +16,11 @@
 
 package stroom.search.elastic;
 
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.docref.DocRef;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 public interface ElasticIndexCache {
-    ElasticIndex get(DocRef key);
+    ElasticIndexDoc get(DocRef key);
 
     void remove(DocRef key);
 }

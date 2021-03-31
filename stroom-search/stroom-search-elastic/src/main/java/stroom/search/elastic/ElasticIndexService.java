@@ -1,19 +1,22 @@
 package stroom.search.elastic;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 
 import java.util.List;
 import java.util.Map;
 
 public interface ElasticIndexService {
-    List<DataSourceField> getDataSourceFields(ElasticIndex index);
+    DataSource getDataSource(final DocRef docRef);
 
-    List<ElasticIndexField> getFields(ElasticIndex index);
+    List<AbstractField> getDataSourceFields(ElasticIndexDoc index);
 
-    Map<String, ElasticIndexField> getFieldsMap(ElasticIndex index);
+    List<ElasticIndexField> getFields(ElasticIndexDoc index);
 
-    List<String> getStoredFields(ElasticIndex index);
+    Map<String, ElasticIndexField> getFieldsMap(ElasticIndexDoc index);
+
+    List<String> getStoredFields(ElasticIndexDoc index);
 }

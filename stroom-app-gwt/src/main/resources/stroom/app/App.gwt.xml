@@ -85,6 +85,7 @@
     <inherits name="stroom.folder.Folder" />
     <inherits name="stroom.dictionary.Dictionary" />
     <inherits name="stroom.index.Index" />
+    <inherits name="stroom.search.elastic.ElasticCluster" />
     <inherits name="stroom.search.elastic.ElasticIndex" />
     <inherits name="stroom.search.solr.SolrIndex" />
     <inherits name="stroom.dashboard.Dashboard" />

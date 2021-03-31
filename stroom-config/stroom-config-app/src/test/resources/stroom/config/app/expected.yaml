@@ -559,6 +559,8 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
+    crypto:
+      secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1

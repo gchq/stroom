@@ -17,53 +17,68 @@
 
 package stroom.search.elastic.search;
 
-import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.ClientProperties;
+import stroom.dictionary.api.WordListProvider;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CoprocessorSettingsMap;
-import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.elastic.ElasticIndexCache;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
-import stroom.task.server.TaskManager;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.ui.config.shared.UiConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
-@SuppressWarnings("unused") //used by DI
-@Component("elasticSearchStoreFactory")
+@SuppressWarnings("unused")
 public class ElasticSearchStoreFactory implements StoreFactory {
-    public static final String ENTITY_TYPE = ElasticIndex.ENTITY_TYPE;
+    public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchStoreFactory.class);
-    private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private final ElasticIndexCache elasticIndexCache;
-    private final StroomPropertyService stroomPropertyService;
-    private final TaskManager taskManager;
+    private final WordListProvider wordListProvider;
+    private final Executor executor;
+    private final TaskContextFactory taskContextFactory;
+    private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
+    private final ElasticSearchConfig searchConfig;
+    private final UiConfig clientConfig;
     private final SecurityContext securityContext;
+    private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
-    public ElasticSearchStoreFactory(final ElasticIndexCache elasticIndexCache,
-                                     final StroomPropertyService stroomPropertyService,
-                                     final TaskManager taskManager,
-                                     @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                                     final SecurityContext securityContext) {
+    public ElasticSearchStoreFactory(
+            final ElasticIndexCache elasticIndexCache,
+            final WordListProvider wordListProvider,
+            final Executor executor,
+            final TaskContextFactory taskContextFactory,
+            final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
+            final ElasticSearchConfig searchConfig,
+            final UiConfig clientConfig,
+            final SecurityContext securityContext,
+            final CoprocessorsFactory coprocessorsFactory
+    ) {
         this.elasticIndexCache = elasticIndexCache;
-        this.stroomPropertyService = stroomPropertyService;
-        this.taskManager = taskManager;
+        this.wordListProvider = wordListProvider;
+        this.executor = executor;
+        this.taskContextFactory = taskContextFactory;
+        this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
+        this.searchConfig = searchConfig;
+        this.clientConfig = clientConfig;
         this.securityContext = securityContext;
+        this.coprocessorsFactory = coprocessorsFactory;
     }
 
     @Override
@@ -71,55 +86,60 @@ public class ElasticSearchStoreFactory implements StoreFactory {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
+        // Replace expression parameters.
+        final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+
         // Get the search.
-        final Query query = searchRequest.getQuery();
+        final Query query = modifiedSearchRequest.getQuery();
 
         // Load the index.
-        final ElasticIndex index;
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            index = elasticIndexCache.get(query.getDataSource());
-        }
+        final ElasticIndexDoc index = securityContext.useAsReadResult(() ->
+                elasticIndexCache.get(query.getDataSource()));
 
-        // Create a coprocessor settings map.
-        final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
-
-        // Create an asynchronous search task.
-        final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
-        final ElasticAsyncSearchTask asyncSearchTask = new ElasticAsyncSearchTask(
-                null,
-                securityContext.getUserIdentity(),
-                searchName,
-                query,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
-                coprocessorSettingsMap.getMap(),
-                searchRequest.getDateTimeLocale(),
-                nowEpochMilli
-        );
+        // Create a coprocessor settings list.
+        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
+                .createSettings(modifiedSearchRequest);
 
         // Create a handler for search results.
-        final Sizes storeSize = getStoreSizes();
-        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                modifiedSearchRequest.getKey().getUuid(),
+                coprocessorSettingsList,
+                modifiedSearchRequest.getQuery().getParams());
+
+        // Create an asynchronous search task.
+        final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
+        final ElasticAsyncSearchTask asyncSearchTask = new ElasticAsyncSearchTask(
+                modifiedSearchRequest.getKey(),
+                searchName,
+                query,
+                coprocessorSettingsList,
+                modifiedSearchRequest.getDateTimeLocale(),
+                nowEpochMilli);
 
         // Create the search result collector.
-        final ElasticSearchResultCollector collector = ElasticSearchResultCollector.create(taskManager, asyncSearchTask, null, resultHandler, defaultMaxResultsSizes, storeSize);
+        final ElasticSearchResultCollector searchResultCollector = ElasticSearchResultCollector.create(
+                executor,
+                taskContextFactory,
+                elasticAsyncSearchTaskHandlerProvider,
+                asyncSearchTask,
+                coprocessors);
 
         // Tell the task where results will be collected.
-        asyncSearchTask.setResultCollector(collector);
+        asyncSearchTask.setResultCollector(searchResultCollector);
 
         // Start asynchronous search execution.
-        collector.start();
+        searchResultCollector.start();
 
-        return collector;
+        return searchResultCollector;
     }
 
     private Sizes getDefaultMaxResultsSizes() {
-        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
     private Sizes getStoreSizes() {
-        final String value = stroomPropertyService.getProperty(ElasticSearchResultCollector.PROP_KEY_STORE_SIZE);
+        final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 

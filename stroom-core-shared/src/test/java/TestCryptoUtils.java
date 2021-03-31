@@ -1,13 +1,10 @@
 import stroom.crypto.shared.CryptoUtils;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.crypto.AEADBadTagException;
 
-@RunWith(StroomJUnit4ClassRunner.class)
 public class TestCryptoUtils {
     @Test
     public void TestEncryption() throws Exception {
@@ -15,11 +12,11 @@ public class TestCryptoUtils {
         final String password = "super secret p@ssword";
 
         final String encrypted = CryptoUtils.encrypt(plainText, password);
-        Assert.assertTrue("Encrypted message length is > 0", encrypted.length() > 0);
+        Assertions.assertTrue(encrypted.length() > 0, "Encrypted message length is > 0");
 
         // Try with the correct password
         String decrypted = CryptoUtils.decrypt(encrypted, password);
-        Assert.assertEquals("Decrypted text is same as original", decrypted, plainText);
+        Assertions.assertEquals(decrypted, plainText, "Decrypted text is same as original");
 
         // Try with an incorrect password
         try {

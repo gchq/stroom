@@ -16,9 +16,18 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.DoubleField;
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FloatField;
+import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.TextField;
+import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,14 +41,14 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(DataSourceFieldType.ID_FIELD, "Id", true, null),
-    BOOLEAN(DataSourceFieldType.BOOLEAN_FIELD, "Boolean", false, new String[]{ "boolean" }),
-    INTEGER(DataSourceFieldType.INTEGER_FIELD, "Integer", true, new String[]{ "integer", "short", "byte" }),
-    LONG(DataSourceFieldType.LONG_FIELD, "Long", true, new String[]{ "long", "unsigned_long" }),
-    FLOAT(DataSourceFieldType.FLOAT_FIELD, "Float", true, new String[]{ "float", "half_float", "scaled_float" }),
-    DOUBLE(DataSourceFieldType.DOUBLE_FIELD, "Double", true, new String[]{ "double" }),
-    DATE(DataSourceFieldType.DATE_FIELD, "Date", false, new String[]{ "date" }),
-    TEXT(DataSourceFieldType.TEXT_FIELD, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
+    ID(FieldTypes.ID, "Id", true, null),
+    BOOLEAN(FieldTypes.BOOLEAN, "Boolean", false, new String[]{ "boolean" }),
+    INTEGER(FieldTypes.INTEGER, "Integer", true, new String[]{ "integer", "short", "byte" }),
+    LONG(FieldTypes.LONG, "Long", true, new String[]{ "long", "unsigned_long" }),
+    FLOAT(FieldTypes.FLOAT, "Float", true, new String[]{ "float", "half_float", "scaled_float" }),
+    DOUBLE(FieldTypes.DOUBLE, "Double", true, new String[]{ "double" }),
+    DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
+    TEXT(FieldTypes.TEXT, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
@@ -55,14 +64,14 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         ElasticIndexFieldType.nativeTypeRegistry = nativeTypeRegistry;
     }
 
-    private final DataSourceFieldType dataSourceFieldType;
+    private final String dataSourceFieldType;
     private final String displayValue;
     private final boolean numeric;
     private final Set<String> nativeTypes;
     private final List<Condition> supportedConditions;
 
     ElasticIndexFieldType(
-            final DataSourceFieldType dataSourceFieldType,
+            final String dataSourceFieldType,
             final String displayValue,
             final boolean numeric,
             final String[] nativeTypes
@@ -71,11 +80,10 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         this.displayValue = displayValue;
         this.numeric = numeric;
         this.nativeTypes = nativeTypes != null ? new HashSet<>(Arrays.asList(nativeTypes)) : null;
-
         this.supportedConditions = getConditions();
     }
 
-    public DataSourceFieldType getDataSourceFieldType() {
+    public String getDataSourceFieldType() {
         return dataSourceFieldType;
     }
 
@@ -102,12 +110,11 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private List<Condition> getConditions() {
         final List<Condition> conditions = new ArrayList<>();
 
-        if (dataSourceFieldType.equals(DataSourceFieldType.ID_FIELD)) {
+        if (dataSourceFieldType.equals(FieldTypes.ID)) {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.IN);
             conditions.add(Condition.IN_DICTIONARY);
-        }
-        else if (dataSourceFieldType.equals(DataSourceFieldType.DATE_FIELD) || dataSourceFieldType.isNumeric()) {
+        } else if (dataSourceFieldType.equals(FieldTypes.DATE) || numeric) {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.GREATER_THAN);
             conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
@@ -116,8 +123,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             conditions.add(Condition.BETWEEN);
             conditions.add(Condition.IN);
             conditions.add(Condition.IN_DICTIONARY);
-        }
-        else {
+        } else {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.IN);
             conditions.add(Condition.IN_DICTIONARY);
@@ -129,14 +135,44 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     /**
      * Given a native Elasticsearch data type, return an equivalent Stroom field type
      */
-    public static ElasticIndexFieldType fromNativeType(String fieldName, String nativeType) {
-        if (fieldName.equals(ElasticIndexConstants.EVENT_ID) || fieldName.equals(ElasticIndexConstants.STREAM_ID) || fieldName.equals(ElasticIndexConstants.FEED_ID)) {
+    public static ElasticIndexFieldType fromNativeType(final String fieldName, final String nativeType) {
+        if (fieldName.equals(ElasticIndexConstants.EVENT_ID) ||
+            fieldName.equals(ElasticIndexConstants.STREAM_ID) ||
+            fieldName.equals(ElasticIndexConstants.FEED_ID)) {
             return ID;
         }
 
-        if (nativeTypeRegistry.containsKey(nativeType))
+        if (nativeTypeRegistry.containsKey(nativeType)) {
             return nativeTypeRegistry.get(nativeType);
+        }
 
         throw new IllegalArgumentException("Unsupported field mapping type: '" + nativeType + "'");
+    }
+
+    /**
+     * Returns an `AbstractField` instance, based on the field's data type
+     */
+    public AbstractField toDataSourceField(final String fieldName, final Boolean isIndexed)
+            throws IllegalArgumentException {
+        switch (dataSourceFieldType) {
+            case FieldTypes.ID:
+                return new IdField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.BOOLEAN:
+                return new BooleanField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.INTEGER:
+                return new IntegerField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.LONG:
+                return new LongField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.FLOAT:
+                return new FloatField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.DOUBLE:
+                return new DoubleField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.DATE:
+                return new DateField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.TEXT:
+                return new TextField(fieldName, isIndexed, supportedConditions);
+            default:
+                return null;
+        }
     }
 }

@@ -34,7 +34,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers> implements ElasticIndexSettingsView, ReadOnlyChangeHandler {
+public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers>
+        implements ElasticIndexSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
 
     @UiField
@@ -73,19 +74,27 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public void setDescription(final String description) { this.description.setText(description); }
+    public void setDescription(final String description) {
+        this.description.setText(description);
+    }
 
     @Override
-    public void setClusterView(final View view) { cluster.setWidget(view.asWidget()); }
+    public void setClusterView(final View view) {
+        cluster.setWidget(view.asWidget());
+    }
 
     @Override
-    public String getIndexName() { return indexName.getText().trim(); }
+    public String getIndexName() {
+        return indexName.getText().trim();
+    }
 
     @Override
-    public void setIndexName(final String indexName) { this.indexName.setText(indexName); }
+    public void setIndexName(final String indexName) {
+        this.indexName.setText(indexName);
+    }
 
     @Override
-    public void setRententionExpressionView(final View view) {
+    public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
     }
 
@@ -98,7 +107,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiHandler("testConnection")
     public void onTestConnectionClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onTestConnection();
+            getUiHandlers().onTestIndex();
         }
     }
 

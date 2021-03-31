@@ -17,13 +17,13 @@
 
 package stroom.search.elastic.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticCluster;
-import stroom.security.client.ClientSecurityContext;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -31,15 +31,17 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticCluster> {
+public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
 
-    private final TabContentProvider<ElasticCluster> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<ElasticClusterDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
-    public ElasticClusterPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                                   final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter,
-                                   final ClientSecurityContext securityContext) {
+    public ElasticClusterPresenter(
+            final EventBus eventBus, final LinkTabPanelView view,
+            final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter,
+            final ClientSecurityContext securityContext
+    ) {
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
@@ -59,7 +61,7 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     }
 
     @Override
-    public void onRead(final DocRef docRef, final ElasticCluster cluster) {
+    public void onRead(final DocRef docRef, final ElasticClusterDoc cluster) {
         super.onRead(docRef, cluster);
         tabContentProvider.read(docRef, cluster);
     }
@@ -71,10 +73,12 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     }
 
     @Override
-    protected void onWrite(final ElasticCluster cluster) { tabContentProvider.write(cluster); }
+    protected void onWrite(final ElasticClusterDoc cluster) {
+        tabContentProvider.write(cluster);
+    }
 
     @Override
     public String getType() {
-        return ElasticCluster.ENTITY_TYPE;
+        return ElasticClusterDoc.DOCUMENT_TYPE;
     }
 }

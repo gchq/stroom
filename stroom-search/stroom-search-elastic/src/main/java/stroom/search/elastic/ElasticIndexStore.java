@@ -17,16 +17,12 @@
 
 package stroom.search.elastic;
 
-import stroom.document.server.DocumentStore;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import java.util.List;
 
-public interface ElasticIndexStore extends DocumentStore<ElasticIndex> {
-    ElasticIndex read(String uuid);
-
-    ElasticIndex update(ElasticIndex doc);
-
+public interface ElasticIndexStore extends DocumentStore<ElasticIndexDoc> {
     List<DocRef> list();
 }

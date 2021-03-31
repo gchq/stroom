@@ -17,16 +17,12 @@
 
 package stroom.search.elastic;
 
-import stroom.document.server.DocumentStore;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticCluster;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
+import stroom.search.elastic.shared.ElasticClusterDoc;
 
 import java.util.List;
 
-public interface ElasticClusterStore extends DocumentStore<ElasticCluster> {
-    ElasticCluster read(String uuid);
-
-    ElasticCluster update(ElasticCluster doc);
-
+public interface ElasticClusterStore extends DocumentStore<ElasticClusterDoc> {
     List<DocRef> list();
 }

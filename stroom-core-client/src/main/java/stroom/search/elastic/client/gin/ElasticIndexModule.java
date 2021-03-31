@@ -31,7 +31,11 @@ public class ElasticIndexModule extends PluginModule {
     protected void configure() {
         bindPlugin(ElasticIndexPlugin.class);
         bind(ElasticIndexPresenter.class);
-        bindPresenterWidget(ElasticIndexSettingsPresenter.class, ElasticIndexSettingsView.class, ElasticIndexSettingsViewImpl.class);
-        bindPresenterWidget(ElasticIndexFieldListPresenter.class, ElasticIndexFieldListView.class, ElasticIndexFieldListViewImpl.class);
+        bindPresenterWidget(ElasticIndexSettingsPresenter.class,
+                ElasticIndexSettingsView.class,
+                ElasticIndexSettingsViewImpl.class);
+        bindPresenterWidget(ElasticIndexFieldListPresenter.class,
+                ElasticIndexFieldListView.class,
+                ElasticIndexFieldListViewImpl.class);
     }
 }

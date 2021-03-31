@@ -16,31 +16,61 @@
 
 package stroom.search.elastic.search;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.query.common.v2.SearchResponseCreatorCacheFactory;
+import stroom.query.common.v2.SearchResponseCreatorCache.Key;
+import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.query.common.v2.StoreFactory;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.query.common.v2.Store;
+import stroom.util.shared.Clearable;
 
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
+import javax.inject.Singleton;
 
-@SuppressWarnings("unused") // used by DI
-@Component("elasticSearchResponseCreatorManager")
-public class ElasticSearchResponseCreatorManager implements SearchResponseCreatorManager {
+@SuppressWarnings("unused") //Used by DI
+@Singleton
+public class ElasticSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchResponseCreatorManager.class);
 
-    private final SearchResponseCreatorCache cache;
+    private static final String CACHE_NAME = "Elastic Search Result Creators";
+
+    private final ElasticSearchStoreFactory storeFactory;
+    private final SearchResponseCreatorFactory searchResponseCreatorFactory;
+    private final ICache<Key, SearchResponseCreator> cache;
 
     @Inject
     public ElasticSearchResponseCreatorManager(
-            @Named("elasticInMemorySearchResponseCreatorCacheFactory") final SearchResponseCreatorCacheFactory cacheFactory,
-            @Named("elasticSearchStoreFactory") final StoreFactory storeFactory) {
+            final CacheManager cacheManager,
+            final ElasticSearchConfig elasticSearchConfig,
+            final ElasticSearchStoreFactory storeFactory,
+            final SearchResponseCreatorFactory searchResponseCreatorFactory
+    ) {
+        this.storeFactory = storeFactory;
+        this.searchResponseCreatorFactory = searchResponseCreatorFactory;
+        this.cache = cacheManager.create(CACHE_NAME,
+                elasticSearchConfig::getSearchResultCache, this::create, this::destroy);
+    }
 
-        SearchResponseCreatorCache cache = cacheFactory.create(storeFactory);
-        this.cache = cache;
+    private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {
+        try {
+            LOGGER.debug("Creating new store for key {}", key);
+            final Store store = storeFactory.create(key.getSearchRequest());
+            return searchResponseCreatorFactory.create(store);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void destroy(final Key key, final SearchResponseCreator value) {
+        if (value != null) {
+            value.destroy();
+        }
     }
 
     @Override
@@ -54,9 +84,12 @@ public class ElasticSearchResponseCreatorManager implements SearchResponseCreato
     }
 
     @Override
-    @SuppressWarnings("unused") //called by stroom lifecycle
-    @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
         cache.evictExpiredElements();
+    }
+
+    @Override
+    public void clear() {
+        cache.clear();
     }
 }

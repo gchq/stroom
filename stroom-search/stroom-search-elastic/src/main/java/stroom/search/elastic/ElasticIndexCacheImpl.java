@@ -17,63 +17,63 @@
 
 package stroom.search.elastic;
 
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.EntityAction;
-import stroom.query.api.v2.DocRef;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.util.cache.CacheManager;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import org.springframework.stereotype.Component;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
+import stroom.docref.DocRef;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
-import java.util.concurrent.TimeUnit;
+import javax.inject.Singleton;
 
-@EntityEventHandler(type = ElasticIndex.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
-@Component
-public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 100;
+@Singleton
+@EntityEventHandler(type = ElasticIndexDoc.DOCUMENT_TYPE, action = {
+        EntityAction.CREATE,
+        EntityAction.DELETE,
+        EntityAction.UPDATE
+})
+public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler, Clearable {
+    private static final String CACHE_NAME = "Elastic Index Cache";
 
-    private final LoadingCache<DocRef, ElasticIndex> cache;
+    private final ElasticIndexStore elasticIndexStore;
+    private final ElasticIndexService elasticIndexService;
+    private final ICache<DocRef, ElasticIndexDoc> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final ElasticIndexStore elasticIndexStore,
+                          final ElasticConfig elasticConfig,
                           final ElasticIndexService elasticIndexService
     ) {
-        final CacheLoader<DocRef, ElasticIndex> cacheLoader = CacheLoader.from(k -> {
-            if (k == null) {
-                throw new NullPointerException("Null key supplied");
-            }
+        this.elasticIndexStore = elasticIndexStore;
+        this.elasticIndexService = elasticIndexService;
+        this.cache = cacheManager.create(CACHE_NAME, elasticConfig::getIndexCache, this::create);
+    }
 
-            final ElasticIndex index = elasticIndexStore.read(k.getUuid());
+    private ElasticIndexDoc create(final DocRef docRef) {
+        if (docRef == null) {
+            throw new NullPointerException("Null key supplied");
+        }
 
-            if (index == null) {
-                throw new NullPointerException("No Elasticsearch index can be found for: " + k);
-            }
+        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
 
-            // Query field mappings and cache with the index
-            index.setFields(elasticIndexService.getFields(index));
-            index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
+        if (index == null) {
+            throw new NullPointerException("No Elasticsearch index can be found for: " + docRef);
+        }
 
-            return index;
-        });
+        // Query field mappings and cache with the index
+        index.setFields(elasticIndexService.getFields(index));
+        index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .expireAfterAccess(10, TimeUnit.SECONDS);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Elasticsearch Index Cache", cacheBuilder, cache);
+        return index;
     }
 
     @Override
-    public ElasticIndex get(final DocRef key) {
-        return cache.getUnchecked(key);
+    public ElasticIndexDoc get(final DocRef key) {
+        return cache.get(key);
     }
 
     @Override
@@ -83,8 +83,13 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (ElasticIndex.ENTITY_TYPE.equals(event.getDocRef().getType())) {
+        if (ElasticIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
             cache.invalidate(event.getDocRef());
         }
+    }
+
+    @Override
+    public void clear() {
+        cache.clear();
     }
 }

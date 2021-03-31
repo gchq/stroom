@@ -16,11 +16,12 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
@@ -31,7 +32,6 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-@JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder({
         "fieldUse",
         "fieldName",
@@ -39,24 +39,34 @@ import java.util.Objects;
         "stored",
         "indexed"
 })
+@JsonInclude(Include.NON_NULL)
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
-    private static final long serialVersionUID = 3100770758821157580L;
+    @JsonProperty
+    private ElasticIndexFieldType fieldUse;
 
-    private ElasticIndexFieldType fieldUse = ElasticIndexFieldType.TEXT;
+    @JsonProperty
     private String fieldName;
+
+    @JsonProperty
     private String fieldType;
+
+    @JsonProperty
     private boolean stored;
-    private boolean indexed = true;
+
+    @JsonProperty
+    private boolean indexed;
 
     public ElasticIndexField() {
-        // Default constructor necessary for GWT serialisation.
+        fieldUse = ElasticIndexFieldType.TEXT;
+        indexed = true;
     }
 
-    public ElasticIndexField(final ElasticIndexFieldType fieldUse,
-                             final String fieldName,
-                             final String fieldType,
-                             final boolean stored,
-                             final boolean indexed
+    public ElasticIndexField(
+            @JsonProperty("fieldUse") final ElasticIndexFieldType fieldUse,
+            @JsonProperty("fieldName") final String fieldName,
+            @JsonProperty("fieldType") final String fieldType,
+            @JsonProperty("stored") final boolean stored,
+            @JsonProperty("indexed") final boolean indexed
     ) {
         setFieldUse(fieldUse);
         setFieldName(fieldName);
@@ -117,8 +127,12 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ElasticIndexField)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ElasticIndexField)) {
+            return false;
+        }
         final ElasticIndexField that = (ElasticIndexField) o;
         return stored == that.stored &&
                 indexed == that.indexed &&

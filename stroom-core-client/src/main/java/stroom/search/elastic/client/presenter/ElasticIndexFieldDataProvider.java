@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ElasticIndexFieldDataProvider<R> extends AsyncDataProvider<R> {
+
     private List<R> list;
     private Range requestedRange;
 

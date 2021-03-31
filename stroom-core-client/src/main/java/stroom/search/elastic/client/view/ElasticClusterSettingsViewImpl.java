@@ -38,7 +38,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticClusterSettingsUiHandlers> implements ElasticClusterSettingsView, ReadOnlyChangeHandler {
+public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticClusterSettingsUiHandlers>
+        implements ElasticClusterSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -88,13 +90,15 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public void setDescription(final String description) { this.description.setText(description); }
+    public void setDescription(final String description) {
+        this.description.setText(description);
+    }
 
     @Override
     public List<String> getConnectionUrls() {
         return Arrays.stream(connectionUrls.getText().split("\n"))
-            .map(String::trim)
-            .collect(Collectors.toList());
+                .map(String::trim)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -103,34 +107,54 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public String getCaCertificate() { return caCertificate.getText().trim(); }
+    public String getCaCertificate() {
+        return caCertificate.getText().trim();
+    }
 
     @Override
-    public void setCaCertificate(final String caCertificate) { this.caCertificate.setText(caCertificate); }
+    public void setCaCertificate(final String caCertificate) {
+        this.caCertificate.setText(caCertificate);
+    }
 
     @Override
-    public boolean getUseAuthentication() { return useAuthentication.getBooleanValue(); }
+    public boolean getUseAuthentication() {
+        return useAuthentication.getBooleanValue();
+    }
 
     @Override
-    public void setUseAuthentication(final boolean useAuthentication) { this.useAuthentication.setBooleanValue(useAuthentication); }
+    public void setUseAuthentication(final boolean useAuthentication) {
+        this.useAuthentication.setBooleanValue(useAuthentication);
+    }
 
     @Override
-    public String getApiKeyId() { return apiKeyId.getText().trim(); }
+    public String getApiKeyId() {
+        return apiKeyId.getText().trim();
+    }
 
     @Override
-    public void setApiKeyId(final String apiKeyId) { this.apiKeyId.setText(apiKeyId); }
+    public void setApiKeyId(final String apiKeyId) {
+        this.apiKeyId.setText(apiKeyId);
+    }
 
     @Override
-    public String getApiKeySecret() { return apiKeySecret.getText().trim(); }
+    public String getApiKeySecret() {
+        return apiKeySecret.getText().trim();
+    }
 
     @Override
-    public void setApiKeySecret(final String apiKeySecret) { this.apiKeySecret.setText(apiKeySecret); }
+    public void setApiKeySecret(final String apiKeySecret) {
+        this.apiKeySecret.setText(apiKeySecret);
+    }
 
     @Override
-    public int getSocketTimeoutMillis() { return socketTimeoutMillis.getValue(); }
+    public int getSocketTimeoutMillis() {
+        return socketTimeoutMillis.getValue();
+    }
 
     @Override
-    public void setSocketTimeoutMillis(final int socketTimeoutMillis) { this.socketTimeoutMillis.setValue(socketTimeoutMillis); }
+    public void setSocketTimeoutMillis(final int socketTimeoutMillis) {
+        this.socketTimeoutMillis.setValue(socketTimeoutMillis);
+    }
 
     @Override
     public void onReadOnly(final boolean readOnly) {

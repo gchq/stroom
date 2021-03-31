@@ -17,119 +17,102 @@
 
 package stroom.search.elastic.search;
 
+import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.Coprocessors;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.security.SecurityContext;
-import stroom.security.SecurityHelper;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
+import stroom.task.shared.TaskId;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-
-import javax.inject.Inject;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
-@TaskHandlerBean(task = ElasticAsyncSearchTask.class)
-@Scope(value = StroomScope.TASK)
-public class ElasticAsyncSearchTaskHandler extends AbstractTaskHandler<ElasticAsyncSearchTask, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticAsyncSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ElasticAsyncSearchTaskHandler.class);
-
-
-    private final TaskMonitor taskMonitor;
+public class ElasticAsyncSearchTaskHandler {
     private final ElasticIndexCache elasticIndexCache;
-    private final ElasticIndexService elasticIndexService;
     private final SecurityContext securityContext;
+    private final ElasticIndexService elasticIndexService;
     private final ElasticClusterSearchTaskHandler clusterSearchTaskHandler;
+    private final TaskManager taskManager;
+    private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
-    ElasticAsyncSearchTaskHandler(final TaskMonitor taskMonitor,
-                                  final ElasticIndexCache elasticIndexCache,
+    ElasticAsyncSearchTaskHandler(final ElasticIndexCache elasticIndexCache,
                                   final ElasticIndexService elasticIndexService,
                                   final SecurityContext securityContext,
-                                  final ElasticClusterSearchTaskHandler clusterSearchTaskHandler) {
-        this.taskMonitor = taskMonitor;
+                                  final ElasticClusterSearchTaskHandler clusterSearchTaskHandler,
+                                  final TaskManager taskManager,
+                                  final ClusterTaskTerminator clusterTaskTerminator) {
         this.elasticIndexCache = elasticIndexCache;
         this.elasticIndexService = elasticIndexService;
         this.securityContext = securityContext;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
+        this.taskManager = taskManager;
+        this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    @Override
-    public VoidResult exec(final ElasticAsyncSearchTask task) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            final ElasticSearchResultCollector resultCollector = task.getResultCollector();
-
-            if (!task.isTerminated()) {
+    public void exec(final TaskContext taskContext,
+                     final ElasticAsyncSearchTask task,
+                     final Coprocessors coprocessors,
+                     final ElasticSearchResultCollector resultCollector
+    ) {
+        securityContext.secure(() -> securityContext.useAsRead(() -> {
+            if (!Thread.currentThread().isInterrupted()) {
                 try {
-                    taskMonitor.info(task.getSearchName() + " - initialising");
+                    taskContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
-
-                    // Reload the index.
-                    final ElasticIndex index = elasticIndexCache.get(query.getDataSource());
-
-                    // Get an array of stored index fields that will be used for
-                    // getting stored data.
-                    // TODO : Specify stored fields based on the fields that all
-                    // coprocessors will require. Also
-                    // batch search only needs stream and event id stored fields.
+                    final ElasticIndexDoc index = elasticIndexCache.get(query.getDataSource());
                     final List<String> storedFields = elasticIndexService.getStoredFields(index);
 
-                    final ElasticClusterSearchTask clusterSearchTask = new ElasticClusterSearchTask(
+                    clusterSearchTaskHandler.exec(taskContext,
+                        task,
                         index,
                         query,
-                        task.getResultSendFrequency(),
                         storedFields.toArray(new String[0]),
-                        task.getCoprocessorMap(),
+                        task.getNow(),
                         task.getDateTimeLocale(),
-                        task.getNow()
+                        coprocessors
                     );
 
-                    clusterSearchTaskHandler.exec(clusterSearchTask, resultCollector);
+                    // Await completion
+                    taskContext.info(() -> task.getSearchName() + " - searching");
+                    resultCollector.awaitCompletion();
 
-                    taskMonitor.info(task.getSearchName() + " - searching...");
+                } catch (final RuntimeException e) {
+                    coprocessors.getErrorConsumer().accept(e);
+                } catch (final InterruptedException e) {
+                    coprocessors.getErrorConsumer().accept(e);
 
-                    while (!task.isTerminated() && !resultCollector.isComplete()) {
-                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                            () -> {
-                                try {
-                                    // block and wait for up to 10s for our search to be completed/terminated
-                                    return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
-                                } catch (InterruptedException e) {
-                                    //Don't reset the interrupt status as we are at the top level of
-                                    //the task execution
-                                    throw new RuntimeException("Thread interrupted");
-                                }
-                            },
-                            "waiting for completion condition");
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                } finally {
+                    taskContext.info(() -> task.getSearchName() + " - complete");
 
-                        LOGGER.trace("await finished with result {}", awaitResult);
-                    }
-                    taskMonitor.info(task.getSearchName() + " - complete");
+                    // Make sure we try and terminate any child tasks on worker
+                    // nodes if we need to.
+                    terminateTasks(task, taskContext.getTaskId());
 
-                } catch (final Exception e) {
-                    resultCollector.getErrorSet().add(e.getMessage());
+                    // Ensure search is complete even if we had errors.
+                    resultCollector.complete();
+
+                    // We need to wait here for the client to keep getting results if
+                    // this is an interactive search.
+                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
-
-                // Ensure search is complete even if we had errors.
-                resultCollector.complete();
-
-                // We need to wait here for the client to keep getting results if
-                // this is an interactive search.
-                taskMonitor.info(task.getSearchName() + " - staying alive for UI requests");
             }
+        }));
+    }
 
-            return VoidResult.INSTANCE;
-        }
+    private void terminateTasks(final ElasticAsyncSearchTask task, final TaskId taskId) {
+        // Terminate this task.
+        taskManager.terminate(taskId);
+
+        // We have to wrap the cluster termination task in another task or
+        // ClusterDispatchAsyncImpl
+        // will not execute it if the parent task is terminated.
+        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "ElasticAsyncSearchTask");
     }
 }

@@ -18,40 +18,82 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexResource;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndex> {
+import java.util.function.Consumer;
+
+public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
+
+    private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
+
     private final Provider<ElasticIndexPresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
-    public ElasticIndexPlugin(final EventBus eventBus,
-                              final Provider<ElasticIndexPresenter> editorProvider,
-                              final ClientDispatchAsync dispatcher,
-                              final ContentManager contentManager,
-                              final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+    public ElasticIndexPlugin(
+            final EventBus eventBus,
+            final Provider<ElasticIndexPresenter> editorProvider,
+            final RestFactory restFactory,
+            final ContentManager contentManager,
+            final DocumentPluginEventManager entityPluginEventManager
+    ) {
+        super(eventBus, contentManager, entityPluginEventManager);
+
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() { return editorProvider.get(); }
+    protected DocumentEditPresenter<?, ?> createEditor() {
+        return editorProvider.get();
+    }
 
     @Override
-    public String getType() { return ElasticIndex.ENTITY_TYPE; }
+    public void load(final DocRef docRef,
+                     final Consumer<ElasticIndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
+        final Rest<ElasticIndexDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(ELASTIC_INDEX_RESOURCE)
+                .fetch(docRef.getUuid());
+    }
 
     @Override
-    protected DocRef getDocRef(final ElasticIndex document) {
+    public void save(final DocRef docRef,
+                     final ElasticIndexDoc document,
+                     final Consumer<ElasticIndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
+        final Rest<ElasticIndexDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(ELASTIC_INDEX_RESOURCE)
+                .update(document.getUuid(), document);
+    }
+
+    @Override
+    public String getType() {
+        return ElasticIndexDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final ElasticIndexDoc document) {
         return DocRefUtil.create(document);
     }
 }

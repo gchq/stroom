@@ -29,6 +29,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ElasticIndexFieldListViewImpl extends ViewImpl implements ElasticIndexFieldListView {
+
     private final Widget widget;
 
     @UiField

@@ -17,7 +17,6 @@
 package stroom.search.elastic.search;
 
 public class SearchException extends RuntimeException {
-    private static final long serialVersionUID = -482925256715483280L;
 
     public SearchException(final String message) {
         super(message);
