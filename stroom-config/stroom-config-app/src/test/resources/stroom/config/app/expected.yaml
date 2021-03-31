@@ -826,13 +826,14 @@ appConfig:
       version: "v0.1"
     theme:
       backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
+      backgroundColour: "#1E88E5"
       backgroundImage: "none"
       backgroundPosition: "0 0"
       backgroundRepeat: "repeat"
       backgroundOpacity: "0"
       tubeVisible: "hidden"
       tubeOpacity: "0.6"
+      topMenuTextColour: "#FFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"

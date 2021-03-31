@@ -15,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row15;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -42,7 +42,7 @@ import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = 721710576;
+    private static final long serialVersionUID = 1577005112;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -71,11 +71,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * The column <code>stroom.index_shard.fk_volume_id</code>.
      */
     public final TableField<IndexShardRecord, Integer> FK_VOLUME_ID = createField(DSL.name("fk_volume_id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.index_shard.old_index_id</code>.
-     */
-    public final TableField<IndexShardRecord, Integer> OLD_INDEX_ID = createField(DSL.name("old_index_id"), org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>stroom.index_shard.index_uuid</code>.
@@ -226,11 +221,11 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row15 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row15<Long, String, Integer, Integer, String, Integer, Long, Long, Integer, Long, Byte, String, String, Long, Long> fieldsRow() {
-        return (Row15) super.fieldsRow();
+    public Row14<Long, String, Integer, String, Integer, Long, Long, Integer, Long, Byte, String, String, Long, Long> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 }

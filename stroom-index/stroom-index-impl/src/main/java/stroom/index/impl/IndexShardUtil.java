@@ -34,17 +34,6 @@ public class IndexShardUtil {
             throw new RuntimeException("Volume path not found: " + indexShard.getVolume().getPath());
         }
 
-        if (indexShard.getOldIndexId() != null) {
-            // If we have a legacy shard then see if we can create a path for it.
-            Path legacyPath = path.resolve("index");
-            legacyPath = legacyPath.resolve(String.valueOf(indexShard.getOldIndexId()));
-            legacyPath = legacyPath.resolve(indexShard.getPartition());
-            legacyPath = legacyPath.resolve(String.valueOf(indexShard.getId()));
-            if (Files.isDirectory(legacyPath)) {
-                return legacyPath;
-            }
-        }
-
         path = path.resolve("index");
         path = path.resolve(indexShard.getIndexUuid());
         path = path.resolve(indexShard.getPartition());

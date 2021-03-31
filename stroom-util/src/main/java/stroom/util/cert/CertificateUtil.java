@@ -37,36 +37,40 @@ public class CertificateUtil {
     private static final String X_SSL_CLIENT_S_DN = "X-SSL-CLIENT-S-DN";
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateUtil.class);
 
-    /**
-     * Do all the below in 1 go !
-     */
-    private static Optional<String> extractCertificateDN(final ServletRequest request) {
-        final X509Certificate cert = extractCertificate(request);
-        return extractDNFromCertificate(cert);
-    }
-
     public static Optional<String> getCN(final HttpServletRequest request) {
         return getDN(request).map(CertificateUtil::extractCNFromDN);
     }
 
     public static Optional<String> getDN(final HttpServletRequest request) {
+        // First see if we have a cert we can use.
+        final Optional<X509Certificate> cert = extractCertificate(request);
+        if (cert.isPresent()) {
+            LOGGER.debug(() -> "Found certificate");
+            return extractDNFromCertificate(cert.get());
+        }
+
         final String clientDn = request.getHeader(X_SSL_CLIENT_S_DN);
         LOGGER.debug(() -> X_SSL_CLIENT_S_DN + " = " + clientDn);
-
-        return Optional.ofNullable(clientDn)
-                .or(() -> extractCertificateDN(request));
+        return Optional.ofNullable(clientDn);
     }
 
     /**
      * Pull out the Subject from the certificate. E.g.
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      */
-    public static X509Certificate extractCertificate(final ServletRequest request) {
-        Object[] certs = (Object[]) request.getAttribute(CertificateUtil.X_SSL_CERT);
-        if (certs == null) {
-            certs = (Object[]) request.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
+    public static Optional<X509Certificate> extractCertificate(final ServletRequest request) {
+        return extractCertificate(request, CertificateUtil.X_SSL_CERT)
+                .or(() -> extractCertificate(request, SERVLET_CERT_ARG));
+    }
+
+    private static Optional<X509Certificate> extractCertificate(final ServletRequest request,
+                                                                final String attribute) {
+        final Object[] certs = (Object[]) request.getAttribute(attribute);
+        if (certs != null) {
+            LOGGER.debug(() -> "Found certificate using " + attribute + " header");
+            return extractCertificate(certs);
         }
-        return CertificateUtil.extractCertificate(certs);
+        return Optional.empty();
     }
 
     /**
@@ -75,15 +79,13 @@ public class CertificateUtil {
      *
      * @param certs ARGS from the SERVLET request.
      */
-    private static X509Certificate extractCertificate(final Object[] certs) {
-        if (certs != null) {
-            for (final Object cert : certs) {
-                if (cert instanceof X509Certificate) {
-                    return (X509Certificate) cert;
-                }
+    private static Optional<X509Certificate> extractCertificate(final Object[] certs) {
+        for (final Object cert : certs) {
+            if (cert instanceof X509Certificate) {
+                return Optional.of((X509Certificate) cert);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -93,26 +95,8 @@ public class CertificateUtil {
      * @return null or the CN name
      */
     private static Optional<String> extractDNFromCertificate(final X509Certificate cert) {
-        if (cert == null) {
-            return Optional.empty();
-        }
         return Optional.ofNullable(cert.getSubjectDN().getName());
     }
-
-//    /**
-//     * Given a cert pull out the expiry date.
-//     *
-//     * @return null or the CN name
-//     */
-//    private static Long extractExpiryDateFromCertificate(final X509Certificate cert) {
-//        if (cert != null) {
-//            final Date date = cert.getNotAfter();
-//            if (date != null) {
-//                return date.getTime();
-//            }
-//        }
-//        return null;
-//    }
 
     /**
      * Given a DN pull out the CN. E.g.

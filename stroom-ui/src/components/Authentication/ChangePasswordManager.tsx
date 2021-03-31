@@ -26,6 +26,7 @@ import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import { usePasswordPolicy } from "./usePasswordPolicy";
 import { useStroomApi } from "lib/useStroomApi";
 import { ChangePasswordRequest, ChangePasswordResponse } from "api/stroom";
+import { PromptType } from "../Prompt/Prompt";
 
 export interface FormValues {
   userId: string;
@@ -42,7 +43,7 @@ const ChangePasswordManager: FunctionComponent<{
   });
 
   const passwordPolicyConfig = usePasswordPolicy();
-  const { showError } = usePrompt();
+  const { showPrompt } = usePrompt();
   const { exec } = useStroomApi();
 
   if (!state || !state.currentPassword) {
@@ -72,17 +73,29 @@ const ChangePasswordManager: FunctionComponent<{
           if (!response) {
             actions.setSubmitting(false);
           } else if (response.changeSucceeded) {
-            props.onClose();
+            showPrompt({
+              promptProps: {
+                type: PromptType.INFO,
+                title: "Success",
+                message: "Your password has been changed",
+              },
+              onCloseDialog: () => props.onClose(),
+            });
           } else {
             actions.setSubmitting(false);
-            showError({
-              message: response.message,
+            showPrompt({
+              promptProps: {
+                type: PromptType.ERROR,
+                title: "Error",
+                message: response.message,
+              },
+              onCloseDialog: () => {
+                // If the user is asked to sign in again then unset the auth state.
+                if (response.forceSignIn) {
+                  props.onClose();
+                }
+              },
             });
-
-            // If the user is asked to sign in again then unset the auth state.
-            if (response.forceSignIn) {
-              props.onClose();
-            }
           }
         },
       );
