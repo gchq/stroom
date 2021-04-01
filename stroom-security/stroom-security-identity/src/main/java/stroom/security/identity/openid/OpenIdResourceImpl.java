@@ -96,7 +96,7 @@ class OpenIdResourceImpl implements OpenIdResource {
             if (status.getError().isPresent()) {
                 AuthenticateOutcomeReason reason = AuthenticateOutcomeReason.OTHER;
                 try {
-                    reason = AuthenticateOutcomeReason.fromValue( status.getError().get().getReason());
+                    reason = AuthenticateOutcomeReason.fromValue(status.getError().get().getReason());
                 } catch (IllegalArgumentException e) {
                     //Ignore, just use "Other"
                 }

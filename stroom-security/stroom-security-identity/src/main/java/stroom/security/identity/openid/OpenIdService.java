@@ -70,7 +70,7 @@ class OpenIdService {
 
         final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
-            authStatus = new AuthStatus(){
+            authStatus = new AuthStatus() {
 
                 @Override
                 public Optional<AuthState> getAuthState() {
@@ -79,7 +79,7 @@ class OpenIdService {
 
                 @Override
                 public Optional<BadRequestException> getError() {
-                    return Optional.of (new BadRequestException(UNKNOWN_SUBJECT,
+                    return Optional.of(new BadRequestException(UNKNOWN_SUBJECT,
                             AuthenticateOutcomeReason.OTHER.value(), "Redirect URI is not allowed"));
                 }
 
