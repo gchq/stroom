@@ -1005,7 +1005,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             int numberOfRows = 1000000;
 
             if (pageRequest != null) {
-                offset = pageRequest.getOffset().intValue();
+                offset = pageRequest.getOffset();
                 numberOfRows = pageRequest.getLength();
             }
 

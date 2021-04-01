@@ -122,7 +122,7 @@ public class ThemeConfig extends AbstractConfig {
             tubeOpacity = "0.6";
         }
         if (topMenuTextColour == null) {
-            topMenuTextColour = "#FFF";
+            topMenuTextColour = "#FFFFFF";
         }
         if (labelColours == null) {
             labelColours = "TEST1=#FF0000,TEST2=#FF9900";

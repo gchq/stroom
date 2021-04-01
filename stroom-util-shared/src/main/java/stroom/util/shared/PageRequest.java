@@ -30,12 +30,11 @@ import java.util.Objects;
 public class PageRequest implements Serializable, Copyable<PageRequest> {
 
     public static final int DEFAULT_PAGE_SIZE = 100;
-    private static final long serialVersionUID = 6838082084157676358L;
     /**
      * Offset from the start 0 is no offset.
      */
     @JsonProperty
-    private Long offset;
+    private Integer offset;
     /**
      * Page size to use, e.g. 10 is 10 records
      */
@@ -43,21 +42,21 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
     private Integer length;
 
     public PageRequest() {
-        offset = 0L;
+        offset = 0;
     }
 
     @JsonCreator
-    public PageRequest(@JsonProperty("offset") final Long offset,
+    public PageRequest(@JsonProperty("offset") final Integer offset,
                        @JsonProperty("length") final Integer length) {
         this.offset = offset;
         this.length = length;
     }
 
-    public Long getOffset() {
+    public Integer getOffset() {
         return offset;
     }
 
-    public void setOffset(final Long offset) {
+    public void setOffset(final Integer offset) {
         this.offset = offset;
     }
 

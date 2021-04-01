@@ -8070,7 +8070,7 @@ components:
           format: int32
         offset:
           type: integer
-          format: int64
+          format: int32
     PageResponse:
       type: object
       description: Details of the page of results being returned.

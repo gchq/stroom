@@ -131,7 +131,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 1));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
         final List<Meta> list = find(findMetaCriteria).getValues();
         if (list == null || list.size() == 0) {
             return null;
@@ -289,7 +289,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //        int numberOfRows = 1000000;
 //
 //        if (pageRequest != null) {
-//            offset = pageRequest.getOffset().intValue();
+//            offset = pageRequest.getOffset();
 //            numberOfRows = pageRequest.getLength();
 //        }
 //
@@ -325,7 +325,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             if (pageRequest != null && pageRequest.getOffset() != null) {
                 // Move by an offset?
                 if (pageRequest.getOffset() > 0) {
-                    results = results.subList(pageRequest.getOffset().intValue(), results.size());
+                    results = results.subList(pageRequest.getOffset(), results.size());
                 }
             }
             if (pageRequest != null && pageRequest.getLength() != null) {
@@ -417,7 +417,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-            findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
+            findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
             set.addAll(secureFind(findMetaCriteria).getValues());
         }
 
@@ -438,7 +438,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
         set.addAll(secureFind(findMetaCriteria).getValues());
 
         return set;

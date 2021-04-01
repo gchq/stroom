@@ -132,7 +132,7 @@ public abstract class AbstractMetaListPresenter
         criteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
 
         final PageRequest pageRequest = criteria.obtainPageRequest();
-        pageRequest.setOffset(0L);
+        pageRequest.setOffset(0);
         pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
         dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, pageRequest) {
             @Override
@@ -476,7 +476,7 @@ public abstract class AbstractMetaListPresenter
 
     public void setExpression(final ExpressionOperator expression) {
         this.criteria.setExpression(expression);
-        this.criteria.obtainPageRequest().setOffset(0L);
+        this.criteria.obtainPageRequest().setOffset(0);
         this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
         refresh();
     }

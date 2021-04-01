@@ -11,7 +11,7 @@ class TestResultPage {
     @Test
     void testCollector1() {
 
-        PageRequest pageRequest = new PageRequest(10L, 10);
+        PageRequest pageRequest = new PageRequest(10, 10);
         ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
                 .boxed()
                 .map(WrappedInt::new)
