@@ -221,7 +221,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             final Optional<ExpressionOperator> optional = pathToStreamExpression(repoPath);
             return optional.map(expression -> {
                 final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-                criteria.setPageRequest(new PageRequest(0L, 1000));
+                criteria.setPageRequest(new PageRequest(0, 1000));
                 return metaService.find(criteria);
             }).orElseGet(() -> ResultPage.createUnboundedList(Collections.emptyList()));
         } catch (final RuntimeException e) {

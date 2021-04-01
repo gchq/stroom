@@ -10879,10 +10879,6 @@
           "nodeName" : {
             "type" : "string"
           },
-          "oldIndexId" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "partition" : {
             "type" : "string"
           },
@@ -11498,7 +11494,7 @@
           },
           "offset" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int32"
           }
         }
       },
@@ -14588,7 +14584,7 @@
           "backgroundAttachment" : {
             "type" : "string"
           },
-          "backgroundColor" : {
+          "backgroundColour" : {
             "type" : "string"
           },
           "backgroundImage" : {
@@ -14604,6 +14600,9 @@
             "type" : "string"
           },
           "labelColours" : {
+            "type" : "string"
+          },
+          "topMenuTextColour" : {
             "type" : "string"
           },
           "tubeOpacity" : {

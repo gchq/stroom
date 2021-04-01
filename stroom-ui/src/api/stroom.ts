@@ -1409,9 +1409,6 @@ export interface IndexShard {
   indexUuid?: string;
   indexVersion?: string;
   nodeName?: string;
-
-  /** @format int32 */
-  oldIndexId?: number;
   partition?: string;
 
   /** @format int64 */
@@ -1719,7 +1716,7 @@ export interface PageRequest {
   /** @format int32 */
   length?: number;
 
-  /** @format int64 */
+  /** @format int32 */
   offset?: number;
 }
 
@@ -3143,12 +3140,13 @@ export interface TextRange {
 
 export interface ThemeConfig {
   backgroundAttachment?: string;
-  backgroundColor?: string;
+  backgroundColour?: string;
   backgroundImage?: string;
   backgroundOpacity?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
   labelColours?: string;
+  topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
 }

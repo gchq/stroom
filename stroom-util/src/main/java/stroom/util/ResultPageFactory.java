@@ -34,7 +34,7 @@ public class ResultPageFactory {
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
-                offset = pageRequest.getOffset().intValue();
+                offset = pageRequest.getOffset();
             }
 
             int length = fullList.size() - offset;
@@ -160,7 +160,7 @@ public class ResultPageFactory {
             } else if (totalSize == null) {
                 // If we have not been given the total size see if we can work it out
                 // based on hitting the end
-                calulatedTotalSize = pageRequest.getOffset() + realList.size();
+                calulatedTotalSize = (long) pageRequest.getOffset() + realList.size();
             }
         }
 

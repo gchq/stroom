@@ -145,9 +145,9 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
 //
 //        BaseResultList<Feed> list = feedService.find(criteria);
 //        assertThat(list.size()).isEqualTo(TEST_PAGE);
-//        assertThat(list.getPageResponse().getOffset().intValue()).isEqualTo(0L);
-//        assertThat(list.getPageResponse().getLength().intValue()).isEqualTo(TEST_PAGE);
-//        assertThat(list.getPageResponse().getTotal().intValue()).isEqualTo(TEST_SIZE);
+//        assertThat(list.getPageResponse().getOffset()).isEqualTo(0L);
+//        assertThat(list.getPageResponse().getLength()).isEqualTo(TEST_PAGE);
+//        assertThat(list.getPageResponse().getTotal()).isEqualTo(TEST_SIZE);
 //        assertThat(list.getPageResponse().isExact()).isTrue();
 //
 //        criteria.getPageRequest()

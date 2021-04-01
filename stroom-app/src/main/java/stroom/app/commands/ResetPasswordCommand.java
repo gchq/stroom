@@ -3,8 +3,7 @@ package stroom.app.commands;
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.security.identity.account.AccountService;
-import stroom.security.identity.account.UpdateAccountRequest;
+import stroom.security.identity.account.AccountDao;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.Injector;
@@ -39,7 +38,7 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     private final Path configFile;
 
     @Inject
-    private AccountService accountService;
+    private AccountDao accountDao;
     @Inject
     private SecurityContext securityContext;
     @Inject
@@ -82,33 +81,19 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
 
 
         securityContext.asProcessingUser(() -> {
-            accountService.read(username)
-                    .ifPresentOrElse(
-                            account -> {
-                                // Clear various flags to ensure it can be logged into.
-                                account.setLocked(false);
-                                account.setInactive(false);
-                                account.setEnabled(true);
-                                account.setLoginFailures(0);
+            try {
+                accountDao.resetPassword(username, newPassword);
 
-                                final UpdateAccountRequest updateAccountRequest = new UpdateAccountRequest(
-                                        account,
-                                        newPassword,
-                                        newPassword);
+                String msg = LogUtil.message("Password reset complete for user {}", username);
+                LOGGER.info(msg);
+                logEvent(username, true, msg);
+                System.exit(0);
 
-                                accountService.update(updateAccountRequest, account.getId());
-
-                                String msg = LogUtil.message("Password reset complete for user {}", username);
-                                LOGGER.info(msg);
-                                logEvent(username, true, msg);
-                                System.exit(0);
-                            },
-                            () -> {
-                                String msg = LogUtil.message("User {} does not have an account", username);
-                                LOGGER.error(msg);
-                                logEvent(username, false, msg);
-                                System.exit(1);
-                            });
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage());
+                logEvent(username, false, e.getMessage());
+                System.exit(1);
+            }
         });
     }
 
