@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -22,14 +23,14 @@ public class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
 
-    private final AuthenticationEventLog eventLog;
-    private final SessionListService sessionListService;
-    private final OpenIdManager openIdManager;
+    private final Provider<AuthenticationEventLog> eventLog;
+    private final Provider<SessionListService> sessionListService;
+    private final Provider<OpenIdManager> openIdManager;
 
     @Inject
-    public SessionResourceImpl(final AuthenticationEventLog eventLog,
-                               final SessionListService sessionListService,
-                               final OpenIdManager openIdManager) {
+    public SessionResourceImpl(final Provider<AuthenticationEventLog> eventLog,
+                               final Provider<SessionListService> sessionListService,
+                               final Provider<OpenIdManager> openIdManager) {
         this.eventLog = eventLog;
         this.sessionListService = sessionListService;
         this.openIdManager = openIdManager;
@@ -41,14 +42,14 @@ public class SessionResourceImpl implements SessionResource {
         try {
             LOGGER.info("Logging in session for '{}'", referrer);
 
-            final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+            final Optional<UserIdentity> userIdentity = openIdManager.get().loginWithRequestToken(request);
             if (userIdentity.isEmpty()) {
                 // If the session doesn't have a user ref then attempt login.
                 final Map<String, String> paramMap = UrlUtils.createParamMap(referrer);
                 final String code = paramMap.get(OpenId.CODE);
                 final String stateId = paramMap.get(OpenId.STATE);
                 final String postAuthRedirectUri = OpenId.removeReservedParams(referrer);
-                redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+                redirectUri = openIdManager.get().redirect(request, code, stateId, postAuthRedirectUri);
             }
 
             if (redirectUri == null) {
@@ -77,7 +78,7 @@ public class SessionResourceImpl implements SessionResource {
         }
         userIdentity.ifPresent(ui -> {
             // Create an event for logout
-            eventLog.logoff(ui.getId());
+            eventLog.get().logoff(ui.getId());
         });
 
         return Boolean.TRUE;
@@ -88,9 +89,9 @@ public class SessionResourceImpl implements SessionResource {
     public SessionListResponse list(final String nodeName) {
         LOGGER.debug("list({}) called", nodeName);
         if (nodeName != null) {
-            return sessionListService.listSessions(nodeName);
+            return sessionListService.get().listSessions(nodeName);
         } else {
-            return sessionListService.listSessions();
+            return sessionListService.get().listSessions();
         }
     }
 
