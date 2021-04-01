@@ -64,13 +64,13 @@ public final class ManageGlobalPropertyEditPresenter
 
     private static final OverrideValue<String> ERROR_VALUE = OverrideValue.with("[[ERROR]]");
     private static final String MAGIC_NULL = "NULL";
-    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values from some nodes]";
     private static final String MULTIPLE_YAML_VALUES_MSG = "[Multiple YAML values exist in the cluster]";
     private static final String MULTIPLE_EFFECTIVE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
 
     private final RestFactory restFactory;
     private final NodeCache nodeCache;
+    private final Set<String> unreachableNodes = new HashSet<>();
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
@@ -178,12 +178,12 @@ public final class ManageGlobalPropertyEditPresenter
         final long uniqueSourcesCount = getUniqueSourcesCount();
         final long nodeCount = getNodeCount();
 
-        if (nodeCount == 1) {
+        if (nodeCount == 1 && unreachableNodes.size() == 0) {
             // Single node cluster so no need for cluster values screen
             effectiveValueInfoButton.setVisible(false);
             effectiveValueWarningsButton.setVisible(false);
         } else {
-            if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1) {
+            if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1 || didAnyNodesError()) {
                 String msg;
 
                 if (didAnyNodesError()) {
@@ -238,7 +238,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private boolean didAnyNodesError() {
-        return nodeToYamlOverrideMap.containsValue(ERROR_VALUE);
+        return unreachableNodes.size() > 0;
     }
 
     private long getNodeCount() {
@@ -247,6 +247,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void refreshYamlOverrideForAllNodes() {
         // For each node fire off a request to get the yaml override for that node
+        unreachableNodes.clear();
         nodeCache.listEnabledNodes(
                 nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
                 throwable -> showError(throwable, "Error getting list of all nodes"));
@@ -306,8 +307,14 @@ public final class ManageGlobalPropertyEditPresenter
                     // Add the node's result to our maps
                     refreshYamlOverrideForNode(nodeName, yamlOverride);
                 })
-                .onFailure(throwable ->
-                        refreshYamlOverrideForNode(nodeName, ERROR_VALUE))
+                .onFailure(throwable -> {
+                    unreachableNodes.add(nodeName);
+                    nodeToYamlOverrideMap.remove(nodeName);
+
+//                    updateEffectiveValueForNode(nodeName, ERROR_VALUE);
+                    updateWarningState();
+                    refreshValuesOnChange();
+                })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
     }
@@ -378,9 +385,11 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiYamlValueText() {
         String text = "";
-        if (didAnyNodesError()) {
-            text = NODES_UNAVAILABLE_MSG;
-        } else if (getUniqueYamlValuesCount() > 1) {
+//        if (didAnyNodesError()) {
+//            text = NODES_UNAVAILABLE_MSG;
+//        } else
+
+        if (getUniqueYamlValuesCount() > 1) {
             text = MULTIPLE_YAML_VALUES_MSG;
         } else {
             if (getEntity().hasYamlOverride()) {
@@ -394,9 +403,11 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiSourceText() {
         String text;
-        if (didAnyNodesError()) {
-            text = NODES_UNAVAILABLE_MSG;
-        } else if (getUniqueSourcesCount() > 1) {
+//        if (didAnyNodesError()) {
+//            text = NODES_UNAVAILABLE_MSG;
+//        } else
+
+        if (getUniqueSourcesCount() > 1) {
             text = MULTIPLE_SOURCES_MSG;
         } else {
             text = getEntity().getSource().getName();
@@ -406,9 +417,10 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiEffectiveValueText() {
         String text;
-        if (didAnyNodesError()) {
-            text = NODES_UNAVAILABLE_MSG;
-        } else if (getUniqueEffectiveValuesCount() > 1) {
+//        if (didAnyNodesError()) {
+//            text = NODES_UNAVAILABLE_MSG;
+//        } else
+        if (getUniqueEffectiveValuesCount() > 1) {
             text = MULTIPLE_EFFECTIVE_VALUES_MSG;
         } else {
             text = getEntity().getEffectiveValue().orElse(null);
@@ -508,9 +520,9 @@ public final class ManageGlobalPropertyEditPresenter
 
     protected PopupSize getPopupSize() {
         return new PopupSize(
-                700, 519,
-                700, 519,
-                1024, 519,
+                700, 556,
+                700, 556,
+                1024, 556,
                 true);
     }
 
