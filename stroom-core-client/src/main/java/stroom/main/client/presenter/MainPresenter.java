@@ -16,6 +16,7 @@
 
 package stroom.main.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.presenter.CorePresenter;
@@ -23,13 +24,16 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UiConfig;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTester;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -83,7 +87,24 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
             }
         });
         registerHandler(clientPropertyCache.addPropertyChangeHandler(
-                event -> getView().setBanner(event.getProperties().getMaintenanceMessage())
+                event -> {
+                    final UiConfig uiConfig = event.getProperties();
+                    getView().setBanner(uiConfig.getMaintenanceMessage());
+                    if (uiConfig == null || uiConfig.getRequireReactWrapper()) {
+                        final Object parentIframe = getParentIframe();
+                        if (parentIframe == null) {
+                            AlertEvent.fireWarn(
+                                    this,
+                                    "You are reached Stroom outside of an IFrame you will now be redirected",
+                                    () -> {
+                                        UrlBuilder builder = new UrlBuilder();
+                                        builder.setProtocol(Window.Location.getProtocol());
+                                        builder.setHost(Window.Location.getHost());
+                                        Window.Location.replace(builder.buildString());
+                                    });
+                        }
+                    }
+                }
         ));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
@@ -134,6 +155,27 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         RevealContentEvent.fire(this, CorePresenter.CORE, this);
         RootPanel.get("logo").setVisible(false);
     }
+
+//    public native boolean isInIFrame() /*-{
+//        try {
+//            return window.frameElement != null;
+//            //return window.self !== window.top;
+//        } catch (e) {
+//            return true;
+//        }
+//	}-*/;
+//
+//    public native Object getIframe() /*-{
+//        try {
+//            return window.frameElement;
+//        } catch (e) {
+//            return true;
+//        }
+//	}-*/;
+
+    public native Object getParentIframe() /*-{
+        return window.parent.frameElement;
+	}-*/;
 
     @ProxyCodeSplit
     public interface MainProxy extends Proxy<MainPresenter> {

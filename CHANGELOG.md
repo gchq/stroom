@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1928**: Stroom will now redirect users to the root URL if the GWT UI is not hosted within the React wrapper. To develop GWT code it is still necessary to use the GWT UI directly outside of the wrapper so to enable this you can set the newly added `requireReactWrapper` property to false.
+
 * Issue **#2156**: The properties screen now shows a warning triangle when there are unreachable nodes rather than showing an error for all property values.
 
 * Issue **#2157**: Fixed issue where pager was causing an exception paging to last on API keys and Accounts list pages.
