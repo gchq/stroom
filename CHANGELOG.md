@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1598** : Audit logging uplifted throughout codebase.
+
+* Issue **#1613** : Added event logging to UserResourceImpl.
 
 ## [v7.0-beta.99] - 2021-04-01
 
