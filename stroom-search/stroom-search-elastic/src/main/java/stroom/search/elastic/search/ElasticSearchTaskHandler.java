@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValBoolean;
 import stroom.dashboard.expression.v1.ValDouble;
@@ -46,6 +47,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -186,7 +188,7 @@ public class ElasticSearchTaskHandler {
 
     private void processBatch(final ElasticSearchTask task, final SearchHit[] searchHits) {
         final Tracker tracker = task.getTracker();
-        final String[] fieldNames = task.getFieldNames();
+        final FieldIndex fieldIndex = task.getFieldIndex();
         final Consumer<Val[]> valuesConsumer = task.getReceiver().getValuesConsumer();
         final Consumer<Throwable> errorConsumer = task.getReceiver().getErrorConsumer();
 
@@ -194,28 +196,30 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 tracker.incrementHitCount();
 
+                final Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                 Val[] values = null;
-                for (int i = 0; i < fieldNames.length; i++) {
-                    final String fieldName = fieldNames[i];
-                    final Object value = searchHit.getSourceAsMap().get(fieldName);
+                for (final String fieldName : fieldIndex.getFieldNames()) {
+                    // Get the ordinal of the field, so values can be mapped by the values receiver
+                    final Integer insertAt = fieldIndex.getPos(fieldName);
+                    final Object fieldValue = sourceMap.get(fieldName);
 
-                    if (value != null) {
+                    if (fieldValue != null) {
                         if (values == null) {
-                            values = new Val[fieldNames.length];
+                            values = new Val[fieldIndex.size()];
                         }
 
-                        if (value instanceof Long) {
-                            values[i] = ValLong.create((Long) value);
-                        } else if (value instanceof Integer) {
-                            values[i] = ValInteger.create((Integer) value);
-                        } else if (value instanceof Double) {
-                            values[i] = ValDouble.create((Double) value);
-                        } else if (value instanceof Float) {
-                            values[i] = ValDouble.create((Float) value);
-                        } else if (value instanceof Boolean) {
-                            values[i] = ValBoolean.create((Boolean) value);
+                        if (fieldValue instanceof Long) {
+                            values[insertAt] = ValLong.create((Long) fieldValue);
+                        } else if (fieldValue instanceof Integer) {
+                            values[insertAt] = ValInteger.create((Integer) fieldValue);
+                        } else if (fieldValue instanceof Double) {
+                            values[insertAt] = ValDouble.create((Double) fieldValue);
+                        } else if (fieldValue instanceof Float) {
+                            values[insertAt] = ValDouble.create((Float) fieldValue);
+                        } else if (fieldValue instanceof Boolean) {
+                            values[insertAt] = ValBoolean.create((Boolean) fieldValue);
                         } else {
-                            values[i] = ValString.create(value.toString());
+                            values[insertAt] = ValString.create(fieldValue.toString());
                         }
                     }
                 }

@@ -78,7 +78,7 @@ class ElasticClusterSearchTaskHandler {
 
                     if (coprocessors.size() > 0) {
                         // Start searching.
-                        search(taskContext, task, elasticIndex, query, storedFields, now, dateTimeLocale, coprocessors);
+                        search(taskContext, task, elasticIndex, query, now, dateTimeLocale, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
@@ -103,7 +103,6 @@ class ElasticClusterSearchTaskHandler {
                         final ElasticAsyncSearchTask task,
                         final ElasticIndexDoc elasticIndex,
                         final Query query,
-                        final String[] storedFields,
                         final long now,
                         final String dateTimeLocale,
                         final Coprocessors coprocessors) {
@@ -123,7 +122,7 @@ class ElasticClusterSearchTaskHandler {
             elasticSearchFactory.search(
                     task,
                     elasticIndex,
-                    storedFields,
+                    coprocessors.getFieldIndex(),
                     now,
                     expression,
                     extractionReceiver,

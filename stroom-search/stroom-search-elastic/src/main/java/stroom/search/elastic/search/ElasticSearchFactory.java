@@ -1,5 +1,6 @@
 package stroom.search.elastic.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.Receiver;
@@ -21,7 +22,6 @@ public class ElasticSearchFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
 
     private final WordListProvider wordListProvider;
-    private final ElasticSearchConfig elasticSearchConfig;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexService elasticIndexService;
 
@@ -32,14 +32,13 @@ public class ElasticSearchFactory {
                                 final ElasticIndexService elasticIndexService
     ) {
         this.wordListProvider = wordListProvider;
-        this.elasticSearchConfig = elasticSearchConfig;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexService = elasticIndexService;
     }
 
     public void search(final ElasticAsyncSearchTask asyncSearchTask,
                        final ElasticIndexDoc index,
-                       final String[] storedFields,
+                       final FieldIndex fieldIndex,
                        final long now,
                        final ExpressionOperator expression,
                        final Receiver receiver,
@@ -56,7 +55,7 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
         final Tracker tracker = new Tracker(hitCount);
         final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
-                asyncSearchTask, index, queryBuilder, storedFields, receiver, tracker);
+                asyncSearchTask, index, queryBuilder, fieldIndex, receiver, tracker);
 
         elasticSearchTaskHandler.exec(taskContext, elasticSearchTask);
 

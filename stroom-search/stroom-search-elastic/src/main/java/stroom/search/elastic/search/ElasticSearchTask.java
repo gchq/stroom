@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.query.common.v2.Receiver;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
@@ -25,20 +26,20 @@ class ElasticSearchTask {
     private final ElasticAsyncSearchTask asyncSearchTask;
     private final ElasticIndexDoc elasticIndex;
     private final QueryBuilder query;
-    private final String[] fieldNames;
+    private final FieldIndex fieldIndex;
     private final Receiver receiver;
     private final Tracker tracker;
 
     ElasticSearchTask(final ElasticAsyncSearchTask asyncSearchTask,
                       final ElasticIndexDoc elasticIndex,
                       final QueryBuilder query,
-                      final String[] fieldNames,
+                      final FieldIndex fieldIndex,
                       final Receiver receiver,
                       final Tracker tracker) {
         this.asyncSearchTask = asyncSearchTask;
         this.elasticIndex = elasticIndex;
         this.query = query;
-        this.fieldNames = fieldNames;
+        this.fieldIndex = fieldIndex;
         this.receiver = receiver;
         this.tracker = tracker;
     }
@@ -55,8 +56,8 @@ class ElasticSearchTask {
         return query;
     }
 
-    String[] getFieldNames() {
-        return fieldNames;
+    FieldIndex getFieldIndex() {
+        return fieldIndex;
     }
 
     Receiver getReceiver() {
