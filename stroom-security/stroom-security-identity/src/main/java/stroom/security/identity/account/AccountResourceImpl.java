@@ -197,13 +197,13 @@ class AccountResourceImpl implements AccountResource {
     }
 
     private MultiObject getBefore(int accountId) {
-        event.logging.User user = event.logging.User.builder().withId(""+accountId).build();
+        event.logging.User user = event.logging.User.builder().withId("" + accountId).build();
 
         try {
             Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
                     () -> serviceProvider.get().read(accountId)
             );
-            if (accountOptional.isPresent()){
+            if (accountOptional.isPresent()) {
                 user = userForAccount(accountOptional.get());
             }
         } catch (Exception ex) {
@@ -213,25 +213,25 @@ class AccountResourceImpl implements AccountResource {
         return MultiObject.builder().addUser(user).build();
     }
 
-    private event.logging.User userForAccount (Account account) {
-       User.Builder<Void> builder = event.logging.User.builder();
+    private event.logging.User userForAccount(Account account) {
+        User.Builder<Void> builder = event.logging.User.builder();
 
-       if (account == null){
-           builder.withState("Not found");
-       } else {
-           builder.withName(account.getUserId())
-            .withState((account.isEnabled()
-                   ? "Enabled"
-                   : "Disabled") + "/"
-                   + (account.isInactive()
-                   ? "Inactive"
-                   : "Active") + "/" + (account.isLocked()
-                   ? "Locked"
-                   : "Unlocked"))
-           .withId("" + account.getId())
-           .withEmailAddress(account.getEmail());
-       }
-       return builder.build();
+        if (account == null) {
+            builder.withState("Not found");
+        } else {
+            builder.withName(account.getUserId())
+                    .withState((account.isEnabled()
+                            ? "Enabled"
+                            : "Disabled") + "/"
+                            + (account.isInactive()
+                            ? "Inactive"
+                            : "Active") + "/" + (account.isLocked()
+                            ? "Locked"
+                            : "Unlocked"))
+                    .withId("" + account.getId())
+                    .withEmailAddress(account.getEmail());
+        }
+        return builder.build();
     }
 
     @Timed

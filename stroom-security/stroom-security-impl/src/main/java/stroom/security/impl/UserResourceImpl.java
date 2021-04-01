@@ -127,7 +127,7 @@ public class UserResourceImpl implements UserResource {
     private User createUser(final String name) {
         CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
-        try{
+        try {
             User newUser = userServiceProvider.get().createUser(name);
 
             builder.withObjects(
@@ -157,7 +157,7 @@ public class UserResourceImpl implements UserResource {
     private User createGroup(final String name) {
         CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
-        try{
+        try {
             User newUser = userServiceProvider.get().createUserGroup(name);
 
             builder.withObjects(
@@ -200,14 +200,14 @@ public class UserResourceImpl implements UserResource {
                     .ifPresentOrElse(
                             user -> {
                                 builder.withBefore(MultiObject.builder()
-                                                .addUser(
-                                                        event.logging.User.builder()
-                                                            .withId(user.getUuid())
-                                                            .withName(user.getName())
-                                                            .withState(user.isEnabled() ? "Enabled" : "Disabled")
-                                                            .build()
-                                                ).build()
-                                        );
+                                        .addUser(
+                                                event.logging.User.builder()
+                                                        .withId(user.getUuid())
+                                                        .withName(user.getName())
+                                                        .withState(user.isEnabled() ? "Enabled" : "Disabled")
+                                                        .build()
+                                        ).build()
+                                );
                                 builder.withAfter(MultiObject.builder()
                                         .addUser(
                                                 event.logging.User.builder()
@@ -290,7 +290,8 @@ public class UserResourceImpl implements UserResource {
             errorMessage = e.getMessage();
         }
 
-        authorisationEventLogProvider.get().removeUserFromGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
+        authorisationEventLogProvider.get().removeUserFromGroup(userIdForLogging, groupIdForLogging,
+                success, errorMessage);
 
         return success;
     }

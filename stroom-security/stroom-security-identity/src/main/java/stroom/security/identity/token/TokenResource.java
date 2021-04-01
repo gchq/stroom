@@ -19,6 +19,7 @@
 package stroom.security.identity.token;
 
 import stroom.security.identity.config.TokenConfig;
+import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -44,7 +45,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Api Keys")
-public interface TokenResource extends RestResource {
+public interface TokenResource extends RestResource, FetchWithIntegerId<Token> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
     FilterFieldDefinition FIELD_DEF_USER_EMAIL = FilterFieldDefinition.qualifiedField("User Email");
