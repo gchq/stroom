@@ -814,6 +814,7 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000
