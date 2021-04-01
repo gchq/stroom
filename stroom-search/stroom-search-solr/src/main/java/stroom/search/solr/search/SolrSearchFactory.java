@@ -1,5 +1,6 @@
 package stroom.search.solr.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.Receiver;
@@ -36,6 +37,7 @@ public class SolrSearchFactory {
 
     public void search(final CachedSolrIndex index,
                        final String[] storedFields,
+                       final FieldIndex fieldIndex,
                        final long now,
                        final ExpressionOperator expression,
                        final Receiver receiver,
@@ -55,7 +57,8 @@ public class SolrSearchFactory {
         solrQuery.setRows(Integer.MAX_VALUE);
 
         final Tracker tracker = new Tracker(hitCount);
-        final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, storedFields, receiver, tracker);
+        final SolrSearchTask solrSearchTask = new SolrSearchTask(
+                index, solrQuery, storedFields, fieldIndex, receiver, tracker);
         solrSearchTaskHandler.exec(taskContext, solrSearchTask);
 
         // Wait until we finish.

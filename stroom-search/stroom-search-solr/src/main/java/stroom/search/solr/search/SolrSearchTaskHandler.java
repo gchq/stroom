@@ -16,6 +16,7 @@
 
 package stroom.search.solr.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValBoolean;
 import stroom.dashboard.expression.v1.ValDouble;
@@ -163,6 +164,7 @@ public class SolrSearchTaskHandler {
         final Callback callback = new Callback(
                 task.getTracker(),
                 task.getFieldNames(),
+                task.getFieldIndex(),
                 task.getReceiver().getValuesConsumer(),
                 task.getReceiver().getErrorConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
@@ -207,6 +209,7 @@ public class SolrSearchTaskHandler {
 
         private final Tracker tracker;
         private final String[] fieldNames;
+        private final FieldIndex fieldIndex;
         private final Consumer<Val[]> valuesConsumer;
         private final Consumer<Throwable> errorConsumer;
 
@@ -214,10 +217,12 @@ public class SolrSearchTaskHandler {
 
         Callback(final Tracker tracker,
                  final String[] fieldNames,
+                 final FieldIndex fieldIndex,
                  final Consumer<Val[]> valuesConsumer,
                  final Consumer<Throwable> errorConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
+            this.fieldIndex = fieldIndex;
             this.valuesConsumer = valuesConsumer;
             this.errorConsumer = errorConsumer;
         }
@@ -228,26 +233,27 @@ public class SolrSearchTaskHandler {
                 tracker.incrementHitCount();
 
                 Val[] values = null;
-                for (int i = 0; i < fieldNames.length; i++) {
-                    final String fieldName = fieldNames[i];
-                    final Object object = doc.getFirstValue(fieldName);
-                    if (object != null) {
+                for (final String fieldName : fieldIndex.getFieldNames()) {
+                    // Get the ordinal of the field, so values can be mapped by the values receiver
+                    final Integer insertAt = fieldIndex.getPos(fieldName);
+                    final Object fieldValue = doc.getFirstValue(fieldName);
+                    if (fieldValue != null) {
                         if (values == null) {
                             values = new Val[fieldNames.length];
                         }
 
-                        if (object instanceof Long) {
-                            values[i] = ValLong.create((Long) object);
-                        } else if (object instanceof Integer) {
-                            values[i] = ValInteger.create((Integer) object);
-                        } else if (object instanceof Double) {
-                            values[i] = ValDouble.create((Double) object);
-                        } else if (object instanceof Float) {
-                            values[i] = ValDouble.create((Float) object);
-                        } else if (object instanceof Boolean) {
-                            values[i] = ValBoolean.create((Boolean) object);
+                        if (fieldValue instanceof Long) {
+                            values[insertAt] = ValLong.create((Long) fieldValue);
+                        } else if (fieldValue instanceof Integer) {
+                            values[insertAt] = ValInteger.create((Integer) fieldValue);
+                        } else if (fieldValue instanceof Double) {
+                            values[insertAt] = ValDouble.create((Double) fieldValue);
+                        } else if (fieldValue instanceof Float) {
+                            values[insertAt] = ValDouble.create((Float) fieldValue);
+                        } else if (fieldValue instanceof Boolean) {
+                            values[insertAt] = ValBoolean.create((Boolean) fieldValue);
                         } else {
-                            values[i] = ValString.create(object.toString());
+                            values[insertAt] = ValString.create(fieldValue.toString());
                         }
                     }
                 }

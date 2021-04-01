@@ -121,6 +121,7 @@ class SolrClusterSearchTaskHandler {
             final AtomicLong hitCount = new AtomicLong();
             solrSearchFactory.search(cachedSolrIndex,
                     storedFields,
+                    coprocessors.getFieldIndex(),
                     now,
                     expression,
                     extractionReceiver,
