@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
 
+* Ported Elasticsearch integration from v6, for compatibility with v7.
+
 
 ## [v7.0-beta.98] - 2021-03-30
 
