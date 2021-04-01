@@ -104,6 +104,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 final String message = status.getError().get().getMessage();
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
                         .withSuccess(false)
+                        .withPermitted(false)
                         .withReason(reason)
                         .withDescription(message)
                         .withData(Data.builder()
@@ -149,14 +150,15 @@ class OpenIdResourceImpl implements OpenIdResource {
                     .withAuthenticationEntity(event.logging.User.builder()
                             .withId(ex.getSubject()).build())
                     .withOutcome(AuthenticateOutcome.builder()
-                    .withSuccess(false)
-                    .withReason(reason)
-                    .withDescription(message)
-                    .withData(Data.builder()
+                            .withSuccess(false)
+                            .withPermitted(false)
+                            .withReason(reason)
+                            .withDescription(message)
+                            .withData(Data.builder()
                             .withName("Error")
                             .withValue(message)
-                            .build())
-                    .build());
+                                    .build())
+                            .build());
 
             stroomEventLoggingServiceProvider.get().log(
                     "OpenIdResourceImpl.token",

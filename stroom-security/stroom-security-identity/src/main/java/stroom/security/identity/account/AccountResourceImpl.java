@@ -22,6 +22,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.security.api.SecurityContext;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.AdvancedQuery;
@@ -45,6 +46,7 @@ import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -55,12 +57,15 @@ class AccountResourceImpl implements AccountResource {
 
     private final Provider<AccountService> serviceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     public AccountResourceImpl(final Provider<AccountService> serviceProvider,
-                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                               final Provider<SecurityContext> securityContextProvider) {
         this.serviceProvider = serviceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Timed
@@ -191,18 +196,51 @@ class AccountResourceImpl implements AccountResource {
                 null);
     }
 
+    private MultiObject getBefore(int accountId) {
+        event.logging.User user = event.logging.User.builder().withId(""+accountId).build();
+
+        try {
+            Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
+                    () -> serviceProvider.get().read(accountId)
+            );
+            if (accountOptional.isPresent()){
+                user = userForAccount(accountOptional.get());
+            }
+        } catch (Exception ex) {
+            //Ignore
+        }
+
+        return MultiObject.builder().addUser(user).build();
+    }
+
+    private event.logging.User userForAccount (Account account) {
+       User.Builder<Void> builder = event.logging.User.builder();
+
+       if (account == null){
+           builder.withState("Not found");
+       } else {
+           builder.withName(account.getUserId())
+            .withState((account.isEnabled()
+                   ? "Enabled"
+                   : "Disabled") + "/"
+                   + (account.isInactive()
+                   ? "Inactive"
+                   : "Active") + "/" + (account.isLocked()
+                   ? "Locked"
+                   : "Unlocked"))
+           .withId("" + account.getId())
+           .withEmailAddress(account.getEmail());
+       }
+       return builder.build();
+    }
+
     @Timed
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
                           final UpdateAccountRequest request,
                           final int accountId) {
 
-        final User user = User.builder()
-                .withId(String.valueOf(accountId))
-                .withName(request.getAccount().getFirstName() + " "
-                        + request.getAccount().getLastName())
-                .withEmailAddress(request.getAccount().getEmail())
-                .build();
+        final User afterUser = userForAccount(request.getAccount());
 
 
         final Boolean result;
@@ -211,8 +249,9 @@ class AccountResourceImpl implements AccountResource {
                     "UpdateAccount",
                     "Update account for user " + accountId,
                     UpdateEventAction.builder()
+                            .withBefore(getBefore(accountId))
                             .withAfter(MultiObject.builder()
-                                    .addUser(user)
+                                    .addUser(afterUser)
                                     .build())
                             .build(),
                     () -> {
@@ -223,11 +262,11 @@ class AccountResourceImpl implements AccountResource {
 
             if (request.getPassword() != null) {
                 // Password change so log that separately
-                logChangePassword(accountId, user, null);
+                logChangePassword(accountId, afterUser, null);
             }
         } catch (Exception e) {
             // Password change so log that separately
-            logChangePassword(accountId, user, e);
+            logChangePassword(accountId, afterUser, e);
             throw e;
         }
 

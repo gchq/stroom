@@ -271,6 +271,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         } catch (Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
+                    .withPermitted(false)
                     .withReason(AuthenticateOutcomeReason.OTHER)
                     .withData(Data.builder()
                             .withName("Error")
@@ -308,6 +309,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         } catch (Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
+                    .withPermitted(false)
                     .withReason(AuthenticateOutcomeReason.OTHER)
                     .withData(Data.builder()
                             .withName("Error")
@@ -336,6 +338,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         } catch (Throwable e) {
             Outcome.Builder<Void> outcomeBuilder = Outcome.builder()
                     .withSuccess(false)
+                    .withPermitted(false)
                     .withDescription(e.getMessage());
             if (e instanceof PermissionException) {
                 outcomeBuilder.withPermitted(false);
