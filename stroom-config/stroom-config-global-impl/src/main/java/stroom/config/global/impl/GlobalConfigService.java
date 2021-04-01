@@ -65,7 +65,7 @@ public class GlobalConfigService {
                     GlobalConfigResource.FIELD_DEF_NAME,
                     ConfigProperty::getNameAsString),
             FilterFieldMapper.of(
-                    GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE,
+                    GlobalConfigResource.FIELD_DEF_VALUE,
                     configProperty -> configProperty.getEffectiveValue().orElse("")),
             FilterFieldMapper.of(
                     GlobalConfigResource.FIELD_DEF_SOURCE,
@@ -80,7 +80,7 @@ public class GlobalConfigService {
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
                     ConfigProperty::getNameAsString, String::compareToIgnoreCase),
-            GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(), Comparator.comparing(
+            GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(), Comparator.comparing(
                     (ConfigProperty prop) ->
                             prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
             GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(ConfigProperty::getSource));

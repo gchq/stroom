@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2156**: The properties screen now shows a warning triangle when there are unreachable nodes rather than showing an error for all property values.
+
 * Issue **#2157**: Fixed issue where pager was causing an exception paging to last on API keys and Accounts list pages.
 
 * Issue **#2153**: Fixed option to log all REST calls.
