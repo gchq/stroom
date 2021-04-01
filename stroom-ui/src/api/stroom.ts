@@ -1716,7 +1716,7 @@ export interface PageRequest {
   /** @format int32 */
   length?: number;
 
-  /** @format int64 */
+  /** @format int32 */
   offset?: number;
 }
 

@@ -220,7 +220,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                     // Copy new filter settings back.
                     getCriteria().setExpression(expression);
                     // Reset the page offset.
-                    getCriteria().obtainPageRequest().setOffset(0L);
+                    getCriteria().obtainPageRequest().setOffset(0);
 
                     // Init the buttons
                     setStreamListSelectableEnabled(metaListPresenter.getSelection());

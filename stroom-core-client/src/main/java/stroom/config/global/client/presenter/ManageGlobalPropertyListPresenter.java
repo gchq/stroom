@@ -93,7 +93,7 @@ public class ManageGlobalPropertyListPresenter
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
 
     private final GlobalConfigCriteria criteria = new GlobalConfigCriteria(
-            new PageRequest(0L, Integer.MAX_VALUE),
+            new PageRequest(0, Integer.MAX_VALUE),
             new ArrayList<>(),
             null);
 
@@ -114,7 +114,7 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshTable(final Range range) {
 
-        criteria.setPageRequest(new PageRequest((long) range.getStart(), range.getLength()));
+        criteria.setPageRequest(new PageRequest(range.getStart(), range.getLength()));
 
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
@@ -158,7 +158,7 @@ public class ManageGlobalPropertyListPresenter
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
 
         criteria.setPageRequest(new PageRequest(
-                (long) getView().getVisibleRange().getStart(),
+                getView().getVisibleRange().getStart(),
                 getView().getVisibleRange().getLength()));
 
         listPropertiesRest

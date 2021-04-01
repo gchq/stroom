@@ -176,7 +176,7 @@ public class GlobalConfigService {
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
-                    : new PageRequest(0L, Integer.MAX_VALUE);
+                    : new PageRequest(0, Integer.MAX_VALUE);
 
             return configMapper.getGlobalProperties().stream()
                     .sorted(buildComparator(criteria))
@@ -195,7 +195,7 @@ public class GlobalConfigService {
 
     public ListConfigResponse list() {
         return list(new GlobalConfigCriteria(
-                new PageRequest(0L, Integer.MAX_VALUE),
+                new PageRequest(0, Integer.MAX_VALUE),
                 Collections.emptyList(),
                 null));
     }
