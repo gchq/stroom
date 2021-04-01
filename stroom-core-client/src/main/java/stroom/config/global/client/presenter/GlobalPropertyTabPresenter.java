@@ -16,6 +16,7 @@
 
 package stroom.config.global.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.Icon;
@@ -39,6 +40,8 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     private final ManageGlobalPropertyListPresenter listPresenter;
     private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
     private final ButtonView openButton;
+    private final ButtonView warningsButton;
+    private String currentWarnings;
 
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
@@ -51,6 +54,9 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         view.setUiHandlers(this);
         setInSlot(LIST, listPresenter);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
+
+        warningsButton = listPresenter.addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton.setVisible(false);
     }
 
     @Override
@@ -78,8 +84,26 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
                 }
             }));
         }
+        registerHandler(warningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showWarnings();
+            }
+        }));
+        registerHandler(listPresenter.addErrorHandler(event -> setErrors(event.getError())));
         super.onBind();
         listPresenter.refresh();
+    }
+
+    public void setErrors(final String errors) {
+        currentWarnings = errors;
+        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    }
+
+    private void showWarnings() {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            AlertEvent.fireWarn(this, "Unable to get properties from all nodes:",
+                    currentWarnings, null);
+        }
     }
 
     private void enableButtons() {
@@ -92,7 +116,6 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         onEdit(e);
     }
 
-    @SuppressWarnings("unchecked")
     public void onEdit(final ConfigProperty e) {
         if (e != null) {
             final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {

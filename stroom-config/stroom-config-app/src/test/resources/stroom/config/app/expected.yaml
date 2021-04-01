@@ -835,7 +835,7 @@ appConfig:
       backgroundOpacity: "0"
       tubeVisible: "hidden"
       tubeOpacity: "0.6"
-      topMenuTextColour: "#FFF"
+      topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"

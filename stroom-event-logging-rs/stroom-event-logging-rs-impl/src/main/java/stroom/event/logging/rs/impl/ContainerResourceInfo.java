@@ -170,7 +170,8 @@ public class ContainerResourceInfo {
                                             final String methodName,
                                             final String httpMethod) {
 
-        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
+        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get()) &&
+                !OperationType.UNLOGGED.equals(type.get())) {
             return type.get();
         } else if (HttpMethod.DELETE.equals(httpMethod)) {
             return OperationType.DELETE;

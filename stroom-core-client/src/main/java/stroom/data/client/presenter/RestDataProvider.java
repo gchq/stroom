@@ -71,7 +71,7 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     private void doFetch(final Range range) {
         if (pageRequest != null) {
-            pageRequest.setOffset((long) range.getStart());
+            pageRequest.setOffset(range.getStart());
             pageRequest.setLength(range.getLength());
         }
 

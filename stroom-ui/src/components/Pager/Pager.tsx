@@ -64,7 +64,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
   const onLast = () => {
     const newRequest = {
       ...pageRequest,
-      offset: Number.MAX_SAFE_INTEGER,
+      offset: -1,
     };
     setPageRequest(newRequest);
     onChange(newRequest);

@@ -40,7 +40,7 @@ public class ResultPageCollector<T> {
 
     private static int getOffset(final PageRequest pageRequest) {
         if (pageRequest != null && pageRequest.getOffset() != null) {
-            return pageRequest.getOffset().intValue();
+            return pageRequest.getOffset();
         }
         return 0;
     }
