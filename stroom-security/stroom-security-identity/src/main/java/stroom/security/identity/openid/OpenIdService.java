@@ -70,61 +70,82 @@ class OpenIdService {
 
         final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
-            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER.value(),
-                    "Redirect URI is not allowed");
-        }
+            authStatus = new AuthStatus(){
 
-        // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-        final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
-        if (requireLoginPrompt) {
-            LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
-        }
+                @Override
+                public Optional<AuthState> getAuthState() {
+                    return Optional.empty();
+                }
 
-        if (requireLoginPrompt) {
-            LOGGER.debug("Login has been requested by the RP");
+                @Override
+                public Optional<BadRequestException> getError() {
+                    return Optional.of (new BadRequestException(UNKNOWN_SUBJECT,
+                            AuthenticateOutcomeReason.OTHER.value(), "Redirect URI is not allowed"));
+                }
+
+                @Override
+                public boolean isNew() {
+                    return true;
+                }
+            };
+
             result = authenticationService.createSignInUri(redirectUri);
 
         } else {
-            // We need to make sure our understanding of the session is correct
-            authStatus = authenticationService.currentAuthState(request);
-
-            if (authStatus.getError().isPresent()) {
-                LOGGER.error("Error authenticating request {} got {}",
-                        request.getRequestURI(), authStatus.getError().get());
-                result = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.UNAUTHORISED_URL_PATH)).build();
-            } else if (authStatus.getAuthState().isPresent()) {
-                // If we have an authenticated session then the user is logged in
-                final AuthState authState = authStatus.getAuthState().get();
-
-                // If the users password still needs tp be changed then send them back to the login page.
-                if (authState.isRequirePasswordChange()) {
-                    result = authenticationService.createSignInUri(redirectUri);
-
-                } else {
-                    LOGGER.debug("User has a session, sending them back to the RP");
-
-                    // We need to make sure we record this access code request.
-                    final String accessCode = createAccessCode();
-                    final String token = createIdToken(clientId, authState.getSubject(), nonce, state);
-                    final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
-                            scope,
-                            responseType,
-                            clientId,
-                            redirectUri,
-                            nonce,
-                            state,
-                            prompt,
-                            token);
-                    accessCodeCache.put(accessCode, accessCodeRequest);
-
-                    result = buildRedirectionUrl(redirectUri, accessCode, state);
-                }
-
-            } else {
-                LOGGER.debug("User has no session and no certificate - sending them to login.");
-                result = authenticationService.createSignInUri(redirectUri);
+            // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
+            final boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
+            if (requireLoginPrompt) {
+                LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
             }
 
+            if (requireLoginPrompt) {
+                LOGGER.debug("Login has been requested by the RP");
+                result = authenticationService.createSignInUri(redirectUri);
+
+            } else {
+                // We need to make sure our understanding of the session is correct
+                authStatus = authenticationService.currentAuthState(request);
+
+                if (authStatus.getError().isPresent()) {
+                    LOGGER.error("Error authenticating request {} for {} got {} - {}",
+                            request.getRequestURI(), authStatus.getError().get().getSubject(),
+                            authStatus.getError().get().getReason(), authStatus.getError().get().getMessage());
+                    //Send back to log in with username/password
+                    result = authenticationService.createSignInUri(redirectUri);
+                } else if (authStatus.getAuthState().isPresent()) {
+                    // If we have an authenticated session then the user is logged in
+                    final AuthState authState = authStatus.getAuthState().get();
+
+                    // If the users password still needs tp be changed then send them back to the login page.
+                    if (authState.isRequirePasswordChange()) {
+                        result = authenticationService.createSignInUri(redirectUri);
+
+                    } else {
+                        LOGGER.debug("User has a session, sending them back to the RP");
+
+                        // We need to make sure we record this access code request.
+                        final String accessCode = createAccessCode();
+                        final String token = createIdToken(clientId, authState.getSubject(), nonce, state);
+                        final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
+                                scope,
+                                responseType,
+                                clientId,
+                                redirectUri,
+                                nonce,
+                                state,
+                                prompt,
+                                token);
+                        accessCodeCache.put(accessCode, accessCodeRequest);
+
+                        result = buildRedirectionUrl(redirectUri, accessCode, state);
+                    }
+
+                } else {
+                    LOGGER.debug("User has no session and no certificate - sending them to login.");
+                    result = authenticationService.createSignInUri(redirectUri);
+                }
+
+            }
         }
 
         return new AuthResult(result, authStatus);

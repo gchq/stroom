@@ -7,8 +7,6 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
 public interface AuthenticationService {
-
-    String UNAUTHORISED_URL_PATH = "/s/unauthorised";
     String SIGN_IN_URL_PATH = "/s/signIn";
     String CONFIRM_PASSWORD_URL_PATH = "/s/confirmpassword";
     String CHANGE_PASSWORD_URL_PATH = "/s/changepassword";
