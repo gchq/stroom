@@ -90,7 +90,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                 event -> {
                     final UiConfig uiConfig = event.getProperties();
                     getView().setBanner(uiConfig.getMaintenanceMessage());
-                    if (uiConfig == null || uiConfig.getRequireReactWrapper()) {
+                    if (uiConfig.getRequireReactWrapper()) {
                         final Object parentIframe = getParentIframe();
                         if (parentIframe == null) {
                             AlertEvent.fireWarn(
@@ -156,26 +156,9 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         RootPanel.get("logo").setVisible(false);
     }
 
-//    public native boolean isInIFrame() /*-{
-//        try {
-//            return window.frameElement != null;
-//            //return window.self !== window.top;
-//        } catch (e) {
-//            return true;
-//        }
-//	}-*/;
-//
-//    public native Object getIframe() /*-{
-//        try {
-//            return window.frameElement;
-//        } catch (e) {
-//            return true;
-//        }
-//	}-*/;
-
     public native Object getParentIframe() /*-{
         return window.parent.frameElement;
-	}-*/;
+    }-*/;
 
     @ProxyCodeSplit
     public interface MainProxy extends Proxy<MainPresenter> {

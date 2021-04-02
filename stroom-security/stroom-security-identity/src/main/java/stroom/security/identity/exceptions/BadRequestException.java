@@ -18,9 +18,25 @@
 
 package stroom.security.identity.exceptions;
 
-public class BadRequestException extends RuntimeException {
+import javax.annotation.Nullable;
 
-    public BadRequestException(String message) {
+public class BadRequestException extends RuntimeException {
+    private final String subject;
+
+    //See AuthenticateOutcomeReason for known values
+    private final String reason;
+
+    public BadRequestException(@Nullable final String subject, final String reason, final String message) {
         super(message);
+        this.subject = subject;
+        this.reason = reason;
+    }
+
+    public @Nullable String getSubject() {
+        return subject;
+    }
+
+    public String getReason() {
+        return reason;
     }
 }

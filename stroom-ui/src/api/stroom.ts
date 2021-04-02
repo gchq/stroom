@@ -3252,6 +3252,7 @@ export interface UiConfig {
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;

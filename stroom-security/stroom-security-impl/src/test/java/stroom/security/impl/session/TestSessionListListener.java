@@ -129,6 +129,6 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
-        return new SessionResourceImpl(authenticationEventLog, sessionListService, null);
+        return new SessionResourceImpl(() -> authenticationEventLog, () -> sessionListService, null);
     }
 }

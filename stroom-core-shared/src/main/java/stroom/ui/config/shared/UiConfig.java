@@ -100,6 +100,12 @@ public class UiConfig extends AbstractConfig {
     private SourceConfig source;
 
     @JsonProperty
+    @JsonPropertyDescription("The Stroom GWT UI is now wrapped in a new React UI that provides some additional " +
+            "features. To use the React UI the GWT UI must be wrapped in an IFrame which is hosted at the root URL. " +
+            "If a user navigates to the GWT UI directly via `stroom/ui` then the React additions will not function. " +
+            "When this property is set to true that will be prevented as the user will be redirected back to the " +
+            "root URL. This behaviour is configurable as development of the GWT UI still requires direct access via " +
+            "`stroom/ui`")
     private Boolean requireReactWrapper;
 
     public UiConfig() {
