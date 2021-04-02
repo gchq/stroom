@@ -163,7 +163,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 //        } catch (e) {
 //            return true;
 //        }
-//	}-*/;
+//    } */;
 //
 //    public native Object getIframe() /*-{
 //        try {
@@ -171,11 +171,11 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 //        } catch (e) {
 //            return true;
 //        }
-//	}-*/;
+//  } */;
 
-    public native Object getParentIframe() /*-{
+    public native Object getParentIframe() /* {
         return window.parent.frameElement;
-	}-*/;
+ } */;
 
     @ProxyCodeSplit
     public interface MainProxy extends Proxy<MainPresenter> {
