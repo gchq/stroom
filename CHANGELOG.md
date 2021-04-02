@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
+
 
 ## [v7.0-beta.100] - 2021-04-02
 
