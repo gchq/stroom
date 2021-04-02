@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
+
 
 ## [v7.0-beta.100] - 2021-04-02
 
@@ -28,9 +30,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#2085**: User now gets notification that a password has been changed.
 
 * Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
-
-* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
-
 
 ## [v7.0-beta.98] - 2021-03-30
 
