@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
+
 * Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
 

@@ -16,6 +16,7 @@
 
 package stroom.search.solr.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValBoolean;
 import stroom.dashboard.expression.v1.ValDouble;
@@ -135,13 +136,29 @@ public class SolrSearchTaskHandler {
         }
     }
 
+    private String[] getStoredFieldNames(final Map<String, SolrIndexField> fieldsMap,
+                                         final FieldIndex fieldIndex) {
+        final String[] storedFieldNames = new String[fieldIndex.size()];
+        for (int i = 0; i < storedFieldNames.length; i++) {
+            final String fieldName = fieldIndex.getField(i);
+            if (fieldName != null) {
+                final SolrIndexField indexField = fieldsMap.get(fieldName);
+                if (indexField != null && indexField.isStored()) {
+                    storedFieldNames[i] = fieldName;
+                }
+            }
+        }
+        return storedFieldNames;
+    }
+
     private void fastStreamingDocsSearch(final SolrSearchTask task,
                                          final SolrIndexDoc solrIndexDoc,
                                          final SolrConnectionConfig connectionConfig) {
+        final String[] fieldNames = getStoredFieldNames(task.getSolrIndex().getFieldsMap(), task.getFieldIndex());
+
         final Callback2 callback = new Callback2(
                 task.getTracker(),
-                task.getFieldNames(),
-                task.getSolrIndex().getFieldsMap(),
+                fieldNames,
                 task.getReceiver().getValuesConsumer(),
                 task.getReceiver().getErrorConsumer(),
                 task.getReceiver().getCompletionConsumer());
@@ -160,9 +177,12 @@ public class SolrSearchTaskHandler {
     private void streamingSearch(final SolrSearchTask task,
                                  final SolrIndexDoc solrIndexDoc,
                                  final SolrConnectionConfig connectionConfig) {
+
+        final String[] fieldNames = getStoredFieldNames(task.getSolrIndex().getFieldsMap(), task.getFieldIndex());
+
         final Callback callback = new Callback(
                 task.getTracker(),
-                task.getFieldNames(),
+                fieldNames,
                 task.getReceiver().getValuesConsumer(),
                 task.getReceiver().getErrorConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
@@ -230,24 +250,27 @@ public class SolrSearchTaskHandler {
                 Val[] values = null;
                 for (int i = 0; i < fieldNames.length; i++) {
                     final String fieldName = fieldNames[i];
-                    final Object object = doc.getFirstValue(fieldName);
-                    if (object != null) {
-                        if (values == null) {
-                            values = new Val[fieldNames.length];
-                        }
+                    if (fieldName != null) {
+                        // Get the ordinal of the field, so values can be mapped by the values receiver
+                        final Object fieldValue = doc.getFirstValue(fieldName);
+                        if (fieldValue != null) {
+                            if (values == null) {
+                                values = new Val[fieldNames.length];
+                            }
 
-                        if (object instanceof Long) {
-                            values[i] = ValLong.create((Long) object);
-                        } else if (object instanceof Integer) {
-                            values[i] = ValInteger.create((Integer) object);
-                        } else if (object instanceof Double) {
-                            values[i] = ValDouble.create((Double) object);
-                        } else if (object instanceof Float) {
-                            values[i] = ValDouble.create((Float) object);
-                        } else if (object instanceof Boolean) {
-                            values[i] = ValBoolean.create((Boolean) object);
-                        } else {
-                            values[i] = ValString.create(object.toString());
+                            if (fieldValue instanceof Long) {
+                                values[i] = ValLong.create((Long) fieldValue);
+                            } else if (fieldValue instanceof Integer) {
+                                values[i] = ValInteger.create((Integer) fieldValue);
+                            } else if (fieldValue instanceof Double) {
+                                values[i] = ValDouble.create((Double) fieldValue);
+                            } else if (fieldValue instanceof Float) {
+                                values[i] = ValDouble.create((Float) fieldValue);
+                            } else if (fieldValue instanceof Boolean) {
+                                values[i] = ValBoolean.create((Boolean) fieldValue);
+                            } else {
+                                values[i] = ValString.create(fieldValue.toString());
+                            }
                         }
                     }
                 }
@@ -318,20 +341,17 @@ public class SolrSearchTaskHandler {
         final Map<String, Val> map = new HashMap<>();
         private final Tracker tracker;
         private final String[] fieldNames;
-        private final Map<String, SolrIndexField> fieldsMap;
         private final Consumer<Val[]> valuesConsumer;
         private final Consumer<Throwable> errorConsumer;
         private final Consumer<Long> countConsumer;
 
         Callback2(final Tracker tracker,
                   final String[] fieldNames,
-                  final Map<String, SolrIndexField> fieldsMap,
                   final Consumer<Val[]> valuesConsumer,
                   final Consumer<Throwable> errorConsumer,
                   final Consumer<Long> countConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
-            this.fieldsMap = fieldsMap;
             this.valuesConsumer = valuesConsumer;
             this.errorConsumer = errorConsumer;
             this.countConsumer = countConsumer;
@@ -416,12 +436,11 @@ public class SolrSearchTaskHandler {
                 Val[] values = null;
 
                 for (int i = 0; i < fieldNames.length; i++) {
-                    final String storedField = fieldNames[i];
-                    final Val value = valueMap.get(storedField);
-                    if (value != null) {
-                        final SolrIndexField solrIndexField = fieldsMap.get(storedField);
-                        // If the field is not in fact stored then it will be null here.
-                        if (solrIndexField != null) {
+                    final String fieldName = fieldNames[i];
+                    // If the field is not in fact stored then it will be null here.
+                    if (fieldName != null) {
+                        final Val value = valueMap.get(fieldName);
+                        if (value != null) {
                             if (values == null) {
                                 values = new Val[fieldNames.length];
                             }
