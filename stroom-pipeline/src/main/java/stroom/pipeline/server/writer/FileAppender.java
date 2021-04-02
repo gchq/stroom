@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -27,7 +25,12 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.io.GZipByteCountOutputStream;
+import stroom.util.io.GZipOutputStream;
 import stroom.util.spring.StroomScope;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -55,6 +58,7 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
+    private boolean useCompression;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -106,7 +110,13 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            if (useCompression) {
+                byteCountOutputStream = new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
+            }
+            else {
+                byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            }
+
             return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
@@ -131,6 +141,9 @@ public class FileAppender extends AbstractAppender {
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
+
+    @PipelineProperty(description = "Apply GZIP compression to output files", defaultValue = "false")
+    public void setUseCompression(final boolean useCompression) { this.useCompression = useCompression; }
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.")
