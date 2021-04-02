@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
-import stroom.security.api.SecurityContext;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
@@ -21,37 +22,35 @@ class StroomSessionResourceImpl implements StroomSessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomSessionResourceImpl.class);
 
-    private final AuthenticationConfig authenticationConfig;
-    private final OpenIdManager openIdManager;
-    private final SecurityContext securityContext;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final Provider<OpenIdManager> openIdManagerProvider;
     private final Provider<HttpServletRequest> httpServletRequestProvider;
-    private final AuthenticationEventLog eventLog;
+    private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
 
     @Inject
-    StroomSessionResourceImpl(final AuthenticationConfig authenticationConfig,
-                              final OpenIdManager openIdManager,
-                              final SecurityContext securityContext,
+    StroomSessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
+                              final Provider<OpenIdManager> openIdManagerProvider,
                               final Provider<HttpServletRequest> httpServletRequestProvider,
-                              final AuthenticationEventLog eventLog) {
-        this.authenticationConfig = authenticationConfig;
-        this.openIdManager = openIdManager;
-        this.securityContext = securityContext;
+                              final Provider<AuthenticationEventLog> authenticationEventLogProvider) {
+        this.authenticationConfigProvider = authenticationConfigProvider;
+        this.openIdManagerProvider = openIdManagerProvider;
         this.httpServletRequestProvider = httpServletRequestProvider;
-        this.eventLog = eventLog;
+        this.authenticationEventLogProvider = authenticationEventLogProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public ValidateSessionResponse validateSession(final HttpServletRequest request,
                                                    final String postAuthRedirectUri) {
-        final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+        final Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
         if (userIdentity.isPresent()) {
             return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
         }
 
-        if (!authenticationConfig.isAuthenticationRequired()) {
+        if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
             return new ValidateSessionResponse(true, "admin", null);
 
-        } else if (openIdManager.isTokenExpectedInRequest()) {
+        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
             LOGGER.error("We are expecting requests that contain authenticated tokens");
             return new ValidateSessionResponse(false, null, null);
 
@@ -63,7 +62,8 @@ class StroomSessionResourceImpl implements StroomSessionResource {
                 // If we have completed the front channel flow then we will have a state id.
                 final String code = getParam(postAuthRedirectUri, OpenId.CODE);
                 final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
-                final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+                final String redirectUri = openIdManagerProvider.get()
+                        .redirect(request, code, stateId, postAuthRedirectUri);
                 return new ValidateSessionResponse(false, null, redirectUri);
 
             } catch (final RuntimeException e) {
@@ -87,20 +87,20 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean invalidateStroomSession() {
-        return securityContext.insecureResult(() -> {
-            final HttpSession session = httpServletRequestProvider.get().getSession(false);
-            final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
-            if (session != null) {
-                // Invalidate the current user session
-                session.invalidate();
-            }
-            userIdentity.ifPresent(ui -> {
-                // Create an event for logout
-                eventLog.logoff(ui.getId());
-            });
-
-            return true;
+        final HttpSession session = httpServletRequestProvider.get().getSession(false);
+        final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
+        if (session != null) {
+            // Invalidate the current user session
+            session.invalidate();
+        }
+        userIdentity.ifPresent(ui -> {
+            // Create an event for logout
+            authenticationEventLogProvider.get().logoff(ui.getId());
         });
+
+        return true;
+
     }
 }
