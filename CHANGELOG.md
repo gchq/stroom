@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.2-beta.1] - 2021-04-02
+
 * Add JVM OOM args to zip distribution scripts.
 
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
@@ -17,8 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2058** : Support authenticating Elasticsearch requests with an API token
 
-* Add ability to provide a custom CA certificate (in PEM or DER encoding) for verifying Elasticsearch connections
-  over HTTPS
+* Add ability to provide a custom CA certificate (in PEM or DER encoding) for verifying Elasticsearch connections over HTTPS
   
 * Remove legacy Elasticsearch integration assets
 
@@ -2354,7 +2356,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.32...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.2-beta.1...6.2
+[v6.2-beta.1]: https://github.com/gchq/stroom/compare/v6.1.32...v6.2-beta.1
 [v6.1.32]: https://github.com/gchq/stroom/compare/v6.1.31...v6.1.32
 [v6.1.31]: https://github.com/gchq/stroom/compare/v6.1.30...v6.1.31
 [v6.1.30]: https://github.com/gchq/stroom/compare/v6.1.29...v6.1.30
