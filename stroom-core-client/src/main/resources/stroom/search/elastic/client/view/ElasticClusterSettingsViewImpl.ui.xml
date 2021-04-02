@@ -18,6 +18,10 @@
         border: solid 1px #c5cde2;
         background-color: white;
         }
+
+        input[type="text"] {
+        border: solid 1px #c5cde2;
+        }
     </ui:style>
     <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
         <g:DockLayoutPanel unit="PX" width="100%" height="100%">
@@ -30,15 +34,39 @@
                         </g:customCell>
                     </g:row>
                     <g:row>
-                        <g:cell>Cluster configuration:</g:cell>
+                        <g:cell>Connection URLs:</g:cell>
                         <g:customCell>
-                            <g:SimplePanel ui:field="cluster" />
+                            <g:TextArea ui:field="connectionUrls" width="400px"/>
                         </g:customCell>
                     </g:row>
                     <g:row>
-                        <g:cell>Index:</g:cell>
+                        <g:cell>CA certificate:</g:cell>
                         <g:customCell>
-                            <g:TextBox ui:field="indexName" width="400px"/>
+                            <g:TextArea ui:field="caCertificate" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Use authentication</g:cell>
+                        <g:customCell>
+                            <t:TickBox ui:field="useAuthentication" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key ID:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="apiKeyId" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key secret:</g:cell>
+                        <g:customCell>
+                            <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Socket timeout (ms):</g:cell>
+                        <g:customCell>
+                            <g:IntegerBox ui:field="socketTimeoutMillis" width="100px"/>
                         </g:customCell>
                     </g:row>
                     <g:row>
@@ -53,20 +81,6 @@
                     </g:row>
                 </g:Grid>
             </g:north>
-            <g:center>
-                <g:DockLayoutPanel unit="PX" width="100%"
-                                   height="100%">
-                    <g:north size="20">
-                        <g:Label text="Data Retention Expression (matching data will be deleted):"
-                                 addStyleNames="{style.label}"
-                                 width="100%"/>
-                    </g:north>
-                    <g:center>
-                        <view:ResizeSimplePanel ui:field="retentionExpressionPanel"
-                                                styleName="{style.retentionExpressionPanel}"/>
-                    </g:center>
-                </g:DockLayoutPanel>
-            </g:center>
         </g:DockLayoutPanel>
     </view:ResizeSimplePanel>
 </ui:UiBinder> 

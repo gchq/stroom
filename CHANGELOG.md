@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
+* Add Elasticsearch integration
+
+* Issue **#2058** : Support authenticating Elasticsearch requests with an API token
+
+* Add ability to provide a custom CA certificate (in PEM or DER encoding) for verifying Elasticsearch connections
+  over HTTPS
+  
+* Remove legacy Elasticsearch integration assets
+
+* Add common secret property encryption utils (`CryptoUtils`)
+
+* Add common property `stroom.secret.encryptionKey` for encrypting secrets at rest
+
 
 ## [v6.1.32] - 2021-01-28
 

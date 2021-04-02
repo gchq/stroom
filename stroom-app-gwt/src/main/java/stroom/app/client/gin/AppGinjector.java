@@ -61,6 +61,8 @@ import stroom.query.client.QueryModule;
 import stroom.ruleset.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
+import stroom.search.elastic.client.gin.ElasticClusterGinjector;
+import stroom.search.elastic.client.gin.ElasticClusterModule;
 import stroom.search.elastic.client.gin.ElasticIndexGinjector;
 import stroom.search.elastic.client.gin.ElasticIndexModule;
 import stroom.search.solr.client.gin.SolrIndexGinjector;
@@ -105,6 +107,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
+        ElasticClusterModule.class,
         ElasticIndexModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
@@ -134,6 +137,7 @@ public interface AppGinjector extends
         PopupGinjector,
         ScriptGinjector,
         SecurityGinjector,
+        ElasticClusterGinjector,
         ElasticIndexGinjector,
         SolrIndexGinjector,
         StatisticsGinjector,

@@ -25,6 +25,8 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Values;
 import stroom.search.elastic.ElasticClientCache;
+import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.task.server.TaskContext;
@@ -78,16 +80,19 @@ public class ElasticSearchTaskHandler {
             Integer.MAX_VALUE);
 
     private final ElasticClientCache elasticClientCache;
+    private final ElasticClusterStore elasticClusterStore;
     private final Executor executor;
     private final Provider<TaskWrapper> taskWrapperProvider;
     private final TaskContext taskContext;
 
     @Inject
     ElasticSearchTaskHandler(final ElasticClientCache elasticClientCache,
+                             final ElasticClusterStore elasticClusterStore,
                              final ExecutorProvider executorProvider,
                              final Provider<TaskWrapper> taskWrapperProvider,
                              final TaskContext taskContext) {
         this.elasticClientCache = elasticClientCache;
+        this.elasticClusterStore = elasticClusterStore;
         this.executor = executorProvider.getExecutor(THREAD_POOL);
         this.taskWrapperProvider = taskWrapperProvider;
         this.taskContext = taskContext;
@@ -117,7 +122,8 @@ public class ElasticSearchTaskHandler {
 
     private void searchIndex(final ElasticSearchTask task) {
         final ElasticIndex elasticIndex = task.getElasticIndex();
-        final ElasticConnectionConfig connectionConfig = elasticIndex.getConnectionConfig();
+        final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+        final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
 
         // If there is an error building the query then it will be null here.
         try {
