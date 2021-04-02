@@ -35,7 +35,8 @@ public final class SvgPresets {
     public static final SvgPreset ERROR = new SvgPreset("images/error.svg", "Error", true);
     public static final SvgPreset EXPLORER = new SvgPreset("images/explorer.svg", "Explorer", true);
     public static final SvgPreset ANNOTATIONS = new SvgPreset("images/document/AnnotationsIndex.svg", "Annotations", true);
-    public static final SvgPreset ELASTIC_SEARCH = new SvgPreset("images/document/ElasticIndex.svg", "Elastic Search", true);
+    public static final SvgPreset ELASTIC_CLUSTER = new SvgPreset("images/document/ElasticCluster.svg", "Elasticsearch Cluster", true);
+    public static final SvgPreset ELASTIC_INDEX = new SvgPreset("images/document/ElasticIndex.svg", "Elasticsearch Index", true);
     public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);

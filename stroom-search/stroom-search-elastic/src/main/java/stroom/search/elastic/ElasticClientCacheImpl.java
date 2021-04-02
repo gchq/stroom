@@ -26,6 +26,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -48,7 +49,9 @@ public class ElasticClientCacheImpl implements ElasticClientCache {
 
     @Inject
     @SuppressWarnings("unchecked")
-    ElasticClientCacheImpl(final CacheManager cacheManager) {
+    ElasticClientCacheImpl(
+        final CacheManager cacheManager
+    ) {
         final CacheLoader<ElasticConnectionConfig, RestHighLevelClient> cacheLoader = CacheLoader.from(k -> {
             if (k == null) {
                 throw new NullPointerException("Elasticsearch connection config not provided");

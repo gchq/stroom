@@ -21,43 +21,59 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
-import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionTestAction;
 import stroom.search.elastic.shared.ElasticIndex;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.EqualsUtil;
 
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-
 public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndex> implements ElasticIndexSettingsUiHandlers {
+    private final EntityDropDownPresenter clusterPresenter;
     private final EditExpressionPresenter editExpressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
     @Inject
     public ElasticIndexSettingsPresenter(final EventBus eventBus,
                                          final ElasticIndexSettingsView view,
+                                         final EntityDropDownPresenter clusterPresenter,
                                          final EditExpressionPresenter editExpressionPresenter,
                                          final ClientDispatchAsync dispatcher
     ) {
         super(eventBus, view);
 
+        this.clusterPresenter = clusterPresenter;
         this.editExpressionPresenter = editExpressionPresenter;
         this.dispatcher = dispatcher;
 
+        clusterPresenter.setIncludedTypes(ElasticCluster.ENTITY_TYPE);
+        clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+
         view.setUiHandlers(this);
+        view.setClusterView(clusterPresenter.getView());
         view.setRententionExpressionView(editExpressionPresenter.getView());
     }
 
     @Override
     protected void onBind() {
+        // If the selected `ElasticCluster` changes, set the dirty flag to `true`
+        registerHandler(clusterPresenter.addDataSelectionHandler(event -> {
+            if (!EqualsUtil.isEquals(clusterPresenter.getSelectedEntityReference(), getEntity().getClusterRef())) {
+                setDirty(true);
+            }
+        }));
+
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
     }
 
@@ -81,13 +97,8 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndex index) {
-        final ElasticConnectionConfig connectionConfig = index.getConnectionConfig();
-
-        if (connectionConfig != null) {
-            getView().setConnectionUrls(connectionConfig.getConnectionUrls());
-        }
-
         getView().setDescription(index.getDescription());
+        clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
 
         if (index.getRetentionExpression() == null) {
@@ -100,17 +111,14 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     @Override
     protected void onWrite(final ElasticIndex index) {
-        final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
-
-        connectionConfig.setConnectionUrls(getView().getConnectionUrls());
-        index.setConnectionConfig(connectionConfig);
-
         index.setDescription(getView().getDescription().trim());
+        index.setClusterRef(clusterPresenter.getSelectedEntityReference());
 
-        if (getView().getIndexName().trim().length() == 0) {
+        final String indexName = getView().getIndexName().trim();
+        if (indexName.isEmpty()) {
             index.setIndexName(null);
         } else {
-            index.setIndexName(getView().getIndexName().trim());
+            index.setIndexName(indexName);
         }
 
         index.setRetentionExpression(editExpressionPresenter.write());
@@ -121,13 +129,11 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         void setDescription(String description);
 
+        void setClusterView(final View view);
+
         String getIndexName();
 
         void setIndexName(String indexName);
-
-        List<String> getConnectionUrls();
-
-        void setConnectionUrls(List<String> connectionUrls);
 
         void setRententionExpressionView(final View view);
     }

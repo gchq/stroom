@@ -20,14 +20,26 @@ import stroom.entity.shared.Action;
 import stroom.util.shared.SharedString;
 
 public class ElasticConnectionTestAction extends Action<SharedString> {
-    private static final long serialVersionUID = -3560107233301674555L;
+    private static final long serialVersionUID = 1L;
 
+    private TestType testType;
+    private ElasticCluster elasticCluster;
     private ElasticIndex elasticIndex;
 
     public ElasticConnectionTestAction() { }
 
-    public ElasticConnectionTestAction(final ElasticIndex elasticIndex) { this.elasticIndex = elasticIndex; }
+    public ElasticConnectionTestAction(final ElasticCluster elasticCluster) {
+        this.testType = TestType.CLUSTER;
+        this.elasticCluster = elasticCluster;
+    }
 
+    public ElasticConnectionTestAction(final ElasticIndex elasticIndex) {
+        this.testType = TestType.INDEX;
+        this.elasticIndex = elasticIndex;
+    }
+
+    public TestType getTestType() { return testType; }
+    public ElasticCluster getElasticCluster() { return elasticCluster; }
     public ElasticIndex getElasticIndex() {
         return elasticIndex;
     }
@@ -35,5 +47,10 @@ public class ElasticConnectionTestAction extends Action<SharedString> {
     @Override
     public String getTaskName() {
         return "Test Elasticsearch connection";
+    }
+
+    public enum TestType {
+        CLUSTER,
+        INDEX
     }
 }

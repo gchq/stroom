@@ -29,8 +29,10 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.ElasticClientCache;
+import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -41,6 +43,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
+import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -65,7 +68,7 @@ import java.util.Map;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "ElasticIndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.ELASTIC_SEARCH)
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.ELASTIC_INDEX)
 class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
 
@@ -78,6 +81,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final ElasticIndexCache elasticIndexCache;
     private final ElasticClientCache elasticClientCache;
+    private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexService elasticIndexService;
 
     private Map<String, ElasticIndexField> fieldsMap;
@@ -98,12 +102,14 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                           final ErrorReceiverProxy errorReceiverProxy,
                           final ElasticIndexCache elasticIndexCache,
                           final ElasticClientCache elasticClientCache,
+                          final ElasticClusterStore elasticClusterStore,
                           final ElasticIndexService elasticIndexService
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticIndexCache = elasticIndexCache;
         this.elasticClientCache = elasticClientCache;
+        this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexService = elasticIndexService;
     }
 
@@ -127,7 +133,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             fieldsMap = elasticIndexService.getFieldsMap(elasticIndex);
 
-            final ElasticConnectionConfig connectionConfig = elasticIndex.getConnectionConfig();
+            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
+
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 try {
                     final boolean pingSucceeded = elasticClient.ping(RequestOptions.DEFAULT);
@@ -247,7 +255,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addDocuments(final Collection<Map<String, Object>> documents) {
         if (docsIndexed > 0) {
             final String indexName = elasticIndex.getIndexName();
-            elasticClientCache.context(elasticIndex.getConnectionConfig(), elasticClient -> {
+            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+
+            elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
                 try {
                     if (documents.size() > 0) {
                         // Create a new bulk indexing request, containing the current batch of documents
@@ -255,8 +265,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         // For each document, create an indexing request and append to the bulk request
                         documents.forEach(document -> {
-                            final IndexRequest indexRequest = new IndexRequest(indexName);
-                            indexRequest.source(document);
+                            final IndexRequest indexRequest = new IndexRequest(indexName)
+                                .opType(OpType.CREATE)
+                                .source(document);
+
                             bulkRequest.add(indexRequest);
                         });
 
@@ -266,7 +278,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         }
                         else {
                             // Only refresh after all batches have been indexed
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.WAIT_UNTIL);
+                            bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
                         }
 
                         BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
@@ -335,11 +347,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addFieldToDocument(final String fieldName, final String value) {
         if (!document.containsKey(fieldName)) {
             LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                    indexRef.getName() +
-                    " name=" +
-                    fieldName +
-                    " value=" +
-                    value);
+                indexRef.getName() +
+                " name=" +
+                fieldName +
+                " value=" +
+                value
+            );
 
             document.put(fieldName, value);
             fieldsIndexed++;

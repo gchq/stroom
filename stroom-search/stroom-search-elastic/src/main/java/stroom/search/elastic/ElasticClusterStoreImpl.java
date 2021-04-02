@@ -17,13 +17,12 @@
 
 package stroom.search.elastic;
 
-import stroom.docstore.server.JsonSerialiser;
 import stroom.docstore.server.Store;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
-import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -40,21 +39,19 @@ import java.util.Set;
 
 @Component
 @Singleton
-public class ElasticIndexStoreImpl implements ElasticIndexStore {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexStoreImpl.class);
+public class ElasticClusterStoreImpl implements ElasticClusterStore {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClusterStoreImpl.class);
 
-    private final Store<ElasticIndex> store;
-    private final ElasticIndexService elasticIndexService;
+    private final Store<ElasticCluster> store;
 
     @Inject
-    public ElasticIndexStoreImpl(final Store<ElasticIndex> store,
-                                 final ElasticIndexService elasticIndexService
+    public ElasticClusterStoreImpl(final Store<ElasticCluster> store,
+                                   @Value("#{propertyConfigurer.getProperty('stroom.secret.encryptionKey')}") final String secretEncryptionKey
     ) {
         this.store = store;
-        this.elasticIndexService = elasticIndexService;
 
-        store.setType(ElasticIndex.ENTITY_TYPE, ElasticIndex.class);
-        store.setSerialiser(new JsonSerialiser<>());
+        store.setType(ElasticCluster.ENTITY_TYPE, ElasticCluster.class);
+        store.setSerialiser(new ElasticClusterJsonSerialiser(secretEncryptionKey));
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -103,17 +100,12 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public ElasticIndex readDocument(final DocRef docRef) {
+    public ElasticCluster readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public ElasticIndex writeDocument(final ElasticIndex document) {
-        document.setDataSourceFields(elasticIndexService.getDataSourceFields(document));
-        document.setFields(elasticIndexService.getFields(document));
-
-        return store.writeDocument(document);
-    }
+    public ElasticCluster writeDocument(final ElasticCluster document) { return store.writeDocument(document); }
 
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
@@ -149,16 +141,16 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public String getDocType() {
-        return ElasticIndex.ENTITY_TYPE;
+        return ElasticCluster.ENTITY_TYPE;
     }
 
     @Override
-    public ElasticIndex read(final String uuid) {
+    public ElasticCluster read(final String uuid) {
         return store.read(uuid);
     }
 
     @Override
-    public ElasticIndex update(final ElasticIndex dataReceiptPolicy) {
+    public ElasticCluster update(final ElasticCluster dataReceiptPolicy) {
         return store.update(dataReceiptPolicy);
     }
 

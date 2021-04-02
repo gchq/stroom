@@ -26,16 +26,13 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers> implements ElasticIndexSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
@@ -45,7 +42,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox indexName;
     @UiField
-    TextArea connectionUrls;
+    SimplePanel cluster;
     @UiField
     Button testConnection;
     @UiField
@@ -57,7 +54,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
         description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
-        connectionUrls.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -77,37 +73,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public void setDescription(final String description) {
-        if (description == null) {
-            this.description.setText("");
-        } else {
-            this.description.setText(description);
-        }
-    }
+    public void setDescription(final String description) { this.description.setText(description); }
 
     @Override
-    public String getIndexName() {
-        return indexName.getText().trim();
-    }
+    public void setClusterView(final View view) { cluster.setWidget(view.asWidget()); }
 
     @Override
-    public void setIndexName(final String indexName) {
-        this.indexName.setText(indexName);
-    }
+    public String getIndexName() { return indexName.getText().trim(); }
 
     @Override
-    public List<String> getConnectionUrls() {
-        return Arrays.stream(connectionUrls.getText().split("\n")).collect(Collectors.toList());
-    }
-
-    @Override
-    public void setConnectionUrls(final List<String> connectionUrls) {
-        if (connectionUrls == null) {
-            this.connectionUrls.setText("");
-        } else {
-            this.connectionUrls.setText(String.join("\n", connectionUrls));
-        }
-    }
+    public void setIndexName(final String indexName) { this.indexName.setText(indexName); }
 
     @Override
     public void setRententionExpressionView(final View view) {
@@ -117,7 +92,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
-        connectionUrls.setEnabled(!readOnly);
+        indexName.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

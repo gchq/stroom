@@ -22,11 +22,11 @@ import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
+import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.streamtask.shared.ExpressionUtil;
 import stroom.task.server.TaskContext;
-import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -52,9 +52,9 @@ public class ElasticIndexRetentionExecutor {
 
     private static final String TASK_NAME = "Elastic Index Retention Executor";
     private static final String LOCK_NAME = "ElasticIndexRetentionExecutor";
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
     private static final int DELETE_REQUEST_TIMEOUT_MILLIS = 10000;
 
+    private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticIndexCache elasticIndexCache;
     private final ElasticIndexService elasticIndexService;
@@ -64,14 +64,17 @@ public class ElasticIndexRetentionExecutor {
     private final TaskContext taskContext;
 
     @Inject
-    public ElasticIndexRetentionExecutor(final ElasticIndexStore elasticIndexStore,
-                                         final ElasticIndexCache elasticIndexCache,
-                                         final ElasticIndexService elasticIndexService,
-                                         final ElasticClientCache elasticClientCache,
-                                         final DictionaryStore dictionaryStore,
-                                         final ClusterLockService clusterLockService,
-                                         final TaskContext taskContext,
-                                         @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount) {
+    public ElasticIndexRetentionExecutor(
+        final ElasticClusterStore elasticClusterStore,
+        final ElasticIndexStore elasticIndexStore,
+        final ElasticIndexCache elasticIndexCache,
+        final ElasticIndexService elasticIndexService,
+        final ElasticClientCache elasticClientCache,
+        final DictionaryStore dictionaryStore,
+        final ClusterLockService clusterLockService,
+        final TaskContext taskContext
+    ) {
+        this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.elasticIndexCache = elasticIndexCache;
         this.elasticIndexService = elasticIndexService;
@@ -120,9 +123,11 @@ public class ElasticIndexRetentionExecutor {
                                 indexFieldsMap,
                                 null,
                                 System.currentTimeMillis());
-                        final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(elasticIndex.getRetentionExpression());
 
-                        elasticClientCache.context(elasticIndex.getConnectionConfig(), elasticClient -> {
+                        final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(elasticIndex.getRetentionExpression());
+                        final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+
+                        elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
                             try {
                                 info("Deleting data from Elasticsearch index '" + elasticIndex.getName() + "'");
                                 DeleteByQueryRequest request = new DeleteByQueryRequest(elasticIndex.getIndexName());
