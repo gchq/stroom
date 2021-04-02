@@ -18,9 +18,9 @@ package stroom.pipeline.destination;
 
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
-import stroom.util.io.PathCreator;
 import stroom.util.io.GZipByteCountOutputStream;
 import stroom.util.io.GZipOutputStream;
+import stroom.util.io.PathCreator;
 import stroom.util.scheduler.SimpleCron;
 
 import com.google.common.base.Strings;
