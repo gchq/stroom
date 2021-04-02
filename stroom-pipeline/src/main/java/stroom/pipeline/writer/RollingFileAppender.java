@@ -186,9 +186,6 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.rolledFileNamePattern = rolledFileNamePattern;
     }
 
-    @PipelineProperty(description = "Apply GZIP compression to output files", defaultValue = "false")
-    public void setUseCompression(final boolean useCompression) { this.useCompression = useCompression; }
-
     @PipelineProperty(description = "Choose how frequently files are rolled.",
             defaultValue = "1h",
             displayPriority = 4)
@@ -209,5 +206,13 @@ public class RollingFileAppender extends AbstractRollingAppender {
             displayPriority = 6)
     public void setRollSize(final String rollSize) {
         super.setRollSize(rollSize);
+    }
+
+    @PipelineProperty(
+            description = "Apply GZIP compression to output files",
+            defaultValue = "false",
+            displayPriority = 7)
+    public void setUseCompression(final boolean useCompression) {
+        this.useCompression = useCompression;
     }
 }
