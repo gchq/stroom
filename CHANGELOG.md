@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.100] - 2021-04-02
+
 * Issue **#1598** : Audit logging uplifted throughout codebase.
 
 * Issue **#1613** : Added event logging to UserResourceImpl.
+
 
 ## [v7.0-beta.99] - 2021-04-01
 
@@ -3253,7 +3257,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.99...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.100...HEAD
+[v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
 [v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
 [v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
 [v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
