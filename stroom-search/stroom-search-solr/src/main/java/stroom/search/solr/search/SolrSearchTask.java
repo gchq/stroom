@@ -16,6 +16,7 @@
 
 package stroom.search.solr.search;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.query.common.v2.Receiver;
 import stroom.search.solr.CachedSolrIndex;
 
@@ -25,18 +26,18 @@ class SolrSearchTask {
 
     private final CachedSolrIndex solrIndex;
     private final SolrParams solrParams;
-    private final String[] fieldNames;
+    private final FieldIndex fieldIndex;
     private final Receiver receiver;
     private final Tracker tracker;
 
     SolrSearchTask(final CachedSolrIndex solrIndex,
                    final SolrParams solrParams,
-                   final String[] fieldNames,
+                   final FieldIndex fieldIndex,
                    final Receiver receiver,
                    final Tracker tracker) {
         this.solrIndex = solrIndex;
         this.solrParams = solrParams;
-        this.fieldNames = fieldNames;
+        this.fieldIndex = fieldIndex;
         this.receiver = receiver;
         this.tracker = tracker;
     }
@@ -49,8 +50,8 @@ class SolrSearchTask {
         return solrParams;
     }
 
-    String[] getFieldNames() {
-        return fieldNames;
+    FieldIndex getFieldIndex() {
+        return fieldIndex;
     }
 
     Receiver getReceiver() {

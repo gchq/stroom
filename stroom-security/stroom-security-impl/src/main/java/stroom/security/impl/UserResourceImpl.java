@@ -1,21 +1,42 @@
 package stroom.security.impl;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
+import event.logging.CreateEventAction;
+import event.logging.MultiObject;
+import event.logging.Outcome;
+import event.logging.UpdateEventAction;
+
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
+@AutoLogged
 public class UserResourceImpl implements UserResource {
 
-    private final UserService userService;
+    private final Provider<UserService> userServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<AuthorisationEventLog> authorisationEventLogProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    public UserResourceImpl(final UserService userService) {
-        this.userService = userService;
+    public UserResourceImpl(final Provider<UserService> userServiceProvider,
+                            final Provider<SecurityContext> securityContextProvider,
+                            final Provider<AuthorisationEventLog> authorisationEventLogProvider,
+                            final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+        this.userServiceProvider = userServiceProvider;
+        this.securityContextProvider = securityContextProvider;
+        this.authorisationEventLogProvider = authorisationEventLogProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Override
@@ -29,9 +50,9 @@ public class UserResourceImpl implements UserResource {
             final User userRef = criteria.getRelatedUser();
             List<User> list;
             if (userRef.isGroup()) {
-                list = userService.findUsersInGroup(userRef.getUuid(), criteria.getQuickFilterInput());
+                list = userServiceProvider.get().findUsersInGroup(userRef.getUuid(), criteria.getQuickFilterInput());
             } else {
-                list = userService.findGroupsForUser(userRef.getUuid(), criteria.getQuickFilterInput());
+                list = userServiceProvider.get().findGroupsForUser(userRef.getUuid(), criteria.getQuickFilterInput());
             }
 
 //            if (criteria.getQuickFilterInput() != null) {
@@ -47,7 +68,7 @@ public class UserResourceImpl implements UserResource {
             return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
         }
 
-        return ResultPage.createUnboundedList(userService.find(criteria));
+        return ResultPage.createUnboundedList(userServiceProvider.get().find(criteria));
     }
 
     @Override
@@ -63,15 +84,12 @@ public class UserResourceImpl implements UserResource {
         final FindUserCriteria criteria = new FindUserCriteria();
         criteria.setQuickFilterInput(name);
         criteria.setGroup(isGroup);
-        return userService.find(criteria);
+        return userServiceProvider.get().find(criteria);
     }
 
     @Override
     public User fetch(String userUuid) {
-        // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
-        //   that are currently unused.
-
-        return userService.loadByUuid(userUuid)
+        return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }
 
@@ -91,52 +109,220 @@ public class UserResourceImpl implements UserResource {
 //    }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public User create(final String name,
                        final Boolean isGroup) {
         User user;
 
         if (isGroup) {
-            user = userService.createUserGroup(name);
+            user = createGroup(name);
         } else {
-            user = userService.createUser(name);
+            user = createUser(name);
         }
 
         return user;
     }
 
-    @Override
-    public Boolean deleteUser(final String uuid) {
-        return userService.delete(uuid);
+    private User createUser(final String name) {
+        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+
+        try {
+            User newUser = userServiceProvider.get().createUser(name);
+
+            builder.withObjects(
+                    event.logging.User.builder()
+                            .withName(name)
+                            .withId(newUser.getUuid())
+                            .build());
+
+            return newUser;
+        } catch (Exception ex) {
+            builder.withObjects(
+                    event.logging.User.builder()
+                            .withName(name)
+                            .build());
+            builder.withOutcome(Outcome.builder()
+                    .withSuccess(false)
+                    .withDescription(ex.getMessage())
+                    .build());
+
+            throw ex;
+        } finally {
+            stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
+                    "Creating new user " + name, builder.build());
+        }
+    }
+
+    private User createGroup(final String name) {
+        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+
+        try {
+            User newUser = userServiceProvider.get().createUserGroup(name);
+
+            builder.withObjects(
+                    event.logging.Group.builder()
+                            .withName(name)
+                            .withId(newUser.getUuid())
+                            .build());
+
+            return newUser;
+        } catch (Exception ex) {
+            builder.withObjects(
+                    event.logging.Group.builder()
+                            .withName(name)
+                            .build());
+            builder.withOutcome(Outcome.builder()
+                    .withSuccess(false)
+                    .withDescription(ex.getMessage())
+                    .build());
+
+            throw ex;
+        } finally {
+            stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
+                    "Creating new user group " + name, builder.build());
+        }
     }
 
     @Override
+    public Boolean deleteUser(final String uuid) {
+        return userServiceProvider.get().delete(uuid);
+    }
+
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean setStatus(String userName, boolean status) {
-        userService.getUserByName(userName)
-                .ifPresentOrElse(
-                        user -> {
-                            user.setEnabled(status);
-                            userService.update(user);
-                        },
-                        () -> {
-                            throw new RuntimeException("User not found");
-                        });
+        //Todo confirm that this is no longer required and remove
+        UpdateEventAction.Builder<Void> builder = UpdateEventAction.builder();
+
+        try {
+            userServiceProvider.get().getUserByName(userName)
+                    .ifPresentOrElse(
+                            user -> {
+                                builder.withBefore(MultiObject.builder()
+                                        .addUser(
+                                                event.logging.User.builder()
+                                                        .withId(user.getUuid())
+                                                        .withName(user.getName())
+                                                        .withState(user.isEnabled() ? "Enabled" : "Disabled")
+                                                        .build()
+                                        ).build()
+                                );
+                                builder.withAfter(MultiObject.builder()
+                                        .addUser(
+                                                event.logging.User.builder()
+                                                        .withId(user.getUuid())
+                                                        .withName(user.getName())
+                                                        .withState(status ? "Enabled" : "Disabled")
+                                                        .build()
+                                        ).build()
+                                );
+
+                                user.setEnabled(status);
+                                userServiceProvider.get().update(user);
+                            },
+                            () -> {
+                                builder.withAfter(MultiObject.builder()
+                                        .addUser(
+                                                event.logging.User.builder()
+                                                        .withId(userName)
+                                                        .withName(userName)
+                                                        .withState(status ? "Enabled" : "Disabled")
+                                                        .build()
+                                        ).build()
+                                );
+                                throw new RuntimeException("User not found");
+                            });
+        } catch (Exception ex) {
+            builder.withOutcome()
+                    .withSuccess(false)
+                    .withDescription(ex.getMessage());
+        } finally {
+            stroomEventLoggingServiceProvider.get().log("UserResourceImpl.setStatus",
+                    status ? "Enabling" : "Disabling" + " user " + userName, builder.build());
+        }
+
         return true;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean addUserToGroup(final String userUuid,
                                   final String groupUuid) {
-        return userService.addUserToGroup(userUuid, groupUuid);
+        String userIdForLogging = getUserNameForLogging(userUuid);
+        String groupIdForLogging = getGroupNameForLogging(groupUuid);
+
+        boolean success = false;
+        String errorMessage = null;
+
+        try {
+            Boolean result = userServiceProvider.get().addUserToGroup(userUuid, groupUuid);
+
+            if (result != null) {
+                success = result;
+            }
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+        }
+
+        authorisationEventLogProvider.get().addUserToGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
+
+        return success;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
-        return userService.removeUserFromGroup(userUuid, groupUuid);
+        String userIdForLogging = getUserNameForLogging(userUuid);
+        String groupIdForLogging = getGroupNameForLogging(groupUuid);
+
+        boolean success = false;
+        String errorMessage = null;
+
+        try {
+            Boolean result = userServiceProvider.get().removeUserFromGroup(userUuid, groupUuid);
+
+            if (result != null) {
+                success = result;
+            }
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+        }
+
+        authorisationEventLogProvider.get().removeUserFromGroup(userIdForLogging, groupIdForLogging,
+                success, errorMessage);
+
+        return success;
     }
 
     @Override
     public List<String> getAssociates(final String filter) {
-        return userService.getAssociates(filter);
+        return userServiceProvider.get().getAssociates(filter);
+    }
+
+    private String getUserNameForLogging(final String uuid) {
+        try {
+            Optional<User> found = securityContextProvider.get()
+                    .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
+            if (found.isPresent() && !found.get().isGroup()) {
+                return found.get().getName();
+            }
+        } catch (Exception ex) {
+            //Ignore at this time
+        }
+        return uuid;
+    }
+
+    private String getGroupNameForLogging(final String uuid) {
+        try {
+            Optional<User> found = securityContextProvider.get()
+                    .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
+            if (found.isPresent() && found.get().isGroup()) {
+                return found.get().getName();
+            }
+        } catch (Exception ex) {
+            //Ignore at this time
+        }
+        return uuid;
     }
 }

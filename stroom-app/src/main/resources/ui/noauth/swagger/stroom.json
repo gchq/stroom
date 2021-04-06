@@ -15256,6 +15256,9 @@
           "query" : {
             "$ref" : "#/components/schemas/QueryConfig"
           },
+          "requireReactWrapper" : {
+            "type" : "boolean"
+          },
           "source" : {
             "$ref" : "#/components/schemas/SourceConfig"
           },

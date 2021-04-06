@@ -31,6 +31,7 @@ import stroom.task.shared.TaskId;
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
+
     private final SolrIndexCache solrIndexCache;
     private final SecurityContext securityContext;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
@@ -69,11 +70,14 @@ public class SolrAsyncSearchTaskHandler {
                     // coprocessors will require. Also
                     // batch search only needs stream and event id stored fields.
                     final String[] storedFields = getStoredFields(index);
+                    // Get the stored fields that search is hoping to use.
+                    if (storedFields.length == 0) {
+                        throw new SearchException("No stored fields have been requested");
+                    }
 
                     clusterSearchTaskHandler.exec(taskContext,
                             index,
                             query,
-                            storedFields,
                             task.getNow(),
                             task.getDateTimeLocale(),
                             coprocessors);

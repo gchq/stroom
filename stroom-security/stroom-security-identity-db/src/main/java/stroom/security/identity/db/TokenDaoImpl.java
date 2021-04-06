@@ -281,6 +281,7 @@ class TokenDaoImpl implements TokenDao {
             final Token newToken = RECORD_TO_TOKEN_MAPPER.apply(record);
             newToken.setUserEmail(token.getUserEmail());
             newToken.setTokenType(token.getTokenType());
+            newToken.setUserId(token.getUserId());
             return newToken;
         });
     }

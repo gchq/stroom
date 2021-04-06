@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Ported Elasticsearch integration from v6, for compatibility with v7.
+
+* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
+
+* Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
+
+
+## [v7.0-beta.100] - 2021-04-02
+
+* Issue **#1598** : Audit logging uplifted throughout codebase.
+
+* Issue **#1613** : Added event logging to UserResourceImpl.
+
+
+## [v7.0-beta.99] - 2021-04-01
+
+* Issue **#1928**: Stroom will now redirect users to the root URL if the GWT UI is not hosted within the React wrapper. To develop GWT code it is still necessary to use the GWT UI directly outside of the wrapper so to enable this you can set the newly added `requireReactWrapper` property to false.
+
 * Issue **#2156**: The properties screen now shows a warning triangle when there are unreachable nodes rather than showing an error for all property values.
 
 * Issue **#2157**: Fixed issue where pager was causing an exception paging to last on API keys and Accounts list pages.
@@ -16,8 +34,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#2085**: User now gets notification that a password has been changed.
 
 * Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
-
-* Ported Elasticsearch integration from v6, for compatibility with v7.
 
 
 ## [v7.0-beta.98] - 2021-03-30
@@ -3247,7 +3263,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.98...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.100...HEAD
+[v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
+[v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
 [v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
 [v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
 [v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96

@@ -43,8 +43,6 @@ class ClusterSearchTaskHandler {
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
 
-    private ClusterSearchTask task;
-
     @Inject
     ClusterSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
@@ -58,16 +56,18 @@ class ClusterSearchTaskHandler {
                      final ClusterSearchTask task,
                      final Coprocessors coprocessors,
                      final RemoteSearchResultFactory remoteSearchResultFactory) {
-        this.task = task;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
+
                 try {
                     remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
                     remoteSearchResultFactory.setStarted(true);
 
-                    // Start searching.
-                    search(taskContext, task, task.getQuery(), coprocessors);
+                    if (coprocessors.size() > 0 && task.getShards().size() > 0) {
+                        // Start searching.
+                        search(taskContext, task, task.getQuery(), coprocessors);
+                    }
 
                 } catch (final RuntimeException e) {
                     coprocessors.getErrorConsumer().accept(e);
@@ -89,62 +89,57 @@ class ClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            if (task.getShards().size() > 0) {
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(
-                        taskContext,
-                        coprocessors,
-                        query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(
+                    taskContext,
+                    coprocessors,
+                    query);
 
-                // Search all index shards.
-                final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                        .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
-                        .build();
-                final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-                final AtomicLong hitCount = new AtomicLong();
-                indexShardSearchFactory.search(
-                        task,
-                        expression,
-                        coprocessors.getFieldIndex(),
-                        extractionReceiver,
-                        taskContext,
-                        hitCount);
+            // Search all index shards.
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
+                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .build();
+            final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
+            final AtomicLong hitCount = new AtomicLong();
+            indexShardSearchFactory.search(
+                    task,
+                    expression,
+                    coprocessors.getFieldIndex(),
+                    extractionReceiver,
+                    taskContext,
+                    hitCount);
 
-                // Wait for search completion.
-                boolean allComplete = false;
-                while (!allComplete) {
-                    allComplete = true;
-                    for (final Coprocessor coprocessor : coprocessors) {
-                        if (!Thread.currentThread().isInterrupted()) {
-                            taskContext.info(() -> "" +
-                                    "Searching... " +
-                                    "found "
-                                    + hitCount.get() +
-                                    " documents" +
-                                    " performed " +
-                                    coprocessor.getValuesCount().get() +
-                                    " extractions");
+            // Wait for search completion.
+            boolean allComplete = false;
+            while (!allComplete) {
+                allComplete = true;
+                for (final Coprocessor coprocessor : coprocessors) {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        taskContext.info(() -> "" +
+                                "Searching... " +
+                                "found " +
+                                hitCount.get() +
+                                " documents" +
+                                " performed " +
+                                coprocessor.getValuesCount().get() +
+                                " extractions");
 
-                            final boolean complete = coprocessor.getCompletionState().awaitCompletion(1,
-                                    TimeUnit.SECONDS);
-                            if (!complete) {
-                                allComplete = false;
-                            }
+                        final boolean complete = coprocessor.getCompletionState()
+                                .awaitCompletion(1, TimeUnit.SECONDS);
+                        if (!complete) {
+                            allComplete = false;
                         }
                     }
                 }
             }
 
             LOGGER.debug(() -> "Complete");
-        } catch (final RuntimeException pEx) {
-            throw SearchException.wrap(pEx);
-        } catch (final InterruptedException pEx) {
+        } catch (final RuntimeException e) {
+            throw SearchException.wrap(e);
+        } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();
-            throw SearchException.wrap(pEx);
+            LOGGER.debug(e::getMessage, e);
+            throw SearchException.wrap(e);
         }
-    }
-
-    public ClusterSearchTask getTask() {
-        return task;
     }
 }

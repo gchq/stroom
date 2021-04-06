@@ -17,6 +17,8 @@ import stroom.util.cert.CertificateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import event.logging.AuthenticateOutcomeReason;
+
 import java.net.URI;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -93,66 +95,95 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public Optional<AuthState> currentAuthState(final HttpServletRequest request) {
+    public AuthStatus currentAuthState(final HttpServletRequest request) {
         LOGGER.debug("currentAuthState");
         AuthStateImpl authState = getAuthState(request);
 
         // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
         if (authState != null) {
             LOGGER.debug("Has current auth state");
-            return Optional.of(authState);
+            return new AuthStatusImpl(authState, false);
 
         } else if (config.isAllowCertificateAuthentication()) {
             LOGGER.debug("Attempting login with certificate");
-            try {
-                loginWithCertificate(request);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage());
-            }
-        } else {
-            LOGGER.debug("Certificate authentication is disabled");
-        }
 
-        return Optional.ofNullable(getAuthState(request));
+            AuthStatus status = loginWithCertificate(request);
+            if (status.getError().isPresent()) {
+                LOGGER.error("Failed to log in with certificate, user: " + status.getError().get().getSubject()
+                        + ", message: " + status.getError().get().getMessage());
+            }
+
+            return status;
+
+        } else {
+            final String message = "Certificate authentication is disabled";
+            LOGGER.debug(message);
+            return new AuthStatusImpl();
+        }
     }
 
-    private void loginWithCertificate(final HttpServletRequest request) {
+    private AuthStatus loginWithCertificate(final HttpServletRequest request) {
         LOGGER.debug("loginWithCertificate");
         final Optional<String> optionalCN = CertificateUtil.getCN(request);
-        optionalCN.ifPresent(cn -> {
+        if (optionalCN.isPresent()) {
+            final String cn = optionalCN.get();
             // Check for a certificate
             LOGGER.debug(() -> "Got CN: " + cn);
             Optional<String> optionalUserId = getIdFromCertificate(cn);
 
             if (optionalUserId.isEmpty()) {
-                throw new RuntimeException(
+                return new AuthStatusImpl(new BadRequestException(cn,
+                        AuthenticateOutcomeReason.INCORRECT_CA.value(),
                         "Found CN but the identity cannot be extracted (CN = " +
                                 cn +
-                                ")");
+                                ")"), true);
 
             } else {
                 final String userId = optionalUserId.get();
                 final Optional<Account> optionalAccount = accountDao.get(userId);
                 if (optionalAccount.isEmpty()) {
                     // There's no user so we can't let them have access.
-                    throw new BadRequestException(
+                    return new AuthStatusImpl(new BadRequestException(userId,
+                            AuthenticateOutcomeReason.INCORRECT_USERNAME.value(),
                             "An account for the userId does not exist (userId = " +
                                     userId +
-                                    ")");
+                                    ")"), true);
 
                 } else {
                     final Account account = optionalAccount.get();
-                    if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
-                        LOGGER.info(() -> "Logging user in: " + userId);
-                        setAuthState(request.getSession(true),
-                                new AuthStateImpl(account, false, System.currentTimeMillis()));
+
+                    if (account.isLocked()) {
+                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                "User account " + account.getUserId() + " is locked"), true);
+                    }
+                    if (account.isInactive()) {
+                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                "User account " + account.getUserId() + " is inactive"), true);
+                    }
+                    if (!account.isEnabled()) {
+                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                "User account " + account.getUserId() + " is not currently enabled"), true);
+
+                    }
+
+                    LOGGER.info(() -> "Logging user in: " + userId);
+                    AuthStateImpl newState = new AuthStateImpl(account, false,
+                            System.currentTimeMillis());
+                    setAuthState(request.getSession(true), newState);
 
                         // Reset last access, login failures, etc...
-                        accountDao.recordSuccessfulLogin(userId);
-                    }
+                    accountDao.recordSuccessfulLogin(userId);
+
+                    AuthStatus status = new AuthStatusImpl(newState, true);
+                    return status;
                 }
             }
-        });
+        }
+
+        return new AuthStatusImpl();
     }
 
     public LoginResponse handleLogin(final LoginRequest loginRequest,
@@ -422,6 +453,45 @@ class AuthenticationServiceImpl implements AuthenticationService {
         @Override
         public long getLastCredentialCheckMs() {
             return lastCredentialCheckMs;
+        }
+    }
+
+    private static class AuthStatusImpl implements AuthStatus {
+        private final AuthState state;
+        private final BadRequestException error;
+        private final boolean isNew;
+
+        AuthStatusImpl() {
+            state = null;
+            error = null;
+            isNew = false;
+        }
+
+        AuthStatusImpl(AuthState state, boolean isNew) {
+            this.state = state;
+            this.isNew = isNew;
+            this.error = null;
+        }
+
+        AuthStatusImpl(BadRequestException error, boolean isNew) {
+            this.error = error;
+            this.isNew = isNew;
+            this.state = null;
+        }
+
+        @Override
+        public Optional<AuthState> getAuthState() {
+            return Optional.ofNullable(state);
+        }
+
+        @Override
+        public boolean isNew() {
+            return isNew;
+        }
+
+        @Override
+        public Optional<BadRequestException> getError() {
+            return Optional.ofNullable(error);
         }
     }
 }
