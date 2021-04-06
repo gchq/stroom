@@ -1,6 +1,5 @@
 package stroom.search.elastic;
 
-import stroom.config.app.CryptoConfig;
 import stroom.crypto.shared.CryptoUtils;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
@@ -32,7 +31,7 @@ class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc>
     @Override
     public ElasticClusterDoc read(final Map<String, byte[]> data) throws IOException {
         final ElasticClusterDoc document = delegate.read(data);
-        final String apiKey = document.getConnectionConfig().getApiKeySecretEncrypted();
+        final String apiKey = document.getConnection().getApiKeySecretEncrypted();
         String decryptedApiKey;
 
         // Decrypt the API key using the configured cluster secret
@@ -46,14 +45,14 @@ class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc>
             decryptedApiKey = apiKey;
         }
 
-        document.getConnectionConfig().setApiKeySecret(decryptedApiKey);
+        document.getConnection().setApiKeySecret(decryptedApiKey);
 
         return document;
     }
 
     @Override
     public Map<String, byte[]> write(final ElasticClusterDoc document) throws IOException {
-        final String apiKey = document.getConnectionConfig().getApiKeySecret();
+        final String apiKey = document.getConnection().getApiKeySecret();
         String encryptedApiKey;
 
         // Encrypt the API key with the configured cluster secret and write it to the destination stream
@@ -67,7 +66,7 @@ class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc>
             encryptedApiKey = "";
         }
 
-        document.getConnectionConfig().setApiKeySecretEncrypted(encryptedApiKey);
+        document.getConnection().setApiKeySecretEncrypted(encryptedApiKey);
 
         return delegate.write(document);
     }

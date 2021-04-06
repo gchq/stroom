@@ -1,4 +1,4 @@
-package stroom.config.app;
+package stroom.search.elastic;
 
 import stroom.util.shared.AbstractConfig;
 

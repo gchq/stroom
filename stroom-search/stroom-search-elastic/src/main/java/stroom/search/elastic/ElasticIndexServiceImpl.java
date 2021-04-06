@@ -200,7 +200,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         try {
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
 
-            return elasticClientCache.contextResult(elasticCluster.getConnectionConfig(), elasticClient -> {
+            return elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
                 final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
                 request.indices(indexName);

@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -49,6 +50,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "ElasticIndex";
 
     /**
@@ -77,6 +79,7 @@ public class ElasticIndexDoc extends Doc {
         this.dataSourceFields = new ArrayList<>();
     }
 
+    @JsonCreator
     public ElasticIndexDoc(
             @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
@@ -94,7 +97,6 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression
     ) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
-
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;

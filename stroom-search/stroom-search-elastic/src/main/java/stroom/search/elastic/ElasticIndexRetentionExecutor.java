@@ -129,7 +129,7 @@ public class ElasticIndexRetentionExecutor {
                     final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(
                             elasticIndex.getClusterRef());
 
-                    elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
+                    elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                         try {
                             info(taskContext, () ->
                                     "Deleting data from Elasticsearch index '" + elasticIndex.getName() + "'");

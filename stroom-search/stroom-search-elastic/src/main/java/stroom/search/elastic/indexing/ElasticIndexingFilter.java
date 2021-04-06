@@ -133,7 +133,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             fieldsMap = elasticIndexService.getFieldsMap(elasticIndex);
 
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
-            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
+            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
 
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 try {
@@ -259,7 +259,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             final String indexName = elasticIndex.getIndexName();
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
 
-            elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
+            elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                 try {
                     if (documents.size() > 0) {
                         // Create a new bulk indexing request, containing the current batch of documents

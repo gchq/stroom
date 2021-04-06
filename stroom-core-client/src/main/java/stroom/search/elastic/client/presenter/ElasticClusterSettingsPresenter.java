@@ -90,7 +90,7 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster) {
-        final ElasticConnectionConfig connectionConfig = cluster.getConnectionConfig();
+        final ElasticConnectionConfig connectionConfig = cluster.getConnection();
 
         if (connectionConfig != null) {
             getView().setConnectionUrls(connectionConfig.getConnectionUrls());
@@ -114,7 +114,7 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
         connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
 
-        cluster.setConnectionConfig(connectionConfig);
+        cluster.setConnection(connectionConfig);
         cluster.setDescription(getView().getDescription().trim());
     }
 

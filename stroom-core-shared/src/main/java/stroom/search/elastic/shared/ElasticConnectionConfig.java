@@ -11,23 +11,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"connectionUrls,caCertificate,useAuthentication,apiKeyId,apiKeySecret,socketTimeoutMillis"})
-@JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "connection")
-@XmlType(name = "ElasticConnectionConfig", propOrder = {
+@JsonPropertyOrder({
         "connectionUrls",
         "caCertificate",
         "useAuthentication",
         "apiKeyId",
-        "apiKeySecret",
+        "apiKeySecretEncrypted",
         "socketTimeoutMillis"})
+@JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
+
     @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();
 
@@ -52,7 +46,7 @@ public class ElasticConnectionConfig implements Serializable {
     /**
      * This is the field that is actually serialised and is an encrypted version of member variable `apiKeySecret`
      */
-    @JsonProperty("apiKeySecret")
+    @JsonProperty("apiKeySecretEncrypted")
     private String apiKeySecretEncrypted;
 
     /**
@@ -62,7 +56,23 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonProperty
     private int socketTimeoutMillis = -1;
 
-    public ElasticConnectionConfig() { }
+    public ElasticConnectionConfig() {
+    }
+
+    @JsonCreator
+    public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
+                                   @JsonProperty("caCertificate") final String caCertificate,
+                                   @JsonProperty("useAuthentication") final boolean useAuthentication,
+                                   @JsonProperty("apiKeyId") final String apiKeyId,
+                                   @JsonProperty("apiKeySecretEncrypted") final String apiKeySecretEncrypted,
+                                   @JsonProperty("socketTimeoutMillis") final int socketTimeoutMillis) {
+        this.connectionUrls = connectionUrls;
+        this.caCertificate = caCertificate;
+        this.useAuthentication = useAuthentication;
+        this.apiKeyId = apiKeyId;
+        this.apiKeySecretEncrypted = apiKeySecretEncrypted;
+        this.socketTimeoutMillis = socketTimeoutMillis;
+    }
 
     public List<String> getConnectionUrls() {
         return connectionUrls;
@@ -96,10 +106,12 @@ public class ElasticConnectionConfig implements Serializable {
         this.apiKeyId = apiKeyId;
     }
 
+    @JsonIgnore
     public String getApiKeySecret() {
         return apiKeySecret;
     }
 
+    @JsonIgnore
     public void setApiKeySecret(final String apiKeySecret) {
         this.apiKeySecret = apiKeySecret;
     }

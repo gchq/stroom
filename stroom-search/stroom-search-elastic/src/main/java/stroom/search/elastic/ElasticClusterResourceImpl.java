@@ -73,7 +73,7 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     @AutoLogged(value = OperationType.PROCESS, verb = "Testing Elasticsearch cluster")
     public ElasticClusterTestResponse testCluster(final ElasticClusterDoc cluster) {
         try {
-            final ElasticConnectionConfig connectionConfig = cluster.getConnectionConfig();
+            final ElasticConnectionConfig connectionConfig = cluster.getConnection();
             final RestHighLevelClient elasticClient = new ElasticClientFactory().create(connectionConfig);
 
             MainResponse response = elasticClient.info(RequestOptions.DEFAULT);

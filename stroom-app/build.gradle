@@ -115,7 +115,7 @@ dependencies {
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
     compile project(':stroom-search:stroom-search-extraction')
-    compile project(path: ':stroom-search:stroom-search-elastic', configuration: 'shadow')
+    compile project(':stroom-search:stroom-search-elastic')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-search:stroom-searchable-impl')
     compile project(':stroom-security:stroom-security-identity')

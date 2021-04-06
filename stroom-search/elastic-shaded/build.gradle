@@ -1,0 +1,43 @@
+ext.moduleName = 'elastic.shaded'
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java-library'
+
+shadowJar {
+    zip64 true
+
+    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+
+    mergeServiceFiles()
+
+    dependencies {
+        exclude(dependency("commons-codec:commons-codec"))
+        exclude(dependency("commons-logging:commons-logging"))
+        exclude(dependency("org.apache.httpcomponents:httpclient"))
+        exclude(dependency("org.apache.httpcomponents:httpcore"))
+        exclude(dependency("org.apache.httpcomponents:httpasyncclient"))
+        exclude(dependency("org.apache.httpcomponents:httpcore-nio"))
+    }
+
+//    artifacts {
+//        shadow(tasks.shadowJar.archiveFile) {
+//            builtBy shadowJar
+//        }
+//    }
+}
+
+dependencies {
+    implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:7.12.0"
+    implementation "org.elasticsearch.client:elasticsearch-rest-client:7.12.0"
+    implementation "org.elasticsearch:elasticsearch:7.12.0"
+    implementation "org.elasticsearch:elasticsearch-core:7.12.0"
+
+    shadow "commons-codec:commons-codec:1.11"
+    shadow "commons-logging:commons-logging:1.1.3"
+    shadow "org.apache.httpcomponents:httpclient:4.5.10"
+    shadow "org.apache.httpcomponents:httpcore:4.4.12"
+    shadow "org.apache.httpcomponents:httpasyncclient:4.1.4"
+    shadow "org.apache.httpcomponents:httpcore-nio:4.4.12"
+}
+
+tasks.build.dependsOn shadowJar

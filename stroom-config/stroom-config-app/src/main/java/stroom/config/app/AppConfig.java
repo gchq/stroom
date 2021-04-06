@@ -28,6 +28,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -64,6 +65,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DATA_SOURCE_URL = "dataSourceUrl";
     public static final String PROP_NAME_DOCSTORE = "docstore";
+    public static final String PROP_NAME_ELASTIC = "elastic";
     public static final String PROP_NAME_EXPLORER = "explorer";
     public static final String PROP_NAME_EXPORT = "export";
     public static final String PROP_NAME_FEED = "feed";
@@ -108,6 +110,7 @@ public class AppConfig extends AbstractConfig {
     private DataConfig dataConfig = new DataConfig();
     private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
     private DocStoreConfig docStoreConfig = new DocStoreConfig();
+    private ElasticConfig elasticConfig = new ElasticConfig();
     private ExplorerConfig explorerConfig = new ExplorerConfig();
     private ExportConfig exportConfig = new ExportConfig();
     private FeedConfig feedConfig = new FeedConfig();
@@ -277,6 +280,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setDocStoreConfig(final DocStoreConfig docStoreConfig) {
         this.docStoreConfig = docStoreConfig;
+    }
+
+    @JsonProperty(PROP_NAME_ELASTIC)
+    public ElasticConfig getElasticConfig() {
+        return elasticConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setElasticConfig(final ElasticConfig elasticConfig) {
+        this.elasticConfig = elasticConfig;
     }
 
     @JsonProperty(PROP_NAME_EXPLORER)

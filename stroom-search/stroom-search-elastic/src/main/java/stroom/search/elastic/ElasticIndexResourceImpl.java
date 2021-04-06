@@ -86,7 +86,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final ElasticClusterDoc elasticCluster = documentResourceHelperProvider.get().read(
                     elasticClusterStoreProvider.get(), index.getClusterRef());
 
-            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
+            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
             final RestHighLevelClient elasticClient = new ElasticClientFactory().create(connectionConfig);
 
             // Check whether the specified index exists

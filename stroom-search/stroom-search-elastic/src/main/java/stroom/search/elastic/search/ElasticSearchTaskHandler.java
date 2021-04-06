@@ -117,7 +117,7 @@ public class ElasticSearchTaskHandler {
     private void searchIndex(final ElasticSearchTask task, final TaskContext taskContext) {
         final ElasticIndexDoc elasticIndex = task.getElasticIndex();
         final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
-        final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
+        final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
 
         // If there is an error building the query then it will be null here.
         try {

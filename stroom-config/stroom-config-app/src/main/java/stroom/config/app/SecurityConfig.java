@@ -1,5 +1,6 @@
 package stroom.config.app;
 
+import stroom.search.elastic.CryptoConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;

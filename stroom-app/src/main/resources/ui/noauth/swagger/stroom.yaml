@@ -5764,7 +5764,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - "NULL"
+          - NULL
           - NUMBER
           - STRING
         defaultValue:
@@ -5861,7 +5861,7 @@ components:
         cascade:
           type: string
           enum:
-          - "NO"
+          - NO
           - CHANGES_ONLY
           - ALL
         changes:
@@ -6745,7 +6745,7 @@ components:
       properties:
         apiKeyId:
           type: string
-        apiKeySecret:
+        apiKeySecretEncrypted:
           type: string
         caCertificate:
           type: string
@@ -6758,8 +6758,6 @@ components:
           format: int32
         useAuthentication:
           type: boolean
-      xml:
-        name: connection
     ElasticIndexDoc:
       type: object
       properties:
@@ -7694,7 +7692,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - "NULL"
+          - NULL
           - NUMBER
           - STRING
     GetFeedStatusRequest:

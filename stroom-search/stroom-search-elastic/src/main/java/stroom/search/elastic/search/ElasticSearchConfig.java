@@ -1,11 +1,9 @@
 package stroom.search.elastic.search;
 
-import stroom.search.extraction.ExtractionConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
@@ -24,7 +22,6 @@ public class ElasticSearchConfig extends AbstractConfig {
     private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
-    private ExtractionConfig extractionConfig = new ExtractionConfig();
     private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -58,15 +55,6 @@ public class ElasticSearchConfig extends AbstractConfig {
         this.storeSize = storeSize;
     }
 
-    @JsonProperty("extraction")
-    public ExtractionConfig getExtractionConfig() {
-        return extractionConfig;
-    }
-
-    public void setExtractionConfig(final ExtractionConfig extractionConfig) {
-        this.extractionConfig = extractionConfig;
-    }
-
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
     }
@@ -81,7 +69,6 @@ public class ElasticSearchConfig extends AbstractConfig {
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxBooleanClauseCount=" + maxBooleanClauseCount +
                 ", storeSize='" + storeSize + '\'' +
-                ", extractionConfig=" + extractionConfig +
                 ", searchResultCache=" + searchResultCache +
                 '}';
     }

@@ -37,20 +37,36 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "connection"
-})
+        "connection"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticClusterDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "ElasticCluster";
 
     @JsonProperty
     private String description;
 
-    @JsonProperty("connection")
-    private ElasticConnectionConfig connectionConfig;
+    @JsonProperty
+    private ElasticConnectionConfig connection;
 
     public ElasticClusterDoc() {
-        this.connectionConfig = new ElasticConnectionConfig();
+        this.connection = new ElasticConnectionConfig();
+    }
+
+    @JsonCreator
+    public ElasticClusterDoc(@JsonProperty("type") final String type,
+                             @JsonProperty("uuid") final String uuid,
+                             @JsonProperty("name") final String name,
+                             @JsonProperty("version") final String version,
+                             @JsonProperty("createTime") final Long createTime,
+                             @JsonProperty("updateTime") final Long updateTime,
+                             @JsonProperty("createUser") final String createUser,
+                             @JsonProperty("updateUser") final String updateUser,
+                             @JsonProperty("description") final String description,
+                             @JsonProperty("connection") final ElasticConnectionConfig connection) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.connection = connection;
     }
 
     public String getDescription() {
@@ -61,12 +77,12 @@ public class ElasticClusterDoc extends Doc {
         this.description = description;
     }
 
-    public ElasticConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    public ElasticConnectionConfig getConnection() {
+        return connection;
     }
 
-    public void setConnectionConfig(final ElasticConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
+    public void setConnection(final ElasticConnectionConfig connection) {
+        this.connection = connection;
     }
 
     @JsonIgnore
@@ -88,19 +104,19 @@ public class ElasticClusterDoc extends Doc {
         }
         final ElasticClusterDoc elasticCluster = (ElasticClusterDoc) o;
         return Objects.equals(description, elasticCluster.description) &&
-                Objects.equals(connectionConfig, elasticCluster.connectionConfig);
+                Objects.equals(connection, elasticCluster.connection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, connectionConfig);
+        return Objects.hash(super.hashCode(), description, connection);
     }
 
     @Override
     public String toString() {
         return "ElasticCluster{" +
                 "description='" + description + '\'' +
-                ", connectionConfig=" + connectionConfig +
+                ", connectionConfig=" + connection +
                 '}';
     }
 }

@@ -9776,7 +9776,7 @@
           "apiKeyId" : {
             "type" : "string"
           },
-          "apiKeySecret" : {
+          "apiKeySecretEncrypted" : {
             "type" : "string"
           },
           "caCertificate" : {
@@ -9795,9 +9795,6 @@
           "useAuthentication" : {
             "type" : "boolean"
           }
-        },
-        "xml" : {
-          "name" : "connection"
         }
       },
       "ElasticIndexDoc" : {
