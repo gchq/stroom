@@ -1,7 +1,6 @@
 ext.moduleName = 'elastic.shaded'
 
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'java-library'
 
 shadowJar {
     zip64 true
@@ -27,10 +26,10 @@ shadowJar {
 }
 
 dependencies {
-    implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:7.12.0"
-    implementation "org.elasticsearch.client:elasticsearch-rest-client:7.12.0"
-    implementation "org.elasticsearch:elasticsearch:7.12.0"
-    implementation "org.elasticsearch:elasticsearch-core:7.12.0"
+    compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:7.12.0"
+    compile "org.elasticsearch.client:elasticsearch-rest-client:7.12.0"
+    compile "org.elasticsearch:elasticsearch:7.12.0"
+    compile "org.elasticsearch:elasticsearch-core:7.12.0"
 
     shadow "commons-codec:commons-codec:1.11"
     shadow "commons-logging:commons-logging:1.1.3"

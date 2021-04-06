@@ -1,27 +1,26 @@
 ext.moduleName = 'stroom.search.elastic'
 
-apply plugin: 'java-library'
-
 dependencies {
-    implementation project(':stroom-annotation:stroom-annotation-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-pipeline')
-    implementation project(':stroom-query:stroom-expression')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
-    implementation project(':stroom-search:stroom-search-extraction')
-    implementation project(':stroom-search:stroom-search-api')
-    implementation project(':stroom-util')
+    compile project(':stroom-annotation:stroom-annotation-api')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
+    compile project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
+    compile project(':stroom-search:stroom-search-extraction')
+    compile project(':stroom-search:stroom-search-api')
+    compile project(':stroom-util')
 
-    implementation libs.httpcore
-    implementation libs.http_client
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
-    implementation libs.javax_inject
-    implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    compile libs.httpcore
+    compile libs.http_client
+    compile libs.dropwizard_metrics_annotation
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
+    compile libs.javax_inject
+    compile libs.ws_rs_api
+    compile libs.xml_apis
 
-    testImplementation project(':stroom-test-common')
+    testCompile project(':stroom-test-common')
 }
