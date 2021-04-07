@@ -37,6 +37,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageResponse;
 
 import com.google.common.base.Strings;
 import org.jooq.Condition;
@@ -62,37 +63,43 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static java.util.Map.entry;
+import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
 class AccountDaoImpl implements AccountDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
 
+    /**
+     * Create a derived field that represents the account state.
+     */
+    private static final Field<String> ACCOUNT_STATUS = DSL.field("status", String.class);
+
     private static final Function<Record, Account> RECORD_TO_ACCOUNT_MAPPER = record -> {
         final Account account = new Account();
-        account.setId(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID));
-        account.setVersion(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.VERSION));
-        account.setCreateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS));
-        account.setUpdateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.UPDATE_TIME_MS));
-        account.setCreateUser(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_USER));
-        account.setUpdateUser(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.UPDATE_USER));
-        account.setUserId(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID));
-        account.setEmail(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL));
-        account.setFirstName(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.FIRST_NAME));
-        account.setLastName(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_NAME));
-        account.setComments(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.COMMENTS));
-        account.setLoginCount(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_COUNT));
-        account.setLoginFailures(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES));
-        account.setLastLoginMs(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS));
-        account.setReactivatedMs(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS));
+        account.setId(record.get(ACCOUNT.ID));
+        account.setVersion(record.get(ACCOUNT.VERSION));
+        account.setCreateTimeMs(record.get(ACCOUNT.CREATE_TIME_MS));
+        account.setUpdateTimeMs(record.get(ACCOUNT.UPDATE_TIME_MS));
+        account.setCreateUser(record.get(ACCOUNT.CREATE_USER));
+        account.setUpdateUser(record.get(ACCOUNT.UPDATE_USER));
+        account.setUserId(record.get(ACCOUNT.USER_ID));
+        account.setEmail(record.get(ACCOUNT.EMAIL));
+        account.setFirstName(record.get(ACCOUNT.FIRST_NAME));
+        account.setLastName(record.get(ACCOUNT.LAST_NAME));
+        account.setComments(record.get(ACCOUNT.COMMENTS));
+        account.setLoginCount(record.get(ACCOUNT.LOGIN_COUNT));
+        account.setLoginFailures(record.get(ACCOUNT.LOGIN_FAILURES));
+        account.setLastLoginMs(record.get(ACCOUNT.LAST_LOGIN_MS));
+        account.setReactivatedMs(record.get(ACCOUNT.REACTIVATED_MS));
         account.setForcePasswordChange(
-                record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.FORCE_PASSWORD_CHANGE));
-        account.setNeverExpires(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.NEVER_EXPIRES));
-        account.setEnabled(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ENABLED));
-        account.setInactive(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE));
-        account.setLocked(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOCKED));
+                record.get(ACCOUNT.FORCE_PASSWORD_CHANGE));
+        account.setNeverExpires(record.get(ACCOUNT.NEVER_EXPIRES));
+        account.setEnabled(record.get(ACCOUNT.ENABLED));
+        account.setInactive(record.get(ACCOUNT.INACTIVE));
+        account.setLocked(record.get(ACCOUNT.LOCKED));
         account.setProcessingAccount(
-                record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PROCESSING_ACCOUNT));
+                record.get(ACCOUNT.PROCESSING_ACCOUNT));
         return account;
     };
 
@@ -124,27 +131,28 @@ class AccountDaoImpl implements AccountDao {
             };
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
-            entry("id", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID),
-            entry("version", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.VERSION),
-            entry("createTimeMs", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS),
-            entry("updateTimeMs", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.UPDATE_TIME_MS),
-            entry("createUser", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_USER),
-            entry("updateUser", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.UPDATE_USER),
-            entry("userId", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID),
-            entry("email", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL),
-            entry("firstName", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.FIRST_NAME),
-            entry("lastName", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_NAME),
-            entry("comments", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.COMMENTS),
-            entry("loginCount", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_COUNT),
-            entry("loginFailures", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES),
-            entry("lastLoginMs", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS),
-            entry("reactivatedMs", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS),
-            entry("forcePasswordChange", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.FORCE_PASSWORD_CHANGE),
-            entry("neverExpires", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.NEVER_EXPIRES),
-            entry("enabled", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ENABLED),
-            entry("inactive", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE),
-            entry("locked", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOCKED),
-            entry("processingAccount", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PROCESSING_ACCOUNT));
+            entry("id", ACCOUNT.ID),
+            entry("version", ACCOUNT.VERSION),
+            entry("createTimeMs", ACCOUNT.CREATE_TIME_MS),
+            entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
+            entry("createUser", ACCOUNT.CREATE_USER),
+            entry("updateUser", ACCOUNT.UPDATE_USER),
+            entry("userId", ACCOUNT.USER_ID),
+            entry("email", ACCOUNT.EMAIL),
+            entry("firstName", ACCOUNT.FIRST_NAME),
+            entry("lastName", ACCOUNT.LAST_NAME),
+            entry("comments", ACCOUNT.COMMENTS),
+            entry("loginCount", ACCOUNT.LOGIN_COUNT),
+            entry("loginFailures", ACCOUNT.LOGIN_FAILURES),
+            entry("lastLoginMs", ACCOUNT.LAST_LOGIN_MS),
+            entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
+            entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
+            entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
+            entry("enabled", ACCOUNT.ENABLED),
+            entry("inactive", ACCOUNT.INACTIVE),
+            entry("locked", ACCOUNT.LOCKED),
+            entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
+            entry("status", ACCOUNT_STATUS));
 
     private static final FilterFieldMappers<Account> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(
@@ -176,8 +184,8 @@ class AccountDaoImpl implements AccountDao {
         this.identityDbConnProvider = identityDbConnProvider;
 
         genericDao = new GenericDao<>(
-                stroom.security.identity.db.jooq.tables.Account.ACCOUNT,
-                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID,
+                ACCOUNT,
+                ACCOUNT.ID,
                 Account.class,
                 identityDbConnProvider);
         genericDao.setObjectToRecordMapper(ACCOUNT_TO_RECORD_MAPPER);
@@ -187,10 +195,10 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public AccountResultPage list() {
         final TableField<AccountRecord, String> orderByUserIdField =
-                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID;
+                ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PROCESSING_ACCOUNT.isFalse())
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
                 .orderBy(orderByUserIdField)
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
@@ -205,25 +213,61 @@ class AccountDaoImpl implements AccountDao {
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
-                final List<Account> list = context
-                        .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                        .where(condition)
-                        .orderBy(orderFields)
-                        .offset(JooqUtil.getOffset(request.getPageRequest()))
-                        .limit(JooqUtil.getLimit(request.getPageRequest(), true))
-                        .fetch()
-                        .map(RECORD_TO_ACCOUNT_MAPPER::apply);
-
-                // Finally we need to get the number of tokens so we can calculate the total number of pages
+                // Get the number of tokens so we can calculate the total number of pages
                 final int count = context
                         .selectCount()
-                        .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .from(ACCOUNT)
                         .where(condition)
                         .fetchOptional()
                         .map(Record1::value1)
                         .orElse(0);
 
-                return ResultPageFactory.createCriterialBasedList(list, request, (long) count, AccountResultPage::new);
+                final int limit = JooqUtil.getLimit(request.getPageRequest(), false);
+                final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
+
+                final List<Account> list = context
+                        .select(ACCOUNT.ID,
+                                ACCOUNT.VERSION,
+                                ACCOUNT.CREATE_TIME_MS,
+                                ACCOUNT.CREATE_USER,
+                                ACCOUNT.UPDATE_TIME_MS,
+                                ACCOUNT.UPDATE_USER,
+                                ACCOUNT.USER_ID,
+                                ACCOUNT.EMAIL,
+                                ACCOUNT.PASSWORD_HASH,
+                                ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                                ACCOUNT.FIRST_NAME,
+                                ACCOUNT.LAST_NAME,
+                                ACCOUNT.COMMENTS,
+                                ACCOUNT.LOGIN_COUNT,
+                                ACCOUNT.LOGIN_FAILURES,
+                                ACCOUNT.LAST_LOGIN_MS,
+                                ACCOUNT.REACTIVATED_MS,
+                                ACCOUNT.FORCE_PASSWORD_CHANGE,
+                                ACCOUNT.NEVER_EXPIRES,
+                                ACCOUNT.ENABLED,
+                                ACCOUNT.INACTIVE,
+                                ACCOUNT.LOCKED,
+                                ACCOUNT.PROCESSING_ACCOUNT,
+                                DSL.when(ACCOUNT.LOCKED.eq(true), "Locked")
+                                        .when(ACCOUNT.INACTIVE.eq(true), "Inactive")
+                                        .when(ACCOUNT.ENABLED.eq(true), "Enabled")
+                                        .otherwise("Disabled")
+                                        .as(ACCOUNT_STATUS))
+                        .from(ACCOUNT)
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch()
+                        .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+
+                final PageResponse pageResponse = new PageResponse(
+                        offset,
+                        list.size(),
+                        (long) count,
+                        true);
+                return new AccountResultPage(list, pageResponse);
 
             } else {
                 // Create the predicate for the current filter value
@@ -231,7 +275,7 @@ class AccountDaoImpl implements AccountDao {
                         request.getQuickFilter(), FIELD_MAPPERS);
 
                 try (final Stream<AccountRecord> stream = context
-                        .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .selectFrom(ACCOUNT)
                         .where(condition)
                         .orderBy(orderFields)
                         .stream()) {
@@ -250,9 +294,9 @@ class AccountDaoImpl implements AccountDao {
         final String passwordHash = hashPassword(password);
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}",
-                    stroom.security.identity.db.jooq.tables.Account.ACCOUNT.getName()));
+                    ACCOUNT.getName()));
             final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
-                    account, context.newRecord(stroom.security.identity.db.jooq.tables.Account.ACCOUNT));
+                    account, context.newRecord(ACCOUNT));
             record.setPasswordHash(passwordHash);
             record.store();
             return RECORD_TO_ACCOUNT_MAPPER.apply(record);
@@ -263,13 +307,13 @@ class AccountDaoImpl implements AccountDao {
     public void recordSuccessfulLogin(final String userId) {
         // We reset the failed login count if we have a successful login
         JooqUtil.context(identityDbConnProvider, context -> context
-                .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES, 0)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS, (Long) null)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_COUNT,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_COUNT.plus(1))
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS, System.currentTimeMillis())
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .update(ACCOUNT)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.REACTIVATED_MS, (Long) null)
+                .set(ACCOUNT.LOGIN_COUNT,
+                        ACCOUNT.LOGIN_COUNT.plus(1))
+                .set(ACCOUNT.LAST_LOGIN_MS, System.currentTimeMillis())
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
     }
 
@@ -281,8 +325,8 @@ class AccountDaoImpl implements AccountDao {
         }
 
         Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional());
 
         // Create the admin account if it doesn't exist.
@@ -300,8 +344,8 @@ class AccountDaoImpl implements AccountDao {
             create(account, User.ADMIN_USER_NAME);
 
             optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                    .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                    .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                    .selectFrom(ACCOUNT)
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .fetchOptional());
         }
 
@@ -333,7 +377,7 @@ class AccountDaoImpl implements AccountDao {
 
         if (config.getFailedLoginLockThreshold() != null) {
             JooqUtil.context(identityDbConnProvider, context -> context
-                    .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                    .update(ACCOUNT)
 //                    .set(DSL.row(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
 //                            DSL.row(DSL.select(ACCOUNT.LOGIN_FAILURES.plus(1),
 //                                    DSL.field(ACCOUNT.LOGIN_FAILURES.plus(2)
@@ -345,28 +389,28 @@ class AccountDaoImpl implements AccountDao {
 //                                    .and(ACCOUNT.LOGIN_FAILURES.plus(1).ge(config.getFailedLoginLockThreshold()))
 //                          ))
 
-                    .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES,
-                            stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES.plus(1))
-                    .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOCKED,
-                            DSL.field(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES
+                    .set(ACCOUNT.LOGIN_FAILURES,
+                            ACCOUNT.LOGIN_FAILURES.plus(1))
+                    .set(ACCOUNT.LOCKED,
+                            DSL.field(ACCOUNT.LOGIN_FAILURES
                                     .ge(config.getFailedLoginLockThreshold())))
-                    .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
 
             // Query the field back to find out if we locked.
             locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                    .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOCKED)
-                    .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                    .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                    .select(ACCOUNT.LOCKED)
+                    .from(ACCOUNT)
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(false));
         } else {
             JooqUtil.context(identityDbConnProvider, context -> context
-                    .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                    .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES,
-                            stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LOGIN_FAILURES.plus(1))
-                    .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                    .update(ACCOUNT)
+                    .set(ACCOUNT.LOGIN_FAILURES,
+                            ACCOUNT.LOGIN_FAILURES.plus(1))
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
         }
 
@@ -402,8 +446,8 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Optional<Account> get(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional()
                 .map(RECORD_TO_ACCOUNT_MAPPER));
     }
@@ -411,11 +455,11 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Optional<Integer> getId(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
-                .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .select(ACCOUNT.ID)
+                .from(ACCOUNT)
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional()
-                .map(r -> r.getValue(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)));
+                .map(r -> r.getValue(ACCOUNT.ID)));
     }
 
     @Override
@@ -464,16 +508,38 @@ class AccountDaoImpl implements AccountDao {
         final String newPasswordHash = PasswordHashUtil.hash(newPassword);
 
         final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PASSWORD_HASH, newPasswordHash)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                .update(ACCOUNT)
+                .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
+                .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
                         System.currentTimeMillis())
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.FORCE_PASSWORD_CHANGE, false)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
 
         if (count == 0) {
             throw new NoSuchUserException("Cannot change this password because this user does not exist!");
+        }
+    }
+
+    @Override
+    public void resetPassword(final String userId, final String newPassword) {
+        final String newPasswordHash = PasswordHashUtil.hash(newPassword);
+
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
+                .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                        System.currentTimeMillis())
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.INACTIVE, false)
+                .set(ACCOUNT.ENABLED, true)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .execute());
+
+        if (count == 0) {
+            throw new NoSuchUserException("Cannot reset this password because this user does not exist!");
         }
     }
 
@@ -484,8 +550,8 @@ class AccountDaoImpl implements AccountDao {
         Objects.requireNonNull(userId, "userId must not be null");
 
         final AccountRecord user = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq(userId))
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOne());
 
         if (user == null) {
@@ -523,19 +589,19 @@ class AccountDaoImpl implements AccountDao {
                 .toEpochMilli();
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE, true)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS
+                .update(ACCOUNT)
+                .set(ACCOUNT.INACTIVE, true)
+                .where(ACCOUNT.CREATE_TIME_MS
                         .lessOrEqual(activityThreshold))
                 // We are only going to deactivate active accounts
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE.isFalse())
+                .and(ACCOUNT.INACTIVE.isFalse())
                 // A 'new' user is one who has never logged in.
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS.isNull())
+                .and(ACCOUNT.LAST_LOGIN_MS.isNull())
                 // We don't want to disable all accounts
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.NEVER_EXPIRES.isFalse())
+                .and(ACCOUNT.NEVER_EXPIRES.isFalse())
                 // We don't want to disable accounts that have been recently reactivated.
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS.isNull()
-                        .or(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS
+                .and(ACCOUNT.REACTIVATED_MS.isNull()
+                        .or(ACCOUNT.REACTIVATED_MS
                                 .lessThan(activityThreshold)))
                 .execute());
     }
@@ -547,27 +613,27 @@ class AccountDaoImpl implements AccountDao {
                 .toEpochMilli();
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .update(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .set(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE, true)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.CREATE_TIME_MS
+                .update(ACCOUNT)
+                .set(ACCOUNT.INACTIVE, true)
+                .where(ACCOUNT.CREATE_TIME_MS
                         .lessOrEqual(activityThreshold))
                 // We are only going to deactivate active accounts
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.INACTIVE.isFalse())
+                .and(ACCOUNT.INACTIVE.isFalse())
                 // Choose users that have logged in but not for a while.
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS.isNotNull())
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.LAST_LOGIN_MS
+                .and(ACCOUNT.LAST_LOGIN_MS.isNotNull())
+                .and(ACCOUNT.LAST_LOGIN_MS
                         .lessOrEqual(activityThreshold))
                 // We don't want to disable all accounts
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.NEVER_EXPIRES.isFalse())
+                .and(ACCOUNT.NEVER_EXPIRES.isFalse())
                 // We don't want to disable accounts that have been recently reactivated.
-                .and(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS.isNull()
-                        .or(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.REACTIVATED_MS
+                .and(ACCOUNT.REACTIVATED_MS.isNull()
+                        .or(ACCOUNT.REACTIVATED_MS
                                 .lessThan(activityThreshold)))
                 .execute());
     }
 
     private Condition createCondition(final SearchAccountRequest request) {
-        Condition condition = stroom.security.identity.db.jooq.tables.Account.ACCOUNT.PROCESSING_ACCOUNT.isFalse();
+        Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
 //        if (request.getQuickFilter() != null) {
 //            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
 //        }

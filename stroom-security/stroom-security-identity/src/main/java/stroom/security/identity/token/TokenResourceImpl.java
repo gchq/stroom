@@ -18,6 +18,8 @@
 
 package stroom.security.identity.token;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.TokenConfig;
 
 import com.codahale.metrics.annotation.Timed;
@@ -27,21 +29,20 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 
-// TODO : @66 Add audit logging
+@AutoLogged
 public class TokenResourceImpl implements TokenResource {
 
     private final Provider<TokenService> serviceProvider;
-    private final TokenEventLog tokenEventLog;
 
     @Inject
-    public TokenResourceImpl(final Provider<TokenService> serviceProvider,
-                             final TokenEventLog tokenEventLog) {
+    public TokenResourceImpl(final Provider<TokenService> serviceProvider) {
         this.serviceProvider = serviceProvider;
-        this.tokenEventLog = tokenEventLog;
     }
 
     @Timed
     @Override
+    //todo remove this method
+    @AutoLogged(OperationType.VIEW)
     public TokenResultPage list(final HttpServletRequest httpServletRequest) {
         return null;
     }
@@ -49,130 +50,75 @@ public class TokenResourceImpl implements TokenResource {
     @Timed
     @Override
     public TokenResultPage search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
-        try {
-            final TokenResultPage result = serviceProvider.get().search(request);
-            tokenEventLog.search(request, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.search(request, null, e);
-            throw e;
-        }
+        return serviceProvider.get().search(request);
     }
 
     @Timed
     @Override
     public final Token create(final HttpServletRequest httpServletRequest,
                               final CreateTokenRequest createTokenRequest) {
-        try {
-            final Token token = serviceProvider.get().create(createTokenRequest);
-            tokenEventLog.create(createTokenRequest, token, null);
-            return token;
-        } catch (final RuntimeException e) {
-            tokenEventLog.create(createTokenRequest, null, e);
-            throw e;
-        }
+        return serviceProvider.get().create(createTokenRequest);
     }
 
     @Timed
     @Override
     public final Integer deleteAll(final HttpServletRequest httpServletRequest) {
-        try {
-            final int result = serviceProvider.get().deleteAll();
-            tokenEventLog.deleteAll(result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.deleteAll(0, e);
-            throw e;
-        }
+        return serviceProvider.get().deleteAll();
     }
 
     @Timed
     @Override
     public final Integer delete(final HttpServletRequest httpServletRequest,
                                 final int tokenId) {
-        try {
-            final int result = serviceProvider.get().delete(tokenId);
-            tokenEventLog.delete(tokenId, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.delete(tokenId, 0, e);
-            throw e;
-        }
+        return serviceProvider.get().delete(tokenId);
     }
 
     @Timed
     @Override
     public final Integer deleteByToken(final HttpServletRequest httpServletRequest,
                                        final String data) {
-        try {
-            final int result = serviceProvider.get().delete(data);
-            tokenEventLog.delete(data, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.delete(data, 0, e);
-            throw e;
-        }
+        return serviceProvider.get().delete(data);
     }
 
     @Timed
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
                             final String token) {
-        try {
-            final Token result = serviceProvider.get().read(token).orElseThrow(NotFoundException::new);
-            tokenEventLog.read(token, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.read(token, null, e);
-            throw e;
-        }
+        return serviceProvider.get().read(token).orElseThrow(NotFoundException::new);
     }
 
     @Timed
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
                             final int tokenId) {
-        try {
-            final Token result = serviceProvider.get().read(tokenId).orElseThrow(NotFoundException::new);
-            tokenEventLog.read(tokenId, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.read(tokenId, null, e);
-            throw e;
-        }
+        return serviceProvider.get().read(tokenId).orElseThrow(NotFoundException::new);
     }
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UPDATE)
     public final Integer toggleEnabled(final HttpServletRequest httpServletRequest,
                                        final int tokenId,
                                        final boolean enabled) {
-        try {
-            final Integer result = serviceProvider.get().toggleEnabled(tokenId, enabled);
-            tokenEventLog.toggleEnabled(tokenId, enabled, null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.toggleEnabled(tokenId, enabled, e);
-            throw e;
-        }
+        return serviceProvider.get().toggleEnabled(tokenId, enabled);
     }
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public final String getPublicKey(final HttpServletRequest httpServletRequest) {
-        try {
-            final String result = serviceProvider.get().getPublicKey();
-            tokenEventLog.getPublicKey(null);
-            return result;
-        } catch (final RuntimeException e) {
-            tokenEventLog.getPublicKey(e);
-            throw e;
-        }
+        return serviceProvider.get().getPublicKey();
     }
 
     @Timed
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public TokenConfig fetchTokenConfig() {
         return serviceProvider.get().fetchTokenConfig();
+    }
+
+    @Override
+    public Token fetch(final Integer id) {
+        return read(null, id);
     }
 }

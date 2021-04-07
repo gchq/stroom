@@ -16,15 +16,14 @@
 
 package stroom.pipeline.reader;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestFindReplaceFilter2 {
 
@@ -46,8 +45,8 @@ public class TestFindReplaceFilter2 {
         return false;
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         bmpRepTwice = new char[40];
         for (int i = 0; i < bmpRepTwice.length; i++) {
             bmpRepTwice[i] = (char) i;
@@ -90,11 +89,11 @@ public class TestFindReplaceFilter2 {
         final Reader r = getReader(testData, mode);
         for (int idx = 0; idx != testData.length; ++idx) {
             final int rch = r.read();
-            assertTrue(isValidXmlCP(rch, mode));
-            assertTrue((char) idx == rch || rch == REPLACE_CHAR);
+            assertThat(isValidXmlCP(rch, mode)).isTrue();
+            assertThat((char) idx == rch || rch == REPLACE_CHAR).isTrue();
         }
         final int rch = r.read();
-        assertEquals(-1, rch);
+        assertThat(rch).isEqualTo(-1);
     }
 
     private void readArrayBMP(final char[] testData, final XmlChars mode) throws IOException {
@@ -105,19 +104,23 @@ public class TestFindReplaceFilter2 {
             final int trail_size = testData.length % chunkSize;
             final int num_chunks = testData.length / chunkSize;
             for (int idx = 0; idx <= num_chunks; ++idx) {
-                final int expect_read = (idx == num_chunks) ? trail_size : buf.length;
+                final int expect_read = (idx == num_chunks)
+                        ? trail_size
+                        : buf.length;
                 if (expect_read == 0) {
                     break;
                 }
                 final int rch = r.read(buf, 0, buf.length);
                 // as idx < floor(char_len /chunk_len)
-                assertEquals(rch, expect_read);
+                assertThat(rch).isEqualTo(expect_read);
                 for (int i = 0; i != expect_read; ++i, ++origchar) {
-                    assertEquals(isValidXmlCP(origchar, mode) ? origchar : REPLACE_CHAR, buf[i]);
+                    assertThat(buf[i]).isEqualTo(isValidXmlCP(origchar, mode)
+                            ? origchar
+                            : REPLACE_CHAR);
                 }
             }
             final int reof = r.read();
-            assertEquals(-1, reof);
+            assertThat(reof).isEqualTo(-1);
         }
     }
 
@@ -183,42 +186,42 @@ public class TestFindReplaceFilter2 {
 //    }
 
     @Test
-    public void testReadCharBMP_XML10() throws IOException {
+    void testReadCharBMP_XML10() throws IOException {
         readCharBMP(bmpRepTwice, new Xml10Chars());
     }
 
     @Test
-    public void testReadCharBMP_XML11() throws IOException {
+    void testReadCharBMP_XML11() throws IOException {
         readCharBMP(bmpRepTwice, new Xml11Chars());
     }
 
 //    @Test
-//    public void testReadArrayBMP_XML10() throws IOException {
+//    void testReadArrayBMP_XML10() throws IOException {
 //        readArrayBMP(bmpRepTwice, new Xml10Chars());
 //    }
 //
 //    @Test
-//    public void testReadArrayBMP_XML11() throws IOException {
+//    void testReadArrayBMP_XML11() throws IOException {
 //        readArrayBMP(bmpRepTwice, new Xml11Chars());
 //    }
 
 //    @Test
-//    public void testReadCharFullUTF16_XML10() throws IOException {
+//    void testReadCharFullUTF16_XML10() throws IOException {
 //        readCharFullUTF16(brokenUTF16Str, new Xml10Chars());
 //    }
 //
 //    @Test
-//    public void testReadCharFullUTF16_XML11() throws IOException {
+//    void testReadCharFullUTF16_XML11() throws IOException {
 //        readCharFullUTF16(brokenUTF16Str, new Xml11Chars());
 //    }
 //
 //    @Test
-//    public void testReadArrayFullUTF16_XML10() throws IOException {
+//    void testReadArrayFullUTF16_XML10() throws IOException {
 //        readArrayFullUTF16(brokenUTF16Str, new Xml10Chars());
 //    }
 //
 //    @Test
-//    public void testReadArrayFullUTF16_XML11() throws IOException {
+//    void testReadArrayFullUTF16_XML11() throws IOException {
 //        readArrayFullUTF16(brokenUTF16Str, new Xml11Chars());
 //    }
 }

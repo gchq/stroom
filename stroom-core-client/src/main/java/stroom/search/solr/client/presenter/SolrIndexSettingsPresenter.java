@@ -59,7 +59,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         this.restFactory = restFactory;
 
         view.setUiHandlers(this);
-        view.setRententionExpressionView(editExpressionPresenter.getView());
+        view.setRetentionExpressionView(editExpressionPresenter.getView());
     }
 
     @Override
@@ -166,6 +166,6 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
         void setZkPath(String zkPath);
 
-        void setRententionExpressionView(final View view);
+        void setRetentionExpressionView(final View view);
     }
 }

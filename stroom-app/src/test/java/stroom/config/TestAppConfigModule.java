@@ -17,7 +17,6 @@ import com.google.common.reflect.ClassPath;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -38,6 +37,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAppConfigModule {
 
@@ -87,7 +88,7 @@ class TestAppConfigModule {
         AppConfig appConfig = injector.getInstance(AppConfig.class);
         CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 
-        Assertions.assertThat(commonDbConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
+        assertThat(commonDbConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                 .isEqualTo(newValue);
 
         // Make sure all the getters that return a HasDbConfig have the modified conn value
@@ -104,13 +105,13 @@ class TestAppConfigModule {
                 .forEach(hasDbConfig -> {
                     final DbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
 
-                    Assertions.assertThat(mergedConfig.getConnectionConfig())
+                    assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
 
-                    Assertions.assertThat(mergedConfig.getConnectionPoolConfig())
+                    assertThat(mergedConfig.getConnectionPoolConfig())
                             .isEqualTo(commonDbConfig.getConnectionPoolConfig());
 
-                    Assertions.assertThat(mergedConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
+                    assertThat(mergedConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                             .isEqualTo(newValue);
                 });
     }
@@ -195,12 +196,12 @@ class TestAppConfigModule {
                 prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
                 prop -> {
                     // make sure we have a getter and a setter
-                    Assertions.assertThat(prop.getGetter())
+                    assertThat(prop.getGetter())
                             .as(LogUtil.message("{} {}",
                                     prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
                             .isNotNull();
 
-                    Assertions.assertThat(prop.getSetter())
+                    assertThat(prop.getSetter())
                             .as(LogUtil.message("{} {}",
                                     prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
                             .isNotNull();
@@ -218,23 +219,25 @@ class TestAppConfigModule {
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
         // being public in the config class, else the config class may not be a property in the
         // AppConfig object tree
-        Set<Class<?>> leftOvers = new HashSet<>(appConfigTreeClasses);
-        leftOvers.removeAll(abstractConfigConcreteClasses);
-        Assertions.assertThat(leftOvers.size()).isZero();
+        Set<Class<?>> remaining = new HashSet<>(appConfigTreeClasses);
+        remaining.removeAll(abstractConfigConcreteClasses);
+        assertThat(remaining).isEmpty();
 
-        leftOvers = new HashSet<>(abstractConfigConcreteClasses);
-        leftOvers.removeAll(appConfigTreeClasses);
-        Assertions.assertThat(leftOvers.size()).isZero();
+        remaining = new HashSet<>(abstractConfigConcreteClasses);
+        remaining.removeAll(appConfigTreeClasses);
+        assertThat(remaining).isEmpty();
 
         // Now we know the appConfig tree contains all the concrete AbstractConfig classes
         // check that guice will give us the right instance. This ensures
-        final Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+
+        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
                 .collect(Collectors.toMap(
                         clazz -> clazz,
                         clazz -> {
                             Object object = injector.getInstance(clazz);
                             return System.identityHashCode(object);
                         }));
+
         List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
                 .stream()
                 .filter(entry -> {
@@ -262,9 +265,8 @@ class TestAppConfigModule {
                     });
         }
 
-        Assertions.assertThat(classesWithMultipleInstances).isEmpty();
+        assertThat(classesWithMultipleInstances).isEmpty();
     }
-
 
     static Path getDevYamlPath() throws FileNotFoundException {
         // Load dev.yaml

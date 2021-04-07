@@ -38,6 +38,8 @@ public class SteppingResult {
     private boolean foundRecord;
     @JsonProperty
     private Set<String> generalErrors;
+    @JsonProperty
+    private boolean segmentedData;
 
     public SteppingResult() {
     }
@@ -48,7 +50,9 @@ public class SteppingResult {
                           @JsonProperty("stepData") final SharedStepData stepData,
                           @JsonProperty("currentStreamOffset") final Integer currentStreamOffset,
                           @JsonProperty("foundRecord") final boolean foundRecord,
-                          @JsonProperty("generalErrors") final Set<String> generalErrors) {
+                          @JsonProperty("generalErrors") final Set<String> generalErrors,
+                          @JsonProperty("segmentedData") final boolean segmentedData) {
+
         // Copy the step filter map so it can be remembered across multiple
         // requests.
         this.stepFilterMap = stepFilterMap;
@@ -57,6 +61,7 @@ public class SteppingResult {
         this.currentStreamOffset = currentStreamOffset;
         this.foundRecord = foundRecord;
         this.generalErrors = generalErrors;
+        this.segmentedData = segmentedData;
     }
 
     public StepLocation getStepLocation() {
@@ -105,5 +110,9 @@ public class SteppingResult {
 
     public void setGeneralErrors(final Set<String> generalErrors) {
         this.generalErrors = generalErrors;
+    }
+
+    public boolean isSegmentedData() {
+        return segmentedData;
     }
 }

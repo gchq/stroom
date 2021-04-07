@@ -1,9 +1,6 @@
 package stroom.db.util;
 
-import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.db.util.CommonExpressionMapper.TermHandler;
-import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionItem;
 
 import org.jooq.Condition;
@@ -16,60 +13,49 @@ import java.util.function.Function;
 public class ExpressionMapper implements Function<ExpressionItem, Condition> {
 
     private final CommonExpressionMapper expressionMapper;
-    private final WordListProvider wordListProvider;
-    private final CollectionService collectionService;
+    private final TermHandlerFactory termHandlerFactory;
 
-    ExpressionMapper(final WordListProvider wordListProvider,
-                     final CollectionService collectionService,
+    ExpressionMapper(final TermHandlerFactory termHandlerFactory,
                      final Function<ExpressionItem, Condition> delegateItemHandler) {
         expressionMapper = new CommonExpressionMapper(delegateItemHandler);
-        this.wordListProvider = wordListProvider;
-        this.collectionService = collectionService;
+        this.termHandlerFactory = termHandlerFactory;
     }
 
     public <T> void map(final AbstractField dataSourceField,
                         final Field<T> field, final Converter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
-                new ConverterAdapter<>(converter),
-                wordListProvider,
-                collectionService));
+                new ConverterAdapter<>(converter)));
     }
 
     public <T> void map(final AbstractField dataSourceField,
                         final Field<T> field,
                         final Converter<T> converter, final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 new ConverterAdapter<>(converter),
-                wordListProvider,
-                collectionService,
                 useName));
     }
 
     public <T> void multiMap(final AbstractField dataSourceField,
                              final Field<T> field,
                              final MultiConverter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
-                converter,
-                wordListProvider,
-                collectionService));
+                converter));
     }
 
     public <T> void multiMap(final AbstractField dataSourceField,
                              final Field<T> field,
                              final MultiConverter<T> converter,
                              final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 converter,
-                wordListProvider,
-                collectionService,
                 useName));
     }
 

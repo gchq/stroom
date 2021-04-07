@@ -85,8 +85,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final Object TASK_CREATION_MONITOR = new Object();
 
-    private static final int RECENT_STREAM_ID_LIMIT = 10000;
-
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
             new RecordToProcessorFilterMapper();
@@ -127,7 +125,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final NodeInfo nodeInfo;
     private final ProcessorNodeCache processorNodeCache;
     private final ProcessorFeedCache processorFeedCache;
-    private final ClusterLockService clusterLockService;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorConfig processorConfig;
     private final ProcessorDbConnProvider processorDbConnProvider;
@@ -142,7 +139,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
                          final ProcessorNodeCache processorNodeCache,
                          final ProcessorFeedCache processorFeedCache,
-                         final ClusterLockService clusterLockService,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorConfig processorConfig,
                          final ProcessorDbConnProvider processorDbConnProvider,
@@ -152,7 +148,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.nodeInfo = nodeInfo;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
-        this.clusterLockService = clusterLockService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorConfig = processorConfig;
         this.processorDbConnProvider = processorDbConnProvider;
@@ -185,7 +180,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
-        expressionMapper.map(ProcessorTaskFields.FEED_NAME, PROCESSOR_FEED.NAME, value -> value, true);
         expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
@@ -200,7 +194,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
-        valueMapper.map(ProcessorTaskFields.FEED_NAME, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
@@ -995,10 +988,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.NODE_NAME);
         final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED) +
-                ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED_NAME);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED)) ||
-                fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED_NAME));
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED);
+        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED));
         final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
         final boolean pipelineValueExists = fieldList.stream()
                 .anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
@@ -1014,7 +1005,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             int numberOfRows = 1000000;
 
             if (pageRequest != null) {
-                offset = pageRequest.getOffset().intValue();
+                offset = pageRequest.getOffset();
                 numberOfRows = pageRequest.getLength();
             }
 

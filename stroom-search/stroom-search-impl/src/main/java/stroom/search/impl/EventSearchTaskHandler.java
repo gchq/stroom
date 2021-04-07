@@ -64,7 +64,7 @@ public class EventSearchTaskHandler {
             final Query query = task.getQuery();
 
             // Replace expression parameters.
-            ExpressionUtil.replaceExpressionParameters(query);
+            final Query modifiedQuery = ExpressionUtil.replaceExpressionParameters(query);
 
             final int coprocessorId = 0;
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(
@@ -80,7 +80,7 @@ public class EventSearchTaskHandler {
             final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
                     task.getKey(),
                     searchName,
-                    query,
+                    modifiedQuery,
                     Collections.singletonList(settings),
                     null,
                     nowEpochMilli);
@@ -88,7 +88,7 @@ public class EventSearchTaskHandler {
             final Coprocessors coprocessors = coprocessorsFactory.create(
                     task.getKey().getUuid(),
                     Collections.singletonList(settings),
-                    query.getParams());
+                    modifiedQuery.getParams());
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create a collector to store search results.

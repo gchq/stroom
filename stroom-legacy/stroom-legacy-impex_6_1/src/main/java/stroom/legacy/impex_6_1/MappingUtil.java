@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 @Deprecated
 public final class MappingUtil {
+
     private MappingUtil() {
     }
 
@@ -125,14 +126,20 @@ public final class MappingUtil {
         if (value == null) {
             return null;
         }
-        return new stroom.dashboard.shared.DashboardConfig(value.getParameters(), mapList(value.getComponents(), MappingUtil::map), map(value.getLayout()), map(value.getTabVisibility()));
+        return new stroom.dashboard.shared.DashboardConfig(value.getParameters(),
+                mapList(value.getComponents(), MappingUtil::map),
+                map(value.getLayout()),
+                map(value.getTabVisibility()));
     }
 
     public static stroom.dashboard.shared.ComponentConfig map(stroom.legacy.model_6_1.ComponentConfig value) {
         if (value == null) {
             return null;
         }
-        return new stroom.dashboard.shared.ComponentConfig(value.getType(), value.getId(), value.getName(), map(value.getSettings()));
+        return new stroom.dashboard.shared.ComponentConfig(value.getType(),
+                value.getId(),
+                value.getName(),
+                map(value.getSettings()));
     }
 
     public static stroom.dashboard.shared.ComponentSettings map(stroom.legacy.model_6_1.ComponentSettings value) {
@@ -158,7 +165,9 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.dashboard.shared.QueryComponentSettings(map(value.getDataSource()), map(value.getExpression()), map(value.getAutomate()));
+        return new stroom.dashboard.shared.QueryComponentSettings(map(value.getDataSource()),
+                map(value.getExpression()),
+                map(value.getAutomate()));
     }
 
     public static stroom.dashboard.shared.TableComponentSettings map(stroom.legacy.model_6_1.TableComponentSettings value) {
@@ -349,12 +358,14 @@ public final class MappingUtil {
         if (stroom.legacy.model_6_1.Format.Type.NUMBER.equals(value.getType())) {
             if (value.getNumberFormat() != null) {
                 final stroom.legacy.model_6_1.NumberFormat numberFormat = value.getNumberFormat();
-                formatSettings = new stroom.query.api.v2.NumberFormatSettings(numberFormat.getDecimalPlaces(), numberFormat.getUseSeparator());
+                formatSettings = new stroom.query.api.v2.NumberFormatSettings(numberFormat.getDecimalPlaces(),
+                        numberFormat.getUseSeparator());
             }
         } else if (stroom.legacy.model_6_1.Format.Type.DATE_TIME.equals(value.getType())) {
             if (value.getDateTimeFormat() != null) {
                 final stroom.legacy.model_6_1.DateTimeFormat dateTimeFormat = value.getDateTimeFormat();
-                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(dateTimeFormat.getPattern(), map(dateTimeFormat.getTimeZone()));
+                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(dateTimeFormat.getPattern(),
+                        map(dateTimeFormat.getTimeZone()));
             }
         }
 
@@ -374,7 +385,10 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.TimeZone(map(value.getUse()), value.getId(), value.getOffsetHours(), value.getOffsetMinutes());
+        return new stroom.query.api.v2.TimeZone(map(value.getUse()),
+                value.getId(),
+                value.getOffsetHours(),
+                value.getOffsetMinutes());
     }
 
     public static stroom.query.api.v2.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
@@ -435,7 +449,9 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.Query(map(value.getDataSource()), map(value.getExpression()), mapList(value.getParams(), MappingUtil::map));
+        return new stroom.query.api.v2.Query(map(value.getDataSource()),
+                map(value.getExpression()),
+                mapList(value.getParams(), MappingUtil::map));
     }
 
     public static stroom.query.api.v2.Param map(stroom.legacy.model_6_1.Param value) {
@@ -671,5 +687,29 @@ public final class MappingUtil {
                 value.getStreamCount(),
                 value.getEventCount(),
                 value.getDurationMs());
+    }
+
+    public static stroom.data.retention.shared.DataRetentionRule map(stroom.legacy.model_6_1.DataRetentionRule value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new stroom.data.retention.shared.DataRetentionRule(
+                value.getRuleNumber(),
+                value.getCreationTime(),
+                value.getName(),
+                value.isEnabled(),
+                map(value.getExpression()),
+                value.getAge(),
+                map(value.getTimeUnit()),
+                value.isForever());
+    }
+
+    public static stroom.data.retention.shared.TimeUnit map(stroom.legacy.model_6_1.TimeUnit value) {
+        if (value == null) {
+            return null;
+        }
+
+        return stroom.data.retention.shared.TimeUnit.valueOf(value.name());
     }
 }

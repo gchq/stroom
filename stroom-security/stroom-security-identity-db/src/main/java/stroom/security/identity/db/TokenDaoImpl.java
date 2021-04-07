@@ -35,6 +35,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageResponse;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -169,6 +170,24 @@ class TokenDaoImpl implements TokenDao {
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
+                // Get the number of tokens so we can calculate the total number of pages
+                final int count = context
+                        .selectCount()
+                        .from(stroom.security.identity.db.jooq.tables.Token.TOKEN
+                                .join(TOKEN_TYPE)
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                        .eq(TOKEN_TYPE.ID))
+                                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
+                        .where(condition)
+                        .fetchOptional()
+                        .map(Record1::value1)
+                        .orElse(0);
+
+                final int limit = JooqUtil.getLimit(request.getPageRequest(), false);
+                final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
+
                 final List<Token> list = context
                         .select(
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
@@ -192,27 +211,18 @@ class TokenDaoImpl implements TokenDao {
                                         .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
                         .where(condition)
                         .orderBy(orderFields)
-                        .offset(JooqUtil.getOffset(request.getPageRequest()))
-                        .limit(JooqUtil.getLimit(request.getPageRequest(), true))
+                        .offset(offset)
+                        .limit(limit)
                         .fetch()
                         .map(RECORD_TO_TOKEN_MAPPER::apply);
 
-                // Finally we need to get the number of tokens so we can calculate the total number of pages
-                final int count = context
-                        .selectCount()
-                        .from(stroom.security.identity.db.jooq.tables.Token.TOKEN
-                                .join(TOKEN_TYPE)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                                        .eq(TOKEN_TYPE.ID))
-                                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
-                                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
-                        .where(condition)
-                        .fetchOptional()
-                        .map(Record1::value1)
-                        .orElse(0);
 
-                return ResultPageFactory.createCriterialBasedList(list, request, (long) count, TokenResultPage::new);
+                final PageResponse pageResponse = new PageResponse(
+                        offset,
+                        list.size(),
+                        (long) count,
+                        true);
+                return new TokenResultPage(list, pageResponse);
 
             } else {
                 // Create the predicate for the current filter value
@@ -271,6 +281,7 @@ class TokenDaoImpl implements TokenDao {
             final Token newToken = RECORD_TO_TOKEN_MAPPER.apply(record);
             newToken.setUserEmail(token.getUserEmail());
             newToken.setTokenType(token.getTokenType());
+            newToken.setUserId(token.getUserId());
             return newToken;
         });
     }

@@ -25,6 +25,7 @@ import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -68,7 +69,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private final MetaDao metaDao;
     private final MetaFeedDao metaFeedDao;
-    private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final MetaServiceConfig metaServiceConfig;
@@ -86,7 +86,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
                     final MetaFeedDao metaFeedDao,
-                    final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final MetaServiceConfig metaServiceConfig,
@@ -99,7 +98,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final TaskManager taskManager) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
-        this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
         this.metaServiceConfig = metaServiceConfig;
@@ -133,7 +131,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 1));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
         final List<Meta> list = find(findMetaCriteria).getValues();
         if (list == null || list.size() == 0) {
             return null;
@@ -291,7 +289,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //        int numberOfRows = 1000000;
 //
 //        if (pageRequest != null) {
-//            offset = pageRequest.getOffset().intValue();
+//            offset = pageRequest.getOffset();
 //            numberOfRows = pageRequest.getLength();
 //        }
 //
@@ -327,7 +325,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             if (pageRequest != null && pageRequest.getOffset() != null) {
                 // Move by an offset?
                 if (pageRequest.getOffset() > 0) {
-                    results = results.subList(pageRequest.getOffset().intValue(), results.size());
+                    results = results.subList(pageRequest.getOffset(), results.size());
                 }
             }
             if (pageRequest != null && pageRequest.getLength() != null) {
@@ -419,7 +417,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-            findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
+            findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
             set.addAll(secureFind(findMetaCriteria).getValues());
         }
 
@@ -431,8 +429,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 .addTerm(MetaFields.EFFECTIVE_TIME,
                         ExpressionTerm.Condition.LESS_THAN,
                         DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
-                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFields.FEED, Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
@@ -440,7 +438,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
         set.addAll(secureFind(findMetaCriteria).getValues());
 
         return set;
@@ -451,8 +449,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 .addTerm(MetaFields.EFFECTIVE_TIME,
                         ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaFields.FEED, Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 

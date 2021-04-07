@@ -1,0 +1,82 @@
+ext.moduleName = 'elastic.shaded'
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java-library'
+// Shadowing Test Sources and Dependencies
+//import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+//
+//configurations {
+//    shadedJars {
+//        canBeConsumed = true
+//        canBeResolved = true
+////        // If you want this configuration to share the same dependencies, otherwise omit this line
+////        extendsFrom implementation, runtimeOnly
+//    }
+//}
+
+
+dependencies {
+//    shadedJars "org.elasticsearch.client:elasticsearch-rest-high-level-client:7.12.0"
+//    shadedJars "org.elasticsearch.client:elasticsearch-rest-client:7.12.0"
+//    shadedJars "org.elasticsearch:elasticsearch:7.12.0"
+//    shadedJars "org.elasticsearch:elasticsearch-core:7.12.0"
+
+    implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:7.12.0"
+    implementation "org.elasticsearch.client:elasticsearch-rest-client:7.12.0"
+    implementation "org.elasticsearch:elasticsearch:7.12.0"
+    implementation "org.elasticsearch:elasticsearch-core:7.12.0"
+
+//    shadow "commons-codec:commons-codec:1.11"
+//    shadow "commons-logging:commons-logging:1.1.3"
+//    shadow "org.apache.httpcomponents:httpclient:4.5.10"
+//    shadow "org.apache.httpcomponents:httpcore:4.4.12"
+//    shadow "org.apache.httpcomponents:httpasyncclient:4.1.4"
+//    shadow "org.apache.httpcomponents:httpcore-nio:4.4.12"
+}
+
+
+
+//task shadedJar(type: ShadowJar) {
+//    archiveClassifier = 'shaded'
+////    from sourceSets.main.output
+//    configurations = [project.configurations.shadedJars]
+//    zip64 true
+//    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+//    mergeServiceFiles()
+//}
+//
+//artifacts {
+//    shadedJars(shadedJar.archiveFile) {
+//        builtBy(shadedJar)
+//    }
+////
+////    shadedJars(shadedJar)
+//}
+
+
+shadowJar {
+    zip64 true
+
+    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+
+    mergeServiceFiles()
+
+//    dependencies {
+//        exclude(dependency("commons-codec:commons-codec"))
+//        exclude(dependency("commons-logging:commons-logging"))
+//        exclude(dependency("org.apache.httpcomponents:httpclient"))
+//        exclude(dependency("org.apache.httpcomponents:httpcore"))
+//        exclude(dependency("org.apache.httpcomponents:httpasyncclient"))
+//        exclude(dependency("org.apache.httpcomponents:httpcore-nio"))
+//    }
+//
+//    archiveClassifier.set('')
+//
+//    artifacts {
+//        shadow(tasks.shadowJar.archiveFile) {
+//            builtBy shadowJar
+//        }
+//    }
+}
+
+//tasks.build.dependsOn shadowJar

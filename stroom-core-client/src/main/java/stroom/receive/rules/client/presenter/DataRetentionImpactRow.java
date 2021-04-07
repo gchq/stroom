@@ -24,14 +24,14 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_RULE_NO = "Rule No.";
     public static final String FIELD_NAME_RULE_NAME = "Rule Name";
     public static final String FIELD_NAME_RULE_AGE = "Rule Age";
-    public static final String FIELD_NAME_FEED_NAME = "Feed Name";
-    public static final String FIELD_NAME_META_TYPE = "Stream Type";
+    public static final String FIELD_NAME_FEED = "Feed";
+    public static final String FIELD_NAME_TYPE = "Type";
     public static final String FIELD_NAME_DELETE_COUNT = "Stream Delete Count";
 
-    public static final Comparator<DataRetentionImpactRow> FEED_NAME_COMPARATOR = Comparator.comparing(
-            DataRetentionImpactRow::getFeedName);
-    public static final Comparator<DataRetentionImpactRow> META_TYPE_COMPARATOR = Comparator.comparing(
-            DataRetentionImpactRow::getMetaType);
+    public static final Comparator<DataRetentionImpactRow> FEED_COMPARATOR = Comparator.comparing(
+            DataRetentionImpactRow::getFeed);
+    public static final Comparator<DataRetentionImpactRow> TYPE_COMPARATOR = Comparator.comparing(
+            DataRetentionImpactRow::getType);
     public static final Comparator<DataRetentionImpactRow> COUNT_COMPARATOR = Comparator.comparingInt(
             DataRetentionImpactRow::getCount);
     public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = Comparator.comparingInt(
@@ -49,8 +49,8 @@ public class DataRetentionImpactRow {
         FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_NO, RULE_NO_COMPARATOR);
         FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_NAME, RULE_NAME_COMPARATOR);
         FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_AGE, RULE_AGE_COMPARATOR);
-        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_FEED_NAME, FEED_NAME_COMPARATOR);
-        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_META_TYPE, META_TYPE_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_FEED, FEED_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_TYPE, TYPE_COMPARATOR);
         FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_DELETE_COUNT, COUNT_COMPARATOR);
     }
 
@@ -68,8 +68,8 @@ public class DataRetentionImpactRow {
     private final String ruleAgeStr;
     private final int ruleAge;
     private final TimeUnit timeUnit;
-    private final String feedName;
-    private final String metaType;
+    private final String feed;
+    private final String type;
     private final int count;
     private Expander expander;
 
@@ -79,8 +79,8 @@ public class DataRetentionImpactRow {
                                   final String ruleAgeStr,
                                   final int ruleAge,
                                   final TimeUnit timeUnit,
-                                  final String feedName,
-                                  final String metaType,
+                                  final String feed,
+                                  final String type,
                                   final int count) {
         this.rowKey = rowKey;
         this.ruleNumber = ruleNumber;
@@ -88,8 +88,8 @@ public class DataRetentionImpactRow {
         this.ruleAgeStr = ruleAgeStr;
         this.ruleAge = ruleAge;
         this.timeUnit = timeUnit;
-        this.feedName = feedName;
-        this.metaType = metaType;
+        this.feed = feed;
+        this.type = type;
         this.count = count;
         this.expander = null;
     }
@@ -101,7 +101,7 @@ public class DataRetentionImpactRow {
     }
 
     private static String buildRowKey(final DataRetentionDeleteSummary summary) {
-        return buildRowKey(summary.getRuleNumber(), summary.getMetaType(), summary.getFeedName());
+        return buildRowKey(summary.getRuleNumber(), summary.getType(), summary.getFeed());
     }
 
     public Integer getRuleNumber() {
@@ -116,12 +116,12 @@ public class DataRetentionImpactRow {
         return ruleAgeStr;
     }
 
-    public String getFeedName() {
-        return feedName;
+    public String getFeed() {
+        return feed;
     }
 
-    public String getMetaType() {
-        return metaType;
+    public String getType() {
+        return type;
     }
 
     public int getCount() {
@@ -195,7 +195,7 @@ public class DataRetentionImpactRow {
                     final DataRetentionRule rule = ruleNoToRuleMap.get(summary.getRuleNumber());
                     final int ruleNumber = summary.getRuleNumber();
 
-                    final String rowKey = buildRowKey(ruleNumber, summary.getMetaType(), summary.getFeedName());
+                    final String rowKey = buildRowKey(ruleNumber, summary.getType(), summary.getFeed());
 
                     return new DataRetentionImpactRow(
                             rowKey,
@@ -204,8 +204,8 @@ public class DataRetentionImpactRow {
                             rule.getAgeString(),
                             rule.getAge(),
                             rule.getTimeUnit(),
-                            summary.getFeedName(),
-                            summary.getMetaType(),
+                            summary.getFeed(),
+                            summary.getType(),
                             summary.getCount());
                 })
                 .sorted(buildComparator(criteria))
@@ -252,7 +252,7 @@ public class DataRetentionImpactRow {
                         final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType =
                                 summariesForRule.stream()
                                         .collect(Collectors.groupingBy(
-                                                DataRetentionDeleteSummary::getMetaType,
+                                                DataRetentionDeleteSummary::getType,
                                                 Collectors.toSet()));
 
                         summariesByRuleAndType.keySet().stream()
@@ -264,22 +264,22 @@ public class DataRetentionImpactRow {
                                                 treeAction))
                                 .sorted(getComparator(
                                         criteria,
-                                        META_TYPE_COMPARATOR,
-                                        FIELD_NAME_META_TYPE,
+                                        TYPE_COMPARATOR,
+                                        FIELD_NAME_TYPE,
                                         FIELD_NAME_DELETE_COUNT))
                                 .forEach(metaTypeRow -> {
                                     rows.add(metaTypeRow);
 
                                     final Set<DataRetentionDeleteSummary> summariesForRuleAndType =
-                                            summariesByRuleAndType.get(metaTypeRow.getMetaType());
+                                            summariesByRuleAndType.get(metaTypeRow.getType());
 
                                     if (isExpanded(treeAction, metaTypeRow, 1)
                                             && summariesForRuleAndType != null) {
 
                                         Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
                                                 criteria,
-                                                FEED_NAME_COMPARATOR,
-                                                FIELD_NAME_FEED_NAME,
+                                                FEED_COMPARATOR,
+                                                FIELD_NAME_FEED,
                                                 FIELD_NAME_DELETE_COUNT);
 
                                         rows.addAll(summariesForRuleAndType.stream()
@@ -410,7 +410,7 @@ public class DataRetentionImpactRow {
                 null,
                 0,
                 null,
-                summary.getFeedName(),
+                summary.getFeed(),
                 null,
                 summary.getCount());
 
@@ -469,13 +469,13 @@ public class DataRetentionImpactRow {
                 Objects.equals(ruleNumber, that.ruleNumber) &&
                 Objects.equals(ruleName, that.ruleName) &&
                 Objects.equals(ruleAgeStr, that.ruleAgeStr) &&
-                Objects.equals(feedName, that.feedName) &&
-                Objects.equals(metaType, that.metaType);
+                Objects.equals(feed, that.feed) &&
+                Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rowKey, ruleNumber, ruleName, ruleAgeStr, feedName, metaType, count);
+        return Objects.hash(rowKey, ruleNumber, ruleName, ruleAgeStr, feed, type, count);
     }
 
     @Override
@@ -485,8 +485,8 @@ public class DataRetentionImpactRow {
                 ", ruleNumber=" + ruleNumber +
                 ", ruleName='" + ruleName + '\'' +
                 ", ruleAge='" + ruleAgeStr + '\'' +
-                ", feedName='" + feedName + '\'' +
-                ", metaType='" + metaType + '\'' +
+                ", feedName='" + feed + '\'' +
+                ", metaType='" + type + '\'' +
                 ", count=" + count +
                 ", expander=" + expander +
                 '}';

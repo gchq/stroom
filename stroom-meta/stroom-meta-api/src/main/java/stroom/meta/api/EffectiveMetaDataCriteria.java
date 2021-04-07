@@ -18,20 +18,11 @@ package stroom.meta.api;
 
 import stroom.util.Period;
 
-import java.io.Serializable;
-
 /**
- * <p>
  * Class used as the search criteria for effective type searches.
- * </p>
- * <p>
- * <p>
  * These are from date range based searches.
- * </p>
  */
-public class EffectiveMetaDataCriteria implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class EffectiveMetaDataCriteria {
 
     private Period effectivePeriod;
     private String feed;

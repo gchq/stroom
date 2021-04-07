@@ -16,42 +16,61 @@
 
 package stroom.util.cert;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.security.cert.X509Certificate;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 public class CertificateUtil {
 
     /**
      * API into the request for the certificate details.
      */
-    public static final String SERVLET_CERT_ARG = "javax.servlet.request.X509Certificate";
-    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
+    private static final String X_SSL_CERT = "X-SSL-CERT";
+    private static final String SERVLET_CERT_ARG = "javax.servlet.request.X509Certificate";
+    private static final String X_SSL_CLIENT_S_DN = "X-SSL-CLIENT-S-DN";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateUtil.class);
 
-    /**
-     * Do all the below in 1 go !
-     */
-    public static String extractCertificateDN(final ServletRequest request) {
-        return extractDNFromCertificate(extractCertificate(request));
+    public static Optional<String> getCN(final HttpServletRequest request) {
+        return getDN(request).map(CertificateUtil::extractCNFromDN);
+    }
+
+    public static Optional<String> getDN(final HttpServletRequest request) {
+        // First see if we have a cert we can use.
+        final Optional<X509Certificate> cert = extractCertificate(request);
+        if (cert.isPresent()) {
+            LOGGER.debug(() -> "Found certificate");
+            return extractDNFromCertificate(cert.get());
+        }
+
+        final String clientDn = request.getHeader(X_SSL_CLIENT_S_DN);
+        LOGGER.debug(() -> X_SSL_CLIENT_S_DN + " = " + clientDn);
+        return Optional.ofNullable(clientDn);
     }
 
     /**
      * Pull out the Subject from the certificate. E.g.
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      */
-    public static java.security.cert.X509Certificate extractCertificate(final ServletRequest request) {
-        final Object[] certs = (Object[]) request.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
+    public static Optional<X509Certificate> extractCertificate(final ServletRequest request) {
+        return extractCertificate(request, CertificateUtil.X_SSL_CERT)
+                .or(() -> extractCertificate(request, SERVLET_CERT_ARG));
+    }
 
-        return CertificateUtil.extractCertificate(certs);
+    private static Optional<X509Certificate> extractCertificate(final ServletRequest request,
+                                                                final String attribute) {
+        final Object[] certs = (Object[]) request.getAttribute(attribute);
+        if (certs != null) {
+            LOGGER.debug(() -> "Found certificate using " + attribute + " header");
+            return extractCertificate(certs);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -60,16 +79,13 @@ public class CertificateUtil {
      *
      * @param certs ARGS from the SERVLET request.
      */
-    public static java.security.cert.X509Certificate extractCertificate(final Object[] certs) {
-        if (certs != null) {
-            for (final Object certO : certs) {
-                if (certO instanceof java.security.cert.X509Certificate) {
-                    final java.security.cert.X509Certificate jCert = (java.security.cert.X509Certificate) certO;
-                    return jCert;
-                }
+    private static Optional<X509Certificate> extractCertificate(final Object[] certs) {
+        for (final Object cert : certs) {
+            if (cert instanceof X509Certificate) {
+                return Optional.of((X509Certificate) cert);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -78,26 +94,8 @@ public class CertificateUtil {
      *
      * @return null or the CN name
      */
-    public static String extractDNFromCertificate(final X509Certificate cert) {
-        if (cert == null) {
-            return null;
-        }
-        return cert.getSubjectDN().getName();
-    }
-
-    /**
-     * Given a cert pull out the expiry date.
-     *
-     * @return null or the CN name
-     */
-    public static Long extractExpiryDateFromCertificate(final X509Certificate cert) {
-        if (cert != null) {
-            final Date date = cert.getNotAfter();
-            if (date != null) {
-                return date.getTime();
-            }
-        }
-        return null;
+    private static Optional<String> extractDNFromCertificate(final X509Certificate cert) {
+        return Optional.ofNullable(cert.getSubjectDN().getName());
     }
 
     /**
@@ -107,7 +105,9 @@ public class CertificateUtil {
      *
      * @return null or the CN name
      */
-    public static String extractCNFromDN(final String dn) {
+    static String extractCNFromDN(final String dn) {
+        LOGGER.debug(() -> "extractCNFromDN DN = " + dn);
+
         if (dn == null) {
             return null;
         }
@@ -122,72 +122,75 @@ public class CertificateUtil {
                 }
             }
         }
-        return map.get("CN");
-    }
+        final String cn = map.get("CN");
+        LOGGER.debug(() -> "extractCNFromDN CN = " + cn);
 
-    /**
-     * User ID's are embedded in brackets at the end.
-     */
-    public static String extractUserIdFromCN(final String cn) {
-        if (cn == null) {
-            return null;
-        }
-        final int startPos = cn.indexOf('(');
-        final int endPos = cn.indexOf(')');
-
-        if (startPos != -1 && endPos != -1 && startPos < endPos) {
-            return cn.substring(startPos + 1, endPos);
-        }
         return cn;
-
     }
 
-    /**
-     * User ID's are embedded in brackets at the end.
-     */
-    public static String extractUserIdFromDN(final String dn, final Pattern pattern) {
-        final String normalisedDN = dnToRfc2253(dn);
-        final Matcher matcher = pattern.matcher(normalisedDN);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        return null;
-    }
-
-    /**
-     * Normalise an RFC 2253 Distinguished Name so that it is consistent. Note
-     * that the values in the fields should not be normalised - they are
-     * case-sensitive.
-     *
-     * @param dn Distinguished Name to normalise. Must be RFC 2253-compliant
-     * @return The DN in RFC 2253 format, with a consistent case for the field
-     * names and separation
-     */
-    public static String dnToRfc2253(final String dn) {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Normalising DN: " + dn);
-        }
-
-        if (dn == null) {
-            return null;
-        }
-
-        if (dn.equalsIgnoreCase("anonymous")) {
-            LOGGER.trace("Anonymous is a special case - returning as-is");
-            return dn;
-        }
-
-        try {
-            final X500Principal x500 = new X500Principal(dn);
-            final String normalised = x500.getName();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Normalised DN: " + normalised);
-            }
-            return normalised;
-        } catch (final IllegalArgumentException e) {
-            LOGGER.error("Provided value is not a valid Distinguished Name; it will be returned as-is: " + dn, e);
-            return dn;
-        }
-    }
+//    /**
+//     * User ID's are embedded in brackets at the end.
+//     */
+//    private static String extractUserIdFromCN(final String cn) {
+//        if (cn == null) {
+//            return null;
+//        }
+//        final int startPos = cn.indexOf('(');
+//        final int endPos = cn.indexOf(')');
+//
+//        if (startPos != -1 && endPos != -1 && startPos < endPos) {
+//            return cn.substring(startPos + 1, endPos);
+//        }
+//        return cn;
+//
+//    }
+//
+//    /**
+//     * User ID's are embedded in brackets at the end.
+//     */
+//    private static String extractUserIdFromDN(final String dn, final Pattern pattern) {
+//        final String normalisedDN = dnToRfc2253(dn);
+//        final Matcher matcher = pattern.matcher(normalisedDN);
+//        if (matcher.find()) {
+//            return matcher.group(1);
+//        }
+//
+//        return null;
+//    }
+//
+//    /**
+//     * Normalise an RFC 2253 Distinguished Name so that it is consistent. Note
+//     * that the values in the fields should not be normalised - they are
+//     * case-sensitive.
+//     *
+//     * @param dn Distinguished Name to normalise. Must be RFC 2253-compliant
+//     * @return The DN in RFC 2253 format, with a consistent case for the field
+//     * names and separation
+//     */
+//    private static String dnToRfc2253(final String dn) {
+//        if (LOGGER.isTraceEnabled()) {
+//            LOGGER.trace("Normalising DN: " + dn);
+//        }
+//
+//        if (dn == null) {
+//            return null;
+//        }
+//
+//        if (dn.equalsIgnoreCase("anonymous")) {
+//            LOGGER.trace("Anonymous is a special case - returning as-is");
+//            return dn;
+//        }
+//
+//        try {
+//            final X500Principal x500 = new X500Principal(dn);
+//            final String normalised = x500.getName();
+//            if (LOGGER.isTraceEnabled()) {
+//                LOGGER.trace("Normalised DN: " + normalised);
+//            }
+//            return normalised;
+//        } catch (final IllegalArgumentException e) {
+//            LOGGER.error("Provided value is not a valid Distinguished Name; it will be returned as-is: " + dn, e);
+//            return dn;
+//        }
+//    }
 }

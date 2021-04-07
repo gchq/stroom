@@ -27,6 +27,7 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -327,7 +328,22 @@ public final class ExpressionOperator extends ExpressionItem {
 
         public Builder addTerm(final DocRefField field,
                                final ExpressionTerm.Condition condition,
+                               final String value) {
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(value)
+                    .build());
+        }
+
+        public Builder addTerm(final DocRefField field,
+                               final ExpressionTerm.Condition condition,
                                final DocRef docRef) {
+            if (!Condition.IS_DOC_REF.equals(condition) &&
+                    !Condition.IN_FOLDER.equals(condition)) {
+                throw new RuntimeException("Unexpected condition used for doc ref :" + condition);
+            }
+
             return addTerm(ExpressionTerm.builder()
                     .field(field.getName())
                     .condition(condition)

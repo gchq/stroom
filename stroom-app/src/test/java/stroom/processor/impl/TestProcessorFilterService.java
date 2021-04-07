@@ -114,14 +114,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.TYPE_NAME,
+                                .addTerm(MetaFields.TYPE,
                                         ExpressionTerm.Condition.EQUALS,
                                         StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFields.TYPE_NAME,
+                                .addTerm(MetaFields.TYPE,
                                         ExpressionTerm.Condition.EQUALS,
                                         StreamTypeNames.RAW_REFERENCE)
                                 .build())
@@ -177,7 +177,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
             for (final String feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <field>" + MetaFields.FEED_NAME + "</field>\n" +
+                        "                  <field>" + MetaFields.FEED + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed + "</value>\n" +
                         "               </term>\n";
@@ -194,12 +194,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFields.TYPE + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
+                "                  <field>" + MetaFields.TYPE + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +

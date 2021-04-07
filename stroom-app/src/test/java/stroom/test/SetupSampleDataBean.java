@@ -257,12 +257,12 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.builder()
-                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                        .addTerm(MetaFields.TYPE_NAME,
+                                        .addTerm(MetaFields.TYPE,
                                                 ExpressionTerm.Condition.EQUALS,
                                                 StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaFields.TYPE_NAME,
+                                        .addTerm(MetaFields.TYPE,
                                                 ExpressionTerm.Condition.EQUALS,
                                                 StreamTypeNames.RAW_REFERENCE)
                                         .build())
@@ -326,12 +326,12 @@ public final class SetupSampleDataBean {
 
             final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder()
                     .addTerm(
-                            MetaFields.TYPE_NAME,
+                            MetaFields.TYPE,
                             ExpressionTerm.Condition.EQUALS,
                             sourceStreamType);
 
             optFeedName.ifPresent(feedName ->
-                    expressionBuilder.addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
+                    expressionBuilder.addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName));
 
             // Create a processor for this index.
             final QueryData criteria = QueryData.builder()

@@ -356,7 +356,6 @@ class TestIndexShardIO {
         final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
-        FileUtil.deleteDir(testDir);
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
@@ -365,10 +364,6 @@ class TestIndexShardIO {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
-        // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
-        FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
@@ -399,7 +394,7 @@ class TestIndexShardIO {
 
         writer.close();
         assertThat(flushSet.isEmpty()).as("Expected not to flush").isTrue();
-        // assertThat(// flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
+        // assertThat( // flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
         // 6144, 4096, 8192]");
     }
 }

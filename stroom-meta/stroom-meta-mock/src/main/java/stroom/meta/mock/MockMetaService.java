@@ -218,11 +218,11 @@ public class MockMetaService implements MetaService, Clearable {
                 attributeMap.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFields.TYPE_NAME.getName(), meta.getTypeName());
+                attributeMap.put(MetaFields.TYPE.getName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaFields.FEED_NAME.getName(), feedName);
+                attributeMap.put(MetaFields.FEED.getName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
             attributeMap.put(MetaFields.PIPELINE.getName(), pipelineUuid);

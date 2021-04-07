@@ -28,7 +28,7 @@
         <g:row>
             <g:cell>Description:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="description" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
+                <g:TextArea ui:field="description" width="100%" addStyleNames="globalProperties {style.textArea}"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -46,7 +46,7 @@
         <g:row styleName="{style.textArea}">
             <g:cell>Database Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties"/>
+                <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>

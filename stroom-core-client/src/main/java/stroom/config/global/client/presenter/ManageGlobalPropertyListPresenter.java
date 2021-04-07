@@ -38,9 +38,11 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,19 +55,19 @@ public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ManageGlobalPropertyListPresenter.ConfigPropertyRow>>
         implements ColumnSortEvent.Handler {
 
-    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values from some nodes]";
+    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values]";
     private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
-    private static final String MULTIPLE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
+    private static final String MULTIPLE_VALUES_MSG = "[Multiple values]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
     private static final String ERROR_CSS_COLOUR = "red";
     private static final int TIMER_DELAY_MS = 50;
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
-    private static final String ERROR_VALUE = "[[ERROR]]";
 
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
     private final NodeCache nodeCache;
+    private final Set<String> unreachableNodes = new HashSet<>();
 
     // propName => (node => effectiveValue)
     private final Map<String, Map<String, String>> nodeToClusterEffectiveValuesMap = new HashMap<>();
@@ -93,7 +95,7 @@ public class ManageGlobalPropertyListPresenter
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
 
     private final GlobalConfigCriteria criteria = new GlobalConfigCriteria(
-            new PageRequest(0L, Integer.MAX_VALUE),
+            new PageRequest(0, Integer.MAX_VALUE),
             new ArrayList<>(),
             null);
 
@@ -114,7 +116,7 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshTable(final Range range) {
 
-        criteria.setPageRequest(new PageRequest((long) range.getStart(), range.getLength()));
+        criteria.setPageRequest(new PageRequest(range.getStart(), range.getLength()));
 
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
@@ -145,6 +147,7 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshPropertiesForAllNodes() {
         // Only care about enable nodes
+        unreachableNodes.clear();
         nodeCache.listEnabledNodes(
                 nodeNames ->
                         nodeNames.forEach(this::refreshPropertiesForNode),
@@ -158,11 +161,12 @@ public class ManageGlobalPropertyListPresenter
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
 
         criteria.setPageRequest(new PageRequest(
-                (long) getView().getVisibleRange().getStart(),
+                getView().getVisibleRange().getStart(),
                 getView().getVisibleRange().getLength()));
 
         listPropertiesRest
                 .onSuccess(listConfigResponse -> {
+                    unreachableNodes.remove(nodeName);
 
                     // Add the node's result to our maps
                     listConfigResponse.getValues().forEach(configProperty -> {
@@ -178,9 +182,28 @@ public class ManageGlobalPropertyListPresenter
                         }
                     });
                 })
-                .onFailure(
-                        throwable -> nodeToClusterEffectiveValuesMap.keySet().forEach(
-                                propName -> updateNodeKeyedMaps(nodeName, propName, ERROR_VALUE, ERROR_VALUE)))
+                .onFailure(throwable -> {
+                    unreachableNodes.add(nodeName);
+
+                    nodeToClusterEffectiveValuesMap.keySet().forEach(
+                            propName -> {
+                                nodeToClusterEffectiveValuesMap.computeIfAbsent(
+                                        propName,
+                                        k -> new HashMap<>())
+                                        .remove(nodeName);
+
+                                nodeToClusterSourcesMap.computeIfAbsent(
+                                        propName,
+                                        k -> new HashMap<>())
+                                        .remove(nodeName);
+                            });
+
+                    // kick off the delayed action to update the maps keyed on prop name,
+                    // unless another node has already kicked it off
+                    if (!updateChildMapsTimer.isRunning()) {
+                        updateChildMapsTimer.schedule(TIMER_DELAY_MS);
+                    }
+                })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .listByNode(nodeName, criteria);
     }
@@ -208,7 +231,7 @@ public class ManageGlobalPropertyListPresenter
                     final String effectiveValueStr;
                     final Set<String> effectiveValues = propertyToUniqueEffectiveValuesMap.get(row.getNameAsString());
 
-                    if (effectiveValues == null || effectiveValues.contains(ERROR_VALUE)) {
+                    if (effectiveValues == null) {
                         effectiveValueStr = NODES_UNAVAILABLE_MSG;
                     } else {
                         if (effectiveValues.size() <= 1) {
@@ -220,7 +243,7 @@ public class ManageGlobalPropertyListPresenter
 
                     final String sourceStr;
                     final Set<String> sources = propertyToUniqueSourcesMap.get(row.getNameAsString());
-                    if (sources == null || sources.contains(ERROR_VALUE)) {
+                    if (sources == null) {
                         sourceStr = NODES_UNAVAILABLE_SHORT_MSG;
                     } else {
                         if (sources.size() <= 1) {
@@ -257,6 +280,13 @@ public class ManageGlobalPropertyListPresenter
                 ));
 
         populateDataProviderFromMaps();
+
+        // Set errors.
+        final String errors = unreachableNodes
+                .stream()
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.joining("\n"));
+        ErrorEvent.fire(this, errors);
     }
 
     private void initColumns() {
@@ -277,10 +307,10 @@ public class ManageGlobalPropertyListPresenter
                                 ConfigPropertyRow::getEffectiveValueAsString,
                                 (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
                                 ERROR_CSS_COLOUR))
-                        .withSorting(GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName())
+                        .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
                         .build(),
-                GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(),
+                GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
                 300);
 
         // Source
@@ -350,6 +380,10 @@ public class ManageGlobalPropertyListPresenter
     @Override
     public void onColumnSort(final ColumnSortEvent event) {
         // TODO implement sorting for Name and Source
+    }
+
+    public HandlerRegistration addErrorHandler(final ErrorEvent.Handler handler) {
+        return this.addHandlerToSource(ErrorEvent.getType(), handler);
     }
 
     public static class ConfigPropertyRow {

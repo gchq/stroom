@@ -183,6 +183,7 @@ appConfig:
         expireAfterWrite: null
   dataSourceUrl:
     index: "/api/stroom-index/v2"
+    elasticIndex: "/api/stroom-elastic-index/v2"
     solrIndex: "/api/stroom-solr-index/v2"
     statisticStore: "/api/sqlstatistics/v2"
     searchable: "/api/searchable/v2"
@@ -202,6 +203,23 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
+  elastic:
+    indexClientCache:
+      maximumSize: 100
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+    indexCache:
+      maximumSize: 100
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+    search:
+      maxStoredDataQueueSize: 1000
+      maxBooleanClauseCount: 1024
+      storeSize: "1000000,100,10,1"
+      searchResultCache:
+        maximumSize: 10000
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
   explorer:
     db:
       connection:
@@ -559,7 +577,10 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
+    crypto:
+      secretEncryptionKey: ""
     identity:
+      allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:
@@ -645,11 +666,6 @@ appConfig:
         maximumSize: 10000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-      extraction:
-        maxStoredDataQueueSize: 1000
-        maxThreads: 4
-        maxThreadsPerTask: 2
-        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"
@@ -813,6 +829,7 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000
@@ -825,13 +842,14 @@ appConfig:
       version: "v0.1"
     theme:
       backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
+      backgroundColour: "#1E88E5"
       backgroundImage: "none"
       backgroundPosition: "0 0"
       backgroundRepeat: "repeat"
       backgroundOpacity: "0"
       tubeVisible: "hidden"
       tubeOpacity: "0.6"
+      topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"

@@ -46,9 +46,9 @@ public class SuggestionsServiceImpl implements SuggestionsService {
 
     // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> fieldNameToFunctionMap = Map.of(
-            MetaFields.FEED_NAME.getName(), this::createFeedList,
+            MetaFields.FEED.getName(), this::createFeedList,
             MetaFields.PIPELINE.getName(), this::createPipelineList,
-            MetaFields.TYPE_NAME.getName(), this::createStreamTypeList,
+            MetaFields.TYPE.getName(), this::createStreamTypeList,
             MetaFields.STATUS.getName(), this::createStatusList);
 
     @SuppressWarnings("unused")

@@ -1,7 +1,5 @@
 package stroom.db.util;
 
-import stroom.collection.api.CollectionService;
-import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionItem;
 
 import org.jooq.Condition;
@@ -11,21 +9,18 @@ import javax.inject.Inject;
 
 public class ExpressionMapperFactory {
 
-    private final WordListProvider wordListProvider;
-    private final CollectionService collectionService;
+    private final TermHandlerFactory termHandlerFactory;
 
     @Inject
-    public ExpressionMapperFactory(final WordListProvider wordListProvider,
-                                   final CollectionService collectionService) {
-        this.wordListProvider = wordListProvider;
-        this.collectionService = collectionService;
+    public ExpressionMapperFactory(final TermHandlerFactory termHandlerFactory) {
+        this.termHandlerFactory = termHandlerFactory;
     }
 
     public ExpressionMapper create() {
-        return new ExpressionMapper(wordListProvider, collectionService, null);
+        return new ExpressionMapper(termHandlerFactory, null);
     }
 
     public ExpressionMapper create(final Function<ExpressionItem, Condition> delegateItemHandler) {
-        return new ExpressionMapper(wordListProvider, collectionService, delegateItemHandler);
+        return new ExpressionMapper(termHandlerFactory, delegateItemHandler);
     }
 }

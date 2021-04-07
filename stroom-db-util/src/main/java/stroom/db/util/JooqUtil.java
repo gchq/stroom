@@ -242,7 +242,20 @@ public final class JooqUtil {
     public static int getOffset(final PageRequest pageRequest) {
         if (pageRequest != null) {
             if (pageRequest.getOffset() != null) {
-                return pageRequest.getOffset().intValue();
+                return pageRequest.getOffset();
+            }
+        }
+
+        return 0;
+    }
+
+    public static int getOffset(final PageRequest pageRequest, final int limit, final int count) {
+        if (pageRequest != null) {
+            if (pageRequest.getOffset() != null) {
+                if (pageRequest.getOffset() == -1 || count < pageRequest.getOffset()) {
+                    return Math.max(0, count - limit);
+                }
+                return pageRequest.getOffset();
             }
         }
 

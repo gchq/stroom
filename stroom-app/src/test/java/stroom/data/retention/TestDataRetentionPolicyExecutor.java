@@ -76,11 +76,11 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
                 ExpressionOperator.builder()
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName1)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, feedName1)
                         .build(), RETENTION_PERIOD_DAYS, TimeUnit.DAYS);
         final DataRetentionRule rule2 = createForeverRule(2,
                 ExpressionOperator.builder()
-                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName2)
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, feedName2)
                         .build());
 
         final Set<DocRef> docs = dataRetentionRulesService.listDocuments();

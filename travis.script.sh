@@ -303,11 +303,12 @@ else
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     build \
-    -x shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
     -x buildDistribution
+
+#    -x shadowJar \
 
 #      -Dorg.gradle.parallel=true \
 

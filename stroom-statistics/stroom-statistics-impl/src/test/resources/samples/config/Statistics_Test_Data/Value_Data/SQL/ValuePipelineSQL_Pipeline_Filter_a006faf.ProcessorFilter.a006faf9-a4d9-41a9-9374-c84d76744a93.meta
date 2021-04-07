@@ -11,7 +11,7 @@
       "op" : "AND",
       "children" : [ {
         "type" : "term",
-        "field" : "Feed Name",
+        "field" : "Feed",
         "condition" : "EQUALS",
         "value" : "VALUE_FEED_SMALL",
         "enabled" : true

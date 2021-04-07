@@ -33,6 +33,7 @@ const useColumns = (): Column<Account>[] => {
         // filterMethod: (filter: any, row: any) => filterRow(row, filter),
       },
       {
+        id: "status",
         Header: "Status",
         accessor: ({ locked, inactive, enabled }) =>
           locked
@@ -47,6 +48,7 @@ const useColumns = (): Column<Account>[] => {
         // Filter: getStateCellFilter,
       },
       {
+        id: "lastLoginMs",
         Header: "Last Sign In",
         accessor: ({ lastLoginMs }) => lastLoginMs && toDateString(lastLoginMs),
         // Cell: (row: RowInfo) => moment(row.row.value).format(dateFormat),

@@ -172,8 +172,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.builder()
-                                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -387,10 +387,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //        final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -524,9 +524,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                     new HashMap<>());
                         }
                         newStepData.getElementMap().put(elementId, newElementData);
-                        newResponse = new SteppingResult(stepResponse.getStepFilterMap(),
-                                stepResponse.getStepLocation(), newStepData, stepResponse.getCurrentStreamOffset(),
-                                stepResponse.isFoundRecord(), null);
+                        newResponse = new SteppingResult(
+                                stepResponse.getStepFilterMap(),
+                                stepResponse.getStepLocation(),
+                                newStepData,
+                                stepResponse.getCurrentStreamOffset(),
+                                stepResponse.isFoundRecord(),
+                                null,
+                                stepResponse.isSegmentedData());
                     }
                 }
 

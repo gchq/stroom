@@ -45,6 +45,10 @@ public class SourceLocation {
     @JsonProperty
     private final long partNo; // For multipart data only, aka streamNo, 0 for non multi-part data, zero based
     // TODO @AT Change to an OffsetRange to support error segments
+    // TODO @AT This was a bad name choice. In segmented data the header and footer occupy the first and
+    //  last segments technically the first rec is at seg 1 (zero based). Probably should have called it
+    //  recordNo like in the stepper to avoid the confusion. Here we treat it like the record no, ignoring the
+    //  header segment.
     @JsonProperty
     private final long segmentNo; // optional for segmented data only (segment aka record), zero based
     //    private final OffsetRange segmentNoRange;
@@ -84,10 +88,6 @@ public class SourceLocation {
 
     public static Builder builder(final long id) {
         return new Builder(id);
-    }
-
-    public Builder clone() {
-        return new Builder(this);
     }
 
     public long getId() {

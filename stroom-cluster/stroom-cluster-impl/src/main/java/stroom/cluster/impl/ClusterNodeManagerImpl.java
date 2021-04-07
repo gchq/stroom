@@ -371,8 +371,12 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     .ifPresent(newMasterNodeName -> {
                         final String oldMasterNodeName = clusterState.setMasterNodeName(newMasterNodeName);
                         if (!Objects.equals(oldMasterNodeName, newMasterNodeName)) {
-                            LOGGER.info("Master node has changed from {} to {}",
-                                    oldMasterNodeName, newMasterNodeName);
+                            if (oldMasterNodeName == null) {
+                                LOGGER.info("Master node is {}", newMasterNodeName);
+                            } else {
+                                LOGGER.info("Master node has changed from {} to {}",
+                                        oldMasterNodeName, newMasterNodeName);
+                            }
                         }
                     });
         }

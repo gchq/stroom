@@ -2,17 +2,18 @@ package stroom.pipeline.reader;
 
 import stroom.util.xml.XMLUtil;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TestInvalidCharFilterReader {
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         char[] good = {'v', 'a', 'l', 'u', 'e'};
         char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
@@ -22,16 +23,16 @@ public class TestInvalidCharFilterReader {
         final String goodXml = appendRecords(new StringBuilder(), goodParms).toString();
         final String badXml = appendRecords(new StringBuilder(), badParms).toString();
 
-        Assert.assertNotEquals(goodXml, badXml);
+        assertThat(badXml.equals(goodXml)).isFalse();
 
         final String convertGoodXml = XMLUtil.prettyPrintXML(goodXml);
         final String convertBadXml = convert(badXml);
 
-        Assert.assertEquals(convertGoodXml, convertBadXml);
+        assertThat(convertBadXml).isEqualTo(convertGoodXml);
     }
 
     @Test
-    public void test2() throws IOException {
+    void test2() throws IOException {
         char[] good = {'v', 'a', 'l', 'u', 'e'};
         char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
@@ -41,12 +42,12 @@ public class TestInvalidCharFilterReader {
         final String goodXml = appendRecords(new StringBuilder(), goodParms).toString();
         final String badXml = appendRecords(new StringBuilder(), badParms).toString();
 
-        Assert.assertNotEquals(goodXml, badXml);
+        assertThat(badXml.equals(goodXml)).isFalse();
 
         final String convertGoodXml = XMLUtil.prettyPrintXML(goodXml);
         final String convertBadXml = convert2(badXml);
 
-        Assert.assertEquals(convertGoodXml, convertBadXml);
+        assertThat(convertBadXml).isEqualTo(convertGoodXml);
     }
 
     private String convert(final String string) throws IOException {

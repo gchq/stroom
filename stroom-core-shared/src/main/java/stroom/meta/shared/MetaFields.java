@@ -35,11 +35,10 @@ public class MetaFields {
     private static final Map<String, AbstractField> ALL_FIELD_MAP;
 
     // Non grouped fields
-    public static final TextField FEED_NAME = new TextField("Feed Name");
     public static final DocRefField FEED = new DocRefField("Feed", "Feed");
     public static final DocRefField PIPELINE = new DocRefField("Pipeline", "Pipeline");
     public static final TextField STATUS = new TextField("Status");
-    public static final TextField TYPE_NAME = new TextField("Type");
+    public static final TextField TYPE = new TextField("Type");
 
     // Id's
     public static final IdField ID = new IdField("Id");
@@ -70,11 +69,10 @@ public class MetaFields {
 
     static {
         // Non grouped fields
-        FIELDS.add(FEED_NAME);
         FIELDS.add(FEED);
         FIELDS.add(PIPELINE);
         FIELDS.add(STATUS);
-        FIELDS.add(TYPE_NAME);
+        FIELDS.add(TYPE);
 
         // Id's
         FIELDS.add(ID);

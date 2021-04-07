@@ -18,7 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexShard;
 
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -27,17 +27,18 @@ import java.nio.file.Paths;
  */
 public class IndexShardUtil {
 
-    public static Path getIndexPath(IndexShard indexShard) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(indexShard.getVolume().getPath());
-        builder.append(File.separatorChar);
-        builder.append("index");
-        builder.append(File.separatorChar);
-        builder.append(indexShard.getIndexUuid());
-        builder.append(File.separatorChar);
-        builder.append(indexShard.getPartition());
-        builder.append(File.separatorChar);
-        builder.append(indexShard.getId());
-        return Paths.get(builder.toString());
+    public static Path getIndexPath(final IndexShard indexShard) {
+        Path path = Paths.get(indexShard.getVolume().getPath());
+
+        if (!Files.isDirectory(path)) {
+            throw new RuntimeException("Volume path not found: " + indexShard.getVolume().getPath());
+        }
+
+        path = path.resolve("index");
+        path = path.resolve(indexShard.getIndexUuid());
+        path = path.resolve(indexShard.getPartition());
+        path = path.resolve(String.valueOf(indexShard.getId()));
+
+        return path;
     }
 }

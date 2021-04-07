@@ -13,6 +13,7 @@ plugins {
 //    id "com.benjaminsproule.swagger" version "1.0.14"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
     id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.7"
+    id "java"
 }
 
 configurations {
@@ -31,9 +32,9 @@ configurations {
                 //// for some reason the DEBUG logging in the swagger plugin is being
                 //// output as part of the gradle build. This is a very crude hack to stop it
                 //// accepting that you will get no logging at all, even errors.
-                //substitute 
-                    //module("ch.qos.logback:logback-classic") 
-                    //using module("org.slf4j:slf4j-nop:1.7.30") 
+                //substitute
+                    //module("ch.qos.logback:logback-classic")
+                    //using module("org.slf4j:slf4j-nop:1.7.30")
                     //because "We don't want all the debug"
             //}
         }
@@ -58,6 +59,8 @@ def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
+apply plugin: "java"
+
 mainClassName = 'stroom.app.App'
 
 dependencies {
@@ -86,8 +89,6 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-dropwizard-common')
-//    compile project(':stroom-elastic:stroom-elastic-impl')
-//    compile project(':stroom-elastic:stroom-elastic-impl-http')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
@@ -115,6 +116,7 @@ dependencies {
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
     compile project(':stroom-search:stroom-search-extraction')
+    compile project(':stroom-search:stroom-search-elastic')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-search:stroom-searchable-impl')
     compile project(':stroom-security:stroom-security-identity')
@@ -180,7 +182,6 @@ dependencies {
     testCompile project(':stroom-docstore:stroom-docstore-api')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-//    testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-mock')

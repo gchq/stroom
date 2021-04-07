@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -43,6 +44,7 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import javax.servlet.http.HttpServletRequest;
 
@@ -149,13 +151,10 @@ public class AttributeMapUtil {
 
     private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
                                            final AttributeMap attributeMap) {
-        final X509Certificate[] certs = (X509Certificate[]) httpServletRequest
-                .getAttribute("javax.servlet.request.X509Certificate");
-
-        if (certs != null && certs.length > 0 && certs[0] != null) {
+        final Optional<X509Certificate> optional = CertificateUtil.extractCertificate(httpServletRequest);
+        optional.ifPresent(cert -> {
             // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
             // from the certificate
-            final X509Certificate cert = certs[0];
             if (cert.getSubjectDN() != null) {
                 final String remoteDN = cert.getSubjectDN().toString();
                 attributeMap.put(StandardHeaderArguments.REMOTE_DN, remoteDN);
@@ -169,10 +168,9 @@ public class AttributeMapUtil {
             } else {
                 LOGGER.debug("Cert {} doesn't have a Not After date", cert);
             }
-        }
+        });
     }
 
-    @SuppressWarnings("unchecked")
     private static void addAllHeaders(final HttpServletRequest httpServletRequest,
                                       final AttributeMap attributeMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();

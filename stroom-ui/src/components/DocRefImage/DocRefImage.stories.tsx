@@ -15,6 +15,7 @@ const docRefTypes = [
   "AnnotationsIndex",
   "Dashboard",
   "Dictionary",
+  "ElasticCluster",
   "ElasticIndex",
   "Feed",
   "Folder",

@@ -566,12 +566,12 @@ export interface DataRange {
 export interface DataRetentionDeleteSummary {
   /** @format int32 */
   count?: number;
-  feedName?: string;
-  metaType?: string;
+  feed?: string;
   ruleName?: string;
 
   /** @format int32 */
   ruleNumber?: number;
+  type?: string;
 }
 
 export interface DataRetentionDeleteSummaryRequest {
@@ -759,6 +759,88 @@ export interface DownloadSearchResultsRequest {
   percent?: number;
   sample?: boolean;
   searchRequest?: DashboardSearchRequest;
+}
+
+export interface ElasticClusterDoc {
+  connection?: ElasticConnectionConfig;
+
+  /** @format int64 */
+  createTime?: number;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  name?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTime?: number;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
+export interface ElasticClusterTestResponse {
+  message?: string;
+  ok?: boolean;
+}
+
+export interface ElasticConnectionConfig {
+  apiKeyId?: string;
+  apiKeySecretEncrypted?: string;
+  caCertificate?: string;
+  connectionUrls?: string[];
+
+  /** @format int32 */
+  socketTimeoutMillis?: number;
+  useAuthentication?: boolean;
+}
+
+export interface ElasticIndexDoc {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  clusterRef?: DocRef;
+
+  /** @format int64 */
+  createTime?: number;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  dataSourceFields?: AbstractField[];
+  description?: string;
+  fields?: ElasticIndexField[];
+  indexName?: string;
+  name?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  retentionExpression?: ExpressionOperator;
+  type?: string;
+
+  /** @format int64 */
+  updateTime?: number;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
+export interface ElasticIndexField {
+  fieldName?: string;
+  fieldType?: string;
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
+  indexed?: boolean;
+  stored?: boolean;
+}
+
+export interface ElasticIndexTestResponse {
+  message?: string;
+  ok?: boolean;
 }
 
 export interface EntityEvent {
@@ -1716,7 +1798,7 @@ export interface PageRequest {
   /** @format int32 */
   length?: number;
 
-  /** @format int64 */
+  /** @format int32 */
   offset?: number;
 }
 
@@ -2900,6 +2982,7 @@ export interface SteppingResult {
   currentStreamOffset?: number;
   foundRecord?: boolean;
   generalErrors?: string[];
+  segmentedData?: boolean;
   stepData?: SharedStepData;
   stepFilterMap?: Record<string, SteppingFilterSettings>;
   stepLocation?: StepLocation;
@@ -3139,12 +3222,13 @@ export interface TextRange {
 
 export interface ThemeConfig {
   backgroundAttachment?: string;
-  backgroundColor?: string;
+  backgroundColour?: string;
   backgroundImage?: string;
   backgroundOpacity?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
   labelColours?: string;
+  topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
 }
@@ -3250,6 +3334,7 @@ export interface UiConfig {
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;
@@ -4983,6 +5068,118 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  elasticCluster = {
+    /**
+     * No description
+     *
+     * @tags Elastic Clusters
+     * @name TestElasticCluster
+     * @summary Test connection to the Elasticsearch cluster
+     * @request POST:/elasticCluster/v1/testCluster
+     * @secure
+     */
+    testElasticCluster: (data: ElasticClusterDoc, params: RequestParams = {}) =>
+      this.request<any, ElasticClusterTestResponse>({
+        path: `/elasticCluster/v1/testCluster`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elastic Clusters
+     * @name FetchElasticCluster
+     * @summary Fetch an Elasticsearch cluster doc by its UUID
+     * @request GET:/elasticCluster/v1/{uuid}
+     * @secure
+     */
+    fetchElasticCluster: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ElasticClusterDoc>({
+        path: `/elasticCluster/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elastic Clusters
+     * @name UpdateElasticCluster
+     * @summary Update an Elasticsearch cluster doc
+     * @request PUT:/elasticCluster/v1/{uuid}
+     * @secure
+     */
+    updateElasticCluster: (uuid: string, data: ElasticClusterDoc, params: RequestParams = {}) =>
+      this.request<any, ElasticClusterDoc>({
+        path: `/elasticCluster/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  elasticIndex = {
+    /**
+     * No description
+     *
+     * @tags Elastic Indices
+     * @name TestElasticIndex
+     * @summary Test the Elasticsearch index
+     * @request POST:/elasticIndex/v1/testIndex
+     * @secure
+     */
+    testElasticIndex: (data: ElasticIndexDoc, params: RequestParams = {}) =>
+      this.request<any, ElasticIndexTestResponse>({
+        path: `/elasticIndex/v1/testIndex`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elastic Indices
+     * @name FetchElasticIndex
+     * @summary Fetch an Elasticsearch index doc by its UUID
+     * @request GET:/elasticIndex/v1/{uuid}
+     * @secure
+     */
+    fetchElasticIndex: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ElasticIndexDoc>({
+        path: `/elasticIndex/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elastic Indices
+     * @name UpdateElasticIndex
+     * @summary Update an Elasticsearch index doc
+     * @request PUT:/elasticIndex/v1/{uuid}
+     * @secure
+     */
+    updateElasticIndex: (uuid: string, data: ElasticIndexDoc, params: RequestParams = {}) =>
+      this.request<any, ElasticIndexDoc>({
+        path: `/elasticIndex/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -7658,6 +7855,64 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, StoredQuery>({
         path: `/storedQuery/v1/update`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  stroomElasticIndex = {
+    /**
+     * No description
+     *
+     * @tags Elasticsearch Queries
+     * @name GetElasticIndexDataSource
+     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
+     * @request POST:/stroom-elastic-index/v2/dataSource
+     * @secure
+     */
+    getElasticIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DataSource>({
+        path: `/stroom-elastic-index/v2/dataSource`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elasticsearch Queries
+     * @name DestroyElasticIndexSearch
+     * @summary Destroy a running query
+     * @request POST:/stroom-elastic-index/v2/destroy
+     * @secure
+     */
+    destroyElasticIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-elastic-index/v2/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elasticsearch Queries
+     * @name SearchElasticIndex
+     * @summary Submit a search request
+     * @request POST:/stroom-elastic-index/v2/search
+     * @secure
+     */
+    searchElasticIndex: (data: SearchRequest, params: RequestParams = {}) =>
+      this.request<any, SearchResponse>({
+        path: `/stroom-elastic-index/v2/search`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
