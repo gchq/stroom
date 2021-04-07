@@ -300,6 +300,7 @@ else
   ./gradlew \
     --scan \
     --stacktrace \
+    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     build \
@@ -315,12 +316,14 @@ else
   ./gradlew \
     --scan \
     --stacktrace \
+    --no-daemon \
     stroom-ui:copyYarnBuild
 
   # Compile the application GWT UI
   ./gradlew \
     --scan \
     --stacktrace \
+    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
@@ -330,6 +333,7 @@ else
   ./gradlew \
     --scan \
     --stacktrace \
+    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
@@ -339,6 +343,7 @@ else
   ./gradlew \
     --scan \
     --stacktrace \
+    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     shadowJar \
