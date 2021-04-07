@@ -288,6 +288,7 @@ else
   echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
   # Ensure we have a local.yml file as the integration tests will need it
+  echo "Ensure we have a local.yml file"
   ./local.yml.sh
 
   # Do the gradle build
@@ -297,6 +298,7 @@ else
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
+  echo "Do the gradle build"
   ./gradlew --stop
   ./gradlew \
     --scan \
@@ -311,9 +313,10 @@ else
     -x buildDistribution
 
 #    -x shadowJar \
-
 #      -Dorg.gradle.parallel=true \
 
+  # Compile the React UI
+  echo "Compile the React UI"
   ./gradlew --stop
   ./gradlew \
     --scan \
@@ -322,6 +325,7 @@ else
     stroom-ui:copyYarnBuild
 
   # Compile the application GWT UI
+  echo "Compile the application GWT UI"
   ./gradlew --stop
   ./gradlew \
     --scan \
@@ -333,6 +337,7 @@ else
     stroom-app-gwt:gwtCompile
 
   # Compile the dashboard GWT UI
+  echo "Compile the dashboard GWT UI"
   ./gradlew --stop
   ./gradlew \
     --scan \
@@ -344,6 +349,7 @@ else
     stroom-dashboard-gwt:gwtCompile
 
   # Make the distribution.
+  echo "Make the distribution"
   ./gradlew --stop
   ./gradlew \
     --scan \
