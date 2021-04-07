@@ -10,7 +10,6 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-//    implementation(project(path: ":stroom-search:elastic-shaded", configuration: 'shadedJars')) // Use shadow JAR
     implementation project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-api')
@@ -27,5 +26,3 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 }
-
-//tasks.compileJava.dependsOn ':stroom-search:elastic-shaded:shadedJar'
