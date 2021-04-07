@@ -299,38 +299,32 @@ else
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
   echo "Do the gradle build"
-  ./gradlew --stop
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     build \
+    -x shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
     -x buildDistribution
 
-#    -x shadowJar \
 #      -Dorg.gradle.parallel=true \
 
   # Compile the React UI
   echo "Compile the React UI"
-  ./gradlew --stop
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     stroom-ui:copyYarnBuild
 
   # Compile the application GWT UI
   echo "Compile the application GWT UI"
-  ./gradlew --stop
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
@@ -338,11 +332,9 @@ else
 
   # Compile the dashboard GWT UI
   echo "Compile the dashboard GWT UI"
-  ./gradlew --stop
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
@@ -350,11 +342,9 @@ else
 
   # Make the distribution.
   echo "Make the distribution"
-  ./gradlew --stop
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     shadowJar \

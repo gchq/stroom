@@ -381,6 +381,10 @@ subprojects {
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:1.7.25")
+//                    substitute module('org.apache.lucene:lucene-analyzers-common') with module("org.apache.lucene:lucene-analyzers-common:$versions.lucene")
+//                    substitute module('org.apache.lucene:lucene-backward-codecs') with module("org.apache.lucene:lucene-backward-codecs:$versions.lucene")
+//                    substitute module('org.apache.lucene:lucene-core') with module("org.apache.lucene:lucene-core:$versions.lucene")
+//                    substitute module('org.apache.lucene:lucene-queryparser') with module("org.apache.lucene:lucene-queryparser:$versions.lucene")
                     // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
                 }
 
