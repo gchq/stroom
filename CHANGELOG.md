@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2168** : Removed special columns from dashboard tables.
+
 * Issue **#2154** : Fixed error adding text widget to a dashboard.
 
 * Issue **#2025** : Added caching for DNS name resolution.
