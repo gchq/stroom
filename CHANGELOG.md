@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2154** : Fixed error adding text widget to a dashboard.
+
 * Issue **#2025** : Added caching for DNS name resolution.
 
 * Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating client IP.
