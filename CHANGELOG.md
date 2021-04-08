@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2171** : Fixed dashboard table expression editor field insertion. 
+
 * Issue **#2168** : Removed special columns from dashboard tables.
 
 * Issue **#2154** : Fixed error adding text widget to a dashboard.
