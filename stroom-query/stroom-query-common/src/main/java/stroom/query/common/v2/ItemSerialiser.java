@@ -30,30 +30,37 @@ public class ItemSerialiser {
                 if (grouped) {
                     list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
                 } else {
-                    list.add(new UngroupedKeyPart(input.readLong()));
+                    list.add(new UngroupedKeyPart(input.readString()));
                 }
             }
-            return Key.fromParts(list);
+            final boolean grouped = input.readBoolean();
+            return Key.fromParts(list, grouped);
         });
     }
 
     void writeKey(final Key key, final Output output) {
         Metrics.measure("Key write", () -> {
+            boolean grouped = false;
             output.writeInt(key.size());
             for (final KeyPart keyPart : key) {
+                grouped = key.isGrouped();
                 output.writeBoolean(keyPart.isGrouped());
                 keyPart.write(output);
             }
+            output.writeBoolean(grouped);
         });
     }
 
     void writeChildKey(final Key key, final Output output) {
         Metrics.measure("Key write", () -> {
+            boolean grouped = false;
             output.writeInt(key.size() + 1);
             for (final KeyPart keyPart : key) {
+                grouped = key.isGrouped();
                 output.writeBoolean(keyPart.isGrouped());
                 keyPart.write(output);
             }
+            output.writeBoolean(grouped);
         });
     }
 

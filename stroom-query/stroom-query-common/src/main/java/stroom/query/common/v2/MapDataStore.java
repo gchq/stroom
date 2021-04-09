@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,7 +54,6 @@ public class MapDataStore implements DataStore {
     private static RawKey ROOT_KEY;
 
     private final Map<RawKey, ItemsImpl> childMap = new ConcurrentHashMap<>();
-    private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
     private final CompiledField[] compiledFields;
     private final CompiledSorter<UnpackedItem>[] compiledSorters;
@@ -120,12 +120,6 @@ public class MapDataStore implements DataStore {
                 final RawItem rawItem = itemSerialiser.readRawItem(bytes);
                 final byte[] keyBytes = rawItem.getKey();
                 final Key key = itemSerialiser.toKey(keyBytes);
-
-                KeyPart lastPart = key.getLast();
-                if (lastPart != null && !lastPart.isGrouped()) {
-                    // Ensure sequence numbers are unique for this data store.
-                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
-                }
 
                 final Key parent = key.getParent();
                 final byte[] parentKeyBytes = itemSerialiser.toBytes(parent);
@@ -235,17 +229,17 @@ public class MapDataStore implements DataStore {
                 groupValues = Arrays.copyOf(groupValues, groupIndex);
             }
 
-            KeyPart keyPart;
             if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
-                keyPart = new GroupKeyPart(groupValues);
+                final KeyPart keyPart = new GroupKeyPart(groupValues);
+                key = key.resolve(keyPart, true);
 
             } else {
                 // This item will not be grouped.
-                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
+                final KeyPart keyPart = new UngroupedKeyPart(UUID.randomUUID().toString());
+                key = key.resolve(keyPart, false);
             }
 
-            key = key.resolve(keyPart);
             final byte[] childKey = itemSerialiser.toBytes(key);
             final byte[] generatorBytes = itemSerialiser.toBytes(generators);
 
