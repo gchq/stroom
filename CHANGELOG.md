@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
 
 ## [v7.0-beta.101] - 2021-04-08
 
