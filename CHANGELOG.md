@@ -7,6 +7,126 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.102] - 2021-04-09
+
+* Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
+
+## [v7.0-beta.101] - 2021-04-08
+
+* Issue **#2172** : Limited the maximum size of LMDB keys and values.
+
+* Issue **#2171** : Fixed dashboard table expression editor field insertion. 
+
+* Issue **#2168** : Removed special columns from dashboard tables.
+
+* Issue **#2154** : Fixed error adding text widget to a dashboard.
+
+* Issue **#2025** : Added caching for DNS name resolution.
+
+* Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating client IP.
+
+
+## [v7.0-beta.100] - 2021-04-02
+
+* Issue **#1598** : Audit logging uplifted throughout codebase.
+
+* Issue **#1613** : Added event logging to UserResourceImpl.
+
+
+## [v7.0-beta.99] - 2021-04-01
+
+* Issue **#1928**: Stroom will now redirect users to the root URL if the GWT UI is not hosted within the React wrapper. To develop GWT code it is still necessary to use the GWT UI directly outside of the wrapper so to enable this you can set the newly added `requireReactWrapper` property to false.
+
+* Issue **#2156**: The properties screen now shows a warning triangle when there are unreachable nodes rather than showing an error for all property values.
+
+* Issue **#2157**: Fixed issue where pager was causing an exception paging to last on API keys and Accounts list pages.
+
+* Issue **#2153**: Fixed option to log all REST calls.
+
+* Issue **#2085**: User now gets notification that a password has been changed.
+
+* Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
+
+
+## [v7.0-beta.98] - 2021-03-30
+
+* Issue **#2138** : Fixed error thrown when updating a property due to the property being updated twice as a result of new event logging code. 
+
+* Issue **#2150** : Added `topMenuTextColour` property to allow the top menu text colour to be changed. Renamed the `backgroundColor` property to `backgroundColour` for consistency. 
+
+* Issue **#2152** : Session list now only shows user authenticated sessions.
+
+* Issue **#2149** : Fixed index volume and index shard migration.
+
+
+## [v7.0-beta.97] - 2021-03-26
+
+* Issue **#2136** : Fixed sorting problems in users and API keys pages.
+
+* Issue **#2146** : Fixed use of dashboard expression parameters.
+
+* Issue **#2141** : Pre v7 index shards can now be used after upgrade.
+
+* Issue **#2142** : Fixed certificate authentication issues.
+
+* Issue **#2140** : Fixed migration issue that was causing the creation of unnecessary index volume groups. 
+
+* Issue **#2137** : Data retention rules are now migrated from previous versions.
+
+* Issue **#2107** : Removed `Feed Name` field and fixed UUID to field name resolution.
+
+* Issue **#2142** : Added debug to help diagnose client cert auth issues.
+
+* Issue **#2107** : Fixed issue where the processor filter UI was saying that no filter had been applied to feeds because the UI wasn't checking feed filtering by docref.
+
+
+## [v7.0-beta.96] - 2021-03-23
+
+* Issue **#2099** : Fix stepping source pane for segmented (cooked) data.
+
+* Issue **#479** : Include folder names in audit events when exporting configuration.
+
+* Provide audit log record for permission changes to explorer items (documents)
+
+
+## [v7.0-beta.95] - 2021-03-18
+
+* Issue **#2105** : Fixed migration of annotations DB.
+
+
+## [v7.0-beta.94] - 2021-03-17
+
+* Issue **#2104** : Fixed issue where the index creation stored procedure was trying to delete a procedure with the wrong name before creating a new one. 
+
+* Issue **#2103** : Fixed statistics migration script to correctly check for empty tables.
+
+* Issue **#2102** : Fixed query migration script.
+
+* Removed unused properties `resilientReplicationCount` and `preferLocalVolumes`.
+
+* Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
+
+
+## [v7.0-beta.93] - 2021-03-16
+
+* Issue **#2088** : Fixed retrieval of stored search results when not using extraction.
+
+* Issue **#2088** : Fixed NullPointerException caused when stepping.
+
+* Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
+
+
+## [v7.0-beta.92] - 2021-03-15
+
+* Issue **#2096** : Remove deprecated int display lengths when creating tables
+
+* Issue **#2095** : Tidy upo statistics migration.
+
+* Issue **#2094** : Corrected DB table creation to state the charset as `utf8mb4` and not `utf8` which is ambiguous in MySQL.
+
+
 ## [v7.0-beta.91] - 2021-03-14
 
 * Refactor auth/identity DB migration scripts.
@@ -3157,7 +3277,18 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.91...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.102...HEAD
+[v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102
+[v7.0-beta.101]: https://github.com/gchq/stroom/compare/v7.0-beta.100...v7.0-beta.101
+[v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
+[v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
+[v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
+[v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
+[v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
+[v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
+[v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
+[v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
+[v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
 [v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
 [v7.0-beta.90]: https://github.com/gchq/stroom/compare/v7.0-beta.89...v7.0-beta.90
 [v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89

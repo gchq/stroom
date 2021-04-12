@@ -70,38 +70,6 @@ public class Account implements HasIntegerId {
     @JsonProperty
     private boolean processingAccount;
 
-//    public Account() {
-//    }
-//
-//    public Account(@NotNull String email, @NotNull String password) {
-//        this.email = email;
-//        this.password = password;
-//    }
-//
-//    public static Pair<Boolean, String> isValidForCreate(Account account) {
-//        ArrayList<AccountValidationError> validationErrors = new ArrayList<>();
-//
-//        if (account == null) {
-//            validationErrors.add(AccountValidationError.NO_USER);
-//        } else {
-//            if (Strings.isNullOrEmpty(account.getEmail())) {
-//                validationErrors.add(AccountValidationError.NO_NAME);
-//            }
-//
-//            if (Strings.isNullOrEmpty(account.getPassword())) {
-//                validationErrors.add(AccountValidationError.NO_PASSWORD);
-//            }
-//        }
-//
-//        String validationMessages = validationErrors.stream()
-//                .map(AccountValidationError::getMessage)
-//                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2)
-//                .orElse("");
-//        boolean isValid = validationErrors.size() == 0;
-//        return Pair.of(isValid, validationMessages);
-//    }
-
-
     public Account() {
     }
 

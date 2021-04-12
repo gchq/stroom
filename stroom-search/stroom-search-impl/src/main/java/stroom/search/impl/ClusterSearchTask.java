@@ -32,8 +32,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class ClusterSearchTask implements Serializable {
 
-    private static final long serialVersionUID = -1305243739417365803L;
-
     @JsonProperty
     private final TaskId sourceTaskId;
     @JsonProperty
@@ -44,8 +42,6 @@ public class ClusterSearchTask implements Serializable {
     private final Query query;
     @JsonProperty
     private final List<Long> shards;
-    @JsonProperty
-    private final String[] storedFields;
     @JsonProperty
     private final List<CoprocessorSettings> settings;
     @JsonProperty
@@ -59,7 +55,6 @@ public class ClusterSearchTask implements Serializable {
                              @JsonProperty("key") final QueryKey key,
                              @JsonProperty("query") final Query query,
                              @JsonProperty("shards") final List<Long> shards,
-                             @JsonProperty("storedFields") final String[] storedFields,
                              @JsonProperty("settings") final List<CoprocessorSettings> settings,
                              @JsonProperty("dateTimeLocale") final String dateTimeLocale,
                              @JsonProperty("now") final long now) {
@@ -68,7 +63,6 @@ public class ClusterSearchTask implements Serializable {
         this.key = key;
         this.query = query;
         this.shards = shards;
-        this.storedFields = storedFields;
         this.settings = settings;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
@@ -92,10 +86,6 @@ public class ClusterSearchTask implements Serializable {
 
     public List<Long> getShards() {
         return shards;
-    }
-
-    public String[] getStoredFields() {
-        return storedFields;
     }
 
     public List<CoprocessorSettings> getSettings() {

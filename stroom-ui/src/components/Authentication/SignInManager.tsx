@@ -15,8 +15,8 @@
  */
 
 import * as React from "react";
-import BackgroundLogo from "../Layout/BackgroundLogo";
 import { useEffect, useState } from "react";
+import BackgroundLogo from "../Layout/BackgroundLogo";
 import { SignIn } from "./SignIn";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
 import { ChangePasswordFormValues, ChangePasswordPage } from "./ChangePassword";
@@ -34,6 +34,7 @@ import {
   ChangePasswordResponse,
 } from "api/stroom";
 import { AuthState } from "./types";
+import { PromptType } from "../Prompt/Prompt";
 
 export interface FormValues {
   userId: string;
@@ -58,7 +59,7 @@ const Page: React.FunctionComponent = () => {
   // Client state
   const [authState, setAuthState] = useState<AuthState>();
 
-  const { showError } = usePrompt();
+  const { showPrompt } = usePrompt();
   const { exec } = useStroomApi();
 
   useEffect(() => {
@@ -125,17 +126,29 @@ const Page: React.FunctionComponent = () => {
           if (!response) {
             actions.setSubmitting(false);
           } else if (response.changeSucceeded) {
-            onClose(true);
+            showPrompt({
+              promptProps: {
+                type: PromptType.INFO,
+                title: "Success",
+                message: "Your password has been changed",
+              },
+              onCloseDialog: () => onClose(true),
+            });
           } else {
             actions.setSubmitting(false);
-            showError({
-              message: response.message,
+            showPrompt({
+              promptProps: {
+                type: PromptType.ERROR,
+                title: "Error",
+                message: response.message,
+              },
+              onCloseDialog: () => {
+                // If the user is asked to sign in again then unset the auth state.
+                if (response.forceSignIn) {
+                  onClose(false);
+                }
+              },
             });
-
-            // If the user is asked to sign in again then unset the auth state.
-            if (response.forceSignIn) {
-              onClose(false);
-            }
           }
         },
       );

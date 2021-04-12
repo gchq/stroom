@@ -173,11 +173,11 @@ public class IndexShard {
         return indexUuid;
     }
 
-    public void setNodeName(String nodeName) {
+    public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
     }
 
-    public void setIndexUuid(String indexUuid) {
+    public void setIndexUuid(final String indexUuid) {
         this.indexUuid = indexUuid;
     }
 

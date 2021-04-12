@@ -22,8 +22,9 @@ import stroom.util.shared.IsServlet;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Writer;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -34,8 +35,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 class SessionListServlet extends HttpServlet implements IsServlet {
-
-    private static final long serialVersionUID = 8723931558071593017L;
 
     private static final Set<String> PATH_SPECS = Set.of("/sessionList");
 
@@ -73,20 +72,6 @@ class SessionListServlet extends HttpServlet implements IsServlet {
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
 
-        final List<List<String>> table = new ArrayList<>();
-
-        sessionListService.listSessions().forEach(sessionDetails -> {
-            final ArrayList<String> row = new ArrayList<>();
-            row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
-            row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
-            row.add(sessionDetails.getUserName());
-            row.add(sessionDetails.getNodeName());
-            row.add("<span class=\"agent\">" + sessionDetails.getLastAccessedAgent() + "</span>");
-            table.add(row);
-        });
-
-        table.sort((l1, l2) -> l2.get(0).compareTo(l1.get(0)));
-
         response.getWriter().write("<html>" +
                 "<head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head>" +
                 "<body>");
@@ -101,24 +86,37 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                 "</tr>" +
                 "</thead>");
 
-        for (final List<String> row : table) {
-            response.getWriter().write("<tr>");
+        final Writer writer = response.getWriter();
+        sessionListService
+                .listSessions()
+                .stream()
+                .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserName()))
+                .sorted(Comparator.comparing(SessionDetails::getLastAccessedMs))
+                .forEach(sessionDetails -> {
+                    try {
+                        writer.write("<tr>");
 
-            for (final String cell : row) {
-                response.getWriter().write("<td>");
-                if (cell == null) {
-                    response.getWriter().write("-");
-                } else {
-                    response.getWriter().write(cell);
-                }
-                response.getWriter().write("</td>");
-            }
-            response.getWriter().write("</tr>");
-        }
+                        writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
+                        writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
+                        writeCell(writer, sessionDetails.getUserName());
+                        writeCell(writer, sessionDetails.getNodeName());
+                        writeCell(writer, "<span class=\"agent\">" + sessionDetails.getLastAccessedAgent() + "</span>");
+
+                        writer.write("</tr>");
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
         response.getWriter().write("</table>");
         response.getWriter().write("</body></html>");
 
         response.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    private void writeCell(final Writer writer, final String value) throws IOException {
+        writer.write("<td>");
+        writer.write(Objects.requireNonNullElse(value, "-"));
+        writer.write("</td>");
     }
 
     /**

@@ -43,14 +43,14 @@ public class SqlStatisticsStore implements Store {
         this.searchKey = searchRequest.getKey().toString();
 
         // convert the search into something stats understands
-        final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+        final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
                 statisticStoreDoc,
-                updatedSearchRequest.getQuery().getExpression(),
-                searchRequest.getDateTimeLocale());
+                modifiedSearchRequest.getQuery().getExpression(),
+                modifiedSearchRequest.getDateTimeLocale());
 
         // Create coprocessors.
-        coprocessors = coprocessorsFactory.create(updatedSearchRequest);
+        coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Create the object that will receive results.

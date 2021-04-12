@@ -25,7 +25,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
     @Override
     public SessionResource getRestResource() {
-        return new SessionResourceImpl(authenticationEventLog, sessionListService, null);
+        return new SessionResourceImpl(() -> authenticationEventLog, () -> sessionListService, null);
     }
 
     @Override

@@ -6,7 +6,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS identity_insert_type_if_absent $$
 
 CREATE PROCEDURE identity_insert_type_if_absent (
-    p_type_name varchar(1000)
+    p_type_name varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci
 )
 BEGIN
     DECLARE object_count integer;

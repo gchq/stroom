@@ -333,7 +333,6 @@ export interface ClusterSearchTask {
   settings?: CoprocessorSettings[];
   shards?: number[];
   sourceTaskId?: TaskId;
-  storedFields?: string[];
   taskName?: string;
 }
 
@@ -567,12 +566,12 @@ export interface DataRange {
 export interface DataRetentionDeleteSummary {
   /** @format int32 */
   count?: number;
-  feedName?: string;
-  metaType?: string;
+  feed?: string;
   ruleName?: string;
 
   /** @format int32 */
   ruleNumber?: number;
+  type?: string;
 }
 
 export interface DataRetentionDeleteSummaryRequest {
@@ -1717,7 +1716,7 @@ export interface PageRequest {
   /** @format int32 */
   length?: number;
 
-  /** @format int64 */
+  /** @format int32 */
   offset?: number;
 }
 
@@ -2901,6 +2900,7 @@ export interface SteppingResult {
   currentStreamOffset?: number;
   foundRecord?: boolean;
   generalErrors?: string[];
+  segmentedData?: boolean;
   stepData?: SharedStepData;
   stepFilterMap?: Record<string, SteppingFilterSettings>;
   stepLocation?: StepLocation;
@@ -3140,12 +3140,13 @@ export interface TextRange {
 
 export interface ThemeConfig {
   backgroundAttachment?: string;
-  backgroundColor?: string;
+  backgroundColour?: string;
   backgroundImage?: string;
   backgroundOpacity?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
   labelColours?: string;
+  topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
 }
@@ -3251,6 +3252,7 @@ export interface UiConfig {
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;

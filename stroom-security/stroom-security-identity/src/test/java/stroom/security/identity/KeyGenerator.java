@@ -14,17 +14,17 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static junit.framework.TestCase.fail;
+import static org.assertj.core.api.Assertions.fail;
 
-@Ignore
+@Disabled
 public class KeyGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyGenerator.class);
@@ -48,7 +48,7 @@ public class KeyGenerator {
     }
 
     @Test
-    public void tokenBuilder() throws JoseException {
+    void tokenBuilder() throws JoseException {
         TokenBuilder builder = new TokenBuilder();
         PublicJsonWebKey jwk = RsaJsonWebKey.Factory.newPublicJwk(JWK);
         String key = builder
@@ -62,7 +62,7 @@ public class KeyGenerator {
     }
 
     @Test
-    public void generateRsaKeys() throws JoseException {
+    void generateRsaKeys() throws JoseException {
         String jwt = sign();
 
         verify(jwt);
@@ -92,7 +92,7 @@ public class KeyGenerator {
             System.out.println("JWT validation succeeded! " + jwtClaims);
         } catch (InvalidJwtException e) {
             System.out.println("Invalid JWT! " + e);
-            fail();
+            fail("Invalid JWT! " + e);
         }
     }
 

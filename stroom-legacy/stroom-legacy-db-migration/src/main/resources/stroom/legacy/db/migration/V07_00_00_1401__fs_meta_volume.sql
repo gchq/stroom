@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS fs_meta_volume (
     meta_id           bigint NOT NULL,
     fs_volume_id      int NOT NULL,
     PRIMARY KEY       (meta_id, fs_volume_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
 -- Copy data into the fs_meta_volume table

@@ -225,7 +225,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setComponentId(queryPresenter.getId());
         criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
-        criteria.setPageRequest(new PageRequest(0L, 100));
+        criteria.setPageRequest(new PageRequest(0, 100));
 
         final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
         rest

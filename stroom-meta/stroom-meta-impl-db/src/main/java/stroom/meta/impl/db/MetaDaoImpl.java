@@ -1,6 +1,5 @@
 package stroom.meta.impl.db;
 
-import stroom.collection.api.CollectionService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -17,9 +16,9 @@ import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.TermHandlerFactory;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
-import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -149,7 +148,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaKeyDaoImpl metaKeyDao;
     private final DataRetentionConfig dataRetentionConfig;
     private final DocRefInfoService docRefInfoService;
-
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
@@ -165,9 +163,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 final MetaKeyDaoImpl metaKeyDao,
                 final DataRetentionConfig dataRetentionConfig,
                 final ExpressionMapperFactory expressionMapperFactory,
-                final WordListProvider wordListProvider,
-                final CollectionService collectionService,
-                final DocRefInfoService docRefInfoService) {
+                final DocRefInfoService docRefInfoService,
+                final TermHandlerFactory termHandlerFactory) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
@@ -176,16 +173,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
         this.dataRetentionConfig = dataRetentionConfig;
         this.docRefInfoService = docRefInfoService;
 
-
         // Extended meta fields.
         metaExpressionMapper = new MetaExpressionMapper(
                 metaKeyDao,
                 META_VAL.META_KEY_ID.getName(),
                 META_VAL.VAL.getName(),
                 META_VAL.META_ID.getName(),
-                MetaFields.getExtendedFields().size(),
-                wordListProvider,
-                collectionService);
+                termHandlerFactory);
         //Add term handlers
         metaExpressionMapper.map(MetaFields.REC_READ);
         metaExpressionMapper.map(MetaFields.REC_WRITE);
@@ -202,8 +196,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
         expressionMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
-        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
-        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
+        expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS,
                 meta.STATUS,
@@ -229,8 +222,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
-        valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, ValString::create);
-        valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
+        valueMapper.map(MetaFields.TYPE, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
@@ -883,16 +875,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(),
-                Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
-        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED,
-                MetaFields.FEED_NAME)::contains);
-        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
-        final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED);
+        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.FEED));
+        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE);
+        final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE));
         final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
         final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
-//        final int extendedTermCount = ExpressionUtil.termCount(
-//        criteria.getExpression(), MetaFields.getExtendedFields());
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
@@ -931,7 +919,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
             int numberOfRows = 1000000;
 
             if (pageRequest != null) {
-                offset = pageRequest.getOffset().intValue();
+                offset = pageRequest.getOffset();
                 numberOfRows = pageRequest.getLength();
             }
 
@@ -1329,9 +1317,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 field = meta.ID;
             } else if (MetaFields.CREATE_TIME.getName().equals(sort.getId())) {
                 field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED_NAME.getName().equals(sort.getId())) {
+            } else if (MetaFields.FEED.getName().equals(sort.getId())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getId())) {
+            } else if (MetaFields.TYPE.getName().equals(sort.getId())) {
                 field = metaType.NAME;
             } else if (MetaFields.PARENT_ID.getName().equals(sort.getId())) {
                 field = meta.PARENT_ID;

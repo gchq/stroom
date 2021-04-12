@@ -119,6 +119,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select(INDEX_VOLUME_GROUP.NAME)
                 .from(INDEX_VOLUME_GROUP)
+                .orderBy(INDEX_VOLUME_GROUP.NAME)
                 .fetch(INDEX_VOLUME_GROUP.NAME));
     }
 
@@ -127,6 +128,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME_GROUP)
+                .orderBy(INDEX_VOLUME_GROUP.NAME)
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER::apply));
     }

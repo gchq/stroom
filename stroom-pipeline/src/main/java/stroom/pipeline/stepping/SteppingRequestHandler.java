@@ -18,7 +18,7 @@
 package stroom.pipeline.stepping;
 
 import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.SizeAwareInputStream;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
@@ -98,6 +98,7 @@ class SteppingRequestHandler {
     private Pipeline pipeline;
     private LoggingErrorReceiver loggingErrorReceiver;
     private Set<String> generalErrors;
+    private boolean isSegmentedData;
 
     @Inject
     SteppingRequestHandler(final Store streamStore,
@@ -212,7 +213,8 @@ class SteppingRequestHandler {
                         stepData.convertToShared(),
                         curentStreamOffset,
                         controller.isFound(),
-                        generalErrors);
+                        generalErrors,
+                        isSegmentedData);
             });
         });
     }
@@ -550,11 +552,15 @@ class SteppingRequestHandler {
                 // Get the stream.
                 try (final InputStreamProvider inputStreamProvider = source.get(partNo - 1)) {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
-                    final SizeAwareInputStream inputStream = inputStreamProvider.get(childDataType);
+                    final SegmentInputStream inputStream = inputStreamProvider.get(childDataType);
+
+                    // Get the segment count so we can determine if this is raw/segmented
+                    isSegmentedData = inputStream.count() > 1;
 
                     // Process the boundary.
                     try {
                         if (inputStream.size() > 0) {
+                            controller.setIsSegmentedData(isSegmentedData);
                             controller.setStepLocation(currentLocation);
                             pipeline.process(inputStream, encoding);
                         }
@@ -628,7 +634,6 @@ class SteppingRequestHandler {
                         "You cannot step with this pipeline as it does not contain required elements.");
             }
         }
-
         return pipeline;
     }
 
@@ -641,87 +646,6 @@ class SteppingRequestHandler {
                 ", received=" +
                 DateUtil.createNormalDateTimeString(meta.getCreateMs());
     }
-
-//    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
-//        String data = null;
-//        if (location != null && highlights != null && highlights.size() > 0) {
-//            try {
-//                final StreamSource streamSource = streamStore.openSource(location.getMetaId());
-//                if (streamSource != null) {
-//                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
-//
-//                    try {
-//                        // Skip to the appropriate stream.
-//                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
-//                            // Load the feed.
-//                            final String feedName = streamSource.getMeta().getFeedName();
-//
-//                            // Get the stream type.
-//                            final String streamTypeName = streamSource.getStreamTypeName();
-//
-//                            // Get the appropriate encoding for the stream type.
-//                            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
-//
-//                            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
-//                            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-//                            final StringBuilder sb = new StringBuilder();
-//
-//                            int i;
-//                            boolean found = false;
-//                            int lineNo = 1;
-//                            int colNo = 0;
-//                            boolean inRecord = false;
-//
-//                            while ((i = bufferedReader.read()) != -1 && !found) {
-//                                final char c = (char) i;
-//
-//                                if (c == '\n') {
-//                                    lineNo++;
-//                                    colNo = 0;
-//                                } else {
-//                                    colNo++;
-//                                }
-//
-//                                for (final Highlight highlight : highlights) {
-//                                    if (!inRecord) {
-//                                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
-//                                                && colNo >= highlight.getColFrom())) {
-//                                            inRecord = true;
-//                                            break;
-//                                        }
-//                                    } else if (lineNo > highlight.getLineTo()
-//                                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
-//                                        inRecord = false;
-//                                        found = true;
-//                                        break;
-//                                    }
-//                                }
-//
-//                                if (inRecord) {
-//                                    sb.append(c);
-//                                }
-//                            }
-//
-//                            inputStream.closeEntry();
-//                            bufferedReader.close();
-//
-//                            data = sb.toString();
-//                        }
-//                    } finally {
-//                        try {
-//                            inputStream.close();
-//                        } finally {
-//                            streamStore.closeStreamSource(streamSource);
-//                        }
-//                    }
-//                }
-//            } catch (final IOException e) {
-//                error(e);
-//            }
-//        }
-//
-//        return data;
-//    }
 
     private void error(final Exception e) {
         LOGGER.debug(e.getMessage(), e);

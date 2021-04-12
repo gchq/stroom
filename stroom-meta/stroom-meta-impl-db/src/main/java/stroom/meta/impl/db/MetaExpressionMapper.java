@@ -1,10 +1,9 @@
 package stroom.meta.impl.db;
 
-import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.CommonExpressionMapper;
-import stroom.db.util.CommonExpressionMapper.TermHandler;
-import stroom.dictionary.api.WordListProvider;
+import stroom.db.util.TermHandler;
+import stroom.db.util.TermHandlerFactory;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
@@ -27,23 +26,19 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     private final String keyFieldName;
     private final String valueFieldName;
     private final String metaIdFieldName;
-    private final WordListProvider wordListProvider;
-    private final CollectionService collectionService;
+    private final TermHandlerFactory termHandlerFactory;
 
     MetaExpressionMapper(final MetaKeyDao metaKeyDao,
                          final String keyFieldName,
                          final String valueFieldName,
                          final String metaIdFieldName,
-                         final int maxValKeyId,
-                         final WordListProvider wordListProvider,
-                         final CollectionService collectionService) {
+                         final TermHandlerFactory termHandlerFactory) {
         expressionMapper = new CommonExpressionMapper();
         this.metaKeyDao = metaKeyDao;
         this.keyFieldName = keyFieldName;
         this.metaIdFieldName = metaIdFieldName;
         this.valueFieldName = valueFieldName;
-        this.wordListProvider = wordListProvider;
-        this.collectionService = collectionService;
+        this.termHandlerFactory = termHandlerFactory;
     }
 
     public void map(final AbstractField dataSourceField) {
@@ -51,13 +46,12 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
 
         if (idOptional.isPresent()) {
             int id = idOptional.get();
-            Field valueField = createValueField(id);
+            Field<Long> valueField = createValueField(id);
 
-            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField,
+            final TermHandler<Long> termHandler = termHandlerFactory.create(
+                    dataSourceField,
                     valueField,
-                    value -> List.of(Long.valueOf(value)),
-                    wordListProvider,
-                    collectionService);
+                    value -> List.of(Long.valueOf(value)));
 
             final MetaTermHandler handler = new MetaTermHandler(
                     createKeyField(id),
@@ -69,7 +63,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
 
     public SelectJoinStep<?> addJoins(
             SelectJoinStep<?> query,
-            final Field metaIdField,
+            final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
         for (Integer id : usedValKeys) {
@@ -83,16 +77,16 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         return "`v" + valKeyId + "`";
     }
 
-    private Field createValueField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + valueFieldName + "`");
+    private Field<Long> createValueField(final int valKeyId) {
+        return DSL.field(createTableName(valKeyId) + ".`" + valueFieldName + "`", Long.class);
     }
 
-    private Field createKeyField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + keyFieldName + "`");
+    private Field<Integer> createKeyField(final int valKeyId) {
+        return DSL.field(createTableName(valKeyId) + ".`" + keyFieldName + "`", Integer.class);
     }
 
-    private Field createMetaIdField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + metaIdFieldName + "`");
+    private Field<Long> createMetaIdField(final int valKeyId) {
+        return DSL.field(createTableName(valKeyId) + ".`" + metaIdFieldName + "`", Long.class);
     }
 
     @Override

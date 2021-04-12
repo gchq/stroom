@@ -8463,12 +8463,6 @@
           "sourceTaskId" : {
             "$ref" : "#/components/schemas/TaskId"
           },
-          "storedFields" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
           "taskName" : {
             "type" : "string"
           }
@@ -9001,10 +8995,7 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "feedName" : {
-            "type" : "string"
-          },
-          "metaType" : {
+          "feed" : {
             "type" : "string"
           },
           "ruleName" : {
@@ -9013,6 +9004,9 @@
           "ruleNumber" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "type" : {
+            "type" : "string"
           }
         }
       },
@@ -11500,7 +11494,7 @@
           },
           "offset" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int32"
           }
         }
       },
@@ -13957,6 +13951,9 @@
             },
             "uniqueItems" : true
           },
+          "segmentedData" : {
+            "type" : "boolean"
+          },
           "stepData" : {
             "$ref" : "#/components/schemas/SharedStepData"
           },
@@ -14587,7 +14584,7 @@
           "backgroundAttachment" : {
             "type" : "string"
           },
-          "backgroundColor" : {
+          "backgroundColour" : {
             "type" : "string"
           },
           "backgroundImage" : {
@@ -14603,6 +14600,9 @@
             "type" : "string"
           },
           "labelColours" : {
+            "type" : "string"
+          },
+          "topMenuTextColour" : {
             "type" : "string"
           },
           "tubeOpacity" : {
@@ -14801,6 +14801,9 @@
           },
           "query" : {
             "$ref" : "#/components/schemas/QueryConfig"
+          },
+          "requireReactWrapper" : {
+            "type" : "boolean"
           },
           "source" : {
             "$ref" : "#/components/schemas/SourceConfig"

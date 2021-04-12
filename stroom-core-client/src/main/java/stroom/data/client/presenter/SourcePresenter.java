@@ -175,7 +175,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 //                GWT.log("Using existing source");
 
                 // Update the highlight in case refresh is called
-                requestedSourceLocation = receivedSourceLocation.clone()
+                requestedSourceLocation = receivedSourceLocation.copy()
                         .withHighlight(highlight)
                         .build();
 
@@ -187,7 +187,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 doWithConfig(sourceConfig -> {
                     final Location newSourceStart = buildNewSourceLocationFromHighlight(
                             sourceLocation, highlight, sourceConfig);
-                    final SourceLocation newSourceLocation = sourceLocation.clone()
+                    final SourceLocation newSourceLocation = sourceLocation.copy()
                             .withDataRange(DataRange.fromLocation(newSourceStart))
                             .build();
 
@@ -275,7 +275,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     private boolean isCurrentSourceSuitable(final SourceLocation sourceLocation) {
         final boolean result;
-        if (receivedSourceLocation == null) {
+        if (receivedSourceLocation == null || receivedSourceLocation.getDataRange() == null) {
             result = false;
         } else {
             result = receivedSourceLocation.isSameSource(sourceLocation)
@@ -592,7 +592,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         @Override
         public void setDataRange(final DataRange dataRange) {
 //            doWithConfig(sourceConfig -> {
-            final SourceLocation newSourceLocation = requestedSourceLocation.clone()
+            final SourceLocation newSourceLocation = requestedSourceLocation.copy()
                     .withDataRange(dataRange)
                     .build();
 

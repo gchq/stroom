@@ -11,9 +11,9 @@ import java.util.Objects;
 public class DataRetentionDeleteSummary {
 
     @JsonProperty
-    private final String feedName;
+    private final String feed;
     @JsonProperty
-    private final String metaType;
+    private final String type;
     @JsonProperty
     private final int ruleNumber;
     @JsonProperty
@@ -22,24 +22,24 @@ public class DataRetentionDeleteSummary {
     private final int count;
 
     @JsonCreator
-    public DataRetentionDeleteSummary(@JsonProperty("feedName") final String feedName,
-                                      @JsonProperty("metaType") final String metaType,
+    public DataRetentionDeleteSummary(@JsonProperty("feed") final String feed,
+                                      @JsonProperty("type") final String type,
                                       @JsonProperty("ruleNumber") final int ruleNumber,
                                       @JsonProperty("ruleName") final String ruleName,
                                       @JsonProperty("count") final int count) {
-        this.feedName = Objects.requireNonNull(feedName);
-        this.metaType = Objects.requireNonNull(metaType);
+        this.feed = Objects.requireNonNull(feed);
+        this.type = Objects.requireNonNull(type);
         this.ruleNumber = ruleNumber;
         this.ruleName = Objects.requireNonNull(ruleName);
         this.count = count;
     }
 
-    public String getFeedName() {
-        return feedName;
+    public String getFeed() {
+        return feed;
     }
 
-    public String getMetaType() {
-        return metaType;
+    public String getType() {
+        return type;
     }
 
     public int getRuleNumber() {
@@ -66,13 +66,13 @@ public class DataRetentionDeleteSummary {
         final DataRetentionDeleteSummary that = (DataRetentionDeleteSummary) o;
         return ruleNumber == that.ruleNumber &&
                 count == that.count &&
-                feedName.equals(that.feedName) &&
-                metaType.equals(that.metaType) &&
+                feed.equals(that.feed) &&
+                type.equals(that.type) &&
                 ruleName.equals(that.ruleName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedName, metaType, ruleNumber, ruleName, count);
+        return Objects.hash(feed, type, ruleNumber, ruleName, count);
     }
 }

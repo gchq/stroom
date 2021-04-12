@@ -39,15 +39,15 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
-    FilterFieldDefinition FIELD_DEF_EFFECTIVE_VALUE = FilterFieldDefinition.qualifiedField(
-            "Effective Value", "value");
+    FilterFieldDefinition FIELD_DEF_VALUE = FilterFieldDefinition.qualifiedField(
+            "Value", "value");
     FilterFieldDefinition FIELD_DEF_SOURCE = FilterFieldDefinition.qualifiedField("Source");
     FilterFieldDefinition FIELD_DEF_DESCRIPTION = FilterFieldDefinition.qualifiedField(
             "Description", "desc");
 
     List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME,
-            FIELD_DEF_EFFECTIVE_VALUE,
+            FIELD_DEF_VALUE,
             FIELD_DEF_SOURCE,
             FIELD_DEF_DESCRIPTION);
 

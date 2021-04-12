@@ -15,7 +15,7 @@
  */
 
 .stroom-body {
-	background-color: @THEME_BACKGROUND_COLOR@  !important;
+	background-color: @THEME_BACKGROUND_COLOUR@  !important;
 }
 
 .stroom-background {
@@ -29,4 +29,8 @@
 .tubeEffect {
 	opacity: @THEME_TUBE_OPACITY@;
 	visibility: @THEME_TUBE_VISIBLE@;
+}
+
+.menuBar .text {
+    color: @THEME_TOP_MENU_TEXT_COLOUR@  !important;
 }

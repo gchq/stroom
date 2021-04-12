@@ -3,12 +3,15 @@ package stroom.importexport.impl;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -17,6 +20,7 @@ import stroom.util.shared.ResultPage;
 import event.logging.AdvancedQuery;
 import event.logging.Criteria;
 import event.logging.ExportEventAction;
+import event.logging.Folder;
 import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.Or;
@@ -36,18 +40,24 @@ import javax.ws.rs.BadRequestException;
 public class ContentResourceImpl implements ContentResource {
     final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
     final Provider<ContentService> contentServiceProvider;
+    final Provider<ExplorerNodeService> explorerNodeServiceProvider;
+    final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ContentResourceImpl(final Provider<StroomEventLoggingService> eventLoggingServiceProvider,
-                        final Provider<ContentService> contentServiceProvider) {
+                        final Provider<ContentService> contentServiceProvider,
+                        final Provider<ExplorerNodeService> explorerNodeServiceProvider,
+                        final Provider<SecurityContext> securityContextProvider) {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
         this.contentServiceProvider = contentServiceProvider;
+        this.explorerNodeServiceProvider = explorerNodeServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceKey importContent(final ImportConfigRequest request) {
-        if (request.getConfirmList() == null || request.getConfirmList().isEmpty()) {
+        if (request.getConfirmList() == null) {
             throw new BadRequestException("Missing confirm list");
         }
 
@@ -90,13 +100,41 @@ public class ContentResourceImpl implements ContentResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration exportContent(final DocRefs docRefs) {
+        final MultiObject.Builder<Void> builder = MultiObject.builder();
+        docRefs.getDocRefs().stream()
+                .forEach(docRef -> {
+                    final String path = securityContextProvider.get()
+                            .asProcessingUserResult(() ->  explorerNodeServiceProvider.get().getPath(docRef))
+                            .stream().map(ExplorerNode::getName).collect(Collectors.joining("/"))
+                            + docRef.getName();
+
+                    if ("Folder".equals(docRef.getType())) {
+                        builder.addFolder(
+                                Folder.builder()
+                                        .withName(docRef.getName())
+                                        .withPath(path)
+                                        .withId(docRef.getUuid())
+                                        .withDescription(docRef.toInfoString())
+                                        .build()
+                        );
+                    } else {
+                        builder.addObject(
+                                OtherObject.builder()
+                                        .withName(docRef.getName())
+                                        .withType(docRef.getType())
+                                        .withId(docRef.getUuid())
+                                        .withDescription(path + " : " + docRef.toInfoString())
+                                        .build()
+
+                        );
+                    }
+                });
+
         return eventLoggingServiceProvider.get().loggedResult(
                 "ExportConfig",
                 "Exporting Configuration",
                 ExportEventAction.builder()
-                        .withSource(MultiObject.builder()
-                                .addCriteria(buildCriteria(docRefs))
-                                .build())
+                        .withSource(builder.build())
                         .build(),
                 () -> contentServiceProvider.get().exportContent(docRefs));
     }

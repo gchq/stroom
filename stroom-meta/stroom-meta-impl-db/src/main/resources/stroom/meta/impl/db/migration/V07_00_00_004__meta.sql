@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `meta` (
   `create_time` bigint NOT NULL,
   `effective_time` bigint DEFAULT NULL,
   `parent_id` bigint DEFAULT NULL,
-  `status` tinyint(4) NOT NULL,
+  `status` tinyint NOT NULL,
   `status_time` bigint DEFAULT NULL,
   `feed_id` int NOT NULL,
   `type_id` int NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `meta` (
   CONSTRAINT `meta_feed_id` FOREIGN KEY (`feed_id`) REFERENCES `meta_feed` (`id`),
   CONSTRAINT `meta_processor_id` FOREIGN KEY (`processor_id`) REFERENCES `meta_processor` (`id`),
   CONSTRAINT `meta_type_id` FOREIGN KEY (`type_id`) REFERENCES `meta_type` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

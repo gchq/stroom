@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `processor_task` (
   `create_time_ms` bigint DEFAULT NULL,
   `start_time_ms` bigint DEFAULT NULL,
   `end_time_ms` bigint DEFAULT NULL,
-  `status` tinyint(4) NOT NULL,
+  `status` tinyint NOT NULL,
   `status_time_ms` bigint DEFAULT NULL,
   `meta_id` bigint NOT NULL,
   `data` longtext,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `processor_task` (
   CONSTRAINT `processor_task_fk_processor_feed_id` FOREIGN KEY (`fk_processor_feed_id`) REFERENCES `processor_feed` (`id`),
   CONSTRAINT `processor_task_fk_processor_filter_id` FOREIGN KEY (`fk_processor_filter_id`) REFERENCES `processor_filter` (`id`),
   CONSTRAINT `processor_task_fk_processor_node_id` FOREIGN KEY (`fk_processor_node_id`) REFERENCES `processor_node` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

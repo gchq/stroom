@@ -39,8 +39,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.time.StroomDuration;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -84,19 +82,6 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     private PhysicalDeleteExecutor physicalDeleteExecutor;
     @Inject
     private DataStoreServiceConfig dataStoreServiceConfig;
-
-    private int initialReplicationCount = 1;
-
-    @BeforeEach
-    void beforeEach() {
-        initialReplicationCount = volumeConfig.getResilientReplicationCount();
-        volumeConfig.setResilientReplicationCount(REPLICATION_COUNT);
-    }
-
-    @AfterEach
-    void afterEach() {
-        volumeConfig.setResilientReplicationCount(initialReplicationCount);
-    }
 
     @Test
     void testCheckArchive() throws IOException {
@@ -166,7 +151,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
+        builder.addTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
         dataRetentionRules.setRules(Collections.singletonList(rule));
         dataRetentionRulesService.writeDocument(dataRetentionRules);

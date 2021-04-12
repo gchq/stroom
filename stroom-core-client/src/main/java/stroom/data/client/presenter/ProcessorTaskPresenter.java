@@ -64,7 +64,7 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
                     root.addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }
                 if (row.getFeed() != null) {
-                    root.addTerm(ProcessorTaskFields.FEED_NAME, Condition.EQUALS, row.getFeed());
+                    root.addTerm(ProcessorTaskFields.FEED, Condition.EQUALS, row.getFeed());
                 }
                 if (row.getStatus() != null) {
                     root.addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
