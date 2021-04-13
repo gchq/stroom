@@ -28,8 +28,8 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Caches")
@@ -49,19 +49,20 @@ public interface CacheResource extends RestResource, DirectRestService {
     List<String> list();
 
     @GET
-    @Path(INFO)
+    @Path(INFO + "/{cacheName}/{nodeName}")
     @Operation(
             summary = "Gets cache info",
             operationId = "getCacheInfo")
     CacheInfoResponse info(
-            @QueryParam("cacheName") String cacheName,
-            @QueryParam("nodeName") String nodeName);
+            @PathParam("cacheName") String cacheName,
+            @PathParam("nodeName") String nodeName);
 
     @DELETE
+    @Path("/{cacheName}/{nodeName}")
     @Operation(
             summary = "Clears a cache",
             operationId = "clearCache")
     Long clear(
-            @QueryParam("cacheName") String cacheName,
-            @QueryParam("nodeName") String nodeName);
+            @PathParam("cacheName") String cacheName,
+            @PathParam("nodeName") String nodeName);
 }
