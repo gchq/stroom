@@ -1,4 +1,7 @@
 #!/bin/bash
 
 # Generate typescript API from Swagger schema.
-npx swagger-typescript-api -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts
+echo "npx --version"
+npx --version
+echo "npx swagger-typescript-api@8.0.3 -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts"
+npx swagger-typescript-api@8.0.3 -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts

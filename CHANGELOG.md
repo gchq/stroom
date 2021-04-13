@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix `node` and `swagger-typescript-api` versions.
+
 
 ## [v7.0-beta.103] - 2021-04-13
 
