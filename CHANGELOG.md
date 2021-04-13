@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Switched from `node-sass` to `sass`
+
 * Fix `node` and `swagger-typescript-api` versions.
 
 

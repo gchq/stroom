@@ -86,12 +86,6 @@ appConfig:
 #    scheme: http
 #    hostname: localhost
 #    port: 3000
-#  security:
-#    webContent:
-#      contentSecurityPolicy: ""
-#      contentTypeOptions: ""
-#      frameOptions: ""
-#      xssProtection: ""
 
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
@@ -103,6 +97,14 @@ appConfig:
       passwordPolicy:
         minimumPasswordStrength: 1
         minimumPasswordLength: 1
+
+#   Uncomment the following to develop React code with `yarn start`
+#      webContent:
+#        contentSecurityPolicy: ""
+#        contentTypeOptions: ""
+#        frameOptions: ""
+#        xssProtection: ""
+
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
