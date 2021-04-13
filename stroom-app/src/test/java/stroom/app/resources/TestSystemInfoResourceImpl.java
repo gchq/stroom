@@ -32,6 +32,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
 
     @Test
     void getAll() {
+        LOGGER.info("Running");
 
         final HasSystemInfo systemInfoSupplier1 = getSystemInfoSupplier(buildSystemInfoResult("name1"));
         final HasSystemInfo systemInfoSupplier2 = getSystemInfoSupplier(buildSystemInfoResult("name2"));

@@ -40,7 +40,8 @@ public final class NodeCallUtil {
 
         final String thisNodeUrl = nodeService.getBaseEndpointUrl(nodeInfo.getThisNodeName());
         if (url.equals(thisNodeUrl)) {
-            throw new RuntimeException("Remote node '" + nodeName + "' is using the same URL as this node");
+            throw new RuntimeException("Remote node '" + nodeName + "' is using the same URL ("
+                    + thisNodeUrl + ") as this node");
         }
 
         return url;

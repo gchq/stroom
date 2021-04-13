@@ -34,7 +34,9 @@ const SingleValue: React.FunctionComponent<SingleValueProps<BasicOption>> = ({
   }
 };
 
-const Option: React.FunctionComponent<OptionProps<BasicOption>> = (props) => (
+const Option: React.FunctionComponent<OptionProps<BasicOption, false>> = (
+  props,
+) => (
   <components.Option {...props}>
     <div className="DocRefTypePicker">
       <DocRefImage

@@ -91,6 +91,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
     private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
+    private static final String X_FORWARDED_FOR = "X-FORWARDED-FOR";
 
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
@@ -103,6 +104,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
+    private final DeviceCache deviceCache;
 
     private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
 
@@ -116,13 +118,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
-                                  final Provider<BuildInfo> buildInfoProvider) {
+                                  final Provider<BuildInfo> buildInfoProvider,
+                                  final DeviceCache deviceCache) {
         this.loggingConfig = loggingConfig;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.objectInfoProviderMap = objectInfoProviderMap;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
+        this.deviceCache = deviceCache;
         this.objectMapper = createObjectMapper();
     }
 
@@ -145,6 +149,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         // Get the current request.
         final HttpServletRequest request = getRequest();
 
+        // Get device.
+        final Device device = getDevice(request);
+
+        // Get client.
+        final Device client = getClient(request);
+
         return Event.builder()
                 .withEventTime(EventTime.builder()
                         .withTimeCreated(new Date())
@@ -156,8 +166,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                 .withVersion(buildInfoProvider.get().getBuildVersion())
                                 .build())
                         .withGenerator(GENERATOR)
-                        .withDevice(getClient(request))
-                        .withClient(getClient(request))
+                        .withDevice(device)
+                        .withClient(client)
                         .withUser(getUser())
                         .withRunAs(getRunAsUser())
                         .build())
@@ -204,36 +214,67 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
+    private Device getDevice(final HttpServletRequest request) {
+        // Get stored device info.
+        final Device storedDevice = obtainStoredDevice(request);
+
+        // We need to copy the stored device as users may make changes to the
+        // returned object that might not be thread safe.
+        return copyDevice(storedDevice);
+    }
+
     private Device getClient(final HttpServletRequest request) {
+        Device device = null;
         if (request != null) {
-            try {
-                String ip = request.getRemoteAddr();
-                ip = DeviceUtil.getValidIP(ip);
+            // First try and use the X-FORWARDED-FOR header that provides the originating IP address of the request if
+            // behind a proxy.
+            final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
+            if (forwardedFor != null && !forwardedFor.isBlank()) {
+                device = copyDevice(deviceCache.getDeviceForIpAddress(forwardedFor));
 
-                if (ip != null) {
-                    InetAddress inetAddress = null;
-                    try {
-                        inetAddress = InetAddress.getByName(ip);
-                    } catch (final UnknownHostException e) {
-                        LOGGER.warn("Problem getting client InetAddress", e);
-                    }
-
-                    final Device client;
-                    if (inetAddress != null) {
-                        client = DeviceUtil.createDeviceFromInetAddress(inetAddress);
-                    } else {
-                        client = new Device();
-                    }
-
-                    client.setIPAddress(ip);
-                    return client;
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.warn("Problem getting client IP address and host name", e);
+            } else {
+                // Either the client is not the other side of a firewall or the X-FORWARDED-FOR header has not been
+                // supplied.
+                device = copyDevice(deviceCache.getDeviceForIpAddress(request.getRemoteAddr()));
             }
         }
+        return device;
+    }
 
-        return null;
+    private synchronized Device obtainStoredDevice(final HttpServletRequest request) {
+        if (!obtainedDevice) {
+            // First try and get the local server IP address and host name.
+            InetAddress inetAddress = null;
+            try {
+                inetAddress = InetAddress.getLocalHost();
+            } catch (final UnknownHostException e) {
+                LOGGER.warn("Problem getting device from InetAddress", e);
+            }
+
+            if (inetAddress != null) {
+                storedDevice = DeviceUtil.createDeviceFromInetAddress(inetAddress);
+            } else {
+                // Make final attempt to set with request if we have one and
+                // haven't been able to set IP and host name already.
+                if (request != null) {
+                    storedDevice = deviceCache.getDeviceForIpAddress(request.getLocalAddr());
+                }
+            }
+            obtainedDevice = true;
+        }
+
+        return storedDevice;
+    }
+
+    private Device copyDevice(final Device source) {
+        Device dest = null;
+        if (source != null) {
+            dest = new Device();
+            dest.setIPAddress(source.getIPAddress());
+            dest.setHostName(source.getHostName());
+            dest.setMACAddress(source.getMACAddress());
+        }
+        return dest;
     }
 
     private User getRunAsUser() {
@@ -245,7 +286,9 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 final String osUser = System.getProperty("user.name");
 
                 return User.builder()
-                        .withId(osUser != null ? osUser : PROCESSING_USER_ID)
+                        .withId(osUser != null
+                                ? osUser
+                                : PROCESSING_USER_ID)
                         .build();
             }
         } catch (final RuntimeException e) {
@@ -265,53 +308,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
 
         return null;
-    }
-
-    private synchronized Device obtainStoredDevice(final HttpServletRequest request) {
-        if (!obtainedDevice) {
-            // First try and get the local server IP address and host name.
-            InetAddress inetAddress = null;
-            try {
-                inetAddress = InetAddress.getLocalHost();
-            } catch (final UnknownHostException e) {
-                LOGGER.warn("Problem getting device from InetAddress", e);
-            }
-
-            if (inetAddress != null) {
-                storedDevice = DeviceUtil.createDeviceFromInetAddress(inetAddress);
-            } else {
-                // Make final attempt to set with request if we have one and
-                // haven't been able to set IP and host name already.
-                if (request != null) {
-                    final String ip = DeviceUtil.getValidIP(request.getLocalAddr());
-                    if (ip != null) {
-                        try {
-                            inetAddress = InetAddress.getByName(ip);
-                        } catch (final UnknownHostException e) {
-                            LOGGER.warn("Problem getting client InetAddress", e);
-                        }
-
-                        if (inetAddress != null) {
-                            storedDevice = DeviceUtil.createDeviceFromInetAddress(inetAddress);
-                        } else {
-                            storedDevice = new Device();
-                        }
-
-                        storedDevice.setIPAddress(ip);
-                    }
-                }
-            }
-            obtainedDevice = true;
-        }
-
-        return storedDevice;
-    }
-
-    private Device copyDevice(final Device source, final Device dest) {
-        dest.setIPAddress(source.getIPAddress());
-        dest.setHostName(source.getHostName());
-        dest.setMACAddress(source.getMACAddress());
-        return dest;
     }
 
     private HttpServletRequest getRequest() {
@@ -575,7 +571,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                             }
                             builder.withValue(value);
                         } else {
-                            getDataItems(valObj).stream().forEach(d -> builder.addData(d));
+                            getDataItems(valObj).forEach(builder::addData);
                         }
                     }
                     return builder.build();
@@ -596,20 +592,20 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return ignore;
     }
 
-    private static void ignorePropertiesFromSuperType(final Object obj, final Class potentialSuperType,
-                                                             final Set<String> ignoreProps) {
+    private static void ignorePropertiesFromSuperType(final Object obj, final Class<?> potentialSuperType,
+                                                      final Set<String> ignoreProps) {
         if (potentialSuperType.isAssignableFrom(obj.getClass())) {
             ignoreProps.addAll(Arrays.stream(potentialSuperType.getMethods())
-                .flatMap(method -> {
-                    final String methodName = method.getName();
-                    if (methodName.startsWith("get")) {
-                        return Stream.of(methodName.substring(3, 4).toLowerCase() + methodName.substring(4));
-                    } else if (methodName.startsWith("is")) {
-                        return Stream.of(methodName.substring(2, 3).toLowerCase() + methodName.substring(3));
-                    } else {
-                        return Stream.empty();
-                    }
-                }).collect(Collectors.toList()));
+                    .flatMap(method -> {
+                        final String methodName = method.getName();
+                        if (methodName.startsWith("get")) {
+                            return Stream.of(methodName.substring(3, 4).toLowerCase() + methodName.substring(4));
+                        } else if (methodName.startsWith("is")) {
+                            return Stream.of(methodName.substring(2, 3).toLowerCase() + methodName.substring(3));
+                        } else {
+                            return Stream.empty();
+                        }
+                    }).collect(Collectors.toList()));
         }
     }
 

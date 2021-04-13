@@ -13,6 +13,7 @@ import stroom.util.shared.BuildInfo;
 import event.logging.AuthenticateEventAction;
 import event.logging.BaseObject;
 import event.logging.Data;
+import event.logging.Device;
 import event.logging.OtherObject;
 import event.logging.Outcome;
 import event.logging.Resource;
@@ -68,7 +69,12 @@ class TestStroomEventLoggingServiceImpl {
                 () -> httpServletRequest,
                 objectInfoProviderMap,
                 currentActivity,
-                () -> buildInfo);
+                () -> buildInfo,
+                (ipAddress -> {
+                    Device device = new Device();
+                    device.setIPAddress(ipAddress);
+                    return device;
+                }));
 
         LocalLogReceiver.getEvents()
                 .clear();

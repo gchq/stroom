@@ -42,8 +42,8 @@ const SingleValue: React.FunctionComponent<SingleValueProps<DocRefType>> = ({
   </div>
 );
 
-const Option: React.FunctionComponent<OptionProps<DocRefType>> = (
-  props: OptionProps<DocRefType>,
+const Option: React.FunctionComponent<OptionProps<DocRefType, false>> = (
+  props: OptionProps<DocRefType, false>,
 ) => {
   const { onOptionFocus, provideBreadcrumbs } = props.selectProps;
 
@@ -77,7 +77,7 @@ const DropdownIndicator: React.FunctionComponent<any> = (props) => {
   return <ModeOptionButtons {...props.selectProps.modeOptionProps} />;
 };
 
-const Menu: React.FunctionComponent<MenuProps<DocRefType>> = (props) => {
+const Menu: React.FunctionComponent<MenuProps<DocRefType, false>> = (props) => {
   const { headerIcon, headerTitle } = props.selectProps;
   return (
     <React.Fragment>

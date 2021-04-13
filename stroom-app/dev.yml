@@ -86,12 +86,6 @@ appConfig:
 #    scheme: http
 #    hostname: localhost
 #    port: 3000
-#  security:
-#    webContent:
-#      contentSecurityPolicy: ""
-#      contentTypeOptions: ""
-#      frameOptions: ""
-#      xssProtection: ""
 
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
@@ -103,6 +97,14 @@ appConfig:
       passwordPolicy:
         minimumPasswordStrength: 1
         minimumPasswordLength: 1
+
+#   Uncomment the following to develop React code with `yarn start`
+#      webContent:
+#        contentSecurityPolicy: ""
+#        contentTypeOptions: ""
+#        frameOptions: ""
+#        xssProtection: ""
+
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
@@ -114,4 +116,10 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
-
+    sql:
+      db:
+        connection:
+          jdbcDriverClassName: "${STROOM_STATISTICS_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}"
+          jdbcDriverUrl: "${STROOM_STATISTICS_JDBC_DRIVER_URL:-jdbc:mysql://localhost:3307/stats?useUnicode=yes&characterEncoding=UTF-8}"
+          jdbcDriverUsername: "${STROOM_STATISTICS_JDBC_DRIVER_USERNAME:-statsuser}"
+          jdbcDriverPassword: "${STROOM_STATISTICS_JDBC_DRIVER_PASSWORD:-stroompassword1}"

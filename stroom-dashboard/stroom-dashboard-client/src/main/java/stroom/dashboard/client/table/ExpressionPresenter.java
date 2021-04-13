@@ -358,13 +358,18 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                     fieldName,
                                     null,
                                     true,
-                                    () -> addFunction(fieldName)))
+                                    () -> addField(fieldName)))
                     .collect(Collectors.toList());
         } else {
             menuItems = Collections.emptyList();
         }
 
         return menuItems;
+    }
+
+    private void addField(final String field) {
+        editorPresenter.insertTextAtCursor(field);
+        editorPresenter.focus();
     }
 
     private void addFunction(final String func) {

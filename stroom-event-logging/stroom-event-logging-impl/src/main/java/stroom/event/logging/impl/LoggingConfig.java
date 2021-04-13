@@ -16,7 +16,9 @@
 
 package stroom.event.logging.impl;
 
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -34,6 +36,11 @@ public class LoggingConfig extends AbstractConfig {
     private int maxListElements = 5;
 
     private int maxDataElementStringLength = 500;
+
+    private CacheConfig deviceCache = CacheConfig.builder()
+            .maximumSize(1000L)
+            .expireAfterWrite(StroomDuration.ofMinutes(60))
+            .build();
 
     @JsonProperty("omitRecordDetailsLoggingEnabled")
     @JsonPropertyDescription("Suppress standard database record fields " +
@@ -76,6 +83,15 @@ public class LoggingConfig extends AbstractConfig {
         this.logEveryRestCallEnabled = logEveryRestCallEnabled;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("The cache configuration for remembering device objects for IP addresses.")
+    public CacheConfig getDeviceCache() {
+        return deviceCache;
+    }
+
+    public void setDeviceCache(final CacheConfig deviceCache) {
+        this.deviceCache = deviceCache;
+    }
 
     @Override
     public String toString() {

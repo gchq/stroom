@@ -8,7 +8,6 @@ import io.dropwizard.jersey.validation.ValidationErrorMessage;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.Assertions;
-import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.junit.Rule;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.function.Function;
-import javax.ws.rs.client.ClientBuilder;
+import java.util.logging.Level;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -29,6 +29,12 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResourceTest.class);
 
+    final LoggingFeature loggingFeature = new LoggingFeature(
+            java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+            Level.INFO,
+            LoggingFeature.Verbosity.PAYLOAD_ANY,
+            LoggingFeature.DEFAULT_MAX_ENTITY_SIZE);
+
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
     @Rule
     private final ResourceExtension resources = ResourceExtension.builder()
@@ -36,12 +42,24 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                 LOGGER.info("Calling getRestResource()");
                 return getRestResource();
             })
+            .setClientConfigurator(clientConfig ->
+                    clientConfig
+                            .register(loggingFeature))
             .build();
 
-    private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
-            new ClientConfig().register(LoggingFeature.class))
-            .target(url);
+    private final WebTargetFactory webTargetFactory = url -> {
+        // Convert url to sub path http://localhost:9998/base/path/sub/path => /sub/path
+        String fullPath = url.replace("http://", "");
+        fullPath = fullPath.replace("//", "/");
+        fullPath = fullPath.substring(fullPath.indexOf("/"));
+        final String subPath = fullPath.replace(getResourceBasePath(), "");
+        System.out.println("subPath: " + subPath);
+        return resources.target(subPath);
+    };
 
+    /**
+     * @return A mocked implementation of the resource
+     */
     public abstract R getRestResource();
 
     public abstract String getResourceBasePath();
@@ -50,10 +68,17 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         return resources;
     }
 
-    public static WebTargetFactory webTargetFactory() {
-        return WEB_TARGET_FACTORY;
+    public WebTargetFactory webTargetFactory() {
+        return webTargetFactory;
     }
 
+//    public Provider<HttpServletRequest> getHttpServletRequestProvider() {
+//        return httpServletRequestHolder;
+//    }
+
+    public URI getServerBaseUri() {
+        return resources.getJerseyTest().target().getUri();
+    }
 
 //    public  <T_RESP> T_RESP doGetTest(final String subPath,
 //                            final Class<T_RESP> responseType,
@@ -154,9 +179,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling PUT on {}{}, passing {}",
                 getResourceBasePath(), subPath, requestEntity);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -195,9 +218,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -237,4 +258,29 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     private boolean isSuccessful(final int statusCode) {
         return statusCode >= 200 && statusCode < 300;
     }
+
+//    private static class MyHttpServletRequestHolder
+//            implements DynamicFeature, ContainerRequestFilter, Provider<HttpServletRequest> {
+//
+//        private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
+//
+//        @Override
+//        public HttpServletRequest get() {
+//            return threadLocal.get();
+//        }
+//
+//        @Override
+//        public void filter(final ContainerRequestContext requestContext) throws IOException {
+//
+//            final Request request = requestContext.getRequest();
+//            if (request instanceof HttpServletRequest) {
+//                threadLocal.set((HttpServletRequest) request);
+//            }
+//        }
+//
+//        @Override
+//        public void configure(final ResourceInfo resourceInfo, final FeatureContext context) {
+//            context.register(this);
+//        }
+//    }
 }

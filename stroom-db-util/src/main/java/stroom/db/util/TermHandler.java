@@ -56,32 +56,44 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     @Override
     public Condition apply(final ExpressionTerm term) {
         switch (term.getCondition()) {
-            case EQUALS: {
+            case EQUALS, CONTAINS -> {
                 return eq(term);
             }
-            case CONTAINS: {
-                return eq(term);
-            }
-            case BETWEEN: {
+            case BETWEEN -> {
                 final String[] parts = term.getValue().split(LIST_DELIMITER);
                 if (parts.length == 2) {
-                    return field.between(getSingleValue(term, parts[0]), getSingleValue(term, parts[1]));
+                    final List<T> value1 = getValues(parts[0]);
+                    final List<T> value2 = getValues(parts[1]);
+                    if (value1.size() == 1 && value2.size() == 1) {
+                        return field.between(value1.get(0), value2.get(0));
+                    }
                 }
-                break;
             }
-            case GREATER_THAN: {
-                return field.greaterThan(getSingleValue(term, term.getValue()));
+            case GREATER_THAN -> {
+                final List<T> value = getValues(term.getValue());
+                if (value.size() == 1) {
+                    return field.greaterThan(value.get(0));
+                }
             }
-            case GREATER_THAN_OR_EQUAL_TO: {
-                return field.greaterOrEqual(getSingleValue(term, term.getValue()));
+            case GREATER_THAN_OR_EQUAL_TO -> {
+                final List<T> value = getValues(term.getValue());
+                if (value.size() == 1) {
+                    return field.greaterOrEqual(value.get(0));
+                }
             }
-            case LESS_THAN: {
-                return field.lessThan(getSingleValue(term, term.getValue()));
+            case LESS_THAN -> {
+                final List<T> value = getValues(term.getValue());
+                if (value.size() == 1) {
+                    return field.lessThan(value.get(0));
+                }
             }
-            case LESS_THAN_OR_EQUAL_TO: {
-                return field.lessOrEqual(getSingleValue(term, term.getValue()));
+            case LESS_THAN_OR_EQUAL_TO -> {
+                final List<T> value = getValues(term.getValue());
+                if (value.size() == 1) {
+                    return field.lessOrEqual(value.get(0));
+                }
             }
-            case IN: {
+            case IN -> {
                 List<T> values = Collections.emptyList();
                 final String value = term.getValue().trim();
                 if (value.length() > 0) {
@@ -95,38 +107,36 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 }
                 return field.in(values);
             }
-            case IN_DICTIONARY: {
+            case IN_DICTIONARY -> {
                 return isInDictionary(term.getDocRef());
             }
-            case IN_FOLDER: {
+            case IN_FOLDER -> {
                 return isInFolder(term, term.getDocRef());
             }
-            case IS_DOC_REF: {
+            case IS_DOC_REF -> {
                 if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
                     return field.isNull();
                 } else {
-                    final String value = getDocValue(term, term.getDocRef());
-                    return field.equal(getSingleValue(term, value));
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    if (value.size() == 1) {
+                        return field.equal(value.get(0));
+                    }
                 }
             }
-            case IS_NULL: {
+            case IS_NULL -> {
                 return field.isNull();
             }
-            case IS_NOT_NULL: {
+            case IS_NOT_NULL -> {
                 return field.isNotNull();
             }
-
-            default:
-                throw new RuntimeException("Unexpected condition '" +
-                        term.getCondition() +
-                        "' for term: " +
-                        term.toString());
+            default -> throw new RuntimeException("Unexpected condition '" +
+                    term.getCondition() +
+                    "' for term: " +
+                    term);
         }
 
-        throw new RuntimeException("Unexpected condition '" +
-                term.getCondition() +
-                "' for term: " +
-                term.toString());
+        return field.in(Collections.emptyList());
     }
 
     private String getDocValue(final ExpressionTerm term, final DocRef docRef) {
@@ -162,17 +172,8 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 }
                 return field.eq(t);
             }
-        } else {
-            return field.in(list);
         }
-    }
-
-    private T getSingleValue(final ExpressionTerm term, final String value) {
-        final List<T> list = converter.apply(value);
-        if (list.size() != 1) {
-            throw new RuntimeException("Expected single value for term: " + term.toString());
-        }
-        return list.get(0);
+        return field.in(list);
     }
 
     private List<T> getValues(final String value) {
@@ -189,20 +190,17 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             }
             return field.in(values);
         }
-
-        return null;
+        return field.in(Collections.emptyList());
     }
 
     private Condition isInFolder(final ExpressionTerm term, final DocRef docRef) {
-        Condition condition = null;
+        Condition condition = field.in(Collections.emptyList());
 
         if (dataSourceField instanceof DocRefField) {
             final String type = ((DocRefField) dataSourceField).getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants == null || descendants.size() == 0) {
-                    condition = field.in(Collections.emptySet());
-                } else {
+                if (descendants != null && descendants.size() > 0) {
                     final Set<T> set = new HashSet<>();
                     for (final DocRef descendant : descendants) {
                         final String value = getDocValue(term, descendant);

@@ -14,6 +14,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
 
+## [v7.0-beta.104] - 2021-04-13
+
+* Switched from `node-sass` to `sass`.
+
+* Fix `node` and `swagger-typescript-api` versions.
+
+
+## [v7.0-beta.103] - 2021-04-13
+
+* Rebuild.
+
+
+## [v7.0-beta.102] - 2021-04-09
+
+* Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
+
+## [v7.0-beta.101] - 2021-04-08
+
+* Issue **#2172** : Limited the maximum size of LMDB keys and values.
+
+* Issue **#2171** : Fixed dashboard table expression editor field insertion. 
+
+* Issue **#2168** : Removed special columns from dashboard tables.
+
+* Issue **#2154** : Fixed error adding text widget to a dashboard.
+
+* Issue **#2025** : Added caching for DNS name resolution.
+
+* Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating client IP.
+
+
 ## [v7.0-beta.100] - 2021-04-02
 
 * Issue **#1598** : Audit logging uplifted throughout codebase.
@@ -3263,7 +3295,11 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.100...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.104...HEAD
+[v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
+[v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
+[v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102
+[v7.0-beta.101]: https://github.com/gchq/stroom/compare/v7.0-beta.100...v7.0-beta.101
 [v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
 [v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
 [v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98

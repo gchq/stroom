@@ -35,6 +35,7 @@ import javax.ws.rs.core.Response;
 public class MockNodeService implements NodeService {
 
     private MockNodeInfo nodeInfo = new MockNodeInfo();
+    private String lastUrl = null;
 
     @Override
     public String getBaseEndpointUrl(final String nodeName) {
@@ -70,6 +71,11 @@ public class MockNodeService implements NodeService {
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper) {
+        // Always return the value from the local supplier on this node
+        // TestNodeServiceImpl tests calling local vs remote
+
+        // Capture the path that it would use for a remote call
+        lastUrl = fullPathSupplier.get();
         return localSupplier.get();
     }
 
@@ -78,6 +84,15 @@ public class MockNodeService implements NodeService {
                                final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc) {
+        // Always run the local runnable on this node
+        // TestNodeServiceImpl tests calling local vs remote
+
+        // Capture the path that it would use for a remote call
+        lastUrl = fullPathSupplier.get();
         localRunnable.run();
+    }
+
+    public String getLastUrl() {
+        return lastUrl;
     }
 }

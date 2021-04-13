@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 public class ValueSerde {
 
     private static final int MIN_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(4);
-    private static final int MAX_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
+    private static final int MAX_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(10);
 
     private final ItemSerialiser itemSerialiser;
 

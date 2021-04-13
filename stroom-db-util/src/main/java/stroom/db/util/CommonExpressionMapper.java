@@ -72,10 +72,16 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         if (item != null && item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 final ExpressionTerm term = (ExpressionTerm) item;
+                if (term.getField() == null) {
+                    throw new NullPointerException("Term has a null field '" + term + "'");
+                }
+                if (term.getCondition() == null) {
+                    throw new NullPointerException("Term has a null condition '" + term + "'");
+                }
+
                 final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(term.getField());
                 if (termHandler != null) {
                     result = termHandler.apply(term);
-
                 } else if (delegateItemHandler != null) {
                     result = delegateItemHandler.apply(term);
                 } else if (!ignoredFields.contains(term.getField())) {
@@ -90,19 +96,11 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                             .map(expressionItem -> apply(expressionItem, simplifyConditions))
                             .collect(Collectors.toList());
 
-                    switch (operator.op()) {
-                        case AND:
-                            result = buildAndConditions(simplifyConditions, children);
-                            break;
-                        case OR:
-                            result = buildOrConditions(simplifyConditions, operator.getChildren(), children);
-                            break;
-                        case NOT:
-                            result = buildNotConditions(simplifyConditions, children);
-                            break;
-                        default:
-                            throw new RuntimeException("Unknown operator " + operator.op());
-                    }
+                    result = switch (operator.op()) {
+                        case AND -> buildAndConditions(simplifyConditions, children);
+                        case OR -> buildOrConditions(simplifyConditions, operator.getChildren(), children);
+                        case NOT -> buildNotConditions(simplifyConditions, children);
+                    };
                 }
 
                 // AND {}, OR {}, equal true, so don't need to do anything with them

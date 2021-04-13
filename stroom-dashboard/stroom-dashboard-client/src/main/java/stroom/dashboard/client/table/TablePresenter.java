@@ -900,14 +900,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Ensure all fields have ids.
         if (getTableSettings().getFields() != null) {
+            final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
+            final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
+
             final List<Field> fields = new ArrayList<>();
             getTableSettings().getFields().forEach(field -> {
                 Field f = field;
-                if (field.getId() == null) {
+                if (obfuscatedStreamId.equals(f.getName())) {
+                    f = buildSpecialField(IndexConstants.STREAM_ID);
+                } else if (obfuscatedEventId.equals(f.getName())) {
+                    f = buildSpecialField(IndexConstants.EVENT_ID);
+                } else if (field.getId() == null) {
                     f = field.copy().id(createRandomFieldId()).build();
-                } else {
-                    usedFieldIds.add(field.getId());
                 }
+                usedFieldIds.add(field.getId());
                 fields.add(f);
             });
             setSettings(getTableSettings().copy().fields(fields).build());

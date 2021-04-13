@@ -9,8 +9,8 @@ import java.nio.ByteBuffer;
 
 public class KeySerde {
 
-    private static final int MIN_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(4);
-    private static final int MAX_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
+    private static final int MIN_SIZE = (int) ByteSizeUnit.BYTE.longBytes(511);
+    private static final int MAX_SIZE = (int) ByteSizeUnit.BYTE.longBytes(511);
 
     private final ItemSerialiser itemSerialiser;
 

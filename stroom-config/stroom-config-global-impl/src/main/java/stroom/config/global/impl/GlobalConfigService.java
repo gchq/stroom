@@ -74,9 +74,6 @@ public class GlobalConfigService {
                     GlobalConfigResource.FIELD_DEF_DESCRIPTION,
                     ConfigProperty::getDescription));
 
-//    private static final Comparator<ConfigProperty> com = Comparator.comparing(configProperty ->
-//    configProperty.getEffectiveValueMasked().orElse(""));
-
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
                     ConfigProperty::getNameAsString, String::compareToIgnoreCase),
@@ -121,22 +118,24 @@ public class GlobalConfigService {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
 
-        final List<ConfigProperty> allDbProps = dao.list();
-        final List<ConfigProperty> validDbProps = new ArrayList<>(allDbProps.size());
+        securityContext.asProcessingUser(() -> {
+            final List<ConfigProperty> allDbProps = dao.list();
+            final List<ConfigProperty> validDbProps = new ArrayList<>(allDbProps.size());
 
-        allDbProps.forEach(dbConfigProp -> {
-            if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
-                LOGGER.debug("Property {} is in the database but not in the appConfig model",
-                        dbConfigProp.getName().toString());
-                if (deleteUnknownProps) {
-                    deleteFromDb(dbConfigProp.getName());
+            allDbProps.forEach(dbConfigProp -> {
+                if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
+                    LOGGER.debug("Property {} is in the database but not in the appConfig model",
+                            dbConfigProp.getName().toString());
+                    if (deleteUnknownProps) {
+                        deleteFromDb(dbConfigProp.getName());
+                    }
+                } else {
+                    validDbProps.add(dbConfigProp);
                 }
-            } else {
-                validDbProps.add(dbConfigProp);
-            }
-        });
+            });
 
-        configMapper.decorateAllDbConfigProperty(validDbProps);
+            configMapper.decorateAllDbConfigProperty(validDbProps);
+        });
     }
 
     /**
@@ -211,12 +210,9 @@ public class GlobalConfigService {
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(propertyPath.toString())
-                    .map(configProp ->
-                            configMapper.decorateDbConfigProperty(configProp))
-                    .or(() -> {
-
-                        return configMapper.getGlobalProperty(propertyPath);
-                    });
+                    .map(configMapper::decorateDbConfigProperty)
+                    .or(() ->
+                            configMapper.getGlobalProperty(propertyPath));
         });
     }
 

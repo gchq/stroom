@@ -568,32 +568,35 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         super.read(componentConfig);
 
         final TextComponentSettings.Builder builder;
-
         final ComponentSettings settings = componentConfig.getSettings();
+
         if (settings instanceof TextComponentSettings) {
-            builder = getTextSettings().copy();
+            final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+            builder = textComponentSettings.copy();
+
+            final Version version = Version.parse(textComponentSettings.getModelVersion());
+            final boolean old = version.lt(CURRENT_MODEL_VERSION);
+
+            // special field names have changed from EventId to __event_id__ so we need to deal
+            // with those and replace them, also rebuild existing special fields just in case
+            if (textComponentSettings.getStreamIdField() == null
+                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdField().getName()))
+                    || (old && textComponentSettings.getStreamIdField().isSpecial())) {
+                builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
+            }
+            if (textComponentSettings.getRecordNoField() == null
+                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoField().getName()))
+                    || (old && textComponentSettings.getRecordNoField().isSpecial())) {
+                builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+            }
+
         } else {
             builder = TextComponentSettings.builder();
-        }
-
-        final Version version = Version.parse(getTextSettings().getModelVersion());
-        final boolean old = version.lt(CURRENT_MODEL_VERSION);
-
-        // special field names have changed from EventId to __event_id__ so we need to deal
-        // with those and replace them, also rebuild existing special fields just in case
-        if (getTextSettings().getStreamIdField() == null
-                || (old && IndexConstants.STREAM_ID.equals(getTextSettings().getStreamIdField().getName()))
-                || (old && getTextSettings().getStreamIdField().isSpecial())) {
             builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
-        }
-        if (getTextSettings().getRecordNoField() == null
-                || (old && IndexConstants.EVENT_ID.equals(getTextSettings().getRecordNoField().getName()))
-                || (old && getTextSettings().getRecordNoField().isSpecial())) {
             builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
 
         builder.modelVersion(CURRENT_MODEL_VERSION.toString());
-
         setSettings(builder.build());
     }
 

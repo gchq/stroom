@@ -28,9 +28,14 @@ public class RestUtil {
     /**
      * Used to validate a request argument and throw a {@link BadRequestException} if it is null
      */
-    public static void requireNonNull(final Object object, String message) throws BadRequestException {
+    public static void requireNonNull(final Object object,
+                                      final String message,
+                                      final Object... args) throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException(message);
+            final String msg = args.length > 0
+                    ? LogUtil.message(message, args)
+                    : message;
+            throw new BadRequestException(msg);
         }
     }
 
@@ -69,6 +74,10 @@ public class RestUtil {
         }
     }
 
+    /**
+     * Return a BAD_REQUEST (400) response
+     * SLF style messages ({}), NOT String.format (%s).
+     */
     public static Response badRequest(final String msg, final Object... args) {
         return Response
                 .status(Response.Status.BAD_REQUEST)
@@ -76,6 +85,10 @@ public class RestUtil {
                 .build();
     }
 
+    /**
+     * Return a NOT_FOUND (404) response
+     * SLF style messages ({}), NOT String.format (%s).
+     */
     public static Response notFound(final String msg, final Object... args) {
         return Response
                 .status(Status.NOT_FOUND)
@@ -83,6 +96,10 @@ public class RestUtil {
                 .build();
     }
 
+    /**
+     * Return an OK (200) response.
+     * SLF style messages ({}), NOT String.format (%s).
+     */
     public static Response ok(final String msg, final Object... args) {
         return Response
                 .ok(LogUtil.message(msg, args))
@@ -92,6 +109,7 @@ public class RestUtil {
     /**
      * Ensure value is non null or throw a {@link NotFoundException}. For use in validating
      * responses.
+     * SLF style messages ({}), NOT String.format (%s).
      */
     public static <T> T ensureNonNullResult(final T value,
                                             final String msg,
@@ -105,6 +123,7 @@ public class RestUtil {
     /**
      * Ensure value is not empty or throw a {@link NotFoundException}. For use in validating
      * responses.
+     * SLF style messages ({}), NOT String.format (%s).
      */
     public static <T> T ensureNotEmptyResult(final Optional<T> optValue,
                                              final String msg,
