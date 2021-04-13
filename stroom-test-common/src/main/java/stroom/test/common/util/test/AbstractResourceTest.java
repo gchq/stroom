@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.function.Function;
+import java.util.logging.Level;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -28,7 +29,11 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResourceTest.class);
 
-//    private final MyHttpServletRequestHolder httpServletRequestHolder = new MyHttpServletRequestHolder();
+    final LoggingFeature loggingFeature = new LoggingFeature(
+            java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+            Level.INFO,
+            LoggingFeature.Verbosity.PAYLOAD_ANY,
+            LoggingFeature.DEFAULT_MAX_ENTITY_SIZE);
 
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
     @Rule
@@ -37,10 +42,9 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                 LOGGER.info("Calling getRestResource()");
                 return getRestResource();
             })
-//            .addResource((ContainerRequestFilter) httpServletRequestHolder)
             .setClientConfigurator(clientConfig ->
                     clientConfig
-                            .register(LoggingFeature.class))
+                            .register(loggingFeature))
             .build();
 
     private final WebTargetFactory webTargetFactory = url -> {
@@ -175,9 +179,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling PUT on {}{}, passing {}",
                 getResourceBasePath(), subPath, requestEntity);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -216,9 +218,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
