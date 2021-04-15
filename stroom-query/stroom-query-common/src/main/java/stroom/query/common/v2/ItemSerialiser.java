@@ -30,7 +30,7 @@ public class ItemSerialiser {
                 if (grouped) {
                     list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
                 } else {
-                    list.add(new UngroupedKeyPart(input.readString()));
+                    list.add(new UngroupedKeyPart(input.readLong()));
                 }
             }
             final boolean grouped = input.readBoolean();
@@ -64,7 +64,7 @@ public class ItemSerialiser {
         });
     }
 
-    byte[] toBytes(final Key key) {
+    public byte[] toBytes(final Key key) {
         return Metrics.measure("Key toBytes", () ->
                 toBytes(output ->
                         writeKey(key, output)));

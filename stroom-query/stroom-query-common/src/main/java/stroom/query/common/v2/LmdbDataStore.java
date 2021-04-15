@@ -32,21 +32,25 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.query.api.v2.TableSettings;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
+import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.KeyRange;
+import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -64,13 +68,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
 public class LmdbDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
+    private static final int HASH_SIZE = Long.BYTES * 3;
+    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
+    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
+    private static final int MIN_PAYLOAD_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
+    private static final int MAX_PAYLOAD_SIZE = (int) ByteSizeUnit.GIBIBYTE.longBytes(1);
+
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private static RawKey ROOT_RAW_KEY;
     private final LmdbEnvironment lmdbEnvironment;
     private final LmdbConfig lmdbConfig;
     private final Dbi<ByteBuffer> lmdbDbi;
@@ -85,8 +95,6 @@ public class LmdbDataStore implements DataStore {
     private final ItemSerialiser itemSerialiser;
     private final boolean hasSort;
 
-    private final KeySerde keySerde;
-    private final ValueSerde valueSerde;
     private final AtomicBoolean hasEnoughData = new AtomicBoolean();
     private final AtomicBoolean drop = new AtomicBoolean();
     private final AtomicBoolean dropped = new AtomicBoolean();
@@ -95,8 +103,10 @@ public class LmdbDataStore implements DataStore {
     private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
 
     private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
+    private final AtomicLong uniqueKey = new AtomicLong();
 
     private final CountDownLatch addedData;
+    private final byte[] rootParentRowHash;
 
     LmdbDataStore(final LmdbEnvironment lmdbEnvironment,
                   final LmdbConfig lmdbConfig,
@@ -117,12 +127,7 @@ public class LmdbDataStore implements DataStore {
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
 
         itemSerialiser = new ItemSerialiser(compiledFields);
-        if (ROOT_RAW_KEY == null) {
-            ROOT_RAW_KEY = itemSerialiser.toRawKey(Key.root());
-        }
-
-        keySerde = new KeySerde(itemSerialiser);
-        valueSerde = new ValueSerde(itemSerialiser);
+        rootParentRowHash = createKeyHash(itemSerialiser.toBytes(Key.root()));
 
         this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
         this.byteBufferPool = byteBufferPool;
@@ -142,6 +147,15 @@ public class LmdbDataStore implements DataStore {
         // TODO : Use provided executor but don't allow it to be terminated by search termination.
         final Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(this::transfer);
+    }
+
+    private static ByteBuffer createKeyStem(final int depth,
+                                            final byte[] parentHash) {
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.BYTES + HASH_SIZE);
+        byteBuffer.putInt(depth);
+        byteBuffer.put(parentHash);
+        byteBuffer.flip();
+        return byteBuffer;
     }
 
     private void commit(final Txn<ByteBuffer> writeTxn) {
@@ -202,6 +216,7 @@ public class LmdbDataStore implements DataStore {
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
         Key key = Key.root();
+        byte[] parentRowHash = rootParentRowHash;
 
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
@@ -235,7 +250,7 @@ public class LmdbDataStore implements DataStore {
                             // now so that we can filter the resultant value.
                             value = generator.eval();
 
-                            if (value != null && !compiledFilter.match(value.toString())) {
+                            if (!compiledFilter.match(value.toString())) {
                                 // We want to exclude this item so get out of this method ASAP.
                                 return;
                             }
@@ -245,7 +260,7 @@ public class LmdbDataStore implements DataStore {
                     // If we are grouping at this level then evaluate the expression and add to the group values.
                     if (groupIndices[fieldIndex]) {
                         // If we haven't already created the generator then do so now.
-                        if (generator == null) {
+                        if (value == null) {
                             generator = expression.createGenerator();
                             generator.set(values);
                             value = generator.eval();
@@ -265,24 +280,67 @@ public class LmdbDataStore implements DataStore {
                 }
             }
 
-            // Trim group values.
-            if (groupIndex < groupSize) {
-                groupValues = Arrays.copyOf(groupValues, groupIndex);
-            }
+//            // Trim group values.
+//            if (groupIndex < groupSize) {
+//                groupValues = Arrays.copyOf(groupValues, groupIndex);
+//            }
+//
 
-            if (depth <= compiledDepths.getMaxGroupDepth()) {
+            final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
+            final byte[] keyBytes;
+            final byte[] rowHash;
+            if (grouped) {
                 // This is a grouped item.
                 final KeyPart keyPart = new GroupKeyPart(groupValues);
                 key = key.resolve(keyPart, true);
+                keyBytes = itemSerialiser.toBytes(key);
+                rowHash = createKeyHash(keyBytes);
 
             } else {
                 // This item will not be grouped.
-                final KeyPart keyPart = new UngroupedKeyPart(UUID.randomUUID().toString());
+                final KeyPart keyPart = new UngroupedKeyPart(getUniqueId());
                 key = key.resolve(keyPart, false);
+                keyBytes = itemSerialiser.toBytes(key);
+                rowHash = createUniqueKey();
             }
 
-            put(new QueueItem(keySerde, valueSerde, key, generators));
+            final RowKey rowKey = new RowKey(depth, parentRowHash, rowHash, grouped);
+            final RowValue rowValue = new RowValue(itemSerialiser, keyBytes, generators);
+            parentRowHash = rowHash;
+            put(new QueueItem(rowKey, rowValue));
         }
+    }
+
+    private long getUniqueId() {
+        return uniqueKey.incrementAndGet();
+    }
+
+    private byte[] createKeyHash(final byte[] key) {
+        final byte[] hash = new byte[HASH_SIZE];
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(hash);
+        byteBuffer.putLong(LongHashFunction.xx().hashBytes(key));
+        byteBuffer.putLong(LongHashFunction.xx().hashBytes(invert(key)));
+        byteBuffer.putLong(0L);
+        return hash;
+    }
+
+    private byte[] createUniqueKey() {
+        final byte[] hash = new byte[HASH_SIZE];
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(hash);
+        byteBuffer.putLong(0L);
+        byteBuffer.putLong(0L);
+        byteBuffer.putLong(getUniqueId());
+        return hash;
+    }
+
+    private byte[] invert(byte[] array) {
+        final byte[] inverted = Arrays.copyOf(array, array.length);
+        for (int i = 0; i < inverted.length / 2; i++) {
+            byte temp = inverted[i];
+            inverted[i] = inverted[inverted.length - 1 - i];
+            inverted[inverted.length - 1 - i] = temp;
+        }
+        return inverted;
     }
 
     private void put(final QueueItem item) {
@@ -341,6 +399,9 @@ public class LmdbDataStore implements DataStore {
                         needsCommit = true;
                     }
 
+                    // TODO : @66 I'm not sure that the final payload will be created as this code will be skipped if
+                    //  the current payload hasn't been taken, unless the completion state is only set after the
+                    //  penultimate payload transfer.
                     if (createPayload.get() && currentPayload.get() == null) {
                         // Commit
                         if (writeTxn != null) {
@@ -386,39 +447,126 @@ public class LmdbDataStore implements DataStore {
             try {
                 LOGGER.trace(() -> "insert");
 
-                final ByteBuffer keyBuffer = queueItem.getKeyBuffer();
-                if (queueItem.isGrouped()) {
-                    Metrics.measure("Grouped insert", () -> {
-                        // See if we can find an existing item.
-                        final ByteBuffer valueBuffer;
-                        final ByteBuffer existing = Metrics.measure("Grouped get",
-                                () -> lmdbDbi.get(txn, keyBuffer));
-                        if (existing != null) {
-                            final Generator[] existingValue = valueSerde.deserialize(existing);
-                            final Generator[] newValue = queueItem.getValue();
-                            final Generator[] combined = combine(existingValue, newValue);
-                            valueBuffer = valueSerde.serialize(combined);
+                final RowKey rowKey = queueItem.getRowKey();
+                final RowValue rowValue = queueItem.getRowValue();
 
-                        } else {
-                            resultCount.incrementAndGet();
-                            valueBuffer = queueItem.getValueBuffer();
+                // Just try to put first.
+                final boolean success = put(
+                        txn,
+                        rowKey.getByteBuffer(),
+                        rowValue.getByteBuffer(),
+                        PutFlags.MDB_NOOVERWRITE);
+                if (success) {
+                    resultCount.incrementAndGet();
+
+                } else if (rowKey.isGroup()) {
+                    // Get the existing entry for this key.
+                    final ByteBuffer existingValueBuffer = lmdbDbi.get(txn, rowKey.getByteBuffer());
+
+                    final int minValueSize = Math.max(MIN_VALUE_SIZE, existingValueBuffer.remaining());
+                    try (final UnsafeByteBufferOutput output =
+                            new UnsafeByteBufferOutput(minValueSize, MAX_VALUE_SIZE)) {
+                        boolean merged = false;
+
+                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(existingValueBuffer)) {
+                            while (!input.end()) {
+                                final int fullKeyLength = input.readInt();
+                                final byte[] fullKey = input.readBytes(fullKeyLength);
+                                final int generatorsLength = input.readInt();
+                                final byte[] generatorBytes = input.readBytes(generatorsLength);
+
+                                // If this is the same value the update it and reinsert.
+                                if (Arrays.equals(fullKey, rowValue.getFullKey())) {
+                                    final Generator[] generators = itemSerialiser.readGenerators(generatorBytes);
+                                    final Generator[] newValue = rowValue.getGenerators();
+                                    final Generator[] combined = combine(generators, newValue);
+                                    final byte[] combinedGeneratorBytes = itemSerialiser.toBytes(combined);
+
+                                    LOGGER.debug("Merging combined value to output");
+                                    output.writeInt(fullKeyLength);
+                                    output.writeBytes(fullKey);
+                                    output.writeInt(combinedGeneratorBytes.length);
+                                    output.writeBytes(combinedGeneratorBytes);
+
+                                    // Copy any remaining values.
+                                    if (!input.end()) {
+                                        final byte[] remainingBytes = input.readAllBytes();
+                                        output.writeBytes(remainingBytes, 0, remainingBytes.length);
+                                    }
+
+                                    merged = true;
+
+                                } else {
+
+                                    LOGGER.debug("Copying value to output");
+                                    output.writeInt(fullKeyLength);
+                                    output.writeBytes(fullKey);
+                                    output.writeInt(generatorsLength);
+                                    output.writeBytes(generatorBytes);
+                                }
+                            }
                         }
 
-                        Metrics.measure("Grouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
-                    });
+                        // Append if we didn't merge.
+                        if (!merged) {
+                            LOGGER.debug("Appending value to output");
+                            final byte[] generatorBytes = itemSerialiser.toBytes(rowValue.getGenerators());
+                            output.writeInt(rowValue.getFullKey().length);
+                            output.writeBytes(rowValue.getFullKey());
+                            output.writeInt(generatorBytes.length);
+                            output.writeBytes(generatorBytes);
+
+                            resultCount.incrementAndGet();
+                        }
+
+                        final ByteBuffer newValue = output.getByteBuffer().flip();
+                        final boolean ok = put(txn, rowKey.getByteBuffer(), newValue);
+                        if (!ok) {
+                            throw new RuntimeException("Unable to update");
+                        }
+                    }
 
                 } else {
-                    Metrics.measure("Ungrouped insert", () -> {
-                        resultCount.incrementAndGet();
-                        final ByteBuffer valueBuffer = queueItem.getValueBuffer();
-                        Metrics.measure("Ungrouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
-                    });
+                    // We do not expect a key collision here.
+                    throw new RuntimeException("Unexpected collision");
                 }
-            } catch (final RuntimeException e) {
+
+//                if (rowKey.isGrouped()) {
+//                    Metrics.measure("Grouped insert", () -> {
+//                        // See if we can replace an existing item.
+//                        final boolean replaced = replaceExisting(txn, rowKey, rowValue);
+//                        if (!replaced) {
+//                            resultCount.incrementAndGet();
+//                            Metrics.measure("Grouped insert", () ->
+//                                    put(txn, rowKey.getByteBuffer(), rowValue.getByteBuffer()));
+//                        }
+//                    });
+//
+//                } else {
+//                    Metrics.measure("Ungrouped insert", () -> {
+//                        resultCount.incrementAndGet();
+//                        Metrics.measure("Ungrouped put", () ->
+//                                put(txn, rowKey.getByteBuffer(), rowValue.getByteBuffer()));
+//                    });
+//                }
+            } catch (final RuntimeException | IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new RuntimeException("Error putting " + queueItem, e);
             }
         });
+    }
+
+    private boolean put(final Txn<ByteBuffer> txn,
+                        final ByteBuffer key,
+                        final ByteBuffer val,
+                        final PutFlags... flags) {
+        try {
+            return lmdbDbi.put(txn, key, val, flags);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return false;
     }
 
     private Generator[] combine(final Generator[] existing, final Generator[] value) {
@@ -479,7 +627,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private byte[] createPayload() {
-        final PayloadOutput payloadOutput = new PayloadOutput();
+        final PayloadOutput payloadOutput = new PayloadOutput(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE);
 
         Metrics.measure("createPayload", () -> {
             try (Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
@@ -503,12 +651,6 @@ public class LmdbDataStore implements DataStore {
                             payloadOutput.writeInt(valBuffer.remaining());
                             payloadOutput.writeByteBuffer(valBuffer);
 
-//                            final Key key = keySerde.deserialize(keyBuffer);
-//                            final Generator[] value = valueSerde.deserialize(valBuffer);
-//
-//                            itemSerialiser.writeKey(key, output);
-//                            itemSerialiser.writeGenerators(value, output);
-
                             lmdbDbi.delete(writeTxn, keyBuffer.flip());
                         }
                     }
@@ -524,13 +666,6 @@ public class LmdbDataStore implements DataStore {
                         payloadOutput.writeByteBuffer(keyBuffer);
                         payloadOutput.writeInt(valBuffer.remaining());
                         payloadOutput.writeByteBuffer(valBuffer);
-
-
-//                        final Key key = keySerde.deserialize(keyBuffer);
-//                        final Generator[] value = valueSerde.deserialize(valBuffer);
-//
-//                        itemSerialiser.writeKey(key, output);
-//                        itemSerialiser.writeGenerators(value, output);
                     });
 
                     lmdbDbi.drop(writeTxn);
@@ -538,6 +673,7 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
                 throw new RuntimeException("Error clearing DB", e);
             }
         });
@@ -588,15 +724,26 @@ public class LmdbDataStore implements DataStore {
                     final byte[] bytes = input.readBytes(length);
                     try (final Input in = new Input(new ByteArrayInputStream(bytes))) {
                         while (!in.end()) {
-                            final int keyLength = in.readInt();
-                            final byte[] key = in.readBytes(keyLength);
+                            final int rowKeyLength = in.readInt();
+                            final byte[] key = in.readBytes(rowKeyLength);
+                            final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+                            keyBuffer.put(key, 0, key.length);
+                            keyBuffer.flip();
+
                             final int valueLength = in.readInt();
                             final byte[] value = in.readBytes(valueLength);
-                            final QueueItem queueItem = new QueueItem(
-                                    keySerde,
-                                    valueSerde,
-                                    ByteBuffer.wrap(key),
-                                    ByteBuffer.wrap(value));
+                            final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
+                            valueBuffer.put(value, 0, value.length);
+                            valueBuffer.flip();
+
+                            RowKey rowKey = new RowKey(keyBuffer);
+                            if (!rowKey.isGroup()) {
+                                // Create a new unique key if this isn't a group key.
+                                rowKey.makeUnique(this::getUniqueId);
+                            }
+
+                            final QueueItem queueItem =
+                                    new QueueItem(rowKey, new RowValue(itemSerialiser, valueBuffer));
                             put(queueItem);
                         }
                     }
@@ -658,60 +805,74 @@ public class LmdbDataStore implements DataStore {
                                       final boolean allowSort,
                                       final boolean trimTop) {
         final ItemArrayList list = new ItemArrayList(10);
-        try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(4096)) {
-            final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
-            try (final Output output = new ByteBufferOutput(byteBuffer)) {
-                itemSerialiser.writeChildKey(parentKey, output);
-            }
-            byteBuffer.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(byteBuffer);
+        final byte[] parentKeyBytes = itemSerialiser.toBytes(parentKey);
+        final byte[] keyHash = createKeyHash(parentKeyBytes);
+        final ByteBuffer start = createKeyStem(depth, keyHash);
+        final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
 
-            final int maxSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.max(1000, trimmedSize * 2);
-            } else {
-                maxSize = Integer.MAX_VALUE;
-            }
-            final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
-            boolean trimmed = true;
+        final int maxSize;
+        if (trimmedSize < Integer.MAX_VALUE / 2) {
+            maxSize = Math.max(1000, trimmedSize * 2);
+        } else {
+            maxSize = Integer.MAX_VALUE;
+        }
+        final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
+        boolean trimmed = true;
 
-            boolean inRange = true;
-            try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
-                try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+        boolean inRange = true;
+        try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                    while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final Key key = keySerde.deserialize(keyVal.key());
+                while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
 
-                        if (!key.getParent().equals(parentKey)) {
-                            inRange = false;
+                    // Make sure the first part of the row key matches the start key we are looking for.
+                    boolean match = true;
+                    for (int i = 0; i < start.remaining() && match; i++) {
+                        if (start.get(i) != keyVal.key().get(i)) {
+                            match = false;
+                        }
+                    }
 
-                        } else {
-                            final byte[] keyBytes = ByteBufferUtils.toBytes(keyVal.key().flip());
-                            final Generator[] generators = valueSerde.deserialize(keyVal.val());
+                    if (match) {
+                        final ByteBuffer valueBuffer = keyVal.val();
+                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
+                            while (!input.end() && inRange) {
+                                final int fullKeyLength = input.readInt();
+                                final byte[] fullKey = input.readBytes(fullKeyLength);
+                                final int generatorsLength = input.readInt();
+                                final byte[] generatorBytes = input.readBytes(generatorsLength);
 
-                            list.add(new ItemImpl(this, new RawKey(keyBytes), key, generators));
-                            if (!allowSort && list.size >= trimmedSize) {
-                                // Stop without sorting etc.
-                                inRange = false;
+                                final Key key = itemSerialiser.toKey(fullKey);
+                                if (key.getParent().equals(parentKey)) {
+                                    final Generator[] generators = itemSerialiser.readGenerators(generatorBytes);
 
-                            } else {
-                                trimmed = false;
-                                if (list.size() > maxSize) {
-                                    list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                    trimmed = true;
+                                    list.add(new ItemImpl(this, new RawKey(fullKey), key, generators));
+                                    if (!allowSort && list.size >= trimmedSize) {
+                                        // Stop without sorting etc.
+                                        inRange = false;
+
+                                    } else {
+                                        trimmed = false;
+                                        if (list.size() > maxSize) {
+                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                            trimmed = true;
+                                        }
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        inRange = false;
                     }
                 }
             }
+        }
 
-            if (!trimmed) {
-                list.sortAndTrim(sorter, trimmedSize, trimTop);
-            }
+        if (!trimmed) {
+            list.sortAndTrim(sorter, trimmedSize, trimTop);
         }
 
         return list;
@@ -867,76 +1028,146 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    private static class QueueItem {
+    private static class RowKey {
 
-        private final KeySerde keySerde;
-        private final ValueSerde valueSerde;
-        private Key key;
-        private Generator[] value;
-        private ByteBuffer keyBuffer;
-        private ByteBuffer valueBuffer;
+        private static final int DEPTH_INDEX = 0;
+        private static final int PARENT_HASH_INDEX = Integer.BYTES;
+        private static final int HASH_INDEX = PARENT_HASH_INDEX + HASH_SIZE;
+        private static final int UNIQUE_INDEX = HASH_INDEX + Long.BYTES + Long.BYTES;
+        private static final int GROUP_INDEX = HASH_INDEX + HASH_SIZE;
+        private static final int KEY_SIZE = GROUP_INDEX + 1;
 
-        public QueueItem(final KeySerde keySerde,
-                         final ValueSerde valueSerde,
-                         final Key key,
-                         final Generator[] value) {
-            this.keySerde = keySerde;
-            this.valueSerde = valueSerde;
-            this.key = key;
-            this.value = value;
+        private final ByteBuffer byteBuffer;
+
+        public RowKey(final ByteBuffer byteBuffer) {
+            this.byteBuffer = byteBuffer;
         }
 
-        public QueueItem(final KeySerde keySerde,
-                         final ValueSerde valueSerde,
-                         final ByteBuffer keyBuffer,
-                         final ByteBuffer valueBuffer) {
-            this.keySerde = keySerde;
-            this.valueSerde = valueSerde;
-            this.keyBuffer = keyBuffer;
-            this.valueBuffer = valueBuffer;
-        }
-
-        public boolean isGrouped() {
-            if (key != null) {
-                return key.isGrouped();
+        public RowKey(final int depth, final byte[] parentHash, final byte[] hash, final boolean group) {
+            try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(KEY_SIZE)) {
+                output.writeInt(depth);
+                output.writeBytes(parentHash, 0, parentHash.length);
+                output.writeBytes(hash, 0, hash.length);
+                output.writeBoolean(group);
+                byteBuffer = output.getByteBuffer().flip();
             }
-            return keyBuffer.get(keyBuffer.remaining() - 1) != 0;
         }
 
-        public Key getKey() {
-            if (key == null) {
-                key = keySerde.deserialize(keyBuffer);
-            }
-            return key;
+        /**
+         * Make a unique version of the row key for non grouped keys
+         */
+        public void makeUnique(final Supplier<Long> uniqueLongSupplier) {
+            byteBuffer.putLong(UNIQUE_INDEX, uniqueLongSupplier.get());
         }
 
-        public Generator[] getValue() {
-            if (value == null) {
-                value = valueSerde.deserialize(valueBuffer);
-            }
-            return value;
+        public boolean isGroup() {
+            return byteBuffer.get(GROUP_INDEX) != 0;
         }
 
-        public ByteBuffer getKeyBuffer() {
-            if (keyBuffer == null) {
-                keyBuffer = keySerde.serialize(key);
-            }
-            return keyBuffer;
-        }
-
-        public ByteBuffer getValueBuffer() {
-            if (valueBuffer == null) {
-                valueBuffer = valueSerde.serialize(value);
-            }
-            return valueBuffer;
+        public ByteBuffer getByteBuffer() {
+            return this.byteBuffer;
         }
 
         @Override
         public String toString() {
-            return "key=" +
-                    getKey() +
-                    ", value=" +
-                    Arrays.toString(getValue());
+            final int depth = byteBuffer.getInt(DEPTH_INDEX);
+            final byte[] parentHash = ByteBufferUtils.toBytes(byteBuffer, PARENT_HASH_INDEX, HASH_SIZE);
+            final byte[] hash = ByteBufferUtils.toBytes(byteBuffer, HASH_INDEX, HASH_SIZE);
+            final boolean group = isGroup();
+            return "RowKey{" +
+                    "depth=" + depth +
+                    ", parentHash=" + Arrays.toString(parentHash) +
+                    ", hash=" + Arrays.toString(hash) +
+                    ", group=" + group +
+                    '}';
+        }
+    }
+
+    private static class RowValue {
+
+        private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
+        private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
+
+        private final ItemSerialiser itemSerialiser;
+        private ByteBuffer byteBuffer;
+        private byte[] fullKey;
+        private Generator[] generators;
+
+        public RowValue(final ItemSerialiser itemSerialiser,
+                        final byte[] fullKey,
+                        final Generator[] generators) {
+            this.itemSerialiser = itemSerialiser;
+            this.fullKey = fullKey;
+            this.generators = generators;
+        }
+
+        public RowValue(final ItemSerialiser itemSerialiser,
+                        final ByteBuffer byteBuffer) {
+            this.itemSerialiser = itemSerialiser;
+            this.byteBuffer = byteBuffer;
+        }
+
+        private void deserialise() {
+            if (fullKey == null) {
+                try (final UnsafeByteBufferInput input =
+                        new UnsafeByteBufferInput(byteBuffer)) {
+                    final int keyLength = input.readInt();
+                    fullKey = input.readBytes(keyLength);
+                    final int valueLength = input.readInt();
+                    final byte[] valueBytes = input.readBytes(valueLength);
+                    generators = itemSerialiser.readGenerators(valueBytes);
+                }
+            }
+        }
+
+        private void serialise() {
+            if (byteBuffer == null) {
+                try (final UnsafeByteBufferOutput output =
+                        new UnsafeByteBufferOutput(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
+                    final byte[] generatorBytes = itemSerialiser.toBytes(generators);
+
+                    output.writeInt(fullKey.length);
+                    output.writeBytes(fullKey, 0, fullKey.length);
+                    output.writeInt(generatorBytes.length);
+                    output.writeBytes(generatorBytes);
+                    byteBuffer = output.getByteBuffer().flip();
+                }
+            }
+        }
+
+        public ByteBuffer getByteBuffer() {
+            serialise();
+            return byteBuffer;
+        }
+
+        public byte[] getFullKey() {
+            deserialise();
+            return fullKey;
+        }
+
+        public Generator[] getGenerators() {
+            deserialise();
+            return generators;
+        }
+    }
+
+    private static class QueueItem {
+
+        private final RowKey rowKey;
+        private final RowValue rowValue;
+
+        public QueueItem(final RowKey rowKey,
+                         final RowValue rowValue) {
+            this.rowKey = rowKey;
+            this.rowValue = rowValue;
+        }
+
+        public RowKey getRowKey() {
+            return rowKey;
+        }
+
+        public RowValue getRowValue() {
+            return rowValue;
         }
     }
 }

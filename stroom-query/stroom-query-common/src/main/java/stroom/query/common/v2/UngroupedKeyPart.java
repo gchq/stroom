@@ -6,15 +6,19 @@ import java.util.Objects;
 
 class UngroupedKeyPart implements KeyPart {
 
-    private final String uuid;
+    private long sequenceNumber;
 
-    public UngroupedKeyPart(final String uuid) {
-        this.uuid = uuid;
+    public UngroupedKeyPart(final long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    public void setSequenceNumber(final long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override
     public void write(final Output output) {
-        output.writeString(uuid);
+        output.writeLong(sequenceNumber);
     }
 
     @Override
@@ -32,18 +36,18 @@ class UngroupedKeyPart implements KeyPart {
             return false;
         }
         final UngroupedKeyPart that = (UngroupedKeyPart) o;
-        return uuid == that.uuid;
+        return sequenceNumber == that.sequenceNumber;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(sequenceNumber);
     }
 
     @Override
     public void append(final StringBuilder sb) {
         sb.append("~");
-        sb.append(uuid);
+        sb.append(sequenceNumber);
     }
 
     @Override
