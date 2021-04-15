@@ -238,12 +238,12 @@ public class MapDataStore implements DataStore {
             if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
                 final KeyPart keyPart = new GroupKeyPart(groupValues);
-                key = key.resolve(keyPart, true);
+                key = key.resolve(keyPart);
 
             } else {
                 // This item will not be grouped.
                 final KeyPart keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
-                key = key.resolve(keyPart, false);
+                key = key.resolve(keyPart);
             }
 
             final byte[] childKey = itemSerialiser.toBytes(key);

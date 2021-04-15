@@ -33,36 +33,29 @@ public class ItemSerialiser {
                     list.add(new UngroupedKeyPart(input.readLong()));
                 }
             }
-            final boolean grouped = input.readBoolean();
-            return Key.fromParts(list, grouped);
+            return Key.fromParts(list);
         });
     }
 
     void writeKey(final Key key, final Output output) {
         Metrics.measure("Key write", () -> {
-            boolean grouped = false;
             output.writeInt(key.size());
             for (final KeyPart keyPart : key) {
-                grouped = key.isGrouped();
                 output.writeBoolean(keyPart.isGrouped());
                 keyPart.write(output);
             }
-            output.writeBoolean(grouped);
         });
     }
 
-    void writeChildKey(final Key key, final Output output) {
-        Metrics.measure("Key write", () -> {
-            boolean grouped = false;
-            output.writeInt(key.size() + 1);
-            for (final KeyPart keyPart : key) {
-                grouped = key.isGrouped();
-                output.writeBoolean(keyPart.isGrouped());
-                keyPart.write(output);
-            }
-            output.writeBoolean(grouped);
-        });
-    }
+//    void writeChildKey(final Key key, final Output output) {
+//        Metrics.measure("Key write", () -> {
+//            output.writeInt(key.size() + 1);
+//            for (final KeyPart keyPart : key) {
+//                output.writeBoolean(keyPart.isGrouped());
+//                keyPart.write(output);
+//            }
+//        });
+//    }
 
     public byte[] toBytes(final Key key) {
         return Metrics.measure("Key toBytes", () ->

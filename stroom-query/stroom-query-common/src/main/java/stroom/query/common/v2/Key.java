@@ -9,31 +9,27 @@ import javax.annotation.Nonnull;
 
 public class Key implements Iterable<KeyPart> {
 
-    private static final Key ROOT_KEY = new Key(Collections.emptyList(), true);
+    private static final Key ROOT_KEY = new Key(Collections.emptyList());
 
     private final List<KeyPart> keyParts;
-    private final boolean grouped;
 
-    private Key(final List<KeyPart> keyParts, final boolean grouped) {
+    private Key(final List<KeyPart> keyParts) {
         this.keyParts = keyParts;
-        this.grouped = grouped;
     }
 
     public static Key root() {
         return ROOT_KEY;
     }
 
-    public static Key fromParts(final List<KeyPart> keyParts,
-                                final boolean grouped) {
-        return new Key(keyParts, grouped);
+    public static Key fromParts(final List<KeyPart> keyParts) {
+        return new Key(keyParts);
     }
 
-    Key resolve(final KeyPart keyPart,
-                final boolean grouped) {
+    Key resolve(final KeyPart keyPart) {
         final List<KeyPart> parts = new ArrayList<>(keyParts.size() + 1);
         parts.addAll(keyParts);
         parts.add(keyPart);
-        return new Key(parts, grouped);
+        return new Key(parts);
     }
 
     KeyPart getLast() {
@@ -45,7 +41,7 @@ public class Key implements Iterable<KeyPart> {
 
     Key getParent() {
         if (keyParts.size() > 0) {
-            return new Key(keyParts.subList(0, keyParts.size() - 1), grouped);
+            return new Key(keyParts.subList(0, keyParts.size() - 1));
         }
         return null;
     }
@@ -59,9 +55,8 @@ public class Key implements Iterable<KeyPart> {
     }
 
     boolean isGrouped() {
-        return grouped;
-//        final KeyPart last = getLast();
-//        return last == null || last.isGrouped();
+        final KeyPart last = getLast();
+        return last == null || last.isGrouped();
     }
 
     @SuppressWarnings("checkstyle:needbraces")

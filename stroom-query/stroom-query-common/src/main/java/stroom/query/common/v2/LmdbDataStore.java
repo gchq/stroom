@@ -292,14 +292,14 @@ public class LmdbDataStore implements DataStore {
             if (grouped) {
                 // This is a grouped item.
                 final KeyPart keyPart = new GroupKeyPart(groupValues);
-                key = key.resolve(keyPart, true);
+                key = key.resolve(keyPart);
                 keyBytes = itemSerialiser.toBytes(key);
                 rowHash = createKeyHash(keyBytes);
 
             } else {
                 // This item will not be grouped.
                 final KeyPart keyPart = new UngroupedKeyPart(getUniqueId());
-                key = key.resolve(keyPart, false);
+                key = key.resolve(keyPart);
                 keyBytes = itemSerialiser.toBytes(key);
                 rowHash = createUniqueKey();
             }

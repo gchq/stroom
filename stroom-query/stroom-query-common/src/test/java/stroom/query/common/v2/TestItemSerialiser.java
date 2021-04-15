@@ -52,7 +52,7 @@ class TestItemSerialiser {
                 .root()
                 .resolve(new GroupKeyPart(
                         new Val[]{ValLong.create(1262304240000L), ValString.create("user5")}
-                ), true);
+                ));
         byte[] keyBytes = itemSerialiser.toBytes(key);
         byte[] generatorBytes = itemSerialiser.toBytes(generators);
         final RawItem item = new RawItem(keyBytes, generatorBytes);
