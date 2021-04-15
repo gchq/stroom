@@ -100,7 +100,7 @@ public class ItemSerialiser {
                         writeRawItem(rawItem, output)));
     }
 
-    RawItem readRawItem(final Input input) {
+    private RawItem readRawItem(final Input input) {
         return Metrics.measure("Item readRawItem input", () -> {
             try {
                 final int groupKeyLength = input.readInt();
@@ -121,7 +121,7 @@ public class ItemSerialiser {
         });
     }
 
-    void writeRawItem(final RawItem rawItem, final Output output) {
+    private void writeRawItem(final RawItem rawItem, final Output output) {
         Metrics.measure("Item writeRawItem", () -> {
             if (rawItem.getKey() != null) {
                 output.writeInt(rawItem.getKey().length);
