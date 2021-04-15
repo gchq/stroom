@@ -11,7 +11,7 @@ interface PropsIn {
 interface UseReactSelect {
   _options: BasicOption[];
   _value: BasicOption | undefined;
-  _onChange: (v: ValueType<BasicOption>) => void;
+  _onChange: (v: ValueType<BasicOption, false>) => void;
 }
 
 export const useReactSelect = ({
@@ -31,7 +31,7 @@ export const useReactSelect = ({
     () => _options.find((o) => o.value === value),
     [_options, value],
   );
-  const _onChange: (v: ValueType<BasicOption>) => void = React.useCallback(
+  const _onChange: (v: ValueType<BasicOption, false>) => void = React.useCallback(
     (v) => {
       if (!!v && (v as BasicOption).value) {
         onChange((v as BasicOption).value);
