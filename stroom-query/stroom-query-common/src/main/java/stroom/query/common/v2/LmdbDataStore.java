@@ -782,16 +782,11 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer valueBuffer = keyVal.val();
                         try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
                             while (!input.end() && inRange) {
-                                final int fullKeyLength = input.readInt();
-                                final byte[] fullKey = input.readBytes(fullKeyLength);
-                                final int generatorsLength = input.readInt();
-                                final byte[] generatorBytes = input.readBytes(generatorsLength);
-
-                                final Key key = itemSerialiser.toKey(fullKey);
+                                final LmdbValue rowValue = LmdbValue.read(itemSerialiser, input);
+                                final Key key = rowValue.getKey();
                                 if (key.getParent().equals(parentKey)) {
-                                    final Generator[] generators = itemSerialiser.readGenerators(generatorBytes);
-
-                                    list.add(new ItemImpl(this, new RawKey(fullKey), key, generators));
+                                    final Generator[] generators = rowValue.getGenerators();
+                                    list.add(new ItemImpl(this, new RawKey(rowValue.getFullKey()), key, generators));
                                     if (!allowSort && list.size >= trimmedSize) {
                                         // Stop without sorting etc.
                                         inRange = false;

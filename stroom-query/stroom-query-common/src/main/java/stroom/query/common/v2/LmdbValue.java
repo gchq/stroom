@@ -113,6 +113,10 @@ class LmdbValue {
         return generatorBytes;
     }
 
+    Key getKey() {
+        return itemSerialiser.toKey(getFullKey());
+    }
+
     Generator[] getGenerators() {
         if (generators == null) {
             generators = itemSerialiser.readGenerators(getGeneratorBytes());
@@ -122,7 +126,7 @@ class LmdbValue {
 
     @Override
     public String toString() {
-        final Key key = itemSerialiser.toKey(getFullKey());
+        final Key key = getKey();
         final Generator[] generators = getGenerators();
 
         return "LmdbValue{" +
