@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
 
 ## [v7.0-beta.104] - 2021-04-13
 
