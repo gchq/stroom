@@ -25,6 +25,7 @@ class GroupKeyPart implements KeyPart {
         return true;
     }
 
+    @Override
     public Val[] getGroupValues() {
         return groupValues;
     }

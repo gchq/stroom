@@ -1,6 +1,8 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.util.io.ByteSizeUnit;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -14,6 +16,8 @@ import javax.annotation.Nonnull;
 
 public class Key implements Iterable<KeyPart> {
 
+    private static final int MIN_KEY_SIZE = (int) ByteSizeUnit.BYTE.longBytes(10);
+    private static final int MAX_KEY_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
     private static final Key ROOT_KEY = new Key(Collections.emptyList());
 
     private byte[] bytes;
@@ -29,12 +33,6 @@ public class Key implements Iterable<KeyPart> {
         this.keyParts = keyParts;
     }
 
-    public Key(final byte[] bytes, final List<KeyPart> keyParts) {
-        this.bytes = bytes;
-        this.hashCode = Arrays.hashCode(bytes);
-        this.keyParts = keyParts;
-    }
-
     public static Key root() {
         return ROOT_KEY;
     }
@@ -42,8 +40,8 @@ public class Key implements Iterable<KeyPart> {
     public byte[] getBytes() {
         if (bytes == null) {
             Metrics.measure("Key getBytes", () -> {
-                try (final Output output = new Output(100, 4096)) {
-                    output.writeInt(size());
+                try (final Output output = new Output(MIN_KEY_SIZE, MAX_KEY_SIZE)) {
+                    output.writeInt(keyParts.size());
                     for (final KeyPart keyPart : keyParts) {
                         output.writeBoolean(keyPart.isGrouped());
                         keyPart.write(output);
@@ -78,21 +76,20 @@ public class Key implements Iterable<KeyPart> {
         return keyParts;
     }
 
+    Key resolve(final Val[] groupValues) {
+        return resolve(new GroupKeyPart(groupValues));
+    }
 
-    Key resolve(final KeyPart keyPart) {
+    Key resolve(final long uniqueId) {
+        return resolve(new UngroupedKeyPart(uniqueId));
+    }
+
+    private Key resolve(final KeyPart keyPart) {
         final List<KeyPart> keyParts = getKeyParts();
         final List<KeyPart> parts = new ArrayList<>(keyParts.size() + 1);
         parts.addAll(keyParts);
         parts.add(keyPart);
         return new Key(parts);
-    }
-
-    KeyPart getLast() {
-        final List<KeyPart> keyParts = getKeyParts();
-        if (keyParts.size() > 0) {
-            return keyParts.get(keyParts.size() - 1);
-        }
-        return null;
     }
 
     Key getParent() {
@@ -103,11 +100,6 @@ public class Key implements Iterable<KeyPart> {
         return null;
     }
 
-    int getDepth() {
-        final List<KeyPart> keyParts = getKeyParts();
-        return keyParts.size() - 1;
-    }
-
     int size() {
         final List<KeyPart> keyParts = getKeyParts();
         return keyParts.size();
@@ -116,6 +108,14 @@ public class Key implements Iterable<KeyPart> {
     boolean isGrouped() {
         final KeyPart last = getLast();
         return last == null || last.isGrouped();
+    }
+
+    private KeyPart getLast() {
+        final List<KeyPart> keyParts = getKeyParts();
+        if (keyParts.size() > 0) {
+            return keyParts.get(keyParts.size() - 1);
+        }
+        return null;
     }
 
     @SuppressWarnings("checkstyle:needbraces")

@@ -17,30 +17,30 @@ class LmdbValue {
     private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
     private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
 
-    private final ItemSerialiser itemSerialiser;
+    private final GeneratorsSerialiser generatorsSerialiser;
     private ByteBuffer byteBuffer;
     private Key key;
     private byte[] generatorBytes;
     private Generator[] generators;
 
-    LmdbValue(final ItemSerialiser itemSerialiser,
+    LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
               final byte[] fullKeyBytes,
               final Generator[] generators) {
-        this.itemSerialiser = itemSerialiser;
+        this.generatorsSerialiser = generatorsSerialiser;
         this.key = new Key(fullKeyBytes);
         this.generators = generators;
     }
 
-    LmdbValue(final ItemSerialiser itemSerialiser,
+    LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
               final ByteBuffer byteBuffer) {
-        this.itemSerialiser = itemSerialiser;
+        this.generatorsSerialiser = generatorsSerialiser;
         this.byteBuffer = byteBuffer;
     }
 
-    public LmdbValue(final ItemSerialiser itemSerialiser,
+    public LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
-        this.itemSerialiser = itemSerialiser;
+        this.generatorsSerialiser = generatorsSerialiser;
         this.key = new Key(fullKeyBytes);
         this.generatorBytes = generatorBytes;
     }
@@ -63,12 +63,12 @@ class LmdbValue {
         }
     }
 
-    static LmdbValue read(final ItemSerialiser itemSerialiser, final Input input) {
+    static LmdbValue read(final GeneratorsSerialiser generatorsSerialiser, final Input input) {
         final int fullKeyLength = input.readInt();
         final byte[] fullKey = input.readBytes(fullKeyLength);
         final int generatorsLength = input.readInt();
         final byte[] generatorBytes = input.readBytes(generatorsLength);
-        return new LmdbValue(itemSerialiser, fullKey, generatorBytes);
+        return new LmdbValue(generatorsSerialiser, fullKey, generatorBytes);
     }
 
     void write(final Output output) {
@@ -105,7 +105,7 @@ class LmdbValue {
             if (byteBuffer != null) {
                 split();
             } else if (generators != null) {
-                generatorBytes = itemSerialiser.toBytes(generators);
+                generatorBytes = generatorsSerialiser.toBytes(generators);
             } else {
                 throw new NullPointerException("Unable to get generator bytes");
             }
@@ -115,7 +115,7 @@ class LmdbValue {
 
     Generator[] getGenerators() {
         if (generators == null) {
-            generators = itemSerialiser.readGenerators(getGeneratorBytes());
+            generators = generatorsSerialiser.readGenerators(getGeneratorBytes());
         }
         return generators;
     }

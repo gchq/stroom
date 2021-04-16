@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestItemSerialiser {
+class TestGeneratorsSerialiser {
 
     @Test
     void test() {
@@ -28,7 +28,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final GeneratorsSerialiser generatorsSerialiser = new GeneratorsSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -47,10 +47,10 @@ class TestItemSerialiser {
             }
         }
 
-        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        byte[] generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected = toString(generators);
 
-        final Generator[] generators1 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators1 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
@@ -58,10 +58,10 @@ class TestItemSerialiser {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = itemSerialiser.toBytes(generators);
+        generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected2 = toString(generators);
 
-        final Generator[] generators2 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators2 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);
@@ -100,7 +100,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final GeneratorsSerialiser generatorsSerialiser = new GeneratorsSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -119,10 +119,10 @@ class TestItemSerialiser {
             }
         }
 
-        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        byte[] generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected = toString(generators);
 
-        final Generator[] generators1 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators1 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
@@ -130,10 +130,10 @@ class TestItemSerialiser {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = itemSerialiser.toBytes(generators);
+        generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected2 = toString(generators);
 
-        final Generator[] generators2 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators2 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);
@@ -150,14 +150,14 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final GeneratorsSerialiser generatorsSerialiser = new GeneratorsSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
 
-        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        byte[] generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected = toString(generators);
 
-        final Generator[] generators1 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators1 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
@@ -165,10 +165,10 @@ class TestItemSerialiser {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = itemSerialiser.toBytes(generators);
+        generatorBytes = generatorsSerialiser.toBytes(generators);
         final String expected2 = toString(generators);
 
-        final Generator[] generators2 = itemSerialiser.readGenerators(generatorBytes);
+        final Generator[] generators2 = generatorsSerialiser.readGenerators(generatorBytes);
         final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);

@@ -2,23 +2,27 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.util.io.ByteSizeUnit;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.function.Consumer;
 
-public class ItemSerialiser {
+public class GeneratorsSerialiser {
+
+    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
+    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
 
     private final CompiledField[] fields;
 
-    public ItemSerialiser(final CompiledField[] fields) {
+    public GeneratorsSerialiser(final CompiledField[] fields) {
         this.fields = fields;
     }
 
     private byte[] toBytes(final Consumer<Output> outputConsumer) {
         byte[] result;
-        try (final Output output = new Output(100, 4096)) {
+        try (final Output output = new Output(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
             outputConsumer.accept(output);
             output.flush();
 

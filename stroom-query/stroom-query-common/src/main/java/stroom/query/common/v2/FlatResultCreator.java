@@ -101,7 +101,7 @@ public class FlatResultCreator implements ResultCreator {
         int depth = 0;
         final List<Object> result = new ArrayList<>(key.size());
         for (final KeyPart keyPart : key) {
-            final Val[] values = ((GroupKeyPart) keyPart).getGroupValues();
+            final Val[] values = keyPart.getGroupValues();
 
             if (values.length == 0) {
                 result.add(null);
