@@ -124,7 +124,7 @@ public class LmdbDataStore implements DataStore {
 
         itemSerialiser = new ItemSerialiser(compiledFields);
         rootParentRowKey = new LmdbKey.Builder()
-                .keyBytes(itemSerialiser.toBytes(Key.root()))
+                .keyBytes(Key.root().getBytes())
                 .build();
 
         this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
@@ -282,7 +282,7 @@ public class LmdbDataStore implements DataStore {
                 // This is a grouped item.
                 final KeyPart keyPart = new GroupKeyPart(groupValues);
                 key = key.resolve(keyPart);
-                keyBytes = itemSerialiser.toBytes(key);
+                keyBytes = key.getBytes();
 
                 final LmdbKey rowKey = rowKeyBuilder
                         .depth(depth)
@@ -299,7 +299,7 @@ public class LmdbDataStore implements DataStore {
                 final long uniqueId = getUniqueId();
                 final KeyPart keyPart = new UngroupedKeyPart(uniqueId);
                 key = key.resolve(keyPart);
-                keyBytes = itemSerialiser.toBytes(key);
+                keyBytes = key.getBytes();
 
                 final LmdbKey rowKey = rowKeyBuilder
                         .depth(depth)
@@ -447,7 +447,7 @@ public class LmdbDataStore implements DataStore {
                                 final LmdbValue existingRowValue = LmdbValue.read(itemSerialiser, input);
 
                                 // If this is the same value the update it and reinsert.
-                                if (Arrays.equals(existingRowValue.getFullKey(), rowValue.getFullKey())) {
+                                if (existingRowValue.getKey().equals(rowValue.getKey())) {
                                     final Generator[] generators = existingRowValue.getGenerators();
                                     final Generator[] newValue = rowValue.getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
@@ -455,7 +455,7 @@ public class LmdbDataStore implements DataStore {
                                     LOGGER.debug("Merging combined value to output");
                                     final LmdbValue combinedValue = new LmdbValue(
                                             itemSerialiser,
-                                            existingRowValue.getFullKey(),
+                                            existingRowValue.getKey().getBytes(),
                                             combined);
                                     combinedValue.write(output);
 
@@ -701,16 +701,12 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public Items get() {
-        return get(null);
+        return get(Key.root());
     }
 
     @Override
-    public Items get(final RawKey rawParentKey) {
+    public Items get(final Key parentKey) {
         return Metrics.measure("get", () -> {
-            Key parentKey = Key.root();
-            if (rawParentKey != null) {
-                parentKey = itemSerialiser.toKey(rawParentKey);
-            }
             final int depth = parentKey.getDepth() + 1;
             final int trimmedSize = maxResults.size(depth);
 
@@ -750,7 +746,7 @@ public class LmdbDataStore implements DataStore {
                                       final boolean trimTop) {
         final ItemArrayList list = new ItemArrayList(10);
 
-        final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey, itemSerialiser);
+        final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
         final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
 
         final int maxSize;
@@ -786,7 +782,7 @@ public class LmdbDataStore implements DataStore {
                                 final Key key = rowValue.getKey();
                                 if (key.getParent().equals(parentKey)) {
                                     final Generator[] generators = rowValue.getGenerators();
-                                    list.add(new ItemImpl(this, new RawKey(rowValue.getFullKey()), key, generators));
+                                    list.add(new ItemImpl(this, key, generators));
                                     if (!allowSort && list.size >= trimmedSize) {
                                         // Stop without sorting etc.
                                         inRange = false;
@@ -877,23 +873,15 @@ public class LmdbDataStore implements DataStore {
     public static class ItemImpl implements Item, HasGenerators {
 
         private final LmdbDataStore lmdbDataStore;
-        private final RawKey rawKey;
         private final Key key;
         private final Generator[] generators;
 
         public ItemImpl(final LmdbDataStore lmdbDataStore,
-                        final RawKey rawKey,
                         final Key key,
                         final Generator[] generators) {
             this.lmdbDataStore = lmdbDataStore;
-            this.rawKey = rawKey;
             this.key = key;
             this.generators = generators;
-        }
-
-        @Override
-        public RawKey getRawKey() {
-            return rawKey;
         }
 
         @Override

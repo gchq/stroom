@@ -7,22 +7,22 @@ import java.util.Set;
 
 public class OpenGroupsConverter {
 
-    static Set<RawKey> convertSet(final Set<String> openGroups) {
+    static Set<Key> convertSet(final Set<String> openGroups) {
         return Metrics.measure("Converting open groups", () -> {
-            Set<RawKey> rawKeys = Collections.emptySet();
+            Set<Key> keys = Collections.emptySet();
             if (openGroups != null) {
-                rawKeys = new HashSet<>();
+                keys = new HashSet<>();
                 for (final String encodedGroup : openGroups) {
                     final byte[] bytes = Base64.getDecoder().decode(encodedGroup);
-                    rawKeys.add(new RawKey(bytes));
+                    keys.add(new Key(bytes));
                 }
             }
-            return rawKeys;
+            return keys;
         });
     }
 
-    public static String encode(final RawKey rawKey) {
+    public static String encode(final Key key) {
         return Metrics.measure("Encoding groups", () ->
-                Base64.getEncoder().encodeToString(rawKey.getBytes()));
+                Base64.getEncoder().encodeToString(key.getBytes()));
     }
 }

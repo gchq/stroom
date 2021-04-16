@@ -4,18 +4,18 @@ import stroom.dashboard.expression.v1.Generator;
 
 public class UnpackedItem implements HasGenerators {
 
-    private final RawKey rawKey;
+    private final Key key;
     private final Generator[] generators;
     private final byte[] bytes;
 
-    public UnpackedItem(final RawKey rawKey, final Generator[] generators, final byte[] bytes) {
-        this.rawKey = rawKey;
+    public UnpackedItem(final Key key, final Generator[] generators, final byte[] bytes) {
+        this.key = key;
         this.generators = generators;
         this.bytes = bytes;
     }
 
-    public RawKey getRawKey() {
-        return rawKey;
+    public Key getKey() {
+        return key;
     }
 
     @Override

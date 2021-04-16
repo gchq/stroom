@@ -19,7 +19,7 @@ class LmdbValue {
 
     private final ItemSerialiser itemSerialiser;
     private ByteBuffer byteBuffer;
-    private byte[] fullKeyBytes;
+    private Key key;
     private byte[] generatorBytes;
     private Generator[] generators;
 
@@ -27,7 +27,7 @@ class LmdbValue {
               final byte[] fullKeyBytes,
               final Generator[] generators) {
         this.itemSerialiser = itemSerialiser;
-        this.fullKeyBytes = fullKeyBytes;
+        this.key = new Key(fullKeyBytes);
         this.generators = generators;
     }
 
@@ -41,7 +41,7 @@ class LmdbValue {
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
         this.itemSerialiser = itemSerialiser;
-        this.fullKeyBytes = fullKeyBytes;
+        this.key = new Key(fullKeyBytes);
         this.generatorBytes = generatorBytes;
     }
 
@@ -49,7 +49,7 @@ class LmdbValue {
         try (final UnsafeByteBufferInput input =
                 new UnsafeByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
-            fullKeyBytes = input.readBytes(keyLength);
+            key = new Key(input.readBytes(keyLength));
             final int generatorLength = input.readInt();
             generatorBytes = input.readBytes(generatorLength);
         }
@@ -58,7 +58,7 @@ class LmdbValue {
     private void pack() {
         try (final UnsafeByteBufferOutput output =
                 new UnsafeByteBufferOutput(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
-            write(output, getFullKey(), getGeneratorBytes());
+            write(output, getKey().getBytes(), getGeneratorBytes());
             byteBuffer = output.getByteBuffer().flip();
         }
     }
@@ -72,7 +72,7 @@ class LmdbValue {
     }
 
     void write(final Output output) {
-        write(output, getFullKey(), getGeneratorBytes());
+        write(output, getKey().getBytes(), getGeneratorBytes());
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) {
@@ -89,15 +89,15 @@ class LmdbValue {
         return byteBuffer;
     }
 
-    byte[] getFullKey() {
-        if (fullKeyBytes == null) {
+    Key getKey() {
+        if (key == null) {
             if (byteBuffer != null) {
                 split();
             } else {
                 throw new NullPointerException("Unable to get key bytes");
             }
         }
-        return fullKeyBytes;
+        return key;
     }
 
     private byte[] getGeneratorBytes() {
@@ -111,10 +111,6 @@ class LmdbValue {
             }
         }
         return generatorBytes;
-    }
-
-    Key getKey() {
-        return itemSerialiser.toKey(getFullKey());
     }
 
     Generator[] getGenerators() {
