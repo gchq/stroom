@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

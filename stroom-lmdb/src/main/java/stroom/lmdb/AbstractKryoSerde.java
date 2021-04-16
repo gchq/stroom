@@ -17,7 +17,7 @@
 
 package stroom.lmdb;
 
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

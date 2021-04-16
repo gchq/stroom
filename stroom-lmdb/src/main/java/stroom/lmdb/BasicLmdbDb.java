@@ -17,7 +17,7 @@
 
 package stroom.lmdb;
 
-import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferPool;
 
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;

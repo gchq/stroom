@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.Any.AnySelector;
 import stroom.dashboard.expression.v1.Bottom.BottomSelector;
 import stroom.dashboard.expression.v1.Expression;
@@ -30,7 +31,6 @@ import stroom.dashboard.expression.v1.Top.TopSelector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
@@ -88,7 +88,6 @@ public class LmdbDataStore implements DataStore {
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
-    private final GeneratorsSerialiser generatorsSerialiser;
     private final boolean hasSort;
 
     private final AtomicBoolean hasEnoughData = new AtomicBoolean();
@@ -122,7 +121,6 @@ public class LmdbDataStore implements DataStore {
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
 
-        generatorsSerialiser = new GeneratorsSerialiser(compiledFields);
         rootParentRowKey = new LmdbKey.Builder()
                 .keyBytes(Key.root().getBytes())
                 .build();
@@ -289,7 +287,9 @@ public class LmdbDataStore implements DataStore {
                         .keyBytes(keyBytes)
                         .group(true)
                         .build();
-                final LmdbValue rowValue = new LmdbValue(generatorsSerialiser, keyBytes, generators);
+                final LmdbValue rowValue = new LmdbValue(
+                        keyBytes,
+                        new Generators(compiledFields, generators));
                 parentRowKey = rowKey;
                 put(new QueueItem(rowKey, rowValue));
 
@@ -305,7 +305,9 @@ public class LmdbDataStore implements DataStore {
                         .uniqueId(uniqueId)
                         .group(false)
                         .build();
-                final LmdbValue rowValue = new LmdbValue(generatorsSerialiser, keyBytes, generators);
+                final LmdbValue rowValue = new LmdbValue(
+                        keyBytes,
+                        new Generators(compiledFields, generators));
                 put(new QueueItem(rowKey, rowValue));
             }
         }
@@ -442,19 +444,18 @@ public class LmdbDataStore implements DataStore {
 
                         try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(existingValueBuffer)) {
                             while (!input.end()) {
-                                final LmdbValue existingRowValue = LmdbValue.read(generatorsSerialiser, input);
+                                final LmdbValue existingRowValue = LmdbValue.read(compiledFields, input);
 
                                 // If this is the same value the update it and reinsert.
                                 if (existingRowValue.getKey().equals(rowValue.getKey())) {
-                                    final Generator[] generators = existingRowValue.getGenerators();
-                                    final Generator[] newValue = rowValue.getGenerators();
+                                    final Generator[] generators = existingRowValue.getGenerators().getGenerators();
+                                    final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
                                     LOGGER.debug("Merging combined value to output");
                                     final LmdbValue combinedValue = new LmdbValue(
-                                            generatorsSerialiser,
                                             existingRowValue.getKey().getBytes(),
-                                            combined);
+                                            new Generators(compiledFields, combined));
                                     combinedValue.write(output);
 
                                     // Copy any remaining values.
@@ -685,7 +686,7 @@ public class LmdbDataStore implements DataStore {
                             }
 
                             final QueueItem queueItem =
-                                    new QueueItem(rowKey, new LmdbValue(generatorsSerialiser, valueBuffer));
+                                    new QueueItem(rowKey, new LmdbValue(compiledFields, valueBuffer));
                             put(queueItem);
                         }
                     }
@@ -776,10 +777,10 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer valueBuffer = keyVal.val();
                         try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
                             while (!input.end() && inRange) {
-                                final LmdbValue rowValue = LmdbValue.read(generatorsSerialiser, input);
+                                final LmdbValue rowValue = LmdbValue.read(compiledFields, input);
                                 final Key key = rowValue.getKey();
                                 if (key.getParent().equals(parentKey)) {
-                                    final Generator[] generators = rowValue.getGenerators();
+                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
                                     list.add(new ItemImpl(this, key, generators));
                                     if (!allowSort && list.size >= trimmedSize) {
                                         // Stop without sorting etc.

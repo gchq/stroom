@@ -18,9 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import org.junit.jupiter.api.Test;
 

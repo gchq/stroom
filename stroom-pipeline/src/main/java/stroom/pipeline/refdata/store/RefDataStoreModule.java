@@ -17,6 +17,8 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.bytebuffer.ByteBufferModule;
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
@@ -32,8 +34,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
-import stroom.pipeline.refdata.util.ByteBufferModule;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 

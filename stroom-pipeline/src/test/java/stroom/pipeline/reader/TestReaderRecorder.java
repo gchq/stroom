@@ -1,6 +1,6 @@
 package stroom.pipeline.reader;
 
-import stroom.pipeline.refdata.util.ByteArrayUtils;
+import stroom.bytebuffer.ByteArrayUtils;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;

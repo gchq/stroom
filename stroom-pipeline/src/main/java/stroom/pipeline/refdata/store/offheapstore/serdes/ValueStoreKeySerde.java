@@ -97,8 +97,8 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
                     thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error comparing [{}] & [{}]",
-                    stroom.pipeline.refdata.util.ByteBufferUtils.byteBufferInfo(thisBuffer),
-                    stroom.pipeline.refdata.util.ByteBufferUtils.byteBufferInfo(thatBuffer)), e);
+                    stroom.bytebuffer.ByteBufferUtils.byteBufferInfo(thisBuffer),
+                    stroom.bytebuffer.ByteBufferUtils.byteBufferInfo(thatBuffer)), e);
         }
     }
 }

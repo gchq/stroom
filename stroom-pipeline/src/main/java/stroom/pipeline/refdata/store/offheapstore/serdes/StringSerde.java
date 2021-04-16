@@ -17,8 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.Serde;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;

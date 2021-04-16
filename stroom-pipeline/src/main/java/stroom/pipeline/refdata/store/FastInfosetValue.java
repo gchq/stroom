@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.bytebuffer.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;

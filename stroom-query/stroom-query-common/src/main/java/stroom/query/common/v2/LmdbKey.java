@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.bytebuffer.ByteBufferUtils;
 
 import net.openhft.hashing.LongHashFunction;
 

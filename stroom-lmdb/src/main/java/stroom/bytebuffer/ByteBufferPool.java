@@ -1,4 +1,4 @@
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;

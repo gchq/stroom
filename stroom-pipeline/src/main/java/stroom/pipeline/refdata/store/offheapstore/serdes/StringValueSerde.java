@@ -17,9 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LogUtil;
 
 import java.io.IOException;

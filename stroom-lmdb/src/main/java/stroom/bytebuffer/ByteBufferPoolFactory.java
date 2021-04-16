@@ -1,4 +1,4 @@
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

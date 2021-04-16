@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
 import stroom.util.io.ByteSizeUnit;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -9,40 +8,35 @@ import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 class LmdbValue {
 
     private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
     private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
 
-    private final GeneratorsSerialiser generatorsSerialiser;
+    private CompiledField[] fields;
     private ByteBuffer byteBuffer;
     private Key key;
-    private byte[] generatorBytes;
-    private Generator[] generators;
+    private Generators generators;
 
-    LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
-              final byte[] fullKeyBytes,
-              final Generator[] generators) {
-        this.generatorsSerialiser = generatorsSerialiser;
+    LmdbValue(final byte[] fullKeyBytes,
+              final Generators generators) {
         this.key = new Key(fullKeyBytes);
         this.generators = generators;
     }
 
-    LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
+    LmdbValue(final CompiledField[] fields,
               final ByteBuffer byteBuffer) {
-        this.generatorsSerialiser = generatorsSerialiser;
+        this.fields = fields;
         this.byteBuffer = byteBuffer;
     }
 
-    public LmdbValue(final GeneratorsSerialiser generatorsSerialiser,
+    public LmdbValue(final CompiledField[] fields,
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
-        this.generatorsSerialiser = generatorsSerialiser;
+        this.fields = fields;
         this.key = new Key(fullKeyBytes);
-        this.generatorBytes = generatorBytes;
+        this.generators = new Generators(fields, generatorBytes);
     }
 
     private void split() {
@@ -51,28 +45,28 @@ class LmdbValue {
             final int keyLength = input.readInt();
             key = new Key(input.readBytes(keyLength));
             final int generatorLength = input.readInt();
-            generatorBytes = input.readBytes(generatorLength);
+            generators = new Generators(fields, input.readBytes(generatorLength));
         }
     }
 
     private void pack() {
         try (final UnsafeByteBufferOutput output =
                 new UnsafeByteBufferOutput(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
-            write(output, getKey().getBytes(), getGeneratorBytes());
+            write(output, getKey().getBytes(), getGenerators().getBytes());
             byteBuffer = output.getByteBuffer().flip();
         }
     }
 
-    static LmdbValue read(final GeneratorsSerialiser generatorsSerialiser, final Input input) {
+    static LmdbValue read(final CompiledField[] fields, final Input input) {
         final int fullKeyLength = input.readInt();
         final byte[] fullKey = input.readBytes(fullKeyLength);
         final int generatorsLength = input.readInt();
         final byte[] generatorBytes = input.readBytes(generatorsLength);
-        return new LmdbValue(generatorsSerialiser, fullKey, generatorBytes);
+        return new LmdbValue(fields, fullKey, generatorBytes);
     }
 
     void write(final Output output) {
-        write(output, getKey().getBytes(), getGeneratorBytes());
+        write(output, getKey().getBytes(), getGenerators().getBytes());
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) {
@@ -100,22 +94,26 @@ class LmdbValue {
         return key;
     }
 
-    private byte[] getGeneratorBytes() {
-        if (generatorBytes == null) {
+//    private byte[] getGeneratorBytes() {
+//        if (generators == null) {
+//            if (byteBuffer != null) {
+//                split();
+//            } else if (generators != null) {
+//                generatorBytes = generators.toBytes();
+//            } else {
+//                throw new NullPointerException("Unable to get generator bytes");
+//            }
+//        }
+//        return generatorBytes;
+//    }
+
+    Generators getGenerators() {
+        if (generators == null) {
             if (byteBuffer != null) {
                 split();
-            } else if (generators != null) {
-                generatorBytes = generatorsSerialiser.toBytes(generators);
             } else {
                 throw new NullPointerException("Unable to get generator bytes");
             }
-        }
-        return generatorBytes;
-    }
-
-    Generator[] getGenerators() {
-        if (generators == null) {
-            generators = generatorsSerialiser.readGenerators(getGeneratorBytes());
         }
         return generators;
     }
@@ -123,21 +121,13 @@ class LmdbValue {
     @Override
     public String toString() {
         final Key key = getKey();
-        final Generator[] generators = getGenerators();
+        final Generators generators = getGenerators();
 
         return "LmdbValue{" +
                 "key=" + key +
                 ", " +
-                "generators=[" +
-                Arrays
-                        .stream(generators)
-                        .map(generator -> {
-                            if (generator == null) {
-                                return "null";
-                            }
-                            return generator.eval().toString();
-                        })
-                        .collect(Collectors.joining(",")) +
-                "]}";
+                "generators=" +
+                generators +
+                "}";
     }
 }

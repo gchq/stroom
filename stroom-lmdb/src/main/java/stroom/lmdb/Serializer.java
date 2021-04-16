@@ -17,8 +17,8 @@
 
 package stroom.lmdb;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.util.logging.LogUtil;
 
 import java.nio.BufferOverflowException;
