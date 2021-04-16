@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Remove merge artifacts from `scripts.env`.
+
 
 ## [v7.0-beta.105] - 2021-04-15
 
