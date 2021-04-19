@@ -56,7 +56,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -97,7 +96,7 @@ public class LmdbDataStore implements DataStore {
     private final AtomicBoolean createPayload = new AtomicBoolean();
     private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
 
-    private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
+    private final LinkedBlockingQueue<QueueItem> queue = new LinkedBlockingQueue<>(1000000);
     private final AtomicLong uniqueKey = new AtomicLong();
 
     private final CountDownLatch addedData;
@@ -158,7 +157,7 @@ public class LmdbDataStore implements DataStore {
             @Override
             public void complete() {
                 try {
-                    queue.put(Optional.empty());
+                    queue.put(QueueItem.EMPTY);
                 } catch (final InterruptedException e) {
                     LOGGER.debug(e.getMessage(), e);
                     Thread.currentThread().interrupt();
@@ -335,7 +334,7 @@ public class LmdbDataStore implements DataStore {
         }
 
         try {
-            queue.put(Optional.of(item));
+            queue.put(item);
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
             // Keep interrupting this thread.
@@ -352,14 +351,13 @@ public class LmdbDataStore implements DataStore {
                 long lastCommitMs = System.currentTimeMillis();
 
                 while (run) {
-                    final Optional<QueueItem> optional = queue.poll(1, TimeUnit.SECONDS);
-                    if (optional != null) {
-                        if (optional.isPresent()) {
+                    final QueueItem item = queue.poll(1, TimeUnit.SECONDS);
+                    if (item != null) {
+                        if (item.getRowKey() != null) {
                             if (writeTxn == null) {
                                 writeTxn = lmdbEnvironment.txnWrite();
                             }
 
-                            final QueueItem item = optional.get();
                             insert(writeTxn, item);
 
                         } else {
@@ -373,9 +371,8 @@ public class LmdbDataStore implements DataStore {
                         needsCommit = true;
                     }
 
-                    // TODO : @66 I'm not sure that the final payload will be created as this code will be skipped if
-                    //  the current payload hasn't been taken, unless the completion state is only set after the
-                    //  penultimate payload transfer.
+                    // A final payload is created after complete in `writePayload()` so this won't necessarily be the
+                    // last one.
                     if (createPayload.get() && currentPayload.get() == null) {
                         // Commit
                         if (writeTxn != null) {
@@ -951,8 +948,9 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-
     private static class QueueItem {
+
+        private static final QueueItem EMPTY = new QueueItem(null, null);
 
         private final LmdbKey rowKey;
         private final LmdbValue rowValue;
