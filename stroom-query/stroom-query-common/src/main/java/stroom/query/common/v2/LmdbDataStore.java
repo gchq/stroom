@@ -493,8 +493,7 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } catch (final RuntimeException | IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException("Error putting " + queueItem, e);
+                LOGGER.error("Error putting " + queueItem + " (" + e.getMessage() + ")", e);
             }
         });
     }

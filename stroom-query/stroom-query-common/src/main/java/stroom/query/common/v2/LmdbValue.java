@@ -1,7 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.util.io.ByteSizeUnit;
-
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
@@ -10,9 +8,6 @@ import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import java.nio.ByteBuffer;
 
 class LmdbValue {
-
-    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
-    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
 
     private CompiledField[] fields;
     private ByteBuffer byteBuffer;
@@ -39,7 +34,7 @@ class LmdbValue {
         this.generators = new Generators(fields, generatorBytes);
     }
 
-    private void split() {
+    private void unpack() {
         try (final UnsafeByteBufferInput input =
                 new UnsafeByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
@@ -50,9 +45,15 @@ class LmdbValue {
     }
 
     private void pack() {
-        try (final UnsafeByteBufferOutput output =
-                new UnsafeByteBufferOutput(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
-            write(output, getKey().getBytes(), getGenerators().getBytes());
+        final byte[] keyBytes = getKey().getBytes();
+        final byte[] generatorBytes = getGenerators().getBytes();
+
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(
+                Integer.BYTES +
+                        keyBytes.length +
+                        Integer.BYTES +
+                        generatorBytes.length)) {
+            write(output, keyBytes, generatorBytes);
             byteBuffer = output.getByteBuffer().flip();
         }
     }
@@ -86,7 +87,7 @@ class LmdbValue {
     Key getKey() {
         if (key == null) {
             if (byteBuffer != null) {
-                split();
+                unpack();
             } else {
                 throw new NullPointerException("Unable to get key bytes");
             }
@@ -94,23 +95,10 @@ class LmdbValue {
         return key;
     }
 
-//    private byte[] getGeneratorBytes() {
-//        if (generators == null) {
-//            if (byteBuffer != null) {
-//                split();
-//            } else if (generators != null) {
-//                generatorBytes = generators.toBytes();
-//            } else {
-//                throw new NullPointerException("Unable to get generator bytes");
-//            }
-//        }
-//        return generatorBytes;
-//    }
-
     Generators getGenerators() {
         if (generators == null) {
             if (byteBuffer != null) {
-                split();
+                unpack();
             } else {
                 throw new NullPointerException("Unable to get generator bytes");
             }
