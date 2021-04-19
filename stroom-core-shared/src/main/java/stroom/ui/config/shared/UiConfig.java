@@ -99,6 +99,15 @@ public class UiConfig extends AbstractConfig {
     @JsonProperty
     private SourceConfig source;
 
+    @JsonProperty
+    @JsonPropertyDescription("The Stroom GWT UI is now wrapped in a new React UI that provides some additional " +
+            "features. To use the React UI the GWT UI must be wrapped in an IFrame which is hosted at the root URL. " +
+            "If a user navigates to the GWT UI directly via `stroom/ui` then the React additions will not function. " +
+            "When this property is set to true that will be prevented as the user will be redirected back to the " +
+            "root URL. This behaviour is configurable as development of the GWT UI still requires direct access via " +
+            "`stroom/ui`")
+    private Boolean requireReactWrapper;
+
     public UiConfig() {
         setDefaults();
     }
@@ -119,7 +128,8 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("url") final UrlConfig url,
                     @JsonProperty("uiPreferences") final UiPreferences uiPreferences,
-                    @JsonProperty("source") final SourceConfig source) {
+                    @JsonProperty("source") final SourceConfig source,
+                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -136,6 +146,7 @@ public class UiConfig extends AbstractConfig {
         this.url = url;
         this.uiPreferences = uiPreferences;
         this.source = source;
+        this.requireReactWrapper = requireReactWrapper;
 
         setDefaults();
     }
@@ -185,6 +196,9 @@ public class UiConfig extends AbstractConfig {
         }
         if (source == null) {
             source = new SourceConfig();
+        }
+        if (requireReactWrapper == null) {
+            requireReactWrapper = true;
         }
     }
 
@@ -316,28 +330,14 @@ public class UiConfig extends AbstractConfig {
         this.source = source;
     }
 
-    @Override
-    public String toString() {
-        return "UiConfig{" +
-                "welcomeHtml='" + welcomeHtml + '\'' +
-                ", aboutHtml='" + aboutHtml + '\'' +
-                ", maintenanceMessage='" + maintenanceMessage + '\'' +
-                ", defaultMaxResults='" + defaultMaxResults + '\'' +
-                ", process=" + process +
-                ", helpUrl='" + helpUrl + '\'' +
-                ", theme=" + theme +
-                ", query=" + query +
-                ", namePattern='" + namePattern + '\'' +
-                ", htmlTitle='" + htmlTitle + '\'' +
-                ", oncontextmenu='" + oncontextmenu + '\'' +
-                ", splash=" + splash +
-                ", activity=" + activity +
-                ", url=" + url +
-                ", uiPreferences=" + uiPreferences +
-                '}';
+    public Boolean getRequireReactWrapper() {
+        return requireReactWrapper;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public void setRequireReactWrapper(final Boolean requireReactWrapper) {
+        this.requireReactWrapper = requireReactWrapper;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -347,21 +347,20 @@ public class UiConfig extends AbstractConfig {
             return false;
         }
         final UiConfig uiConfig = (UiConfig) o;
-        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) &&
-                Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
-                Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage) &&
-                Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults) &&
-                Objects.equals(process, uiConfig.process) &&
-                Objects.equals(helpUrl, uiConfig.helpUrl) &&
-                Objects.equals(theme, uiConfig.theme) &&
-                Objects.equals(query, uiConfig.query) &&
-                Objects.equals(namePattern, uiConfig.namePattern) &&
-                Objects.equals(htmlTitle, uiConfig.htmlTitle) &&
-                Objects.equals(oncontextmenu, uiConfig.oncontextmenu) &&
-                Objects.equals(splash, uiConfig.splash) &&
-                Objects.equals(activity, uiConfig.activity) &&
-                Objects.equals(url, uiConfig.url) &&
-                Objects.equals(uiPreferences, uiConfig.uiPreferences);
+        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) && Objects.equals(aboutHtml,
+                uiConfig.aboutHtml) && Objects.equals(maintenanceMessage,
+                uiConfig.maintenanceMessage) && Objects.equals(defaultMaxResults,
+                uiConfig.defaultMaxResults) && Objects.equals(process,
+                uiConfig.process) && Objects.equals(helpUrl, uiConfig.helpUrl) && Objects.equals(theme,
+                uiConfig.theme) && Objects.equals(query, uiConfig.query) && Objects.equals(namePattern,
+                uiConfig.namePattern) && Objects.equals(htmlTitle,
+                uiConfig.htmlTitle) && Objects.equals(oncontextmenu,
+                uiConfig.oncontextmenu) && Objects.equals(splash, uiConfig.splash) && Objects.equals(
+                activity,
+                uiConfig.activity) && Objects.equals(url, uiConfig.url) && Objects.equals(uiPreferences,
+                uiConfig.uiPreferences) && Objects.equals(source, uiConfig.source) && Objects.equals(
+                requireReactWrapper,
+                uiConfig.requireReactWrapper);
     }
 
     @Override
@@ -380,6 +379,31 @@ public class UiConfig extends AbstractConfig {
                 splash,
                 activity,
                 url,
-                uiPreferences);
+                uiPreferences,
+                source,
+                requireReactWrapper);
+    }
+
+    @Override
+    public String toString() {
+        return "UiConfig{" +
+                "welcomeHtml='" + welcomeHtml + '\'' +
+                ", aboutHtml='" + aboutHtml + '\'' +
+                ", maintenanceMessage='" + maintenanceMessage + '\'' +
+                ", defaultMaxResults='" + defaultMaxResults + '\'' +
+                ", process=" + process +
+                ", helpUrl='" + helpUrl + '\'' +
+                ", theme=" + theme +
+                ", query=" + query +
+                ", namePattern='" + namePattern + '\'' +
+                ", htmlTitle='" + htmlTitle + '\'' +
+                ", oncontextmenu='" + oncontextmenu + '\'' +
+                ", splash=" + splash +
+                ", activity=" + activity +
+                ", url=" + url +
+                ", uiPreferences=" + uiPreferences +
+                ", source=" + source +
+                ", requireReactWrapper=" + requireReactWrapper +
+                '}';
     }
 }

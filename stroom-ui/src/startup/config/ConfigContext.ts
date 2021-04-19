@@ -4,7 +4,7 @@ import { UiConfig } from "api/stroom";
 
 export const defaultValue: UiConfig = {
   theme: {
-    backgroundColor: "red",
+    backgroundColour: "red",
   },
   uiPreferences: {
     dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS",

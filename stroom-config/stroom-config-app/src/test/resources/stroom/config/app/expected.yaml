@@ -819,6 +819,7 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000
@@ -831,13 +832,14 @@ appConfig:
       version: "v0.1"
     theme:
       backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
+      backgroundColour: "#1E88E5"
       backgroundImage: "none"
       backgroundPosition: "0 0"
       backgroundRepeat: "repeat"
       backgroundOpacity: "0"
       tubeVisible: "hidden"
       tubeOpacity: "0.6"
+      topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
@@ -862,6 +864,10 @@ appConfig:
     - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
   logging:
+    deviceCache:
+      maximumSize: 1000
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
     logEveryRestCallEnabled: false
     omitRecordDetailsLoggingEnabled: true
     maxListElements: 5

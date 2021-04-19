@@ -189,7 +189,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 1));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
         testCriteria(findMetaCriteria, 1);
     }
 
@@ -352,7 +352,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0L, 100));
+        findMetaCriteria.setPageRequest(new PageRequest(0, 100));
         findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName());
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
 

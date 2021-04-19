@@ -24,7 +24,7 @@ const Background: React.FunctionComponent = ({ children }) => {
   const { theme } = useConfig();
 
   const t: CSSProperties = {
-    backgroundColor: theme.backgroundColor,
+    backgroundColor: theme.backgroundColour,
   };
 
   return (

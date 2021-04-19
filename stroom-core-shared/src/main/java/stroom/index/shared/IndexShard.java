@@ -112,9 +112,6 @@ public class IndexShard {
     private IndexVolume volume;
     @JsonProperty
     private String nodeName;
-    @Deprecated // Remove when no pre v7 index shards remain.
-    @JsonProperty
-    private Integer oldIndexId;
     @JsonProperty
     private String indexUuid;
 
@@ -135,7 +132,6 @@ public class IndexShard {
                       @JsonProperty("indexVersion") final String indexVersion,
                       @JsonProperty("volume") final IndexVolume volume,
                       @JsonProperty("nodeName") final String nodeName,
-                      @JsonProperty("oldIndexId") final Integer oldIndexId,
                       @JsonProperty("indexUuid") final String indexUuid) {
         this.id = id;
         this.partition = partition;
@@ -150,7 +146,6 @@ public class IndexShard {
         this.indexVersion = indexVersion;
         this.volume = volume;
         this.nodeName = nodeName;
-        this.oldIndexId = oldIndexId;
         this.indexUuid = indexUuid;
     }
 
@@ -174,24 +169,16 @@ public class IndexShard {
         return nodeName;
     }
 
-    public Integer getOldIndexId() {
-        return oldIndexId;
-    }
-
-    public void setOldIndexId(final Integer oldIndexId) {
-        this.oldIndexId = oldIndexId;
-    }
-
     public String getIndexUuid() {
         return indexUuid;
     }
 
-    public void setIndexUuid(String indexUuid) {
-        this.indexUuid = indexUuid;
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
     }
 
-    public void setNodeName(String nodeName) {
-        this.nodeName = nodeName;
+    public void setIndexUuid(final String indexUuid) {
+        this.indexUuid = indexUuid;
     }
 
     public String getPartition() {

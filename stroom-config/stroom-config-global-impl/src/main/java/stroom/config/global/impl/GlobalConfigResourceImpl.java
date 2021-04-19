@@ -169,7 +169,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                                 stroomEventLoggingService.buildUpdateEventAction(
                                         () -> globalConfigService.fetch(configProperty.getId())
                                                 .orElse(null),
-                                        () -> globalConfigService.update(configProperty)));
+                                        () -> persistedProperty));
                     },
                     null);
         } catch (ConfigPropertyValidationException e) {

@@ -22,8 +22,7 @@ public class OpenGroupsConverter {
     }
 
     public static String encode(final RawKey rawKey) {
-        return Metrics.measure("Encoding groups", () -> {
-            return Base64.getEncoder().encodeToString(rawKey.getBytes());
-        });
+        return Metrics.measure("Encoding groups", () ->
+                Base64.getEncoder().encodeToString(rawKey.getBytes()));
     }
 }

@@ -235,17 +235,17 @@ public class MapDataStore implements DataStore {
                 groupValues = Arrays.copyOf(groupValues, groupIndex);
             }
 
-            KeyPart keyPart;
             if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
-                keyPart = new GroupKeyPart(groupValues);
+                final KeyPart keyPart = new GroupKeyPart(groupValues);
+                key = key.resolve(keyPart);
 
             } else {
                 // This item will not be grouped.
-                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
+                final KeyPart keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
+                key = key.resolve(keyPart);
             }
 
-            key = key.resolve(keyPart);
             final byte[] childKey = itemSerialiser.toBytes(key);
             final byte[] generatorBytes = itemSerialiser.toBytes(generators);
 

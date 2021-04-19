@@ -60,4 +60,27 @@ CREATE TABLE IF NOT EXISTS index_volume (
       REFERENCES index_volume_group (id)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS index_shard (
+    id                    bigint NOT NULL AUTO_INCREMENT,
+    node_name             varchar(255) NOT NULL,
+    fk_volume_id          int NOT NULL,
+    index_uuid            varchar(255) NOT NULL,
+    commit_document_count int DEFAULT NULL,
+    commit_duration_ms    bigint DEFAULT NULL,
+    commit_ms             bigint DEFAULT NULL,
+    document_count        int DEFAULT 0,
+    file_size             bigint DEFAULT 0,
+    status                tinyint NOT NULL,
+    index_version         varchar(255) DEFAULT NULL,
+    partition_name        varchar(255) NOT NULL,
+    partition_from_ms     bigint DEFAULT NULL,
+    partition_to_ms       bigint DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY index_shard_fk_volume_id (fk_volume_id),
+    KEY index_shard_index_uuid (index_uuid),
+    CONSTRAINT index_shard_fk_volume_id
+        FOREIGN KEY (fk_volume_id)
+        REFERENCES index_volume (id)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
 SET SQL_NOTES=@OLD_SQL_NOTES;

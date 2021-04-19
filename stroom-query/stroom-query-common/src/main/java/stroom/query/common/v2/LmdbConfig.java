@@ -122,8 +122,8 @@ public class LmdbConfig extends AbstractConfig {
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
             "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
-            "the actively used ref data is larger than the available RAM, as this will stop it evicting hot " +
-            "ref entries to make space for pre-fetched data.")
+            "the actively used search data is larger than the available RAM, as this will stop it evicting hot " +
+            "search entries to make space for pre-fetched data.")
     public boolean isReadAheadEnabled() {
         return isReadAheadEnabled;
     }

@@ -34,6 +34,7 @@ public class EventLoggingModule extends AbstractModule {
         requireBinding(SecurityContext.class);
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
+        bind(DeviceCache.class).to(DeviceCacheImpl.class);
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 

@@ -47,17 +47,17 @@ public class ItemSerialiser {
         });
     }
 
-    void writeChildKey(final Key key, final Output output) {
-        Metrics.measure("Key write", () -> {
-            output.writeInt(key.size() + 1);
-            for (final KeyPart keyPart : key) {
-                output.writeBoolean(keyPart.isGrouped());
-                keyPart.write(output);
-            }
-        });
-    }
+//    void writeChildKey(final Key key, final Output output) {
+//        Metrics.measure("Key write", () -> {
+//            output.writeInt(key.size() + 1);
+//            for (final KeyPart keyPart : key) {
+//                output.writeBoolean(keyPart.isGrouped());
+//                keyPart.write(output);
+//            }
+//        });
+//    }
 
-    byte[] toBytes(final Key key) {
+    public byte[] toBytes(final Key key) {
         return Metrics.measure("Key toBytes", () ->
                 toBytes(output ->
                         writeKey(key, output)));
@@ -100,7 +100,7 @@ public class ItemSerialiser {
                         writeRawItem(rawItem, output)));
     }
 
-    RawItem readRawItem(final Input input) {
+    private RawItem readRawItem(final Input input) {
         return Metrics.measure("Item readRawItem input", () -> {
             try {
                 final int groupKeyLength = input.readInt();
@@ -121,7 +121,7 @@ public class ItemSerialiser {
         });
     }
 
-    void writeRawItem(final RawItem rawItem, final Output output) {
+    private void writeRawItem(final RawItem rawItem, final Output output) {
         Metrics.measure("Item writeRawItem", () -> {
             if (rawItem.getKey() != null) {
                 output.writeInt(rawItem.getKey().length);

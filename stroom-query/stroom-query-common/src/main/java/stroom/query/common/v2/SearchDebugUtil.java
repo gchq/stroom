@@ -85,8 +85,8 @@ public class SearchDebugUtil {
             final String expected = Files.readString(pathForExpectedOutput);
 
             if (!actual.equals(expected)) {
-                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath().toString() +
-                        " " + pathForExpectedOutput.toAbsolutePath().toString());
+                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath() +
+                        " " + pathForExpectedOutput.toAbsolutePath());
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

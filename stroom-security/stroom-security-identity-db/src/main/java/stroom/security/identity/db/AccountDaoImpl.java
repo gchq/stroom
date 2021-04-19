@@ -37,6 +37,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageResponse;
 
 import com.google.common.base.Strings;
 import org.jooq.Condition;
@@ -212,6 +213,18 @@ class AccountDaoImpl implements AccountDao {
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
+                // Get the number of tokens so we can calculate the total number of pages
+                final int count = context
+                        .selectCount()
+                        .from(ACCOUNT)
+                        .where(condition)
+                        .fetchOptional()
+                        .map(Record1::value1)
+                        .orElse(0);
+
+                final int limit = JooqUtil.getLimit(request.getPageRequest(), false);
+                final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
+
                 final List<Account> list = context
                         .select(ACCOUNT.ID,
                                 ACCOUNT.VERSION,
@@ -244,21 +257,17 @@ class AccountDaoImpl implements AccountDao {
                         .from(ACCOUNT)
                         .where(condition)
                         .orderBy(orderFields)
-                        .offset(JooqUtil.getOffset(request.getPageRequest()))
-                        .limit(JooqUtil.getLimit(request.getPageRequest(), true))
+                        .offset(offset)
+                        .limit(limit)
                         .fetch()
                         .map(RECORD_TO_ACCOUNT_MAPPER::apply);
 
-                // Finally we need to get the number of tokens so we can calculate the total number of pages
-                final int count = context
-                        .selectCount()
-                        .from(ACCOUNT)
-                        .where(condition)
-                        .fetchOptional()
-                        .map(Record1::value1)
-                        .orElse(0);
-
-                return ResultPageFactory.createCriterialBasedList(list, request, (long) count, AccountResultPage::new);
+                final PageResponse pageResponse = new PageResponse(
+                        offset,
+                        list.size(),
+                        (long) count,
+                        true);
+                return new AccountResultPage(list, pageResponse);
 
             } else {
                 // Create the predicate for the current filter value
@@ -509,6 +518,28 @@ class AccountDaoImpl implements AccountDao {
 
         if (count == 0) {
             throw new NoSuchUserException("Cannot change this password because this user does not exist!");
+        }
+    }
+
+    @Override
+    public void resetPassword(final String userId, final String newPassword) {
+        final String newPasswordHash = PasswordHashUtil.hash(newPassword);
+
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
+                .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                        System.currentTimeMillis())
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.INACTIVE, false)
+                .set(ACCOUNT.ENABLED, true)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .execute());
+
+        if (count == 0) {
+            throw new NoSuchUserException("Cannot reset this password because this user does not exist!");
         }
     }
 

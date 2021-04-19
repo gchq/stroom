@@ -94,7 +94,7 @@ public class FlatResultCreator implements ResultCreator {
             return null;
         }
 
-        if (!key.getLast().isGrouped()) {
+        if (!key.isGrouped()) {
             return null;
         }
 

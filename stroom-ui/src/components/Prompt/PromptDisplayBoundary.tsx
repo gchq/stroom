@@ -6,17 +6,17 @@ import {
   useContext,
   useState,
 } from "react";
-import Prompt, { ContentProps, PromptProps, PromptType } from "./Prompt";
+import Prompt, { ContentProps, Props, PromptType } from "./Prompt";
 
 type PromptContextType = {
-  props: PromptProps;
-  setProps: (value: PromptProps) => void;
+  props: Props;
+  setProps: (value: Props) => void;
 };
 
 const PromptContext = createContext<PromptContextType | undefined>(undefined);
 
 export interface Api {
-  showPrompt: (props: PromptProps) => void;
+  showPrompt: (props: Props) => void;
   showInfo: (props: ContentProps) => void;
   showWarning: (props: ContentProps) => void;
   showError: (props: ContentProps) => void;
@@ -27,7 +27,7 @@ export const usePrompt = (): Api => {
   const { setProps } = useContext(PromptContext);
 
   const showPrompt = useCallback(
-    (props: PromptProps) => {
+    (props: Props) => {
       setProps(props);
     },
     [setProps],
@@ -36,9 +36,11 @@ export const usePrompt = (): Api => {
   const showInfo = useCallback(
     ({ title = "Info", message = "" }) => {
       showPrompt({
-        type: PromptType.INFO,
-        title: title,
-        message: message,
+        promptProps: {
+          type: PromptType.INFO,
+          title: title,
+          message: message,
+        },
       });
     },
     [showPrompt],
@@ -47,9 +49,11 @@ export const usePrompt = (): Api => {
   const showWarning = useCallback(
     ({ title = "Warning", message = "" }) => {
       showPrompt({
-        type: PromptType.WARNING,
-        title: title,
-        message: message,
+        promptProps: {
+          type: PromptType.WARNING,
+          title: title,
+          message: message,
+        },
       });
     },
     [showPrompt],
@@ -58,9 +62,11 @@ export const usePrompt = (): Api => {
   const showError = useCallback(
     ({ title = "Error", message = "" }) => {
       showPrompt({
-        type: PromptType.ERROR,
-        title: title,
-        message: message,
+        promptProps: {
+          type: PromptType.ERROR,
+          title: title,
+          message: message,
+        },
       });
     },
     [showPrompt],
@@ -69,9 +75,11 @@ export const usePrompt = (): Api => {
   const showFatal = useCallback(
     ({ title = "Fatal", message = "" }) => {
       showPrompt({
-        type: PromptType.FATAL,
-        title: title,
-        message: message,
+        promptProps: {
+          type: PromptType.FATAL,
+          title: title,
+          message: message,
+        },
       });
     },
     [showPrompt],
@@ -85,7 +93,15 @@ const PromptOutlet: FunctionComponent = () => {
   console.log("Render: Prompt");
   if (props !== undefined) {
     return (
-      <Prompt promptProps={props} onCloseDialog={() => setProps(undefined)} />
+      <Prompt
+        promptProps={props.promptProps}
+        onCloseDialog={() => {
+          if (props.onCloseDialog) {
+            props.onCloseDialog();
+          }
+          setProps(undefined);
+        }}
+      />
     );
   } else {
     return null;
@@ -93,7 +109,7 @@ const PromptOutlet: FunctionComponent = () => {
 };
 
 export const PromptDisplayBoundary: FunctionComponent = ({ children }) => {
-  const [props, setProps] = useState<PromptProps | undefined>(undefined);
+  const [props, setProps] = useState<Props | undefined>(undefined);
   return (
     <PromptContext.Provider value={{ props, setProps }}>
       {children}

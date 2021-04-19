@@ -50,12 +50,13 @@ class TestItemSerialiser {
 
         final Key key = Key
                 .root()
-                .resolve(new GroupKeyPart(new Val[]{ValLong.create(1262304240000L), ValString.create("user5")}));
+                .resolve(new GroupKeyPart(
+                        new Val[]{ValLong.create(1262304240000L), ValString.create("user5")}
+                ));
         byte[] keyBytes = itemSerialiser.toBytes(key);
         byte[] generatorBytes = itemSerialiser.toBytes(generators);
         final RawItem item = new RawItem(keyBytes, generatorBytes);
         final String expected = toString(generators);
-
 
         final byte[] bytes = itemSerialiser.toBytes(item);
         final RawItem result = itemSerialiser.readRawItem(bytes);

@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+* Remove merge artifacts from `scripts.env`.
+
+
+## [v7.0-beta.105] - 2021-04-15
+
+* Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
+
+## [v7.0-beta.104] - 2021-04-13
+
+* Switched from `node-sass` to `sass`.
+
+* Fix `node` and `swagger-typescript-api` versions.
+
+
+## [v7.0-beta.103] - 2021-04-13
+
+* Rebuild.
+
+
+## [v7.0-beta.102] - 2021-04-09
+
+* Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
+
+## [v7.0-beta.101] - 2021-04-08
+
+* Issue **#2172** : Limited the maximum size of LMDB keys and values.
+
+* Issue **#2171** : Fixed dashboard table expression editor field insertion. 
+
+* Issue **#2168** : Removed special columns from dashboard tables.
+
+* Issue **#2154** : Fixed error adding text widget to a dashboard.
+
+* Issue **#2025** : Added caching for DNS name resolution.
+
+* Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating client IP.
+
+
+## [v7.0-beta.100] - 2021-04-02
+
+* Issue **#1598** : Audit logging uplifted throughout codebase.
+
+* Issue **#1613** : Added event logging to UserResourceImpl.
+
+
+## [v7.0-beta.99] - 2021-04-01
+
+* Issue **#1928**: Stroom will now redirect users to the root URL if the GWT UI is not hosted within the React wrapper. To develop GWT code it is still necessary to use the GWT UI directly outside of the wrapper so to enable this you can set the newly added `requireReactWrapper` property to false.
+
+* Issue **#2156**: The properties screen now shows a warning triangle when there are unreachable nodes rather than showing an error for all property values.
+
+* Issue **#2157**: Fixed issue where pager was causing an exception paging to last on API keys and Accounts list pages.
+
+* Issue **#2153**: Fixed option to log all REST calls.
+
+* Issue **#2085**: User now gets notification that a password has been changed.
+
+* Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the cert will be used and no other header attribute.
+
+
+## [v7.0-beta.98] - 2021-03-30
+
+* Issue **#2138** : Fixed error thrown when updating a property due to the property being updated twice as a result of new event logging code. 
+
+* Issue **#2150** : Added `topMenuTextColour` property to allow the top menu text colour to be changed. Renamed the `backgroundColor` property to `backgroundColour` for consistency. 
+
+* Issue **#2152** : Session list now only shows user authenticated sessions.
+
+* Issue **#2149** : Fixed index volume and index shard migration.
+
 
 ## [v7.0-beta.97] - 2021-03-26
 
@@ -3224,7 +3298,15 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.97...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.105...HEAD
+[v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
+[v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
+[v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
+[v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102
+[v7.0-beta.101]: https://github.com/gchq/stroom/compare/v7.0-beta.100...v7.0-beta.101
+[v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
+[v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
+[v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
 [v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
 [v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
 [v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
