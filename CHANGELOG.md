@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
 
 ## [v7.1-beta.1] - 2021-04-13
 
