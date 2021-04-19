@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.QueryKey;
@@ -27,6 +28,8 @@ import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.util.json.JsonUtil;
 
 import com.codahale.metrics.annotation.Timed;
+import event.logging.ProcessAction;
+import event.logging.ProcessEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,12 +72,22 @@ public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResourc
 
     @Timed
     @Override
-    @AutoLogged(value = OperationType.DELETE, verb = "Closing Query")
+    @AutoLogged(value = OperationType.PROCESS, verb = "Closing Query", decorator = TerminateDecorator.class)
     public Boolean destroy(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
         return statisticsQueryServiceProvider.get().destroy(queryKey);
+    }
+
+    static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {
+
+        @Override
+        public ProcessEventAction decorate(final ProcessEventAction eventAction) {
+            return eventAction.newCopyBuilder()
+                    .withAction(ProcessAction.TERMINATE)
+                    .build();
+        }
     }
 }
