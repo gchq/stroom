@@ -157,9 +157,9 @@ public class TestSimpleCron {
     @Test
     public void testEveryTwoDays() throws ParseException {
         String startTime = "2010-03-26T00:00:00.000Z";
-        startTime = testAndGetNext("* * */2", startTime, "2010-03-28T00:00:00.000Z");
-        startTime = testAndGetNext("* * */2", startTime, "2010-03-30T00:00:00.000Z");
-        startTime = testAndGetNext("* * */2", startTime, "2010-04-02T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-03-28T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-03-30T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-04-02T00:00:00.000Z");
     }
 
     @Test
