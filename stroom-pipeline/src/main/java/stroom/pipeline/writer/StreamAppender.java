@@ -182,7 +182,10 @@ public class StreamAppender extends AbstractAppender {
     private void insertSegmentMarker() throws IOException {
         // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutput) {
-            wrappedSegmentOutputStream.addSegment();
+            if (wrappedSegmentOutputStream != null) {
+                //This can happen if stream type isn't set due to incorrect / incomplete configuration
+                wrappedSegmentOutputStream.addSegment();
+            }
         }
     }
 
