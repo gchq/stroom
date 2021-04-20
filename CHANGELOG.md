@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
+
+* Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.
+
 
 ## [v7.0-beta.104] - 2021-04-13
 

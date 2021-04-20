@@ -16,6 +16,8 @@
 
 package stroom.search.impl;
 
+import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
@@ -57,6 +59,7 @@ public class ClusterSearchResultCollector implements Store {
     private final String nodeName;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
+    private final CompletionState completionState = new CompletionStateImpl();
 
     public ClusterSearchResultCollector(final Executor executor,
                                         final TaskContextFactory taskContextFactory,
@@ -72,6 +75,10 @@ public class ClusterSearchResultCollector implements Store {
         this.nodeName = nodeName;
         this.highlights = highlights;
         this.coprocessors = coprocessors;
+    }
+
+    public Coprocessors getCoprocessors() {
+        return coprocessors;
     }
 
     public void start() {
@@ -111,23 +118,23 @@ public class ClusterSearchResultCollector implements Store {
     }
 
     public void complete() {
-        coprocessors.getCompletionState().complete();
+        completionState.complete();
     }
 
     @Override
     public boolean isComplete() {
-        return coprocessors.getCompletionState().isComplete();
+        return completionState.isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        coprocessors.getCompletionState().awaitCompletion();
+        completionState.awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout,
                                    final TimeUnit unit) throws InterruptedException {
-        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
+        return completionState.awaitCompletion(timeout, unit);
     }
 
     public synchronized boolean onSuccess(final String nodeName,
@@ -153,25 +160,6 @@ public class ClusterSearchResultCollector implements Store {
         // therefore consider search complete.
         return complete.get() || !success;
     }
-
-//    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
-//        boolean success = true;
-//        try {
-//            final List<Payload> payloads = result.getPayloads();
-//            final List<String> errors = result.getErrors();
-//
-//            if (payloads != null) {
-//                success = coprocessors.consumePayloads(payloads);
-//            }
-//
-//            if (errors != null) {
-//                getErrorSet(nodeName).addAll(errors);
-//            }
-//        } catch (final RuntimeException e) {
-//            getErrorSet(nodeName).add(e.getMessage());
-//        }
-//        return success;
-//    }
 
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
