@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
 
 * Remove merge artifacts from `scripts.env`.
