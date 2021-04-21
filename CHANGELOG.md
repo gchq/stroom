@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.106] - 2021-04-21
+
 * Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
 
 * Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.
@@ -3304,7 +3307,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.105...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.106...HEAD
+[v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
 [v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
 [v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
