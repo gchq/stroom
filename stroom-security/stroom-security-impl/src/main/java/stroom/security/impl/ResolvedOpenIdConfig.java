@@ -21,8 +21,10 @@ import java.io.InputStream;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletResponse;
 
+@Singleton
 public class ResolvedOpenIdConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResolvedOpenIdConfig.class);
@@ -37,80 +39,89 @@ public class ResolvedOpenIdConfig {
     public static final String INTERNAL_JWKS_URI = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/certs");
 
+    private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
     private final OpenIdClientFactory openIdClientDetailsFactory;
+    private final Provider<CloseableHttpClient> httpClientProvider;
 
-    private static String lastConfigurationEndpoint;
-    private static OpenIdConfigurationResponse openIdConfiguration;
+    private volatile String lastConfigurationEndpoint;
+    private volatile OpenIdConfigurationResponse openIdConfiguration;
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
                                 final OpenIdConfig openIdConfig,
                                 final OpenIdClientFactory openIdClientDetailsFactory,
                                 final Provider<CloseableHttpClient> httpClientProvider) {
+        this.uriFactory = uriFactory;
         this.openIdConfig = openIdConfig;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.httpClientProvider = httpClientProvider;
+    }
 
+    private OpenIdConfigurationResponse getOpenIdConfiguration() {
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
+        if (openIdConfiguration == null || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint)) {
+            if (openIdConfig.isUseInternal()) {
+                openIdConfiguration = OpenIdConfigurationResponse.builder()
+                        .issuer(INTERNAL_ISSUER)
+                        .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
+                        .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
+                        .jwksUri(uriFactory.nodeUri(INTERNAL_JWKS_URI).toString())
+                        .build();
 
-        if (openIdConfig.isUseInternal()) {
-            openIdConfiguration = OpenIdConfigurationResponse.builder()
-                    .issuer(INTERNAL_ISSUER)
-                    .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
-                    .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
-                    .jwksUri(uriFactory.nodeUri(INTERNAL_JWKS_URI).toString())
-                    .build();
+            } else if (configurationEndpoint != null && !configurationEndpoint.isBlank()) {
+                LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
+                try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
+                    final HttpGet httpGet = new HttpGet(configurationEndpoint);
+                    try (final CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                        if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
+                            final HttpEntity entity = response.getEntity();
+                            String msg;
+                            try (final InputStream is = entity.getContent()) {
+                                msg = StreamUtil.streamToString(is);
+                            }
 
-        } else if (configurationEndpoint == null || configurationEndpoint.isBlank()) {
-            openIdConfiguration = OpenIdConfigurationResponse.builder()
-                    .issuer(openIdConfig.getIssuer())
-                    .authorizationEndpoint(openIdConfig.getAuthEndpoint())
-                    .tokenEndpoint(openIdConfig.getTokenEndpoint())
-                    .jwksUri(openIdConfig.getJwksUri())
-                    .build();
-
-        } else if (!Objects.equals(lastConfigurationEndpoint, configurationEndpoint)) {
-            LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
-            try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
-                final HttpGet httpGet = new HttpGet(configurationEndpoint);
-                try (final CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                    if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                        final HttpEntity entity = response.getEntity();
-                        String msg;
-                        try (final InputStream is = entity.getContent()) {
-                            msg = StreamUtil.streamToString(is);
+                            final ObjectMapper mapper = new ObjectMapper();
+                            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                            openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
+                        } else {
+                            throw new AuthenticationException("Received status " + response.getStatusLine() +
+                                    " from " + configurationEndpoint);
                         }
-
-                        final ObjectMapper mapper = new ObjectMapper();
-                        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                        openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
-                    } else {
-                        throw new AuthenticationException("Received status " + response.getStatusLine() +
-                                " from " + configurationEndpoint);
                     }
+                } catch (final RuntimeException | IOException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-            } catch (final IOException e) {
-                LOGGER.debug(e.getMessage(), e);
-            } finally {
-                lastConfigurationEndpoint = configurationEndpoint;
             }
+
+            if (openIdConfiguration == null) {
+                openIdConfiguration = OpenIdConfigurationResponse.builder()
+                        .issuer(openIdConfig.getIssuer())
+                        .authorizationEndpoint(openIdConfig.getAuthEndpoint())
+                        .tokenEndpoint(openIdConfig.getTokenEndpoint())
+                        .jwksUri(openIdConfig.getJwksUri())
+                        .build();
+            }
+            lastConfigurationEndpoint = configurationEndpoint;
         }
+
+        return openIdConfiguration;
     }
 
     public String getIssuer() {
-        return openIdConfiguration.getIssuer();
+        return getOpenIdConfiguration().getIssuer();
     }
 
     public String getAuthEndpoint() {
-        return openIdConfiguration.getAuthorizationEndpoint();
+        return getOpenIdConfiguration().getAuthorizationEndpoint();
     }
 
     public String getTokenEndpoint() {
-        return openIdConfiguration.getTokenEndpoint();
+        return getOpenIdConfiguration().getTokenEndpoint();
     }
 
     public String getJwksUri() {
-        return openIdConfiguration.getJwksUri();
+        return getOpenIdConfiguration().getJwksUri();
     }
 
     public String getClientId() {

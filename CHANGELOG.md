@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2177** : Stroom should no longer crash when it is unable to retrieve OpenId configuration.
+
 * Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
 
 
