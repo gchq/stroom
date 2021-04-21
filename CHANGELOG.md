@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
+
 
 ## [v7.0-beta.106] - 2021-04-21
 
