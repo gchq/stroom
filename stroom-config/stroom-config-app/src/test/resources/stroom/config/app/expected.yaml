@@ -517,6 +517,7 @@ appConfig:
         jwksUri: null
         formTokenRequest: false
         jwtClaimsResolver: null
+        tokenExpectedInRequest: false
         clientId: null
         clientSecret: null
       preventLogin: false

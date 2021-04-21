@@ -32,6 +32,8 @@ public class OpenIdConfig extends AbstractConfig {
     private String clientId;
     private String clientSecret;
 
+    private boolean tokenExpectedInRequest;
+
     /**
      * @return true if Stroom will handle the OpenId authenication, false if an external
      * OpenId provider is used.
@@ -146,6 +148,17 @@ public class OpenIdConfig extends AbstractConfig {
 
     public void setFormTokenRequest(final boolean formTokenRequest) {
         this.formTokenRequest = formTokenRequest;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Some OpenId providers, e.g. AWS Cognito, will provide tokens in every request so in " +
+            "these cases this should be set to true")
+    public boolean isTokenExpectedInRequest() {
+        return tokenExpectedInRequest;
+    }
+
+    public void setTokenExpectedInRequest(final boolean tokenExpectedInRequest) {
+        this.tokenExpectedInRequest = tokenExpectedInRequest;
     }
 
     @Override

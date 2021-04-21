@@ -144,4 +144,8 @@ public class ResolvedOpenIdConfig {
         }
         return openIdConfig.isFormTokenRequest();
     }
+
+    public boolean isTokenExpectedInRequest() {
+        return openIdConfig.isTokenExpectedInRequest();
+    }
 }
