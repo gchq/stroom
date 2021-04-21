@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Val;
+
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Objects;
@@ -24,6 +26,11 @@ class UngroupedKeyPart implements KeyPart {
     @Override
     public boolean isGrouped() {
         return false;
+    }
+
+    @Override
+    public Val[] getGroupValues() {
+        throw new RuntimeException("No group values exist for ungrouped parts");
     }
 
     @SuppressWarnings("checkstyle:needbraces")

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import stroom.util.guice.HasSystemInfoBinder;
 

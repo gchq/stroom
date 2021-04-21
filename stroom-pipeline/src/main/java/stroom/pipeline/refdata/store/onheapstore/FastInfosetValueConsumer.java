@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

@@ -1,7 +1,7 @@
 package stroom.data.store.impl;
 
+import stroom.bytebuffer.ByteArrayUtils;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
-import stroom.pipeline.refdata.util.ByteArrayUtils;
 
 import io.vavr.Tuple;
 import org.apache.commons.io.ByteOrderMark;

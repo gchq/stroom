@@ -77,10 +77,11 @@ public class RemoteSearchService {
                                 taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
                                 final ClusterSearchTaskHandler clusterSearchTaskHandler =
                                         clusterSearchTaskHandlerProvider.get();
+                                remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
+                                remoteSearchResultFactory.setStarted(true);
                                 clusterSearchTaskHandler.exec(taskContext,
                                         clusterSearchTask,
-                                        coprocessors,
-                                        remoteSearchResultFactory);
+                                        coprocessors);
                             });
 
                     final Executor executor = executorProvider.get();

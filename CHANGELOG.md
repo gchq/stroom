@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
+
+* Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+* Remove merge artifacts from `scripts.env`.
+
+* Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
 * Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
 
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.

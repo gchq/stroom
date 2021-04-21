@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferConsumer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetByteBufferConsumer.class);
 
     private final SAXDocumentParser saxDocumentParser;

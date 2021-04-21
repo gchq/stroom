@@ -17,9 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;

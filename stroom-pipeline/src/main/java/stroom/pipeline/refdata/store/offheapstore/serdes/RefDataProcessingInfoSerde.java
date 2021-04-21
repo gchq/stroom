@@ -17,12 +17,12 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.Deserializer;
 import stroom.lmdb.Serde;
 import stroom.lmdb.Serializer;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

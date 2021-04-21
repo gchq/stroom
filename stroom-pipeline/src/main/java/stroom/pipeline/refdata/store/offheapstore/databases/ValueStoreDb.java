@@ -17,6 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbUtils;
@@ -26,10 +30,6 @@ import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

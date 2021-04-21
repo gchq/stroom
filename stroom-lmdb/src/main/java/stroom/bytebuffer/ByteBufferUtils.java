@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -182,6 +182,16 @@ public class ByteBufferUtils {
         sourceBuffer.rewind();
     }
 
+    public static void copy(final ByteBuffer sourceBuffer,
+                            final ByteBuffer destBuffer,
+                            final int sourceIndex,
+                            final int destIndex,
+                            final int length) {
+        for (int i = 0; i < length; i++) {
+            destBuffer.put(destIndex + i, sourceBuffer.get(sourceIndex + i));
+        }
+    }
+
     /**
      * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
      * The bytes from position() to limit() will be copied into a newly allocated
@@ -239,9 +249,17 @@ public class ByteBufferUtils {
     }
 
     public static byte[] toBytes(final ByteBuffer byteBuffer) {
-//        byteBuffer.rewind();
         final byte[] arr = new byte[byteBuffer.remaining()];
-        byteBuffer.get(arr);
+        byteBuffer.get(byteBuffer.position(), arr, 0, arr.length);
+        return arr;
+    }
+
+    /**
+     * Get the requested length number of bytes from the specified index.
+     */
+    public static byte[] toBytes(final ByteBuffer byteBuffer, int index, int length) {
+        final byte[] arr = new byte[length];
+        byteBuffer.get(index, arr, 0, length);
         return arr;
     }
 

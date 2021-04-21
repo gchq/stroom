@@ -1,4 +1,4 @@
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

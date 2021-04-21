@@ -50,19 +50,16 @@ public class MapDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
-    private static RawKey ROOT_KEY;
-
-    private final Map<RawKey, ItemsImpl> childMap = new ConcurrentHashMap<>();
+    private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
     private final CompiledField[] compiledFields;
-    private final CompiledSorter<UnpackedItem>[] compiledSorters;
+    private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
-    private final ItemSerialiser itemSerialiser;
 
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
@@ -82,19 +79,14 @@ public class MapDataStore implements DataStore {
         this.maxResults = maxResults;
         this.storeSize = storeSize;
 
-        itemSerialiser = new ItemSerialiser(compiledFields);
-        if (ROOT_KEY == null) {
-            ROOT_KEY = itemSerialiser.toRawKey(Key.root());
-        }
-
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
-            groupingFunctions[depth] = new GroupingFunction(itemSerialiser);
+            groupingFunctions[depth] = new GroupingFunction();
         }
 
         // Find out if we have any sorting.
         boolean hasSort = false;
-        for (final CompiledSorter<UnpackedItem> sorter : compiledSorters) {
+        for (final CompiledSorter<ItemImpl> sorter : compiledSorters) {
             if (sorter != null) {
                 hasSort = true;
                 break;
@@ -111,52 +103,54 @@ public class MapDataStore implements DataStore {
 
     @Override
     public boolean readPayload(final Input input) {
-        return Metrics.measure("readPayload", () -> {
-            final int count = input.readInt();
-            for (int i = 0; i < count; i++) {
-                final int length = input.readInt();
-                final byte[] bytes = input.readBytes(length);
-
-                final RawItem rawItem = itemSerialiser.readRawItem(bytes);
-                final byte[] keyBytes = rawItem.getKey();
-                final Key key = itemSerialiser.toKey(keyBytes);
-
-                KeyPart lastPart = key.getLast();
-                if (lastPart != null && !lastPart.isGrouped()) {
-                    // Ensure sequence numbers are unique for this data store.
-                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
-                }
-
-                final Key parent = key.getParent();
-                final byte[] parentKeyBytes = itemSerialiser.toBytes(parent);
-
-                final byte[] generators = rawItem.getGenerators();
-
-                addToChildMap(key.getDepth(), parentKeyBytes, keyBytes, generators);
-            }
-
-            // Return success if we have not been asked to terminate and we are still willing to accept data.
-            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
-        });
+        throw new RuntimeException("Not implemented");
+//        return Metrics.measure("readPayload", () -> {
+//            final int count = input.readInt();
+//            for (int i = 0; i < count; i++) {
+//                final int length = input.readInt();
+//                final byte[] bytes = input.readBytes(length);
+//
+//                final RawItem rawItem = itemSerialiser.readRawItem(bytes);
+//                final byte[] keyBytes = rawItem.getKey();
+//                final Key key = itemSerialiser.toKey(keyBytes);
+//
+//                KeyPart lastPart = key.getLast();
+//                if (lastPart != null && !lastPart.isGrouped()) {
+//                    // Ensure sequence numbers are unique for this data store.
+//                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+//                }
+//
+//                final Key parent = key.getParent();
+//                final byte[] parentKeyBytes = itemSerialiser.toBytes(parent);
+//
+//                final byte[] generators = rawItem.getGenerators();
+//
+//                addToChildMap(key.getDepth(), parentKeyBytes, keyBytes, generators);
+//            }
+//
+//            // Return success if we have not been asked to terminate and we are still willing to accept data.
+//            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+//        });
     }
 
     @Override
     public void writePayload(final Output output) {
-        Metrics.measure("writePayload", () -> {
-            final List<byte[]> list = new ArrayList<>();
-            childMap.keySet().forEach(groupKey -> {
-                final ItemsImpl items = childMap.remove(groupKey);
-                if (items != null) {
-                    list.addAll(items.getList());
-                }
-            });
-
-            output.writeInt(list.size());
-            for (final byte[] item : list) {
-                output.writeInt(item.length);
-                output.writeBytes(item);
-            }
-        });
+        throw new RuntimeException("Not implemented");
+//        Metrics.measure("writePayload", () -> {
+//            final List<byte[]> list = new ArrayList<>();
+//            childMap.keySet().forEach(groupKey -> {
+//                final ItemsImpl items = childMap.remove(groupKey);
+//                if (items != null) {
+//                    list.addAll(items.getList());
+//                }
+//            });
+//
+//            output.writeInt(list.size());
+//            for (final byte[] item : list) {
+//                output.writeInt(item.length);
+//                output.writeBytes(item);
+//            }
+//        });
     }
 
     @Override
@@ -166,8 +160,7 @@ public class MapDataStore implements DataStore {
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
         Key key = Key.root();
-
-        byte[] parentKey = ROOT_KEY.getBytes();
+        Key parentKey = key;
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
 
@@ -235,30 +228,24 @@ public class MapDataStore implements DataStore {
                 groupValues = Arrays.copyOf(groupValues, groupIndex);
             }
 
-            KeyPart keyPart;
             if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
-                keyPart = new GroupKeyPart(groupValues);
+                key = key.resolve(groupValues);
 
             } else {
                 // This item will not be grouped.
-                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
+                key = key.resolve(ungroupedItemSequenceNumber.incrementAndGet());
             }
 
-            key = key.resolve(keyPart);
-            final byte[] childKey = itemSerialiser.toBytes(key);
-            final byte[] generatorBytes = itemSerialiser.toBytes(generators);
-
-            addToChildMap(depth, parentKey, childKey, generatorBytes);
-
-            parentKey = childKey;
+            addToChildMap(depth, parentKey, key, generators);
+            parentKey = key;
         }
     }
 
     private void addToChildMap(final int depth,
-                               final byte[] parentKey,
-                               final byte[] groupKey,
-                               final byte[] generators) {
+                               final Key parentKey,
+                               final Key groupKey,
+                               final Generator[] generators) {
         LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
             return;
@@ -268,15 +255,14 @@ public class MapDataStore implements DataStore {
         totalResultCount.getAndIncrement();
 
         final GroupingFunction groupingFunction = groupingFunctions[depth];
-        final Function<Stream<UnpackedItem>, Stream<UnpackedItem>> sortingFunction = compiledSorters[depth];
+        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters[depth];
 
-        childMap.compute(new RawKey(parentKey), (k, v) -> {
+        childMap.compute(parentKey, (k, v) -> {
             ItemsImpl result = v;
 
             if (result == null) {
                 result = new ItemsImpl(
                         storeSize.size(depth),
-                        itemSerialiser,
                         this,
                         groupingFunction,
                         sortingFunction,
@@ -303,14 +289,14 @@ public class MapDataStore implements DataStore {
         LOGGER.trace(() -> "Finished adding items to the queue");
     }
 
-    private void remove(final RawKey parentKey) {
+    private void remove(final Key parentKey) {
         if (parentKey != null) {
             // Execute removal asynchronously to prevent blocking.
             CompletableFuture.runAsync(() -> {
                 final ItemsImpl items = childMap.remove(parentKey);
                 if (items != null) {
                     resultCount.addAndGet(-items.size());
-                    items.forEach(item -> remove(item.getRawKey()));
+                    items.forEach(item -> remove(item.getKey()));
                 }
             });
         }
@@ -318,7 +304,7 @@ public class MapDataStore implements DataStore {
 
     @Override
     public Items get() {
-        return get(ROOT_KEY);
+        return get(Key.root());
     }
 
     @Override
@@ -332,13 +318,13 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public Items get(final RawKey rawKey) {
+    public Items get(final Key key) {
         Items result;
 
-        if (rawKey == null) {
-            result = childMap.get(ROOT_KEY);
+        if (key == null) {
+            result = childMap.get(Key.root());
         } else {
-            result = childMap.get(rawKey);
+            result = childMap.get(key);
         }
 
         if (result == null) {
@@ -368,30 +354,27 @@ public class MapDataStore implements DataStore {
 
         private final int trimmedSize;
         private final int maxSize;
-        private final ItemSerialiser itemSerialiser;
         private final MapDataStore dataStore;
-        private final Function<Stream<UnpackedItem>, Stream<UnpackedItem>> groupingFunction;
-        private final Function<Stream<UnpackedItem>, Stream<UnpackedItem>> sortingFunction;
-        private final Consumer<RawKey> removeHandler;
+        private final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction;
+        private final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction;
+        private final Consumer<Key> removeHandler;
 
-        private volatile List<byte[]> list;
+        private volatile List<ItemImpl> list;
 
         private volatile boolean trimmed = true;
         private volatile boolean full;
 
         ItemsImpl(final int trimmedSize,
-                  final ItemSerialiser itemSerialiser,
                   final MapDataStore dataStore,
-                  final Function<Stream<UnpackedItem>, Stream<UnpackedItem>> groupingFunction,
-                  final Function<Stream<UnpackedItem>, Stream<UnpackedItem>> sortingFunction,
-                  final Consumer<RawKey> removeHandler) {
+                  final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
+                  final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
+                  final Consumer<Key> removeHandler) {
             this.trimmedSize = trimmedSize;
             if (trimmedSize < Integer.MAX_VALUE / 2) {
                 this.maxSize = trimmedSize * 2;
             } else {
                 this.maxSize = Integer.MAX_VALUE;
             }
-            this.itemSerialiser = itemSerialiser;
             this.dataStore = dataStore;
             this.groupingFunction = groupingFunction;
             this.sortingFunction = sortingFunction;
@@ -399,38 +382,19 @@ public class MapDataStore implements DataStore {
             list = new ArrayList<>();
         }
 
-        List<byte[]> getList() {
-            return list;
-        }
-
-        synchronized void add(final byte[] groupKey, final byte[] generators) {
+        synchronized void add(final Key groupKey, final Generator[] generators) {
             if (groupingFunction != null || sortingFunction != null) {
-                list.add(itemSerialiser.toBytes(new RawItem(groupKey, generators)));
+                list.add(new ItemImpl(dataStore, groupKey, generators));
                 trimmed = false;
                 if (list.size() > maxSize) {
                     sortAndTrim();
                 }
             } else if (list.size() < trimmedSize) {
-                list.add(itemSerialiser.toBytes(new RawItem(groupKey, generators)));
+                list.add(new ItemImpl(dataStore, groupKey, generators));
             } else {
                 full = true;
-                removeHandler.accept(new RawKey(groupKey));
+                removeHandler.accept(groupKey);
             }
-        }
-
-        private List<Item> toItemList(final List<byte[]> bytesList) {
-            final List<Item> items = new ArrayList<>(bytesList.size());
-            for (final byte[] bytes : bytesList) {
-                items.add(toItem(bytes));
-            }
-            return items;
-        }
-
-        private Item toItem(final byte[] bytes) {
-            return new ItemImpl(
-                    itemSerialiser,
-                    dataStore,
-                    bytes);
         }
 
         @Override
@@ -443,9 +407,8 @@ public class MapDataStore implements DataStore {
                 // We won't group, sort or trim lists with only a single item obviously.
                 if (list.size() > 1) {
                     if (groupingFunction != null || sortingFunction != null) {
-                        Stream<UnpackedItem> stream = list
-                                .parallelStream()
-                                .map(this::unpack);
+                        Stream<ItemImpl> stream = list
+                                .parallelStream();
 
                         // Group items.
                         if (groupingFunction != null) {
@@ -458,97 +421,56 @@ public class MapDataStore implements DataStore {
                         }
 
                         list = stream
-                                .map(this::pack)
                                 .collect(Collectors.toList());
                     }
 
                     while (list.size() > trimmedSize) {
-                        final byte[] lastItem = list.remove(list.size() - 1);
+                        final ItemImpl lastItem = list.remove(list.size() - 1);
 
                         // Tell the remove handler that we have removed an item.
-                        removeHandler.accept(toItem(lastItem).getRawKey());
+                        removeHandler.accept(lastItem.getKey());
                     }
                 }
                 trimmed = true;
             }
         }
 
-        private UnpackedItem unpack(final byte[] bytes) {
-            final RawItem rawItem = itemSerialiser.readRawItem(bytes);
-            final RawKey rawKey = new RawKey(rawItem.getKey());
-            final Generator[] generators = itemSerialiser.readGenerators(rawItem.getGenerators());
-            return new UnpackedItem(rawKey, generators, bytes);
-        }
-
-        private byte[] pack(final UnpackedItem unpackedItems) {
-            return unpackedItems.getBytes();
-        }
-
         private synchronized List<Item> copy() {
             sortAndTrim();
-            return toItemList(list);
+            return new ArrayList<>(list);
         }
 
         @Override
         @Nonnull
         public Iterator<Item> iterator() {
-//        if (full) {
-//            return list.iterator();
-//        } else {
-            final List<Item> copy = copy();
-            return copy.iterator();
-//        }
+            return copy().iterator();
         }
     }
 
-    public static class ItemImpl implements Item {
+    public static class ItemImpl implements Item, HasGenerators {
 
-        private final ItemSerialiser itemSerialiser;
         private final MapDataStore dataStore;
-        private final byte[] bytes;
 
-        private RawItem rawItem;
-        private RawKey rawKey;
-        private Key key;
-        private Generator[] generators;
+        private final Key key;
+        private final Generator[] generators;
         private Optional<Selection<Val>> childSelection;
 
-        public ItemImpl(final ItemSerialiser itemSerialiser,
-                        final MapDataStore dataStore,
-                        final byte[] bytes) {
-            this.itemSerialiser = itemSerialiser;
+        public ItemImpl(final MapDataStore dataStore,
+                        final Key key,
+                        final Generator[] generators) {
             this.dataStore = dataStore;
-            this.bytes = bytes;
-        }
-
-        RawItem getRawItem() {
-            if (rawItem == null) {
-                rawItem = itemSerialiser.readRawItem(bytes);
-            }
-            return rawItem;
-        }
-
-        Generator[] getGenerators() {
-            if (generators == null) {
-                generators = itemSerialiser.readGenerators(getRawItem().getGenerators());
-            }
-            return generators;
-        }
-
-        @Override
-        public RawKey getRawKey() {
-            if (rawKey == null) {
-                rawKey = new RawKey(getRawItem().getKey());
-            }
-            return rawKey;
+            this.key = key;
+            this.generators = generators;
         }
 
         @Override
         public Key getKey() {
-            if (key == null) {
-                key = itemSerialiser.toKey(getRawKey());
-            }
             return key;
+        }
+
+        @Override
+        public Generator[] getGenerators() {
+            return generators;
         }
 
         @Override
@@ -590,10 +512,8 @@ public class MapDataStore implements DataStore {
             final Key parentKey = key.getParent();
 
             if (parentKey != null) {
-                final RawKey rawParentKey = itemSerialiser.toRawKey(parentKey);
-
                 // If the generator is a selector then select a child row.
-                final ItemsImpl childItems = (ItemsImpl) dataStore.get(rawParentKey);
+                final ItemsImpl childItems = (ItemsImpl) dataStore.get(parentKey);
                 if (childItems != null) {
                     final List<Item> items = childItems.copy();
 
@@ -612,6 +532,46 @@ public class MapDataStore implements DataStore {
             }
 
             return null;
+        }
+    }
+
+
+    private class GroupingFunction implements Function<Stream<ItemImpl>, Stream<ItemImpl>> {
+
+        @Override
+        public Stream<ItemImpl> apply(final Stream<ItemImpl> stream) {
+            final Map<Key, Generator[]> groupingMap = new ConcurrentHashMap<>();
+            stream.forEach(unpackedItem -> {
+                final Key rawKey = unpackedItem.getKey();
+                final Generator[] generators = unpackedItem.getGenerators();
+
+                groupingMap.compute(rawKey, (k, v) -> {
+                    Generator[] result = v;
+
+                    if (result == null) {
+                        result = generators;
+                    } else {
+                        // Combine the new item into the original item.
+                        for (int i = 0; i < result.length; i++) {
+                            Generator existingGenerator = result[i];
+                            Generator newGenerator = generators[i];
+                            if (newGenerator != null) {
+                                if (existingGenerator == null) {
+                                    result[i] = newGenerator;
+                                } else {
+                                    existingGenerator.merge(newGenerator);
+                                }
+                            }
+                        }
+                    }
+
+                    return result;
+                });
+            });
+            return groupingMap
+                    .entrySet()
+                    .parallelStream()
+                    .map(e -> new ItemImpl(MapDataStore.this, e.getKey(), e.getValue()));
         }
     }
 }

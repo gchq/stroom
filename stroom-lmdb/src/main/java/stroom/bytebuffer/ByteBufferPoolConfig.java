@@ -1,4 +1,4 @@
-package stroom.pipeline.refdata.util;
+package stroom.bytebuffer;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;

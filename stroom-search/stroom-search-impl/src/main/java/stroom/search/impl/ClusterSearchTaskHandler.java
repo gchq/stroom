@@ -54,16 +54,12 @@ class ClusterSearchTaskHandler {
 
     public void exec(final TaskContext taskContext,
                      final ClusterSearchTask task,
-                     final Coprocessors coprocessors,
-                     final RemoteSearchResultFactory remoteSearchResultFactory) {
+                     final Coprocessors coprocessors) {
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
 
                 try {
-                    remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
-                    remoteSearchResultFactory.setStarted(true);
-
                     if (coprocessors.size() > 0 && task.getShards().size() > 0) {
                         // Start searching.
                         search(taskContext, task, task.getQuery(), coprocessors);
