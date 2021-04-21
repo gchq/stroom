@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+
 
 ## [v6.2-beta.1] - 2021-04-02
 

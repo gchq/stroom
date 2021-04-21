@@ -30,21 +30,21 @@ public class TestSimpleCron {
 
     @Test
     public void testMinRollAny1() throws ParseException {
-        textNext("* * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
-        textNext("* * *", "2010-01-01T04:04:20.000Z", "2010-01-01T04:05:00.000Z");
-        textNext("* * *", "2010-01-01T04:59:20.000Z", "2010-01-01T05:00:00.000Z");
-        textNext("* * *", "2010-01-01T23:59:59.000Z", "2010-01-02T00:00:00.000Z");
+        testAndGetNext("* * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
+        testAndGetNext("* * *", "2010-01-01T04:04:20.000Z", "2010-01-01T04:05:00.000Z");
+        testAndGetNext("* * *", "2010-01-01T04:59:20.000Z", "2010-01-01T05:00:00.000Z");
+        testAndGetNext("* * *", "2010-01-01T23:59:59.000Z", "2010-01-02T00:00:00.000Z");
     }
 
     @Test
     public void testMinRollExact1() throws ParseException {
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:01:00.000Z", "2010-01-01T04:02:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:02:00.000Z", "2010-01-01T04:03:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:04:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:04:00.000Z", "2010-01-01T04:55:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T04:55:00.000Z", "2010-01-01T05:01:00.000Z");
-        textNext("1,2,3,4,55 * *", "2010-01-01T05:01:00.000Z", "2010-01-01T05:02:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:01:00.000Z", "2010-01-01T04:02:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:02:00.000Z", "2010-01-01T04:03:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:04:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:04:00.000Z", "2010-01-01T04:55:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T04:55:00.000Z", "2010-01-01T05:01:00.000Z");
+        testAndGetNext("1,2,3,4,55 * *", "2010-01-01T05:01:00.000Z", "2010-01-01T05:02:00.000Z");
 
         textLast("1,2,3,4,55 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T03:55:00.000Z");
         textLast("1,2,3,4,55 * *", "2010-01-01T03:55:00.000Z", "2010-01-01T03:04:00.000Z");
@@ -57,25 +57,25 @@ public class TestSimpleCron {
 
     @Test
     public void testHourRollAny1() throws ParseException {
-        textNext("0 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T05:00:00.000Z");
-        textNext("0 * *", "2010-01-01T04:30:00.000Z", "2010-01-01T05:00:00.000Z");
-        textNext("0 * *", "2010-01-01T04:59:59.000Z", "2010-01-01T05:00:00.000Z");
+        testAndGetNext("0 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T05:00:00.000Z");
+        testAndGetNext("0 * *", "2010-01-01T04:30:00.000Z", "2010-01-01T05:00:00.000Z");
+        testAndGetNext("0 * *", "2010-01-01T04:59:59.000Z", "2010-01-01T05:00:00.000Z");
     }
 
     @Test
     public void testHourRollAny2() throws ParseException {
-        textNext("3,57 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:03:00.000Z");
-        textNext("3,57 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:57:00.000Z");
-        textNext("3,57 * *", "2010-01-01T04:57:00.000Z", "2010-01-01T05:03:00.000Z");
+        testAndGetNext("3,57 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:03:00.000Z");
+        testAndGetNext("3,57 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:57:00.000Z");
+        testAndGetNext("3,57 * *", "2010-01-01T04:57:00.000Z", "2010-01-01T05:03:00.000Z");
     }
 
     @Test
     public void testHourEveryMinOnHours1Forward() throws ParseException {
-        textNext("* 1,2 *", "2010-01-01T00:00:00.000Z", "2010-01-01T01:00:00.000Z");
-        textNext("* 1,2 *", "2010-01-01T01:00:00.000Z", "2010-01-01T01:01:00.000Z");
-        textNext("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T02:01:00.000Z");
-        textNext("* 1,2 *", "2010-01-01T02:58:00.000Z", "2010-01-01T02:59:00.000Z");
-        textNext("* 1,2 *", "2010-01-01T02:59:00.000Z", "2010-01-02T01:00:00.000Z");
+        testAndGetNext("* 1,2 *", "2010-01-01T00:00:00.000Z", "2010-01-01T01:00:00.000Z");
+        testAndGetNext("* 1,2 *", "2010-01-01T01:00:00.000Z", "2010-01-01T01:01:00.000Z");
+        testAndGetNext("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T02:01:00.000Z");
+        testAndGetNext("* 1,2 *", "2010-01-01T02:58:00.000Z", "2010-01-01T02:59:00.000Z");
+        testAndGetNext("* 1,2 *", "2010-01-01T02:59:00.000Z", "2010-01-02T01:00:00.000Z");
     }
 
     @Test
@@ -89,52 +89,88 @@ public class TestSimpleCron {
 
     @Test
     public void testWrapBoundaries() throws ParseException {
-        textNext("0 0 1,29", "2010-01-01T00:00:00.000Z", "2010-01-29T00:00:00.000Z");
+        testAndGetNext("0 0 1,29", "2010-01-01T00:00:00.000Z", "2010-01-29T00:00:00.000Z");
         textLast("0 0 1,29", "2010-01-01T00:00:00.000Z", "2009-12-29T00:00:00.000Z");
-        textNext("0 0 1,29", "2009-12-29T00:00:00.000Z", "2010-01-01T00:00:00.000Z");
+        testAndGetNext("0 0 1,29", "2009-12-29T00:00:00.000Z", "2010-01-01T00:00:00.000Z");
         textLast("0 0 1,29", "2009-12-29T00:00:00.000Z", "2009-12-01T00:00:00.000Z");
 
-        textNext("* * 1,29", "2010-01-01T00:00:00.000Z", "2010-01-01T00:01:00.000Z");
+        testAndGetNext("* * 1,29", "2010-01-01T00:00:00.000Z", "2010-01-01T00:01:00.000Z");
         textLast("* * 1,29", "2010-01-01T00:00:00.000Z", "2009-12-29T23:59:00.000Z");
-        textNext("* * 1,29", "2009-12-29T00:00:00.000Z", "2009-12-29T00:01:00.000Z");
-        textNext("* * 1,29", "2009-12-29T23:59:00.000Z", "2010-01-01T00:00:00.000Z");
+        testAndGetNext("* * 1,29", "2009-12-29T00:00:00.000Z", "2009-12-29T00:01:00.000Z");
+        testAndGetNext("* * 1,29", "2009-12-29T23:59:00.000Z", "2010-01-01T00:00:00.000Z");
         textLast("* * 1,29", "2009-12-29T00:00:00.000Z", "2009-12-01T23:59:00.000Z");
     }
 
     @Test
     public void testACoupleOfDaysPerMonthTwiceInADay1() throws ParseException {
         String startTime = "2010-01-02T00:00:00.000Z";
-        startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T01:00:00.000Z");
-        startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T02:00:00.000Z");
-        startTime = textNext("0 1,2 14,15", startTime, "2010-01-15T01:00:00.000Z");
-        startTime = textNext("0 1,2 14,15", startTime, "2010-01-15T02:00:00.000Z");
-        textNext("0 1,2 14,15", startTime, "2010-02-14T01:00:00.000Z");
+        startTime = testAndGetNext("0 1,2 14,15", startTime, "2010-01-14T01:00:00.000Z");
+        startTime = testAndGetNext("0 1,2 14,15", startTime, "2010-01-14T02:00:00.000Z");
+        startTime = testAndGetNext("0 1,2 14,15", startTime, "2010-01-15T01:00:00.000Z");
+        startTime = testAndGetNext("0 1,2 14,15", startTime, "2010-01-15T02:00:00.000Z");
+        testAndGetNext("0 1,2 14,15", startTime, "2010-02-14T01:00:00.000Z");
     }
 
     @Test
     public void testACoupleOfDaysPerMonthTwiceInADay2() throws ParseException {
-        textNext("0 1,2 14,15", "2010-01-15T02:00:00.000Z", "2010-02-14T01:00:00.000Z");
+        testAndGetNext("0 1,2 14,15", "2010-01-15T02:00:00.000Z", "2010-02-14T01:00:00.000Z");
     }
 
     @Test
     public void testAEveryDayPerMonth1() throws ParseException {
         String startTime = "2010-01-02T00:00:00.000Z";
-        startTime = textNext("0 0 *", startTime, "2010-01-03T00:00:00.000Z");
-        startTime = textNext("0 0 *", startTime, "2010-01-04T00:00:00.000Z");
-        startTime = textNext("0 0 *", startTime, "2010-01-05T00:00:00.000Z");
-        startTime = textNext("0 0 *", "2010-01-30T00:00:00.000Z", "2010-01-31T00:00:00.000Z");
-        textNext("0 0 *", startTime, "2010-02-01T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", startTime, "2010-01-03T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", startTime, "2010-01-04T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", startTime, "2010-01-05T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", "2010-01-30T00:00:00.000Z", "2010-01-31T00:00:00.000Z");
+        testAndGetNext("0 0 *", startTime, "2010-02-01T00:00:00.000Z");
     }
 
     @Test
     public void testOverBSTPeriod1() throws ParseException {
         String startTime = "2010-03-26T00:00:00.000Z";
-        startTime = textNext("0 0 *", startTime, "2010-03-27T00:00:00.000Z");
-        startTime = textNext("0 0 *", startTime, "2010-03-28T00:00:00.000Z");
-        textNext("0 0 *", startTime, "2010-03-29T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", startTime, "2010-03-27T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 *", startTime, "2010-03-28T00:00:00.000Z");
+        testAndGetNext("0 0 *", startTime, "2010-03-29T00:00:00.000Z");
     }
 
-    public String textNext(String expression, String start, String end) {
+    @Test
+    public void testOnceEveryTenMinutes() throws ParseException {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T00:10:00.000Z");
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T00:20:00.000Z");
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T00:30:00.000Z");
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T00:40:00.000Z");
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T00:50:00.000Z");
+        startTime = testAndGetNext("*/10 * *", startTime, "2010-03-26T01:00:00.000Z");
+    }
+
+    @Test
+    public void testOnceEveryTenHours() throws ParseException {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = testAndGetNext("0 */10 *", startTime, "2010-03-26T10:00:00.000Z");
+        startTime = testAndGetNext("0 */10 *", startTime, "2010-03-26T20:00:00.000Z");
+        startTime = testAndGetNext("0 */10 *", startTime, "2010-03-27T00:00:00.000Z");
+        startTime = testAndGetNext("0 */10 *", startTime, "2010-03-27T10:00:00.000Z");
+    }
+
+    @Test
+    public void testEveryTwoDays() throws ParseException {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-03-28T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-03-30T00:00:00.000Z");
+        startTime = testAndGetNext("0 0 */2", startTime, "2010-04-02T00:00:00.000Z");
+    }
+
+    @Test
+    public void testEveryHourAtNight() throws ParseException {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = testAndGetNext("0 20-23 *", startTime, "2010-03-26T20:00:00.000Z");
+        startTime = testAndGetNext("0 20-23 *", startTime, "2010-03-26T21:00:00.000Z");
+        startTime = testAndGetNext("0 20-23 *", startTime, "2010-03-26T22:00:00.000Z");
+    }
+
+    public String testAndGetNext(String expression, String start, String end) {
         try {
             SimpleCron cron = SimpleCron.compile(expression);
             Long time = DateUtil.parseNormalDateTimeString(start);
