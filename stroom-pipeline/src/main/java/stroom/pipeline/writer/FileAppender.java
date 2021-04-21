@@ -25,6 +25,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.io.GZipByteCountOutputStream;
+import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
+    private boolean useCompression;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -97,7 +100,6 @@ public class FileAppender extends AbstractAppender {
             }
 
             final Path lockFile = Paths.get(path + LOCK_EXTENSION);
-            final Path outFile = file;
 
             // Make sure we can create both output files without overwriting
             // another file.
@@ -105,19 +107,23 @@ public class FileAppender extends AbstractAppender {
                 throw new ProcessException(
                         "Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
             }
-            if (Files.exists(outFile)) {
+            if (Files.exists(file)) {
                 throw new ProcessException(
-                        "Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
+                        "Output file \"" + FileUtil.getCanonicalPath(file) + "\" already exists");
             }
             LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(
-                    new BufferedOutputStream(Files.newOutputStream(lockFile)));
-            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
+            if (useCompression) {
+                byteCountOutputStream =
+                        new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
+            } else {
+                byteCountOutputStream =
+                        new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            }
 
-        } catch (final IOException e) {
-            throw e;
+            return new LockedOutputStream(byteCountOutputStream, lockFile, file);
+
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
@@ -164,5 +170,13 @@ public class FileAppender extends AbstractAppender {
             displayPriority = 4)
     public void setSplitRecords(final boolean splitRecords) {
         super.setSplitRecords(splitRecords);
+    }
+
+    @PipelineProperty(
+            description = "Apply GZIP compression to output files",
+            defaultValue = "false",
+            displayPriority = 5)
+    public void setUseCompression(final boolean useCompression) {
+        this.useCompression = useCompression;
     }
 }

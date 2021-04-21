@@ -17,9 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringValueSerde;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

@@ -81,6 +81,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
+        install(new stroom.search.elastic.ElasticSearchModule());
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());
         install(new stroom.security.identity.IdentityModule());

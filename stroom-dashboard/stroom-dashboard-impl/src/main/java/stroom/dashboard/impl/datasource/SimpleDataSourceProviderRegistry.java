@@ -54,6 +54,7 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         urlMap = new HashMap<>();
         urlMap.put("Index", getUriSupplier(dataSourceUrlConfig::getIndex));
         urlMap.put("Searchable", getUriSupplier(dataSourceUrlConfig::getSearchable));
+        urlMap.put("ElasticIndex", getUriSupplier(dataSourceUrlConfig::getElasticIndex));
         urlMap.put("SolrIndex", getUriSupplier(dataSourceUrlConfig::getSolrIndex));
         urlMap.put("StatisticStore", getUriSupplier(dataSourceUrlConfig::getStatisticStore));
 

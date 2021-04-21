@@ -182,7 +182,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     }
 
     @Override
-    public void setRententionExpressionView(final View view) {
+    public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
     }
 

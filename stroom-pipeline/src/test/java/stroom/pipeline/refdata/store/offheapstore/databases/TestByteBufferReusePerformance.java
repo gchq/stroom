@@ -18,12 +18,12 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
-import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
-import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

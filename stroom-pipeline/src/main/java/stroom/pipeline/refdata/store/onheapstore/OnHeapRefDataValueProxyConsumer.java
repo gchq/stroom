@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 import stroom.pipeline.refdata.store.AbstractConsumer;
 import stroom.pipeline.refdata.store.FastInfosetValue;
@@ -25,7 +26,6 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueConsumerId;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

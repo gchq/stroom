@@ -101,7 +101,7 @@ public class FlatResultCreator implements ResultCreator {
         int depth = 0;
         final List<Object> result = new ArrayList<>(key.size());
         for (final KeyPart keyPart : key) {
-            final Val[] values = ((GroupKeyPart) keyPart).getGroupValues();
+            final Val[] values = keyPart.getGroupValues();
 
             if (values.length == 0) {
                 result.add(null);
@@ -264,10 +264,10 @@ public class FlatResultCreator implements ResultCreator {
                 resultCountAtThisLevel++;
 
                 // Add child results if a node is open.
-                if (item.getRawKey() != null &&
+                if (item.getKey() != null &&
                         item.getKey().isGrouped() &&
-                        openGroups.isOpen(item.getRawKey())) {
-                    final Items childItems = data.get(item.getRawKey());
+                        openGroups.isOpen(item.getKey())) {
+                    final Items childItems = data.get(item.getKey());
                     if (childItems.size() > 0) {
                         count = addResults(
                                 data,
@@ -315,7 +315,7 @@ public class FlatResultCreator implements ResultCreator {
     @FunctionalInterface
     private interface OpenGroups {
 
-        boolean isOpen(RawKey key);
+        boolean isOpen(Key key);
     }
 
     private static class Mapper {
@@ -412,12 +412,12 @@ public class FlatResultCreator implements ResultCreator {
 
     private static class OpenGroupsFactory {
 
-        public static OpenGroups create(final Set<RawKey> openGroups) {
+        public static OpenGroups create(final Set<Key> openGroups) {
             if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;
             }
 
-            final Set<RawKey> set = new HashSet<>(openGroups);
+            final Set<Key> set = new HashSet<>(openGroups);
             return key -> key != null && set.contains(key);
         }
     }

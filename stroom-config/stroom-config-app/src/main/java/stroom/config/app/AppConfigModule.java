@@ -1,5 +1,6 @@
 package stroom.config.app;
 
+import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.config.common.CommonDbConfig;
@@ -37,9 +38,11 @@ import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.query.common.v2.LmdbConfig;
+import stroom.search.elastic.CryptoConfig;
+import stroom.search.elastic.ElasticConfig;
+import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -149,6 +152,11 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getDataSourceUrlConfig, AppConfig::setDataSourceUrlConfig, DataSourceUrlConfig.class);
         bindConfig(AppConfig::getDocStoreConfig, AppConfig::setDocStoreConfig, DocStoreConfig.class);
+        bindConfig(AppConfig::getElasticConfig, AppConfig::setElasticConfig, ElasticConfig.class, elasticConfig ->
+                bindConfig(elasticConfig,
+                        ElasticConfig::getElasticSearchConfig,
+                        ElasticConfig::setElasticSearchConfig,
+                        ElasticSearchConfig.class));
         bindConfig(AppConfig::getExplorerConfig, AppConfig::setExplorerConfig, ExplorerConfig.class);
         bindConfig(AppConfig::getExportConfig, AppConfig::setExportConfig, ExportConfig.class);
         bindConfig(AppConfig::getFeedConfig, AppConfig::setFeedConfig, FeedConfig.class);
@@ -232,6 +240,10 @@ public class AppConfigModule extends AbstractModule {
                     SecurityConfig::getContentSecurityConfig,
                     SecurityConfig::setContentSecurityConfig,
                     ContentSecurityConfig.class);
+            bindConfig(securityConfig,
+                    SecurityConfig::getCryptoConfig,
+                    SecurityConfig::setCryptoConfig,
+                    CryptoConfig.class);
             bindConfig(securityConfig,
                     SecurityConfig::getAuthorisationConfig,
                     SecurityConfig::setAuthorisationConfig,

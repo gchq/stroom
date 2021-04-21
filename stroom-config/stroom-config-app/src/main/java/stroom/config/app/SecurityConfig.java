@@ -1,5 +1,6 @@
 package stroom.config.app;
 
+import stroom.search.elastic.CryptoConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;
@@ -18,6 +19,7 @@ public class SecurityConfig extends AbstractConfig {
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
     private AuthorisationConfig authorisationConfig = new AuthorisationConfig();
     private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
+    private CryptoConfig cryptoConfig = new CryptoConfig();
     private IdentityConfig identityConfig = new IdentityConfig();
 
     @JsonProperty("authentication")
@@ -36,6 +38,15 @@ public class SecurityConfig extends AbstractConfig {
 
     public void setAuthorisationConfig(final AuthorisationConfig authorisationConfig) {
         this.authorisationConfig = authorisationConfig;
+    }
+
+    @JsonProperty("crypto")
+    public CryptoConfig getCryptoConfig() {
+        return cryptoConfig;
+    }
+
+    public void setCryptoConfig(final CryptoConfig cryptoConfig) {
+        this.cryptoConfig = cryptoConfig;
     }
 
     @JsonProperty("webContent")

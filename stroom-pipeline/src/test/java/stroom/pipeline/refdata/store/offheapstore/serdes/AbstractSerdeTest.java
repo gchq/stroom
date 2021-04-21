@@ -18,10 +18,10 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.Serde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;

@@ -1,0 +1,86 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:view="urn:import:stroom.widget.layout.client.view">
+    <ui:style>
+        .label {
+        width: 110px;
+        margin-top: 2px;
+        vertical-align: top;
+        white-space: nowrap;
+        }
+
+        .retentionExpressionPanel {
+        width: 100%;
+        height: 100%;
+        border: solid 1px #c5cde2;
+        background-color: white;
+        }
+
+        input[type="text"] {
+        border: solid 1px #c5cde2;
+        }
+    </ui:style>
+    <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
+        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+            <g:north size="440">
+                <g:Grid styleName="stroom-control-grid">
+                    <g:row>
+                        <g:cell>Description:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="description" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Connection URLs:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="connectionUrls" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>CA certificate:</g:cell>
+                        <g:customCell>
+                            <g:TextArea ui:field="caCertificate" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Use authentication</g:cell>
+                        <g:customCell>
+                            <t:TickBox ui:field="useAuthentication" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key ID:</g:cell>
+                        <g:customCell>
+                            <g:TextBox ui:field="apiKeyId" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>API key secret:</g:cell>
+                        <g:customCell>
+                            <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Socket timeout (ms):</g:cell>
+                        <g:customCell>
+                            <g:IntegerBox ui:field="socketTimeoutMillis" width="100px"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell></g:cell>
+                        <g:cell></g:cell>
+                    </g:row>
+                    <g:row>
+                        <g:cell></g:cell>
+                        <g:customCell>
+                            <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
+                        </g:customCell>
+                    </g:row>
+                </g:Grid>
+            </g:north>
+        </g:DockLayoutPanel>
+    </view:ResizeSimplePanel>
+</ui:UiBinder> 

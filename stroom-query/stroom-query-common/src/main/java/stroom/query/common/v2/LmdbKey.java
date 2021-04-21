@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.bytebuffer.ByteBufferUtils;
 
 import net.openhft.hashing.LongHashFunction;
 
@@ -80,9 +80,8 @@ class LmdbKey {
     }
 
     static ByteBuffer createKeyStem(final int depth,
-                                           final Key parentKey,
-                                           final ItemSerialiser itemSerialiser) {
-        final byte[] keyBytes = itemSerialiser.toBytes(parentKey);
+                                    final Key parentKey) {
+        final byte[] keyBytes = parentKey.getBytes();
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_STEM_SIZE);
         byteBuffer.putInt(depth);
         addKeyHash(byteBuffer, keyBytes);

@@ -13,7 +13,6 @@ import event.logging.CreateEventAction;
 import event.logging.MultiObject;
 import event.logging.Outcome;
 import event.logging.UpdateEventAction;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.List;
 import java.util.Optional;

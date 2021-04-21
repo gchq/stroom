@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.Map;

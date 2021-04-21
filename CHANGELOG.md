@@ -7,14 +7,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
+
+* Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
 
 * Remove merge artifacts from `scripts.env`.
 
-
-## [v7.0-beta.105] - 2021-04-15
-
 * Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+## [v7.1-beta.1] - 2021-04-13
+
+* Ported Elasticsearch integration from v6, for compatibility with v7.
+
+* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
+
+* Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
 
 ## [v7.0-beta.104] - 2021-04-13
@@ -3298,8 +3313,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.105...HEAD
-[v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.1...HEAD
+[v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
 [v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
 [v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102

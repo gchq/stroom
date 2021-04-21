@@ -1,78 +1,73 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
-import stroom.util.io.ByteSizeUnit;
-
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 class LmdbValue {
 
-    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
-    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
-
-    private final ItemSerialiser itemSerialiser;
+    private CompiledField[] fields;
     private ByteBuffer byteBuffer;
-    private byte[] fullKeyBytes;
-    private byte[] generatorBytes;
-    private Generator[] generators;
+    private Key key;
+    private Generators generators;
 
-    LmdbValue(final ItemSerialiser itemSerialiser,
-              final byte[] fullKeyBytes,
-              final Generator[] generators) {
-        this.itemSerialiser = itemSerialiser;
-        this.fullKeyBytes = fullKeyBytes;
+    LmdbValue(final byte[] fullKeyBytes,
+              final Generators generators) {
+        this.key = new Key(fullKeyBytes);
         this.generators = generators;
     }
 
-    LmdbValue(final ItemSerialiser itemSerialiser,
+    LmdbValue(final CompiledField[] fields,
               final ByteBuffer byteBuffer) {
-        this.itemSerialiser = itemSerialiser;
+        this.fields = fields;
         this.byteBuffer = byteBuffer;
     }
 
-    public LmdbValue(final ItemSerialiser itemSerialiser,
+    public LmdbValue(final CompiledField[] fields,
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
-        this.itemSerialiser = itemSerialiser;
-        this.fullKeyBytes = fullKeyBytes;
-        this.generatorBytes = generatorBytes;
+        this.fields = fields;
+        this.key = new Key(fullKeyBytes);
+        this.generators = new Generators(fields, generatorBytes);
     }
 
-    private void split() {
+    private void unpack() {
         try (final UnsafeByteBufferInput input =
                 new UnsafeByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
-            fullKeyBytes = input.readBytes(keyLength);
+            key = new Key(input.readBytes(keyLength));
             final int generatorLength = input.readInt();
-            generatorBytes = input.readBytes(generatorLength);
+            generators = new Generators(fields, input.readBytes(generatorLength));
         }
     }
 
     private void pack() {
-        try (final UnsafeByteBufferOutput output =
-                new UnsafeByteBufferOutput(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
-            write(output, getFullKey(), getGeneratorBytes());
+        final byte[] keyBytes = getKey().getBytes();
+        final byte[] generatorBytes = getGenerators().getBytes();
+
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(
+                Integer.BYTES +
+                        keyBytes.length +
+                        Integer.BYTES +
+                        generatorBytes.length)) {
+            write(output, keyBytes, generatorBytes);
             byteBuffer = output.getByteBuffer().flip();
         }
     }
 
-    static LmdbValue read(final ItemSerialiser itemSerialiser, final Input input) {
+    static LmdbValue read(final CompiledField[] fields, final Input input) {
         final int fullKeyLength = input.readInt();
         final byte[] fullKey = input.readBytes(fullKeyLength);
         final int generatorsLength = input.readInt();
         final byte[] generatorBytes = input.readBytes(generatorsLength);
-        return new LmdbValue(itemSerialiser, fullKey, generatorBytes);
+        return new LmdbValue(fields, fullKey, generatorBytes);
     }
 
     void write(final Output output) {
-        write(output, getFullKey(), getGeneratorBytes());
+        write(output, getKey().getBytes(), getGenerators().getBytes());
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) {
@@ -89,37 +84,24 @@ class LmdbValue {
         return byteBuffer;
     }
 
-    byte[] getFullKey() {
-        if (fullKeyBytes == null) {
+    Key getKey() {
+        if (key == null) {
             if (byteBuffer != null) {
-                split();
+                unpack();
             } else {
                 throw new NullPointerException("Unable to get key bytes");
             }
         }
-        return fullKeyBytes;
+        return key;
     }
 
-    private byte[] getGeneratorBytes() {
-        if (generatorBytes == null) {
+    Generators getGenerators() {
+        if (generators == null) {
             if (byteBuffer != null) {
-                split();
-            } else if (generators != null) {
-                generatorBytes = itemSerialiser.toBytes(generators);
+                unpack();
             } else {
                 throw new NullPointerException("Unable to get generator bytes");
             }
-        }
-        return generatorBytes;
-    }
-
-    Key getKey() {
-        return itemSerialiser.toKey(getFullKey());
-    }
-
-    Generator[] getGenerators() {
-        if (generators == null) {
-            generators = itemSerialiser.readGenerators(getGeneratorBytes());
         }
         return generators;
     }
@@ -127,21 +109,13 @@ class LmdbValue {
     @Override
     public String toString() {
         final Key key = getKey();
-        final Generator[] generators = getGenerators();
+        final Generators generators = getGenerators();
 
         return "LmdbValue{" +
                 "key=" + key +
                 ", " +
-                "generators=[" +
-                Arrays
-                        .stream(generators)
-                        .map(generator -> {
-                            if (generator == null) {
-                                return "null";
-                            }
-                            return generator.eval().toString();
-                        })
-                        .collect(Collectors.joining(",")) +
-                "]}";
+                "generators=" +
+                generators +
+                "}";
     }
 }

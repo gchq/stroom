@@ -52,6 +52,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String[] outputPaths;
     private String fileNamePattern;
     private String rolledFileNamePattern;
+    private boolean useCompression;
 
     private String dir;
     private String fileName;
@@ -98,7 +99,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 fileName,
                 rolledFileName,
                 parentDir,
-                file);
+                file,
+                useCompression);
     }
 
     @Override
@@ -204,5 +206,13 @@ public class RollingFileAppender extends AbstractRollingAppender {
             displayPriority = 6)
     public void setRollSize(final String rollSize) {
         super.setRollSize(rollSize);
+    }
+
+    @PipelineProperty(
+            description = "Apply GZIP compression to output files",
+            defaultValue = "false",
+            displayPriority = 7)
+    public void setUseCompression(final boolean useCompression) {
+        this.useCompression = useCompression;
     }
 }
