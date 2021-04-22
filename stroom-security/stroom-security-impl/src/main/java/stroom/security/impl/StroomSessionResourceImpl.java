@@ -28,19 +28,16 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     private final Provider<OpenIdManager> openIdManagerProvider;
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
-    private final OpenIdManager openIdManager;
 
     @Inject
     StroomSessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
                               final Provider<OpenIdManager> openIdManagerProvider,
                               final Provider<HttpServletRequest> httpServletRequestProvider,
-                              final Provider<AuthenticationEventLog> authenticationEventLogProvider,
-                              final OpenIdManager openIdManager) {
+                              final Provider<AuthenticationEventLog> authenticationEventLogProvider) {
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.openIdManagerProvider = openIdManagerProvider;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.authenticationEventLogProvider = authenticationEventLogProvider;
-        this.openIdManager = openIdManager;
     }
 
     @Override
@@ -110,7 +107,7 @@ class StroomSessionResourceImpl implements StroomSessionResource {
             authenticationEventLogProvider.get().logoff(ui.getId());
         });
 
-        final String url = openIdManager.logout(request, postAuthRedirectUri);
+        final String url = openIdManagerProvider.get().logout(request, postAuthRedirectUri);
         return new UrlResponse(url);
     }
 }
