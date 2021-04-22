@@ -1,6 +1,7 @@
 package stroom.dropwizard.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
@@ -394,6 +395,7 @@ class TestRestResources {
         final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
         LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
 
+
         // Check that all member variables are providers.
         assertProviders(resourceClass, softAssertions);
         // Check that resource doesn't attempt to handle security
@@ -409,6 +411,23 @@ class TestRestResources {
                             .withFailMessage(() -> "Method " + method.getName() +
                                     "(...) or its class must be annotated with @AutoLogged")
                             .isTrue();
+
+                    OperationType effectiveLoggingType = null;
+                    if(classIsAutoLogged){
+                        effectiveLoggingType = resourceClass.getAnnotation(AutoLogged.class).value();
+                    }
+                    if (methodIsAutoLogged){
+                        effectiveLoggingType = method.getAnnotation(AutoLogged.class).value();
+                    }
+
+                    if(method.getReturnType().equals(Void.TYPE)){
+                        softAssertions.assertThat(effectiveLoggingType)
+                            .withFailMessage(() -> "Method " + method.getName() +
+                                    "(...) returns void, so autologger can't operate on it. " +
+                                    "Either change the return type or manually log an annotate" +
+                                    " with @AutoLogged(MANUALLY_LOGGED).")
+                                .isEqualTo(OperationType.MANUALLY_LOGGED);
+                    }
                 });
 
         assertFetchDeclared(resourceClass, softAssertions);
