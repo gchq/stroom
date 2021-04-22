@@ -53,5 +53,5 @@ public interface ReferenceDataResource extends RestResource {
     @Operation(
             summary = "Explicitly delete all entries that are older than purgeAge.",
             operationId = "purgeReferenceData")
-    void purge(@NotNull @PathParam("purgeAge") final String purgeAge);
+    boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge);
 }

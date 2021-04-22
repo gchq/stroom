@@ -85,7 +85,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Sets the priority of a node",
             operationId = "setNodePriority")
-    void setPriority(@PathParam("nodeName") String nodeName,
+    boolean setPriority(@PathParam("nodeName") String nodeName,
                      @Parameter(description = "nodeName", required = true) Integer priority);
 
     @PUT
@@ -93,6 +93,6 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Sets whether a node is enabled",
             operationId = "setNodeEnabled")
-    void setEnabled(@PathParam("nodeName") String nodeName,
+    boolean setEnabled(@PathParam("nodeName") String nodeName,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
 }

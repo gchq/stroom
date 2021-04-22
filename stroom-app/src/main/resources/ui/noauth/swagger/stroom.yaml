@@ -2634,7 +2634,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets whether a node is enabled
       tags:
@@ -2698,7 +2700,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the priority of a node
       tags:
@@ -3151,7 +3155,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Deletes a processor
       tags:
@@ -3176,7 +3182,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the enabled/disabled state for a processor
       tags:
@@ -3256,7 +3264,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Deletes a filter
       tags:
@@ -3322,7 +3332,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the enabled/disabled state for a filter
       tags:
@@ -3346,7 +3358,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the priority for a filter
       tags:
@@ -3498,7 +3512,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Explicitly delete all entries that are older than purgeAge.
       tags:

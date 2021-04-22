@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2185** : Stroom now supports the use of an externally provided logout endpoint with the `logoutEndpoint` configuration property.
 
+* Issue **#2188** : Changed all autologged REST methods to return a value (void is not compatible with autologger)
+
 * Issue **#2184** : It should now be possible to use the Cognito OpenId configuration endpoint with Stroom. You should no longer need to set the `jwtClaimsResolver` in the Stroom config as the standard resolver should work. However, you will need to set the new `tokenExpectedInRequest` property to `true` as Cognito delivers fresh tokens with every request.
 
 * Issue **#2177** : Stroom should no longer crash when it is unable to retrieve OpenId configuration.
