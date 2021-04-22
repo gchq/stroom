@@ -6060,7 +6060,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setNodeEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
         body: data,
@@ -6113,7 +6113,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/node/v1/priority/${nodeName}`,
         method: "PUT",
         body: data,
@@ -6531,7 +6531,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     deleteProcessor: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
         secure: true,
@@ -6548,7 +6548,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processor/v1/${id}/enabled`,
         method: "PUT",
         body: data,
@@ -6625,7 +6625,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     deleteProcessorFilter: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}`,
         method: "DELETE",
         secure: true,
@@ -6678,7 +6678,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorFilterEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}/enabled`,
         method: "PUT",
         body: data,
@@ -6697,7 +6697,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorFilterPriority: (id: number, data: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}/priority`,
         method: "PUT",
         body: data,
@@ -6831,7 +6831,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/refData/v1/purge/${purgeAge}`,
         method: "DELETE",
         secure: true,

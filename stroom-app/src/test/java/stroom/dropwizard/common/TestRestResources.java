@@ -413,14 +413,14 @@ class TestRestResources {
                             .isTrue();
 
                     OperationType effectiveLoggingType = null;
-                    if(classIsAutoLogged){
+                    if (classIsAutoLogged) {
                         effectiveLoggingType = resourceClass.getAnnotation(AutoLogged.class).value();
                     }
-                    if (methodIsAutoLogged){
+                    if (methodIsAutoLogged) {
                         effectiveLoggingType = method.getAnnotation(AutoLogged.class).value();
                     }
 
-                    if(method.getReturnType().equals(Void.TYPE)){
+                    if (method.getReturnType().equals(Void.TYPE)) {
                         softAssertions.assertThat(effectiveLoggingType)
                             .withFailMessage(() -> "Method " + method.getName() +
                                     "(...) returns void, so autologger can't operate on it. " +
