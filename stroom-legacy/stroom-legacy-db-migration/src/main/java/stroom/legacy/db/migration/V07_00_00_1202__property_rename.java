@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -36,20 +37,40 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             V07_00_00_1202__property_rename::modelStringDurationToDuration;
     private static final Function<String, String> MSU_2_STROOM_DURATION =
             V07_00_00_1202__property_rename::modelStringDurationToStroomDuration;
+    private static final Function<String, String> COMMA_DELIM_STR_2_LIST_OF_STR =
+            V07_00_00_1202__property_rename::commaDelimitedStringToListOfString;
+    private static final Function<String, String> COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS =
+            V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs;
 
+    /**
+     * Rename prop and change its serialised form
+     */
     static void map(final String oldName,
                     final String newName,
                     final Function<String, String> serialisationMappingFunc) {
+        Objects.requireNonNull(oldName);
+        Objects.requireNonNull(newName);
+        Objects.requireNonNull(serialisationMappingFunc);
         MAPPINGS.add(new Mapping(oldName, newName, serialisationMappingFunc));
     }
 
+    /**
+     * Change to serialised form, no name change
+     */
     static void map(final String name,
                     final Function<String, String> serialisationMappingFunc) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(serialisationMappingFunc);
         MAPPINGS.add(new Mapping(name, name, serialisationMappingFunc));
     }
 
+    /**
+     * Simple rename of the prop
+     */
     static void map(final String oldName,
                     final String newName) {
+        Objects.requireNonNull(oldName);
+        Objects.requireNonNull(newName);
         MAPPINGS.add(new Mapping(oldName, newName));
     }
 
@@ -65,24 +86,37 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.activity.enabled", "stroom.ui.activity.enabled");
         map("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
         map("stroom.advertisedUrl", "stroom.ui.url.ui");
-        map("stroom.auth.authentication.service.url", "stroom.security.authentication.authenticationServiceUrl");
+
+        map("stroom.annotation.statusValues", COMMA_DELIM_STR_2_LIST_OF_STR);
+        map("stroom.annotation.standardComments", COMMA_DELIM_STR_2_LIST_OF_STR);
+        // stroom.annotation.createText // name and serialised form are the same
+
+        map("stroom.auth.authentication.service.url",
+                "stroom.security.authentication.authenticationServiceUrl");
         map("stroom.auth.jwt.enabletokenrevocationcheck",
                 "stroom.security.authentication.jwt.enableTokenRevocationCheck");
         map("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
         map("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
-        map("stroom.authentication.required", "stroom.security.authentication.authenticationRequired");
+        map("stroom.authentication.required",
+                "stroom.security.authentication.authenticationRequired");
         // same names in 6 & master
         // stroom.benchmark.concurrentWriters
         // stroom.benchmark.recordCount
         // stroom.benchmark.streamCount
         map("stroom.bufferSize", "stroom.receive.bufferSize");
-        map("stroom.clusterCallIgnoreSSLHostnameVerifier", "stroom.cluster.clusterCallIgnoreSSLHostnameVerifier");
-        map("stroom.clusterCallReadTimeout", "stroom.cluster.clusterCallReadTimeout", MSU_2_STROOM_DURATION);
+        map("stroom.clusterCallIgnoreSSLHostnameVerifier",
+                "stroom.cluster.clusterCallIgnoreSSLHostnameVerifier");
+        map("stroom.clusterCallReadTimeout",
+                "stroom.cluster.clusterCallReadTimeout",
+                MSU_2_STROOM_DURATION);
         map("stroom.clusterCallUseLocal", "stroom.cluster.clusterCallUseLocal");
-        map("stroom.clusterResponseTimeout", "stroom.cluster.clusterResponseTimeout", MSU_2_STROOM_DURATION);
+        map("stroom.clusterResponseTimeout",
+                "stroom.cluster.clusterResponseTimeout",
+                MSU_2_STROOM_DURATION);
         map("stroom.contentPackImportEnabled", "stroom.contentPackImport.enabled");
         map("stroom.dashboard.defaultMaxResults", "stroom.ui.defaultMaxResults");
-        map("stroom.databaseMultiInsertMaxBatchSize", "stroom.processor.databaseMultiInsertMaxBatchSize");
+        map("stroom.databaseMultiInsertMaxBatchSize",
+                "stroom.processor.databaseMultiInsertMaxBatchSize");
         // TODO how to map connection pool props?
         // stroom.db.connectionPool.acquireIncrement
         // stroom.db.connectionPool.acquireRetryAttempts
@@ -102,7 +136,9 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.feedNamePattern", "stroom.feed.feedNamePattern");
         map("stroom.fileSystemCleanBatchSize", "stroom.data.store.fileSystemCleanBatchSize");
         map("stroom.fileSystemCleanDeleteOut", "stroom.data.store.fileSystemCleanDeleteOut");
-        map("stroom.fileSystemCleanOldAge", "stroom.data.store.fileSystemCleanOldAge", MSU_2_STROOM_DURATION);
+        map("stroom.fileSystemCleanOldAge",
+                "stroom.data.store.fileSystemCleanOldAge",
+                MSU_2_STROOM_DURATION);
         map("stroom.helpUrl", "stroom.ui.helpUrl");
 
         // same names in 6 & master
@@ -113,20 +149,51 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // stroom.index.writer.cache.timeToIdle
         // stroom.index.writer.cache.timeToLive
 
-        map("stroom.internalstatistics.benchmarkCluster.docRefs", "stroom.statistics.internal.benchmarkCluster");
-        map("stroom.internalstatistics.cpu.docRefs", "stroom.statistics.internal.cpu");
-        map("stroom.internalstatistics.eventsPerSecond.docRefs", "stroom.statistics.internal.eventsPerSecond");
-        map("stroom.internalstatistics.heapHistogramBytes.docRefs", "stroom.statistics.internal.heapHistogramBytes");
-        map("stroom.internalstatistics.heapHistogramInstances.docRefs",
-                "stroom.statistics.internal.heapHistogramInstances");
-        map("stroom.internalstatistics.memory.docRefs", "stroom.statistics.internal.memory");
-        map("stroom.internalstatistics.metaDataStreamSize.docRefs", "stroom.statistics.internal.metaDataStreamSize");
-        map("stroom.internalstatistics.metaDataStreamsReceived.docRefs",
-                "stroom.statistics.internal.metaDataStreamsReceived");
-        map("stroom.internalstatistics.pipelineStreamProcessor.docRefs",
-                "stroom.statistics.internal.pipelineStreamProcessor");
-        map("stroom.internalstatistics.streamTaskQueueSize.docRefs", "stroom.statistics.internal.streamTaskQueueSize");
-        map("stroom.internalstatistics.volumes.docRefs", "stroom.statistics.internal.volumes");
+        map(
+                "stroom.internalstatistics.benchmarkCluster.docRefs",
+                "stroom.statistics.internal.benchmarkCluster",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.cpu.docRefs",
+                "stroom.statistics.internal.cpu",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.eventsPerSecond.docRefs",
+                "stroom.statistics.internal.eventsPerSecond",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.heapHistogramBytes.docRefs",
+                "stroom.statistics.internal.heapHistogramBytes",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.heapHistogramInstances.docRefs",
+                "stroom.statistics.internal.heapHistogramInstances",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.memory.docRefs",
+                "stroom.statistics.internal.memory",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.metaDataStreamSize.docRefs",
+                "stroom.statistics.internal.metaDataStreamSize",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.metaDataStreamsReceived.docRefs",
+                "stroom.statistics.internal.metaDataStreamsReceived",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.pipelineStreamProcessor.docRefs",
+                "stroom.statistics.internal.pipelineStreamProcessor",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.streamTaskQueueSize.docRefs",
+                "stroom.statistics.internal.streamTaskQueueSize",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+        map(
+                "stroom.internalstatistics.volumes.docRefs",
+                "stroom.statistics.internal.volumes",
+                COMMA_DELIM_DOCREFS_2_LIST_OF_DOCREFS);
+
         map("stroom.jdbcDriverClassName", "stroom.core.db.connection.jdbcDriverClassName");
         map("stroom.jdbcDriverPassword", "stroom.core.db.connection.jdbcDriverPassword");
         map("stroom.jdbcDriverUrl", "stroom.core.db.connection.jdbcDriverUrl");
@@ -189,10 +256,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
-        map("stroom.security.userNamePattern", "stroom.security.authentication.userNamePattern");
-        map("stroom.serviceDiscovery.curator.baseSleepTimeMs", "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
-        map("stroom.serviceDiscovery.curator.maxRetries", "stroom.serviceDiscovery.curatorMaxRetries");
-        map("stroom.serviceDiscovery.curator.maxSleepTimeMs", "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
+        map("stroom.security.userNamePattern",
+                "stroom.security.authentication.userNamePattern");
+        map("stroom.serviceDiscovery.curator.baseSleepTimeMs",
+                "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
+        map("stroom.serviceDiscovery.curator.maxRetries",
+                "stroom.serviceDiscovery.curatorMaxRetries");
+        map("stroom.serviceDiscovery.curator.maxSleepTimeMs",
+                "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
 
         // TODO need to figure out what we are doing with service disco
         // stroom.serviceDiscovery.enabled
@@ -217,9 +288,12 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // ? stroom.services.stroomStats.name ?
         // ? stroom.services.stroomStats.version ?
 
-        map("stroom.services.stroomStats.internalStats.eventsPerMessage", "stroom.statistics.hbase.eventsPerMessage");
-        map("stroom.services.stroomStats.kafkaTopics.count", "stroom.statistics.hbase.kafkaTopics.count");
-        map("stroom.services.stroomStats.kafkaTopics.value", "stroom.statistics.hbase.kafkaTopics.value");
+        map("stroom.services.stroomStats.internalStats.eventsPerMessage",
+                "stroom.statistics.hbase.eventsPerMessage");
+        map("stroom.services.stroomStats.kafkaTopics.count",
+                "stroom.statistics.hbase.kafkaTopics.count");
+        map("stroom.services.stroomStats.kafkaTopics.value",
+                "stroom.statistics.hbase.kafkaTopics.value");
 
         map("stroom.splash.body", "stroom.ui.splash.body");
         map("stroom.splash.enabled", "stroom.ui.splash.enabled");
@@ -244,10 +318,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // ? stroom.statistics.sql.db.connectionPool.numHelperThreads
         // ? stroom.statistics.sql.db.connectionPool.unreturnedConnectionTimeout
 
-        map("stroom.statistics.sql.jdbcDriverClassName", "stroom.statistics.sql.db.connection.jdbcDriverClassName");
-        map("stroom.statistics.sql.jdbcDriverPassword", "stroom.statistics.sql.db.connection.jdbcDriverPassword");
-        map("stroom.statistics.sql.jdbcDriverUrl", "stroom.statistics.sql.db.connection.jdbcDriverUrl");
-        map("stroom.statistics.sql.jdbcDriverUsername", "stroom.statistics.sql.db.connection.jdbcDriverUsername");
+        map("stroom.statistics.sql.jdbcDriverClassName",
+                "stroom.statistics.sql.db.connection.jdbcDriverClassName");
+        map("stroom.statistics.sql.jdbcDriverPassword",
+                "stroom.statistics.sql.db.connection.jdbcDriverPassword");
+        map("stroom.statistics.sql.jdbcDriverUrl",
+                "stroom.statistics.sql.db.connection.jdbcDriverUrl");
+        map("stroom.statistics.sql.jdbcDriverUsername",
+                "stroom.statistics.sql.db.connection.jdbcDriverUsername");
 
         // Same names in 6 & master
         map("stroom.statistics.sql.maxProcessingAge", MSU_2_STROOM_DURATION);
@@ -272,9 +350,10 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.streamTask.fillTaskQueue", "stroom.processor.fillTaskQueue");
         map("stroom.streamTask.queueSize", "stroom.processor.queueSize");
         map("stroom.streamstore.preferLocalVolumes", "stroom.volumes.preferLocalVolumes");
-        map("stroom.streamstore.resilientReplicationCount", "stroom.volumes.resilientReplicationCount");
+        map("stroom.streamstore.resilientReplicationCount",
+                "stroom.volumes.resilientReplicationCount");
         map("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
-        map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
+        map("stroom.ui.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
         map("stroom.theme.background-color", "stroom.ui.theme.backgroundColor");
         map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
         map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
@@ -297,7 +376,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             final DSLContext context = JooqUtil.createContext(flywayContext.getConnection());
 
             // This line should only be un-commented for manual testing in development
-//            loadTestDataForManualTesting(create);
+//            loadTestDataForManualTesting(context);
 
             // Rename some property names
             MAPPINGS.stream()
@@ -312,13 +391,18 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                         optRec.ifPresent(rec -> {
                             // We can't validate the dest key as we don't know if the java model
                             // is applicable to this mig script.
-                            LOGGER.info("Renaming DB property {} to {}", mapping.getOldName(), mapping.getNewName());
-                            rec.setName(mapping.getNewName());
-                            String oldValue = rec.getVal();
+                            if (!mapping.newName.equals(mapping.oldName)) {
+                                LOGGER.info("Renaming DB property {} to {}",
+                                        mapping.getOldName(),
+                                        mapping.getNewName());
+                                rec.setName(mapping.getNewName());
+                            }
+                            final String oldValue = rec.getVal();
                             if (oldValue != null && !oldValue.isEmpty()) {
                                 String newValue = mapping.serialisationMappingFunc.apply(oldValue);
+
                                 if (!oldValue.equals(newValue)) {
-                                    LOGGER.info("  Changing value of DB property {} from [{}] to [{}]",
+                                    LOGGER.info("Changing value of DB property {} from [{}] to [{}]",
                                             mapping.getOldName(), oldValue, newValue);
                                     rec.setVal(newValue);
                                 }
@@ -326,7 +410,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                             rec.store();
                         });
                     });
-
 
             // we can't remove keys that are not in the model as there may be more mig scripts
             // after this one that do more migration.  The model is a shifting sand relative to this
@@ -352,7 +435,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         }
     }
 
-    private void loadTestDataForManualTesting(final DSLContext create) {
+    private void loadTestDataForManualTesting(final DSLContext dslContext) {
 
         LOGGER.warn("Loading test data - Not for use in prod");
         final Map<String, String> testDataMap = Map.of(
@@ -363,7 +446,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         );
 
         testDataMap.forEach((key, value) ->
-                create
+                dslContext
                         .insertInto(Config.CONFIG)
                         .columns(Config.CONFIG.NAME, Config.CONFIG.VAL)
                         .values(key, value)
@@ -433,6 +516,38 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             // We want the ISO format so create a new one with the underlying duration so we
             // lose the old string format
             return StroomDuration.of(stroomDuration.getDuration()).toString();
+        }
+    }
+
+    static String commaDelimitedStringToListOfString(final String oldValue) {
+        return delimitedStringToListOfString(",", oldValue);
+    }
+
+    static String delimitedStringToListOfString(final String delimiter, final String oldValue) {
+        if (oldValue == null) {
+            return null;
+        } else if (oldValue.isBlank()) {
+            return "";
+        } else {
+            // Our list serialisation is like '|A|B|C', i.e. prefixed with the delimiter in use
+            return delimiter + oldValue;
+        }
+    }
+
+    /**
+     * [docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)] => [|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)]
+     */
+    static String delimitedDocRefsToListOfDocRefs(final String oldValue) {
+        if (oldValue == null) {
+            return null;
+        } else if (oldValue.isBlank()) {
+            return "";
+        } else {
+            // Our List<DocRef> serialisation is like '|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)',
+            // i.e. prefixed with the outer delimiter then the inner delimiter
+            String newValue = oldValue.replaceAll("\\),docRef", ")|docRef");
+            newValue = "|," + newValue;
+            return newValue;
         }
     }
 }

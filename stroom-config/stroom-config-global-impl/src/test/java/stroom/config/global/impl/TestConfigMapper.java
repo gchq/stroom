@@ -6,6 +6,8 @@ import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
@@ -15,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.reflect.TypeToken;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -69,18 +73,23 @@ class TestConfigMapper {
 
     @Test
     void getDataTypeNames() {
-        TestConfig appConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        final TestConfig appConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(appConfig);
 
-        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
-        String txt = configProperties.stream()
+        final List<Tuple2<String, String>> rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
-                        LogUtil.message("{}, {}", configProperty.getName(), configProperty.getDataTypeName()))
-                .collect(Collectors.joining("\n"));
+                        Tuple.of(configProperty.getName().toString(), configProperty.getDataTypeName()))
+                .collect(Collectors.toList());
 
-        LOGGER.debug("Properties\n{}", txt);
+        final String asciiTable = AsciiTable.builder(rows)
+                .withColumn(Column.of("Property Path", Tuple2::_1))
+                .withColumn(Column.of("Data Type", Tuple2::_2))
+                .build();
+
+        LOGGER.debug("Properties\n{}", asciiTable);
     }
 
     @Test

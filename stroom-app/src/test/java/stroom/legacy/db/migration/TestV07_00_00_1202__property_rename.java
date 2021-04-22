@@ -57,6 +57,46 @@ class TestV07_00_00_1202__property_rename {
     }
 
     @Test
+    void testListConversion() {
+        doConversionTest(
+                V07_00_00_1202__property_rename::commaDelimitedStringToListOfString,
+                "one,two,three",
+                ",one,two,three");
+        doConversionTest(
+                V07_00_00_1202__property_rename::commaDelimitedStringToListOfString,
+                "one",
+                ",one");
+        doConversionTest(
+                V07_00_00_1202__property_rename::commaDelimitedStringToListOfString,
+                "",
+                "");
+        doConversionTest(
+                V07_00_00_1202__property_rename::commaDelimitedStringToListOfString,
+                null,
+                null);
+    }
+
+    @Test
+    void testDocRefConversion() {
+        doConversionTest(
+                V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
+                "docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)",
+                "|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)");
+        doConversionTest(
+                V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
+                "docRef(type1,uuid1,name1)",
+                "|,docRef(type1,uuid1,name1)");
+        doConversionTest(
+                V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
+                "",
+                "");
+        doConversionTest(
+                V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
+                null,
+                null);
+    }
+
+    @Test
     void test() {
         LOGGER.info(Duration.parse("P30D").toString());
     }
@@ -64,7 +104,7 @@ class TestV07_00_00_1202__property_rename {
     void doConversionTest(final Function<String, String> func, final String oldValue, final String expectedValue) {
         String newValue = func.apply(oldValue);
 
-        LOGGER.info("{} => {}", oldValue, newValue);
+        LOGGER.info("[{}] => [{}]", oldValue, newValue);
 
         Assertions.assertThat(newValue).isEqualTo(expectedValue);
     }
