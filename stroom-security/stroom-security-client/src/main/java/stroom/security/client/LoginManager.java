@@ -21,7 +21,8 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
-import stroom.security.shared.GwtStroomSessionResource;
+import stroom.security.shared.StroomSessionResource;
+import stroom.security.shared.UrlResponse;
 import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -29,15 +30,13 @@ import stroom.task.client.TaskStartEvent;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class LoginManager implements HasHandlers {
 
-    private static final GwtStroomSessionResource STROOM_SESSION_RESOURCE =
-            GWT.create(GwtStroomSessionResource.class);
+    private static final StroomSessionResource STROOM_SESSION_RESOURCE =
+            GWT.create(StroomSessionResource.class);
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final EventBus eventBus;
@@ -78,25 +77,25 @@ public class LoginManager implements HasHandlers {
     }
 
     private void logout() {
-        // Perform logout on the server
-        final Rest<Boolean> rest = restFactory.create();
+        // Tell the server we want to logout and the server will provide a logout URL.
+        final Rest<UrlResponse> rest = restFactory.create();
         rest
-                .onSuccess(response -> {
-                    // Refresh the page to restart the auth flow.
-                    String url = Window.Location.createUrlBuilder()
-                            .setParameter("prompt", "login")
-                            .buildString();
-
-                    String redirectUrl = URL.encode(url);
-                    Window.Location.replace(redirectUrl);
-                })
+                .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
                 .call(STROOM_SESSION_RESOURCE)
-                .gwtInvalidateStroomSession();
+                .logout(getLocation());
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
     }
+
+    private static native String getLocation() /*-{
+        return window.top.location.href;
+    }-*/;
+
+    private static native void setLocation(String uri) /*-{
+        window.top.location.href = uri;
+    }-*/;
 }

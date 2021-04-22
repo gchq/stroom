@@ -90,8 +90,15 @@ class OpenIdManager {
     }
 
     private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
-        Objects.requireNonNull(openIdConfig.getAuthEndpoint(),
+        final String endpoint = openIdConfig.getAuthEndpoint();
+        Objects.requireNonNull(endpoint,
                 "To make an authentication request the OpenId config 'authEndpoint' must not be null");
+        return createAuthUri(request, endpoint, postAuthRedirectUri);
+    }
+
+    private String createAuthUri(final HttpServletRequest request,
+                                 final String endpoint,
+                                 final String postAuthRedirectUri) {
         Objects.requireNonNull(openIdConfig.getClientId(),
                 "To make an authentication request the OpenId config 'clientId' must not be null");
 
@@ -100,7 +107,7 @@ class OpenIdManager {
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
-        UriBuilder authenticationRequest = UriBuilder.fromUri(openIdConfig.getAuthEndpoint())
+        UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
                 .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
                 .queryParam(OpenId.CLIENT_ID, openIdConfig.getClientId())
                 .queryParam(OpenId.REDIRECT_URI, postAuthRedirectUri)
@@ -307,9 +314,7 @@ class OpenIdManager {
                     "This may be due to Stroom being left open in a browser after Stroom was restarted.");
 
             // Provide identity from the session if we are allowing this to happen.
-            if (!jwtContextFactory.isTokenExpectedInRequest()) {
-                userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
-            }
+            userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
 
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.
@@ -352,14 +357,10 @@ class OpenIdManager {
         }
     }
 
-    /**
-     * We expect some configurations to always pass a token in the request so this flag tells us if the configuration is
-     * expected to do so.
-     *
-     * @return True if the context factory always expects a token in the request, i.e. it expects all requests to be pre
-     * authenticated.
-     */
-    public boolean isTokenExpectedInRequest() {
-        return jwtContextFactory.isTokenExpectedInRequest();
+    public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
+        final String endpoint = openIdConfig.getLogoutEndpoint();
+        Objects.requireNonNull(endpoint,
+                "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
+        return createAuthUri(request, endpoint, postAuthRedirectUri);
     }
 }

@@ -161,7 +161,7 @@ class SecurityFilter implements Filter {
                 if (userIdentity.isPresent()) {
                     continueAsUser(request, response, chain, userIdentity.get());
 
-                } else if (isApiRequest(servletPath) || openIdManager.isTokenExpectedInRequest()) {
+                } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
                     // or no login flow is possible/expected.
                     LOGGER.debug("API request is unauthorised.");

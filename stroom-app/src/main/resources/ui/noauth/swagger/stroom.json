@@ -2799,25 +2799,6 @@
         "tags" : [ "Filesystem Volumes" ]
       }
     },
-    "/gwtStroomSession/v1/invalidate" : {
-      "get" : {
-        "operationId" : "gwtInvalidateStroomSession",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Invalidate the current session",
-        "tags" : [ "Stroom Sessions" ]
-      }
-    },
     "/index/v2/shard/delete" : {
       "post" : {
         "operationId" : "deleteIndexShards",
@@ -6606,15 +6587,23 @@
         "tags" : [ "Solr Queries" ]
       }
     },
-    "/stroomSession/v1/invalidateStroomSession" : {
+    "/stroomSession/v1/logout" : {
       "get" : {
-        "operationId" : "invalidateStroomSession",
+        "operationId" : "gwtInvalidateStroomSession",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "redirect_uri",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "boolean"
+                  "$ref" : "#/components/schemas/UrlResponse"
                 }
               }
             },
@@ -14897,6 +14886,14 @@
             "type" : "string"
           },
           "users" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UrlResponse" : {
+        "type" : "object",
+        "properties" : {
+          "url" : {
             "type" : "string"
           }
         }

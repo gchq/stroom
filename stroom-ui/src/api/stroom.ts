@@ -3293,6 +3293,10 @@ export interface UrlConfig {
   users?: string;
 }
 
+export interface UrlResponse {
+  url?: string;
+}
+
 export interface User {
   /** @format int64 */
   createTimeMs?: number;
@@ -5400,24 +5404,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-  };
-  gwtStroomSession = {
-    /**
-     * No description
-     *
-     * @tags Stroom Sessions
-     * @name GwtInvalidateStroomSession
-     * @summary Invalidate the current session
-     * @request GET:/gwtStroomSession/v1/invalidate
-     * @secure
-     */
-    gwtInvalidateStroomSession: (params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/gwtStroomSession/v1/invalidate`,
-        method: "GET",
-        secure: true,
         ...params,
       }),
   };
@@ -7788,15 +7774,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Sessions
-     * @name InvalidateStroomSession
+     * @name GwtInvalidateStroomSession
      * @summary Invalidate the current session
-     * @request GET:/stroomSession/v1/invalidateStroomSession
+     * @request GET:/stroomSession/v1/logout
      * @secure
      */
-    invalidateStroomSession: (params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroomSession/v1/invalidateStroomSession`,
+    gwtInvalidateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, UrlResponse>({
+        path: `/stroomSession/v1/logout`,
         method: "GET",
+        query: query,
         secure: true,
         ...params,
       }),

@@ -5,6 +5,8 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
+import stroom.security.shared.StroomSessionResource;
+import stroom.security.shared.UrlResponse;
 import stroom.security.shared.ValidateSessionResponse;
 
 import org.slf4j.Logger;
@@ -26,22 +28,25 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     private final Provider<OpenIdManager> openIdManagerProvider;
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
+    private final OpenIdManager openIdManager;
 
     @Inject
     StroomSessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
                               final Provider<OpenIdManager> openIdManagerProvider,
                               final Provider<HttpServletRequest> httpServletRequestProvider,
-                              final Provider<AuthenticationEventLog> authenticationEventLogProvider) {
+                              final Provider<AuthenticationEventLog> authenticationEventLogProvider,
+                              final OpenIdManager openIdManager) {
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.openIdManagerProvider = openIdManagerProvider;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.authenticationEventLogProvider = authenticationEventLogProvider;
+        this.openIdManager = openIdManager;
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public ValidateSessionResponse validateSession(final HttpServletRequest request,
-                                                   final String postAuthRedirectUri) {
+    public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
+        final HttpServletRequest request = httpServletRequestProvider.get();
         final Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
         if (userIdentity.isPresent()) {
             return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
@@ -50,9 +55,9 @@ class StroomSessionResourceImpl implements StroomSessionResource {
         if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
             return new ValidateSessionResponse(true, "admin", null);
 
-        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
-            LOGGER.error("We are expecting requests that contain authenticated tokens");
-            return new ValidateSessionResponse(false, null, null);
+//        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
+//            LOGGER.error("We are expecting requests that contain authenticated tokens");
+//            return new ValidateSessionResponse(false, null, null);
 
         } else {
             // If the session doesn't have a user ref then attempt login.
@@ -88,19 +93,24 @@ class StroomSessionResourceImpl implements StroomSessionResource {
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public Boolean invalidateStroomSession() {
-        final HttpSession session = httpServletRequestProvider.get().getSession(false);
+    public UrlResponse logout(final String redirectUri) {
+        final String postAuthRedirectUri = OpenId.removeReservedParams(redirectUri);
+        final HttpServletRequest request = httpServletRequestProvider.get();
+
+        // Invalidate the Stroom session.
+        final HttpSession session = request.getSession(false);
         final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session
             session.invalidate();
         }
+        // Record the logoff event.
         userIdentity.ifPresent(ui -> {
             // Create an event for logout
             authenticationEventLogProvider.get().logoff(ui.getId());
         });
 
-        return true;
-
+        final String url = openIdManager.logout(request, postAuthRedirectUri);
+        return new UrlResponse(url);
     }
 }
