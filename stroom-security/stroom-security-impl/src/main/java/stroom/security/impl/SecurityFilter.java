@@ -50,9 +50,7 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 
 /**
- * <p>
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
- * </p>
  */
 @Singleton
 class SecurityFilter implements Filter {
