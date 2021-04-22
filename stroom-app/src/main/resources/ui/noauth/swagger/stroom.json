@@ -3859,7 +3859,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -3949,7 +3953,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4610,7 +4618,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4645,7 +4657,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4762,7 +4778,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4856,7 +4876,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4890,7 +4914,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -5109,7 +5137,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
