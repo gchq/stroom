@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2079** : Removed unused session resource code from React UI and backend. 
+* Issue **#2187** : Fixed issue editing a processing filter that has been changed.
+
+* Issue **#2079** : Removed unused session resource code from React UI and backend.
 
 * Issue **#2185** : Stroom now supports the use of an externally provided logout endpoint with the `logoutEndpoint` configuration property.
 
