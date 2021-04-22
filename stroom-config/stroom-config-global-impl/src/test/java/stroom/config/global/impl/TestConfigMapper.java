@@ -4,6 +4,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
@@ -11,6 +12,7 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.reflect.TypeToken;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
 import org.junit.jupiter.api.Assertions;
@@ -19,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -307,11 +311,21 @@ class TestConfigMapper {
                 "1MiB",
                 ByteSize::parse);
 
-        doUpdateValueTest(
+        doUpdateValueTestComplex(
                 "stroom.docRefProp",
                 TestConfig::getDocRefProp,
                 ",docRef(aaaaaa,bbbbbbb,ccccccc)",
-                str -> ConfigMapper.convertToObject(str, DocRef.class));
+                (prop, str) -> ConfigMapper.convertToObject(prop, str, DocRef.class));
+
+        final Type stateListType = new TypeToken<List<TestConfig.State>>() {
+        }.getType();
+
+        doUpdateValueTestComplex(
+                "stroom.stateListProp",
+                TestConfig::getStateListProp,
+                ",ON,OFF",
+                (prop, str) ->
+                        ConfigMapper.convertToObject(prop, str, stateListType));
 
         doUpdateValueTest(
                 "stroom.stateProp",
@@ -324,6 +338,17 @@ class TestConfigMapper {
                                final Function<TestConfig, T> getter,
                                final String newValueAsStr,
                                final Function<String, T> parseFunc) {
+        doUpdateValueTestComplex(
+                path,
+                getter,
+                newValueAsStr,
+                (prop, s) -> parseFunc.apply(s));
+    }
+
+    <T> void doUpdateValueTestComplex(final String path,
+                                      final Function<TestConfig, T> getter,
+                                      final String newValueAsStr,
+                                      final BiFunction<Prop, String, T> parseFunc) {
 
         LOGGER.info("Testing {}, with new value {}", path, newValueAsStr);
 
@@ -334,6 +359,9 @@ class TestConfigMapper {
         final PropertyPath fullPath = PropertyPath.fromPathString(path);
 
         final ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        final Prop prop = configMapper.getProp(fullPath)
+                .orElseThrow();
 
         boolean isValidPath = configMapper.validatePropertyPath(PropertyPath.fromPathString(path));
 
@@ -348,7 +376,7 @@ class TestConfigMapper {
         configProperty.setDatabaseOverrideValue(newValueAsStr);
         configMapper.decorateDbConfigProperty(configProperty);
 
-        final T newObj = parseFunc.apply(newValueAsStr);
+        final T newObj = parseFunc.apply(prop, newValueAsStr);
 
         LOGGER.info("{} - {} => {}", newObj.getClass().getSimpleName(), originalObj, newObj);
 
