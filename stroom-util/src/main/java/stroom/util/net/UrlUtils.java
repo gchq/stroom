@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.util.net;
 
 import java.net.URI;
 import java.net.URLDecoder;

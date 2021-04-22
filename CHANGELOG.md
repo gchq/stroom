@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2183** : Improve error message when property values cannot be de-serialised. Change property DB migration to add conversion of legacy property values that are now a collection type, e.g. List<String>.
 
+
+## [v7.0-beta.107] - 2021-04-22
+
+* Issue **#2187** : Fixed issue editing a processing filter that has been changed.
+
+* Issue **#2079** : Removed unused session resource code from React UI and backend.
+
+* Issue **#2185** : Stroom now supports the use of an externally provided logout endpoint with the `logoutEndpoint` configuration property.
+
 * Issue **#2188** : Changed all autologged REST methods to return a value (void is not compatible with autologger)
 
 * Issue **#2184** : It should now be possible to use the Cognito OpenId configuration endpoint with Stroom. You should no longer need to set the `jwtClaimsResolver` in the Stroom config as the standard resolver should work. However, you will need to set the new `tokenExpectedInRequest` property to `true` as Cognito delivers fresh tokens with every request.
@@ -3317,7 +3326,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.106...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.107...HEAD
+[v7.0-beta.107]: https://github.com/gchq/stroom/compare/v7.0-beta.106...v7.0-beta.107
 [v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
 [v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104

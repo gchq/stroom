@@ -110,9 +110,4 @@ class StandardJwtContextFactory implements JwtContextFactory {
                 .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();
     }
-
-    @Override
-    public boolean isTokenExpectedInRequest() {
-        return openIdConfig.isTokenExpectedInRequest();
-    }
 }

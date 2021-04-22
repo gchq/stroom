@@ -1,4 +1,4 @@
-package stroom.security.impl.session;
+package stroom.security.impl;
 
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;

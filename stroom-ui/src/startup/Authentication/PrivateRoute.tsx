@@ -15,14 +15,11 @@
  */
 import * as React from "react";
 import { Route, RouteProps } from "react-router-dom";
-import AuthenticationRequest from "./AuthenticationRequest";
-import useAuthenticationContext from "./useAuthenticationContext";
 import useUrlFactory from "../../lib/useUrlFactory";
 
 const PrivateRoute = ({ render, ...rest }: RouteProps) => {
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/login/v1");
-  const { idToken } = useAuthenticationContext();
 
   if (!(resource !== undefined)) {
     throw new Error(
@@ -32,21 +29,7 @@ const PrivateRoute = ({ render, ...rest }: RouteProps) => {
     );
   }
 
-  return (
-    <Route
-      {...rest}
-      render={(props) =>
-        !!idToken ? (
-          render && render({ ...props })
-        ) : (
-          <AuthenticationRequest
-            referrer={window.location.href}
-            loginUrl={resource}
-          />
-        )
-      }
-    />
-  );
+  return <Route {...rest} render={(props) => render && render({ ...props })} />;
 };
 
 export default PrivateRoute;
