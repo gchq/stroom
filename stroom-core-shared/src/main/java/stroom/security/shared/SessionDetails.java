@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.impl.session;
+package stroom.security.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

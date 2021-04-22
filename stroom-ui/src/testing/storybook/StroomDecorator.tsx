@@ -12,8 +12,6 @@ import testData from "../data";
 import { ThemeContextProvider } from "lib/useTheme/useTheme";
 import { withRouter, RouteComponentProps } from "react-router";
 import { CustomRouter } from "lib/useRouter";
-import { AuthorisationContextProvider } from "startup/Authorisation";
-import { AuthenticationContext } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
 
@@ -48,26 +46,13 @@ export default (storyFn: any) =>
   StoryRouter()(() => (
     <ErrorReportingContextProvider>
       <PromptDisplayBoundary>
-        <AuthenticationContext.Provider
-          value={{
-            idToken: "PollyWannaCracker",
-            setIdToken: () => {
-              console.error(
-                "Setting the idToken in storybook? This is most unexpected!",
-              );
-            },
-          }}
-        >
-          <AuthorisationContextProvider>
-            <ThemeContextProvider>
-              <DragDropRouted>
-                <DocumentTreeContextProvider>
-                  {storyFn()}
-                </DocumentTreeContextProvider>
-              </DragDropRouted>
-            </ThemeContextProvider>
-          </AuthorisationContextProvider>
-        </AuthenticationContext.Provider>
+        <ThemeContextProvider>
+          <DragDropRouted>
+            <DocumentTreeContextProvider>
+              {storyFn()}
+            </DocumentTreeContextProvider>
+          </DragDropRouted>
+        </ThemeContextProvider>
       </PromptDisplayBoundary>
     </ErrorReportingContextProvider>
   ));

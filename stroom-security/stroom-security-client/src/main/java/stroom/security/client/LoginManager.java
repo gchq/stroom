@@ -21,7 +21,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
-import stroom.security.shared.StroomSessionResource;
+import stroom.security.shared.SessionResource;
 import stroom.security.shared.UrlResponse;
 import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
@@ -35,8 +35,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class LoginManager implements HasHandlers {
 
-    private static final StroomSessionResource STROOM_SESSION_RESOURCE =
-            GWT.create(StroomSessionResource.class);
+    private static final SessionResource STROOM_SESSION_RESOURCE =
+            GWT.create(SessionResource.class);
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final EventBus eventBus;

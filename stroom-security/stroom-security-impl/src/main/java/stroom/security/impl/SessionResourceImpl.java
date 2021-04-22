@@ -3,16 +3,17 @@ package stroom.security.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.session.SessionListResponse;
-import stroom.security.impl.session.SessionListService;
-import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
-import stroom.util.net.UrlUtils;
+import stroom.security.shared.SessionListResponse;
+import stroom.security.shared.SessionResource;
+import stroom.security.shared.UrlResponse;
+import stroom.security.shared.ValidateSessionResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -24,65 +25,104 @@ public class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
 
-    private final Provider<AuthenticationEventLog> eventLog;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final Provider<OpenIdManager> openIdManagerProvider;
+    private final Provider<HttpServletRequest> httpServletRequestProvider;
+    private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
     private final Provider<SessionListService> sessionListService;
-    private final Provider<OpenIdManager> openIdManager;
 
     @Inject
-    public SessionResourceImpl(final Provider<AuthenticationEventLog> eventLog,
-                               final Provider<SessionListService> sessionListService,
-                               final Provider<OpenIdManager> openIdManager) {
-        this.eventLog = eventLog;
+    public SessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
+                               final Provider<OpenIdManager> openIdManagerProvider,
+                               final Provider<HttpServletRequest> httpServletRequestProvider,
+                               final Provider<AuthenticationEventLog> authenticationEventLogProvider,
+                               final Provider<SessionListService> sessionListService) {
+        this.authenticationConfigProvider = authenticationConfigProvider;
+        this.openIdManagerProvider = openIdManagerProvider;
+        this.httpServletRequestProvider = httpServletRequestProvider;
+        this.authenticationEventLogProvider = authenticationEventLogProvider;
         this.sessionListService = sessionListService;
-        this.openIdManager = openIdManager;
+    }
+
+    // For testing.
+    SessionResourceImpl(final Provider<SessionListService> sessionListService) {
+        this.authenticationConfigProvider = null;
+        this.openIdManagerProvider = null;
+        this.httpServletRequestProvider = null;
+        this.authenticationEventLogProvider = null;
+        this.sessionListService = sessionListService;
     }
 
     @Override
-    public SessionLoginResponse login(final HttpServletRequest request, final String referrer) {
-        String redirectUri = null;
-        try {
-            LOGGER.info("Logging in session for '{}'", referrer);
+    @AutoLogged(OperationType.UNLOGGED)
+    public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
+        final HttpServletRequest request = httpServletRequestProvider.get();
+        final Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
+        if (userIdentity.isPresent()) {
+            return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
+        }
 
-            final Optional<UserIdentity> userIdentity = openIdManager.get().loginWithRequestToken(request);
-            if (userIdentity.isEmpty()) {
-                // If the session doesn't have a user ref then attempt login.
-                final Map<String, String> paramMap = UrlUtils.createParamMap(referrer);
-                final String code = paramMap.get(OpenId.CODE);
-                final String stateId = paramMap.get(OpenId.STATE);
-                final String postAuthRedirectUri = OpenId.removeReservedParams(referrer);
-                redirectUri = openIdManager.get().redirect(request, code, stateId, postAuthRedirectUri);
+        if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
+            return new ValidateSessionResponse(true, "admin", null);
+
+//        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
+//            LOGGER.error("We are expecting requests that contain authenticated tokens");
+//            return new ValidateSessionResponse(false, null, null);
+
+        } else {
+            // If the session doesn't have a user ref then attempt login.
+            try {
+                LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
+
+                // If we have completed the front channel flow then we will have a state id.
+                final String code = getParam(postAuthRedirectUri, OpenId.CODE);
+                final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
+                final String redirectUri = openIdManagerProvider.get()
+                        .redirect(request, code, stateId, postAuthRedirectUri);
+                return new ValidateSessionResponse(false, null, redirectUri);
+
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw e;
             }
-
-            if (redirectUri == null) {
-                redirectUri = OpenId.removeReservedParams(referrer);
-            }
-
-            return new SessionLoginResponse(userIdentity.isPresent(), redirectUri);
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw e;
         }
     }
 
+    private String getParam(final String url, final String param) {
+        int start = url.indexOf(param + "=");
+        if (start != -1) {
+            start += param.length() + 1;
+            final int end = url.indexOf("&", start);
+            if (end != -1) {
+                return URLDecoder.decode(url.substring(start, end), StandardCharsets.UTF_8);
+            }
+            return URLDecoder.decode(url.substring(start), StandardCharsets.UTF_8);
+        }
+        return null;
+    }
+
     @Override
-    public Boolean logout(final String authSessionId) {
-        LOGGER.info("Logging out session {}", authSessionId);
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public UrlResponse logout(final String redirectUri) {
+        final String postAuthRedirectUri = OpenId.removeReservedParams(redirectUri);
+        final HttpServletRequest request = httpServletRequestProvider.get();
 
-        // TODO : We need to lookup the auth session in our user sessions
-
-        final HttpSession session = SessionMap.getSession(authSessionId);
-        final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
+        // Get the session.
+        final HttpSession session = request.getSession(false);
         if (session != null) {
-            // Invalidate the current user session
-            session.invalidate();
-        }
-        userIdentity.ifPresent(ui -> {
-            // Create an event for logout
-            eventLog.get().logoff(ui.getId());
-        });
+            final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
+            // Record the logoff event.
+            userIdentity.ifPresent(ui -> {
+                // Create an event for logout
+                authenticationEventLogProvider.get().logoff(ui.getId());
+            });
 
-        return Boolean.TRUE;
+            // Remove the user identity from the current session.
+            UserIdentitySessionUtil.set(session, null);
+        }
+
+        final String url = openIdManagerProvider.get().logout(request, postAuthRedirectUri);
+        return new UrlResponse(url);
     }
 
     @Override
@@ -95,5 +135,4 @@ public class SessionResourceImpl implements SessionResource {
             return sessionListService.get().listSessions();
         }
     }
-
 }

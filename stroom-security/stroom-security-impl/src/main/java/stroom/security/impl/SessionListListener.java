@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.security.impl.session;
+package stroom.security.impl;
 
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.SessionResource;
+import stroom.security.shared.SessionDetails;
+import stroom.security.shared.SessionListResponse;
+import stroom.security.shared.SessionResource;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;

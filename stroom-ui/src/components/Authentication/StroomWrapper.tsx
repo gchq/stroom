@@ -41,7 +41,7 @@ const StroomWrapper: FunctionComponent = () => {
     if (!userId) {
       exec(
         (api) =>
-          api.stroomSession.validateStroomSession({
+          api.session.validateStroomSession({
             redirect_uri: window.location.href,
           }),
         (response: ValidateSessionResponse) => {

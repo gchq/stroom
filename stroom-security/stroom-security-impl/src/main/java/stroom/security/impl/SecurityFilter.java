@@ -21,7 +21,6 @@ import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;

@@ -5563,12 +5563,12 @@
         "tags" : [ "Sessions" ]
       }
     },
-    "/session/v1/logout/{sessionId}" : {
+    "/session/v1/logout" : {
       "get" : {
-        "operationId" : "logoutSession",
+        "operationId" : "stroomLogout",
         "parameters" : [ {
-          "in" : "path",
-          "name" : "sessionId",
+          "in" : "query",
+          "name" : "redirect_uri",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -5579,23 +5579,24 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "boolean"
+                  "$ref" : "#/components/schemas/UrlResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Logs the specified session out of Stroom",
+        "summary" : "Logout of Stroom session",
         "tags" : [ "Sessions" ]
       }
     },
-    "/session/v1/noauth/login" : {
+    "/session/v1/noauth/validateSession" : {
       "get" : {
-        "operationId" : "loginSession",
+        "operationId" : "validateStroomSession",
         "parameters" : [ {
           "in" : "query",
           "name" : "redirect_uri",
+          "required" : true,
           "schema" : {
             "type" : "string"
           }
@@ -5605,14 +5606,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SessionLoginResponse"
+                  "$ref" : "#/components/schemas/ValidateSessionResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Checks if the current session is authenticated and redirects to an auth flow if it is not",
+        "summary" : "Validate the current session, return a redirect Uri if invalid.",
         "tags" : [ "Sessions" ]
       }
     },
@@ -6585,60 +6586,6 @@
         },
         "summary" : "Submit a search request",
         "tags" : [ "Solr Queries" ]
-      }
-    },
-    "/stroomSession/v1/logout" : {
-      "get" : {
-        "operationId" : "stroomLogout",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "redirect_uri",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UrlResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Logout of Stroom",
-        "tags" : [ "Stroom Sessions" ]
-      }
-    },
-    "/stroomSession/v1/noauth/validateSession" : {
-      "get" : {
-        "operationId" : "validateStroomSession",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "redirect_uri",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ValidateSessionResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Validate the current session, return a redirect Uri if invalid.",
-        "tags" : [ "Stroom Sessions" ]
       }
     },
     "/suggest/v1" : {
@@ -13390,17 +13337,6 @@
             "items" : {
               "$ref" : "#/components/schemas/SessionDetails"
             }
-          }
-        }
-      },
-      "SessionLoginResponse" : {
-        "type" : "object",
-        "properties" : {
-          "authenticated" : {
-            "type" : "boolean"
-          },
-          "redirectUri" : {
-            "type" : "string"
           }
         }
       },

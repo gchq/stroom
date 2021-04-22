@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.shared.User;
