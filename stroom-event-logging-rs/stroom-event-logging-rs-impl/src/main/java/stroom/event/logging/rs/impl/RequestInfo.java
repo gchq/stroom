@@ -30,6 +30,7 @@ import stroom.util.shared.HasIntegerId;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -43,24 +44,30 @@ class RequestInfo {
     private final ContainerResourceInfo containerResourceInfo;
     private final Object requestObj;
     private final Object beforeCallObj;
+    private Object afterCallObj;
+    private boolean afterCallObjFound = false;
 
     public RequestInfo(final SecurityContext securityContext, final ContainerResourceInfo containerResourceInfo) {
         this.containerResourceInfo = containerResourceInfo;
         this.requestObj = findRequestObj();
         this.beforeCallObj = securityContext.asProcessingUserResult(
-                () -> findBeforeCallObj(containerResourceInfo.getResource(), requestObj));
+                () -> findBeforeOrAfterCallObj(containerResourceInfo.getResource(), requestObj));
+    }
+
+    public static boolean objectIsLoggable(Object obj) {
+        return obj != null  && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
     }
 
     public RequestInfo(final SecurityContext securityContext,
                        final ContainerResourceInfo containerResourceInfo,
                        Object requestObj) {
         this.containerResourceInfo = containerResourceInfo;
-        if (requestObj == null) {
+        if (!objectIsLoggable(requestObj)) {
             requestObj = findRequestObj();
         }
         this.requestObj = requestObj;
         this.beforeCallObj = securityContext.asProcessingUserResult(
-                () -> findBeforeCallObj(containerResourceInfo.getResource(), this.requestObj));
+                () -> findBeforeOrAfterCallObj(containerResourceInfo.getResource(), this.requestObj));
     }
 
     public Object getRequestObj() {
@@ -71,11 +78,21 @@ class RequestInfo {
         return beforeCallObj;
     }
 
+    public synchronized Object getAfterCallObj(SecurityContext securityContext) {
+        if (afterCallObjFound){
+            return afterCallObj;
+        }
+        afterCallObj = securityContext.asProcessingUserResult(
+                () -> findBeforeOrAfterCallObj(containerResourceInfo.getResource(), this.requestObj));
+        afterCallObjFound = true;
+        return afterCallObj;
+    }
+
     public ContainerResourceInfo getContainerResourceInfo() {
         return containerResourceInfo;
     }
 
-    private Object findBeforeCallObj(Object resource, Object template) {
+    private Object findBeforeOrAfterCallObj(Object resource, Object template) {
         if (template == null || resource == null) {
             return null;
         }

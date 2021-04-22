@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
+
 * Issue **#2188** : Changed all autologged REST methods to return a value (void is not compatible with autologger)
 
 * Issue **#2184** : It should now be possible to use the Cognito OpenId configuration endpoint with Stroom. You should no longer need to set the `jwtClaimsResolver` in the Stroom config as the standard resolver should work. However, you will need to set the new `tokenExpectedInRequest` property to `true` as Cognito delivers fresh tokens with every request.

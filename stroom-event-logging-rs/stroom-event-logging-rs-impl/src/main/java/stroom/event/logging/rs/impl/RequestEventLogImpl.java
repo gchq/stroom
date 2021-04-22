@@ -84,7 +84,17 @@ class RequestEventLogImpl implements RequestEventLog {
                 documentEventLog.copy(requestEntity, typeId, descriptionVerb, error);
                 break;
             case UPDATE:
-                documentEventLog.update(requestInfo.getBeforeCallObj(), responseEntity, typeId, descriptionVerb, error);
+                if (!RequestInfo.objectIsLoggable(responseEntity)) {
+                    //A success status or similar is returned, we need to find the actual entity being updated.
+                    documentEventLog.update(requestInfo.getBeforeCallObj(),
+                            requestInfo.getAfterCallObj(securityContext) , typeId, descriptionVerb, error);
+                } else {
+                    documentEventLog.update(requestInfo.getBeforeCallObj(),
+                            responseEntity,
+                            typeId,
+                            descriptionVerb,
+                            error);
+                }
                 break;
             case SEARCH:
                 logSearch(decoratorClass, typeId, requestEntity, responseEntity, descriptionVerb, error);
