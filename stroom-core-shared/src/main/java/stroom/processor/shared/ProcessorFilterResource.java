@@ -85,19 +85,19 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @Operation(
             summary = "Deletes a filter",
             operationId = "deleteProcessorFilter")
-    void delete(@PathParam("id") Integer id);
+    boolean delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/priority")
     @Operation(
             summary = "Sets the priority for a filter",
             operationId = "setProcessorFilterPriority")
-    void setPriority(@PathParam("id") Integer id, Integer priority);
+    boolean setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
     @Path("/{id}/enabled")
     @Operation(
             summary = "Sets the enabled/disabled state for a filter",
             operationId = "setProcessorFilterEnabled")
-    void setEnabled(@PathParam("id") Integer id, Boolean enabled);
+    boolean setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

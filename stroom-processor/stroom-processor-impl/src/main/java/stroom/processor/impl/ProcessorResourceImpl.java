@@ -37,12 +37,14 @@ class ProcessorResourceImpl implements ProcessorResource {
     }
 
     @Override
-    public void delete(final Integer id) {
+    public boolean delete(final Integer id) {
         processorServiceProvider.get().delete(id);
+        return true;
     }
 
     @Override
-    public void setEnabled(final Integer id, final Boolean enabled) {
+    public boolean setEnabled(final Integer id, final Boolean enabled) {
         processorServiceProvider.get().setEnabled(id, enabled);
+        return true;
     }
 }
