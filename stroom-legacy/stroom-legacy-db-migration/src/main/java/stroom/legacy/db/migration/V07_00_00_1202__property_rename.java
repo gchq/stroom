@@ -435,14 +435,37 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         }
     }
 
+    /**
+     * If this is called before the mig happens you can seed the db with test data to manually test migrations
+     */
     private void loadTestDataForManualTesting(final DSLContext dslContext) {
 
         LOGGER.warn("Loading test data - Not for use in prod");
         final Map<String, String> testDataMap = Map.of(
 
-                "stroom.aboutHTML", "myHtml",
-                "stroom.advertisedUrl", "myUrl",
-                "stroom.unknownProp", "some value"
+                "stroom.aboutHTML",
+                "myHtml",
+
+                "stroom.advertisedUrl",
+                "myUrl",
+
+                "stroom.unknownProp",
+                "some value",
+
+                "stroom.statistics.internal.cpu",
+                "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)",
+
+                "stroom.statistics.internal.memory",
+                "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)",
+
+                "stroom.annotation.standardComments",
+                "This is comment one,This is comment two, This is comment three",
+
+                "stroom.annotation.statusValues",
+                "New,Assigned,Closed,Bingo,Bongo",
+
+                "stroom.statistics.sql.maxProcessingAge",
+                "100d"
         );
 
         testDataMap.forEach((key, value) ->
@@ -535,7 +558,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
     }
 
     /**
-     * [docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)] => [|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)]
+     * [docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)] => [|,docRef(type1,uuid1,name1)|,docRef(type2,uuid2,name2)]
      */
     static String delimitedDocRefsToListOfDocRefs(final String oldValue) {
         if (oldValue == null) {
@@ -544,8 +567,8 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             return "";
         } else {
             // Our List<DocRef> serialisation is like '|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)',
-            // i.e. prefixed with the outer delimiter then the inner delimiter
-            String newValue = oldValue.replaceAll("\\),docRef", ")|docRef");
+            // i.e. prefixed with the outer delimiter then each docref is prefixed with the inner delimiter
+            String newValue = oldValue.replace("),docRef", ")|,docRef");
             newValue = "|," + newValue;
             return newValue;
         }

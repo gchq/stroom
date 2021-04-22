@@ -81,7 +81,7 @@ class TestV07_00_00_1202__property_rename {
         doConversionTest(
                 V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
                 "docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)",
-                "|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)");
+                "|,docRef(type1,uuid1,name1)|,docRef(type2,uuid2,name2)");
         doConversionTest(
                 V07_00_00_1202__property_rename::delimitedDocRefsToListOfDocRefs,
                 "docRef(type1,uuid1,name1)",
