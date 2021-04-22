@@ -241,7 +241,7 @@ public class ConfigMapper {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
-            return convertToObject(valueAsString, genericType);
+            return convertToObject(prop, valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
         }
@@ -272,7 +272,9 @@ public class ConfigMapper {
                             // Now set the new effective value on our guice bound appConfig instance
                             final Type genericType = prop.getValueType();
                             final Object typedValue = convertToObject(
-                                    globalProp.getEffectiveValue().orElse(null), genericType);
+                                    prop,
+                                    globalProp.getEffectiveValue().orElse(null),
+                                    genericType);
                             prop.setValueOnConfigObject(typedValue);
                         } else {
                             throw new RuntimeException(LogUtil.message(
@@ -315,7 +317,9 @@ public class ConfigMapper {
                 // guice bound appConfig instance.
                 final Type genericType = prop.getValueType();
                 final Object typedValue = convertToObject(
-                        globalConfigProperty.getEffectiveValue().orElse(null), genericType);
+                        prop,
+                        globalConfigProperty.getEffectiveValue().orElse(null),
+                        genericType);
                 prop.setValueOnConfigObject(typedValue);
 
                 return globalConfigProperty;
@@ -560,7 +564,8 @@ public class ConfigMapper {
             final BiFunction<Object, List<String>, String> conversionFunc) {
 
         List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
-        return object -> conversionFunc.apply(object, availableDelimiters);
+        return object ->
+                conversionFunc.apply(object, availableDelimiters);
     }
 
     static void validateDelimiter(final String serialisedForm,
@@ -626,11 +631,13 @@ public class ConfigMapper {
     }
 
     // pkg private for testing
-    static Object convertToObject(final String value, final Type genericType) {
+    static Object convertToObject(
+            final Prop prop,
+            final String value,
+            final Type genericType) {
         if (value == null) {
             return null;
         }
-
         Class<?> type = getDataType(genericType);
 
         try {
@@ -655,12 +662,12 @@ public class ConfigMapper {
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);
-                return stringToList(value, itemType);
+                return stringToList(prop, value, itemType);
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
                 final Class<?> keyType = getGenericsParam(genericType, 0);
                 final Class<?> valueType = getGenericsParam(genericType, 1);
-                return stringToMap(value, keyType, valueType);
+                return stringToMap(prop, value, keyType, valueType);
             } else if (type.equals(DocRef.class)) {
                 return stringToDocRef(value);
             } else if (Enum.class.isAssignableFrom(type)) {
@@ -675,12 +682,18 @@ public class ConfigMapper {
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
             // original which is not very user friendly. Enable debug to see the stack
+            final String propName = (prop.getParentObject() == null
+                    ? "null"
+                    : prop.getParentObject().getClass().getSimpleName())
+                    + "."
+                    + prop.getName();
+
             LOGGER.debug(() -> LogUtil.message(
-                    "Unable to convert value [{}] to type {} due to: {}",
-                    value, genericType, e.getMessage()), e);
+                    "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
+                    value, propName, e.getMessage()), e);
             throw new ConfigPropertyValidationException(LogUtil.message(
-                    "Unable to convert value [{}] to type {} due to: {}",
-                    value, getDataTypeName(genericType), e.getMessage()), e);
+                    "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
+                    value, propName, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
@@ -786,8 +799,10 @@ public class ConfigMapper {
         return enumInstance.name();
     }
 
-    private static <T> List<T> stringToList(final String serialisedForm,
-                                            final Class<T> type) {
+    private static <T> List<T> stringToList(
+            final Prop prop,
+            final String serialisedForm,
+            final Class<T> type) {
         if (serialisedForm == null || serialisedForm.isEmpty()) {
             return Collections.emptyList();
         } else {
@@ -807,7 +822,7 @@ public class ConfigMapper {
                                 .on(delimiter)
                                 .split(delimitedValue)
                                 .spliterator(), false)
-                        .map(str -> convertToObject(str, type))
+                        .map(str -> convertToObject(prop, str, type))
                         .map(type::cast)
                         .collect(Collectors.toList());
             } catch (Exception e) {
@@ -818,6 +833,7 @@ public class ConfigMapper {
     }
 
     private static <K, V> Map<K, V> stringToMap(
+            final Prop prop,
             final String serialisedForm,
             final Class<K> keyType,
             final Class<V> valueType) {
@@ -855,9 +871,9 @@ public class ConfigMapper {
                                 ? null
                                 : parts.get(1);
 
-                        final K key = keyType.cast(convertToObject(keyStr, keyType));
+                        final K key = keyType.cast(convertToObject(prop, keyStr, keyType));
                         final V value = valueStr != null
-                                ? valueType.cast(convertToObject(valueStr, valueType))
+                                ? valueType.cast(convertToObject(prop, valueStr, valueType))
                                 : null;
 
                         return Map.entry(key, value);

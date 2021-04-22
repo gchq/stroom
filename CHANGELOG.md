@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2183** : Improve error message when property values cannot be de-serialised. Change property DB migration to add conversion of legacy property values that are now a collection type, e.g. List<String>.
+
 
 ## [v7.0-beta.107] - 2021-04-22
 
