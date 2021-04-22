@@ -43,7 +43,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
     @AutoLogged(OperationType.DELETE)
     @Override
-    public void purge(final String purgeAge) {
+    public boolean purge(final String purgeAge) {
         StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
@@ -54,8 +54,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         try {
             referenceDataServiceProvider.get()
                     .purge(purgeAgeDuration);
+            return true;
         } catch (Exception e) {
             LOGGER.error("Failed to purgeAge " + purgeAge, e);
+            throw e;
         }
     }
 }

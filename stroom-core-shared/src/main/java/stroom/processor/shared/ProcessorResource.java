@@ -43,13 +43,13 @@ public interface ProcessorResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Deletes a processor",
             operationId = "deleteProcessor")
-    void delete(@PathParam("id") Integer id);
+    boolean delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/enabled")
     @Operation(
             summary = "Sets the enabled/disabled state for a processor",
             operationId = "setProcessorEnabled")
-    void setEnabled(@PathParam("id") Integer id,
+    boolean setEnabled(@PathParam("id") Integer id,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
 }

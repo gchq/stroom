@@ -208,13 +208,15 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    public void setPriority(final String nodeName, final Integer priority) {
+    public boolean setPriority(final String nodeName, final Integer priority) {
         modifyNode(nodeName, node -> node.setPriority(priority));
+        return true;
     }
 
     @Override
-    public void setEnabled(final String nodeName, final Boolean enabled) {
+    public boolean setEnabled(final String nodeName, final Boolean enabled) {
         modifyNode(nodeName, node -> node.setEnabled(enabled));
+        return true;
     }
 
     private void modifyNode(final String nodeName,
