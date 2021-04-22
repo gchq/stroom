@@ -4096,24 +4096,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Logout
-     * @summary Log a user out of their session
-     * @request GET:/authentication/v1/logout
-     * @secure
-     */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/authentication/v1/logout`,
-        method: "GET",
-        query: query,
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authentication
      * @name NeedsPasswordChange
      * @summary Check if a user's password needs changing.
      * @request GET:/authentication/v1/needsPasswordChange
@@ -4216,6 +4198,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authentication
+     * @name Logout
+     * @summary Log a user out of their session
+     * @request GET:/authentication/v1/noauth/logout
+     * @secure
+     */
+    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/authentication/v1/noauth/logout`,
+        method: "GET",
+        query: query,
+        secure: true,
         ...params,
       }),
 
@@ -7774,12 +7774,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom Sessions
-     * @name GwtInvalidateStroomSession
-     * @summary Invalidate the current session
+     * @name StroomLogout
+     * @summary Logout of Stroom
      * @request GET:/stroomSession/v1/logout
      * @secure
      */
-    gwtInvalidateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    stroomLogout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
       this.request<any, UrlResponse>({
         path: `/stroomSession/v1/logout`,
         method: "GET",

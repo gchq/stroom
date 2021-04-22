@@ -7,6 +7,7 @@ import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
+import stroom.util.net.UrlUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

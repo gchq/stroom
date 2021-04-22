@@ -495,25 +495,6 @@ paths:
       summary: Unlinks an annotation from an event
       tags:
       - Annotations
-  /authentication/v1/logout:
-    get:
-      operationId: logout
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Log a user out of their session
-      tags:
-      - Authentication
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -616,6 +597,25 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
           description: default response
       summary: Handle a login request made using username and password credentials.
+      tags:
+      - Authentication
+  /authentication/v1/noauth/logout:
+    get:
+      operationId: logout
+      parameters:
+      - in: query
+        name: redirect_uri
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Log a user out of their session
       tags:
       - Authentication
   /authentication/v1/noauth/reset/{email}:
@@ -4517,7 +4517,7 @@ paths:
       - Solr Queries
   /stroomSession/v1/logout:
     get:
-      operationId: gwtInvalidateStroomSession
+      operationId: stroomLogout
       parameters:
       - in: query
         name: redirect_uri
@@ -4531,7 +4531,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UrlResponse'
           description: default response
-      summary: Invalidate the current session
+      summary: Logout of Stroom
       tags:
       - Stroom Sessions
   /stroomSession/v1/noauth/validateSession:

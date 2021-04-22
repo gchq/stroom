@@ -719,33 +719,6 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/authentication/v1/logout" : {
-      "get" : {
-        "operationId" : "logout",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "redirect_uri",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Log a user out of their session",
-        "tags" : [ "Authentication" ]
-      }
-    },
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "operationId" : "needsPasswordChange",
@@ -897,6 +870,33 @@
           }
         },
         "summary" : "Handle a login request made using username and password credentials.",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/authentication/v1/noauth/logout" : {
+      "get" : {
+        "operationId" : "logout",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "redirect_uri",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Log a user out of their session",
         "tags" : [ "Authentication" ]
       }
     },
@@ -6589,7 +6589,7 @@
     },
     "/stroomSession/v1/logout" : {
       "get" : {
-        "operationId" : "gwtInvalidateStroomSession",
+        "operationId" : "stroomLogout",
         "parameters" : [ {
           "in" : "query",
           "name" : "redirect_uri",
@@ -6610,7 +6610,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Invalidate the current session",
+        "summary" : "Logout of Stroom",
         "tags" : [ "Stroom Sessions" ]
       }
     },

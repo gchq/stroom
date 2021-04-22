@@ -10,6 +10,7 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.UrlUtils;
 import stroom.util.servlet.UserAgentSessionUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -93,12 +94,13 @@ class OpenIdManager {
         final String endpoint = openIdConfig.getAuthEndpoint();
         Objects.requireNonNull(endpoint,
                 "To make an authentication request the OpenId config 'authEndpoint' must not be null");
-        return createAuthUri(request, endpoint, postAuthRedirectUri);
+        return createAuthUri(request, endpoint, postAuthRedirectUri, false);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
-                                 final String postAuthRedirectUri) {
+                                 final String postAuthRedirectUri,
+                                 final boolean prompt) {
         Objects.requireNonNull(openIdConfig.getClientId(),
                 "To make an authentication request the OpenId config 'clientId' must not be null");
 
@@ -119,9 +121,11 @@ class OpenIdManager {
         // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
-        final String prompt = UrlUtils.getLastParam(request, OpenId.PROMPT);
-        if (!Strings.isNullOrEmpty(prompt)) {
-            authenticationRequest.queryParam(OpenId.PROMPT, prompt);
+        final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
+        if (!Strings.isNullOrEmpty(promptParam)) {
+            authenticationRequest.queryParam(OpenId.PROMPT, promptParam);
+        } else if (prompt) {
+            authenticationRequest.queryParam(OpenId.PROMPT, "login");
         }
 
         final String authenticationRequestUrl = authenticationRequest.build().toString();
@@ -361,6 +365,6 @@ class OpenIdManager {
         final String endpoint = openIdConfig.getLogoutEndpoint();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
-        return createAuthUri(request, endpoint, postAuthRedirectUri);
+        return createAuthUri(request, endpoint, postAuthRedirectUri, true);
     }
 }

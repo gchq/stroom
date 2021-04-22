@@ -27,6 +27,7 @@ import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
 
 import org.slf4j.Logger;

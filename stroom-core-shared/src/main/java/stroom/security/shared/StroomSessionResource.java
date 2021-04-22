@@ -31,7 +31,7 @@ public interface StroomSessionResource extends RestResource, DirectRestService {
     @GET
     @Path("logout")
     @Operation(
-            summary = "Invalidate the current session",
-            operationId = "gwtInvalidateStroomSession")
+            summary = "Logout of Stroom",
+            operationId = "stroomLogout")
     UrlResponse logout(@QueryParam("redirect_uri") @NotNull String redirectUri);
 }
