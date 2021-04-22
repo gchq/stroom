@@ -87,7 +87,7 @@ class RequestEventLogImpl implements RequestEventLog {
                 if (!RequestInfo.objectIsLoggable(responseEntity)) {
                     //A success status or similar is returned, we need to find the actual entity being updated.
                     documentEventLog.update(requestInfo.getBeforeCallObj(),
-                            requestInfo.getAfterCallObj(securityContext) , typeId, descriptionVerb, error);
+                            requestInfo.getAfterCallObj(securityContext), typeId, descriptionVerb, error);
                 } else {
                     documentEventLog.update(requestInfo.getBeforeCallObj(),
                             responseEntity,

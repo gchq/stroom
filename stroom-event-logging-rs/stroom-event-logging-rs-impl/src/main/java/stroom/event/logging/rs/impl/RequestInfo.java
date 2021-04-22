@@ -79,7 +79,7 @@ class RequestInfo {
     }
 
     public synchronized Object getAfterCallObj(SecurityContext securityContext) {
-        if (afterCallObjFound){
+        if (afterCallObjFound) {
             return afterCallObj;
         }
         afterCallObj = securityContext.asProcessingUserResult(
