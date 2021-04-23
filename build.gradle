@@ -3,7 +3,7 @@ import de.undercouch.gradle.tasks.download.Download
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
@@ -67,12 +67,12 @@ ext.versions = [
 
     //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
-    eventLogging: 'v3.1.2_schema-v3.1.2',
+    eventLogging: '3.3.0_schema-v3.3.1',
     hadoopCommonShaded: 'v2.6.4-5',
     hadoopHdfsShaded: 'v2.6.4-4',
     stroomAuth: 'v6.0.25-1', // Needed for the correct version of the client API
-    stroomExpression: 'v1.5.10',
-    stroomQuery: 'v2.2.21', // Same version for both stroom-query-api and stroom-query-common
+    stroomExpression: '1.5.15',
+    stroomQuery: '2.2.24', // Same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
     stroomProxyApi: 'v5.1.2',
 
@@ -100,11 +100,11 @@ ext.versions = [
 //dependency strings for use in sub projects
 ext.libs = [
     //------Stroom-libs---------------
-    eventLogging: "event-logging:event-logging:$versions.eventLogging",
-    stroomQueryApi: "stroom:stroom-query-api:$versions.stroomQuery",
-    stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
-    stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
-    stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
+    eventLogging: "uk.gov.gchq.eventlogging:event-logging:$versions.eventLogging",
+    stroomQueryApi: "uk.gov.gchq.stroom.query:stroom-query-api:$versions.stroomQuery",
+    stroomQueryAudit: "uk.gov.gchq.stroom.query:stroom-query-audit:$versions.stroomQuery",
+    stroomQueryCommon: "uk.gov.gchq.stroom.query:stroom-query-common:$versions.stroomQuery",
+    stroomExpression: "uk.gov.gchq.stroom.expression:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
     stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
     stroomProxyRemoteApi: "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
@@ -249,7 +249,6 @@ def projectsToBePublished = subprojects.findAll { project ->
         ':stroom-entity-shared',
         ':stroom-util',
         ':stroom-util-shared',
-        'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -333,8 +332,8 @@ subprojects {
 
     repositories {
         mavenLocal()
-        jcenter()
-        maven { url "https://dl.bintray.com/stroom/event-logging" }
+        mavenCentral()
+        //maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
         maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
