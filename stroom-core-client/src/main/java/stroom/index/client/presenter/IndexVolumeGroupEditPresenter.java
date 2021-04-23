@@ -28,7 +28,6 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.node.client.NodeCache;
-import stroom.node.client.view.WrapperView;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
@@ -45,11 +44,13 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView> {
+public class IndexVolumeGroupEditPresenter
+        extends MyPresenterWidget<IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView> {
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
@@ -70,7 +71,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
 
     @Inject
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
-                                         final WrapperView view,
+                                         final IndexVolumeGroupEditView view,
                                          final IndexVolumeStatusListPresenter volumeStatusListPresenter,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
@@ -87,7 +88,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
         rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
         rescanButton.setTitle("Rescan Volumes");
 
-        view.setView(volumeStatusListPresenter.getView());
+        view.setListView(volumeStatusListPresenter.getView());
     }
 
     @Override
@@ -176,6 +177,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
             opening = true;
 
             this.volumeGroup = volumeGroup;
+            getView().setName(volumeGroup.getName());
 
             final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.GROUP_ID,
                     volumeGroup.getId());
@@ -186,6 +188,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
+                            volumeGroup.setName(getView().getName());
                             try {
                                 final Rest<IndexVolumeGroup> rest = restFactory.create();
                                 rest
@@ -205,7 +208,8 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
                     }
                 };
 
-                final PopupSize popupSize = new PopupSize(1000, 600, true);
+                final PopupSize popupSize =
+                        new PopupSize(1000, 600, 350, 250, true);
                 ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
                         popupUiHandlers);
             });
@@ -214,5 +218,15 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
 
     void hide() {
         HidePopupEvent.fire(this, this, false, true);
+    }
+
+
+    public interface IndexVolumeGroupEditView extends View {
+
+        String getName();
+
+        void setName(String name);
+
+        void setListView(View listView);
     }
 }
