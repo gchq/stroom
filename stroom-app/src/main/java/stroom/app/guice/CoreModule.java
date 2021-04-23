@@ -1,5 +1,6 @@
 package stroom.app.guice;
 
+import stroom.security.impl.SessionSecurityModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
@@ -86,7 +87,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.identity.db.IdentityDbModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.security.impl.db.SecurityDbModule());
-        install(new stroom.security.impl.session.SessionSecurityModule());
+        install(new SessionSecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());

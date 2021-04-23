@@ -4,6 +4,7 @@ import stroom.config.common.UriFactory;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
+import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -32,12 +33,15 @@ public class ResolvedOpenIdConfig {
     public static final String INTERNAL_ISSUER = "stroom";
     // These paths must tally up with those in stroom.authentication.oauth2.OAuth2Resource
     private static final String OAUTH2_BASE_PATH = "/oauth2/v1/noauth";
+    private static final String AUTHENTICATION_BASE_PATH = "/authentication/v1/noauth";
     public static final String INTERNAL_AUTH_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/auth");
     public static final String INTERNAL_TOKEN_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/token");
     public static final String INTERNAL_JWKS_URI = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/certs");
+    public static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+            AUTHENTICATION_BASE_PATH, "/logout");
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
@@ -67,6 +71,7 @@ public class ResolvedOpenIdConfig {
                         .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
                         .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
                         .jwksUri(uriFactory.nodeUri(INTERNAL_JWKS_URI).toString())
+                        .logoutEndpoint(uriFactory.publicUri(INTERNAL_LOGOUT_ENDPOINT).toString())
                         .build();
 
             } else if (configurationEndpoint != null && !configurationEndpoint.isBlank()) {
@@ -84,6 +89,31 @@ public class ResolvedOpenIdConfig {
                             final ObjectMapper mapper = new ObjectMapper();
                             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                             openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
+
+                            // Overwrite configuration with any values we might have manually configured.
+                            Builder builder = openIdConfiguration.copy();
+                            if (openIdConfig.getIssuer() != null &&
+                                    !openIdConfig.getIssuer().isBlank()) {
+                                builder = builder.issuer(openIdConfig.getIssuer());
+                            }
+                            if (openIdConfig.getAuthEndpoint() != null &&
+                                    !openIdConfig.getAuthEndpoint().isBlank()) {
+                                builder = builder.authorizationEndpoint(openIdConfig.getAuthEndpoint());
+                            }
+                            if (openIdConfig.getTokenEndpoint() != null &&
+                                    !openIdConfig.getTokenEndpoint().isBlank()) {
+                                builder = builder.tokenEndpoint(openIdConfig.getTokenEndpoint());
+                            }
+                            if (openIdConfig.getJwksUri() != null &&
+                                    !openIdConfig.getJwksUri().isBlank()) {
+                                builder = builder.jwksUri(openIdConfig.getJwksUri());
+                            }
+                            if (openIdConfig.getLogoutEndpoint() != null &&
+                                    !openIdConfig.getLogoutEndpoint().isBlank()) {
+                                builder = builder.logoutEndpoint(openIdConfig.getLogoutEndpoint());
+                            }
+                            openIdConfiguration = builder.build();
+
                         } else {
                             throw new AuthenticationException("Received status " + response.getStatusLine() +
                                     " from " + configurationEndpoint);
@@ -100,8 +130,10 @@ public class ResolvedOpenIdConfig {
                         .authorizationEndpoint(openIdConfig.getAuthEndpoint())
                         .tokenEndpoint(openIdConfig.getTokenEndpoint())
                         .jwksUri(openIdConfig.getJwksUri())
+                        .logoutEndpoint(openIdConfig.getLogoutEndpoint())
                         .build();
             }
+
             lastConfigurationEndpoint = configurationEndpoint;
         }
 
@@ -124,6 +156,10 @@ public class ResolvedOpenIdConfig {
         return getOpenIdConfiguration().getJwksUri();
     }
 
+    public String getLogoutEndpoint() {
+        return getOpenIdConfiguration().getLogoutEndpoint();
+    }
+
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
             return openIdClientDetailsFactory.getClient().getClientId();
@@ -143,9 +179,5 @@ public class ResolvedOpenIdConfig {
             return false;
         }
         return openIdConfig.isFormTokenRequest();
-    }
-
-    public boolean isTokenExpectedInRequest() {
-        return openIdConfig.isTokenExpectedInRequest();
     }
 }

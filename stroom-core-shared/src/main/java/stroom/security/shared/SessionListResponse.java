@@ -1,4 +1,4 @@
-package stroom.security.impl.session;
+package stroom.security.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;

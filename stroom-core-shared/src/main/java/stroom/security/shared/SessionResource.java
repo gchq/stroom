@@ -1,6 +1,5 @@
-package stroom.security.impl;
+package stroom.security.shared;
 
-import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -8,15 +7,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -35,19 +31,18 @@ public interface SessionResource extends RestResource, DirectRestService {
     String NODE_NAME_PARAM = "nodeName";
 
     @GET
-    @Path("/noauth/login")
+    @Path("/noauth/validateSession")
     @Operation(
-            summary = "Checks if the current session is authenticated and redirects to an auth flow if it is not",
-            operationId = "loginSession")
-    SessionLoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
-                               @QueryParam("redirect_uri") String redirectUri);
+            summary = "Validate the current session, return a redirect Uri if invalid.",
+            operationId = "validateStroomSession")
+    ValidateSessionResponse validateSession(@QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
-    @Path("logout/{sessionId}")
+    @Path("logout")
     @Operation(
-            summary = "Logs the specified session out of Stroom",
-            operationId = "logoutSession")
-    Boolean logout(@PathParam("sessionId") String authSessionId);
+            summary = "Logout of Stroom session",
+            operationId = "stroomLogout")
+    UrlResponse logout(@QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
     @Path(LIST_PATH_PART)

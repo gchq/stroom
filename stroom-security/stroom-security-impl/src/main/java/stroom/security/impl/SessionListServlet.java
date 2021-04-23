@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.security.impl.session;
+package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.SessionDetails;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IsServlet;
 

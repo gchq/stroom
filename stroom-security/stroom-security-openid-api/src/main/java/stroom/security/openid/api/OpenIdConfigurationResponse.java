@@ -10,8 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 public class OpenIdConfigurationResponse {
 
     @JsonProperty("authorization_endpoint")
-    @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The authentication endpoint used in OpenId authentication.")
     private final String authorizationEndpoint;
     @JsonProperty("claims_supported")
     private final String[] claimsSupported;
@@ -24,12 +23,10 @@ public class OpenIdConfigurationResponse {
     @JsonProperty("id_token_signing_alg_values_supported")
     private final String[] idTokenSigningSlgValuesSupported;
     @JsonProperty("issuer")
-    @JsonPropertyDescription("The issuer used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The issuer used in OpenId authentication.")
     private final String issuer;
     @JsonProperty("jwks_uri")
-    @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication.")
     private final String jwksUri;
     @JsonProperty("response_types_supported")
     private final String[] responseTypesSupported;
@@ -40,13 +37,15 @@ public class OpenIdConfigurationResponse {
     @JsonProperty("subject_types_supported")
     private final String[] subjectTypesSupported;
     @JsonProperty("token_endpoint")
-    @JsonPropertyDescription("The token endpoint used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The token endpoint used in OpenId authentication.")
     private final String tokenEndpoint;
     @JsonProperty("token_endpoint_auth_methods_supported")
     private final String[] tokenEndpointAuthMethodsSupported;
     @JsonProperty("userinfo_endpoint")
     private final String userinfoEndpoint;
+    @JsonProperty("logout_endpoint")
+    @JsonPropertyDescription("The logout endpoint used in OpenId authentication.")
+    private final String logoutEndpoint;
 
     @JsonCreator
     OpenIdConfigurationResponse(
@@ -64,7 +63,8 @@ public class OpenIdConfigurationResponse {
             @JsonProperty("subject_types_supported") final String[] subjectTypesSupported,
             @JsonProperty("token_endpoint") final String tokenEndpoint,
             @JsonProperty("token_endpoint_auth_methods_supported") final String[] tokenEndpointAuthMethodsSupported,
-            @JsonProperty("userinfo_endpoint") final String userinfoEndpoint) {
+            @JsonProperty("userinfo_endpoint") final String userinfoEndpoint,
+            @JsonProperty("logout_endpoint") final String logoutEndpoint) {
 
         this.authorizationEndpoint = authorizationEndpoint;
         this.claimsSupported = claimsSupported;
@@ -81,6 +81,7 @@ public class OpenIdConfigurationResponse {
         this.tokenEndpoint = tokenEndpoint;
         this.tokenEndpointAuthMethodsSupported = tokenEndpointAuthMethodsSupported;
         this.userinfoEndpoint = userinfoEndpoint;
+        this.logoutEndpoint = logoutEndpoint;
     }
 
     public String getAuthorizationEndpoint() {
@@ -143,6 +144,10 @@ public class OpenIdConfigurationResponse {
         return userinfoEndpoint;
     }
 
+    public String getLogoutEndpoint() {
+        return logoutEndpoint;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -168,6 +173,7 @@ public class OpenIdConfigurationResponse {
         private String tokenEndpoint;
         private String[] tokenEndpointAuthMethodsSupported;
         private String userinfoEndpoint;
+        private String logoutEndpoint;
 
         private Builder() {
         }
@@ -188,6 +194,7 @@ public class OpenIdConfigurationResponse {
             tokenEndpoint = openIdConfigurationResponse.tokenEndpoint;
             tokenEndpointAuthMethodsSupported = openIdConfigurationResponse.tokenEndpointAuthMethodsSupported;
             userinfoEndpoint = openIdConfigurationResponse.userinfoEndpoint;
+            logoutEndpoint = openIdConfigurationResponse.logoutEndpoint;
         }
 
         public Builder authorizationEndpoint(final String authorizationEndpoint) {
@@ -265,6 +272,11 @@ public class OpenIdConfigurationResponse {
             return this;
         }
 
+        public Builder logoutEndpoint(final String logoutEndpoint) {
+            this.logoutEndpoint = logoutEndpoint;
+            return this;
+        }
+
         public OpenIdConfigurationResponse build() {
             return new OpenIdConfigurationResponse(
                     authorizationEndpoint,
@@ -281,7 +293,8 @@ public class OpenIdConfigurationResponse {
                     subjectTypesSupported,
                     tokenEndpoint,
                     tokenEndpointAuthMethodsSupported,
-                    userinfoEndpoint);
+                    userinfoEndpoint,
+                    logoutEndpoint);
         }
     }
 }

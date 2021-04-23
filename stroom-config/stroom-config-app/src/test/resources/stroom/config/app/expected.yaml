@@ -515,9 +515,9 @@ appConfig:
         authEndpoint: null
         tokenEndpoint: null
         jwksUri: null
+        logoutEndpoint: null
         formTokenRequest: false
         jwtClaimsResolver: null
-        tokenExpectedInRequest: false
         clientId: null
         clientSecret: null
       preventLogin: false

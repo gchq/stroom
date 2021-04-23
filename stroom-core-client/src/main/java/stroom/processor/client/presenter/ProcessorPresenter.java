@@ -17,6 +17,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -27,7 +28,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -46,7 +46,6 @@ import com.gwtplatform.mvp.client.View;
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
 
-    private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final ProcessorListPresenter processorListPresenter;
@@ -200,11 +199,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void addProcessor() {
         if (pipelineDoc != null) {
-            processorEditPresenterProvider.get().show(docRef, null, result -> {
-                if (result != null) {
-                    refresh(result);
-                }
-            });
+            edit(null);
         }
     }
 
@@ -213,13 +208,31 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
-                processorEditPresenterProvider.get().show(docRef, filter, result -> {
-                    if (result != null) {
-                        refresh(result);
-                    }
-                });
+
+                final Rest<ProcessorFilter> rest = restFactory.create();
+                rest
+                        .onSuccess(loadedFilter -> {
+                            if (loadedFilter == null) {
+                                AlertEvent.fireError(
+                                        ProcessorPresenter.this,
+                                        "Unable to load filter",
+                                        null);
+                            } else {
+                                edit(loadedFilter);
+                            }
+                        })
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .fetch(filter.getId());
             }
         }
+    }
+
+    private void edit(final ProcessorFilter filter) {
+        processorEditPresenterProvider.get().show(docRef, filter, result -> {
+            if (result != null) {
+                refresh(result);
+            }
+        });
     }
 
     private void removeProcessor() {

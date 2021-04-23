@@ -63,12 +63,4 @@ class JwtContextFactoryImpl implements JwtContextFactory {
         }
         return Optional.empty();
     }
-
-    @Override
-    public boolean isTokenExpectedInRequest() {
-        for (final JwtContextFactory factory : factories) {
-            return factory.isTokenExpectedInRequest();
-        }
-        return false;
-    }
 }

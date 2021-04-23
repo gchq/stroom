@@ -72,7 +72,7 @@ public interface AuthenticationResource extends RestResource {
             @NotNull LoginRequest loginRequest);
 
     @GET
-    @Path("/logout")
+    @Path("/noauth/logout")
     @NotNull
     @Operation(
             summary = "Log a user out of their session",

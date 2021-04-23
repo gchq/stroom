@@ -1,5 +1,6 @@
 package stroom.config.app;
 
+import stroom.docref.DocRef;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LogUtil;
@@ -13,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Singleton;
 
@@ -88,4 +91,32 @@ class TestAppConfig {
                     }
                 });
     }
+
+    @Test
+    void showPropsWithCollectionValues() {
+        // list any config values that are null.  This may be valid so no assertions used.
+        PropertyUtil.walkObjectTree(
+                new AppConfig(),
+                prop -> true,
+                prop -> {
+                    final Class<?> valueClass = prop.getValueClass();
+                    if (!valueClass.getName().startsWith("stroom")
+                            && isCollectionClass(valueClass)) {
+                        LOGGER.warn("{}.{} => {} => {}",
+                                prop.getParentObject().getClass().getSimpleName(),
+                                prop.getName(),
+                                prop.getValueType(),
+                                prop.getValueClass());
+                    }
+//                    if (prop.getValueType().getTypeName().matches("")) {
+//                    }
+                });
+    }
+
+    private boolean isCollectionClass(final Class<?> clazz) {
+        return clazz.isAssignableFrom(List.class)
+                || clazz.isAssignableFrom(Map.class)
+                || clazz.equals(DocRef.class);
+    }
+
 }
