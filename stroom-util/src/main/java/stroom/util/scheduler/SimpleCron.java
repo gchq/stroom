@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * Class to figure out the next time we should fire based on a simple CRON
@@ -105,6 +108,7 @@ public class SimpleCron {
         for (int i = 0; i < cronParts.size(); i++) {
             hasRolled = move(i, time, hasRolled, forward);
         }
+
         return time.getTime().getTime();
     }
 
@@ -244,7 +248,12 @@ public class SimpleCron {
      */
     private static class CronPart {
 
+        private static final Pattern reNumericList = Pattern.compile("^(\\d+)(,\\d+)*$");
+        private static final Pattern reInterval = Pattern.compile("^\\*\\/(\\d{1,2})$");
+        private static final Pattern reRange = Pattern.compile("^(\\d+)-(\\d+)$");
+
         private final int calendarType;
+
         /**
          * CRON matches OR null if ANY match
          */
@@ -260,51 +269,115 @@ public class SimpleCron {
          */
         @SuppressWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS") // private array ... designed to allow null
         private int[] buildMatches(final String expression) {
-            int[] matches = null;
-
-            if (!CRON_ANY.equals(expression)) {
-                final String[] parts = expression.split(",");
-                if (parts.length == 0) {
-                    throw new MalformedCronException(
-                            "Cron expression \"" + expression + "\" must be a list of comma separated numbers or an *");
+            if (CRON_ANY.equals(expression)) {
+                return null;
+            } else {
+                // A comma-separated list of numeric values (e.g. 10,20,30)
+                final Matcher numericListMatcher = reNumericList.matcher(expression);
+                if (numericListMatcher.matches()) {
+                    return buildMatchesFromList(expression);
                 }
 
-                matches = new int[parts.length];
-                for (int i = 0; i < parts.length; i++) {
-                    try {
-                        final int val = Integer.valueOf(parts[i]);
-                        switch (calendarType) {
-                            case Calendar.MINUTE:
-                                if (val < 0 || val > 59) {
-                                    throw new MalformedCronException(
-                                            "Cron expression \"" + expression + "\" must be in the range 0-59 or an *");
-                                }
-                                break;
-                            case Calendar.HOUR_OF_DAY:
-                                if (val < 0 || val > 59) {
-                                    throw new MalformedCronException(
-                                            "Cron expression \"" + expression + "\" must be in the range 0-59 or an *");
-                                }
-                                break;
-                            case Calendar.DAY_OF_MONTH:
-                                if (val < 1 || val > 31) {
-                                    throw new MalformedCronException(
-                                            "Cron expression \"" + expression + "\" must be in the range 1-31 or an *");
-                                }
-                                break;
+                // Expression is an interval like `*/10`
+                final Matcher intervalMatcher = reInterval.matcher(expression);
+                if (intervalMatcher.matches()) {
+                    final int interval = Integer.parseInt(intervalMatcher.group(1));
+                    return buildMatchesFromInterval(interval);
+                }
+
+                // A numeric range (e.g. 1-25)
+                final Matcher rangeMatcher = reRange.matcher(expression);
+                if (rangeMatcher.matches()) {
+                    final int start = Integer.parseInt(rangeMatcher.group(1));
+                    final int end = Integer.parseInt(rangeMatcher.group(2));
+                    return buildMatchesFromRange(expression, start, end);
+                }
+
+                throw new MalformedCronException(
+                    "Cron expression \"" + expression + "\" must be a list of comma-separated numbers," +
+                            "an interval or a wildcard (*)");
+            }
+        }
+
+        /**
+         * Extract numeric values from a series of matches
+         */
+        private int[] buildMatchesFromList(final String expression) {
+            return Arrays.stream(expression.split(",")).map(str -> {
+                final int val = Integer.parseInt(str);
+
+                switch (calendarType) {
+                    case Calendar.MINUTE:
+                        if (val < 0 || val > 59) {
+                            throw new MalformedCronException(
+                                    "Cron expression \"" + expression + "\" must be in the range 0-59 or *");
                         }
-
-                        matches[i] = val;
-                    } catch (final NumberFormatException e) {
-                        throw new MalformedCronException("Cron expression \"" + expression
-                                + "\" must be a list of comma separated numbers or an *");
-                    }
+                        break;
+                    case Calendar.HOUR_OF_DAY:
+                        if (val < 0 || val > 23) {
+                            throw new MalformedCronException(
+                                    "Cron expression \"" + expression + "\" must be in the range 0-23 or *");
+                        }
+                        break;
+                    case Calendar.DAY_OF_MONTH:
+                        if (val < 1 || val > 31) {
+                            throw new MalformedCronException(
+                                    "Cron expression \"" + expression + "\" must be in the range 1-31 or *");
+                        }
+                        break;
                 }
 
-                Arrays.sort(matches);
+                return val;
+            }).sorted().mapToInt(i -> i).toArray();
+        }
+
+        /**
+         * Return a list of numbers, incrementing each iteration by the specified numeric interval
+         */
+        private int[] buildMatchesFromInterval(final int interval) {
+            switch (calendarType) {
+                case Calendar.MINUTE:
+                    return IntStream.range(0, 59).filter(x -> x % interval == 0).toArray();
+                case Calendar.HOUR_OF_DAY:
+                    return IntStream.range(0, 23).filter(x -> x % interval == 0).toArray();
+                case Calendar.DAY_OF_MONTH:
+                    return IntStream.range(1, 31).filter(x -> x % interval == 0).toArray();
             }
 
-            return matches;
+            return null;
+        }
+
+        /**
+         * Return a sequence of numbers between the specified start and end (inclusive), incrementing by one
+         */
+        private int[] buildMatchesFromRange(final String expression, final int start, final int end) {
+            if (start > end) {
+                throw new MalformedCronException(
+                        "Cron expression range start (" + start + ") must be less than end (" + end + ")");
+            }
+
+            switch (calendarType) {
+                case Calendar.MINUTE:
+                    if (start < 0 || end > 59) {
+                        throw new MalformedCronException(
+                                "Cron expression \"" + expression + "\" must be in the range 0-59 or *");
+                    }
+                    return IntStream.range(start, end).toArray();
+                case Calendar.HOUR_OF_DAY:
+                    if (start < 0 || end > 23) {
+                        throw new MalformedCronException(
+                                "Cron expression \"" + expression + "\" must be in the range 0-23 or *");
+                    }
+                    return IntStream.range(start, end).toArray();
+                case Calendar.DAY_OF_MONTH:
+                    if (start < 1 || end > 31) {
+                        throw new MalformedCronException(
+                                "Cron expression \"" + expression + "\" must be in the range 1-31 or *");
+                    }
+                    return IntStream.range(start, end).toArray();
+            }
+
+            return null;
         }
 
         public int getCalendarType() {
@@ -312,7 +385,7 @@ public class SimpleCron {
         }
 
         public boolean hasMatches() {
-            return matches != null;
+            return matches != null && matches.length > 0;
         }
 
         public Integer match(final int value, final boolean forward) {

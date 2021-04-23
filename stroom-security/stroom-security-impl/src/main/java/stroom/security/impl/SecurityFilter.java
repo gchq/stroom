@@ -21,12 +21,12 @@ import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
 
 import org.slf4j.Logger;
@@ -50,9 +50,7 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 
 /**
- * <p>
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
- * </p>
  */
 @Singleton
 class SecurityFilter implements Filter {
@@ -161,7 +159,7 @@ class SecurityFilter implements Filter {
                 if (userIdentity.isPresent()) {
                     continueAsUser(request, response, chain, userIdentity.get());
 
-                } else if (isApiRequest(servletPath) || openIdManager.isTokenExpectedInRequest()) {
+                } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
                     // or no login flow is possible/expected.
                     LOGGER.debug("API request is unauthorised.");

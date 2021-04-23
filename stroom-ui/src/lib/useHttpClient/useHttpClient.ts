@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { HttpError } from "lib/ErrorTypes";
-import { useAuthenticationContext } from "startup/Authentication";
 import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
 
 const useCheckStatus = (status: number) =>
@@ -81,7 +80,6 @@ let cache = {};
 
 export const useHttpClient = (): HttpClient => {
   const { showError } = usePrompt();
-  const { idToken } = useAuthenticationContext();
 
   const handle200 = useCheckStatus(200);
   const handle204 = useCheckStatus(204);
@@ -102,23 +100,12 @@ export const useHttpClient = (): HttpClient => {
         [s: string]: any;
       } = {},
       forceGet = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
-      addAuthentication = false, // most of the time we want authenticated requests, so we'll make that the default.
     ): Promise<T | void> => {
-      if (!idToken && addAuthentication) {
-        const p = Promise.reject();
-        p.catch(() => console.log("Missing ID Token, not making request"));
-        return p;
-      }
-
       const headers = {
         Accept: "application/json",
         "Content-Type": "application/json",
         ...(options ? options.headers : {}),
       };
-
-      if (addAuthentication) {
-        headers.Authorization = `Bearer ${idToken}`;
-      }
 
       // If we do not have an entry in the cache or we are forcing GET, create a new call
       if (!cache[url] || forceGet) {
@@ -160,7 +147,7 @@ export const useHttpClient = (): HttpClient => {
 
       return cache[url];
     },
-    [catchImpl, idToken, handle200],
+    [catchImpl, handle200],
   );
 
   const useFetchWithBodyAndJsonResponse = (method: string) =>
@@ -170,24 +157,12 @@ export const useHttpClient = (): HttpClient => {
         options?: {
           [s: string]: any;
         },
-        forceGet = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
-        addAuthentication = true, // most of the time we want authenticated requests, so we'll make that the default.
       ): Promise<T | void> => {
-        if (!idToken && addAuthentication) {
-          const p = Promise.reject();
-          p.catch(() => console.log("Missing ID Token, not making request"));
-          return p;
-        }
-
         const headers = {
           Accept: "application/json",
           "Content-Type": "application/json",
           ...(options ? options.headers : {}),
         };
-
-        if (addAuthentication) {
-          headers.Authorization = `Bearer ${idToken}`;
-        }
 
         return (
           fetch(url, {
@@ -235,22 +210,11 @@ export const useHttpClient = (): HttpClient => {
         options?: {
           [s: string]: any;
         },
-        addAuthentication = true, // most of the time we want authenticated requests, so we'll make that the default.
       ): Promise<Response | void> => {
-        if (!idToken && addAuthentication) {
-          const p = Promise.reject();
-          p.catch(() => console.log("Missing ID Token, not making request"));
-          return p;
-        }
-
         const headers = {
           "Content-Type": "application/json",
           ...(options ? options.headers : {}),
         };
-
-        if (addAuthentication) {
-          headers.Authorization = `Bearer ${idToken}`;
-        }
 
         return fetch(url, {
           mode: "cors",

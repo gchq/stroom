@@ -18,12 +18,16 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 class StandardJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
+    private static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
+    private static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
+    private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
     private final ResolvedOpenIdConfig openIdConfig;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
@@ -37,9 +41,13 @@ class StandardJwtContextFactory implements JwtContextFactory {
 
     @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
+        LOGGER.debug(() -> AMZN_OIDC_ACCESS_TOKEN_HEADER + "=" + request.getHeader(AMZN_OIDC_ACCESS_TOKEN_HEADER));
+        LOGGER.debug(() -> AMZN_OIDC_IDENTITY_HEADER + "=" + request.getHeader(AMZN_OIDC_IDENTITY_HEADER));
+        LOGGER.debug(() -> AMZN_OIDC_DATA_HEADER + "=" + request.getHeader(AMZN_OIDC_DATA_HEADER));
         LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
 
-        final Optional<String> optionalJws = JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER);
+        final Optional<String> optionalJws = JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
+                .or(() -> JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER));
         return optionalJws
                 .flatMap(this::getJwtContext)
                 .or(() -> {
@@ -101,10 +109,5 @@ class StandardJwtContextFactory implements JwtContextFactory {
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();
-    }
-
-    @Override
-    public boolean isTokenExpectedInRequest() {
-        return false;
     }
 }

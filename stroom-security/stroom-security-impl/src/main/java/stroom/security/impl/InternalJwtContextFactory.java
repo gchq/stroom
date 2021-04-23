@@ -108,9 +108,4 @@ class InternalJwtContextFactory implements JwtContextFactory {
                 .setExpectedIssuer(ResolvedOpenIdConfig.INTERNAL_ISSUER);
         return builder.build();
     }
-
-    @Override
-    public boolean isTokenExpectedInRequest() {
-        return false;
-    }
 }

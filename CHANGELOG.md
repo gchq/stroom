@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
+
+* Issue **#2183** : Improve error message when property values cannot be de-serialised. Change property DB migration to add conversion of legacy property values that are now a collection type, e.g. List<String>.
+
+* Issue **#2187** : Fixed issue editing a processing filter that has been changed.
+
+* Issue **#2079** : Removed unused session resource code from React UI and backend.
+
+* Issue **#2185** : Stroom now supports the use of an externally provided logout endpoint with the `logoutEndpoint` configuration property.
+
+* Issue **#2188** : Changed all autologged REST methods to return a value (void is not compatible with autologger)
+
+* Issue **#2184** : It should now be possible to use the Cognito OpenId configuration endpoint with Stroom. You should no longer need to set the `jwtClaimsResolver` in the Stroom config as the standard resolver should work. However, you will need to set the new `tokenExpectedInRequest` property to `true` as Cognito delivers fresh tokens with every request.
+
+* Issue **#2177** : Stroom should no longer crash when it is unable to retrieve OpenId configuration.
+
+* Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
+
+* Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+
 * Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
 
 * Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.

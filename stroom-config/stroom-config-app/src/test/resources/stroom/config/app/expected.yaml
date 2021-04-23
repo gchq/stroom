@@ -538,6 +538,7 @@ appConfig:
         authEndpoint: null
         tokenEndpoint: null
         jwksUri: null
+        logoutEndpoint: null
         formTokenRequest: false
         jwtClaimsResolver: null
         clientId: null

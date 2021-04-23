@@ -15,7 +15,9 @@
  *
  */
 
-package stroom.security.impl.session;
+package stroom.security.impl;
+
+import stroom.security.shared.SessionListResponse;
 
 public interface SessionListService {
 
