@@ -111,6 +111,10 @@ public class SourceDao {
                 .execute());
     }
 
+    public void setForwardSuccess(final long sourceId) {
+        jooq.context(context -> setForwardSuccess(context, sourceId));
+    }
+
     public void setForwardSuccess(final DSLContext context, final long sourceId) {
         // Record the source as forwarded so it can be deleted by Cleanup.
         context
