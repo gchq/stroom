@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2090** : Changed to log the authenticated user (if there is one) during noauth calls. 
+
 * Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
 
 

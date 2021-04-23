@@ -141,12 +141,7 @@ class SecurityFilter implements Filter {
                             .map(str -> "/" + str)
                             .orElse("")));
 
-            // Some paths don't need authentication (they contain `/noauth/`.
-            // If that is the case then proceed as proc user.
-            if (shouldBypassAuthentication(fullPath)) {
-                authenticateAsProcUser(request, response, chain);
-
-            } else if (!authenticationConfig.isAuthenticationRequired()) {
+            if (!authenticationConfig.isAuthenticationRequired()) {
                 // If authentication is turned off then proceed as admin.
                 final String propPath = authenticationConfig.getFullPath(
                         AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
@@ -158,6 +153,11 @@ class SecurityFilter implements Filter {
                 final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
                 if (userIdentity.isPresent()) {
                     continueAsUser(request, response, chain, userIdentity.get());
+
+                }  else if (shouldBypassAuthentication(fullPath)) {
+                    // Some paths don't need authentication (they contain `/noauth/`.
+                    // If that is the case then proceed as proc user.
+                    authenticateAsProcUser(request, response, chain);
 
                 } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
