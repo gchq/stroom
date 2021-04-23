@@ -719,33 +719,6 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/authentication/v1/logout" : {
-      "get" : {
-        "operationId" : "logout",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "redirect_uri",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Log a user out of their session",
-        "tags" : [ "Authentication" ]
-      }
-    },
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "operationId" : "needsPasswordChange",
@@ -897,6 +870,33 @@
           }
         },
         "summary" : "Handle a login request made using username and password credentials.",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/authentication/v1/noauth/logout" : {
+      "get" : {
+        "operationId" : "logout",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "redirect_uri",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Log a user out of their session",
         "tags" : [ "Authentication" ]
       }
     },
@@ -2985,25 +2985,6 @@
         "tags" : [ "Filesystem Volumes" ]
       }
     },
-    "/gwtStroomSession/v1/invalidate" : {
-      "get" : {
-        "operationId" : "gwtInvalidateStroomSession",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Invalidate the current session",
-        "tags" : [ "Stroom Sessions" ]
-      }
-    },
     "/index/v2/shard/delete" : {
       "post" : {
         "operationId" : "deleteIndexShards",
@@ -4045,7 +4026,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4135,7 +4120,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4796,7 +4785,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4831,7 +4824,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -4948,7 +4945,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -5042,7 +5043,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -5076,7 +5081,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -5295,7 +5304,11 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : { }
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
             },
             "description" : "default response"
           }
@@ -5768,12 +5781,12 @@
         "tags" : [ "Sessions" ]
       }
     },
-    "/session/v1/logout/{sessionId}" : {
+    "/session/v1/logout" : {
       "get" : {
-        "operationId" : "logoutSession",
+        "operationId" : "stroomLogout",
         "parameters" : [ {
-          "in" : "path",
-          "name" : "sessionId",
+          "in" : "query",
+          "name" : "redirect_uri",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -5784,23 +5797,24 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "boolean"
+                  "$ref" : "#/components/schemas/UrlResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Logs the specified session out of Stroom",
+        "summary" : "Logout of Stroom session",
         "tags" : [ "Sessions" ]
       }
     },
-    "/session/v1/noauth/login" : {
+    "/session/v1/noauth/validateSession" : {
       "get" : {
-        "operationId" : "loginSession",
+        "operationId" : "validateStroomSession",
         "parameters" : [ {
           "in" : "query",
           "name" : "redirect_uri",
+          "required" : true,
           "schema" : {
             "type" : "string"
           }
@@ -5810,14 +5824,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SessionLoginResponse"
+                  "$ref" : "#/components/schemas/ValidateSessionResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Checks if the current session is authenticated and redirects to an auth flow if it is not",
+        "summary" : "Validate the current session, return a redirect Uri if invalid.",
         "tags" : [ "Sessions" ]
       }
     },
@@ -6880,52 +6894,6 @@
         },
         "summary" : "Submit a search request",
         "tags" : [ "Solr Queries" ]
-      }
-    },
-    "/stroomSession/v1/invalidateStroomSession" : {
-      "get" : {
-        "operationId" : "invalidateStroomSession",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Invalidate the current session",
-        "tags" : [ "Stroom Sessions" ]
-      }
-    },
-    "/stroomSession/v1/noauth/validateSession" : {
-      "get" : {
-        "operationId" : "validateStroomSession",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "redirect_uri",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ValidateSessionResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Validate the current session, return a redirect Uri if invalid.",
-        "tags" : [ "Stroom Sessions" ]
       }
     },
     "/suggest/v1" : {
@@ -13858,17 +13826,6 @@
           }
         }
       },
-      "SessionLoginResponse" : {
-        "type" : "object",
-        "properties" : {
-          "authenticated" : {
-            "type" : "boolean"
-          },
-          "redirectUri" : {
-            "type" : "string"
-          }
-        }
-      },
       "SetAssignedToRequest" : {
         "type" : "object",
         "properties" : {
@@ -15351,6 +15308,14 @@
             "type" : "string"
           },
           "users" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UrlResponse" : {
+        "type" : "object",
+        "properties" : {
+          "url" : {
             "type" : "string"
           }
         }

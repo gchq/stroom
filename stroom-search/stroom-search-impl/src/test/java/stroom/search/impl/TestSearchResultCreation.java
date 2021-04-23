@@ -1,11 +1,11 @@
 package stroom.search.impl;
 
+import stroom.bytebuffer.ByteBufferPoolConfig;
+import stroom.bytebuffer.ByteBufferPoolImpl4;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
-import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
-import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;

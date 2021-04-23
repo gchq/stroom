@@ -16,6 +16,7 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.hadoopcommonshaded.org.apache.commons.collections.map.HashedMap;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -28,7 +29,6 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;

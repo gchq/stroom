@@ -34,6 +34,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import javax.servlet.http.HttpSessionListener;
 
 public class SecurityModule extends AbstractModule {
+
     private static final String MATCH_ALL_PATHS = "/*";
 
     @Override
@@ -73,8 +74,6 @@ public class SecurityModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)
-                .bind(StroomSessionResourceImpl.class)
-                .bind(GwtStroomSessionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class);

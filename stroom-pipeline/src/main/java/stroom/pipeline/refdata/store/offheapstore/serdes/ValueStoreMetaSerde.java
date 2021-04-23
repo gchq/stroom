@@ -1,10 +1,10 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.UnsignedBytes;
 import stroom.pipeline.refdata.store.offheapstore.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,6 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -25,10 +29,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

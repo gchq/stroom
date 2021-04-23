@@ -1,10 +1,10 @@
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

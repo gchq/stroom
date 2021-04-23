@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -37,7 +38,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.util.io.ByteSize;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;

@@ -17,6 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbUtils;
@@ -40,10 +44,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;

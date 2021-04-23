@@ -13,27 +13,72 @@ public class OpenIdConfig extends AbstractConfig {
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
 
-//    private static final String OPEN_ID_CONFIGURATION__ENDPOINT = "https://accounts.google.com/.well-known/openid-configuration";
-//    private static final String ISSUER = "accounts.google.com";
-//    private static final String AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
-//    private static final String TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
-//    private static final String JWKS_URI = "https://www.googleapis.com/oauth2/v3/certs";
-
     private boolean useInternal = true;
 
+    /**
+     * e.g. https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/openid-configuration
+     * e.g. https://accounts.google.com/.well-known/openid-configuration
+     */
     private String openIdConfigurationEndpoint;
+
+    /**
+     * Don't set if using configuration endpoint
+     * e.g. stroom
+     * e.g. accounts.google.com
+     */
     private String issuer;
+
+    /**
+     * Don't set if using configuration endpoint
+     * e.g. https://mydomain.auth.us-east-1.amazoncognito.com/oauth2/authorize
+     * e.g. https://accounts.google.com/o/oauth2/v2/auth
+     */
     private String authEndpoint;
+
+    /**
+     * Don't set if using configuration endpoint
+     * e.g. https://mydomain.auth.us-east-1.amazoncognito.com/oauth2/token
+     * e.g. https://accounts.google.com/o/oauth2/token
+     */
     private String tokenEndpoint;
+
+    /**
+     * Don't set if using configuration endpoint
+     * e.g. https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json
+     * e.g. https://www.googleapis.com/oauth2/v3/certs
+     */
     private String jwksUri;
+
+    /**
+     * Not provided by the configuration endpoint, must be configured manually.
+     * <p>
+     * e.g. https://mydomain.auth.us-east-1.amazoncognito.com/logout
+     * e.g. https://www.google.com/accounts/Logout?
+     * continue=https://appengine.google.com/_ah/logout?continue=http://www.example.com"
+     */
+    private String logoutEndpoint;
+
+    /**
+     * Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.
+     */
     private boolean formTokenRequest;
+
+    /**
+     * Optionally choose a class to resolve JWT claims
+     */
     private String jwtClaimsResolver;
 
+    /**
+     * The client ID used in OpenId authentication.
+     */
     private String clientId;
+    /**
+     * The client secret used in OpenId authentication.
+     */
     private String clientSecret;
 
     /**
-     * @return true if Stroom will handle the OpenId authenication, false if an external
+     * @return true if Stroom will handle the OpenId authentication, false if an external
      * OpenId provider is used.
      */
     @JsonProperty
@@ -60,7 +105,7 @@ public class OpenIdConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The issuer used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+            "Should only be set if not using a configuration endpoint.")
     public String getIssuer() {
         return issuer;
     }
@@ -71,7 +116,7 @@ public class OpenIdConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+            "Should only be set if not using a configuration endpoint.")
     public String getAuthEndpoint() {
         return authEndpoint;
     }
@@ -82,7 +127,7 @@ public class OpenIdConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The token endpoint used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+            "Should only be set if not using a configuration endpoint.")
     public String getTokenEndpoint() {
         return tokenEndpoint;
     }
@@ -93,13 +138,24 @@ public class OpenIdConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+            "Should only be set if not using a configuration endpoint.")
     public String getJwksUri() {
         return jwksUri;
     }
 
     public void setJwksUri(final String jwksUri) {
         this.jwksUri = jwksUri;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("The logout endpoint for the identity provider." +
+            "This is not typically provided by the configuration endpoint.")
+    public String getLogoutEndpoint() {
+        return logoutEndpoint;
+    }
+
+    public void setLogoutEndpoint(final String logoutEndpoint) {
+        this.logoutEndpoint = logoutEndpoint;
     }
 
     @JsonProperty
@@ -115,8 +171,7 @@ public class OpenIdConfig extends AbstractConfig {
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
     //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_ID)
-    @JsonPropertyDescription("The client ID used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The client ID used in OpenId authentication.")
     public String getClientId() {
         return clientId;
     }
@@ -128,8 +183,7 @@ public class OpenIdConfig extends AbstractConfig {
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
     //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
-    @JsonPropertyDescription("The client secret used in OpenId authentication." +
-            "Should only be set if useInternal is true.")
+    @JsonPropertyDescription("The client secret used in OpenId authentication.")
     public String getClientSecret() {
         return clientSecret;
     }
@@ -151,13 +205,17 @@ public class OpenIdConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "OpenIdConfig{" +
-                "issuer='" + issuer + '\'' +
+                "useInternal=" + useInternal +
+                ", openIdConfigurationEndpoint='" + openIdConfigurationEndpoint + '\'' +
+                ", issuer='" + issuer + '\'' +
                 ", authEndpoint='" + authEndpoint + '\'' +
                 ", tokenEndpoint='" + tokenEndpoint + '\'' +
+                ", logoutEndpoint='" + logoutEndpoint + '\'' +
                 ", jwksUri='" + jwksUri + '\'' +
+                ", formTokenRequest=" + formTokenRequest +
+                ", jwtClaimsResolver='" + jwtClaimsResolver + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
-                ", formTokenRequest='" + formTokenRequest + '\'' +
                 '}';
     }
 }

@@ -17,16 +17,16 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

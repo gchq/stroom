@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
@@ -21,17 +20,14 @@ import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -48,12 +44,9 @@ class TestSearchResponseCreator {
     @Mock
     private SizesProvider sizesProvider;
 
-    private Path tempDir;
 
     @BeforeEach
-    void setup(@TempDir final Path tempDir) {
-        this.tempDir = tempDir;
-
+    void setup() {
         // Default mock behaviour
         Mockito.when(mockStore.getErrors()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
@@ -285,16 +278,8 @@ class TestSearchResponseCreator {
     }
 
     private DataStore createSingleItemDataObject() {
-        final List<Field> fields = List.of(
-                Field.builder().name("f1").expression("'A'").build(),
-                Field.builder().name("f2").expression("'B'").build(),
-                Field.builder().name("f3").expression("'C'").build());
-        final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
-
         final ItemsImpl items = new ItemsImpl(
                 100,
-                itemSerialiser,
                 null,
                 null,
                 null,
@@ -304,7 +289,7 @@ class TestSearchResponseCreator {
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        items.add(new byte[4], itemSerialiser.toBytes(generators));
+        items.add(Key.root(), generators);
 
         final CompletionState completionState = new CompletionStateImpl();
 
@@ -315,7 +300,7 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Items get(final RawKey key) {
+            public Items get(final Key key) {
                 return null;
             }
 

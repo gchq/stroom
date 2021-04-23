@@ -288,6 +288,7 @@ else
   echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
   # Ensure we have a local.yml file as the integration tests will need it
+  echo "Ensure we have a local.yml file"
   ./local.yml.sh
 
   # Do the gradle build
@@ -297,53 +298,53 @@ else
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
+  echo "Do the gradle build"
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     build \
+    -x shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
     -x buildDistribution
 
-#    -x shadowJar \
-
 #      -Dorg.gradle.parallel=true \
 
+  # Compile the React UI
+  echo "Compile the React UI"
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     stroom-ui:copyYarnBuild
 
   # Compile the application GWT UI
+  echo "Compile the application GWT UI"
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
     stroom-app-gwt:gwtCompile
 
   # Compile the dashboard GWT UI
+  echo "Compile the dashboard GWT UI"
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PgwtCompilerWorkers=2 \
     -PgwtCompilerMinHeap=50M \
     -PgwtCompilerMaxHeap=2G \
     stroom-dashboard-gwt:gwtCompile
 
   # Make the distribution.
+  echo "Make the distribution"
   ./gradlew \
     --scan \
     --stacktrace \
-    --no-daemon \
     -PdumpFailedTestXml=true \
     -Pversion="${TRAVIS_TAG}" \
     shadowJar \

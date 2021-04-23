@@ -81,18 +81,21 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     }
 
     @Override
-    public void delete(final Integer id) {
+    public boolean delete(final Integer id) {
         processorFilterServiceProvider.get().delete(id);
+        return true;
     }
 
     @Override
-    public void setPriority(final Integer id, final Integer priority) {
+    public boolean setPriority(final Integer id, final Integer priority) {
         processorFilterServiceProvider.get().setPriority(id, priority);
+        return true;
     }
 
     @Override
-    public void setEnabled(final Integer id, final Boolean enabled) {
+    public boolean setEnabled(final Integer id, final Boolean enabled) {
         processorFilterServiceProvider.get().setEnabled(id, enabled);
+        return true;
     }
 
     @Override

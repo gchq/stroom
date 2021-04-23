@@ -9,7 +9,7 @@ public interface DataStore {
 
     Items get();
 
-    Items get(final RawKey key);
+    Items get(final Key key);
 
     long getSize();
 

@@ -7,11 +7,81 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
+
+* Issue **#2183** : Improve error message when property values cannot be de-serialised. Change property DB migration to add conversion of legacy property values that are now a collection type, e.g. List<String>.
+
+* Issue **#2187** : Fixed issue editing a processing filter that has been changed.
+
+* Issue **#2079** : Removed unused session resource code from React UI and backend.
+
+* Issue **#2185** : Stroom now supports the use of an externally provided logout endpoint with the `logoutEndpoint` configuration property.
+
+* Issue **#2188** : Changed all autologged REST methods to return a value (void is not compatible with autologger)
+
+* Issue **#2184** : It should now be possible to use the Cognito OpenId configuration endpoint with Stroom. You should no longer need to set the `jwtClaimsResolver` in the Stroom config as the standard resolver should work. However, you will need to set the new `tokenExpectedInRequest` property to `true` as Cognito delivers fresh tokens with every request.
+
+* Issue **#2177** : Stroom should no longer crash when it is unable to retrieve OpenId configuration.
+
+* Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
+
+* Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+
+* Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
+
+* Issue **#2172** : To improve search performance only primary search result stores using LMDB will serialise data, i.e. stores used for visualisations now just use search objects and not binary data.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+* Remove merge artifacts from `scripts.env`.
+
+* Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+## [v7.1-beta.1] - 2021-04-13
+
 * Ported Elasticsearch integration from v6, for compatibility with v7.
 
 * Issue **#2034**: Fixed Solr column ordering in dashboard tables.
 
 * Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
+
+
+## [v7.0-beta.104] - 2021-04-13
+
+* Switched from `node-sass` to `sass`.
+
+* Fix `node` and `swagger-typescript-api` versions.
+
+
+## [v7.0-beta.103] - 2021-04-13
+
+* Rebuild.
+
+
+## [v7.0-beta.102] - 2021-04-09
+
+* Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
+
+## [v7.0-beta.101] - 2021-04-08
+
+* Issue **#2172** : Limited the maximum size of LMDB keys and values.
+
+* Issue **#2171** : Fixed dashboard table expression editor field insertion. 
+
+* Issue **#2168** : Removed special columns from dashboard tables.
+
+* Issue **#2154** : Fixed error adding text widget to a dashboard.
+
+* Issue **#2025** : Added caching for DNS name resolution.
+
+* Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating client IP.
 
 
 ## [v7.0-beta.100] - 2021-04-02
@@ -3263,7 +3333,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.100...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.1...HEAD
+[v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
+[v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
+[v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
+[v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102
+[v7.0-beta.101]: https://github.com/gchq/stroom/compare/v7.0-beta.100...v7.0-beta.101
 [v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
 [v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
 [v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98

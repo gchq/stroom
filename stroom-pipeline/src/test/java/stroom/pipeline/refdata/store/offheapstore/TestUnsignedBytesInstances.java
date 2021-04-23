@@ -1,6 +1,6 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.bytebuffer.ByteBufferUtils;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

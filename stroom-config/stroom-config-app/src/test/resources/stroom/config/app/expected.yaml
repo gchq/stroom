@@ -533,6 +533,7 @@ appConfig:
         authEndpoint: null
         tokenEndpoint: null
         jwksUri: null
+        logoutEndpoint: null
         formTokenRequest: false
         jwtClaimsResolver: null
         clientId: null
@@ -874,6 +875,10 @@ appConfig:
     - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
   logging:
+    deviceCache:
+      maximumSize: 1000
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
     logEveryRestCallEnabled: false
     omitRecordDetailsLoggingEnabled: true
     maxListElements: 5
