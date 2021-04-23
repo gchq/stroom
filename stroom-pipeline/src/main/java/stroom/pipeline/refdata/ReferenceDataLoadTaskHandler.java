@@ -140,8 +140,16 @@ class ReferenceDataLoadTaskHandler {
                         metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                         // Set the pipeline so it can be used by a filter if needed.
+                        if (refStreamDefinition.getPipelineDocRef() == null ||
+                                refStreamDefinition.getPipelineDocRef().getUuid() == null) {
+                            throw new RuntimeException("Null reference pipeline");
+                        }
                         final PipelineDoc pipelineDoc = pipelineStore
                                 .readDocument(refStreamDefinition.getPipelineDocRef());
+                        if (pipelineDoc == null) {
+                            throw new RuntimeException("Unable to find pipeline with UUID: " +
+                                    refStreamDefinition.getPipelineDocRef().getUuid());
+                        }
                         pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
 
                         // Create the parser.

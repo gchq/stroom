@@ -495,25 +495,6 @@ paths:
       summary: Unlinks an annotation from an event
       tags:
       - Annotations
-  /authentication/v1/logout:
-    get:
-      operationId: logout
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Log a user out of their session
-      tags:
-      - Authentication
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -616,6 +597,25 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
           description: default response
       summary: Handle a login request made using username and password credentials.
+      tags:
+      - Authentication
+  /authentication/v1/noauth/logout:
+    get:
+      operationId: logout
+      parameters:
+      - in: query
+        name: redirect_uri
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Log a user out of their session
       tags:
       - Authentication
   /authentication/v1/noauth/reset/{email}:
@@ -2042,19 +2042,6 @@ paths:
       summary: Update a volume
       tags:
       - Filesystem Volumes
-  /gwtStroomSession/v1/invalidate:
-    get:
-      operationId: gwtInvalidateStroomSession
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Invalidate the current session
-      tags:
-      - Stroom Sessions
   /index/v2/shard/delete:
     post:
       operationId: deleteIndexShards
@@ -2775,7 +2762,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets whether a node is enabled
       tags:
@@ -2839,7 +2828,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the priority of a node
       tags:
@@ -3292,7 +3283,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Deletes a processor
       tags:
@@ -3317,7 +3310,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the enabled/disabled state for a processor
       tags:
@@ -3397,7 +3392,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Deletes a filter
       tags:
@@ -3463,7 +3460,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the enabled/disabled state for a filter
       tags:
@@ -3487,7 +3486,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Sets the priority for a filter
       tags:
@@ -3639,7 +3640,9 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
       summary: Explicitly delete all entries that are older than purgeAge.
       tags:
@@ -3962,12 +3965,12 @@ paths:
         is null
       tags:
       - Sessions
-  /session/v1/logout/{sessionId}:
+  /session/v1/logout:
     get:
-      operationId: logoutSession
+      operationId: stroomLogout
       parameters:
-      - in: path
-        name: sessionId
+      - in: query
+        name: redirect_uri
         required: true
         schema:
           type: string
@@ -3976,17 +3979,18 @@ paths:
           content:
             application/json:
               schema:
-                type: boolean
+                $ref: '#/components/schemas/UrlResponse'
           description: default response
-      summary: Logs the specified session out of Stroom
+      summary: Logout of Stroom session
       tags:
       - Sessions
-  /session/v1/noauth/login:
+  /session/v1/noauth/validateSession:
     get:
-      operationId: loginSession
+      operationId: validateStroomSession
       parameters:
       - in: query
         name: redirect_uri
+        required: true
         schema:
           type: string
       responses:
@@ -3994,10 +3998,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionLoginResponse'
+                $ref: '#/components/schemas/ValidateSessionResponse'
           description: default response
-      summary: Checks if the current session is authenticated and redirects to an
-        auth flow if it is not
+      summary: Validate the current session, return a redirect Uri if invalid.
       tags:
       - Sessions
   /sessionInfo/v1:
@@ -4717,38 +4720,6 @@ paths:
       summary: Submit a search request
       tags:
       - Solr Queries
-  /stroomSession/v1/invalidateStroomSession:
-    get:
-      operationId: invalidateStroomSession
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Invalidate the current session
-      tags:
-      - Stroom Sessions
-  /stroomSession/v1/noauth/validateSession:
-    get:
-      operationId: validateStroomSession
-      parameters:
-      - in: query
-        name: redirect_uri
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidateSessionResponse'
-          description: default response
-      summary: Validate the current session, return a redirect Uri if invalid.
-      tags:
-      - Stroom Sessions
   /suggest/v1:
     post:
       operationId: fetchSuggestions
@@ -9803,13 +9774,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SessionDetails'
-    SessionLoginResponse:
-      type: object
-      properties:
-        authenticated:
-          type: boolean
-        redirectUri:
-          type: string
     SetAssignedToRequest:
       type: object
       properties:
@@ -10924,6 +10888,11 @@ components:
         changepassword:
           type: string
         users:
+          type: string
+    UrlResponse:
+      type: object
+      properties:
+        url:
           type: string
     User:
       type: object

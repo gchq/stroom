@@ -167,9 +167,4 @@ class AmznJwtContextFactory implements JwtContextFactory {
 
         return publicKey;
     }
-
-    @Override
-    public boolean isTokenExpectedInRequest() {
-        return true;
-    }
 }

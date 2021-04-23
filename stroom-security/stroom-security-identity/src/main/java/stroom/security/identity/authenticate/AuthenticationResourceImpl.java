@@ -21,12 +21,14 @@ package stroom.security.identity.authenticate;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.security.api.SecurityContext;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.security.openid.api.OpenId;
+import stroom.util.net.UrlUtils;
 import stroom.util.shared.PermissionException;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Strings;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateLogonType;
@@ -38,12 +40,9 @@ import event.logging.EventSource;
 import event.logging.Outcome;
 import event.logging.User;
 import event.logging.ViewEventAction;
-import org.checkerframework.checker.units.qual.Acceleration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -52,8 +51,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.Response.Status;
-
-import static event.logging.AuthenticateAction.RESET_PASSWORD;
+import javax.ws.rs.core.UriBuilder;
 
 @Singleton
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -66,8 +64,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
     @Inject
     AuthenticationResourceImpl(final Provider<AuthenticationServiceImpl> serviceProvider,
-                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                               final Provider<SecurityContext> securityContextProvider) {
+                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.serviceProvider = serviceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
@@ -103,7 +100,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                         "AuthenticationResourceImpl.LoginInteractive",
                         "Stroom user login",
                         eventBuilder.build());
-                return  response;
+                return response;
             } catch (Throwable e) {
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
                         .withSuccess(false)
@@ -125,7 +122,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
-    //Currently unused?
+    /**
+     * Called as part of logout flow when using internal identity provider.
+     */
     @Timed
     @Override
     public Boolean logout(
@@ -141,7 +140,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
             eventBuilder.withUser(event.logging.User.builder().withId(userId).build())
                     .withAuthenticationEntity(event.logging.User.builder()
                             .withId(userId)
-                            .build());;
+                            .build());
 
         } catch (Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
@@ -156,19 +155,13 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
 
         try {
-            throw new RedirectionException(Status.SEE_OTHER, new URI(redirectUri));
-        } catch (final URISyntaxException e) {
-            LOGGER.error(e.getMessage(), e);
-            eventBuilder.withOutcome(AuthenticateOutcome.builder()
-                    .withSuccess(false)
-                    .withReason(AuthenticateOutcomeReason.OTHER)
-                    .withDescription(e.getMessage())
-                    .withData(Data.builder()
-                            .withName("Error")
-                            .withValue(e.getMessage())
-                            .build())
-                    .build());
-            throw new RuntimeException(e.getMessage(), e);
+            final UriBuilder uriBuilder = UriBuilder.fromUri(redirectUri);
+            final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
+            if (!Strings.isNullOrEmpty(promptParam)) {
+                uriBuilder.queryParam(OpenId.PROMPT, promptParam);
+            }
+
+            throw new RedirectionException(Status.SEE_OTHER, uriBuilder.build());
         } finally {
             stroomEventLoggingServiceProvider.get().log(
                     "AuthenticationResourceImpl.Logout",
@@ -196,7 +189,6 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                         .build())
                 .withAction(AuthenticateAction.CHANGE_PASSWORD);
         final String userId = getUserId(request);
-        final boolean ownPasword = userId.equals(changePasswordRequest.getUserId());
 
         try {
             final ChangePasswordResponse response =
@@ -226,7 +218,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
             final String description;
             if (userId == null) {
                 description = "An unauthenticated user is changing a user's password";
-            } else if (ownPasword) {
+            } else if (userId.equals(changePasswordRequest.getUserId())) {
                 description = "User is changing their own password";
             } else {
                 description = "User is changing another user's password";
@@ -238,12 +230,14 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                     eventBuilder.build());
 
             stroomEventLoggingServiceProvider.get().log(
-                    userId == null ? event //Unauthenticated case
+                    userId == null
+                            ? event
+                            //Unauthenticated case
                             : Event.builder().copyOf(event)
-                        .withEventSource(EventSource.builder().copyOf(event.getEventSource())
-                                .withUser(User.builder().withId(userId).build())
-                                .build())
-                        .build()
+                                    .withEventSource(EventSource.builder().copyOf(event.getEventSource())
+                                            .withUser(User.builder().withId(userId).build())
+                                            .build())
+                                    .build()
             );
         }
     }
@@ -332,8 +326,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         ViewEventAction.Builder<Void> eventBuilder = event.logging.ViewEventAction.builder()
                 .withObjects(event.logging.User.builder().withEmailAddress(email).build());
         try {
-            Boolean response = serviceProvider.get().needsPasswordChange(email);
-            return response;
+            return serviceProvider.get().needsPasswordChange(email);
 
         } catch (Throwable e) {
             Outcome.Builder<Void> outcomeBuilder = Outcome.builder()

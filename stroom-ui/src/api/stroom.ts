@@ -2722,11 +2722,6 @@ export interface SessionListResponse {
   values?: SessionDetails[];
 }
 
-export interface SessionLoginResponse {
-  authenticated?: boolean;
-  redirectUri?: string;
-}
-
 export interface SetAssignedToRequest {
   annotationIdList?: number[];
   assignedTo?: string;
@@ -3373,6 +3368,10 @@ export interface UrlConfig {
   apiKeys?: string;
   changepassword?: string;
   users?: string;
+}
+
+export interface UrlResponse {
+  url?: string;
 }
 
 export interface User {
@@ -4174,24 +4173,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authentication
-     * @name Logout
-     * @summary Log a user out of their session
-     * @request GET:/authentication/v1/logout
-     * @secure
-     */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/authentication/v1/logout`,
-        method: "GET",
-        query: query,
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authentication
      * @name NeedsPasswordChange
      * @summary Check if a user's password needs changing.
      * @request GET:/authentication/v1/needsPasswordChange
@@ -4294,6 +4275,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authentication
+     * @name Logout
+     * @summary Log a user out of their session
+     * @request GET:/authentication/v1/noauth/logout
+     * @secure
+     */
+    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/authentication/v1/noauth/logout`,
+        method: "GET",
+        query: query,
+        secure: true,
         ...params,
       }),
 
@@ -5597,24 +5596,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  gwtStroomSession = {
-    /**
-     * No description
-     *
-     * @tags Stroom Sessions
-     * @name GwtInvalidateStroomSession
-     * @summary Invalidate the current session
-     * @request GET:/gwtStroomSession/v1/invalidate
-     * @secure
-     */
-    gwtInvalidateStroomSession: (params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/gwtStroomSession/v1/invalidate`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-  };
   index = {
     /**
      * No description
@@ -6254,7 +6235,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setNodeEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
         body: data,
@@ -6307,7 +6288,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/node/v1/priority/${nodeName}`,
         method: "PUT",
         body: data,
@@ -6725,7 +6706,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     deleteProcessor: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
         secure: true,
@@ -6742,7 +6723,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processor/v1/${id}/enabled`,
         method: "PUT",
         body: data,
@@ -6819,7 +6800,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     deleteProcessorFilter: (id: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}`,
         method: "DELETE",
         secure: true,
@@ -6872,7 +6853,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorFilterEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}/enabled`,
         method: "PUT",
         body: data,
@@ -6891,7 +6872,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setProcessorFilterPriority: (id: number, data: number, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/processorFilter/v1/${id}/priority`,
         method: "PUT",
         body: data,
@@ -7025,7 +7006,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
-      this.request<any, void>({
+      this.request<any, boolean>({
         path: `/refData/v1/purge/${purgeAge}`,
         method: "DELETE",
         secure: true,
@@ -7337,15 +7318,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sessions
-     * @name LogoutSession
-     * @summary Logs the specified session out of Stroom
-     * @request GET:/session/v1/logout/{sessionId}
+     * @name StroomLogout
+     * @summary Logout of Stroom session
+     * @request GET:/session/v1/logout
      * @secure
      */
-    logoutSession: (sessionId: string, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/session/v1/logout/${sessionId}`,
+    stroomLogout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, UrlResponse>({
+        path: `/session/v1/logout`,
         method: "GET",
+        query: query,
         secure: true,
         ...params,
       }),
@@ -7354,14 +7336,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sessions
-     * @name LoginSession
-     * @summary Checks if the current session is authenticated and redirects to an auth flow if it is not
-     * @request GET:/session/v1/noauth/login
+     * @name ValidateStroomSession
+     * @summary Validate the current session, return a redirect Uri if invalid.
+     * @request GET:/session/v1/noauth/validateSession
      * @secure
      */
-    loginSession: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
-      this.request<any, SessionLoginResponse>({
-        path: `/session/v1/noauth/login`,
+    validateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<any, ValidateSessionResponse>({
+        path: `/session/v1/noauth/validateSession`,
         method: "GET",
         query: query,
         secure: true,
@@ -8032,42 +8014,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-  };
-  stroomSession = {
-    /**
-     * No description
-     *
-     * @tags Stroom Sessions
-     * @name InvalidateStroomSession
-     * @summary Invalidate the current session
-     * @request GET:/stroomSession/v1/invalidateStroomSession
-     * @secure
-     */
-    invalidateStroomSession: (params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroomSession/v1/invalidateStroomSession`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Stroom Sessions
-     * @name ValidateStroomSession
-     * @summary Validate the current session, return a redirect Uri if invalid.
-     * @request GET:/stroomSession/v1/noauth/validateSession
-     * @secure
-     */
-    validateStroomSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
-      this.request<any, ValidateSessionResponse>({
-        path: `/stroomSession/v1/noauth/validateSession`,
-        method: "GET",
-        query: query,
-        secure: true,
         ...params,
       }),
   };

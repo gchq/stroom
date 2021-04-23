@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

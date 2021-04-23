@@ -1,8 +1,8 @@
 package stroom.security.impl;
 
-import stroom.security.impl.session.SessionDetails;
-import stroom.security.impl.session.SessionListResponse;
-import stroom.security.impl.session.SessionListService;
+import stroom.security.shared.SessionDetails;
+import stroom.security.shared.SessionListResponse;
+import stroom.security.shared.SessionResource;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.shared.ResourcePaths;
 
@@ -16,15 +16,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
-    @Mock
-    private AuthenticationEventLog authenticationEventLog;
 
     @Mock
     private SessionListService sessionListService;
 
     @Override
     public SessionResource getRestResource() {
-        return new SessionResourceImpl(() -> authenticationEventLog, () -> sessionListService, null);
+        return new SessionResourceImpl(() -> sessionListService);
     }
 
     @Override
