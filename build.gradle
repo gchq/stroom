@@ -7,7 +7,6 @@ buildscript {
     }
     dependencies {
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.5.2'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
@@ -17,20 +16,15 @@ plugins {
 
     //plugin for producing a tree of task dependencies, run task 'taskTree'
     id "com.dorongold.task-tree" version "1.3.1" apply true
-
     id "com.github.johnrengelman.shadow" version "6.1.0" apply false
-
     id 'nu.studer.jooq' version '3.0.2' apply false
-
     id 'org.flywaydb.flyway' version '5.2.4' apply false
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 }
-
-//task wrapper(type: Wrapper) {
-//    gradleVersion = '4.1'
-//}
 
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 if(JavaVersion.current() != JavaVersion.VERSION_1_8){
     throw new GradleException("This build must be run with java 8")
@@ -39,13 +33,29 @@ if(JavaVersion.current() != JavaVersion.VERSION_1_8){
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
 
+ext.isPropertySet = { propName ->
+    if (!project.hasProperty(propName)) {
+        return false
+    } else {
+        def prop = project.getProperty(propName)
+        return (prop != "unspecified" && (prop != "" || prop != null))
+    }
+}
+
+ext.ensurePropertyIsSet = { propName -> 
+    if (!isPropertySet(propName)) {
+        throw new GradleException(
+            "Expecting project property [${propName}] or env var [ORG_GRADLE_PROJECT_${propName}] to be set.")
+    }
+}
+
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
-ext.getPropertyOrDefault = { propName, defaultValue -> 
+ext.getPropertyOrDefault = { propName, defaultValue ->
     def val;
-    if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified" && project.getProperty(propName) != "") {
+    if (isPropertySet(propName)) {
         val = project.getProperty(propName)
-        println "Using property [$propName] with value [$val]"
+        println "Getting property [$propName] with value [$val]"
     } else {
         val = defaultValue
         println "Property [$propName] has no value, using default value [$val]"
@@ -63,7 +73,7 @@ ext.gwtCompilerProps = [
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
     //----------Stroom-----------------
-    stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
+    stroom: getPropertyOrDefault('version', 'SNAPSHOT').replaceFirst(/^v/, ""),
 
     //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
@@ -221,6 +231,7 @@ ext.libs = [
     zookeeper: "org.apache.zookeeper:zookeeper:$versions.zookeeper",
 ]
 
+ext.isReleaseBuild = !versions.stroom.endsWith('SNAPSHOT')
 def contentPackDownloadDir = "${project.buildDir}/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
@@ -242,12 +253,14 @@ ext.contentPacks = [
     'template-pipelines': 'v0.2'
 ]
 
-//defines a list of gradle projects that we will publish with maven/bintray
+// Defines a list of gradle projects that we will publish with maven/bintray
+// Be sure to define 'project.ext.pomDescription' in each one
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-        ':stroom-entity-shared',
-        ':stroom-util',
-        ':stroom-util-shared',
+        // TODO in v6 pretty sure nothing uses these libs
+        //':stroom-entity-shared',
+        //':stroom-util',
+        //':stroom-util-shared',
     ]
 }
 
@@ -267,6 +280,63 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
 //list to hold details of any failed test classes
 def failedTestReportFiles = []
 
+if (isReleaseBuild) {
+    println "This is a release build for maven version [${versions.stroom}]"
+    // Ensure the various props are set for signing and publishing to sonatype
+
+    // The username for Sonatype OSSRH Jira account
+    ensurePropertyIsSet("sonatypeUsername")
+    // The password for Sonatype OSSRH Jira account
+    ensurePropertyIsSet("sonatypePassword")
+    // The GPG2 secret key in ascii armour format, base64 encoded
+    ensurePropertyIsSet("signingKey")
+    // The password for the GPG2 secret key
+    ensurePropertyIsSet("signingPassword")
+}
+
+String base64DecodeProjectProperty(String propName) {
+    def encodedVal = project.findProperty(propName)
+    return encodedVal == null
+        ? null
+        : new String(Base64.getDecoder().decode(encodedVal.toString())).trim()
+}
+
+void configureSigning(Project project) {
+
+    // To create the GPG key do:
+    //   gpg2 --gen-key 
+    // To list it
+    //   gpg2 --list-keys
+    // To publish the public key on a keyserver
+    //   gpg2 --keyserver hkp://keyserver.ubuntu.com --send-keys <your short key id>
+    // To get the ascii-armour private key for use in travis env vars as base64 encoded
+    //   gpg2 --armor --export-secret-keys <your short key id> | base64 -w0
+
+    //project.signing.gnupg.keyName = project.findProperty("signingKeyId")
+
+    project.signing {
+        println "Configuring project to sign maven artifacts"
+        required { project.gradle.taskGraph.hasTask("required") }
+        def signingKeyId = project.findProperty("signingKeyId")
+        def signingKey = base64DecodeProjectProperty("signingKey")
+        def signingPassword = project.findProperty("signingPassword")
+
+        //println "pword: [$signingPassword]"
+        //println "key: [$signingKey]"
+        //println "keyId: [$signingKeyId]"
+
+        if (signingKeyId) {
+            println "Using in memory pgp key with ID"
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        } else if (signingKey) {
+            println "Using in memory pgp key without ID"
+            useInMemoryPgpKeys(signingKey, signingPassword)
+        }
+        //useGpgCmd()
+        sign project.publishing.publications.mavenJava
+    }
+}
+
 //Configuration applicable to all projects
 allprojects {
     // Make doclint be quiet - we don't care about JavaDoc warnings.
@@ -283,8 +353,8 @@ subprojects {
     apply plugin: 'ca.cutterslade.analyze' //analyze missing dependencies for the code base
     apply plugin: 'idea'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     sourceSets {
         // This lets us use different directories for our integration tests.
@@ -437,109 +507,59 @@ configure(projectsToBePublished) {
 
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
-    apply plugin: 'com.jfrog.bintray'
 
-    group = 'stroom'
+    // Maven coordinates
+    group = 'uk.gov.gchq.stroom'
     version = versions.stroom
 
-    def pomConfig = {
-        licenses {
-            license {
-                name "The Apache Software License, Version 2.0"
-                url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                distribution "repo"
-            }
-        }
-        scm {
-            url "https://github.com/stroom/stroom"
-        }
-    }
-
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-//    javadoc {
-//        // this switch is needed in java10
-//        options.addBooleanOption('html5', true)
-//        options.addStringOption('Xdoclint:none', '-quiet')
-//    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
-
-//    afterEvaluate {
-//        jar {
-//            inputs.property("moduleName", moduleName)
-//            manifest {
-//                attributes(
-//                        "Automatic-Module-Name": moduleName,
-//                )
-//            }
-//        }
-//    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifact sourcesJar
-                artifact javadocJar
-                pom.withXml {
-                    def root = asNode()
-                    root.appendNode('name', project.name)
-                    root.children().last() + pomConfig
-                }
-            }
-        }
+    //for java plugin
+    //see https://docs.gradle.org/current/userguide/java_plugin.html
+    java {
+        //package JavaDoc as part of publication
+        withJavadocJar()
+        //package Sources as part of publication
+        withSourcesJar()
     }
 
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
+
+                pom {
+                    name = project['name']
+
+                    description = project.ext.pomDescription != null
+                        ? project.ext.pomDescription
+                        : "Stroom is a data processing, storage and analysis platform."
+
+                    url = 'https://github.com/gchq/stroom'
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = 'GCHQDevelopers'
+                            organization = 'GCQH'
+                            organizationUrl = 'https://github.com/gchq'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git@github.com:gchq/stroom.git'
+                        developerConnection = 'scm:git:git@github.com:gchq/stroom.git'
+                        url = 'https://github.com/gchq/stroom'
+                    }
+                }         
             }
         }
     }
 
-    // configuration for the bintray plugin for uploading maven artifacts to bintray
-    // see https://github.com/bintray/gradle-bintray-plugin
-    // run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
-    bintray {
-        // Must never write these to log or system out
-        user = System.getenv('BINTRAY_USER') // set in Travis UI
-        key = System.getenv('BINTRAY_KEY') // set in Travis UI
-
-        // The maven plugin publications to push to bintray
-        publications = ['mavenJava']
-
-        // immediately make the artifacts public
-        publish = true
-
-        pkg {
-            repo = 'stroom'
-            name = 'stroom'
-            userOrg = 'stroom'
-            licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/gchq/stroom.git'
-            version {
-                name = "${versions.stroom}"
-                desc = "stroom-${versions.stroom}"
-                released = new Date()
-                vcsTag = "${versions.stroom}"
-                gpg {
-                    // Bintray will self-sign the files
-                    sign = true // Determines whether to GPG sign the files. The default is false
-                }
-            }
-        }
+    def hasSigningKey = project.hasProperty("signingkeyId") || project.findProperty("signingKey")
+    if (hasSigningKey) {
+        configureSigning(project)
     }
 }
 
@@ -566,6 +586,20 @@ configure(projectsWithSharedTestJars) {
     }
 
     artifacts.archives packageTests
+}
+
+
+// Uses sonotypeUsername and sonotypePassword
+// See https://github.com/rwinch/gradle-publish-ossrh-sample
+// Also https://github.com/kit-data-manager/nexus-publish-example
+nexusPublishing {
+    repositories {
+        sonatype()    //sonatypeUsername and sonatypePassword properties are used automatically
+    }
+    // these are not strictly required. The default timeouts are set to 1 minute. But Sonatype can be really slow.
+    // If you get the error "java.net.SocketTimeoutException: timeout", these lines will help.
+    connectTimeout = Duration.ofMinutes(3)
+    clientTimeout = Duration.ofMinutes(3)
 }
 
 // NOT SURE IF WE NEED THIS NOW
