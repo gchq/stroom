@@ -5,6 +5,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;
@@ -37,6 +38,7 @@ class TestModule extends AbstractModule {
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
         bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
+        bind(IndexStore.class).toProvider(() -> null);
     }
 
     @Provides
