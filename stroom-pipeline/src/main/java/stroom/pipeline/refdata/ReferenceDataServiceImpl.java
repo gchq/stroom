@@ -39,6 +39,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.time.StroomDuration;
 
@@ -60,7 +61,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
@@ -218,7 +218,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public String lookup(final RefDataLookupRequest refDataLookupRequest) {
         if (refDataLookupRequest == null) {
-            throw new BadRequestException("Missing request object");
+            throw RestUtil.badRequest("Missing request object");
         }
 
         // TODO @AT ensure user has rights to
@@ -325,7 +325,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private DocRef getFeedDocRef(final ReferenceLoader referenceLoader) {
         if (referenceLoader == null) {
-            throw new BadRequestException("Null referenceLoader");
+            throw RestUtil.badRequest("Null referenceLoader");
         } else {
             if (referenceLoader.getReferenceFeed().getUuid() != null
                     && referenceLoader.getReferenceFeed().getName() != null) {
@@ -337,9 +337,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         .stream()
                         .findFirst()
                         .orElseThrow(() ->
-                                new BadRequestException("Unknown feed " + referenceLoader.getReferenceFeed()));
+                                RestUtil.badRequest("Unknown feed " + referenceLoader.getReferenceFeed()));
             } else {
-                throw new BadRequestException(
+                throw RestUtil.badRequest(
                         "Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
             }
         }
@@ -383,11 +383,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
 
-        withPermissionCheck(() -> {
-            LOGGER.logDurationIfInfoEnabled(
-                    () -> doSearch(criteria, fields, consumer),
-                    "Querying ref store");
-        });
+        withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
+                () -> doSearch(criteria, fields, consumer),
+                "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
@@ -423,7 +421,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
                                         .apply(refStoreEntry);
                                 valArr[i] = convertToVal(value, fields[i]);
-                                ;
                             }
                         }
                         consumer.accept(valArr);

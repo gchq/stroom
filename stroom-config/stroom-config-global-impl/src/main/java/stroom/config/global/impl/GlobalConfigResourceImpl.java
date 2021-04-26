@@ -30,7 +30,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.SyncInvoker;
@@ -134,7 +133,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         try {
             return globalConfigServiceProvider.get().update(configProperty);
         } catch (ConfigPropertyValidationException e) {
-            throw new BadRequestException(e.getMessage(), e);
+            throw RestUtil.badRequest(e);
         }
     }
 
@@ -146,7 +145,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(configProperty, "configProperty not supplied");
 
         if (!propertyName.equals(configProperty.getNameAsString())) {
-            throw new BadRequestException(LogUtil.message("Property names don't match, {} & {}",
+            throw RestUtil.badRequest(LogUtil.message("Property names don't match, {} & {}",
                     propertyName, configProperty.getNameAsString()));
         }
 
@@ -173,7 +172,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                     },
                     null);
         } catch (ConfigPropertyValidationException e) {
-            throw new BadRequestException(e.getMessage(), e);
+            throw RestUtil.badRequest(e);
         }
     }
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2151** : The UI now shows REST service error messages properly.
+
 * Issue **#1930** : Dashboards opened from links now stop querying when closed.
 
 * Issue **#2166** : You can now change index volume group names.

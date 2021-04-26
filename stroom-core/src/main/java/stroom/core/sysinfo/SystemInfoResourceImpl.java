@@ -4,6 +4,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LogUtil;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -36,12 +36,12 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
 
         return stroomEventLoggingServiceProvider.get()
                 .loggedResult(
-                "getAllSystemInfo",
-                "Getting all system info results",
-                buildViewEventAction(""),
-                () ->
-                        SystemInfoResultList.of(systemInfoServiceProvider.get().getAll())
-        );
+                        "getAllSystemInfo",
+                        "Getting all system info results",
+                        buildViewEventAction(""),
+                        () ->
+                                SystemInfoResultList.of(systemInfoServiceProvider.get().getAll())
+                );
     }
 
     @Override
@@ -60,7 +60,7 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
     public SystemInfoResult get(final String name) {
 
         if (name == null || name.isEmpty()) {
-            throw new BadRequestException("name not supplied");
+            throw RestUtil.badRequest("name not supplied");
         }
 
         return stroomEventLoggingServiceProvider.get().loggedResult(
