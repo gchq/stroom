@@ -6,19 +6,19 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
+        classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.5.2'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
 plugins {
     //plugin for downloading content from the 'net
-    id "de.undercouch.download" version "3.2.0" apply false
+    id "de.undercouch.download" version "4.1.1" apply false
 
     //plugin for producing a tree of task dependencies, run task 'taskTree'
     id "com.dorongold.task-tree" version "1.3.1" apply true
 
-    id "com.github.johnrengelman.shadow" version "2.0.1" apply false
+    id "com.github.johnrengelman.shadow" version "6.1.0" apply false
 
     id 'nu.studer.jooq' version '3.0.2' apply false
 
@@ -219,7 +219,6 @@ ext.libs = [
     ws_rs_api: "javax.ws.rs:javax.ws.rs-api:2.0.1",
     xml_apis: "xml-apis:xml-apis:1.0.b2",
     zookeeper: "org.apache.zookeeper:zookeeper:$versions.zookeeper",
-    zzDUMMYzz: "makes sorting easier"
 ]
 
 def contentPackDownloadDir = "${project.buildDir}/contentPackDownload"
@@ -262,7 +261,6 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
         ':stroom-index-server',
         ':stroom-security-server',
         ':stroom-util',
-        'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -416,6 +414,21 @@ subprojects {
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
+
+    // This plugin has a number of issues and doesn't always appear to work so need to disable the errors
+    // Hopefully in 7.1+ we can add the java library plugin and set all the api/impl deps and 
+    // maybe it will work better
+    analyzeClassesDependencies {
+        justWarn = true
+    }
+
+    analyzeTestClassesDependencies {
+        justWarn = true
+    }
+
+    analyzeIntegrationTestClassesDependencies {
+        justWarn = true
+    }
 }
 
 // configures only those projects in publishedProjectsPaths
