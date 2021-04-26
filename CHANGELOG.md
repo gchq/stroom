@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1930** : Dashboards opened from links now stop querying when closed.
+
 * Issue **#2166** : You can now change index volume group names.
 
 * Issue **#2090** : Changed to log the authenticated user (if there is one) during noauth calls.

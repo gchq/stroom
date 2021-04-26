@@ -206,7 +206,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems != null && menuItems.size() > 0) {
+            if (menuItems.size() > 0) {
                 final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
                 showMenu(popupPosition, menuItems);
             }
@@ -551,7 +551,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public void onRemove() {
         super.onRemove();
-        searchModel.destroy();
+        stop();
+        initialised = false;
     }
 
     @Override
@@ -611,7 +612,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         autoRefreshTimer = null;
 
         final Automate automate = getQuerySettings().getAutomate();
-        if (automate.isRefresh()) {
+        if (initialised && automate.isRefresh()) {
             try {
                 final String interval = automate.getRefreshInterval();
                 int millis = ModelStringUtil.parseDurationString(interval).intValue();
@@ -622,9 +623,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 autoRefreshTimer = new Timer() {
                     @Override
                     public void run() {
-                        // Make sure search is currently inactive before we attempt to execute a new query.
-                        if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
-                            QueryPresenter.this.run(false, false);
+                        if (!initialised) {
+                            stop();
+                        } else {
+                            // Make sure search is currently inactive before we attempt to execute a new query.
+                            if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+                                QueryPresenter.this.run(false, false);
+                            }
                         }
                     }
                 };
