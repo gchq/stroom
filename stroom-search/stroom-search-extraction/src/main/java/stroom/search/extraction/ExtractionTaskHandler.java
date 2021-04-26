@@ -161,6 +161,9 @@ class ExtractionTaskHandler {
                     AbstractSearchResultOutputFilter.class);
 
             searchResultOutputFilter.setup(task.getReceiver().getFieldMap(), task.getReceiver().getValuesConsumer());
+            if (task.isAlerting()) {
+                searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings(), task.getParamMapForAlerting());
+            }
 
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);

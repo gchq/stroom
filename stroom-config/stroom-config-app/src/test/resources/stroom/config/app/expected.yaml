@@ -17,6 +17,11 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
+  alerting:
+    timezone: "UTC"
+    rulesFolderList: []
+    reportAllExtractedFieldsEnabled: false
+    additionalFieldsPrefix: "_"
   annotation:
     db:
       connection:

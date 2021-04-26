@@ -65,6 +65,7 @@ mainClassName = 'stroom.app.App'
 
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
+    compile project(':stroom-alert:stroom-alert-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-annotation:stroom-annotation-pipeline')
     compile project(':stroom-cache:stroom-cache-impl')
@@ -170,6 +171,8 @@ dependencies {
 
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
+    testCompile project(':stroom-alert:stroom-alert-api')
+    testCompile project(':stroom-alert:stroom-alert-mock')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')

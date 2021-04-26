@@ -135,10 +135,14 @@ public abstract class TaskExecutor {
             start();
         }
         producers.add(producer);
+        LOGGER.trace("Added a producer of class " + producer.getClass().getName() + " Now got " +
+                producers.list().size() + " producers.");
     }
 
     final void removeProducer(final TaskProducer producer) {
         producers.remove(producer);
+        LOGGER.trace("Removed a producer of class " + producer.getClass().getName() + " Now got " +
+                producers.list().size() + " producers.");
     }
 
     final void signalAll() {

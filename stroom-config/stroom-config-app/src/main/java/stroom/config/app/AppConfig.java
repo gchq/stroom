@@ -1,6 +1,7 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.alert.impl.AlertConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
@@ -54,6 +55,9 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
+    public static final String PROP_NAME_ALERTING = "alerting";
+    public static final String PROP_NAME_AUTHENTICATION = "authentication";
+    public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
@@ -99,6 +103,7 @@ public class AppConfig extends AbstractConfig {
     private boolean haltBootOnConfigValidationFailure = true;
 
     private ActivityConfig activityConfig = new ActivityConfig();
+    private AlertConfig alertConfig = new AlertConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
@@ -165,6 +170,17 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setActivityConfig(final ActivityConfig activityConfig) {
         this.activityConfig = activityConfig;
+    }
+
+    @JsonProperty(PROP_NAME_ALERTING)
+    public AlertConfig getAlertConfig() {
+        return alertConfig;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonProperty(PROP_NAME_ALERTING)
+    public void setAlertConfig(final AlertConfig alertConfig) {
+        this.alertConfig = alertConfig;
     }
 
     @JsonProperty(PROP_NAME_ANNOTATION)
