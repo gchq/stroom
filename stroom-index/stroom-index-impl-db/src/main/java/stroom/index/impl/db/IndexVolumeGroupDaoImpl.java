@@ -111,7 +111,8 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 final List<DocRef> indexes = indexStore.list();
                 for (final DocRef docRef : indexes) {
                     final IndexDoc indexDoc = indexStore.readDocument(docRef);
-                    if (indexDoc.getVolumeGroupName() != null && indexDoc.getVolumeGroupName().equals(currentGroupName)) {
+                    if (indexDoc.getVolumeGroupName() != null &&
+                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
                         indexDoc.setVolumeGroupName(saved.getName());
                         indexStore.writeDocument(indexDoc);
                     }
