@@ -11,6 +11,7 @@ import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -22,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 
 public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
@@ -88,7 +88,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 //                    case "expiresOn":
 //                    case "issuedOn":
 //                    case "updatedOn":
-//                        throw new BadRequestException("Filtering by date is not supported.");
+//                        throw RestUtil.badRequest("Filtering by date is not supported.");
 //                }
 //            }
 //        }
@@ -108,7 +108,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         // Parse and validate tokenType
         final Optional<TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
         final TokenType tokenType = optionalTokenType.orElseThrow(() ->
-                new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
+                RestUtil.badRequest("Unknown token type:" + createTokenRequest.getTokenType()));
 
         final Instant expiryInstant = createTokenRequest.getExpiresOnMs() == null
                 ? null

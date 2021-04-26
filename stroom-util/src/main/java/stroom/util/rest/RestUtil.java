@@ -21,7 +21,7 @@ public class RestUtil {
      */
     public static void requireNonNull(final Object object) throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException();
+            throw badRequest("Object is null");
         }
     }
 
@@ -30,7 +30,7 @@ public class RestUtil {
      */
     public static void requireNonNull(final Object object, String message) throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException(message);
+            throw badRequest(message);
         }
     }
 
@@ -40,7 +40,7 @@ public class RestUtil {
     public static void requireNonNull(final Object object, Supplier<String> messageSupplier)
             throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException(messageSupplier != null
+            throw badRequest(messageSupplier != null
                     ? messageSupplier.get()
                     : null);
         }
@@ -48,24 +48,24 @@ public class RestUtil {
 
     public static void requireMatchingIds(final int id, final HasIntegerId object) {
         if (object == null) {
-            throw new BadRequestException("Object is null");
+            throw badRequest("Object is null");
         }
         // Allow for the object not having an id in which case the int id wins
         if (object.getId() != null && object.getId() != id) {
-            throw new BadRequestException("Id " + id + " doesn't match id in object " + object.getId());
+            throw badRequest("Id " + id + " doesn't match id in object " + object.getId());
         }
     }
 
     public static void requireMatchingUuids(final String uuid, final HasUuid object) {
         if (object == null) {
-            throw new BadRequestException("Object is null");
+            throw badRequest("Object is null");
         }
         if (uuid == null) {
-            throw new BadRequestException("uuid is null");
+            throw badRequest("uuid is null");
         }
         // Allow for the object not having a uuid in which case the string uuid wins
         if (object.getUuid() != null && !object.getUuid().equals(uuid)) {
-            throw new BadRequestException("UUID " + uuid + " doesn't match UUID in object " + object.getUuid());
+            throw badRequest("UUID " + uuid + " doesn't match UUID in object " + object.getUuid());
         }
     }
 
@@ -113,5 +113,25 @@ public class RestUtil {
             throw new NotFoundException(LogUtil.message(msg, args));
         }
         return optValue.get();
+    }
+
+    public static BadRequestException badRequest(final String message, final Throwable e) {
+        return new BadRequestException(
+                message,
+                Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build(),
+                e);
+    }
+
+    public static BadRequestException badRequest(final Throwable e) {
+        return new BadRequestException(
+                e.getMessage(),
+                Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build(),
+                e);
+    }
+
+    public static BadRequestException badRequest(final String message) {
+        return new BadRequestException(
+                message,
+                Response.status(Status.BAD_REQUEST).entity(message).build());
     }
 }

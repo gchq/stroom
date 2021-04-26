@@ -70,14 +70,18 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         // The exception is restyGWT's FailedResponseException
                         // so extract the response payload and treat it as WebApplicationException
                         // json
-                        String msg;
-                        Exception wrappedExcepton = null;
-                        try {
-                            // Assuming we get a response like { "code": "", "message": "" } or
-                            // { "code": "", "details": "" }
-                            final String responseText = method.getResponse().getText();
-                            if (responseText != null && !responseText.isEmpty()) {
-                                final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
+                        String message = exception.getMessage();
+                        Throwable throwable = exception;
+
+                        if (method.getResponse() != null &&
+                                method.getResponse().getText() != null &&
+                                !method.getResponse().getText().trim().isEmpty()) {
+                            message = method.getResponse().getText().trim();
+
+                            try {
+                                // Assuming we get a response like { "code": "", "message": "" } or
+                                // { "code": "", "details": "" }
+                                final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(message);
                                 final String responseKeyValues = responseJson.keySet()
                                         .stream()
                                         .map(key -> {
@@ -89,29 +93,24 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                                         .filter(Objects::nonNull)
                                         .collect(Collectors.joining(", "));
 
-                                msg = "Error calling " +
+                                message = "Error calling " +
                                         method.builder.getHTTPMethod() +
                                         " " +
                                         method.builder.getUrl() +
                                         " - " +
                                         responseKeyValues;
-
-                                wrappedExcepton = new RuntimeException(msg, exception);
-                            } else {
-                                msg = exception.getMessage();
+                            } catch (Exception e) {
+                                // Unable to parse message as JSON.
                             }
-                        } catch (Exception e) {
-                            // Not the format we were expecting so just use the msg from the exception
-                            msg = exception.getMessage();
+
+                            throwable = new RuntimeException(message, exception);
                         }
 
                         if (errorConsumer != null) {
-                            errorConsumer.accept(wrappedExcepton != null
-                                    ? wrappedExcepton
-                                    : exception);
+                            errorConsumer.accept(throwable);
                         } else {
-                            GWT.log(msg, exception);
-                            AlertEvent.fireError(hasHandlers, msg, null);
+                            GWT.log(message, throwable);
+                            AlertEvent.fireError(hasHandlers, message, null);
                         }
                     } catch (final Throwable t) {
                         GWT.log(method.getRequest().toString());
