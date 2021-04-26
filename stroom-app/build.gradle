@@ -171,6 +171,8 @@ dependencies {
 
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
+    testCompile project(':stroom-alert:stroom-alert-api')
+    testCompile project(':stroom-alert:stroom-alert-mock')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')
