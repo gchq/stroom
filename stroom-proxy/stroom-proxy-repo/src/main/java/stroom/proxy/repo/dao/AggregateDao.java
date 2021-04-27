@@ -128,8 +128,8 @@ public class AggregateDao {
     }
 
     public void addItem(final SourceItem sourceItem,
-                        final long maxUncompressedByteSize,
-                        final int maxItemsPerAggregate) {
+                        final int maxItemsPerAggregate,
+                        final long maxUncompressedByteSize) {
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getByteSize());
         final Condition condition = DSL
                 .and(sourceItem.getFeedName() == null

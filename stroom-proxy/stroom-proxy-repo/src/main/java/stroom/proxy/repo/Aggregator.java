@@ -75,8 +75,8 @@ public class Aggregator {
     synchronized int addItem(final SourceItem sourceItem) {
         aggregateDao.addItem(
                 sourceItem,
-                config.getMaxUncompressedByteSize(),
-                config.getMaxItemsPerAggregate());
+                config.getMaxItemsPerAggregate(),
+                config.getMaxUncompressedByteSize());
 
         // Close any old aggregates.
         return closeOldAggregates();
