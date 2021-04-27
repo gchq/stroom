@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2201** : Improved Stroom Proxy and aggregation process.
+
 
 ## [v7.1-beta.2] - 2021-04-23
 
