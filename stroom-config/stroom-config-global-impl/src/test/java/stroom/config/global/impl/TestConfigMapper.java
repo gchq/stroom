@@ -73,7 +73,7 @@ class TestConfigMapper {
 
     @Test
     void getDataTypeNames() {
-        final TestConfig appConfig = new TestConfig();
+        final AppConfig appConfig = new AppConfig();
         final ConfigMapper configMapper = new ConfigMapper(appConfig);
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
@@ -87,6 +87,40 @@ class TestConfigMapper {
         final String asciiTable = AsciiTable.builder(rows)
                 .withColumn(Column.of("Property Path", Tuple2::_1))
                 .withColumn(Column.of("Data Type", Tuple2::_2))
+                .build();
+
+        LOGGER.debug("Properties\n{}", asciiTable);
+    }
+
+    @Test
+    void getUniqueDataTypes() {
+        final AppConfig appConfig = new AppConfig();
+        final ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        final Map<String, String> map = configProperties.stream()
+                .map(configProp ->
+                        Tuple.of(configMapper.getProp(configProp.getName())
+                                        .get()
+                                        .getValueClass().getSimpleName(),
+                                configProp))
+                .collect(Collectors.groupingBy(
+                        tuple2 -> tuple2._1(),
+                        Collectors.mapping(
+                                tuple2 -> tuple2._2().getName().toString(),
+                                Collectors.joining(", "))));
+
+        final List<Tuple2<String, String>> rows = map
+                .entrySet()
+                .stream()
+                .map(entry -> Tuple.of(entry.getKey(), entry.getValue()))
+                .sorted()
+                .collect(Collectors.toList());
+
+        final String asciiTable = AsciiTable.builder(rows)
+                .withColumn(Column.of("Data Type", Tuple2::_1))
+                .withColumn(Column.of("Property Paths", Tuple2::_2))
                 .build();
 
         LOGGER.debug("Properties\n{}", asciiTable);
