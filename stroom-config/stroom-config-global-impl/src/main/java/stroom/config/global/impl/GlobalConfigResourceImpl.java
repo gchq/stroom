@@ -23,14 +23,13 @@ import stroom.util.shared.ResourcePaths;
 import com.codahale.metrics.annotation.Timed;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.UpdateEventAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.SyncInvoker;
@@ -38,8 +37,6 @@ import javax.ws.rs.core.GenericType;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigResourceImpl.class);
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
@@ -64,7 +61,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
-        return globalConfigServiceProvider.get().list(criteria);
+        final ListConfigResponse list = globalConfigServiceProvider.get().list(criteria);
+        List<ConfigProperty> values = list.getValues();
+        values = values.stream().map(this::sanitise).collect(Collectors.toList());
+        return new ListConfigResponse(values, list.getPageResponse());
     }
 
     @Timed
@@ -88,26 +88,49 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public ConfigProperty getPropertyByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
+        Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
                 PropertyPath.fromPathString(propertyPath));
+        optConfigProperty = sanitise(optConfigProperty);
         return optConfigProperty.orElseThrow(NotFoundException::new);
     }
 
     @Timed
     public OverrideValue<String> getYamlValueByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        final Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
+        Optional<ConfigProperty> optConfigProperty = globalConfigServiceProvider.get().fetch(
                 PropertyPath.fromPathString(propertyPath));
+        optConfigProperty = sanitise(optConfigProperty);
         return optConfigProperty
                 .map(ConfigProperty::getYamlOverrideValue)
                 .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
     }
 
+    private Optional<ConfigProperty> sanitise(final Optional<ConfigProperty> optionalConfigProperty) {
+        return optionalConfigProperty.map(this::sanitise);
+    }
+
+    private ConfigProperty sanitise(final ConfigProperty configProperty) {
+        if (configProperty.isPassword()) {
+            configProperty.setDefaultValue(null);
+            if (configProperty.getDatabaseOverrideValue().isHasOverride()) {
+                configProperty.setDatabaseOverrideValue(OverrideValue.withNullValue(String.class));
+            } else {
+                configProperty.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+            }
+            if (configProperty.getYamlOverrideValue().isHasOverride()) {
+                configProperty.setYamlOverrideValue(OverrideValue.withNullValue(String.class));
+            } else {
+                configProperty.setYamlOverrideValue(OverrideValue.unSet(String.class));
+            }
+        }
+        return configProperty;
+    }
+
     @Timed
     @Override
-    public OverrideValue<String> getYamlValueByNodeAndName(final String propertyName,
+    public OverrideValue<String> getYamlValueByNodeAndName(final String propertyPath,
                                                            final String nodeName) {
-        RestUtil.requireNonNull(propertyName, "propertyName not supplied");
+        RestUtil.requireNonNull(propertyPath, "propertyName not supplied");
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         return nodeServiceProvider.get().remoteRestResult(
@@ -115,11 +138,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                        propertyName,
+                        propertyPath,
                         GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
                         nodeName),
                 () ->
-                        getYamlValueByName(propertyName),
+                        getYamlValueByName(propertyPath),
                 SyncInvoker::get,
                 response -> response.readEntity(new GenericType<OverrideValue<String>>() {
                 }));
@@ -134,7 +157,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         try {
             return globalConfigServiceProvider.get().update(configProperty);
         } catch (ConfigPropertyValidationException e) {
-            throw new BadRequestException(e.getMessage(), e);
+            throw RestUtil.badRequest(e);
         }
     }
 
@@ -146,7 +169,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(configProperty, "configProperty not supplied");
 
         if (!propertyName.equals(configProperty.getNameAsString())) {
-            throw new BadRequestException(LogUtil.message("Property names don't match, {} & {}",
+            throw RestUtil.badRequest(LogUtil.message("Property names don't match, {} & {}",
                     propertyName, configProperty.getNameAsString()));
         }
 
@@ -173,7 +196,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                     },
                     null);
         } catch (ConfigPropertyValidationException e) {
-            throw new BadRequestException(e.getMessage(), e);
+            throw RestUtil.badRequest(e);
         }
     }
 

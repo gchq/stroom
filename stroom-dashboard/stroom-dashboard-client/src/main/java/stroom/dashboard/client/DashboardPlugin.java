@@ -105,7 +105,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             //        tabDataToDocumentMap.put(tabData, docRef);
 
             // Load the document and show the tab.
-            final CloseHandler closeHandler = callback -> callback.closeTab(true);
+            final CloseHandler closeHandler = callback -> {
+                // Tell the presenter we are closing.
+                presenter.onClose();
+                // Actually close the tab.
+                callback.closeTab(true);
+            };
             showTab(docRef, presenter, closeHandler, presenter);
         }
     }

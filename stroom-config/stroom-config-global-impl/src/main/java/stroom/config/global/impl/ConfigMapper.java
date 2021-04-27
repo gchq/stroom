@@ -83,6 +83,14 @@ public class ConfigMapper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigMapper.class);
 
+    private static final boolean DEFAULT_BOOLEAN = false;
+    private static final byte DEFAULT_BYTE = 0;
+    private static final short DEFAULT_SHORT = 0;
+    private static final int DEFAULT_INT = 0;
+    private static final long DEFAULT_LONG = 0;
+    private static final float DEFAULT_FLOAT = 0;
+    private static final double DEFAULT_DOUBLE = 0;
+
     // In order of preference
     private static final List<String> VALID_DELIMITERS_LIST = List.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
@@ -96,6 +104,7 @@ public class ConfigMapper {
     public static final String DOCREF_EXAMPLE = ","
             + DOCREF_PREFIX
             + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
+
 
     // The guice bound appConfig
     private final AppConfig appConfig;
@@ -237,7 +246,7 @@ public class ConfigMapper {
         convertValue(fullPath, valueAsString);
     }
 
-    Object convertValue(final PropertyPath fullPath, final String valueAsString) {
+    public Object convertValue(final PropertyPath fullPath, final String valueAsString) {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
@@ -264,21 +273,25 @@ public class ConfigMapper {
                     .filter(entry -> entry.getValue().hasDatabaseOverride())
                     .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
                     .forEach(entry -> {
-                        final ConfigProperty globalProp = entry.getValue();
-                        globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+                        try {
+                            final ConfigProperty globalProp = entry.getValue();
+                            globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
 
-                        final Prop prop = propertyMap.get(entry.getKey());
-                        if (prop != null) {
-                            // Now set the new effective value on our guice bound appConfig instance
-                            final Type genericType = prop.getValueType();
-                            final Object typedValue = convertToObject(
-                                    prop,
-                                    globalProp.getEffectiveValue().orElse(null),
-                                    genericType);
-                            prop.setValueOnConfigObject(typedValue);
-                        } else {
-                            throw new RuntimeException(LogUtil.message(
-                                    "Not expecting prop to be null for {}", entry.getKey().toString()));
+                            final Prop prop = propertyMap.get(entry.getKey());
+                            if (prop != null) {
+                                // Now set the new effective value on our guice bound appConfig instance
+                                final Type genericType = prop.getValueType();
+                                final Object typedValue = convertToObject(
+                                        prop,
+                                        globalProp.getEffectiveValue().orElse(null),
+                                        genericType);
+                                prop.setValueOnConfigObject(typedValue);
+                            } else {
+                                throw new RuntimeException(LogUtil.message(
+                                        "Not expecting prop to be null for {}", entry.getKey().toString()));
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
                         }
                     });
         }
@@ -635,10 +648,14 @@ public class ConfigMapper {
             final Prop prop,
             final String value,
             final Type genericType) {
+        final Class<?> type = getDataType(genericType);
+
         if (value == null) {
+            if (type.isPrimitive()) {
+                return getDefaultValue(type);
+            }
             return null;
         }
-        Class<?> type = getDataType(genericType);
 
         try {
             if (type.equals(String.class)) {
@@ -699,6 +716,27 @@ public class ConfigMapper {
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
         throw new ConfigPropertyValidationException(LogUtil.message(
                 "Type [{}] is not supported for value [{}]", genericType, value));
+    }
+
+    private static Object getDefaultValue(Class<?> clazz) {
+        if (clazz.equals(boolean.class)) {
+            return DEFAULT_BOOLEAN;
+        } else if (clazz.equals(byte.class)) {
+            return DEFAULT_BYTE;
+        } else if (clazz.equals(short.class)) {
+            return DEFAULT_SHORT;
+        } else if (clazz.equals(int.class)) {
+            return DEFAULT_INT;
+        } else if (clazz.equals(long.class)) {
+            return DEFAULT_LONG;
+        } else if (clazz.equals(float.class)) {
+            return DEFAULT_FLOAT;
+        } else if (clazz.equals(double.class)) {
+            return DEFAULT_DOUBLE;
+        } else {
+            throw new IllegalArgumentException(
+                    "Class type " + clazz + " not supported");
+        }
     }
 
     private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {

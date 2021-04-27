@@ -9,8 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2201** : Improved Stroom Proxy and aggregation process.
 
+* Issue **#2098** : Properties that contain passwords no longer transfer any part of the password to the UI.
 
-## [v7.1-beta.2] - 2021-04-23
+* Issue **#1841** : Fixed migration of some config props.
+
+* Issue **#2151** : The UI now shows REST service error messages properly.
+
+* Issue **#1930** : Dashboards opened from links now stop querying when closed.
+
+* Issue **#2166** : You can now change index volume group names.
+
+* Issue **#2090** : Changed to log the authenticated user (if there is one) during noauth calls.
 
 * Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
 
@@ -30,7 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
 
-* Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+* Issue **#2179** : Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
 
 * Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
 

@@ -12,6 +12,7 @@ import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -34,10 +35,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
 
 @AutoLogged
 public class ContentResourceImpl implements ContentResource {
+
     final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
     final Provider<ContentService> contentServiceProvider;
     final Provider<ExplorerNodeService> explorerNodeServiceProvider;
@@ -58,7 +59,7 @@ public class ContentResourceImpl implements ContentResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceKey importContent(final ImportConfigRequest request) {
         if (request.getConfirmList() == null) {
-            throw new BadRequestException("Missing confirm list");
+            throw RestUtil.badRequest("Missing confirm list");
         }
 
         return eventLoggingServiceProvider.get().loggedResult(
@@ -104,7 +105,7 @@ public class ContentResourceImpl implements ContentResource {
         docRefs.getDocRefs().stream()
                 .forEach(docRef -> {
                     final String path = securityContextProvider.get()
-                            .asProcessingUserResult(() ->  explorerNodeServiceProvider.get().getPath(docRef))
+                            .asProcessingUserResult(() -> explorerNodeServiceProvider.get().getPath(docRef))
                             .stream().map(ExplorerNode::getName).collect(Collectors.joining("/"))
                             + docRef.getName();
 

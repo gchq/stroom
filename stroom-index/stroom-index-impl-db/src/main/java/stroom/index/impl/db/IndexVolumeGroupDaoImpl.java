@@ -2,8 +2,11 @@ package stroom.index.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.docref.DocRef;
+import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexVolumeGroup;
 
 import org.jooq.Record;
@@ -13,6 +16,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 
@@ -45,11 +49,14 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             };
 
     private final IndexDbConnProvider indexDbConnProvider;
+    private final Provider<IndexStore> indexStoreProvider;
     private final GenericDao<IndexVolumeGroupRecord, IndexVolumeGroup, Integer> genericDao;
 
     @Inject
-    IndexVolumeGroupDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
+    IndexVolumeGroupDaoImpl(final IndexDbConnProvider indexDbConnProvider,
+                            final Provider<IndexStore> indexStoreProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
+        this.indexStoreProvider = indexStoreProvider;
         genericDao = new GenericDao<>(INDEX_VOLUME_GROUP,
                 INDEX_VOLUME_GROUP.ID,
                 IndexVolumeGroup.class,
@@ -88,7 +95,32 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
-        return genericDao.update(indexVolumeGroup);
+        // Get the current group name.
+        String currentGroupName = null;
+        if (indexVolumeGroup.getId() != null) {
+            final IndexVolumeGroup current = get(indexVolumeGroup.getId());
+            currentGroupName = current.getName();
+        }
+
+        final IndexVolumeGroup saved = genericDao.update(indexVolumeGroup);
+
+        // If the group name has changed then update indexes to point to the new group name.
+        if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
+            final IndexStore indexStore = indexStoreProvider.get();
+            if (indexStore != null) {
+                final List<DocRef> indexes = indexStore.list();
+                for (final DocRef docRef : indexes) {
+                    final IndexDoc indexDoc = indexStore.readDocument(docRef);
+                    if (indexDoc.getVolumeGroupName() != null &&
+                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
+                        indexDoc.setVolumeGroupName(saved.getName());
+                        indexStore.writeDocument(indexDoc);
+                    }
+                }
+            }
+        }
+
+        return saved;
     }
 
     @Override

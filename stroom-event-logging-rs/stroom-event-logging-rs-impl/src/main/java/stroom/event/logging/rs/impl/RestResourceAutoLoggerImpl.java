@@ -125,7 +125,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
-            throws IOException, WebApplicationException {
+            throws WebApplicationException {
         try {
             writerInterceptorContext.proceed();
         } catch (Exception ex) {

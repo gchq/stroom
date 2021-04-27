@@ -63,7 +63,7 @@ public class SplashConfig extends AbstractConfig {
         return enabled;
     }
 
-    public void setEnabled(final Boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 
