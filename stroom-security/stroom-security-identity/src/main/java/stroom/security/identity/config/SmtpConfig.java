@@ -18,6 +18,7 @@
 
 package stroom.security.identity.config;
 
+import stroom.util.config.annotations.Password;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
@@ -49,15 +50,14 @@ public class SmtpConfig extends AbstractConfig {
     @JsonPropertyDescription("The transport type for communicating with the SMTP server.")
     private String transport = "plain";
 
-    @NotNull
     @JsonProperty("username")
     @JsonPropertyDescription("The username to authenticate with on the SMTP server.")
-    private String username = "username";
+    private String username;
 
-    @NotNull
+    @Password
     @JsonProperty("password")
     @JsonPropertyDescription("The password to authenticate with on the SMTP server.")
-    private String password = "password";
+    private String password;
 
     public String getHost() {
         return host;
