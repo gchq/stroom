@@ -16,7 +16,12 @@
 
 package stroom.search.extraction;
 
+import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
+import stroom.query.common.v2.Receiver;
+
+import java.util.List;
+import java.util.Map;
 
 class ExtractionTask {
 
@@ -24,6 +29,8 @@ class ExtractionTask {
     private final long[] eventIds;
     private final DocRef pipelineRef;
     private final ExtractionReceiver receiver;
+    private final List<AlertDefinition> alertDefinitions;
+    private final Map<String, String> paramMapForAlerting;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
@@ -33,6 +40,22 @@ class ExtractionTask {
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
+        this.alertDefinitions = null;
+        this.paramMapForAlerting = null;
+    }
+
+    ExtractionTask(final long streamId,
+                   final long[] eventIds,
+                   final DocRef pipelineRef,
+                   final ExtractionReceiver receiver,
+                   final List<AlertDefinition> alertTableSettings,
+                   final Map<String, String> paramMap) {
+        this.streamId = streamId;
+        this.eventIds = eventIds;
+        this.pipelineRef = pipelineRef;
+        this.receiver = receiver;
+        this.alertDefinitions = alertTableSettings;
+        this.paramMapForAlerting = paramMap;
     }
 
     long getStreamId() {
@@ -50,4 +73,17 @@ class ExtractionTask {
     ExtractionReceiver getReceiver() {
         return receiver;
     }
+
+    boolean isAlerting() {
+        return alertDefinitions != null;
+    }
+
+    final List<AlertDefinition> getAlertTableSettings() {
+        return alertDefinitions;
+    }
+
+    final Map<String, String> getParamMapForAlerting() {
+        return paramMapForAlerting;
+    }
+
 }

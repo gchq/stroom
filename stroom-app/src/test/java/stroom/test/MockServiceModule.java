@@ -1,6 +1,7 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
+import stroom.alert.mock.MockAlertModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.mock.MockStreamStoreModule;
@@ -46,6 +47,7 @@ public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new MockActivityModule());
+        install(new MockAlertModule());
         install(new CacheModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());

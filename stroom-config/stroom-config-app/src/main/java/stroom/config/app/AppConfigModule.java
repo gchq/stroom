@@ -121,6 +121,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getActivityConfig,
                 AppConfig::setActivityConfig,
                 stroom.activity.impl.db.ActivityConfig.class);
+        bindConfig(AppConfig::getAlertConfig, AppConfig::setAlertConfig, stroom.alert.impl.AlertConfig.class);
         bindConfig(AppConfig::getAnnotationConfig,
                 AppConfig::setAnnotationConfig,
                 stroom.annotation.impl.AnnotationConfig.class);

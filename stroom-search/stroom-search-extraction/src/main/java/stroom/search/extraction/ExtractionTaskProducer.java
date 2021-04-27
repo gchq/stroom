@@ -284,4 +284,25 @@ class ExtractionTaskProducer extends TaskProducer {
                 "tracker=" + tracker +
                 '}';
     }
+
+    static class ExtractionRunnable implements Consumer<TaskContext> {
+        private final ExtractionTask task;
+        private final Provider<ExtractionTaskHandler> handlerProvider;
+
+        ExtractionRunnable(final ExtractionTask task, final Provider<ExtractionTaskHandler> handlerProvider) {
+            this.task = task;
+            this.handlerProvider = handlerProvider;
+        }
+
+        @Override
+        public void accept(final TaskContext taskContext) {
+            final ExtractionTaskHandler handler = handlerProvider.get();
+            LOGGER.debug("Starting extraction handler for Stream " + task.getStreamId());
+            handler.exec(taskContext, task);
+        }
+
+        public ExtractionTask getTask() {
+            return task;
+        }
+    }
 }

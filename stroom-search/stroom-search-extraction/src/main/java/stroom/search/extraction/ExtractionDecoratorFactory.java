@@ -1,5 +1,6 @@
 package stroom.search.extraction;
 
+import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
@@ -15,6 +16,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -75,7 +77,7 @@ public class ExtractionDecoratorFactory {
                 final Consumer<Val[]> valuesConsumer = coprocessor.getValuesConsumer();
                 final Consumer<Throwable> errorConsumer = coprocessor.getErrorConsumer();
                 final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
@@ -89,7 +91,7 @@ public class ExtractionDecoratorFactory {
                 final Consumer<Long> completionConsumer = delta ->
                         coprocessorSet.forEach(coprocessor ->
                                 coprocessor.getCompletionConsumer().accept(delta));
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 
             // Decorate result with annotations.
@@ -118,4 +120,21 @@ public class ExtractionDecoratorFactory {
         // Begin processing.
         return extractionTaskProducer.process();
     }
+
+    public Receiver createAlertExtractionTask(final ExtractionReceiver receiver,
+                                              final long streamId, final long[] sortedEventIds,
+                                              DocRef extractionPipeline, List<AlertDefinition> alertDefinitions,
+                                              final Map<String, String> params) {
+        final AlertExtractionSingleTaskProducer extractionTaskProducer =
+                new AlertExtractionSingleTaskProducer(streamId, sortedEventIds,
+                        extractionPipeline, receiver,
+                alertDefinitions, params,
+                extractionTaskExecutor,
+                extractionTaskHandlerProvider,
+                taskContextFactory,
+                taskContextFactory.currentContext());
+
+        return extractionTaskProducer.process();
+    }
+
 }
