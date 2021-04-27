@@ -1,0 +1,78 @@
+@startuml
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity source {
+  *id : bigint
+  --
+  *path : varchar(255) - unique
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *last_modified_time_ms : bigint
+  *examined : boolean
+  forwarded : boolean
+  forward_error : boolean
+}
+
+entity source_item {
+  *id : bigint
+  --
+  *name : varchar(255)
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *fk_source_id : bigint
+  *aggregated : boolean
+}
+
+entity source_entry {
+  *id : bigint
+  --
+  *extension : varchar(255)
+  *extension_type : int
+  *byte_size : bigint
+  *fk_source_item_id : bigint
+}
+
+entity aggregate {
+  *id : bigint
+  --
+  *create_time_ms : bigint
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *byte_size : bigint
+  *items : int
+  *complete : boolean
+  *forward_error : boolean
+}
+
+entity aggregate_item {
+  *id : bigint
+  --
+  *fk_aggregate_id : bigint
+  *fk_source_item_id : bigint
+}
+
+entity forward_url {
+  *id : int
+  --
+  *url : varchar(255)
+}
+
+entity forward_aggregate {
+  *id : bigint
+  --
+  *fk_forward_url_id : int
+  *fk_aggregate_id : bigint
+  *success : boolean
+  *error : varchar(255)
+}
+
+source ||..o{ source_item
+source_item ||--|{ source_entry
+aggregate ||--|{ aggregate_item
+source_item ||..o| aggregate_item
+forward_aggregate }o--|| forward_url
+forward_aggregate }o--|| aggregate
+
+@enduml

@@ -38,7 +38,7 @@ class TestRASegmentStreamsNulls {
         final SegmentOutputStream segStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 () -> new LockingFileOutputStream(segFile, true));
 
-        segStream.write("tom1".getBytes(StreamUtil.DEFAULT_CHARSET));
+        segStream.write("test1".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         segStream.close();
 
@@ -48,7 +48,7 @@ class TestRASegmentStreamsNulls {
         RASegmentInputStream inputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(segFile, true));
 
-        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("tom1");
+        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("test1");
 
         inputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(segFile, true));
@@ -59,7 +59,7 @@ class TestRASegmentStreamsNulls {
             inputStream.include(i);
         }
 
-        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("tom1");
+        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("test1");
 
         Files.deleteIfExists(datFile);
         Files.deleteIfExists(segFile);

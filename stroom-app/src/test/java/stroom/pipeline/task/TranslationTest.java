@@ -25,7 +25,6 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
-import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
@@ -46,7 +45,6 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorService;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -55,9 +53,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentImportService;
@@ -100,15 +97,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ProcessorTaskManager processorTaskManager;
     @Inject
-    private TaskManager taskManager;
-    @Inject
     private SteppingService steppingService;
     @Inject
     private FeedStore feedStore;
     @Inject
     private PipelineStore pipelineStore;
-    @Inject
-    private ProcessorService streamProcessorService;
     @Inject
     private ProcessorFilterService processorFilterService;
     @Inject
@@ -116,13 +109,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private FeedProperties feedProperties;
-    @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
     private ContentImportService contentImportService;
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
+    @Inject
+    private StreamTargetStreamHandlers streamHandlers;
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -354,16 +347,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
-        final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedProperties, null, feed.getName(), feed.getStreamType());
-
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
-                handlerList,
-                new byte[1000],
-                "DefaultDataFeedRequest-");
-
-        stroomStreamProcessor.process(Files.newInputStream(file), "test");
-        stroomStreamProcessor.closeHandlers();
+        try (final InputStream inputStream = Files.newInputStream(file)) {
+            streamHandlers.handle(feed.getName(), feed.getStreamType(), attributeMap, handler -> {
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+                stroomStreamProcessor.process(inputStream, "test");
+            });
+        }
     }
 
     /**

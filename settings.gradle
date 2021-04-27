@@ -200,6 +200,7 @@ include 'stroom-processor:stroom-processor-mock'
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
+include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
 // Query

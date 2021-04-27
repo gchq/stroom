@@ -43,6 +43,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
@@ -95,7 +96,6 @@ public final class SetupSampleDataBean {
 
     private final FeedStore feedStore;
     private final FeedProperties feedProperties;
-    private final Store streamStore;
     private final ImportExportSerializer importExportSerializer;
     private final ProcessorService processorService;
     private final ProcessorFilterService processorFilterService;
@@ -108,11 +108,11 @@ public final class SetupSampleDataBean {
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
     private final SampleDataGenerator sampleDataGenerator;
+    private final StreamTargetStreamHandlers streamTargetStreamHandlers;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
                         final FeedProperties feedProperties,
-                        final Store streamStore,
                         final ImportExportSerializer importExportSerializer,
                         final ProcessorService processorService,
                         final ProcessorFilterService processorFilterService,
@@ -124,10 +124,10 @@ public final class SetupSampleDataBean {
                         final FsVolumeService fsVolumeService,
                         final StatisticStoreStore statisticStoreStore,
                         final StroomStatsStoreStore stroomStatsStoreStore,
-                        final SampleDataGenerator sampleDataGenerator) {
+                        final SampleDataGenerator sampleDataGenerator,
+                        final StreamTargetStreamHandlers streamTargetStreamHandlers) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
-        this.streamStore = streamStore;
         this.importExportSerializer = importExportSerializer;
         this.processorService = processorService;
         this.processorFilterService = processorFilterService;
@@ -140,6 +140,7 @@ public final class SetupSampleDataBean {
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
         this.sampleDataGenerator = sampleDataGenerator;
+        this.streamTargetStreamHandlers = streamTargetStreamHandlers;
     }
 
 //    private void createStreamAttributes() {
@@ -394,7 +395,7 @@ public final class SetupSampleDataBean {
         LOGGER.info("Checking data dir {}", dataDir.toAbsolutePath().normalize());
         if (Files.exists(dataDir)) {
             // Load data.
-            final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
+            final DataLoader dataLoader = new DataLoader(feedProperties, streamTargetStreamHandlers);
 
             // We spread the received time over 10 min intervals to help test
             // repo
@@ -422,6 +423,7 @@ public final class SetupSampleDataBean {
                 dataLoader.loadInputStream(
                         feedName,
                         "Gen data",
+                        null,
                         StreamUtil.stringToStream(randomData),
                         false,
                         startTime);
@@ -437,7 +439,7 @@ public final class SetupSampleDataBean {
                     if (Files.exists(dir)) {
                         LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize().toString());
                         // Load data.
-                        final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
+                        final DataLoader dataLoader = new DataLoader(feedProperties, streamTargetStreamHandlers);
                         long startTime = System.currentTimeMillis();
 
                         // Then load event data.
@@ -466,6 +468,7 @@ public final class SetupSampleDataBean {
             dataLoader.loadInputStream(
                     feedName,
                     "Auto generated statistics data",
+                    null,
                     StreamUtil.stringToStream(dataGenerationFunction.apply(iterations, startTime)),
                     false,
                     startTime.toEpochMilli());
@@ -479,7 +482,7 @@ public final class SetupSampleDataBean {
      * exist it will fail silently
      */
     private void generateSampleStatisticsData() {
-        final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
+        final DataLoader dataLoader = new DataLoader(feedProperties, streamTargetStreamHandlers);
         final long startTime = System.currentTimeMillis();
 
         //keep the big and small feeds apart in terms of their event times
@@ -519,6 +522,7 @@ public final class SetupSampleDataBean {
             dataLoader.loadInputStream(
                     STATS_COUNT_API_FEED_NAME,
                     "Sample statistics count data for export to API",
+                    null,
                     StreamUtil.stringToStream(sampleData),
                     false,
                     startTime);

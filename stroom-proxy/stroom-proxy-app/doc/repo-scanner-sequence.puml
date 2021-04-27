@@ -1,0 +1,17 @@
+@startuml
+
+title Scan Proxy Repo
+
+participant ProxyRepoFileScanner
+participant ProxyRepoSources
+database repo
+database db
+actor ChangeListener
+
+ProxyRepoFileScanner ->> repo: scan
+ProxyRepoFileScanner ->> ProxyRepoSources: addSource
+ProxyRepoSources ->> db: Add `source` record
+ProxyRepoSources --// ChangeListener: onChange
+
+
+@enduml

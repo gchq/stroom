@@ -17,74 +17,123 @@
 
 package stroom.core.receive;
 
-import stroom.proxy.repo.FileSetProcessor;
-import stroom.proxy.repo.RepositoryProcessor;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
+import stroom.proxy.repo.AggregateForwarder;
+import stroom.proxy.repo.Aggregator;
+import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.Cleanup;
+import stroom.proxy.repo.ProxyRepoFileScanner;
+import stroom.proxy.repo.ProxyRepoSourceEntries;
+import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.SourceForwarder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * <p>
  * Task read a proxy repository and sent it to the stream store.
  * </p>
  */
+@Singleton
 public class ProxyAggregationExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
-    private final RepositoryProcessor repositoryProcessor;
+    private final Exec exec;
 
     @Inject
-    ProxyAggregationExecutor(final ExecutorProvider executorProvider,
-                             final TaskContextFactory taskContextFactory,
-                             final Provider<FileSetProcessor> fileSetProcessorProvider,
-                             final ProxyAggregationConfig proxyAggregationConfig) {
-        this(
-                executorProvider,
-                taskContextFactory,
-                fileSetProcessorProvider,
-                proxyAggregationConfig.getProxyDir(),
-                proxyAggregationConfig.getProxyThreads(),
-                proxyAggregationConfig.getMaxFileScan(),
-                proxyAggregationConfig.getMaxConcurrentMappedFiles(),
-                proxyAggregationConfig.getMaxFilesPerAggregate(),
-                proxyAggregationConfig.getMaxUncompressedFileSizeBytes()
-        );
-    }
+    public ProxyAggregationExecutor(final ProxyRepoFileScanner proxyRepoFileScanner,
+                                    final ProxyRepoSources proxyRepoSources,
+                                    final ProxyRepoSourceEntries proxyRepoSourceEntries,
+                                    final AggregatorConfig aggregatorConfig,
+                                    final Aggregator aggregator,
+                                    final Provider<AggregateForwarder> aggregateForwarderProvider,
+                                    final Provider<SourceForwarder> sourceForwarderProvider,
+                                    final Cleanup cleanup) {
+        if (aggregatorConfig.isEnabled()) {
+            final AggregateForwarder aggregateForwarder = aggregateForwarderProvider.get();
 
-    public ProxyAggregationExecutor(final ExecutorProvider executorProvider,
-                                    final TaskContextFactory taskContextFactory,
-                                    final Provider<FileSetProcessor> fileSetProcessorProvider,
-                                    final String proxyDir,
-                                    final int threadCount,
-                                    final int maxFileScan,
-                                    final int maxConcurrentMappedFiles,
-                                    final int maxFilesPerAggregate,
-                                    final long maxUncompressedFileSize) {
-        this.repositoryProcessor = new RepositoryProcessor(
-                executorProvider,
-                taskContextFactory,
-                fileSetProcessorProvider,
-                proxyDir,
-                threadCount,
-                maxFileScan,
-                maxConcurrentMappedFiles,
-                maxFilesPerAggregate,
-                maxUncompressedFileSize);
+            // Cleanup as part of the start up process in case aggregation has been turned on/off.
+            aggregateForwarder.cleanup();
+
+            // If we are aggregating then we need to tell the source entry service to examine new sources when they are
+            // added.
+            proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
+            // When new source entries have been added tell teh aggregator that they are ready to be added to
+            // aggregates.
+            proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
+            // When new aggregates are complete tell the forwarder that it can forward them.
+            aggregator.addChangeListener(count -> aggregateForwarder.forward());
+            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
+            // that are no longer needed.
+            aggregateForwarder.addChangeListener(() -> {
+                cleanup.deleteUnusedSourceEntries();
+                cleanup.deleteUnusedSources();
+            });
+
+            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+                // Try aggregating again.
+                aggregator.aggregate();
+
+                // Scan the proxy repo to find new files to aggregate.
+                proxyRepoFileScanner.scan(scanSorted);
+
+                if (forceAggregation) {
+                    // Force close of old aggregates.
+                    aggregator.closeOldAggregates(System.currentTimeMillis());
+                }
+
+                // Retry failed forwards.
+                if (aggregateForwarder.retryFailures() > 0) {
+                    aggregateForwarder.forward();
+                }
+            };
+
+        } else {
+            final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
+
+            // Cleanup as part of the start up process in case aggregation has been turned on/off.
+            sourceForwarder.cleanup();
+
+            // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
+            proxyRepoSources.addChangeListener((source) -> sourceForwarder.forward());
+            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
+            // that are no longer needed.
+            sourceForwarder.addChangeListener(cleanup::deleteUnusedSources);
+
+            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+                // Scan the proxy repo to find new files to aggregate.
+                proxyRepoFileScanner.scan(scanSorted);
+
+                // Retry failed forwards.
+                if (sourceForwarder.retryFailures() > 0) {
+                    sourceForwarder.forward();
+                }
+            };
+        }
     }
 
     public void exec() {
+        exec(false, false);
+    }
+
+    public void exec(final boolean forceAggregation,
+                     final boolean scanSorted) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
-                repositoryProcessor.process();
+                exec.exec(forceAggregation, scanSorted);
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
+    }
+
+    private interface Exec {
+
+        void exec(boolean forceAggregation, boolean scanSorted);
     }
 }

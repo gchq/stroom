@@ -10,35 +10,40 @@ public class HostNameUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HostNameUtil.class);
 
+    private static String cachedHostName;
+
     private HostNameUtil() {
     }
 
     public static String determineHostName() {
-        // If running in a docker container then these env vars can be set so
-        // the container knows who its host is
+        if (cachedHostName == null) {
+            // If running in a docker container then these env vars can be set so
+            // the container knows who its host is
 
-        String hostName = null;
-        try {
-            hostName = getEnvVar("DOCKER_HOST_HOSTNAME");
+            String hostName;
+            try {
+                hostName = getEnvVar("DOCKER_HOST_HOSTNAME");
 
-            if (hostName == null || hostName.isEmpty()) {
-                hostName = getEnvVar("DOCKER_HOST_IP");
-            }
+                if (hostName == null || hostName.isEmpty()) {
+                    hostName = getEnvVar("DOCKER_HOST_IP");
+                }
 
-            if (hostName == null || hostName.isEmpty()) {
-                hostName = InetAddress.getLocalHost().getHostName();
-            }
+                if (hostName == null || hostName.isEmpty()) {
+                    hostName = InetAddress.getLocalHost().getHostName();
+                }
 
-            if (hostName == null || hostName.isEmpty()) {
+                if (hostName == null || hostName.isEmpty()) {
+                    hostName = "Unknown";
+                }
+            } catch (UnknownHostException e) {
+                LOGGER.error("Unable to determine hostname, using 'Unknown'", e);
                 hostName = "Unknown";
             }
-        } catch (UnknownHostException e) {
-            LOGGER.error("Unable to determine hostname, using 'Unknown'", e);
-            hostName = "Unknown";
-        }
 
-        LOGGER.info("Determined hostname to be {}", hostName);
-        return hostName;
+            LOGGER.info("Determined hostname to be {}", hostName);
+            cachedHostName = hostName;
+        }
+        return cachedHostName;
     }
 
     private static String getEnvVar(final String envVarName) {

@@ -16,10 +16,9 @@
 
 package stroom.core.receive;
 
-import stroom.proxy.repo.FileSetProcessor;
+import stroom.proxy.repo.ForwarderDestinations;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RequestHandler;
-import stroom.util.io.BufferFactory;
 
 import com.google.inject.AbstractModule;
 
@@ -27,9 +26,10 @@ public class ReceiveDataModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(BufferFactory.class).to(BufferFactoryImpl.class);
-        bind(FileSetProcessor.class).to(DataStoreFileSetProcessor.class);
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
+
+        // Make Stroom produce proxy aggregation forwarding destinations that put data into Stroom.
+        bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
     }
 }

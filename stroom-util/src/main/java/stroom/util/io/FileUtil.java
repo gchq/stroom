@@ -22,6 +22,7 @@ import stroom.util.logging.LogUtil;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
@@ -215,6 +216,14 @@ public final class FileUtil {
 
     public static String getCanonicalPath(final Path file) {
         return file.toAbsolutePath().normalize().toString();
+    }
+
+    public static Path createTempDirectory(final String prefix) {
+        try {
+            return Files.createTempDirectory(prefix);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**

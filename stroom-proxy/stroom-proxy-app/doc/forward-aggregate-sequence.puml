@@ -1,0 +1,53 @@
+@startuml
+
+title Aggregate and Forward Data
+
+participant ProxyRepoSources
+participant ProxyRepoSourceEntries
+participant Aggregator
+participant AggregateForwarder
+database db
+database repo
+participant ForwardStreamHandlers
+participant Cleanup
+actor Destination
+
+ProxyRepoSources --// ProxyRepoSourceEntries: onChange
+ProxyRepoSourceEntries -> ProxyRepoSourceEntries++: examine
+ProxyRepoSourceEntries --// ProxyRepoSourceEntries++: examineSource
+ProxyRepoSourceEntries -> db: add source items
+ProxyRepoSourceEntries -> db: add source entries
+ProxyRepoSourceEntries -> db: mark source as examined
+
+ProxyRepoSourceEntries --// Aggregator: onChange
+
+return
+return
+
+Aggregator -> Aggregator++: aggregate
+Aggregator -> Aggregator++: add source item
+Aggregator -> db: mark source_item as aggregated
+Aggregator -> Aggregator: closeOldAggregates
+Aggregator --// AggregateForwarder: onChange
+
+return
+return
+
+AggregateForwarder -// AggregateForwarder++: forward
+AggregateForwarder -// AggregateForwarder++: forwardAggregate
+AggregateForwarder -> repo: read
+AggregateForwarder -> ForwardStreamHandlers: write
+ForwardStreamHandlers --> Destination: handle
+AggregateForwarder -> db: record 'forward_aggregate'
+
+AggregateForwarder -> db: record 'aggregate' forwarded
+return
+
+AggregateForwarder -> AggregateForwarder++: deleteAggregate
+AggregateForwarder -> db: delete 'forward_aggregate' for complete aggregate id
+AggregateForwarder -> db: delete 'aggregate_item' for complete aggregate id
+AggregateForwarder -> db: delete 'aggregate' for complete aggregate id
+AggregateForwarder --// Cleanup: onChange
+return
+
+@enduml

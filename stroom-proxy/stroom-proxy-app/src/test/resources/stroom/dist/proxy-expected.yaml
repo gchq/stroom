@@ -1,32 +1,41 @@
 ---
 proxyConfig:
-  proxyContentDir: null
-  useDefaultOpenIdCredentials: true
-  proxyRequestConfig:
+  path:
+    home: "."
+    temp: "/tmp/stroom"
+  receiptPolicy:
     receiptPolicyUuid: null
-  forwardStreamConfig:
+  repository:
+    storingEnabled: false
+    repoDir: "repo"
+    dbDir: "repo"
+    format: "${pathId}/${id}"
+    cleanupFrequency: "PT1H"
+    lockDeleteAge: "PT1H"
+    dirCleanDelay: "PT10S"
+  scanner:
+    scanningEnabled: false
+    scanFrequency: "PT10S"
+  aggregator:
+    enabled: true
+    maxItemsPerAggregate: 1000
+    maxUncompressedByteSize: "1.0G"
+    maxAggregateAge: "PT10M"
+    aggregationFrequency: "PT1M"
+  forwarder:
+    forwardingEnabled: false
     userAgent: null
     forwardDestinations: []
-    forwardingEnabled: false
-  proxyRepositoryConfig:
-    format: "${pathId}/${id}"
-    rollCron: null
-    storingEnabled: false
-    dir: null
-  proxyRepositoryReaderConfig:
-    readCron: null
-    forwardThreadCount: 3
-    maxFileScan: 100000
-    maxConcurrentMappedFiles: 100000
-    maxAggregation: 1000
-    maxStreamSize: "1.0G"
-  logStreamConfig:
+    retryFrequency: "PT1M"
+  logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
-  contentSyncConfig:
+  contentDir: null
+  contentSync:
     upstreamUrl: null
     syncFrequency: 0
     apiKey: null
     contentSyncEnabled: false
+  useDefaultOpenIdCredentials: true
   feedStatus:
     url: null
     apiKey: null

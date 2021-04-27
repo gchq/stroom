@@ -22,6 +22,7 @@ import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Attr;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -217,6 +218,15 @@ public class AttributeMapUtil {
                     attributeMap.put(key, val);
                 }
             }
+        }
+    }
+
+    public static void addFeedAndType(final AttributeMap attributeMap,
+                                       final String feedName,
+                                       final String typeName) {
+        attributeMap.put(StandardHeaderArguments.FEED, feedName.trim());
+        if (typeName != null && !typeName.isBlank()) {
+            attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());
         }
     }
 }

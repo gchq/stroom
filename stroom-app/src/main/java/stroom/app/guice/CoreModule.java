@@ -25,6 +25,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
+        install(new stroom.core.receive.ProxyAggregationModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.sysinfo.SystemInfoModule());
@@ -77,6 +78,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
+        install(new stroom.proxy.repo.ProxyRepoDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());

@@ -16,6 +16,7 @@
 
 package stroom.config.app;
 
+import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

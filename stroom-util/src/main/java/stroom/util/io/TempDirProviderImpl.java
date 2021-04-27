@@ -2,6 +2,7 @@ package stroom.util.io;
 
 import stroom.util.logging.LogUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,9 +47,13 @@ public class TempDirProviderImpl implements TempDirProvider {
             }
 
             // If this isn't an absolute path then make it so relative to the home path.
-            if (!path.startsWith("/") && !path.startsWith("\\")) {
+            String canonicalPath = FileUtil.getCanonicalPath(path);
+            if (!path.toString().equals(canonicalPath)) {
                 path = homeDirProvider.get().resolve(path);
             }
+//            if (!path.startsWith("/") && !path.startsWith("\\")) {
+//                path = homeDirProvider.get().resolve(path);
+//            }
 
             path = path.toAbsolutePath();
 

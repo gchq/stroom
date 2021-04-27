@@ -40,6 +40,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.test.util.ConsoleColour;
+import stroom.util.io.StreamUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -195,7 +196,7 @@ class TestSerialisation {
 //        System.out.println(serialisedIn);
 
         if (!Files.isRegularFile(expectedFile)) {
-            StreamUtil.stringToFile(serialisedIn, expectedFile);
+            stroom.util.io.StreamUtil.stringToFile(serialisedIn, expectedFile);
         }
         StreamUtil.stringToFile(serialisedIn, actualFileIn);
 

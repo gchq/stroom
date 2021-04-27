@@ -93,10 +93,10 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         for (int i = 1; i <= entryCount; i++) {
             final String baseName = StroomFileNameUtil.idToString(i);
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Manifest)).isTrue();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Data)).isTrue();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Context)).isFalse();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Meta)).isFalse();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.MANIFEST)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.DATA)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.CONTEXT)).isFalse();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.META)).isFalse();
         }
         stroomZipFile.close();
 
@@ -116,7 +116,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         Files.write(file, "TEST".getBytes());
 
         dataUploadTaskHandler.uploadData("test.dat", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n");
+                StreamTypeNames.RAW_EVENTS, null, "Foo:One\nBar:Two\n");
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
     }
@@ -163,13 +163,13 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         dataDownloadTaskHandler.downloadData(findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Meta)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Context)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Data)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Meta)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Context)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Data)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.MANIFEST)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.META)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.CONTEXT)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.DATA)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.META)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.CONTEXT)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.DATA)).isTrue();
         stroomZipFile.close();
 
         final String extraMeta = "Z:ALL\n";

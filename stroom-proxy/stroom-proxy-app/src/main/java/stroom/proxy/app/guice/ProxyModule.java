@@ -1,6 +1,7 @@
 package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
+import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -16,20 +17,24 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
-import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
-import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.app.ProxyLifecycle;
+import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
-import stroom.proxy.repo.ProxyLifecycle;
-import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.ProxyRepositoryReader;
-import stroom.proxy.repo.StreamHandlerFactory;
+import stroom.proxy.repo.ErrorReceiver;
+import stroom.proxy.repo.ErrorReceiverImpl;
+import stroom.proxy.repo.ForwarderDestinations;
+import stroom.proxy.repo.ProxyRepoDbModule;
+import stroom.proxy.repo.RepoDbDirProvider;
+import stroom.proxy.repo.RepoDbDirProviderImpl;
+import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.RepoDirProviderImpl;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
@@ -52,9 +57,9 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
@@ -70,7 +75,6 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -98,6 +102,8 @@ public class ProxyModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
 
         install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new DbModule());
+        install(new ProxyRepoDbModule());
         install(new MockCollectionModule());
 
         install(new DictionaryModule());
@@ -108,29 +114,28 @@ public class ProxyModule extends AbstractModule {
         install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
-        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
+        bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
-        bind(ProxyRepositoryManager.class).asEagerSingleton();
-        bind(ProxyRepositoryReader.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
-        bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
+        bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
 
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+        bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
+        bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceImpl.class)
-                .bind(ForwardStreamHandlerFactory.class)
+                .bind(ForwarderDestinationsImpl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
-                .bind(ProxyRepositoryManager.class)
                 .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
@@ -162,8 +167,9 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Persistence providePersistence() {
-        return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
+    Persistence providePersistence(PathCreator pathCreator) {
+        final String path = configuration.getProxyConfig().getContentDir();
+        return new FSPersistence(pathCreator.toAppPath(path));
     }
 
     @Provides

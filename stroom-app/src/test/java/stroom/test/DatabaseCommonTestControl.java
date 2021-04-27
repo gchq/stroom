@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -90,10 +89,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         Path indexVolDir;
         if (tempDir == null) {
             final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
-            fsVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(fsVolPathStr.get(0))));
+            fsVolDir = pathCreator.toAppPath(fsVolPathStr.get(0));
             final List<String> volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths();
-            indexVolDir = Paths.get(
-                    pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(volGroupPathStr.get(0))));
+            indexVolDir = pathCreator.toAppPath(volGroupPathStr.get(0));
         } else {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;

@@ -465,13 +465,14 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "proxy_repo"
-    proxyThreads: 10
-    maxFileScan: 100000
-    maxConcurrentMappedFiles: 100000
-    maxFilesPerAggregate: 10000
-    maxUncompressedFileSize: "1G"
-    buffferSize: 8192
+    repoDir: "proxy_repo"
+    dbDir: "proxy_repo_db"
+    aggregator:
+      enabled: true
+      maxItemsPerAggregate: 1000
+      maxUncompressedByteSize: "1.0G"
+      maxAggregateAge: "PT10M"
+      aggregationFrequency: "PT1M"
   publicUri:
     scheme: "https"
     hostname: null
@@ -479,7 +480,6 @@ appConfig:
     pathPrefix: null
   receive:
     receiptPolicyUuid: null
-    bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
   search:

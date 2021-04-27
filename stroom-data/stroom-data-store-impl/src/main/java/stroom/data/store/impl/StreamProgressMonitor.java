@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.function.Supplier;
 
 public class StreamProgressMonitor {
@@ -48,8 +49,8 @@ public class StreamProgressMonitor {
         return totalBytes;
     }
 
-    public void progress(int thisBytes) throws IOException {
-        totalBytes += thisBytes;
+    public void progress(long totalBytes) {
+        this.totalBytes = totalBytes;
         long timeNow = System.currentTimeMillis();
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
@@ -59,7 +60,7 @@ public class StreamProgressMonitor {
                 taskContext.info(msg);
 
                 if (Thread.currentThread().isInterrupted()) {
-                    throw new IOException("Progress Stopped");
+                    throw new UncheckedIOException(new IOException("Progress Stopped"));
                 }
             }
             LOGGER.debug(msg);

@@ -29,7 +29,6 @@ import com.google.inject.Injector;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -96,21 +95,18 @@ public final class SetupSampleData {
                                         final PathCreator pathCreator,
                                         final Config config) {
         try {
-            final String downloadDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
-                    ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR));
-            final String importDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
-                    config.getAppConfig().getContentPackImportConfig().getImportDirectory()));
+            final Path downloadDir =
+                    pathCreator.toAppPath(ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR);
+            final Path importDir =
+                    pathCreator.toAppPath(config.getAppConfig().getContentPackImportConfig().getImportDirectory());
 
-            final Path contentPackDownloadPath = Paths.get(downloadDir);
-            final Path contentPackImportPath = Paths.get(importDir);
-
-            Files.createDirectories(contentPackDownloadPath);
-            Files.createDirectories(contentPackImportPath);
+            Files.createDirectories(downloadDir);
+            Files.createDirectories(importDir);
 
             ContentPackDownloader.downloadPacks(
                     contentPacksDefinition,
-                    contentPackDownloadPath,
-                    contentPackImportPath);
+                    downloadDir,
+                    importDir);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
