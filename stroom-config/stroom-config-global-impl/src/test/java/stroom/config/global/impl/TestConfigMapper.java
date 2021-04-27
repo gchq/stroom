@@ -8,7 +8,6 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
@@ -19,6 +18,8 @@ import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.Tuple7;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -55,20 +56,33 @@ class TestConfigMapper {
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
-        String txt = configProperties.stream()
+
+        List<Tuple7<String, String, String, String, String, String, String>> rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
-                        LogUtil.message("{} - [{}] - [{}] - [{}] - [{}] - [{}] - [{}]",
-                                configProperty.getName(),
-                                configProperty.getDefaultValue().orElse(""),
-                                configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET", null),
-                                configProperty.getYamlOverrideValue().getValueOrElse("UNSET", null),
-                                configProperty.getEffectiveValue().orElse(""),
-                                configProperty.getSource(),
-                                configProperty.getDescription()))
-                .collect(Collectors.joining("\n"));
+                        Tuple.of(
+                                configProperty.getName().toString(),
+                                StringUtils.truncate(configProperty.getDefaultValue().orElse("").toString(), 0, 50),
+                                StringUtils.truncate(configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET",
+                                        null), 0, 50),
+                                StringUtils.truncate(configProperty.getYamlOverrideValue().getValueOrElse("UNSET",
+                                        null), 0, 50),
+                                StringUtils.truncate(configProperty.getEffectiveValue().orElse("").toString(), 0, 50),
+                                configProperty.getSource().getName(),
+                                StringUtils.truncate(configProperty.getDescription(), 0, 100)))
+                .collect(Collectors.toList());
 
-        LOGGER.debug("Properties\n{}", txt);
+        final String asciiTable = AsciiTable.builder(rows)
+                .withColumn(Column.of("Property Path", Tuple7::_1))
+                .withColumn(Column.of("Default Value", Tuple7::_2))
+                .withColumn(Column.of("DB Override Val", Tuple7::_3))
+                .withColumn(Column.of("Yaml Override Val", Tuple7::_4))
+                .withColumn(Column.of("Effective Val", Tuple7::_5))
+                .withColumn(Column.of("Source", Tuple7::_6))
+                .withColumn(Column.of("Description", Tuple7::_7))
+                .build();
+
+        LOGGER.debug("Properties\n{}", asciiTable);
     }
 
     @Test
