@@ -147,7 +147,6 @@ class TestV07_00_00_1202__property_rename {
         IGNORE.add("stroom.loginHTML");
 
         IGNORE.add("stroom.security.documentPermissions.maxCacheSize");
-        IGNORE.add("troom.security.authentication.userNamePatter");
 
         IGNORE.add("stroom.statistics.common.statisticEngines");
         IGNORE.add("stroom.statistics.sql.search.resultHandlerBatchSize");
