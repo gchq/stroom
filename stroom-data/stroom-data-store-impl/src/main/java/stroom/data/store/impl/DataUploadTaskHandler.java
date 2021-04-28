@@ -32,6 +32,7 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;

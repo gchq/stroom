@@ -28,6 +28,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.shared.Count;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.OffsetRange;

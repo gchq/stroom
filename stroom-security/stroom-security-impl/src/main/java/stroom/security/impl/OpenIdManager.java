@@ -91,46 +91,15 @@ class OpenIdManager {
 
     private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
         final String endpoint = openIdConfig.getAuthEndpoint();
+        final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make an authentication request the OpenId config 'authEndpoint' must not be null");
-        return createAuthUri(request, endpoint, postAuthRedirectUri, false);
-    }
-
-    private String createAuthUri(final HttpServletRequest request,
-                                 final String endpoint,
-                                 final String postAuthRedirectUri,
-                                 final boolean prompt) {
-        Objects.requireNonNull(openIdConfig.getClientId(),
+        Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
-
-        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-        // Use OIDC API.
-        UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
-                .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
-                .queryParam(OpenId.CLIENT_ID, openIdConfig.getClientId())
-                .queryParam(OpenId.REDIRECT_URI, postAuthRedirectUri)
-                .queryParam(OpenId.SCOPE, OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL)
-                .queryParam(OpenId.STATE, state.getId())
-                .queryParam(OpenId.NONCE, state.getNonce());
-
-        // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
-        // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
-        // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
-        // log in as the 'admin' user but the browser is always presenting a certificate.
-        final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
-        if (!Strings.isNullOrEmpty(promptParam)) {
-            authenticationRequest.queryParam(OpenId.PROMPT, promptParam);
-        } else if (prompt) {
-            authenticationRequest.queryParam(OpenId.PROMPT, "login");
-        }
-
-        final String authenticationRequestUrl = authenticationRequest.build().toString();
-        LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
-        // We want to make sure that the client has the cookie.
-        return authenticationRequestUrl;
+        LOGGER.debug(() -> "frontChannelOIDC state=" + state);
+        return createAuthUri(request, endpoint, clientId, postAuthRedirectUri, state, false);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
@@ -152,6 +121,8 @@ class OpenIdManager {
             LOGGER.warn(() -> "Unexpected state: " + stateId);
 
         } else {
+            LOGGER.debug(() -> "backChannelOIDC state=" + state);
+
             // Invalidate the current session.
             final HttpSession session = request.getSession(false);
             UserAgentSessionUtil.set(request);
@@ -362,8 +333,47 @@ class OpenIdManager {
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
         final String endpoint = openIdConfig.getLogoutEndpoint();
+        final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
-        return createAuthUri(request, endpoint, postAuthRedirectUri, true);
+        Objects.requireNonNull(clientId,
+                "To make an authentication request the OpenId config 'clientId' must not be null");
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
+        LOGGER.debug(() -> "logout state=" + state);
+        return createAuthUri(request, endpoint, clientId, postAuthRedirectUri, state, true);
+    }
+
+    private String createAuthUri(final HttpServletRequest request,
+                                 final String endpoint,
+                                 final String clientId,
+                                 final String redirectUri,
+                                 final AuthenticationState state,
+                                 final boolean prompt) {
+
+        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
+        // Use OIDC API.
+        UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
+                .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
+                .queryParam(OpenId.CLIENT_ID, clientId)
+                .queryParam(OpenId.REDIRECT_URI, redirectUri)
+                .queryParam(OpenId.SCOPE, OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL)
+                .queryParam(OpenId.STATE, state.getId())
+                .queryParam(OpenId.NONCE, state.getNonce());
+
+        // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
+        // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
+        // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
+        // log in as the 'admin' user but the browser is always presenting a certificate.
+        final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
+        if (!Strings.isNullOrEmpty(promptParam)) {
+            authenticationRequest.queryParam(OpenId.PROMPT, promptParam);
+        } else if (prompt) {
+            authenticationRequest.queryParam(OpenId.PROMPT, "login");
+        }
+
+        final String authenticationRequestUrl = authenticationRequest.build().toString();
+        LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
+        // We want to make sure that the client has the cookie.
+        return authenticationRequestUrl;
     }
 }

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2201** : Improved Stroom Proxy and aggregation process.
 
+* Issue **#2203** : Fix NPE in index doc partition by migration.
+
+* Issue **#2184** : Improved logging for OpenId flow.
+
+* Issue **#2205** : Improved migration to prevent null DB values being lost.
+
 * Issue **#2098** : Properties that contain passwords no longer transfer any part of the password to the UI.
 
 * Issue **#1841** : Fixed migration of some config props.

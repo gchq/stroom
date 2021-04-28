@@ -426,11 +426,21 @@ subprojects {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 //        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
+        beforeSuite { descriptor ->
+            println "Executing test class ${descriptor.className}"
+        }
+
+        beforeTest { descriptor ->
+            if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
+                println "  Executing test ${descriptor.className}.${descriptor.name}"
+            }
+        }
+
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
             if (durationSecs > 1) {
-                println "Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+                println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
             }
         }
 
