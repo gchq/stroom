@@ -20,6 +20,7 @@ import stroom.db.util.DbUtil;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.index.impl.IndexSerialiser;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.Index;
@@ -44,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -363,10 +365,18 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         final String descrip = resultSet.getString(7);
                         final Integer maxDoc = (Integer) resultSet.getObject(8);
                         final Integer maxShrd = (Integer) resultSet.getObject(9);
-                        final Byte partBy = resultSet.getByte(10);
+                        final Byte partBy = (Byte) resultSet.getObject(10); // col is nullable
                         final Integer partSz = (Integer) resultSet.getObject(11);
                         final Integer retenDayAge = DbUtil.getInteger(resultSet, 12);
                         final String fields = resultSet.getString(13);
+
+                        final PartitionBy newPartitionBy = partBy == null
+                                ? null
+                                : Optional.ofNullable(
+                                        Index.PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy))
+                                        .map(legacyPartitionBy ->
+                                                IndexDoc.PartitionBy.valueOf(legacyPartitionBy.name()))
+                                        .orElse(null);
 
                         final IndexDoc document = new IndexDoc();
                         document.setType(IndexDoc.DOCUMENT_TYPE);
@@ -380,11 +390,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         document.setDescription(descrip);
                         document.setMaxDocsPerShard(maxDoc);
                         document.setShardsPerPartition(maxShrd);
-                        document.setPartitionBy(
-                                IndexDoc
-                                        .PartitionBy
-                                        .valueOf(Index.PartitionBy.PRIMITIVE_VALUE_CONVERTER
-                                                .fromPrimitiveValue(partBy).name()));
+                        document.setPartitionBy(newPartitionBy);
                         document.setPartitionSize(partSz);
                         document.setRetentionDayAge(retenDayAge);
                         document.setFields(MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(fields)));

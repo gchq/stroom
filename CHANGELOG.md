@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2203** : Fix NPE in index doc partition by migration.
+
 * Issue **#2184** : Improved logging for OpenId flow.
 
 * Issue **#2205** : Improved migration to prevent null DB values being lost.
