@@ -297,7 +297,7 @@ else
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
-  echo -e "${GREEN}Do the basic gradle build${NC}"
+  echo -e "${GREEN}Do the basic java build${NC}"
   ./gradlew \
     -Dorg.gradle.parallel=false \
     --scan \
@@ -315,7 +315,6 @@ else
 
   echo -e "${GREEN}Do the yarn build${NC}"
   ./gradlew \
-    -Dorg.gradle.parallel=false \
     --scan \
     --stacktrace \
     stroom-ui:copyYarnBuild
@@ -323,7 +322,6 @@ else
   # Compile the application GWT UI
   echo -e "${GREEN}Do the GWT app compile${NC}"
   ./gradlew \
-    -Dorg.gradle.parallel=false \
     --scan \
     --stacktrace \
     -PgwtCompilerWorkers=2 \
@@ -334,7 +332,6 @@ else
   # Compile the dashboard GWT UI
   echo -e "${GREEN}Do the GWT dashboard compile${NC}"
   ./gradlew \
-    -Dorg.gradle.parallel=false \
     --scan \
     --stacktrace \
     -PgwtCompilerWorkers=2 \
@@ -345,7 +342,6 @@ else
   # Make the distribution.
   echo -e "${GREEN}Build the distribution${NC}"
   ./gradlew \
-    -Dorg.gradle.parallel=false \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
