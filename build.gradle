@@ -417,6 +417,12 @@ subprojects {
             println "Executing test class ${descriptor.className}"
         }
 
+        beforeTest { descriptor ->
+            if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
+                println "  Executing test ${descriptor.className}.${descriptor.name}"
+            }
+        }
+
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
