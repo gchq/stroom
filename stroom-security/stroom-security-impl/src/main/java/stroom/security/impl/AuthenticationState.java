@@ -43,4 +43,13 @@ public class AuthenticationState {
     public String getNonce() {
         return nonce;
     }
+
+    @Override
+    public String toString() {
+        return "AuthenticationState{" +
+                "id='" + id + '\'' +
+                ", url='" + url + '\'' +
+                ", nonce='" + nonce + '\'' +
+                '}';
+    }
 }

@@ -47,9 +47,9 @@ public class V6_0_0_21__Dictionary extends BaseJavaMigration {
             try (final ResultSet resultSet = statement.executeQuery(
                     "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, UUID, NAME, DAT FROM DICT")) {
                 while (resultSet.next()) {
-                    final long crtMs = resultSet.getLong(1);
+                    final Long crtMs = (Long) resultSet.getObject(1);
                     final String crtUser = resultSet.getString(2);
-                    final long updtMs = resultSet.getLong(3);
+                    final Long updtMs = (Long) resultSet.getObject(3);
                     final String updUser = resultSet.getString(4);
                     final String uuid = resultSet.getString(5);
                     final String name = resultSet.getString(6);

@@ -59,9 +59,9 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
                         "FROM OLD_SCRIPT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    final Long crtMs = resultSet.getLong(1);
+                    final Long crtMs = (Long) resultSet.getObject(1);
                     final String crtUser = resultSet.getString(2);
-                    final Long updMs = resultSet.getLong(3);
+                    final Long updMs = (Long) resultSet.getObject(3);
                     final String updUser = resultSet.getString(4);
                     final String name = resultSet.getString(5);
                     final String uuid = resultSet.getString(6);

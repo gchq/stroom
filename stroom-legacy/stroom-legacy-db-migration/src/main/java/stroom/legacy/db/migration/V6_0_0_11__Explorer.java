@@ -188,7 +188,7 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
                     final long id = resultSet.getLong(1);
                     final String uuid = resultSet.getString(2);
                     final String name = resultSet.getString(3);
-                    Long parentId = resultSet.getLong(4);
+                    Long parentId = (Long) resultSet.getObject(4);
                     if (parentId == null) {
                         parentId = 0L;
                     }
