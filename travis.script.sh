@@ -307,9 +307,8 @@ else
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
-    -x buildDistribution
-
-#      -Dorg.gradle.parallel=true \
+    -x buildDistribution \
+    -Dorg.gradle.parallel=false
 
   ./gradlew \
     --scan \
