@@ -194,18 +194,18 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
             try (final ResultSet resultSet = select.executeQuery()) {
                 while (resultSet.next()) {
                     final int volId = resultSet.getInt(1);
-                    final long crtMs = resultSet.getLong(2);
+                    final Long crtMs = (Long) resultSet.getObject(2);
                     final String crtUser = resultSet.getString(3);
-                    final long updMs = resultSet.getLong(4);
+                    final Long updMs = (Long) resultSet.getObject(4);
                     final String updUser = resultSet.getString(5);
                     final String path = resultSet.getString(6);
                     final byte state = resultSet.getByte(7);
-                    final long bytesLimit = resultSet.getLong(8);
+                    final Long bytesLimit = (Long) resultSet.getObject(8);
                     final String node = resultSet.getString(9);
-                    final long bytesUsed = resultSet.getLong(10);
-                    final long bytesFree = resultSet.getLong(11);
-                    final long bytesTotal = resultSet.getLong(12);
-                    final long statMs = resultSet.getLong(13);
+                    final Long bytesUsed = (Long) resultSet.getObject(10);
+                    final Long bytesFree = (Long) resultSet.getObject(11);
+                    final Long bytesTotal = (Long) resultSet.getObject(12);
+                    final Long statMs = (Long) resultSet.getObject(13);
 
                     oldVolumes.put(volId, new OldVolume(
                             volId,
@@ -354,17 +354,17 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
             try (final PreparedStatement select = connection.prepareStatement(selectSql)) {
                 try (final ResultSet resultSet = select.executeQuery()) {
                     while (resultSet.next()) {
-                        final Long crtMs = resultSet.getLong(1);
+                        final Long crtMs = (Long) resultSet.getObject(1);
                         final String crtUser = resultSet.getString(2);
-                        final Long updMs = resultSet.getLong(3);
+                        final Long updMs = (Long) resultSet.getObject(3);
                         final String updUser = resultSet.getString(4);
                         final String name = resultSet.getString(5);
                         final String uuid = resultSet.getString(6);
                         final String descrip = resultSet.getString(7);
-                        final int maxDoc = resultSet.getInt(8);
-                        final int maxShrd = resultSet.getInt(9);
-                        final byte partBy = resultSet.getByte(10);
-                        final int partSz = resultSet.getInt(11);
+                        final Integer maxDoc = (Integer) resultSet.getObject(8);
+                        final Integer maxShrd = (Integer) resultSet.getObject(9);
+                        final Byte partBy = resultSet.getByte(10);
+                        final Integer partSz = (Integer) resultSet.getObject(11);
                         final Integer retenDayAge = DbUtil.getInteger(resultSet, 12);
                         final String fields = resultSet.getString(13);
 
@@ -456,21 +456,21 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
             try (final PreparedStatement select = connection.prepareStatement(selectSql)) {
                 try (final ResultSet resultSet = select.executeQuery()) {
                     while (resultSet.next()) {
-                        final Long id = resultSet.getLong(1);
+                        final Long id = (Long) resultSet.getObject(1);
                         final String nodeName = resultSet.getString(2);
-                        final Integer volumeId = resultSet.getInt(3);
-                        final Integer oldIndexId = resultSet.getInt(4);
+                        final Integer volumeId = (Integer) resultSet.getObject(3);
+                        final Integer oldIndexId = (Integer) resultSet.getObject(4);
                         final String indexUuid = resultSet.getString(5);
-                        final Integer commitDocumentCount = resultSet.getInt(6);
-                        final Long commitDurationMs = resultSet.getLong(7);
-                        final Long commitMs = resultSet.getLong(8);
-                        final Integer documentCount = resultSet.getInt(9);
-                        final Long fileSize = resultSet.getLong(10);
-                        final Byte status = resultSet.getByte(11);
+                        final Integer commitDocumentCount = (Integer) resultSet.getObject(6);
+                        final Long commitDurationMs = (Long) resultSet.getObject(7);
+                        final Long commitMs = (Long) resultSet.getObject(8);
+                        final Integer documentCount = (Integer) resultSet.getObject(9);
+                        final Long fileSize = (Long) resultSet.getObject(10);
+                        final Byte status = (Byte) resultSet.getObject(11);
                         final String indexVersion = resultSet.getString(12);
                         final String part = resultSet.getString(13);
-                        final Long partFrom = resultSet.getLong(14);
-                        final Long partTo = resultSet.getLong(15);
+                        final Long partFrom = (Long) resultSet.getObject(14);
+                        final Long partTo = (Long) resultSet.getObject(15);
 
                         // Get target volume id.
                         final OldVolume oldVolume = oldVolumes.get(volumeId);

@@ -211,7 +211,7 @@ public class DBPersistence implements Persistence {
     private Long getId(final Connection connection, final DocRef docRef, final String ext) {
         final String sql = "" +
                 "SELECT " +
-                "  id " +
+                "id " +
                 "FROM doc " +
                 "WHERE type = ? " +
                 "AND uuid = ? " +
