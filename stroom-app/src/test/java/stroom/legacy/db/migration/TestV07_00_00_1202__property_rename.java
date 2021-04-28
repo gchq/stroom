@@ -153,6 +153,14 @@ class TestV07_00_00_1202__property_rename {
 
         IGNORE.add("stroom.uiUrl");
         IGNORE.add("stroom.volumes.createDefaultOnStart");
+
+        IGNORE.add("stroom.bufferSize");
+        IGNORE.add("stroom.maxAggregation");
+        IGNORE.add("stroom.maxConcurrentMappedFiles");
+        IGNORE.add("stroom.maxFileScan");
+        IGNORE.add("stroom.maxStreamSize");
+        IGNORE.add("stroom.proxyDir");
+        IGNORE.add("stroom.proxyThreads");
     }
 
     @TestFactory
