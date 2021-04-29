@@ -75,12 +75,13 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return dataStore.awaitCompletion(timeout, unit);
+    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return dataStore.awaitTransfer(timeout, unit);
     }
 
-    public AtomicLong getValuesCount() {
-        return valuesCount;
+    @Override
+    public long getValuesCount() {
+        return valuesCount.get();
     }
 
     @Override

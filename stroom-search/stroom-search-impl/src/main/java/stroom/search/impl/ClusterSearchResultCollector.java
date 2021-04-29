@@ -161,7 +161,7 @@ public class ClusterSearchResultCollector implements Store {
             try {
                 boolean consumed = false;
                 while (!consumed && !Thread.currentThread().isInterrupted()) {
-                    consumed = coprocessors.awaitCompletion(1, TimeUnit.MINUTES);
+                    consumed = coprocessors.awaitTransfer(1, TimeUnit.MINUTES);
                 }
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();

@@ -20,19 +20,52 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 public interface Coprocessor extends Receiver {
 
-    AtomicLong getValuesCount();
+    /**
+     * Get the number of values that have been added to the coprocessor.
+     *
+     * @return The number of values that have been added to the coprocessor.
+     */
+    long getValuesCount();
 
-    boolean readPayload(Input input);
+    /**
+     * Clear the data store.
+     */
+    void clear();
 
-    void writePayload(Output output);
-
-    boolean awaitCompletion(long timeout, TimeUnit unit) throws InterruptedException;
-
+    /**
+     * Get the completion state associated with receiving all search results and having added them to the store
+     * successfully.
+     *
+     * @return The search completion state for the data store.
+     */
     CompletionState getCompletionState();
 
-    void clear();
+    /**
+     * Read items from the supplied input and transfer them to the data store.
+     *
+     * @param input The input to read.
+     * @return True if we still happy to keep on receiving data, false otherwise.
+     */
+    boolean readPayload(Input input);
+
+    /**
+     * Write data from the data store to an output removing them from the datastore as we go as they will be transferred
+     * to another store.
+     *
+     * @param output The output to write to.
+     */
+    void writePayload(Output output);
+
+    /**
+     * Wait for all current items that might be queued for adding to be added.
+     *
+     * @param timeout How long to wait for items to be added.
+     * @param unit    The time unit for the wait period.
+     * @return True if we didn't timeout and all items are now added.
+     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
+     */
+    boolean awaitTransfer(long timeout, TimeUnit unit) throws InterruptedException;
 }

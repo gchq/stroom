@@ -73,11 +73,11 @@ public class Coprocessors implements Iterable<Coprocessor> {
         }
     }
 
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
         boolean complete = true;
         for (final Entry<Integer, Coprocessor> entry : coprocessorMap.entrySet()) {
             final Coprocessor coprocessor = entry.getValue();
-            if (!coprocessor.awaitCompletion(timeout, unit)) {
+            if (!coprocessor.awaitTransfer(timeout, unit)) {
                 complete = false;
             }
         }

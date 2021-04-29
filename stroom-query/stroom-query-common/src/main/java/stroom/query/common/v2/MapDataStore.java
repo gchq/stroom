@@ -96,69 +96,11 @@ public class MapDataStore implements DataStore {
         this.hasSort = hasSort;
     }
 
-    @Override
-    public void clear() {
-        totalResultCount.set(0);
-        childMap.clear();
-    }
-
-    @Override
-    public boolean readPayload(final Input input) {
-        throw new RuntimeException("Not implemented");
-//        return Metrics.measure("readPayload", () -> {
-//            final int count = input.readInt();
-//            for (int i = 0; i < count; i++) {
-//                final int length = input.readInt();
-//                final byte[] bytes = input.readBytes(length);
-//
-//                final RawItem rawItem = itemSerialiser.readRawItem(bytes);
-//                final byte[] keyBytes = rawItem.getKey();
-//                final Key key = itemSerialiser.toKey(keyBytes);
-//
-//                KeyPart lastPart = key.getLast();
-//                if (lastPart != null && !lastPart.isGrouped()) {
-//                    // Ensure sequence numbers are unique for this data store.
-//                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
-//                }
-//
-//                final Key parent = key.getParent();
-//                final byte[] parentKeyBytes = itemSerialiser.toBytes(parent);
-//
-//                final byte[] generators = rawItem.getGenerators();
-//
-//                addToChildMap(key.getDepth(), parentKeyBytes, keyBytes, generators);
-//            }
-//
-//            // Return success if we have not been asked to terminate and we are still willing to accept data.
-//            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
-//        });
-    }
-
-    @Override
-    public void writePayload(final Output output) {
-        throw new RuntimeException("Not implemented");
-//        Metrics.measure("writePayload", () -> {
-//            final List<byte[]> list = new ArrayList<>();
-//            childMap.keySet().forEach(groupKey -> {
-//                final ItemsImpl items = childMap.remove(groupKey);
-//                if (items != null) {
-//                    list.addAll(items.getList());
-//                }
-//            });
-//
-//            output.writeInt(list.size());
-//            for (final byte[] item : list) {
-//                output.writeInt(item.length);
-//                output.writeBytes(item);
-//            }
-//        });
-    }
-
-    @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return true;
-    }
-
+    /**
+     * Add some values to the data store.
+     *
+     * @param values The values to add to the store.
+     */
     @Override
     public void add(final Val[] values) {
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
@@ -308,29 +250,30 @@ public class MapDataStore implements DataStore {
         }
     }
 
+    /**
+     * Get root items from the data store.
+     *
+     * @return Root items.
+     */
     @Override
     public Items get() {
         return get(Key.root());
     }
 
+    /**
+     * Get child items from the data store for the provided parent key.
+     *
+     * @param parentKey The parent key to get child items for.
+     * @return The child items for the parent key.
+     */
     @Override
-    public long getSize() {
-        return resultCount.get();
-    }
-
-    @Override
-    public long getTotalSize() {
-        return totalResultCount.get();
-    }
-
-    @Override
-    public Items get(final Key key) {
+    public Items get(final Key parentKey) {
         Items result;
 
-        if (key == null) {
+        if (parentKey == null) {
             result = childMap.get(Key.root());
         } else {
-            result = childMap.get(key);
+            result = childMap.get(parentKey);
         }
 
         if (result == null) {
@@ -351,9 +294,101 @@ public class MapDataStore implements DataStore {
         return result;
     }
 
+    /**
+     * Clear the data store.
+     */
+    @Override
+    public void clear() {
+        totalResultCount.set(0);
+        childMap.clear();
+    }
+
+    /**
+     * Get the completion state associated with receiving all search results and having added them to the store
+     * successfully.
+     *
+     * @return The search completion state for the data store.
+     */
     @Override
     public CompletionState getCompletionState() {
         return completionState;
+    }
+
+    /**
+     * Read items from the supplied input and transfer them to the data store.
+     *
+     * @param input The input to read.
+     * @return True if we still happy to keep on receiving data, false otherwise.
+     */
+    @Override
+    public boolean readPayload(final Input input) {
+        throw new RuntimeException("Not implemented");
+//        return Metrics.measure("readPayload", () -> {
+//            final int count = input.readInt();
+//            for (int i = 0; i < count; i++) {
+//                final int length = input.readInt();
+//                final byte[] bytes = input.readBytes(length);
+//
+//                final RawItem rawItem = itemSerialiser.readRawItem(bytes);
+//                final byte[] keyBytes = rawItem.getKey();
+//                final Key key = itemSerialiser.toKey(keyBytes);
+//
+//                KeyPart lastPart = key.getLast();
+//                if (lastPart != null && !lastPart.isGrouped()) {
+//                    // Ensure sequence numbers are unique for this data store.
+//                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+//                }
+//
+//                final Key parent = key.getParent();
+//                final byte[] parentKeyBytes = itemSerialiser.toBytes(parent);
+//
+//                final byte[] generators = rawItem.getGenerators();
+//
+//                addToChildMap(key.getDepth(), parentKeyBytes, keyBytes, generators);
+//            }
+//
+//            // Return success if we have not been asked to terminate and we are still willing to accept data.
+//            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+//        });
+    }
+
+    /**
+     * Write data from the data store to an output removing them from the datastore as we go as they will be transferred
+     * to another store.
+     *
+     * @param output The output to write to.
+     */
+    @Override
+    public void writePayload(final Output output) {
+        throw new RuntimeException("Not implemented");
+//        Metrics.measure("writePayload", () -> {
+//            final List<byte[]> list = new ArrayList<>();
+//            childMap.keySet().forEach(groupKey -> {
+//                final ItemsImpl items = childMap.remove(groupKey);
+//                if (items != null) {
+//                    list.addAll(items.getList());
+//                }
+//            });
+//
+//            output.writeInt(list.size());
+//            for (final byte[] item : list) {
+//                output.writeInt(item.length);
+//                output.writeBytes(item);
+//            }
+//        });
+    }
+
+    /**
+     * Wait for all current items that might be queued for adding to be added.
+     *
+     * @param timeout How long to wait for items to be added.
+     * @param unit    The time unit for the wait period.
+     * @return True if we didn't timeout and all items are now added.
+     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
+     */
+    @Override
+    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return true;
     }
 
     public static class ItemsImpl implements Items {
@@ -540,7 +575,6 @@ public class MapDataStore implements DataStore {
             return null;
         }
     }
-
 
     private class GroupingFunction implements Function<Stream<ItemImpl>, Stream<ItemImpl>> {
 

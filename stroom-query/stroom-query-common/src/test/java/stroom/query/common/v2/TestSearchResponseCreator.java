@@ -295,6 +295,10 @@ class TestSearchResponseCreator {
 
         return new DataStore() {
             @Override
+            public void add(final Val[] values) {
+            }
+
+            @Override
             public Items get() {
                 return items;
             }
@@ -305,17 +309,12 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public long getSize() {
-                return items.size();
+            public void clear() {
             }
 
             @Override
-            public long getTotalSize() {
-                return items.size();
-            }
-
-            @Override
-            public void add(final Val[] values) {
+            public CompletionState getCompletionState() {
+                return completionState;
             }
 
             @Override
@@ -328,17 +327,8 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public boolean awaitCompletion(final long timeout, final TimeUnit unit) {
+            public boolean awaitTransfer(final long timeout, final TimeUnit unit) {
                 return true;
-            }
-
-            @Override
-            public void clear() {
-            }
-
-            @Override
-            public CompletionState getCompletionState() {
-                return completionState;
             }
         };
     }

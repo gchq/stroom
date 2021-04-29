@@ -144,18 +144,11 @@ public class LmdbDataStore implements DataStore {
         executor.execute(this::transfer);
     }
 
-    private void commit(final Txn<ByteBuffer> writeTxn) {
-        Metrics.measure("Commit", () -> {
-            writeTxn.commit();
-            writeTxn.close();
-        });
-    }
-
-    @Override
-    public CompletionState getCompletionState() {
-        return completionState;
-    }
-
+    /**
+     * Add some values to the data store.
+     *
+     * @param values The values to add to the store.
+     */
     @Override
     public void add(final Val[] values) {
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
@@ -363,6 +356,13 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
+    private void commit(final Txn<ByteBuffer> writeTxn) {
+        Metrics.measure("Commit", () -> {
+            writeTxn.commit();
+            writeTxn.close();
+        });
+    }
+
     private void insert(final Txn<ByteBuffer> txn, final QueueItem queueItem) {
         Metrics.measure("Insert", () -> {
             try {
@@ -477,18 +477,6 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    @Override
-    public void clear() {
-        // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
-        running.set(false);
-        // Clear the queue for good measure.
-        queue.clear();
-        // Ensure we complete.
-        complete.countDown();
-        // If the transfer loop is waiting on new queue items ensure it loops once more.
-        completionState.complete();
-    }
-
     private synchronized void drop() {
         if (!dropped.get()) {
             try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
@@ -562,135 +550,22 @@ public class LmdbDataStore implements DataStore {
         return payloadOutput.toBytes();
     }
 
-    @Override
-    public void writePayload(final Output output) {
-        Metrics.measure("writePayload", () -> {
-            final boolean complete = getCompletionState().isComplete();
-            createPayload.set(true);
-
-            final List<byte[]> payloads = new ArrayList<>(2);
-
-            final byte[] payload = currentPayload.getAndSet(null);
-            if (payload != null) {
-                payloads.add(payload);
-            }
-
-            if (complete && running.get()) {
-                // If we are complete and running then we ought to be able to get the run loop to create a final
-                // payload.
-                final CountDownLatch countDownLatch = new CountDownLatch(1);
-                try {
-                    queue.put(new QueueItem() {
-                        @Override
-                        public void complete() {
-                            countDownLatch.countDown();
-                        }
-                    });
-                    if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
-                        LOGGER.error("Timeout waiting for final payload creation");
-                    }
-                } catch (final InterruptedException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    Thread.currentThread().interrupt();
-                }
-
-                final byte[] finalPayload = currentPayload.getAndSet(null);
-                if (finalPayload != null) {
-                    payloads.add(finalPayload);
-                }
-            }
-
-            output.writeInt(payloads.size());
-            payloads.forEach(bytes -> {
-                output.writeInt(bytes.length);
-                output.writeBytes(bytes);
-            });
-        });
-    }
-
-    @Override
-    public boolean readPayload(final Input input) {
-        // Return false if we aren't happy to accept any more data
-        if (!acceptingData()) {
-            return false;
-        }
-
-        return Metrics.measure("readPayload", () -> {
-            final int count = input.readInt(); // There may be more than one payload if it was the final transfer.
-            for (int i = 0; i < count; i++) {
-                final int length = input.readInt();
-                if (length > 0) {
-                    final byte[] bytes = input.readBytes(length);
-                    try (final Input in = new Input(new ByteArrayInputStream(bytes))) {
-                        while (!in.end()) {
-                            final int rowKeyLength = in.readInt();
-                            final byte[] key = in.readBytes(rowKeyLength);
-                            final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
-                            keyBuffer.put(key, 0, key.length);
-                            keyBuffer.flip();
-
-                            final int valueLength = in.readInt();
-                            final byte[] value = in.readBytes(valueLength);
-                            final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
-                            valueBuffer.put(value, 0, value.length);
-                            valueBuffer.flip();
-
-                            LmdbKey rowKey = new LmdbKey(keyBuffer);
-                            if (!rowKey.isGroup()) {
-                                // Create a new unique key if this isn't a group key.
-                                rowKey.makeUnique(this::getUniqueId);
-                            }
-
-                            final QueueItem queueItem =
-                                    new QueueItemImpl(rowKey, new LmdbValue(compiledFields, valueBuffer));
-                            put(queueItem);
-                        }
-                    }
-                }
-            }
-
-            // Return true if we are still happy to accept more data.
-            return acceptingData();
-        });
-    }
-
     /**
-     * Return false if we don't want any more data because we have been asked to terminate,
-     * are no longer running or have enough data already.
+     * Get root items from the data store.
+     *
+     * @return Root items.
      */
-    private boolean acceptingData() {
-        return running.get() && !Thread.currentThread().isInterrupted() && !hasEnoughData.get();
-    }
-
-    @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw new InterruptedException();
-        }
-
-        // If we are no longer running then we must have been destroyed.
-        if (!running.get()) {
-            // Just let the caller think we are complete to stop asking.
-            return true;
-        }
-
-        // Add a countdown latch to the transfer queue so we only return complete after the transfer queue item has been
-        // consumed, i.e. all items queued before it have been added to LMDB.
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        queue.put(new QueueItem() {
-            @Override
-            public void complete() {
-                countDownLatch.countDown();
-            }
-        });
-        return countDownLatch.await(timeout, unit);
-    }
-
     @Override
     public Items get() {
         return get(Key.root());
     }
 
+    /**
+     * Get child items from the data store for the provided parent key.
+     *
+     * @param parentKey The parent key to get child items for.
+     * @return The child items for the parent key.
+     */
     @Override
     public Items get(final Key parentKey) {
         return Metrics.measure("get", () -> {
@@ -798,15 +673,176 @@ public class LmdbDataStore implements DataStore {
         return list;
     }
 
-
+    /**
+     * Clear the data store.
+     */
     @Override
-    public long getSize() {
-        return resultCount.get();
+    public void clear() {
+        // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
+        running.set(false);
+        // Clear the queue for good measure.
+        queue.clear();
+        // Ensure we complete.
+        complete.countDown();
+        // If the transfer loop is waiting on new queue items ensure it loops once more.
+        completionState.complete();
     }
 
+    /**
+     * Get the completion state associated with receiving all search results and having added them to the store
+     * successfully.
+     *
+     * @return The search completion state for the data store.
+     */
     @Override
-    public long getTotalSize() {
-        return totalResultCount.get();
+    public CompletionState getCompletionState() {
+        return completionState;
+    }
+
+    /**
+     * Read items from the supplied input and transfer them to the data store.
+     *
+     * @param input The input to read.
+     * @return True if we still happy to keep on receiving data, false otherwise.
+     */
+    @Override
+    public boolean readPayload(final Input input) {
+        // Return false if we aren't happy to accept any more data
+        if (!acceptingData()) {
+            return false;
+        }
+
+        return Metrics.measure("readPayload", () -> {
+            final int count = input.readInt(); // There may be more than one payload if it was the final transfer.
+            for (int i = 0; i < count; i++) {
+                final int length = input.readInt();
+                if (length > 0) {
+                    final byte[] bytes = input.readBytes(length);
+                    try (final Input in = new Input(new ByteArrayInputStream(bytes))) {
+                        while (!in.end()) {
+                            final int rowKeyLength = in.readInt();
+                            final byte[] key = in.readBytes(rowKeyLength);
+                            final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+                            keyBuffer.put(key, 0, key.length);
+                            keyBuffer.flip();
+
+                            final int valueLength = in.readInt();
+                            final byte[] value = in.readBytes(valueLength);
+                            final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
+                            valueBuffer.put(value, 0, value.length);
+                            valueBuffer.flip();
+
+                            LmdbKey rowKey = new LmdbKey(keyBuffer);
+                            if (!rowKey.isGroup()) {
+                                // Create a new unique key if this isn't a group key.
+                                rowKey.makeUnique(this::getUniqueId);
+                            }
+
+                            final QueueItem queueItem =
+                                    new QueueItemImpl(rowKey, new LmdbValue(compiledFields, valueBuffer));
+                            put(queueItem);
+                        }
+                    }
+                }
+            }
+
+            // Return true if we are still happy to accept more data.
+            return acceptingData();
+        });
+    }
+
+    /**
+     * Write data from the data store to an output removing them from the datastore as we go as they will be transferred
+     * to another store.
+     *
+     * @param output The output to write to.
+     */
+    @Override
+    public void writePayload(final Output output) {
+        Metrics.measure("writePayload", () -> {
+            final boolean complete = getCompletionState().isComplete();
+            createPayload.set(true);
+
+            final List<byte[]> payloads = new ArrayList<>(2);
+
+            final byte[] payload = currentPayload.getAndSet(null);
+            if (payload != null) {
+                payloads.add(payload);
+            }
+
+            if (complete && running.get()) {
+                // If we are complete and running then we ought to be able to get the run loop to create a final
+                // payload.
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                try {
+                    queue.put(new QueueItem() {
+                        @Override
+                        public void complete() {
+                            countDownLatch.countDown();
+                        }
+                    });
+                    if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
+                        LOGGER.error("Timeout waiting for final payload creation");
+                    }
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
+                }
+
+                final byte[] finalPayload = currentPayload.getAndSet(null);
+                if (finalPayload != null) {
+                    payloads.add(finalPayload);
+                }
+            }
+
+            output.writeInt(payloads.size());
+            payloads.forEach(bytes -> {
+                output.writeInt(bytes.length);
+                output.writeBytes(bytes);
+            });
+        });
+    }
+
+    /**
+     * Wait for all current items that might be queued for adding to be added.
+     *
+     * @param timeout How long to wait for items to be added.
+     * @param unit    The time unit for the wait period.
+     * @return True if we didn't timeout and all items are now added.
+     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
+     */
+    @Override
+    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new InterruptedException();
+        }
+
+        // If we are no longer running then we must have been destroyed.
+        if (!running.get()) {
+            // Just let the caller think we are complete to stop asking.
+            return true;
+        }
+
+        // Add a countdown latch to the transfer queue so we only return complete after the transfer queue item has been
+        // consumed, i.e. all items queued before it have been added to LMDB.
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        queue.put(new QueueItem() {
+            @Override
+            public void complete() {
+                countDownLatch.countDown();
+            }
+        });
+        return countDownLatch.await(timeout, unit);
+    }
+
+    /**
+     * Return false if we don't want any more data because we have been asked to terminate,
+     * are no longer running or have enough data already.
+     *
+     * @return True if we are happy to keep receiving data.
+     */
+    private boolean acceptingData() {
+        return running.get() && !Thread.currentThread().isInterrupted() && !hasEnoughData.get();
     }
 
     private static class ItemArrayList {
@@ -993,24 +1029,26 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public void complete() {
-            try {
-                if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
-                    complete.countDown();
-                } else {
-                    // Add a countdown latch to the transfer queue so we only return complete after the transfer queue
-                    // item has been consumed, i.e. all items queued before it have been added to LMDB.
-                    lmdbDataStore.queue.put(new QueueItem() {
-                        @Override
-                        public void complete() {
-                            complete.countDown();
-                        }
-                    });
-                }
+            if (!isComplete()) {
+                try {
+                    if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
+                        complete.countDown();
+                    } else {
+                        // Add a countdown latch to the transfer queue so we only return complete after the transfer
+                        // queue item has been consumed, i.e. all items queued before it have been added to LMDB.
+                        lmdbDataStore.queue.put(new QueueItem() {
+                            @Override
+                            public void complete() {
+                                complete.countDown();
+                            }
+                        });
+                    }
 
-            } catch (final InterruptedException e) {
-                complete.countDown();
-                LOGGER.debug(e.getMessage(), e);
-                Thread.currentThread().interrupt();
+                } catch (final InterruptedException e) {
+                    complete.countDown();
+                    LOGGER.debug(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
+                }
             }
         }
 

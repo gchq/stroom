@@ -83,8 +83,8 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public AtomicLong getValuesCount() {
-        return valuesCount;
+    public long getValuesCount() {
+        return valuesCount.get();
     }
 
     @Override
@@ -155,7 +155,7 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
         return true;
     }
 
