@@ -72,7 +72,7 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
-    public ResultPage<IndexShard> findIndexShards(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
         return indexShardServiceProvider.get().find(criteria);
     }
 

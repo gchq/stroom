@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2193** : Enable autologger to work for delete with criteria operations.
+
 
 ## [v7.0-beta.109] - 2021-04-28
 
@@ -3352,10 +3354,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.109...HEAD
-[v7.0-beta.109]: https://github.com/gchq/stroom/compare/v7.0-beta.108...v7.0-beta.109
-[v7.0-beta.108]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.108
-[v7.0-beta.107]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.107
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.106...HEAD
 [v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
 [v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
