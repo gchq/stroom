@@ -140,7 +140,7 @@ class SolrClusterSearchTaskHandler {
                                 hitCount.get() +
                                 " documents" +
                                 " performed "
-                                + coprocessor.getValuesCount().get() +
+                                + coprocessor.getValuesCount() +
                                 " extractions");
 
                         final boolean complete = coprocessor.getCompletionState()
