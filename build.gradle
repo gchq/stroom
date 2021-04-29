@@ -78,13 +78,13 @@ ext.versions = [
     //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: '3.3.0_schema-v3.3.1',
-    hadoopCommonShaded: 'v2.6.4-5',
-    hadoopHdfsShaded: 'v2.6.4-4',
-    stroomAuth: 'v6.0.25-1', // Needed for the correct version of the client API
+    hadoopCommonShaded: '2.6.4-9',
+    hadoopHdfsShaded: '2.6.4-7',
+    stroomAuth: '6.0.32', // Not sure if this needs to be v6.0.25-1 which is only on bintray
     stroomExpression: '1.5.15',
     stroomQuery: '2.2.24', // Same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
-    stroomProxyApi: 'v5.1.2',
+    stroomProxyApi: '5.1.6',
 
     //------------3rd-party------------
     curator: '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
@@ -116,10 +116,10 @@ ext.libs = [
     stroomQueryCommon: "uk.gov.gchq.stroom.query:stroom-query-common:$versions.stroomQuery",
     stroomExpression: "uk.gov.gchq.stroom.expression:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
-    stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
-    stroomProxyRemoteApi: "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
-    hadoopCommonShaded: "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
-    hadoopHdfsShaded: "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
+    stroomAuthApi: "uk.gov.gchq.stroom.auth:stroom-auth-service-api:$versions.stroomAuth",
+    stroomProxyRemoteApi: "uk.gov.gchq.stroom.proxy:stroom-proxy-remote-api:$versions.stroomProxyApi",
+    hadoopCommonShaded: "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
+    hadoopHdfsShaded: "uk.gov.gchq.stroom.hadoop.hdfs:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -253,7 +253,7 @@ ext.contentPacks = [
     'template-pipelines': 'v0.2'
 ]
 
-// Defines a list of gradle projects that we will publish with maven/bintray
+// Defines a list of gradle projects that we will publish with maven/sonatype
 // Be sure to define 'project.ext.pomDescription' in each one
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
