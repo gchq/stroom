@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 
@@ -48,14 +49,14 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             };
 
     private final IndexDbConnProvider indexDbConnProvider;
-    private final IndexStore indexStore;
+    private final Provider<IndexStore> indexStoreProvider;
     private final GenericDao<IndexVolumeGroupRecord, IndexVolumeGroup, Integer> genericDao;
 
     @Inject
     IndexVolumeGroupDaoImpl(final IndexDbConnProvider indexDbConnProvider,
-                            final IndexStore indexStore) {
+                            final Provider<IndexStore> indexStoreProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
-        this.indexStore = indexStore;
+        this.indexStoreProvider = indexStoreProvider;
         genericDao = new GenericDao<>(INDEX_VOLUME_GROUP,
                 INDEX_VOLUME_GROUP.ID,
                 IndexVolumeGroup.class,
@@ -105,12 +106,16 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
         // If the group name has changed then update indexes to point to the new group name.
         if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
-            final List<DocRef> indexes = indexStore.list();
-            for (final DocRef docRef : indexes) {
-                final IndexDoc indexDoc = indexStore.readDocument(docRef);
-                if (indexDoc.getVolumeGroupName() != null && indexDoc.getVolumeGroupName().equals(currentGroupName)) {
-                    indexDoc.setVolumeGroupName(saved.getName());
-                    indexStore.writeDocument(indexDoc);
+            final IndexStore indexStore = indexStoreProvider.get();
+            if (indexStore != null) {
+                final List<DocRef> indexes = indexStore.list();
+                for (final DocRef docRef : indexes) {
+                    final IndexDoc indexDoc = indexStore.readDocument(docRef);
+                    if (indexDoc.getVolumeGroupName() != null &&
+                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
+                        indexDoc.setVolumeGroupName(saved.getName());
+                        indexStore.writeDocument(indexDoc);
+                    }
                 }
             }
         }

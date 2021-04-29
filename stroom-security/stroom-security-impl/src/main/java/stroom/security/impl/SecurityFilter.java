@@ -212,7 +212,9 @@ class SecurityFilter implements Filter {
         // the same to the redirect URL before adding its additional
         // parameters.
         LOGGER.debug("postAuthRedirectUri before param removal: {}", postAuthRedirectUri);
-        return OpenId.removeReservedParams(postAuthRedirectUri);
+        final String cleanUri =  OpenId.removeReservedParams(postAuthRedirectUri);
+        LOGGER.debug("postAuthRedirectUri after param removal: {}", cleanUri);
+        return cleanUri;
     }
 
     private boolean isStaticResource(final HttpServletRequest request) {

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2193** : Enable autologger to work for delete with criteria operations.
 
+
+## [v7.0-beta.109] - 2021-04-28
+
+* Issue **#2203** : Fix NPE in index doc partition by migration.
+
+* Issue **#2184** : Improved logging for OpenId flow.
+
+* Issue **#2205** : Improved migration to prevent null DB values being lost.
+
+* Issue **#2098** : Properties that contain passwords no longer transfer any part of the password to the UI.
+
+* Issue **#1841** : Fixed migration of some config props.
+
 * Issue **#2151** : The UI now shows REST service error messages properly.
 
 * Issue **#1930** : Dashboards opened from links now stop querying when closed.

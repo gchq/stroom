@@ -591,8 +591,8 @@ appConfig:
           host: "localhost"
           port: 2525
           transport: "plain"
-          username: "username"
-          password: "password"
+          username: null
+          password: null
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:

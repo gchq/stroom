@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,7 +28,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1202__property_rename.class);
 
     // Pkg private so we can access it for testing
-    static final Map<String, String> FROM_TO_MAP = new HashMap<>();
     static final List<Mapping> MAPPINGS = new ArrayList<>();
 
     // The mapping funcs are held as variables to save using the fully qualified name
@@ -75,9 +73,21 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
     }
 
     static {
-
         // TODO what do we do about mapping c3po pool props to hikari?
         //   Can we map some/any of them to equiv hikari props?
+        map("stroom.temp", "stroom.path.temp");
+        map("stroom.feed.receiptPolicyUuid", "stroom.receive.receiptPolicyUuid");
+        map("stroom.maxFileScan", "stroom.proxyAggregation.maxFileScan");
+        map("stroom.maxConcurrentMappedFiles", "stroom.proxyAggregation.maxConcurrentMappedFiles");
+        map("stroom.streamAttribute.deleteAge", "stroom.data.meta.metaValue.deleteAge", MSU_2_STROOM_DURATION);
+        map("stroom.streamAttribute.deleteBatchSize", "stroom.data.meta.metaValue.deleteBatchSize");
+        map("stroom.streamTask.deleteAge", "stroom.processor.deleteAge", MSU_2_STROOM_DURATION);
+        map("stroom.stream.deletePurgeAge", "stroom.data.store.deletePurgeAge", MSU_2_STROOM_DURATION);
+        map("stroom.stream.deleteBatchSize", "stroom.data.store.deleteBatchSize");
+        map("stroom.lifecycle.enabled", "stroom.lifecycle.enabled");
+        map("stroom.lifecycle.executionInterval", "stroom.job.executionInterval");
+        map("stroom.pipeline.parser.secureProcessing", "stroom.pipeline.parser.secureProcessing");
+
 
         map("stroom.aboutHTML", "stroom.ui.aboutHtml");
         map("stroom.activity.chooseOnStartup", "stroom.ui.activity.chooseOnStartup");
@@ -85,20 +95,22 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.activity.editorTitle", "stroom.ui.activity.editorTitle");
         map("stroom.activity.enabled", "stroom.ui.activity.enabled");
         map("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
-        map("stroom.advertisedUrl", "stroom.ui.url.ui");
+//        map("stroom.advertisedUrl", "stroom.ui.url.ui");
 
         map("stroom.annotation.statusValues", COMMA_DELIM_STR_2_LIST_OF_STR);
         map("stroom.annotation.standardComments", COMMA_DELIM_STR_2_LIST_OF_STR);
-        // stroom.annotation.createText // name and serialised form are the same
+        map("stroom.annotation.createText", "stroom.annotation.createText");  // name and serialised form are the same
 
-        map("stroom.auth.authentication.service.url",
-                "stroom.security.authentication.authenticationServiceUrl");
-        map("stroom.auth.jwt.enabletokenrevocationcheck",
-                "stroom.security.authentication.jwt.enableTokenRevocationCheck");
-        map("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
-        map("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
-        map("stroom.authentication.required",
-                "stroom.security.authentication.authenticationRequired");
+//        map("stroom.auth.authentication.service.url",
+//                "stroom.security.authentication.openId.authenticationServiceUrl");
+//        map("stroom.auth.jwt.enabletokenrevocationcheck",
+//                "stroom.security.authentication.jwt.enableTokenRevocationCheck");
+//        map("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
+//        map("stroom.auth.clientId", "stroom.security.authentication.openId.clientId");
+//        map("stroom.auth.jwt.issuer", "stroom.security.authentication.openId.issuer");
+//        map("stroom.auth.clientSecret", "stroom.security.authentication.openId.clientSecret");
+//        map("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
+        map("stroom.authentication.required", "stroom.security.authentication.authenticationRequired");
         // same names in 6 & master
         // stroom.benchmark.concurrentWriters
         // stroom.benchmark.recordCount
@@ -131,7 +143,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // stroom.db.connectionPool.minPoolSize
         // stroom.db.connectionPool.numHelperThreads
         // stroom.db.connectionPool.unreturnedConnectionTimeout
-        // stroom.export.enabled
+        map("stroom.export.enabled", "stroom.export.enabled");
         // stroom.feed.receiptPolicyUuid
         map("stroom.feedNamePattern", "stroom.feed.feedNamePattern");
         map("stroom.fileSystemCleanBatchSize", "stroom.data.store.fileSystemCleanBatchSize");
@@ -142,12 +154,12 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.helpUrl", "stroom.ui.helpUrl");
 
         // same names in 6 & master
-        // stroom.index.ramBufferSizeMB
-        // stroom.index.writer.cache.coreItems
-        // stroom.index.writer.cache.maxItems
-        // stroom.index.writer.cache.minItems
-        // stroom.index.writer.cache.timeToIdle
-        // stroom.index.writer.cache.timeToLive
+        map("stroom.index.ramBufferSizeMB", "stroom.index.ramBufferSizeMB");
+        map("stroom.index.writer.cache.coreItems", "stroom.index.writer.cache.coreItems");
+        map("stroom.index.writer.cache.maxItems", "stroom.index.writer.cache.maxItems");
+        map("stroom.index.writer.cache.minItems", "stroom.index.writer.cache.minItems");
+        map("stroom.index.writer.cache.timeToIdle", "stroom.index.writer.cache.timeToIdle", MSU_2_STROOM_DURATION);
+        map("stroom.index.writer.cache.timeToLive", "stroom.index.writer.cache.timeToLive", MSU_2_STROOM_DURATION);
 
         map(
                 "stroom.internalstatistics.benchmarkCluster.docRefs",
@@ -199,10 +211,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.jdbcDriverUrl", "stroom.core.db.connection.jdbcDriverUrl");
         map("stroom.jdbcDriverUsername", "stroom.core.db.connection.jdbcDriverUsername");
 
-        // same names in 6 & master
-        // stroom.lifecycle.enabled
-        // stroom.lifecycle.executionInterval
-
         // Now defined in a doc entity
         // stroom.kafka.bootstrap.servers
 
@@ -218,15 +226,18 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.node", "stroom.node.name");
 
         // Same names in 6 & master
-        // stroom.node.status.heapHistogram.classNameMatchRegex
-        // stroom.node.status.heapHistogram.classNameReplacementRegex
+        map("stroom.node.status.heapHistogram.classNameMatchRegex",
+                "stroom.node.status.heapHistogram.classNameMatchRegex");
+        map("stroom.node.status.heapHistogram.classNameReplacementRegex",
+                "stroom.node.status.heapHistogram.classNameReplacementRegex");
         // stroom.node.status.heapHistogram.jMapExecutable
 
-        map("stroom.pageTitle", "stroom.ui.htmlTitle");
+//        map("stroom.pageTitle", "stroom.ui.htmlTitle");
+        map("stroom.htmlTitle", "stroom.ui.htmlTitle");
 
         // Same names in 6 & master
-        // stroom.pipeline.appender.maxActiveDestinations
-        // stroom.pipeline.xslt.maxElements
+        map("stroom.pipeline.appender.maxActiveDestinations", "stroom.pipeline.appender.maxActiveDestinations");
+        map("stroom.pipeline.xslt.maxElements", "stroom.pipeline.xslt.maxElements");
 
         // These are now all part of ProxyConfig that does not get written to the DB and thus has no prop name.
         // stroom.proxy.store.dir ?
@@ -241,11 +252,17 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.query.infoPopup.title", "stroom.ui.query.infoPopup.title");
         map("stroom.query.infoPopup.validationRegex", "stroom.ui.query.infoPopup.validationRegex");
 
-        // Same name in 6 & master
-        // stroom.search.impl.extraction.maxThreads
-        // stroom.search.impl.extraction.maxThreadsPerTask
-        // stroom.search.maxBooleanClauseCount
-        // stroom.search.maxStoredDataQueueSize
+
+        map("stroom.search.storeSize", "stroom.search.storeSize");
+        map("stroom.search.shard.maxDocIdQueueSize", "stroom.search.shard.maxDocIdQueueSize");
+        map("stroom.search.shard.maxThreads", "stroom.search.shard.maxThreads");
+        map("stroom.search.shard.maxThreadsPerTask", "stroom.search.shard.maxThreadsPerTask");
+        map("stroom.search.extraction.maxThreads", "stroom.search.extraction.maxThreads");
+        map("stroom.search.extraction.maxThreadsPerTask", "stroom.search.extraction.maxThreadsPerTask");
+        map("stroom.search.extraction.maxStreamEventMapSize", "stroom.search.extraction.maxStreamEventMapSize");
+        map("stroom.search.maxBooleanClauseCount", "stroom.search.maxBooleanClauseCount");
+        map("stroom.search.maxStoredDataQueueSize", "stroom.search.maxStoredDataQueueSize");
+
 
         map("stroom.search.process.defaultRecordLimit", "stroom.ui.process.defaultRecordLimit");
         map("stroom.search.process.defaultTimeLimit", "stroom.ui.process.defaultTimeLimit");
@@ -256,8 +273,18 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
-        map("stroom.security.userNamePattern",
-                "stroom.security.authentication.userNamePattern");
+        map("stroom.security.web.content.frameOptions",
+                "stroom.security.webContent.frameOptions");
+        map("stroom.security.web.content.securityPolicy",
+                "stroom.security.webContent.contentSecurityPolicy");
+        map("stroom.security.web.content.typeOptions",
+                "stroom.security.webContent.contentTypeOptions");
+        map("stroom.security.web.content.xssProtection",
+                "stroom.security.webContent.xssProtection");
+
+//        map("stroom.security.userNamePattern",
+//                "stroom.security.authentication.userNamePattern");
+
         map("stroom.serviceDiscovery.curator.baseSleepTimeMs",
                 "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
         map("stroom.serviceDiscovery.curator.maxRetries",
@@ -266,12 +293,13 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                 "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
 
         // TODO need to figure out what we are doing with service disco
-        // stroom.serviceDiscovery.enabled
-        // stroom.serviceDiscovery.servicesHostNameOrIpAddress
-        // stroom.serviceDiscovery.servicesPort
-        // ? stroom.serviceDiscovery.simpleLookup.basePath
-        // stroom.serviceDiscovery.zookeeperBasePath
-        // stroom.serviceDiscovery.zookeeperUrl
+        map("stroom.serviceDiscovery.enabled", "stroom.serviceDiscovery.enabled");
+        map("stroom.serviceDiscovery.servicesHostNameOrIpAddress",
+                "stroom.serviceDiscovery.servicesHostNameOrIpAddress");
+        map("stroom.serviceDiscovery.servicesPort", "stroom.serviceDiscovery.servicesPort");
+//        map("stroom.serviceDiscovery.simpleLookup.basePath", "stroom.serviceDiscovery.simpleLookup.basePath");
+        map("stroom.serviceDiscovery.zookeeperBasePath", "stroom.serviceDiscovery.zookeeperBasePath");
+        map("stroom.serviceDiscovery.zookeeperUrl", "stroom.serviceDiscovery.zookeeperUrl");
         // stroom.services.authentication.docRefType
         // stroom.services.authentication.name
         // stroom.services.authentication.version
@@ -329,10 +357,11 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
         // Same names in 6 & master
         map("stroom.statistics.sql.maxProcessingAge", MSU_2_STROOM_DURATION);
-        // stroom.statistics.impl.sql.search.fetchSize
-        // stroom.statistics.impl.sql.search.maxResults
+        map("stroom.statistics.sql.search.fetchSize", "stroom.statistics.sql.search.fetchSize");
+        map("stroom.statistics.sql.search.maxResults", "stroom.statistics.sql.search.maxResults");
         // stroom.statistics.impl.sql.search.resultHandlerBatchSize
-        // stroom.statistics.sql.statisticAggregationBatchSize
+        map("stroom.statistics.sql.statisticAggregationBatchSize",
+                "stroom.statistics.sql.statisticAggregationBatchSize");
 
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
         // ? stroom.stream.deleteBatchSize ? stroom.data.store.deleteBatchSize
@@ -353,8 +382,8 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.streamstore.resilientReplicationCount",
                 "stroom.volumes.resilientReplicationCount");
         map("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
-        map("stroom.ui.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
-        map("stroom.theme.background-color", "stroom.ui.theme.backgroundColor");
+        map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
+        map("stroom.theme.background-color", "stroom.ui.theme.backgroundColour");
         map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
         map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
         map("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");
@@ -476,7 +505,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                         .execute());
     }
 
-    private static class Mapping {
+    public static class Mapping {
 
         private final String oldName;
         private final String newName;
@@ -511,10 +540,10 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
      * ModelString e.g. 30d to an ISO-8601 duration string, e.g. P30D
      */
     static String modelStringDurationToDuration(final String oldValue) {
-        if (oldValue == null) {
+        if (oldValue == null || oldValue.isBlank()) {
             return null;
-        } else if (oldValue.isBlank()) {
-            return "";
+//        } else if (oldValue.isBlank()) {
+//            return "";
         } else if (oldValue.matches("^[0-9]+[dD]$")) {
             // special case for days to stop Duration turning them into hours
             // e.g. 30d becomes PT720H rather than P30D
@@ -530,10 +559,10 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
      * ModelString e.g. 30d to an ISO-8601 duration string, e.g. P30D
      */
     static String modelStringDurationToStroomDuration(final String oldValue) {
-        if (oldValue == null) {
+        if (oldValue == null || oldValue.isBlank()) {
             return null;
-        } else if (oldValue.isBlank()) {
-            return "";
+//        } else if (oldValue.isBlank()) {
+//            return "";
         } else {
             StroomDuration stroomDuration = StroomDuration.parse(oldValue);
             // We want the ISO format so create a new one with the underlying duration so we
@@ -547,10 +576,10 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
     }
 
     static String delimitedStringToListOfString(final String delimiter, final String oldValue) {
-        if (oldValue == null) {
+        if (oldValue == null || oldValue.isBlank()) {
             return null;
-        } else if (oldValue.isBlank()) {
-            return "";
+//        } else if (oldValue.isBlank()) {
+//            return "";
         } else {
             // Our list serialisation is like '|A|B|C', i.e. prefixed with the delimiter in use
             return delimiter + oldValue;
@@ -561,10 +590,10 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
      * [docRef(type1,uuid1,name1),docRef(type2,uuid2,name2)] => [|,docRef(type1,uuid1,name1)|,docRef(type2,uuid2,name2)]
      */
     static String delimitedDocRefsToListOfDocRefs(final String oldValue) {
-        if (oldValue == null) {
+        if (oldValue == null || oldValue.isBlank()) {
             return null;
-        } else if (oldValue.isBlank()) {
-            return "";
+//        } else if (oldValue.isBlank()) {
+//            return "";
         } else {
             // Our List<DocRef> serialisation is like '|,docRef(type1,uuid1,name1)|docRef(type2,uuid2,name2)',
             // i.e. prefixed with the outer delimiter then each docref is prefixed with the inner delimiter
