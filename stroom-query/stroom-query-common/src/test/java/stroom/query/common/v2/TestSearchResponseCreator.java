@@ -328,6 +328,11 @@ class TestSearchResponseCreator {
             }
 
             @Override
+            public boolean awaitCompletion(final long timeout, final TimeUnit unit) {
+                return true;
+            }
+
+            @Override
             public void clear() {
             }
 

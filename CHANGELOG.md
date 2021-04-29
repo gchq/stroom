@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2172** : Further improvements to search payload transfer and search completion.
+
 
 ## [v7.0-beta.109] - 2021-04-28
 

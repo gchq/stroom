@@ -98,7 +98,7 @@ public class LmdbDataStore implements DataStore {
     private final LinkedBlockingQueue<QueueItem> queue = new LinkedBlockingQueue<>(1000000);
     private final AtomicBoolean running = new AtomicBoolean(true);
     private final CountDownLatch complete = new CountDownLatch(1);
-    private final CompletionState completionState = new CompletionStateImpl(queue, complete);
+    private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
 
     private final LmdbKey rootParentRowKey;
@@ -610,8 +610,8 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public boolean readPayload(final Input input) {
-        // Return false if we have been asked to terminate or are no longer running.
-        if (!running.get() || Thread.currentThread().isInterrupted()) {
+        // Return false if we aren't happy to accept any more data
+        if (!acceptingData()) {
             return false;
         }
 
@@ -649,29 +649,41 @@ public class LmdbDataStore implements DataStore {
                 }
             }
 
-            // Return false if we have been asked to terminate or are no longer running.
-            if (!running.get() || Thread.currentThread().isInterrupted()) {
-                return false;
-            }
-
-            // Wait for the payload to be added before we go and ask for another.
-            // If we don't wait here then remote search results may not be added to the data store before the associated
-            // remote search is assumed to be complete.
-            final CountDownLatch countDownLatch = new CountDownLatch(1);
-            put(new QueueItem() {
-                @Override
-                public void complete() {
-                    countDownLatch.countDown();
-                }
-            });
-            try {
-                countDownLatch.await();
-            } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-                Thread.currentThread().interrupt();
-            }
-            return !Thread.currentThread().isInterrupted() && !hasEnoughData.get();
+            // Return true if we are still happy to accept more data.
+            return acceptingData();
         });
+    }
+
+    /**
+     * Return false if we don't want any more data because we have been asked to terminate,
+     * are no longer running or have enough data already.
+     */
+    private boolean acceptingData() {
+        return running.get() && !Thread.currentThread().isInterrupted() && !hasEnoughData.get();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new InterruptedException();
+        }
+
+        // If we are no longer running then we must have been destroyed.
+        if (!running.get()) {
+            // Just let the caller think we are complete to stop asking.
+            return true;
+        }
+
+        // Add a countdown latch to the transfer queue so we only return complete after the transfer queue item has been
+        // consumed, i.e. all items queued before it have been added to LMDB.
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        queue.put(new QueueItem() {
+            @Override
+            public void complete() {
+                countDownLatch.countDown();
+            }
+        });
+        return countDownLatch.await(timeout, unit);
     }
 
     @Override
@@ -970,28 +982,35 @@ public class LmdbDataStore implements DataStore {
 
     private static class CompletionStateImpl implements CompletionState {
 
-        private final LinkedBlockingQueue<QueueItem> queue;
+        private final LmdbDataStore lmdbDataStore;
         private final CountDownLatch complete;
 
-        public CompletionStateImpl(final LinkedBlockingQueue<QueueItem> queue,
+        public CompletionStateImpl(final LmdbDataStore lmdbDataStore,
                                    final CountDownLatch complete) {
-            this.queue = queue;
+            this.lmdbDataStore = lmdbDataStore;
             this.complete = complete;
         }
 
         @Override
         public void complete() {
             try {
-                queue.put(new QueueItem() {
-                    @Override
-                    public void complete() {
-                        complete.countDown();
-                    }
-                });
+                if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
+                    complete.countDown();
+                } else {
+                    // Add a countdown latch to the transfer queue so we only return complete after the transfer queue
+                    // item has been consumed, i.e. all items queued before it have been added to LMDB.
+                    lmdbDataStore.queue.put(new QueueItem() {
+                        @Override
+                        public void complete() {
+                            complete.countDown();
+                        }
+                    });
+                }
+
             } catch (final InterruptedException e) {
+                complete.countDown();
                 LOGGER.debug(e.getMessage(), e);
                 Thread.currentThread().interrupt();
-                complete.countDown();
             }
         }
 

@@ -43,7 +43,6 @@ import stroom.util.io.TempDirProvider;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -258,7 +257,6 @@ class TestSearchResultCreation {
         validateSearchResponse(searchResponse);
     }
 
-    @Disabled("TODO seems to hang in travis, temporarily disabled to get the build passing")
     @Test
     void testFrequentPayloadTransfer() throws Exception {
         final SearchRequest searchRequest = createSearchRequest();
