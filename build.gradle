@@ -91,7 +91,7 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomStats       : 'v0.6.0-alpha.2',
-        stroomTestData    : 'v0.2.2',
+        stroomTestData    : '0.2.3',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
         // Curator 4 can apparently work with zk 3.4.x as long as you exclude its zk dependency
@@ -136,7 +136,7 @@ ext.libs = [
         hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
-        stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
+        stroomTestData                 : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
 //        agrona                         : "org.agrona:agrona:1.8.0",
