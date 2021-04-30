@@ -35,4 +35,6 @@ public interface AlertManager {
     String getAdditionalFieldsPrefix();
 
     boolean isReportAllExtractedFieldsEnabled();
+
+    void initialiseCache();
 }
