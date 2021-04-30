@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         jcenter()
         // used for
         maven { url "https://dl.bintray.com/stroom/stroom" }
@@ -401,6 +402,7 @@ subprojects {
 
     repositories {
         mavenLocal()
+        mavenCentral()
         jcenter()
         maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
