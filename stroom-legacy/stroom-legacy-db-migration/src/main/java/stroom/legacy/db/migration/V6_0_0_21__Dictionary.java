@@ -16,6 +16,7 @@
 
 package stroom.legacy.db.migration;
 
+import stroom.db.util.DbUtil;
 import stroom.legacy.model_6_1.DocDocRefUtil;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.legacy.model_6_1.JsonSerialiser;
@@ -47,9 +48,9 @@ public class V6_0_0_21__Dictionary extends BaseJavaMigration {
             try (final ResultSet resultSet = statement.executeQuery(
                     "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, UUID, NAME, DAT FROM DICT")) {
                 while (resultSet.next()) {
-                    final Long crtMs = (Long) resultSet.getObject(1);
+                    final Long crtMs = DbUtil.getLong(resultSet, 1);
                     final String crtUser = resultSet.getString(2);
-                    final Long updtMs = (Long) resultSet.getObject(3);
+                    final Long updtMs = DbUtil.getLong(resultSet, 3);
                     final String updUser = resultSet.getString(4);
                     final String uuid = resultSet.getString(5);
                     final String name = resultSet.getString(6);

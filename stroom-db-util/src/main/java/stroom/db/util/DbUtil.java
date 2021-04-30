@@ -182,36 +182,87 @@ public class DbUtil {
         }
     }
 
-//    private void executeStatement(final Connection connection, final String sql) throws SQLException {
-//        executeStatements(connection, Collections.singletonList(sql));
-//    }
-
-
-    public static Integer getInteger(final ResultSet rs, final String strColName) throws SQLException {
-        final int nValue = rs.getInt(strColName);
+    public static Byte getByte(final ResultSet rs, final String columnLabel) throws SQLException {
+        final byte val = rs.getByte(columnLabel);
         return rs.wasNull()
                 ? null
-                : nValue;
+                : val;
+    }
+
+    public static Byte getByte(final ResultSet rs, final int columnIndex) throws SQLException {
+        final byte val = rs.getByte(columnIndex);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Short getShort(final ResultSet rs, final String columnLabel) throws SQLException {
+        final short val = rs.getShort(columnLabel);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Short getShort(final ResultSet rs, final int columnIndex) throws SQLException {
+        final short val = rs.getShort(columnIndex);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Float getFloat(final ResultSet rs, final String columnLabel) throws SQLException {
+        final float val = rs.getFloat(columnLabel);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Float getFloat(final ResultSet rs, final int columnIndex) throws SQLException {
+        final float val = rs.getFloat(columnIndex);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Double getDouble(final ResultSet rs, final String columnLabel) throws SQLException {
+        final double val = rs.getDouble(columnLabel);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Double getDouble(final ResultSet rs, final int columnIndex) throws SQLException {
+        final double val = rs.getDouble(columnIndex);
+        return rs.wasNull()
+                ? null
+                : val;
+    }
+
+    public static Integer getInteger(final ResultSet rs, final String columnLabel) throws SQLException {
+        final int val = rs.getInt(columnLabel);
+        return rs.wasNull()
+                ? null
+                : val;
     }
 
     public static Integer getInteger(final ResultSet rs, final int columnIndex) throws SQLException {
-        final int nValue = rs.getInt(columnIndex);
+        final int val = rs.getInt(columnIndex);
         return rs.wasNull()
                 ? null
-                : nValue;
+                : val;
     }
 
-    public static Long getLong(final ResultSet rs, final String strColName) throws SQLException {
-        final long nValue = rs.getLong(strColName);
+    public static Long getLong(final ResultSet rs, final String columnLabel) throws SQLException {
+        final long val = rs.getLong(columnLabel);
         return rs.wasNull()
                 ? null
-                : nValue;
+                : val;
     }
 
     public static Long getLong(final ResultSet rs, final int columnIndex) throws SQLException {
-        final long nValue = rs.getLong(columnIndex);
+        final long val = rs.getLong(columnIndex);
         return rs.wasNull()
                 ? null
-                : nValue;
+                : val;
     }
 }

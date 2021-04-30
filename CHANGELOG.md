@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2205** : Improved migration to prevent null DB values being lost.
+
 * Issue **#2184** : Improved logging for OpenId flow.
 
 * Issue **#2205** : Improved migration to prevent null DB values being lost.
