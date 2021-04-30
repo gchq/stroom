@@ -22,6 +22,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.Sort;
@@ -30,10 +31,11 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.api.v2.ParamUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -87,11 +89,13 @@ class TestTableDataStore {
     @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
+            final long start = System.currentTimeMillis();
             testBigResult();
+            System.out.println("Took " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - start));
         }
     }
 
-//    @Test
+    //    @Test
     void testBigResult() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
@@ -102,7 +106,7 @@ class TestTableDataStore {
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
                         .format(Format.TEXT)
-                        .group(1)
+                        .group(0)
                         .build())
                 .addFields(Field.builder()
                         .id("Text2")
@@ -124,7 +128,6 @@ class TestTableDataStore {
 
         for (int i = 0; i < 100; i++) {
             final String key = UUID.randomUUID().toString();
-//            System.out.println("Group " + i + " " + key);
             for (int j = 0; j < 100000; j++) {
                 final String value = UUID.randomUUID().toString();
 
@@ -159,18 +162,6 @@ class TestTableDataStore {
                 data,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
-
-
-
-//        //Print free memory
-//        System.out.println("Free Memory: "
-//                + ModelStringUtil.formatIECByteSizeString(runtime.freeMemory()));
-//
-//        //Print total available memory
-//        System.out.println("Total Memory: " + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory()));
-//
-//        //Print Maximum available memory
-//        System.out.println("Max Memory: " + ModelStringUtil.formatIECByteSizeString(runtime.maxMemory()));
     }
 
     @Test
