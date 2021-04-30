@@ -420,7 +420,10 @@ subprojects {
         maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
+
     test {
+        systemProperties.put("useEmbeddedMySql",System.properties.get("useEmbeddedMySql"))
+
         useJUnitPlatform()
 
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
