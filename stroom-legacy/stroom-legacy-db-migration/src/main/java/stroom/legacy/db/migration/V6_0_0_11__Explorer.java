@@ -16,6 +16,7 @@
 
 package stroom.legacy.db.migration;
 
+import stroom.db.util.DbUtil;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.legacy.model_6_1.ExplorerConstants;
 import stroom.legacy.model_6_1.SQLNameConstants;
@@ -188,7 +189,7 @@ public class V6_0_0_11__Explorer extends BaseJavaMigration {
                     final long id = resultSet.getLong(1);
                     final String uuid = resultSet.getString(2);
                     final String name = resultSet.getString(3);
-                    Long parentId = (Long) resultSet.getObject(4);
+                    Long parentId = DbUtil.getLong(resultSet, 4);
                     if (parentId == null) {
                         parentId = 0L;
                     }
