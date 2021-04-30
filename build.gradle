@@ -38,7 +38,7 @@ ext.isPropertySet = { propName ->
         return false
     } else {
         def prop = project.getProperty(propName)
-        return (prop != "unspecified" && (prop != "" || prop != null))
+        return (prop != "unspecified" && prop != "" && prop != null)
     }
 }
 
