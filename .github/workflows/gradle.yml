@@ -119,6 +119,7 @@ jobs:
     - name: Make the distribution
       run: |
         ./gradlew \
+        -DuseEmbeddedMySql=true\
         --scan \
         --stacktrace \
         -PdumpFailedTestXml=true \
