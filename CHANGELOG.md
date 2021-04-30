@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change build dependencies on other gchq projects to use new maven group IDs and manven central.
+
 * Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data. 
 
 * Add JVM OOM args to zip distribution scripts.
