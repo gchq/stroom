@@ -83,7 +83,8 @@ ext.versions = [
     stroomAuth: '6.0.32', // Not sure if this needs to be v6.0.25-1 which is only on bintray
     stroomExpression: '1.5.15',
     stroomQuery: '2.2.24', // Same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.6.0-alpha.2',
+    //stroomStats: 'v0.6.0-alpha.2',
+    stroomStats: '1.0-alpha.6',
     stroomProxyApi: '5.1.6',
 
     //------------3rd-party------------
@@ -115,7 +116,7 @@ ext.libs = [
     stroomQueryAudit: "uk.gov.gchq.stroom.query:stroom-query-audit:$versions.stroomQuery",
     stroomQueryCommon: "uk.gov.gchq.stroom.query:stroom-query-common:$versions.stroomQuery",
     stroomExpression: "uk.gov.gchq.stroom.expression:stroom-expression:$versions.stroomExpression",
-    stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
+    stroomStatsSchema: "uk.gov.gchq.stroom.stats:stroom-stats-schema:$versions.stroomStats",
     stroomAuthApi: "uk.gov.gchq.stroom.auth:stroom-auth-service-api:$versions.stroomAuth",
     stroomProxyRemoteApi: "uk.gov.gchq.stroom.proxy:stroom-proxy-remote-api:$versions.stroomProxyApi",
     hadoopCommonShaded: "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
@@ -257,7 +258,8 @@ ext.contentPacks = [
 // Be sure to define 'project.ext.pomDescription' in each one
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-        // TODO in v6 pretty sure nothing uses these libs
+        // TODO in v6 pretty sure nothing uses these libs, leaving logic here
+        // as v7 will need to release libs
         //':stroom-entity-shared',
         //':stroom-util',
         //':stroom-util-shared',
@@ -401,9 +403,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        //maven { url "https://dl.bintray.com/stroom/event-logging" }
-        maven { url "https://dl.bintray.com/stroom/stroom" }
-        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
     test {
