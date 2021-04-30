@@ -406,7 +406,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
                         final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(
+                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).find(
                                 queryCriteria);
                     }
 

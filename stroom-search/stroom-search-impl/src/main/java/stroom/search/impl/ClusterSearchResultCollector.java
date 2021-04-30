@@ -156,9 +156,24 @@ public class ClusterSearchResultCollector implements Store {
             onFailure(nodeName, e);
         }
 
-        // If the result collector returns false it is because we have already collected enough data and can
+        // If we were told this payload belongs to a completed node then wait for this payload to be added.
+        if (complete.get()) {
+            try {
+                boolean consumed = false;
+                while (!consumed && !Thread.currentThread().isInterrupted()) {
+                    consumed = coprocessors.awaitTransfer(1, TimeUnit.MINUTES);
+                }
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.debug(e.getMessage(), e);
+            }
+
+            return true;
+        }
+
+        // If the result collector rejected the result it is because we have already collected enough data and can
         // therefore consider search complete.
-        return complete.get() || !success;
+        return !success;
     }
 
     public synchronized void onFailure(final String nodeName,
