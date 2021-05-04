@@ -28,6 +28,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -77,14 +78,21 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 feedProperties,
                 metaService,
                 null);
+        final ProgressHandler progressHandler = new ProgressHandler("Test");
         streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
-                handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
+                handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -113,6 +121,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
         attributeMap2.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
+        final ProgressHandler progressHandler = new ProgressHandler("Test");
         final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
                 streamStore,
                 feedProperties,
@@ -120,9 +129,12 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 null);
         streamTargetStreamHandlers.handle(feedName1, StreamTypeNames.RAW_EVENTS, attributeMap1, handler -> {
             try {
-                handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
+                handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -130,9 +142,12 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
 
         streamTargetStreamHandlers.handle(feedName2, StreamTypeNames.RAW_EVENTS, attributeMap2, handler -> {
             try {
-                handler.addEntry("2" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
+                handler.addEntry("2" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -154,6 +169,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
 
+        final ProgressHandler progressHandler = new ProgressHandler("Test");
         final StreamTargetStreamHandlers streamTargetStreamHandlers = new StreamTargetStreamHandlers(
                 streamStore,
                 feedProperties,
@@ -161,12 +177,18 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
                 null);
         streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
             try {
-                handler.addEntry("1" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.META.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(), new ByteArrayInputStream(new byte[0]));
-                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(), new ByteArrayInputStream(new byte[0]));
+                handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.META.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.CONTEXT.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
+                handler.addEntry("2" + StroomZipFileType.DATA.getExtension(),
+                        new ByteArrayInputStream(new byte[0]), progressHandler);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

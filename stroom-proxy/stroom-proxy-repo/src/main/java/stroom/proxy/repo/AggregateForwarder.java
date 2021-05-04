@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -267,12 +268,15 @@ public class AggregateForwarder implements Forwarder {
                             final String fullSourceName = sourceName + extension;
                             final String fullTargetName = targetName + extension;
 
+                            final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
+                                    fullTargetName);
+
                             final ZipArchiveEntry zipArchiveEntry = zipFile.getEntry(fullSourceName);
                             try (final ByteCountInputStream inputStream =
                                     new ByteCountInputStream(zipFile.getInputStream(zipArchiveEntry))) {
                                 LOGGER.debug(() -> "sendEntry() - " + fullTargetName);
 
-                                handler.addEntry(targetName + extension, inputStream);
+                                handler.addEntry(targetName + extension, inputStream, progressHandler);
                                 final long totalRead = inputStream.getCount();
 
                                 LOGGER.trace(() -> "sendEntry() - " +

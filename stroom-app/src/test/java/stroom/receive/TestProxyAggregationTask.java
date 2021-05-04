@@ -501,8 +501,11 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         }
 
-        final String meta = "Feed:" + feedName1 +
-                "\nProxy:ProxyTest\nCompression:Zip\nReceivedTime:2010-01-01T00:00:00.000Z\n";
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Compression", "Zip");
+        attributeMap.put("Feed", feedName1);
+        attributeMap.put("Proxy", "ProxyTest");
+        attributeMap.put("ReceivedTime", "2010-01-01T00:00:00.000Z");
 
         try (final Source source = store.openSource(list.get(0).getId())) {
             assertThat(source.count())
@@ -514,8 +517,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                             .isEqualTo("data1\ndata1\n");
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false))
-                            .isEqualTo(meta);
+                    checkMeta(inputStream, attributeMap);
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                     assertThat(StreamUtil.streamToString(inputStream, false))
@@ -528,8 +530,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                             .isEqualTo("data2\ndata2\n");
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-                    assertThat(StreamUtil.streamToString(inputStream, false))
-                            .isEqualTo(meta);
+                    checkMeta(inputStream, attributeMap);
                 }
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                     assertThat(StreamUtil.streamToString(inputStream, false))
@@ -537,6 +538,12 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 }
             }
         }
+    }
+
+    private void checkMeta(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {
+        final AttributeMap resultAttributeMap = new AttributeMap();
+        AttributeMapUtil.read(inputStream, resultAttributeMap);
+        attributeMap.forEach((k, v) -> assertThat(resultAttributeMap.get(k)).isEqualTo(v));
     }
 
     private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType)

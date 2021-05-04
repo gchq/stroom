@@ -26,24 +26,16 @@ import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceDao.Source;
 import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.receive.common.StreamHandlers;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
-import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -233,42 +226,22 @@ public class SourceForwarder implements Forwarder {
         }
 
         final StreamHandlers streamHandlers = forwarderDestinations.getProvider(forwardUrl);
+        final Path zipFilePath = repoDir.resolve(source.getSourcePath());
+
+        final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
+                zipFilePath);
 
         // Start the POST
         try {
             streamHandlers.handle(source.getFeedName(), source.getTypeName(), attributeMap, handler -> {
-                final Path zipFilePath = repoDir.resolve(source.getSourcePath());
-
-                try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
-                    final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-                    while (entries.hasMoreElements()) {
-                        final ZipArchiveEntry zipArchiveEntry = entries.nextElement();
-
-                        try (final ByteCountInputStream inputStream =
-                                new ByteCountInputStream(zipFile.getInputStream(zipArchiveEntry))) {
-                            LOGGER.debug(() -> "sendEntry() - " + zipArchiveEntry.getName());
-
-                            handler.addEntry(zipArchiveEntry.getName(), inputStream);
-                            final long totalRead = inputStream.getCount();
-
-                            LOGGER.trace(() -> "sendEntry() - " +
-                                    zipArchiveEntry.getName() +
-                                    " " +
-                                    ModelStringUtil.formatIECByteSizeString(
-                                            totalRead));
-
-                            if (totalRead == 0) {
-                                LOGGER.warn(() -> "sendEntry() - " + zipArchiveEntry.getName() + " IS BLANK");
-                            }
-                            LOGGER.debug(() -> "sendEntry() - " + zipArchiveEntry.getName() + " size is " + totalRead);
-                        }
-                    }
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-
-                success.set(true);
+                // Use the Stroom stream processor to send zip entries in a consistent order.
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                        attributeMap, handler, progressHandler);
+                stroomStreamProcessor.processZipFile(zipFilePath);
             });
+
+            success.set(true);
+
         } catch (final RuntimeException ex) {
             error.set(ex.getMessage());
             LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + source.getFeedName() + " ( " + ex + ")");

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#190** : Statistics are now recorded when manually uploading data.
+
 * Issue **#2201** : Improved Stroom Proxy and aggregation process.
 
 * Issue **#2098** : Properties that contain passwords no longer transfer any part of the password to the UI.

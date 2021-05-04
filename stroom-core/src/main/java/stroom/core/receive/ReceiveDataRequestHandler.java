@@ -27,6 +27,8 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskProgressHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -51,14 +54,17 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final SecurityContext securityContext;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final StreamTargetStreamHandlers streamTargetStreamHandlerProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
-                                     final StreamTargetStreamHandlers streamTargetStreamHandlerProvider) {
+                                     final StreamTargetStreamHandlers streamTargetStreamHandlerProvider,
+                                     final TaskContextFactory taskContextFactory) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.streamTargetStreamHandlerProvider = streamTargetStreamHandlerProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -73,18 +79,23 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
                 final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
-                try (final InputStream inputStream = request.getInputStream()) {
-                    streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
-                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                attributeMap,
-                                handler);
-                        stroomStreamProcessor.processRequestHeader(request);
-                        stroomStreamProcessor.process(inputStream, "");
-                    });
-                } catch (final RuntimeException | IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    StroomStreamException.create(e);
-                }
+                taskContextFactory.context("Receiving Data", taskContext -> {
+                    final Consumer<Long> progressHandler =
+                            new TaskProgressHandler(taskContext, "Receiving " + feedName + " - ");
+                    try (final InputStream inputStream = request.getInputStream()) {
+                        streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
+                            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                                    attributeMap,
+                                    handler,
+                                    progressHandler);
+                            stroomStreamProcessor.processRequestHeader(request);
+                            stroomStreamProcessor.processInputStream(inputStream, "");
+                        });
+                    } catch (final RuntimeException | IOException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        StroomStreamException.create(e);
+                    }
+                }).run();
             } else {
                 // Drop the data.
                 debug("Dropping data", attributeMap);

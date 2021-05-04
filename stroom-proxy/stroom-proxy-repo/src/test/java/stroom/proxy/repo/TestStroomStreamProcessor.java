@@ -43,9 +43,12 @@ class TestStroomStreamProcessor {
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                attributeMap,
+                handler,
+                new ProgressHandler("Test"));
 
-        stroomStreamProcessor.process(byteArrayInputStream, "");
+        stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
 
         stroomZipOutputStream.close();
 
@@ -76,10 +79,13 @@ class TestStroomStreamProcessor {
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                attributeMap,
+                handler,
+                new ProgressHandler("Test"));
 
         try {
-            stroomStreamProcessor.process(byteArrayInputStream, "");
+            stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
             stroomZipOutputStream.close();
             final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
             final String msg = StreamUtil.streamToString(stroomZipFile.getInputStream(
@@ -117,10 +123,13 @@ class TestStroomStreamProcessor {
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                attributeMap,
+                handler,
+                new ProgressHandler("Test"));
 
         try {
-            stroomStreamProcessor.process(byteArrayInputStream, "");
+            stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
             stroomZipOutputStream.close();
 
             final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -152,9 +161,12 @@ class TestStroomStreamProcessor {
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                attributeMap,
+                handler,
+                new ProgressHandler("Test"));
 
-        stroomStreamProcessor.process(byteArrayInputStream, "");
+        stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
         stroomZipOutputStream.close();
 
         assertThat(Files.isRegularFile(zipFile))
@@ -395,14 +407,16 @@ class TestStroomStreamProcessor {
         attributeMap.put("Compression", "ZIP");
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
 
         try {
-            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                    attributeMap,
+                    handler,
+                    new ProgressHandler("Test"));
 
-            stroomStreamProcessor.process(byteArrayInputStream, "");
+            stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
             if (fail) {
                 fail("Expecting a fail");
             }
@@ -415,9 +429,13 @@ class TestStroomStreamProcessor {
     }
 
     public static StreamHandler createStroomStreamHandler(final StroomZipOutputStream stroomZipOutputStream) {
-        return (entry, inputStream) -> {
+        return (entry, inputStream, progressHandler) -> {
             try (final OutputStream outputStream = stroomZipOutputStream.addEntry(entry)) {
-                return StreamUtil.streamToStream(inputStream, outputStream);
+                return StreamUtil.streamToStream(
+                        inputStream,
+                        outputStream,
+                        new byte[StreamUtil.BUFFER_SIZE],
+                        progressHandler);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

@@ -13,13 +13,9 @@ import java.util.function.Function;
 /**
  * String hash map that does not care about key case.
  */
-class CIStringHashMap implements Serializable, Map<String, String> {
-
-    private static final long serialVersionUID = 4877407570072403322L;
+class CIStringHashMap implements Map<String, String> {
 
     protected static class CIString implements Comparable<CIString>, Serializable {
-
-        private static final long serialVersionUID = 550532045010691235L;
 
         private final String key;
         private final String lowerKey;
@@ -150,7 +146,6 @@ class CIStringHashMap implements Serializable, Map<String, String> {
         return realMap.size();
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
     public Set<Entry<String, String>> entrySet() {
         final Set<Entry<String, String>> rtnSet = new HashSet<>();
@@ -160,7 +155,6 @@ class CIStringHashMap implements Serializable, Map<String, String> {
         return rtnSet;
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
     public Set<String> keySet() {
         final Set<String> rtnSet = new HashSet<>();
@@ -170,7 +164,6 @@ class CIStringHashMap implements Serializable, Map<String, String> {
         return rtnSet;
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
     public void putAll(final Map<? extends String, ? extends String> m) {
         for (final Entry<? extends String, ? extends String> entry : m.entrySet()) {
@@ -178,7 +171,6 @@ class CIStringHashMap implements Serializable, Map<String, String> {
         }
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
     public Collection<String> values() {
         return realMap.values();

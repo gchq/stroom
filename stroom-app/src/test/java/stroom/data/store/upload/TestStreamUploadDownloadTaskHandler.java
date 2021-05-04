@@ -103,7 +103,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         dataUploadTaskHandler.uploadData("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null);
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount * 2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount + 1);
     }
 
     @Test
@@ -195,7 +195,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                                     false), "META:" + i, "X:" + i);
                         } else {
                             assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
-                                    false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                                    false), "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
                         }
                     }
                 }
