@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change stroom dependencies to use maven central instead of bintray.
+
 * Issue **#2207** : Fixed dashboard column rename issue where column name was not updated visually after rename.
 
 
