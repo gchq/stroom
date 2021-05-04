@@ -85,8 +85,6 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
             final Format format = getFormat();
             if (!EqualsUtil.isEquals(format, field.getFormat())) {
                 fieldChangeConsumer.accept(field, field.copy().format(format).build());
-                tablePresenter.setDirty(true);
-                tablePresenter.clearAndRefresh();
             }
         }
 

@@ -231,7 +231,7 @@ public class FieldsManager implements HeadingListener {
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
             tablePresenter.reset();
-            tablePresenter.clearAndRefresh();
+            tablePresenter.clear();
         }
     }
 
@@ -259,19 +259,36 @@ public class FieldsManager implements HeadingListener {
     }
 
     public void showRename(final Field field) {
-        renameFieldPresenterProvider.get().show(tablePresenter, field, this::replaceField);
+        renameFieldPresenterProvider.get().show(tablePresenter, field, (oldField, newField) -> {
+            replaceField(oldField, newField);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+        });
     }
 
     public void showExpression(final Field field) {
-        expressionPresenterProvider.get().show(tablePresenter, field, this::replaceField);
+        expressionPresenterProvider.get().show(tablePresenter, field, (oldField, newField) -> {
+            replaceField(oldField, newField);
+            tablePresenter.setDirty(true);
+            tablePresenter.clear();
+        });
     }
 
     public void showFormat(final Field field) {
-        formatPresenter.show(tablePresenter, field, this::replaceField);
+        formatPresenter.show(tablePresenter, field, (oldField, newField) -> {
+            replaceField(oldField, newField);
+            tablePresenter.setDirty(true);
+            tablePresenter.clear();
+        });
     }
 
     private void filterField(final Field field) {
-        filterPresenter.show(tablePresenter, field, this::replaceField);
+        filterPresenter.show(tablePresenter, field, (oldField, newField) -> {
+            replaceField(oldField, newField);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.clear();
+        });
     }
 
     public void addField(final Field field) {
@@ -281,7 +298,6 @@ public class FieldsManager implements HeadingListener {
 
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
-        tablePresenter.clearAndRefresh();
     }
 
     private void deleteField(final Field field) {
@@ -292,7 +308,6 @@ public class FieldsManager implements HeadingListener {
 
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.clearAndRefresh();
         }
     }
 
@@ -329,7 +344,6 @@ public class FieldsManager implements HeadingListener {
         replaceField(field, field.copy().visible(true).build());
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
-        tablePresenter.clearAndRefresh();
     }
 
     private void hideField(final Field field) {
@@ -339,7 +353,6 @@ public class FieldsManager implements HeadingListener {
             replaceField(field, field.copy().visible(false).build());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.clearAndRefresh();
         }
     }
 
@@ -515,7 +528,7 @@ public class FieldsManager implements HeadingListener {
             fixGroups(getFields());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.clearAndRefresh();
+            tablePresenter.clear();
         }
     }
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2207** : Fixed dashboard column rename issue where column name was not updated visually after rename.
+
 
 ## [v7.0-beta.110] - 2021-05-04
 
