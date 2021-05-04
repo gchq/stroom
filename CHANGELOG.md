@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1820** : Stroom now records `UploadedBy` meta attribute when manually uploading data via the UI.
+
 * Issue **#190** : Statistics are now recorded when manually uploading data.
 
 

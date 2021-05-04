@@ -112,6 +112,7 @@ public class DataUploadTaskHandler {
             attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
+            attributeMap.put("UploadedBy", securityContext.getUserId());
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(taskContext, "Uploading");
 
