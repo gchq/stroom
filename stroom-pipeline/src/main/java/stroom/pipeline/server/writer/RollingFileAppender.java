@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.destination.RollingDestination;
@@ -34,6 +36,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Joins text instances into a single text instance.
@@ -49,12 +54,15 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
 class RollingFileAppender extends AbstractRollingAppender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileAppender.class);
+
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private boolean useCompression;
+    private String filePermissions;
 
     private String dir;
     private String fileName;
@@ -82,9 +90,15 @@ class RollingFileAppender extends AbstractRollingAppender {
 
         // Try and create the path.
         final Path parentDir = file.getParent();
+        final Set<PosixFilePermission> permissions = parsePosixFilePermissions(filePermissions);
         if (!Files.isDirectory(parentDir)) {
             try {
                 Files.createDirectories(parentDir);
+
+                // Set permissions on the created directory
+                if (permissions != null) {
+                    Files.setPosixFilePermissions(parentDir, permissions);
+                }
             } catch (final IOException e) {
                 throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(parentDir));
             }
@@ -100,7 +114,8 @@ class RollingFileAppender extends AbstractRollingAppender {
                 rolledFileName,
                 parentDir,
                 file,
-                useCompression
+                useCompression,
+                permissions
         );
     }
 
@@ -149,6 +164,22 @@ class RollingFileAppender extends AbstractRollingAppender {
         return path;
     }
 
+    /**
+     * Parses a POSIX-style file permission string like "rwxr--r--"
+     */
+    private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
+        if (filePermissions == null || filePermissions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return PosixFilePermissions.fromString(filePermissions);
+        } catch (IllegalArgumentException e) {
+            LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
+            return null;
+        }
+    }
+
     @Override
     void validateSpecificSettings() {
         if (outputPaths == null || outputPaths.length == 0) {
@@ -185,6 +216,9 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(description = "Apply GZIP compression to output files", defaultValue = "false")
     public void setUseCompression(final boolean useCompression) { this.useCompression = useCompression; }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')")
+    public void setFilePermissions(final String filePermissions) { this.filePermissions = filePermissions; }
 
     @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {

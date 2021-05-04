@@ -23,6 +23,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Collections;
+import java.util.Set;
 
 class LockedOutputStream extends WrappedOutputStream {
     private static final String UNABLE_TO_RENAME_FILE = "Unable to rename file \"";
@@ -31,11 +35,21 @@ class LockedOutputStream extends WrappedOutputStream {
 
     final Path lockFile;
     final Path outFile;
+    final Set<PosixFilePermission> filePermissions;
 
     LockedOutputStream(final OutputStream outputStream, final Path lockFile, final Path outFile) {
         super(outputStream);
         this.lockFile = lockFile;
         this.outFile = outFile;
+        this.filePermissions = null;
+    }
+
+    LockedOutputStream(final OutputStream outputStream, final Path lockFile, final Path outFile,
+                       final Set<PosixFilePermission> filePermissions) {
+        super(outputStream);
+        this.lockFile = lockFile;
+        this.outFile = outFile;
+        this.filePermissions = filePermissions;
     }
 
     @Override
@@ -45,6 +59,11 @@ class LockedOutputStream extends WrappedOutputStream {
 
         try {
             Files.move(lockFile, outFile);
+
+            // If specified, set file system permissions on the finished file
+            if (filePermissions != null) {
+                Files.setPosixFilePermissions(outFile, filePermissions);
+            }
         } catch (final IOException e) {
             final String message = UNABLE_TO_RENAME_FILE +
                     FileUtil.getCanonicalPath(lockFile) +

@@ -33,6 +33,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class RollingFileDestination extends RollingDestination {
@@ -51,6 +53,11 @@ public class RollingFileDestination extends RollingDestination {
      */
     private final boolean useCompression;
 
+    /**
+     * Optional file permissions to apply to finished files
+     */
+    private final Set<PosixFilePermission> filePermissions;
+
     public RollingFileDestination(
             final String key,
             final Long frequency,
@@ -61,7 +68,8 @@ public class RollingFileDestination extends RollingDestination {
             final String rolledFileName,
             final Path dir,
             final Path file,
-            final boolean useCompression
+            final boolean useCompression,
+            final Set<PosixFilePermission> filePermissions
     ) throws IOException {
         super(key, frequency, schedule, rollSize, creationTime);
 
@@ -72,6 +80,7 @@ public class RollingFileDestination extends RollingDestination {
         this.file = file;
 
         this.useCompression = useCompression;
+        this.filePermissions = filePermissions;
 
         // Make sure we can create this path.
         try {
@@ -138,6 +147,9 @@ public class RollingFileDestination extends RollingDestination {
             } else {
                 try {
                     Files.move(source, dest);
+                    if (filePermissions != null) {
+                        Files.setPosixFilePermissions(dest, filePermissions);
+                    }
                     success = true;
                 } catch (final Throwable t) {
                     exceptionConsumer.accept(wrapRollException(file, destFile, t));
@@ -160,6 +172,9 @@ public class RollingFileDestination extends RollingDestination {
                         }
                         try {
                             Files.move(source, dest);
+                            if (filePermissions != null) {
+                                Files.setPosixFilePermissions(dest, filePermissions);
+                            }
                             success = true;
                         } catch (final Throwable t) {
                             LOGGER.debug(t.getMessage(), t);
