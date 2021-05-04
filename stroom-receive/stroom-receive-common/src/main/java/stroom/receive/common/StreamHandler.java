@@ -18,8 +18,9 @@ package stroom.receive.common;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 public interface StreamHandler {
 
-    long addEntry(String entry, InputStream inputStream) throws IOException;
+    long addEntry(String entry, InputStream inputStream, Consumer<Long> progressHandler) throws IOException;
 }

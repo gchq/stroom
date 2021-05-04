@@ -1,13 +1,11 @@
 package stroom.data.zip;
 
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskProgressHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -24,7 +22,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private final Path file;
     private final Path lockFile;
     private final ZipOutputStream zipOutputStream;
-    private final StreamProgressMonitor streamProgressMonitor;
+    private final TaskProgressHandler progressHandler;
     private StroomZipNameSet stroomZipNameSet;
     private boolean inEntry = false;
     private long entryCount = 0;
@@ -73,11 +71,11 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
         this.lockFile = result;
 
-        streamProgressMonitor = new StreamProgressMonitor(taskContext, "Write");
+        progressHandler = new TaskProgressHandler(taskContext, "Write");
         final OutputStream rawOutputStream = Files.newOutputStream(lockFile);
         final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream);
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
-                streamProgressMonitor);
+                progressHandler);
         zipOutputStream = new ZipOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
@@ -86,8 +84,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
     @Override
     public long getProgressSize() {
-        if (streamProgressMonitor != null) {
-            return streamProgressMonitor.getTotalBytes();
+        if (progressHandler != null) {
+            return progressHandler.getTotalBytes();
         }
         return -1;
     }

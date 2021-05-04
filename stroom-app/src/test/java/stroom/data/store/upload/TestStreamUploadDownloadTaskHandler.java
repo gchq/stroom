@@ -103,7 +103,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         dataUploadTaskHandler.uploadData("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null);
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount * 2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount + 1);
     }
 
     @Test
@@ -186,16 +186,20 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
             try (final Source streamSource = streamStore.openSource(meta.getId())) {
                 for (int i = 1; i <= streamSource.count(); i++) {
                     try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
-                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false))
+                                .isEqualTo("DATA" + i);
                         assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT),
-                                false)).isEqualTo("CONTEXT" + i);
+                                false))
+                                .isEqualTo("CONTEXT" + i);
 
                         if (originalMeta.equals(meta)) {
                             assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
-                                    false), "META:" + i, "X:" + i);
+                                    false),
+                                    "META:" + i, "X:" + i);
                         } else {
                             assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
-                                    false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                                    false),
+                                    "UploadedBy:admin", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
                         }
                     }
                 }

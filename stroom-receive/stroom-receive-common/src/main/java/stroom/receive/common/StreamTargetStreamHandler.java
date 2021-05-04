@@ -35,7 +35,6 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -69,8 +68,6 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamTargetStreamHandler.class);
 
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-    private final Consumer<Long> progressHandler = (totalBytes) -> {
-    };
     private final Store store;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
@@ -79,15 +76,14 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final HashSet<Meta> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
     private final Map<String, Target> targetMap = new HashMap<>();
-    private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
-    private StroomZipEntry currentStroomZipEntry = null;
-    private StroomZipEntry lastDatStroomZipEntry = null;
-    private StroomZipEntry lastCtxStroomZipEntry = null;
+    private final ByteArrayOutputStream tempByteArrayOutputStream = new ByteArrayOutputStream();
+    private String lastBaseName;
     private String currentFeedName;
-    private AttributeMap currentAttributeMap;
+    private AttributeMap manifestAttributeMap;
+    private AttributeMap metaAttributeMap;
 
     private OutputStreamProvider currentOutputStreamProvider;
-    private Layer currentLayer;
+    private final Layer layer = new Layer();
 
     StreamTargetStreamHandler(final Store store,
                               final FeedProperties feedProperties,
@@ -102,128 +98,144 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         this.typeName = typeName;
         this.streamSet = new HashSet<>();
         this.stroomZipNameSet = new StroomZipNameSet(true);
-        this.globalAttributeMap = globalAttributeMap;
+
+        if (globalAttributeMap == null) {
+            this.globalAttributeMap = null;
+        } else {
+            this.globalAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
+        }
     }
 
     @Override
-    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entryName,
+                         final InputStream inputStream,
+                         final Consumer<Long> progressHandler) throws IOException {
         long bytesWritten;
-        LOGGER.debug(() -> LogUtil.message("handleEntryStart() - {}", entry));
+        LOGGER.debug(() -> "addEntry() - " + entryName);
 
-        final StroomZipEntry nextEntry = stroomZipNameSet.add(entry);
-        final StroomZipFileType stroomZipFileType = nextEntry.getStroomZipFileType();
+        final StroomZipEntry entry = stroomZipNameSet.add(entryName);
+        final String baseName = entry.getBaseName();
+        final StroomZipFileType stroomZipFileType = entry.getStroomZipFileType();
 
         // We don't want to aggregate reference feeds.
         final boolean singleEntry = feedProperties.isReference(currentFeedName);
 
-        if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
-            // Close it if we have opened it.
-            if (targetMap.containsKey(currentFeedName)) {
-                LOGGER.debug(() -> LogUtil.message(
-                        "handleEntryStart() - Closing due to singleEntry={} currentFeedName={} " +
-                                "currentStroomZipEntry={} nextEntry={}",
-                        singleEntry, currentFeedName, currentStroomZipEntry, nextEntry));
+        // If the base name changes then reset and we will treat this as a new layer.
+        final boolean requiresNewLayer = layer.hasType(stroomZipFileType) || (lastBaseName != null &&
+                !lastBaseName.equals(baseName));
+        if (requiresNewLayer) {
+            reset();
+            if (singleEntry) {
                 closeCurrentFeed();
             }
         }
 
-        currentStroomZipEntry = nextEntry;
+        lastBaseName = baseName;
+        // Tell the new layer that it will contain the requested type.
+        layer.addType(stroomZipFileType);
 
-        if (StroomZipFileType.META.equals(stroomZipFileType)) {
-            // Buffer up the header.
-            currentHeaderByteArrayOutputStream.reset();
-            bytesWritten = StreamUtil.streamToStream(
-                    inputStream,
-                    currentHeaderByteArrayOutputStream,
-                    buffer,
-                    progressHandler);
+        if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
+            manifestAttributeMap = new AttributeMap();
+            final byte[] bytes = readAttributes(inputStream, manifestAttributeMap, progressHandler);
+            bytesWritten = bytes.length;
+            putAll(globalAttributeMap, manifestAttributeMap);
 
-            final byte[] headerBytes = currentHeaderByteArrayOutputStream.toByteArray();
-            currentAttributeMap = null;
-            if (globalAttributeMap != null) {
-                currentAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
-            } else {
-                currentAttributeMap = new AttributeMap();
+            // Are we switching feed?
+            final String feedName = getCurrentAttributeMap().get(StandardHeaderArguments.FEED);
+            if (feedName != null && !feedName.equals(currentFeedName)) {
+                if (layer.hasType(StroomZipFileType.DATA) || layer.hasType(StroomZipFileType.CONTEXT)) {
+                    throw new IOException("Header and Data out of order for multiple feed data");
+                }
+                currentFeedName = feedName;
             }
-            AttributeMapUtil.read(headerBytes, currentAttributeMap);
+
+        } else if (StroomZipFileType.META.equals(stroomZipFileType)) {
+            metaAttributeMap = new AttributeMap();
+            putAll(manifestAttributeMap, metaAttributeMap);
+            final byte[] bytes = readAttributes(inputStream, metaAttributeMap, progressHandler);
+            bytesWritten = bytes.length;
+            putAll(globalAttributeMap, metaAttributeMap);
 
             if (metaDataStatistics != null) {
-                metaDataStatistics.recordStatistics(currentAttributeMap);
+                metaDataStatistics.recordStatistics(metaAttributeMap);
             }
 
             // Are we switching feed?
-            final String feedName = currentAttributeMap.get(StandardHeaderArguments.FEED);
-            if (feedName != null) {
-                if (currentFeedName == null || !currentFeedName.equals(feedName)) {
-                    // Yes ... load the new feed
-                    currentFeedName = feedName;
-
-                    final String currentBaseName = currentStroomZipEntry.getBaseName();
-
-                    // Have we stored some data or context
-                    if (lastDatStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastDatStroomZipEntry.getFullName())
-                            .equals(currentBaseName)) {
-                        throw new IOException("Header and Data out of order for multiple feed data");
-                    }
-                    if (lastCtxStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastCtxStroomZipEntry.getFullName())
-                            .equals(currentBaseName)) {
-                        throw new IOException("Header and Data out of order for multiple feed data");
-                    }
+            final String feedName = getCurrentAttributeMap().get(StandardHeaderArguments.FEED);
+            if (feedName != null && !feedName.equals(currentFeedName)) {
+                if (layer.hasType(StroomZipFileType.DATA) || layer.hasType(StroomZipFileType.CONTEXT)) {
+                    throw new IOException("Header and Data out of order for multiple feed data");
                 }
+                currentFeedName = feedName;
             }
 
-            checkLayer(StroomZipFileType.META);
-            try (final OutputStream outputStream = currentOutputStreamProvider.get(StreamTypeNames.META)) {
-                outputStream.write(headerBytes);
+            final OutputStreamProvider outputStreamProvider = getOutputStreamProvider(currentFeedName, typeName);
+            try (final OutputStream outputStream = outputStreamProvider.get(StreamTypeNames.META)) {
+                AttributeMapUtil.write(metaAttributeMap, outputStream);
             }
 
         } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
-            // Check to see if we need to move to the next output and do so if necessary.
-            checkLayer(stroomZipFileType);
-            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+            final OutputStreamProvider outputStreamProvider = getOutputStreamProvider(currentFeedName, typeName);
+            try (final OutputStream currentOutputStream = outputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                 bytesWritten = StreamUtil.streamToStream(
                         inputStream,
                         currentOutputStream,
                         buffer,
                         progressHandler);
             }
-
-            lastCtxStroomZipEntry = currentStroomZipEntry;
 
         } else {
-            // Check to see if we need to move to the next output and do so if necessary.
-            checkLayer(stroomZipFileType);
-            try (final OutputStream currentOutputStream = currentOutputStreamProvider.get()) {
+            final OutputStreamProvider outputStreamProvider = getOutputStreamProvider(currentFeedName, typeName);
+            try (final OutputStream currentOutputStream = outputStreamProvider.get()) {
                 bytesWritten = StreamUtil.streamToStream(
                         inputStream,
                         currentOutputStream,
                         buffer,
                         progressHandler);
             }
-
-            lastDatStroomZipEntry = currentStroomZipEntry;
         }
 
         return bytesWritten;
     }
 
-    /**
-     * Layers are used to synchronise writing context, meta and actual data to the current output stream provider.
-     *
-     * @param type The type that needs to be added to the current layer.
-     */
-    private void checkLayer(final StroomZipFileType type) {
-        if (currentLayer == null || currentLayer.hasType(type)) {
-            // We have either not initialised any layer or the current layer already includes this type so start
-            // a new layer.
-            currentLayer = new Layer();
-            // Tell the new layer that it will contain the requested type.
-            currentLayer.hasType(type);
-            // Get a new output stream provider for the new layer.
-            currentOutputStreamProvider = getTarget().next();
+    private void putAll(final AttributeMap source,
+                        final AttributeMap dest) {
+        if (source != null && dest != null) {
+            source.forEach((k, v) -> {
+                if (source.isOverrideEmbeddedMeta()) {
+                    dest.remove(k);
+                    dest.put(k, v);
+                } else {
+                    dest.putIfAbsent(k, v);
+                }
+            });
         }
+    }
+
+    private byte[] readAttributes(final InputStream inputStream,
+                                  final AttributeMap attributeMap,
+                                  final Consumer<Long> progressHandler) {
+        byte[] bytes = new byte[0];
+        try {
+            tempByteArrayOutputStream.reset();
+            StreamUtil.streamToStream(
+                    inputStream,
+                    tempByteArrayOutputStream,
+                    buffer,
+                    progressHandler);
+            bytes = tempByteArrayOutputStream.toByteArray();
+            AttributeMapUtil.read(bytes, attributeMap);
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return bytes;
+    }
+
+    private void reset() {
+        layer.clear();
+        manifestAttributeMap = null;
+        metaAttributeMap = null;
+        currentOutputStreamProvider = null;
     }
 
     void error() {
@@ -243,8 +255,11 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
     private void closeCurrentFeed() {
-        LOGGER.debug(() -> LogUtil.message("closeCurrentFeed() - {}", currentFeedName));
-        CloseableUtil.closeLogAndIgnoreException(targetMap.remove(currentFeedName));
+        LOGGER.debug(() -> "closeCurrentFeed() - " + currentFeedName);
+        final Target target = targetMap.remove(currentFeedName);
+        if (target != null) {
+            CloseableUtil.closeLogAndIgnoreException(target);
+        }
     }
 
     public Set<Meta> getStreamSet() {
@@ -252,38 +267,57 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
     private AttributeMap getCurrentAttributeMap() {
-        if (currentAttributeMap != null) {
-            return currentAttributeMap;
+        if (metaAttributeMap != null) {
+            return metaAttributeMap;
+        }
+        if (manifestAttributeMap != null) {
+            return manifestAttributeMap;
         }
         return globalAttributeMap;
     }
 
-    private Target getTarget() {
-        return targetMap.computeIfAbsent(currentFeedName, k -> {
-            LOGGER.debug(() -> LogUtil.message("getOutputStreamProvider() - open stream for {}", currentFeedName));
+    private OutputStreamProvider getOutputStreamProvider(final String feedName, final String typeName) {
+        // Check to see if we need to move to the next output and do so if necessary.
+        if (currentOutputStreamProvider == null) {
+            // Get a new output stream provider for the new layer.
+            currentOutputStreamProvider = getTarget(feedName, typeName).next();
+        }
+        return currentOutputStreamProvider;
+    }
+
+    private Target getTarget(final String feedName, final String typeName) {
+        return targetMap.computeIfAbsent(feedName, k -> {
+            LOGGER.debug(() -> "getTarget() - open stream for " + feedName);
 
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
 
             final MetaProperties metaProperties = MetaProperties.builder()
-                    .feedName(currentFeedName)
+                    .feedName(feedName)
                     .typeName(typeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
             final Target streamTarget = store.openTarget(metaProperties);
             streamSet.add(streamTarget.getMeta());
-
             return streamTarget;
         });
     }
 
     private static class Layer {
 
-        final Set<StroomZipFileType> types = new HashSet<>();
+        private final Set<StroomZipFileType> types = new HashSet<>();
 
         boolean hasType(final StroomZipFileType type) {
-            return !types.add(type);
+            return types.contains(type);
+        }
+
+        void addType(final StroomZipFileType type) {
+            types.add(type);
+        }
+
+        void clear() {
+            types.clear();
         }
     }
 }

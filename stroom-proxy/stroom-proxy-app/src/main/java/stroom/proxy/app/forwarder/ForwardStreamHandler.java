@@ -36,9 +36,6 @@ public class ForwardStreamHandler implements StreamHandler {
     private final String forwardUrl;
     private final Integer forwardDelayMs;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-    private final Consumer<Long> progressHandler = (totalBytes) -> {
-    };
-
     private HttpURLConnection connection;
     private final ZipOutputStream zipOutputStream;
     private final long startTimeMs;
@@ -100,7 +97,9 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     @Override
-    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entry,
+                         final InputStream inputStream,
+                         final Consumer<Long> progressHandler) throws IOException {
         // First call we set up if we are going to do chunked streaming
         zipOutputStream.putNextEntry(new ZipEntry(entry));
 

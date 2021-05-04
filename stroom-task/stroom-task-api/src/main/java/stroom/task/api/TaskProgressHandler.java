@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.data.zip;
+package stroom.task.api;
 
-import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class StreamProgressMonitor {
+public class TaskProgressHandler implements Consumer<Long> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamProgressMonitor.class);
-
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskProgressHandler.class);
     private static final long INTERVAL_MS = 1000;
 
     private final TaskContext taskContext;
@@ -35,13 +35,8 @@ public class StreamProgressMonitor {
     private long totalBytes = 0;
     private long lastProgressTime = System.currentTimeMillis();
 
-    public StreamProgressMonitor(final TaskContext taskContext, final String prefix) {
+    public TaskProgressHandler(final TaskContext taskContext, final String prefix) {
         this.taskContext = taskContext;
-        this.prefix = prefix;
-    }
-
-    public StreamProgressMonitor(String prefix) {
-        this.taskContext = null;
         this.prefix = prefix;
     }
 
@@ -49,19 +44,24 @@ public class StreamProgressMonitor {
         return totalBytes;
     }
 
-    public void progress(int thisBytes) throws IOException {
-        totalBytes += thisBytes;
+    @Override
+    public void accept(final Long bytes) {
+        totalBytes += bytes;
+        progress(totalBytes);
+    }
+
+    private void progress(long totalBytes) {
         long timeNow = System.currentTimeMillis();
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;
-            final Supplier<String> messageSupplier = () -> prefix + " - " + ModelStringUtil.formatIECByteSizeString(
-                    totalBytes);
+            final Supplier<String> messageSupplier = () ->
+                    prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
             if (taskContext != null) {
                 taskContext.info(messageSupplier);
 
                 if (Thread.currentThread().isInterrupted()) {
-                    throw new IOException("Progress Stopped");
+                    throw new UncheckedIOException(new IOException("Progress Stopped"));
                 }
             }
             LOGGER.debug(messageSupplier);

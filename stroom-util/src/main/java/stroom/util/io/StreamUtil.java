@@ -264,7 +264,7 @@ public final class StreamUtil {
             while ((len = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, len);
                 bytesWritten += len;
-                progressConsumer.accept(bytesWritten);
+                progressConsumer.accept((long) len);
             }
             return bytesWritten;
         } catch (final IOException ioEx) {

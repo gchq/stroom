@@ -6,6 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.ProgressHandler;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
@@ -73,12 +74,14 @@ public class ProxyRequestHandler implements RequestHandler {
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.
                 if (attributeMapFilter.filter(attributeMap)) {
-                    // Send the data
+                    // Consume the data
                     receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
                         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                attributeMap, handler);
+                                attributeMap,
+                                handler,
+                                new ProgressHandler("Receiving data"));
                         stroomStreamProcessor.processRequestHeader(request);
-                        stroomStreamProcessor.process(inputStream, "");
+                        stroomStreamProcessor.processInputStream(inputStream, "");
                     });
 
                     final long duration = System.currentTimeMillis() - startTimeMs;

@@ -22,8 +22,6 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     private final StroomZipOutputStream stroomZipOutputStream;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-    private final Consumer<Long> progressHandler = (totalBytes) -> {
-    };
 
     private boolean doneOne = false;
 
@@ -33,7 +31,9 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     }
 
     @Override
-    public long addEntry(final String entry, final InputStream inputStream) throws IOException {
+    public long addEntry(final String entry,
+                         final InputStream inputStream,
+                         final Consumer<Long> progressHandler) throws IOException {
         doneOne = true;
         long bytesWritten;
         try (final OutputStream outputStream = stroomZipOutputStream.addEntry(entry)) {

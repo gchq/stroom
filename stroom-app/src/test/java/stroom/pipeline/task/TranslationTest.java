@@ -49,6 +49,7 @@ import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
+import stroom.proxy.repo.ProgressHandler;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -347,10 +348,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
+        final ProgressHandler progressHandler = new ProgressHandler("Test");
         try (final InputStream inputStream = Files.newInputStream(file)) {
             streamHandlers.handle(feed.getName(), feed.getStreamType(), attributeMap, handler -> {
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handler);
-                stroomStreamProcessor.process(inputStream, "test");
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                        attributeMap,
+                        handler,
+                        progressHandler);
+                stroomStreamProcessor.processInputStream(inputStream, "test");
             });
         }
     }

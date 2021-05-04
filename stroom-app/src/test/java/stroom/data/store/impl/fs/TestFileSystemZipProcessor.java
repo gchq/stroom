@@ -24,6 +24,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
@@ -261,12 +262,13 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                     attributeMap,
-                    handler);
+                    handler,
+                    new ProgressHandler("Test"));
             stroomStreamProcessor.setAppendReceivedPath(false);
 
             for (int i = 0; i < processCount; i++) {
                 try (final InputStream inputStream = Files.newInputStream(file)) {
-                    stroomStreamProcessor.process(inputStream, String.valueOf(i));
+                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i));
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

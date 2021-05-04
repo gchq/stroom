@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletResponse;
 public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
-    private static final long serialVersionUID = 1L;
 
     private static final Set<String> PATH_SPECS = Set.of("/datafeed", "/datafeed/*");
 
@@ -72,12 +71,8 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     /**
      * Do handle the request.
-     *
-     * @param request
-     * @param response
      */
-    private void handleRequest(final HttpServletRequest request, final HttpServletResponse response)
-            throws IOException {
+    private void handleRequest(final HttpServletRequest request, final HttpServletResponse response) {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getRequestTrace(request));
         }
@@ -91,14 +86,8 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
     }
 
     /**
-     * <p>
      * Utility to log out some trace info.
-     * </p>
-     *
-     * @param request
-     * @return
      */
-    @SuppressWarnings("unchecked")
     private String getRequestTrace(final HttpServletRequest request) {
         final StringBuilder trace = new StringBuilder();
         trace.append("request.getAuthType()=");

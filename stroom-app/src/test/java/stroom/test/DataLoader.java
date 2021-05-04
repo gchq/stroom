@@ -17,13 +17,14 @@
 
 package stroom.test;
 
-import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
+import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -133,16 +134,23 @@ public class DataLoader {
             map.put(StandardHeaderArguments.FEED, feedName);
             map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
+            final ProgressHandler progressHandler = new ProgressHandler("Data Loader");
             streamTargetStreamHandlers.handle(feedName, null, map, handler -> {
                 try {
                     // Write meta.
                     if (metaInputStream != null) {
-                        handler.addEntry("001" + StroomZipFileType.META.getExtension(), metaInputStream);
+                        handler.addEntry(
+                                "001" + StroomZipFileType.META.getExtension(),
+                                metaInputStream,
+                                progressHandler);
                     }
 
                     // Write data.
                     if (dataInputStream != null) {
-                        handler.addEntry("001" + StroomZipFileType.DATA.getExtension(), dataInputStream);
+                        handler.addEntry(
+                                "001" + StroomZipFileType.DATA.getExtension(),
+                                dataInputStream,
+                                progressHandler);
                     }
 
                 } catch (final IOException e) {
@@ -166,36 +174,18 @@ public class DataLoader {
         if (feedProperties.isReference(feedName) == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-            try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
+            final AttributeMap attributeMap = new AttributeMap();
+            attributeMap.put(StandardHeaderArguments.FEED, feedName);
+            attributeMap.put("TestData", "Loaded By SetupSampleData");
+            attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
 
-                final AttributeMap map = new AttributeMap();
-                map.put(StandardHeaderArguments.FEED, feedName);
-                map.put("TestData", "Loaded By SetupSampleData");
-                map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
-
-                streamTargetStreamHandlers.handle(feedName, null, map, handler -> {
-                    try {
-                        for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
-                            // Add context data.
-                            try (final InputStream inputStream =
-                                    stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT)) {
-                                handler.addEntry(baseName + StroomZipFileType.CONTEXT.getExtension(), inputStream);
-                            }
-
-                            // Add data.
-                            try (final InputStream inputStream =
-                                    stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA)) {
-                                handler.addEntry(baseName + StroomZipFileType.DATA.getExtension(), inputStream);
-                            }
-                        }
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
-
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            final ProgressHandler progressHandler = new ProgressHandler("Data Loader");
+            streamTargetStreamHandlers.handle(feedName, null, attributeMap, handler -> {
+                // Use the Stroom stream processor to send zip entries in a consistent order.
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                        attributeMap, handler, progressHandler);
+                stroomStreamProcessor.processZipFile(file);
+            });
         }
     }
 
