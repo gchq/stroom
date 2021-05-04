@@ -60,7 +60,6 @@ public class AlertManagerImpl implements AlertManager {
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final AlertConfig alertConfig;
     private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
-    //todo make into a clearable cache, and periodically refresh
 
     private boolean initialised = false;
 
@@ -136,7 +135,6 @@ public class AlertManagerImpl implements AlertManager {
                     .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {
-                LOGGER.error(() -> "Unable to find folder called " + name + " when opening rules path ");
                 return null;
             } else if (matchingChildren.size() > 1) {
                 final ExplorerNode node = currentNode;
@@ -158,7 +156,7 @@ public class AlertManagerImpl implements AlertManager {
         return new HashMap<>();
     }
 
-    private void initialiseCache() {
+    public void initialiseCache() {
         Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
 
         List<String> rulesPaths = findRulesPaths();
@@ -166,13 +164,15 @@ public class AlertManagerImpl implements AlertManager {
             return;
         }
 
+        LOGGER.debug("Refreshing rules");
         for (String rulesPath : rulesPaths) {
-            LOGGER.info("Loading alerting rules from " + rulesPath);
             final DocRef rulesFolder = getFolderForPath(rulesPath);
 
             if (rulesFolder == null) {
-                return;
+                LOGGER.warn("The specified ruled folder \"" + rulesPath + "\" does not exist.");
+                continue;
             }
+            LOGGER.info("Loading alerting rules from " + rulesPath);
 
             List<ExplorerNode> childNodes = explorerNodeService.getDescendants(rulesFolder);
 
@@ -234,6 +234,7 @@ public class AlertManagerImpl implements AlertManager {
         }
 
         this.indexToRules = indexToRules;
+        this.initialised = true;
     }
 
     @Override

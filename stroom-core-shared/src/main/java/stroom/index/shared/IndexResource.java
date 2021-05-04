@@ -16,7 +16,9 @@
 
 package stroom.index.shared;
 
+import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.FindWithCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -40,7 +42,8 @@ import javax.ws.rs.core.MediaType;
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<IndexDoc> {
+public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<IndexDoc>,
+        FindWithCriteria<FindIndexShardCriteria, IndexShard> {
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
@@ -66,7 +69,7 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Find matching index shards",
             operationId = "findIndexShards")
-    ResultPage<IndexShard> findIndexShards(
+    ResultPage<IndexShard> find(
             @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST

@@ -43,4 +43,9 @@ public class MockAlertManager implements AlertManager {
     public boolean isReportAllExtractedFieldsEnabled() {
         return false;
     }
+
+    @Override
+    public void initialiseCache() {
+
+    }
 }
