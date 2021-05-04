@@ -87,7 +87,6 @@ ext.versions = [
         eventLogging      : '5.0-beta.16_schema-v4.0-beta.3',
         hadoopCommonShaded: '2.6.4-9',
         hadoopHdfsShaded  : '2.6.4-7',
-        //stroomStats       : 'v0.6.0-alpha.2',
         stroomStats       : '1.0-alpha.6',
         stroomTestData    : '0.2.3',
 
