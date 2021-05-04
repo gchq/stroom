@@ -71,8 +71,6 @@ public class TestStoreAndForward {
         assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
 
         sourceForwarder.forward();
-        assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isZero();
-        sourceForwarder.setForwardSuccess(sources.get(0).getSourceId());
         assertThat(sourceDao.getDeletableSources(Integer.MAX_VALUE).size()).isOne();
 
         assertThat(sourceDao.countSources()).isOne();
