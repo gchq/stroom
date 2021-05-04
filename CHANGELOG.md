@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2209** : Fixed more property migration issues.
+
 * Issue **#2205** : Improved migration to prevent null DB values being lost.
 
 * Issue **#2172** : Further improvements to search payload transfer and search completion.
