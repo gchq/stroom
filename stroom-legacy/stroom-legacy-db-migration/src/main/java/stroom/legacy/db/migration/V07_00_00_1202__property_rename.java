@@ -336,6 +336,16 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             ignoredMappings.add("stroom.uiUrl");
             ignoredMappings.add("stroom.volumes.createDefaultOnStart");
 
+            // v7.1 No longer uses these properties.
+            ignoredMappings.add("stroom.maxConcurrentMappedFiles");
+            ignoredMappings.add("stroom.maxFileScan");
+            ignoredMappings.add("stroom.proxyDir");
+            ignoredMappings.add("stroom.proxyThreads");
+            ignoredMappings.add("stroom.bufferSize");
+            ignoredMappings.add("stroom.maxAggregation");
+            ignoredMappings.add("stroom.maxAggregationScan");
+            ignoredMappings.add("stroom.maxStreamSize");
+
             // TODO what do we do about mapping c3po pool props to hikari?
             //   Can we map some/any of them to equiv hikari props?
             map("stroom.temp", "stroom.path.temp");
