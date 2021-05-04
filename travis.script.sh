@@ -271,8 +271,10 @@ else
 
     if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
       echo "This is a release version so add gradle arg for publishing" \
-        "libs to Bintray"
-      extraBuildArgs+=("bintrayUpload")
+        "libs to Maven Central"
+      # TODO need to add in the sonatype build args when we have decided 
+      # what we are publishing from stroom
+      #extraBuildArgs+=("bintrayUpload")
     fi
   elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
     # This is a branch we want to create a floating snapshot docker image for
