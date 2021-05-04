@@ -673,8 +673,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         };
 
         final FieldHeader fieldHeader = new FieldHeader(fieldsManager, field);
-        fieldHeader.setUpdater(value -> dataGrid.redrawHeaders());
-
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
     }
@@ -720,10 +718,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 });
         return wasModified.get();
-    }
-
-    void redrawHeaders() {
-        dataGrid.redrawHeaders();
     }
 
     private void setQueryId(final String queryId) {
@@ -968,15 +962,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    void clearAndRefresh() {
-        clear();
-    }
-
     private void refresh() {
         currentSearchModel.refresh(getComponentConfig().getId());
     }
 
-    private void clear() {
+    void clear() {
         setData(null);
     }
 

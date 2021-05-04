@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql;
 
+import stroom.db.util.DbUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -106,7 +107,7 @@ public class ConnectionUtil {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    result = (Long) resultSet.getObject(1);
+                    result = DbUtil.getLong(resultSet, 1);
                 }
             }
 

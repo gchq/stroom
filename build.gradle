@@ -1,12 +1,9 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
-        // used for
-        maven { url "https://dl.bintray.com/stroom/stroom" }
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
 //        // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
 //        classpath 'stroom:gradle-dependency-analyze:v2.2.6'
@@ -83,15 +80,15 @@ ext.gwtCompilerProps = [
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
         //----------Stroom-----------------
-        stroom            : getPropertyOrDefault('version', 'SNAPSHOT'),
+        stroom            : getPropertyOrDefault('version', 'SNAPSHOT').replaceFirst(/^v/, ""),
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : 'v5.0-beta.15_schema-v4.0-beta.3',
-        hadoopCommonShaded: 'v2.6.4-5',
-        hadoopHdfsShaded  : 'v2.6.4-4',
-        stroomStats       : 'v0.6.0-alpha.2',
-        stroomTestData    : 'v0.2.2',
+        eventLogging      : '5.0-beta.16_schema-v4.0-beta.3',
+        hadoopCommonShaded: '2.6.4-9',
+        hadoopHdfsShaded  : '2.6.4-7',
+        stroomStats       : '1.0-alpha.6',
+        stroomTestData    : '0.2.3',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
         // Curator 4 can apparently work with zk 3.4.x as long as you exclude its zk dependency
@@ -134,11 +131,11 @@ ext.versions = [
 // search for 'platform'.
 ext.libs = [
         //------Stroom-libs---------------
-        eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
-        hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
-        hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
-        stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
-        stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
+        eventLogging                   : "uk.gov.gchq.eventlogging:event-logging:$versions.eventLogging",
+        hadoopCommonShaded             : "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
+        hadoopHdfsShaded               : "uk.gov.gchq.stroom.hadoop.hdfs:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
+        stroomStatsSchema              : "uk.gov.gchq.stroom.stats:stroom-stats-schema:$versions.stroomStats",
+        stroomTestData                 : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
 //        agrona                         : "org.agrona:agrona:1.8.0",
@@ -300,12 +297,12 @@ ext.contentPackDefinitionFile = contentPackDefinitionFile
 def contentPackDownloadDir = "${System.properties['user.home']}/.stroom/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
 
-//defines a list of gradle projects that we will publish with maven/bintray
+//defines a list of gradle projects that we will publish with maven
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
-            ':stroom-util',
-            ':stroom-util-shared',
-            'zzDUMMYzz to ease sorting'
+    // TODO add in query and expression so others can use them
+            //':stroom-util',
+            //':stroom-util-shared',
     ]
 }
 
@@ -414,10 +411,7 @@ subprojects {
 
     repositories {
         mavenLocal()
-        jcenter()
-        maven { url "https://dl.bintray.com/stroom/event-logging" }
-        maven { url "https://dl.bintray.com/stroom/stroom" }
-        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
+        mavenCentral()
     }
 
     test {
@@ -592,9 +586,7 @@ subprojects {
 configure(projectsToBePublished) {
     println "Configuring ${project.name} for publishing"
 
-    apply plugin: 'maven'
     apply plugin: 'maven-publish'
-    apply plugin: 'com.jfrog.bintray'
 
     group = 'stroom'
     version = versions.stroom
@@ -645,39 +637,6 @@ configure(projectsToBePublished) {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-            }
-        }
-    }
-
-    // configuration for the bintray plugin for uploading maven artifacts to bintray
-    // see https://github.com/bintray/gradle-bintray-plugin
-    // run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
-    bintray {
-        // Must never write these to log or system out
-        user = System.getenv('BINTRAY_USER') // set in Travis UI
-        key = System.getenv('BINTRAY_KEY') // set in Travis UI
-
-        // The maven plugin publications to push to bintray
-        publications = ['mavenJava']
-
-        // immediately make the artifacts public
-        publish = true
-
-        pkg {
-            repo = 'stroom'
-            name = 'stroom'
-            userOrg = 'stroom'
-            licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/gchq/stroom.git'
-            version {
-                name = "${versions.stroom}"
-                desc = "stroom-${versions.stroom}"
-                released = new Date()
-                vcsTag = "${versions.stroom}"
-                gpg {
-                    // Bintray will self-sign the files
-                    sign = true // Determines whether to GPG sign the files. The default is false
-                }
             }
         }
     }
