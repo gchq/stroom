@@ -29,6 +29,8 @@ import stroom.util.io.GZipByteCountOutputStream;
 import stroom.util.io.GZipOutputStream;
 import stroom.util.spring.StroomScope;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +41,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Joins text instances into a single text instance.
@@ -53,12 +58,14 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILE)
 public class FileAppender extends AbstractAppender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileAppender.class);
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
     private boolean useCompression;
+    private String filePermissions;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -89,9 +96,15 @@ public class FileAppender extends AbstractAppender {
             // Make sure we can create this path.
             final Path file = Paths.get(path);
             final Path dir = file.getParent();
+            final Set<PosixFilePermission> permissions = parsePosixFilePermissions(filePermissions);
             if (!Files.isDirectory(dir)) {
                 try {
                     Files.createDirectories(dir);
+
+                    // Set permissions on the created directory
+                    if (permissions != null) {
+                        Files.setPosixFilePermissions(dir, permissions);
+                    }
                 } catch (final IOException e) {
                     throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(dir));
                 }
@@ -117,12 +130,32 @@ public class FileAppender extends AbstractAppender {
                 byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
             }
 
-            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
+            if (permissions != null) {
+                return new LockedOutputStream(byteCountOutputStream, lockFile, outFile, permissions);
+            } else {
+                return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
+            }
 
         } catch (final IOException e) {
             throw e;
         } catch (final Exception e) {
             throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Parses a POSIX-style file permission string like "rwxr--r--"
+     */
+    private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
+        if (filePermissions == null || filePermissions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return PosixFilePermissions.fromString(filePermissions);
+        } catch (IllegalArgumentException e) {
+            LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
+            return null;
         }
     }
 
@@ -144,6 +177,9 @@ public class FileAppender extends AbstractAppender {
 
     @PipelineProperty(description = "Apply GZIP compression to output files", defaultValue = "false")
     public void setUseCompression(final boolean useCompression) { this.useCompression = useCompression; }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')")
+    public void setFilePermissions(final String filePermissions) { this.filePermissions = filePermissions; }
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.")

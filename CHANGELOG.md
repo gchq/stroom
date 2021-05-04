@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
 
+* Issue **#2214** Allow file permission override for `FileAppender` and `RollingFileAppender`.
+
 
 ## [v6.2-beta.1] - 2021-04-02
 
