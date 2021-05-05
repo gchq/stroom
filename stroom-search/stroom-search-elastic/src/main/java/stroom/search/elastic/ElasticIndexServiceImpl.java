@@ -39,7 +39,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -64,31 +66,39 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
         return fieldMappings.entrySet().stream()
                 .map(field -> {
-                    final Object properties = field.getValue().sourceAsMap().get(field.getKey());
+                    final FieldMappingMetadata fieldMeta = field.getValue();
+                    final Optional<Entry<String, Object>> firstFieldEntry = fieldMeta.sourceAsMap().entrySet().stream().findFirst();
 
-                    if (properties instanceof Map) {
-                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                        final String nativeType = (String) propertiesMap.get("type");
+                    if (firstFieldEntry.isPresent()) {
+                        final Object properties = firstFieldEntry.get().getValue();
+                        final String fieldName = fieldMeta.fullName();
 
-                        try {
-                            final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
-                            return new DataSourceField.Builder()
-                                    .type(elasticFieldType.getDataSourceFieldType())
-                                    .name(field.getValue().fullName())
-                                    .queryable(true)
-                                    .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
-                                    .build();
+                        if (properties instanceof Map) {
+                            @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                            final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                            final String nativeType = (String) propertiesMap.get("type");
+
+                            try {
+                                final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fieldName, nativeType);
+                                return new DataSourceField.Builder()
+                                        .type(elasticFieldType.getDataSourceFieldType())
+                                        .name(fieldName)
+                                        .queryable(true)
+                                        .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
+                                        .build();
+                            }
+                            catch (IllegalArgumentException e) {
+                                LOGGER.warn(e::getMessage);
+                                return null;
+                            }
                         }
-                        catch (IllegalArgumentException e) {
-                            LOGGER.warn(e::getMessage);
+                        else {
+                            LOGGER.debug(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
                             return null;
                         }
                     }
-                    else {
-                        LOGGER.debug(() -> "Mapping properties for field '" + field.getKey() + "' were in an unrecognised format. Field ignored.");
-                        return null;
-                    }
+
+                    return null;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -104,32 +114,34 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
-        fieldMappings.forEach((key, value) -> {
-            final Object properties = value.sourceAsMap().get(key);
+        fieldMappings.forEach((key, fieldMeta) -> {
+            final Optional<Entry<String, Object>> firstFieldEntry = fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+            if (firstFieldEntry.isPresent()) {
+                final Object properties = firstFieldEntry.get().getValue();
+                if (properties instanceof Map) {
+                    try {
+                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                        final String fieldName = fieldMeta.fullName();
+                        final String fieldType = (String) propertiesMap.get("type");
+                        final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
+                        final boolean stored = fieldIsStored(key, fieldMeta);
 
-            if (properties instanceof Map) {
-                try {
-                    @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                    final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                    final String fieldName = value.fullName();
-                    final String fieldType = (String) propertiesMap.get("type");
-                    final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
-                    final boolean stored = fieldIsStored(key, value);
-
-                    fieldsMap.put(fieldName, new ElasticIndexField(
-                            ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
-                            fieldName,
-                            fieldType,
-                            sourceFieldEnabled || stored,
-                            true
-                    ));
+                        fieldsMap.put(fieldName, new ElasticIndexField(
+                                ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
+                                fieldName,
+                                fieldType,
+                                sourceFieldEnabled || stored,
+                                true
+                        ));
+                    }
+                    catch (Exception e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
                 }
-                catch (Exception e) {
-                    LOGGER.error(e::getMessage, e);
+                else {
+                    LOGGER.debug(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
                 }
-            }
-            else {
-                LOGGER.debug(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
             }
         });
 
