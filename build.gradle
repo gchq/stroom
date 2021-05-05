@@ -234,7 +234,6 @@ ext.libs = [
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by DW BOM
         jetty_servlets                 : "org.eclipse.jetty:jetty-servlets", // version controlled by DW BOM
         jinjava                        : "com.hubspot.jinjava:jinjava:2.5.5",
-        joda_time                      : 'joda-time:joda-time:2.9.3', // TODO: auth-into-stroom - remove joda
         jooq                           : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
