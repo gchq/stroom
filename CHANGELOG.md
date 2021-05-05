@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2214** Allow file permission override for `FileAppender` and `RollingFileAppender`.
 
+* Issue **#2215** Support arrays of strings and objects in Elastic indexing and search.
+
 
 ## [v6.2-beta.1] - 2021-04-02
 
