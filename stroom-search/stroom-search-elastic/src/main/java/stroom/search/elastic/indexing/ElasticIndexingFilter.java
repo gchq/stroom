@@ -60,6 +60,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,6 +90,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private DocRef indexRef;
     private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
     private Map<String, Object> document = new HashMap<>();
+    private List<String> currentStringArray;
+    private String currentArrayString;
+    private List<Map<String, Object>> currentObjectArray;
+    private Map<String, Object> currentArrayObject;
+    private boolean isBuildingArrayObject = false;
+    private String currentPropertyName;
 
     private int batchSize = 10000;
     private boolean refreshAfterEachBatch = false;
@@ -183,26 +190,58 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         if (DATA_ELEMENT_NAME.equals(localName) && document != null) {
             String name = attributes.getValue(NAME_ATTRIBUTE);
             String value = attributes.getValue(VALUE_ATTRIBUTE);
-            if (name != null && value != null) {
-                name = name.trim();
-                value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
-                    // See if we can get this field.
-                    final ElasticIndexField indexField = fieldsMap.get(name);
-                    if (indexField != null) {
-                        // Index the current content if we are to store or index
-                        // this field.
-                        if (indexField.isIndexed() || indexField.isStored()) {
-                            addFieldToDocument(indexField, value);
+            if (name == null) {
+                if (value == null) {
+                    // Start of an array object
+                    currentArrayObject = new HashMap<>();
+                    currentObjectArray.add(currentArrayObject);
+                } else {
+                    // Node with no name, but a value. Treat this as a string array item.
+                    if (currentStringArray != null) {
+                        if (currentArrayObject != null) {
+                            throw new SAXException("Cannot mix strings and objects in arrays");
                         }
-                    } else {
-                        final String msg = "No explicit field mapping exists for field: '" + name + "'";
-                        LOGGER.debug(() -> msg);
 
-                        // Add the field to the document by name, so it's available for dynamic property mappings
-                        // and included in the document `_source` field
-                        addFieldToDocument(name, value);
+                        currentArrayString = value;
+                        currentStringArray.add(value);
+                    }
+                }
+            } else {
+                if (value == null) {
+                    // Node with a name and no value. Treat this as the start of an array.
+                    // Could be either a string or object array.
+                    if (currentStringArray != null || currentObjectArray != null) {
+                        throw new SAXException("Cannot nest an array within another array");
+                    }
+
+                    currentStringArray = new ArrayList<>();
+                    currentObjectArray = new ArrayList<>();
+                    currentPropertyName = name;
+                } else {
+                    if (currentArrayObject != null) {
+                        isBuildingArrayObject = true;
+                        currentArrayObject.put(name, value);
+                    } else {
+                        // This is a simple property, not part of an array
+                        if (name.length() > 0 && value.length() > 0) {
+                            // See if we can get this field.
+                            final ElasticIndexField indexField = fieldsMap.get(name);
+                            if (indexField != null) {
+                                // Index the current content if we are to store or index
+                                // this field.
+                                if (indexField.isIndexed() || indexField.isStored()) {
+                                    addFieldToDocument(indexField, value);
+                                }
+                            } else {
+                                final String msg = "No explicit field mapping exists for field: '" + name + "'";
+                                LOGGER.debug(() -> msg);
+
+                                // Add the field to the document by name, so it's available for dynamic property mappings
+                                // and included in the document `_source` field
+                                addFieldToDocument(name, value);
+                            }
+                        }
                     }
                 }
             }
@@ -216,9 +255,34 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (RECORD_ELEMENT_NAME.equals(localName)) {
+        if (DATA_ELEMENT_NAME.equals(localName)) {
+            if (isBuildingArrayObject) {
+                // An array object is currently being built and is not yet completed
+                isBuildingArrayObject = false;
+            } else if (currentArrayObject != null) {
+                // An array object has ended
+                currentArrayObject = null;
+            } else if (currentArrayString != null) {
+                // An array string has ended
+                currentArrayString = null;
+            } else if (currentObjectArray != null && currentObjectArray.size() > 0) {
+                // We're at the end of an object array, so commit it to the document
+                addFieldToDocument(currentPropertyName, currentObjectArray);
+                currentStringArray = null;
+                currentObjectArray = null;
+            } else if (currentStringArray != null && currentStringArray.size() > 0) {
+                // End of a string array
+                addFieldToDocument(currentPropertyName, currentStringArray);
+                currentStringArray = null;
+                currentObjectArray = null;
+            }
+        } else if (RECORD_ELEMENT_NAME.equals(localName)) {
             processDocument();
             document = null;
+            currentStringArray = null;
+            currentObjectArray = null;
+            currentArrayObject = null;
+            currentArrayString = null;
 
             // Reset the count of how many fields we have indexed for the
             // current event.
@@ -311,7 +375,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             if (indexField.getFieldUse().isNumeric()) {
                 val = Long.parseLong(value);
-
             } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
                 try {
                     val = DateUtil.parseUnknownString(value);
@@ -344,7 +407,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * If Elasticsearch index dynamic properties are defined, a field mapping will be created if the field name matches
      * the defined pattern. Regardless, the field will be added to the document's `_source`.
      */
-    private void addFieldToDocument(final String fieldName, final String value) {
+    private void addFieldToDocument(final String fieldName, final Object value) {
         if (!document.containsKey(fieldName)) {
             LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
                 indexRef.getName() +
