@@ -22,10 +22,7 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.index.impl.IndexShardService;
-import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeCallUtil;
@@ -58,7 +55,6 @@ class AsyncSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
@@ -71,7 +67,6 @@ class AsyncSearchTaskHandler {
 
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
-                           final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
@@ -82,7 +77,6 @@ class AsyncSearchTaskHandler {
                            final Provider<LocalNodeSearch> localNodeSearchProvider,
                            final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
@@ -108,16 +102,6 @@ class AsyncSearchTaskHandler {
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
                     parentContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
-
-                    // Reload the index.
-                    final IndexDoc index = indexStore.readDocument(query.getDataSource());
-
-                    // Get an array of stored index fields that will be used for
-                    // getting stored data.
-                    // TODO : Specify stored fields based on the fields that all
-                    // coprocessors will require. Also
-                    // batch search only needs stream and event id stored fields.
-                    final String[] storedFields = getStoredFields(index);
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
@@ -210,13 +194,5 @@ class AsyncSearchTaskHandler {
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
         clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
-    }
-
-    private String[] getStoredFields(final IndexDoc index) {
-        return index.getFields()
-                .stream()
-                .filter(IndexField::isStored)
-                .map(IndexField::getFieldName)
-                .toArray(String[]::new);
     }
 }

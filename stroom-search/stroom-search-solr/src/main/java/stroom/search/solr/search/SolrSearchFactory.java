@@ -93,7 +93,7 @@ public class SolrSearchFactory {
         if (query.getQuery() == null) {
             throw new SearchException("Failed to build query given expression");
         } else {
-            LOGGER.debug(() -> "Query is " + query.toString());
+            LOGGER.debug(() -> "Query is " + query);
         }
 
         return query;
