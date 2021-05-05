@@ -24,7 +24,6 @@ import stroom.util.scheduler.SimpleCron;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 
 public class TestRollingFileDestination {
     @Test
@@ -44,7 +43,7 @@ public class TestRollingFileDestination {
                 dir,
                 file,
                 false,
-                Collections.emptySet());
+                null);
 
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));
@@ -67,7 +66,7 @@ public class TestRollingFileDestination {
                 dir,
                 file,
                 false,
-                Collections.emptySet());
+                null);
 
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));

@@ -20,6 +20,8 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+
+import stroom.entity.shared.EntityServiceException;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -121,8 +123,15 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
                     feedHolder.setFeed(feed);
 
                     // Set the pipeline so it can be used by a filter if needed.
+                    if (mapStorePoolKey.getPipeline() == null || mapStorePoolKey.getPipeline().getUuid() == null) {
+                        throw new EntityServiceException("Null reference pipeline");
+                    }
                     final PipelineEntity pipelineEntity = pipelineService
                             .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
+                    if (pipelineEntity == null) {
+                        throw new EntityServiceException("Unable to find pipeline with UUID: " +
+                                mapStorePoolKey.getPipeline().getUuid());
+                    }
                     pipelineHolder.setPipeline(pipelineEntity);
 
                     // Create the parser.
@@ -131,7 +140,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
 
                     populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
+                        LOGGER.debug("Finished loading reference data: " + mapStorePoolKey);
                     }
                 } finally {
                     try {
