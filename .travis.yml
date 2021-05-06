@@ -49,6 +49,7 @@ before_install:
 
   # Install Node
   - nvm install 15.14.0
+  - nvm use 15.14.0
   - node --version
 
   # Install NPM
