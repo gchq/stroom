@@ -95,6 +95,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private List<Map<String, Object>> currentObjectArray;
     private Map<String, Object> currentArrayObject;
     private boolean isBuildingArrayObject = false;
+    private Map<String, Object> currentObject;
+    private boolean isBuildingObject = false;
     private String currentPropertyName;
 
     private int batchSize = 10000;
@@ -217,11 +219,17 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                     currentStringArray = new ArrayList<>();
                     currentObjectArray = new ArrayList<>();
+                    currentObject = new HashMap<>();
                     currentPropertyName = name;
                 } else {
                     if (currentArrayObject != null) {
+                        // An array object has been started, so treat this key/value pair as a property of that object
                         isBuildingArrayObject = true;
                         currentArrayObject.put(name, value);
+                    } else if (currentObject != null) {
+                        // An object has been started, so apply this key/value pair to the object
+                        isBuildingObject = true;
+                        currentObject.put(name, value);
                     } else {
                         // This is a simple property, not part of an array
                         if (name.length() > 0 && value.length() > 0) {
@@ -259,6 +267,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (isBuildingArrayObject) {
                 // An array object is currently being built and is not yet completed
                 isBuildingArrayObject = false;
+            } else if (isBuildingObject) {
+                isBuildingObject = false;
             } else if (currentArrayObject != null) {
                 // An array object has ended
                 currentArrayObject = null;
@@ -270,11 +280,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 addFieldToDocument(currentPropertyName, currentObjectArray);
                 currentStringArray = null;
                 currentObjectArray = null;
+                currentObject = null;
             } else if (currentStringArray != null && currentStringArray.size() > 0) {
                 // End of a string array
                 addFieldToDocument(currentPropertyName, currentStringArray);
                 currentStringArray = null;
                 currentObjectArray = null;
+                currentObject = null;
+            } else if (currentObject != null && currentObject.size() > 0) {
+                // End of plain object
+                addFieldToDocument(currentPropertyName, currentObject);
+                currentStringArray = null;
+                currentObjectArray = null;
+                currentObject = null;
             }
         } else if (RECORD_ELEMENT_NAME.equals(localName)) {
             processDocument();
@@ -282,7 +300,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             currentStringArray = null;
             currentObjectArray = null;
             currentArrayObject = null;
+            isBuildingArrayObject = false;
             currentArrayString = null;
+            currentObject = null;
 
             // Reset the count of how many fields we have indexed for the
             // current event.
