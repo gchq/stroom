@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2223** : Fixed migration issue.
+
 
 ## [v7.0-beta.111] - 2021-05-04
 

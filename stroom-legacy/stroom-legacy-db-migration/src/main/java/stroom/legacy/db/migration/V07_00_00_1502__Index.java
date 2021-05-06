@@ -268,11 +268,11 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                     insert.setString(8, oldVolume.path);
                     insert.setInt(9, volumeGroup.id);
                     insert.setByte(10, oldVolume.status.getPrimitiveValue());
-                    insert.setLong(11, oldVolume.bytesLimit);
-                    insert.setLong(12, oldVolume.bytesUsed);
-                    insert.setLong(13, oldVolume.bytesFree);
-                    insert.setLong(14, oldVolume.bytesTotal);
-                    insert.setLong(15, oldVolume.statMs);
+                    DbUtil.setLong(insert, 11, oldVolume.bytesLimit);
+                    DbUtil.setLong(insert, 12, oldVolume.bytesUsed);
+                    DbUtil.setLong(insert, 13, oldVolume.bytesFree);
+                    DbUtil.setLong(insert, 14, oldVolume.bytesTotal);
+                    DbUtil.setLong(insert, 15, oldVolume.statMs);
                     insert.executeUpdate();
                 }
 
@@ -365,7 +365,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         final String descrip = resultSet.getString(7);
                         final Integer maxDoc = DbUtil.getInteger(resultSet, 8);
                         final Integer maxShrd = DbUtil.getInteger(resultSet, 9);
-                        final Byte partBy = resultSet.getByte(10);
+                        final Byte partBy = DbUtil.getByte(resultSet, 10);
                         final Integer partSz = DbUtil.getInteger(resultSet, 11);
                         final Integer retenDayAge = DbUtil.getInteger(resultSet, 12);
                         final String fields = resultSet.getString(13);
@@ -388,10 +388,16 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         document.setCreateUser(crtUser);
                         document.setUpdateUser(updUser);
                         document.setDescription(descrip);
-                        document.setMaxDocsPerShard(maxDoc);
-                        document.setShardsPerPartition(maxShrd);
+                        if (maxDoc != null) {
+                            document.setMaxDocsPerShard(maxDoc);
+                        }
+                        if (maxShrd != null) {
+                            document.setShardsPerPartition(maxShrd);
+                        }
                         document.setPartitionBy(newPartitionBy);
-                        document.setPartitionSize(partSz);
+                        if (partSz != null) {
+                            document.setPartitionSize(partSz);
+                        }
                         document.setRetentionDayAge(retenDayAge);
                         document.setFields(MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(fields)));
                         document.setVolumeGroupName(indexUuidToVolumeGroupMap.get(uuid).getName());
@@ -487,20 +493,20 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         moveShard(oldVolume.path, oldIndexId, indexUuid);
 
                         try {
-                            insert.setLong(1, id);
+                            DbUtil.setLong(insert, 1, id);
                             insert.setString(2, nodeName);
-                            insert.setInt(3, newVolumeId);
+                            DbUtil.setInteger(insert, 3, newVolumeId);
                             insert.setString(4, indexUuid);
-                            insert.setInt(5, commitDocumentCount);
-                            insert.setLong(6, commitDurationMs);
-                            insert.setLong(7, commitMs);
-                            insert.setInt(8, documentCount);
-                            insert.setLong(9, fileSize);
-                            insert.setByte(10, status);
+                            DbUtil.setInteger(insert, 5, commitDocumentCount);
+                            DbUtil.setLong(insert, 6, commitDurationMs);
+                            DbUtil.setLong(insert, 7, commitMs);
+                            DbUtil.setInteger(insert, 8, documentCount);
+                            DbUtil.setLong(insert, 9, fileSize);
+                            DbUtil.setByte(insert, 10, status);
                             insert.setString(11, indexVersion);
                             insert.setString(12, part);
-                            insert.setLong(13, partFrom);
-                            insert.setLong(14, partTo);
+                            DbUtil.setLong(insert, 13, partFrom);
+                            DbUtil.setLong(insert, 14, partTo);
                             insert.executeUpdate();
                         } catch (final SQLException e) {
                             throw new RuntimeException(e.getMessage(), e);

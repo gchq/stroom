@@ -14,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import javax.sql.DataSource;
 
 public class DbUtil {
@@ -264,5 +265,35 @@ public class DbUtil {
         return rs.wasNull()
                 ? null
                 : val;
+    }
+
+    public static void setByte(final PreparedStatement ps,
+                               final int parameterIndex,
+                               final Byte val) throws SQLException {
+        if (val == null) {
+            ps.setNull(parameterIndex, Types.TINYINT);
+        } else {
+            ps.setByte(parameterIndex, val);
+        }
+    }
+
+    public static void setInteger(final PreparedStatement ps,
+                                  final int parameterIndex,
+                                  final Integer val) throws SQLException {
+        if (val == null) {
+            ps.setNull(parameterIndex, Types.INTEGER);
+        } else {
+            ps.setInt(parameterIndex, val);
+        }
+    }
+
+    public static void setLong(final PreparedStatement ps,
+                               final int columnIndex,
+                               final Long val) throws SQLException {
+        if (val == null) {
+            ps.setNull(columnIndex, Types.BIGINT);
+        } else {
+            ps.setLong(columnIndex, val);
+        }
     }
 }
